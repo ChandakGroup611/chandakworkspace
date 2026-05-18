@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
+import { fetchSidebarCounts } from "@/lib/actions/workspaces";
 
 interface NavItem {
   label: string;
@@ -86,11 +87,34 @@ export default function Sidebar() {
     "/masters": true
   });
   const [clientQuery, setClientQuery] = useState("");
+  const [counts, setCounts] = useState<Record<string, string>>({
+    tickets: "",
+    workspaces: "",
+    requirements: "",
+    sla: "",
+    users: ""
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setClientQuery(window.location.search);
     }
+
+    async function loadCounts() {
+      try {
+        const data = await fetchSidebarCounts();
+        setCounts({
+          tickets: String(data.tickets),
+          workspaces: String(data.workspaces),
+          requirements: String(data.requirements),
+          sla: data.sla > 0 ? `${data.sla} Active` : "",
+          users: String(data.users)
+        });
+      } catch (e) {
+        console.error("Failed to load sidebar counts", e);
+      }
+    }
+    loadCounts();
   }, []);
 
   const { theme } = useTheme();
@@ -185,6 +209,15 @@ export default function Sidebar() {
                 const IconComponent = item.icon;
                 const isBaseActive = pathname === item.href;
                 const isTreeExpanded = expandedTrees[item.href];
+                
+                const dynamicBadge = (() => {
+                  if (item.href === "/tickets") return counts.tickets;
+                  if (item.href === "/workspaces") return counts.workspaces;
+                  if (item.href === "/requirements") return counts.requirements;
+                  if (item.href === "/sla") return counts.sla;
+                  if (item.href === "/users") return counts.users;
+                  return item.badge;
+                })();
 
                 return (
                   <div key={item.href} className="space-y-0.5">
@@ -212,9 +245,9 @@ export default function Sidebar() {
                           <span className="flex-1 truncate transition-colors duration-150">{item.label}</span>
                         )}
                         
-                        {!isCompact && item.badge && (
+                        {!isCompact && dynamicBadge && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all ${item.badgeColor || (isLight ? "bg-gray-100 text-gray-700" : "bg-white/10 text-gray-300")}`}>
-                            {item.badge}
+                            {dynamicBadge}
                           </span>
                         )}
                       </Link>
@@ -242,11 +275,11 @@ export default function Sidebar() {
                           isLight ? "bg-white border-gray-200 text-gray-800 shadow-gray-200/50" : "bg-[#0f172a] border-white/10 text-white shadow-black/80"
                         }`}>
                           <span className="font-semibold whitespace-nowrap text-xs">{item.label}</span>
-                          {item.badge && (
+                          {dynamicBadge && (
                             <span className={`text-[9px] px-1 py-0.2 rounded font-bold uppercase border ${
                               isLight ? "bg-blue-50 text-blue-600 border-blue-200" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                             }`}>
-                              {item.badge}
+                              {dynamicBadge}
                             </span>
                           )}
                           <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 transition-all flex items-center gap-0.5 ${
