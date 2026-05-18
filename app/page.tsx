@@ -7,7 +7,7 @@ export default async function Page() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  // Safely pre-fetch real demonstration items from backend storage
+  // Safely pre-fetch real production items from backend storage
   const { data: todos, error } = await supabase.from("todos").select().limit(5);
 
   return (
