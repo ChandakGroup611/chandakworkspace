@@ -48,7 +48,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
       { label: "ITSM Tickets", href: "/tickets", icon: Ticket, badge: "12", badgeColor: "bg-blue-500/10 text-blue-500 border border-blue-500/20", permission: "TICKETS_VIEW" },
-      { label: "Workspaces", href: "/workspaces", icon: FolderKanban, permission: "WORKSPACES_VIEW" },
+      { label: "Workspaces", href: "/workspaces", icon: FolderKanban, badge: "0", badgeColor: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20", permission: "WORKSPACES_VIEW" },
     ]
   },
   {
