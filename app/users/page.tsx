@@ -240,7 +240,8 @@ export default function UserMasterPage() {
       // Attempt 1: Direct Database Fetch
       let { data, error } = await (supabase
         .from("user_master") as any)
-        .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id, assigned_assets, last_login_at, last_logout_at")
+        .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id, assigned_assets, last_login_at, last_logout_at, is_deleted")
+        .eq("is_deleted", false)
         .order("full_name", { ascending: true });
 
       let columnsMissing = false;
@@ -249,7 +250,8 @@ export default function UserMasterPage() {
         console.warn("Database missing modern columns. Falling back to basic select.");
         const fallbackRes = await (supabase
           .from("user_master") as any)
-          .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id")
+          .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id, is_deleted")
+          .eq("is_deleted", false)
           .order("full_name", { ascending: true });
         data = fallbackRes.data;
         error = fallbackRes.error;
@@ -273,7 +275,7 @@ export default function UserMasterPage() {
       } catch (e) {}
 
       const rawUsers = data || [];
-      const cleanUsers = rawUsers.map((usr: any) => {
+      const cleanUsers = rawUsers.filter((usr: any) => usr.is_deleted !== true).map((usr: any) => {
         let mergedUser = { ...usr };
         if (columnsMissing) {
           try {
