@@ -109,22 +109,16 @@ export async function fetchWorkspaces() {
     const userId = userData.user?.id;
     if (!userId) return [];
 
-    // 1. Get user's team memberships
-    const { data: tm } = await supabase.from("team_members").select("team_id").eq("user_id", userId);
-    const myTeamIds = (tm || []).map((r: any) => r.team_id);
+    // Run direct reports, team, and assignee checks in parallel
+    const [tmRes, directTasksRes, assigneeTasksRes] = await Promise.all([
+      supabase.from("team_members").select("team_id").eq("user_id", userId),
+      supabase.from("workspace_tasks").select("workspace_id").eq("assignee_id", userId).eq("is_deleted", false),
+      supabase.from("task_assignees").select("task:workspace_tasks(workspace_id)").eq("user_id", userId)
+    ]);
 
-    // 2. Get workspaces where user is a primary assignee of any task
-    const { data: directTasks } = await supabase
-      .from("workspace_tasks")
-      .select("workspace_id")
-      .eq("assignee_id", userId)
-      .eq("is_deleted", false);
-
-    // 3. Get workspaces where user is in task_assignees of any task
-    const { data: assigneeTasks } = await supabase
-      .from("task_assignees")
-      .select("task:workspace_tasks(workspace_id)")
-      .eq("user_id", userId);
+    const myTeamIds = (tmRes.data || []).map((r: any) => r.team_id);
+    const directTasks = directTasksRes.data || [];
+    const assigneeTasks = assigneeTasksRes.data || [];
 
     const assignedWorkspaceIds = new Set();
     (directTasks || []).forEach((t: any) => {
@@ -154,6 +148,15 @@ export async function fetchWorkspaces() {
     console.error("Error enforcing workspace visibility:", e);
     return all;
   }
+}
+
+export async function fetchWorkspacesInitialData() {
+  const [workspaces, companies, priorities] = await Promise.all([
+    fetchWorkspaces(),
+    fetchCompanies(),
+    fetchPriorities()
+  ]);
+  return { workspaces, companies, priorities };
 }
 
 export async function updateWorkspace(id: string, formData: any) {
