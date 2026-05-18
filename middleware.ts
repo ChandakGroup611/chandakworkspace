@@ -1,8 +1,29 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  return await createClient(request);
+  const { supabaseResponse, user } = await createClient(request);
+
+  const pathname = request.nextUrl.pathname;
+
+  const isAuthRoute = pathname === "/login" || pathname === "/register";
+  const isApiRoute = pathname.startsWith("/api");
+
+  // If user is not authenticated and trying to access protected routes, redirect to /login
+  if (!user && !isAuthRoute && !isApiRoute) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/login";
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // If user is authenticated and trying to access login/register, redirect to home page
+  if (user && isAuthRoute) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/";
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  return supabaseResponse;
 }
 
 export const config = {
