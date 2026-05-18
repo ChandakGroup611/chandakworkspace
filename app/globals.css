@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Import Phase 1 Enterprise Design Token Foundation Layers */
+@import '../src/styles/themes/base.css';
+@import '../src/styles/themes/executive-light.css';
+@import '../src/styles/themes/midnight-operations.css';
+@import '../src/styles/themes/glass-intelligence.css';
+@import '../src/styles/themes/enterprise-bento.css';
+@import '../src/styles/themes/tactical-utility.css';

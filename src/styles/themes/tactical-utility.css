@@ -1,0 +1,37 @@
+/* Theme 5: Tactical Utility — Fast Enterprise Tactile Interaction Layer */
+@layer utilities {
+  /* Fast Premium Lift Animation on Hover */
+  .tactile-lift {
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    will-change: transform;
+  }
+  .tactile-lift:hover {
+    transform: translateY(-1.5px);
+    box-shadow: var(--shadow-elevation);
+  }
+  .tactile-lift:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-ambient);
+  }
+
+  /* Reliable Enterprise Accessible Focus States */
+  .tactile-focus {
+    outline: none;
+    transition: box-shadow var(--transition-fast);
+  }
+  .tactile-focus:focus-visible {
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-primary);
+  }
+
+  /* Active Interactive Table/Row Operational States */
+  .tactile-row {
+    transition: background-color var(--transition-fast);
+  }
+  .tactile-row:hover {
+    background-color: var(--bg-surface);
+  }
+  .tactile-row--active {
+    background-color: var(--border-subtle);
+    border-left: 3px solid var(--accent-primary);
+  }
+}

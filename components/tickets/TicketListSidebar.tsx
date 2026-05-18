@@ -1,0 +1,168 @@
+"use client";
+
+import React from "react";
+import { Search, Filter, Clock, User, AlertCircle, Hash } from "lucide-react";
+import { AppBadge } from "@/components/ui/AppBadge";
+import { useTheme } from "@/components/theme/ThemeProvider";
+
+interface TicketListSidebarProps {
+  tickets: any[];
+  selectedTicketId: string | null;
+  onSelect: (ticket: any) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  selectedDept: string;
+  onDeptChange: (dept: string) => void;
+  departments: any[];
+}
+
+export function TicketListSidebar({
+  tickets,
+  selectedTicketId,
+  onSelect,
+  searchQuery,
+  onSearchChange,
+  selectedDept,
+  onDeptChange,
+  departments
+}: TicketListSidebarProps) {
+  const { theme } = useTheme();
+  const isLightMode = theme === "executive-light";
+
+  return (
+    <div className={`flex flex-col h-full overflow-hidden border-r transition-colors duration-300 ${
+      isLightMode ? "bg-white border-gray-200" : "bg-[#0f172a]/40 border-white/5"
+    }`}>
+      {/* Filters Area */}
+      <div className={`p-4 space-y-4 border-b ${
+        isLightMode ? "border-gray-100 bg-gray-50/30" : "border-white/5 bg-white/[0.01]"
+      }`}>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <input 
+            type="text"
+            placeholder="Search tickets..."
+            className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+              isLightMode 
+                ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" 
+                : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+            }`}
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <button 
+            onClick={() => onDeptChange("ALL")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+              selectedDept === "ALL" 
+                ? "bg-indigo-600 text-white" 
+                : (isLightMode ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-white/5 text-gray-400 hover:bg-white/10")
+            }`}
+          >
+            All Departments
+          </button>
+          {departments.map(dept => (
+            <button 
+              key={dept.id}
+              onClick={() => onDeptChange(dept.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedDept === dept.id 
+                  ? "bg-indigo-600 text-white" 
+                  : (isLightMode ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-white/5 text-gray-400 hover:bg-white/10")
+              }`}
+            >
+              {dept.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* List Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+        {tickets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
+            <div className="p-3 bg-white/5 rounded-full">
+              <Hash className="h-6 w-6 text-gray-600" />
+            </div>
+            <p className="text-sm text-gray-500">No tickets found</p>
+          </div>
+        ) : (
+          tickets.map(ticket => {
+            const isSelected = selectedTicketId === ticket.dbId || selectedTicketId === ticket.id;
+            const priority = ticket.priorityObj;
+            
+            return (
+              <button
+                key={ticket.dbId || ticket.id}
+                onClick={() => onSelect(ticket)}
+                className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border ${
+                  isSelected 
+                    ? (isLightMode ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-indigo-600/20 border-indigo-500/30")
+                    : (isLightMode ? "hover:bg-gray-50 border-transparent" : "hover:bg-white/[0.03] border-transparent")
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`}>
+                    {ticket.id}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <div className={`h-1.5 w-1.5 rounded-full ${
+                      priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : 
+                      priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-blue-500"
+                    }`} />
+                    <span className="text-[10px] text-gray-500 font-medium">
+                      {priority?.name || "P3"}
+                    </span>
+                  </div>
+                </div>
+
+                <h4 className={`text-sm font-semibold mb-2 line-clamp-1 transition-colors ${
+                  isSelected 
+                    ? (isLightMode ? "text-indigo-900" : "text-white") 
+                    : (isLightMode ? "text-gray-900 group-hover:text-indigo-700" : "text-gray-300 group-hover:text-white")
+                }`}>
+                  {ticket.title}
+                </h4>
+
+                <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    <span className="truncate max-w-[80px]">{ticket.assignedTo || "Unassigned"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                </div>
+
+                {isSelected && (
+                  <div className="mt-3 flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+                    <AppBadge variant={ticket.statusObj?.code === "ST_OPEN" ? "info" : "success"} className="text-[8px] py-0 px-1.5">
+                      {ticket.statusObj?.name || "Active"}
+                    </AppBadge>
+                    <span className="text-[8px] text-indigo-300 font-medium bg-indigo-400/10 px-1.5 rounded">
+                      SLA: STABLE
+                    </span>
+                  </div>
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      {/* Stats Summary */}
+      <div className={`p-4 border-t transition-colors duration-300 ${
+        isLightMode ? "border-gray-100 bg-gray-50/30" : "border-white/5 bg-white/[0.01]"
+      } flex items-center justify-between`}>
+        <span className="text-[10px] text-gray-500 font-medium">{tickets.length} Incidents Found</span>
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="text-[10px] text-gray-500">Realtime Sync Active</span>
+        </div>
+      </div>
+    </div>
+  );
+}

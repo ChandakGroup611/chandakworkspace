@@ -1,0 +1,38 @@
+/* Theme 1: Executive Light — Premium Soft Pearl Foundation */
+:root, [data-theme="executive-light"] {
+  /* Crisp Soft Slate Backgrounds */
+  --bg-primary: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+
+  /* Superior Readability Contrast Text Tokens */
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #475569;
+
+  /* Minimal Clean Borders */
+  --border-subtle: #E2E8F0;
+  --border-active: #CBD5E1;
+
+  /* Professional Accents & Statuses */
+  --accent-primary: #2563EB;
+  --accent-secondary: #3B82F6;
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #DC2626;
+
+  /* Soft Ambient Shadows */
+  --shadow-ambient: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-elevation: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+}
+
+/* Safety Net Overrides: automatically convert overlapping light texts to highly legible dark text on light backgrounds */
+[data-theme="executive-light"] .text-white:not(button .text-white):not(.badge .text-white),
+[data-theme="executive-light"] .text-gray-100:not(button .text-gray-100),
+[data-theme="executive-light"] .text-gray-200:not(button .text-gray-200),
+[data-theme="executive-light"] .text-gray-300:not(button .text-gray-300),
+[data-theme="executive-light"] .text-gray-400:not(button .text-gray-400) {
+  color: #0F172A !important; /* Deep dark text-primary */
+  font-weight: 600;
+}
+

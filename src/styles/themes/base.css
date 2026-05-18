@@ -1,0 +1,101 @@
+@layer base {
+  :root {
+    /* Base Grid System */
+    --base-grid: 4px;
+    
+    /* Default Spacing Rhythms (Comfortable by default) */
+    --spacing-rhythm: 8px;
+    --spacing-comfortable: 8px;
+    --spacing-compact: 6px;
+    --spacing-dense: 4px;
+
+    /* Base Typography Normalization */
+    --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-secondary: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+
+    /* Standard Component Radius System */
+    --radius-input: 10px;
+    --radius-button: 12px;
+    --radius-card: 16px;
+    --radius-modal: 20px;
+    --radius-kpi: 24px;
+
+    /* Base Transitions */
+    --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Apply global font normalizations */
+  body {
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Support responsive density modes injected via data attributes */
+  [data-density="comfortable"] {
+    --spacing-rhythm: var(--spacing-comfortable);
+  }
+  [data-density="compact"] {
+    --spacing-rhythm: var(--spacing-compact);
+  }
+  [data-density="dense"] {
+    --spacing-rhythm: var(--spacing-dense);
+  }
+}
+
+/* Absolute Viewport Stretch Coverage: remove all empty black border bounds in Chrome tab spaces */
+html, body {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+  background-color: var(--bg-primary, #0A0D14) !important;
+}
+
+/* Global Typography Escalation & Legibility Booster */
+html {
+  /* Globally scale up all rem-based font sizes across the entire application */
+  font-size: 17.5px !important;
+}
+
+/* Explicit scaling for literal fixed-pixel utility classes used in subtexts/badges */
+.text-\[10px\] {
+  font-size: 11.5px !important;
+}
+.text-\[11px\] {
+  font-size: 12.5px !important;
+}
+.text-xs {
+  font-size: 0.85rem !important;
+}
+.text-sm {
+  font-size: 0.95rem !important;
+}
+
+/* Subtext & Muted Text Saturation Boosters (Make faint text darker/stronger in existing color family) */
+.text-gray-400 {
+  color: var(--text-gray-400-boost, #cbd5e1) !important; /* Promoted to slate-300 for crisp high-contrast dark-mode clarity */
+  font-weight: 500;
+}
+.text-gray-500 {
+  color: var(--text-gray-500-boost, #94a3b8) !important; /* Promoted to slate-400 */
+  font-weight: 500;
+}
+
+/* Corresponding dark/solid mapping when Light Mode is active */
+.theme-light .text-gray-400,
+[data-theme="executive-light"] .text-gray-400 {
+  color: #475569 !important; /* Deep dark slate-600 */
+  font-weight: 600;
+}
+.theme-light .text-gray-500,
+[data-theme="executive-light"] .text-gray-500 {
+  color: #334155 !important; /* Deep dark slate-700 */
+  font-weight: 600;
+}
+
+

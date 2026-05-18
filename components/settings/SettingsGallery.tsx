@@ -1,0 +1,504 @@
+"use client";
+
+import React, { useState } from "react";
+import { useTheme, ThemeType, DensityType, FontFamilyType, FontSizeScaleType } from "@/components/theme/ThemeProvider";
+import { AppCard, AppCardHeader, AppCardTitle, AppCardContent, AppCardDescription } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
+import { AppBadge } from "@/components/ui/AppBadge";
+import { 
+  Sparkles, 
+  Layers, 
+  Check, 
+  Grid, 
+  CheckCircle2, 
+  Zap, 
+  Sliders, 
+  Sun, 
+  Moon, 
+  MousePointerClick,
+  Monitor,
+  Maximize2,
+  Minimize2,
+  Type
+} from "lucide-react";
+import CustomFieldsConfigurator from "@/components/settings/CustomFieldsConfigurator";
+
+export default function SettingsGallery() {
+  const { 
+    theme, 
+    density, 
+    tactileFeedback, 
+    fontFamily, 
+    fontSizeScale, 
+    setTheme, 
+    setDensity, 
+    setTactileFeedback, 
+    setFontFamily, 
+    setFontSizeScale 
+  } = useTheme();
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setSuccessToast(msg);
+    setTimeout(() => setSuccessToast(null), 3000);
+  };
+
+  const themesList: {
+    id: ThemeType;
+    name: string;
+    tagline: string;
+    benefit: string;
+    sentiment: string;
+    icon: React.ElementType;
+    previewBg: string;
+    previewBorder: string;
+    accentColor: string;
+  }[] = [
+    {
+      id: "glass-intelligence",
+      name: "Glassmorphism",
+      tagline: "Controlled Translucent Surfaces",
+      benefit: "Visual depth & layering",
+      sentiment: "Futuristic & Premium",
+      icon: Sparkles,
+      previewBg: "bg-gradient-to-br from-[#121926]/90 to-[#1A2436]/60 backdrop-blur-md",
+      previewBorder: "border-white/10",
+      accentColor: "bg-indigo-500",
+    },
+    {
+      id: "midnight-operations",
+      name: "Layered Dark",
+      tagline: "High-Performance Solid Graphite",
+      benefit: "Optimized operational contrast",
+      sentiment: "Tactical & Immersive",
+      icon: Moon,
+      previewBg: "bg-[#111827]",
+      previewBorder: "border-[#334155]",
+      accentColor: "bg-emerald-500",
+    },
+    {
+      id: "executive-light",
+      name: "Quiet Minimalist",
+      tagline: "Warm Executive Whites",
+      benefit: "Reduced cognitive load",
+      sentiment: "Calm & Focused",
+      icon: Sun,
+      previewBg: "bg-[#F8F9FA] text-gray-900",
+      previewBorder: "border-gray-200",
+      accentColor: "bg-blue-600",
+    },
+  ];
+
+  const densitiesList: {
+    id: DensityType;
+    name: string;
+    benefit: string;
+    sentiment: string;
+    icon: React.ElementType;
+    gapClass: string;
+  }[] = [
+    {
+      id: "dense",
+      name: "Bento Grid",
+      benefit: "Efficient data density",
+      sentiment: "Organized & Intuitive",
+      icon: Grid,
+      gapClass: "gap-2 p-2",
+    },
+    {
+      id: "compact",
+      name: "Compact Layout",
+      benefit: "Streamlined element groups",
+      sentiment: "Responsive & Active",
+      icon: Minimize2,
+      gapClass: "gap-3 p-3",
+    },
+    {
+      id: "comfortable",
+      name: "Comfortable Rhythm",
+      benefit: "Generous whitespace padding",
+      sentiment: "Executive standard",
+      icon: Maximize2,
+      gapClass: "gap-4 p-4",
+    },
+  ];
+
+  const fontsList: { id: FontFamilyType; name: string; sample: string; css: string }[] = [
+    { id: "inter", name: "Inter UI", sample: "Crisp geometric neo-grotesque precision.", css: "font-sans" },
+    { id: "outfit", name: "Outfit Premium", sample: "Warm modern corporate rounded humanist.", css: "font-sans tracking-wide" },
+    { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible structural forms.", css: "font-sans" }
+  ];
+
+  const scalesList: { id: FontSizeScaleType; name: string; desc: string; baseRem: string }[] = [
+    { id: "sm", name: "Condensed Scaling", desc: "15px Root Base — highly optimized data metrics.", baseRem: "15px" },
+    { id: "base", name: "Executive Standard", desc: "17.5px Root Base — optimal multi-screen clarity.", baseRem: "17.5px" },
+    { id: "lg", name: "Maximized Immersive", desc: "19px Root Base — ultra-crisp presentation layer.", baseRem: "19px" }
+  ];
+
+  const isLightMode = theme === "executive-light";
+
+  return (
+    <div className="space-y-8 pb-12">
+      {/* Toast feedback component */}
+      {successToast && (
+        <div id="settings-toast-alert" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-emerald-500 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span className="text-xs font-semibold">{successToast}</span>
+        </div>
+      )}
+
+      {/* Row 1: The Design Gallery Theme Options */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sliders className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+            <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+              1. Aesthetic Palette System
+            </h2>
+          </div>
+          <AppBadge variant="info">Zero-rerender variable mapping</AppBadge>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {themesList.map((t) => {
+            const IconComponent = t.icon;
+            const isSelected = theme === t.id;
+
+            return (
+              <div 
+                key={t.id}
+                id={`theme-select-card-${t.id}`}
+                onClick={() => {
+                  setTheme(t.id);
+                  triggerToast(`Theme applied: ${t.name}`);
+                }}
+                className={`group relative flex flex-col justify-between rounded-2xl border p-5 cursor-pointer transition-all duration-300 tactile-lift ${
+                  isSelected 
+                    ? `ring-2 ring-blue-500 shadow-xl ${isLightMode ? "bg-white border-blue-500" : "bg-white/[0.04] border-blue-500/50"}` 
+                    : `${isLightMode ? "bg-white/50 border-gray-200 hover:bg-white" : "bg-white/[0.01] border-white/5 hover:border-white/10"}`
+                }`}
+              >
+                {/* Active Check Indicator */}
+                {isSelected && (
+                  <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow-md animate-in zoom-in-50">
+                    <Check className="h-3 w-3 stroke-[3]" />
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {/* Internal preview display card reproducing specific visual tokens */}
+                  <div className={`h-24 rounded-xl border ${t.previewBg} ${t.previewBorder} p-3 flex flex-col justify-between relative overflow-hidden shadow-inner`}>
+                    {/* Simulated header */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`h-2.5 w-2.5 rounded-full ${t.accentColor}`} />
+                        <span className="text-[10px] font-bold opacity-80">{t.name}</span>
+                      </div>
+                      <span className="text-[9px] px-1 py-0.2 rounded bg-black/10 font-mono">CSS var</span>
+                    </div>
+
+                    {/* Simulated content metrics */}
+                    <div className="space-y-1">
+                      <div className="h-1.5 w-3/4 rounded bg-current opacity-20" />
+                      <div className="h-1.5 w-1/2 rounded bg-current opacity-10" />
+                    </div>
+
+                    {/* Bottom floating layered decoration */}
+                    <div className="absolute bottom-1 right-2 flex items-center gap-1">
+                      <div className="h-2 w-8 rounded bg-blue-500/20" />
+                      <div className="h-2 w-2 rounded-full bg-emerald-500/40" />
+                    </div>
+                  </div>
+
+                  {/* Descriptions matching exact requirement mappings */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <IconComponent className={`h-4 w-4 ${isSelected ? "text-blue-500" : "text-gray-400"}`} />
+                      <h3 className={`font-bold text-sm tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                        {t.name}
+                      </h3>
+                    </div>
+                    <p className={`text-[11px] font-medium ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                      {t.tagline}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefits / Sentiment blocks */}
+                <div className={`mt-4 pt-3 border-t space-y-1 text-[11px] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Primary Benefit:</span>
+                    <span className={`font-semibold text-right ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{t.benefit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">User Sentiment:</span>
+                    <span className="text-indigo-400 font-semibold text-right">{t.sentiment}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Row 2: Layout Density & Bento Grid Controls */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Grid className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+          <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+            2. Grid Rhythm & Data Density
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {densitiesList.map((d) => {
+            const IconComponent = d.icon;
+            const isSelected = density === d.id;
+
+            return (
+              <AppCard 
+                key={d.id}
+                id={`density-select-card-${d.id}`}
+                onClick={() => {
+                  setDensity(d.id);
+                  triggerToast(`Density applied: ${d.name}`);
+                }}
+                className={`p-5 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                  isSelected 
+                    ? `border-blue-500 bg-blue-500/[0.03] ring-1 ring-blue-500` 
+                    : `hover:border-white/10 ${isLightMode ? "bg-white/50 border-gray-200" : ""}`
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1.5 rounded-lg ${isSelected ? "bg-blue-500 text-white" : "bg-white/5 text-gray-400"}`}>
+                        <IconComponent className="h-4 w-4" />
+                      </div>
+                      <span className={`font-bold text-xs tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{d.name}</span>
+                    </div>
+                    {isSelected && <AppBadge variant="success">Active</AppBadge>}
+                  </div>
+
+                  {/* Simulated spacing diagram */}
+                  <div className={`rounded-xl border ${isLightMode ? "border-gray-200 bg-gray-50" : "border-white/5 bg-black/20"} flex ${d.gapClass} transition-all`}>
+                    <div className="flex-1 h-8 rounded bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                      <span className="text-[9px] font-mono opacity-60">Track</span>
+                    </div>
+                    <div className="w-8 h-8 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+                      <span className="text-[9px] font-mono opacity-60">KPI</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`mt-4 pt-3 border-t space-y-1 text-[11px] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Primary Benefit:</span>
+                    <span className={`font-semibold ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{d.benefit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">User Sentiment:</span>
+                    <span className="text-emerald-400 font-semibold">{d.sentiment}</span>
+                  </div>
+                </div>
+              </AppCard>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Row 3: Typography Selection & Base Root Scale */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Type className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+            <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+              3. Typography Engine & Font Scale
+            </h2>
+          </div>
+          <AppBadge variant="info">Hardware Accelerated Binding</AppBadge>
+        </div>
+
+        {/* Sub-grid A: Font Families Selection */}
+        <div className="space-y-2">
+          <span className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Matrix</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {fontsList.map((f) => {
+              const isSelected = fontFamily === f.id;
+              return (
+                <div
+                  key={f.id}
+                  onClick={() => {
+                    setFontFamily(f.id);
+                    triggerToast(`Typeface active: ${f.name}`);
+                  }}
+                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                    isSelected 
+                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] ${isLightMode ? "border-blue-500" : "border-blue-500/40"}` 
+                      : `hover:border-white/10 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{f.name}</span>
+                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
+                    </div>
+                    <p className={`text-[11px] italic ${isLightMode ? "text-gray-600" : "text-gray-400"} ${f.css}`}>
+                      "{f.sample}"
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Sub-grid B: Base Scaler Matrix */}
+        <div className="space-y-2 pt-2">
+          <span className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">B. Literal Scaler Options</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {scalesList.map((s) => {
+              const isSelected = fontSizeScale === s.id;
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => {
+                    setFontSizeScale(s.id);
+                    triggerToast(`Scale adjusted to ${s.baseRem}`);
+                  }}
+                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
+                    isSelected 
+                      ? `ring-1 ring-emerald-500 bg-emerald-500/[0.04] ${isLightMode ? "border-emerald-500" : "border-emerald-500/40"}` 
+                      : `hover:border-white/10 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-1 border-b border-inherit/10">
+                    <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{s.name}</span>
+                    <AppBadge variant={isSelected ? "success" : "info"}>{s.baseRem}</AppBadge>
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-2 font-medium">{s.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Row 4: Interaction Mechanics (Tactile Utility) */}
+      <section className="space-y-4 pt-2">
+        <div className="flex items-center gap-2">
+          <MousePointerClick className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+          <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+            4. Tactile Interaction Protocol
+          </h2>
+        </div>
+
+        <AppCard className={`p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isLightMode ? "bg-white/80 border-gray-200" : ""}`}>
+          <div className="space-y-1 max-w-xl">
+            <div className="flex items-center gap-2">
+              <h3 className={`font-bold text-sm tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                Tactile Utility Layer
+              </h3>
+              <AppBadge variant="info">Preset Enabled</AppBadge>
+            </div>
+            <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+              Applies hardware-accelerated subtle lifts (`translateY`), targeted micro-animations, and visible focus boundaries across table elements and interactive buttons.
+            </p>
+            <div className={`flex gap-4 pt-1 text-[11px] font-medium ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
+              <span><strong className="text-gray-400">Primary Benefit:</strong> Interactive feedback</span>
+              <span>•</span>
+              <span><strong className="text-gray-400">User Sentiment:</strong> <span className="text-blue-500 font-semibold">Satisfying & Reliable</span></span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <AppButton 
+              id="tactile-utility-toggle-btn"
+              variant={tactileFeedback ? "primary" : "secondary"} 
+              size="sm"
+              onClick={() => {
+                setTactileFeedback(!tactileFeedback);
+                triggerToast(tactileFeedback ? "Tactile Feedback Disabled" : "Tactile Feedback Enabled");
+              }}
+            >
+              <Zap className="h-3.5 w-3.5 mr-1" />
+              <span>{tactileFeedback ? "Tactile Mode Active" : "Tactile Mode Paused"}</span>
+            </AppButton>
+          </div>
+        </AppCard>
+      </section>
+
+      {/* Live Operational State Reflection Sandbox */}
+      <section className="space-y-3 pt-4 border-t border-white/5">
+        <div className="flex items-center justify-between">
+          <span className={`text-xs font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+            Live Workspace Preview Sandbox
+          </span>
+          <span className="text-[11px] text-gray-500 italic">Interacting reflects your active state instant mappings</span>
+        </div>
+
+        {/* Live dynamic card demonstrating padding, gaps, border colors, lift animations */}
+        <div className={`p-6 rounded-2xl border transition-all duration-300 ${
+          isLightMode 
+            ? "bg-white border-gray-200 shadow-sm text-gray-900" 
+            : "bg-white/[0.02] border-white/10 shadow-2xl text-white"
+        }`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-inherit/10">
+            <div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase tracking-wider">
+                Live Rendering Frame
+              </span>
+              <h4 className="text-sm font-bold tracking-tight mt-1">Simulated Component Primitive Response</h4>
+            </div>
+            <div className="flex items-center gap-2">
+              <AppBadge variant="success">Theme: {theme}</AppBadge>
+              <AppBadge variant="warning">Density: {density}</AppBadge>
+            </div>
+          </div>
+
+          <div className={`mt-4 grid grid-cols-1 sm:grid-cols-3 ${
+            density === "dense" ? "gap-2" : density === "compact" ? "gap-3" : "gap-4"
+          }`}>
+            <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
+              isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
+            }`}>
+              <span className="text-[10px] text-gray-400 font-semibold block">Component Density Pad</span>
+              <span className="text-lg font-bold tracking-tight block mt-1">{density === "dense" ? "12px base" : density === "compact" ? "16px base" : "24px base"}</span>
+              <span className="text-[9px] text-emerald-400 font-mono mt-1 block">var(--bento-gap)</span>
+            </div>
+
+            <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
+              isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
+            }`}>
+              <span className="text-[10px] text-gray-400 font-semibold block">Active Visual Depth</span>
+              <span className="text-lg font-bold tracking-tight block mt-1">{theme === "glass-intelligence" ? "Translucent" : theme === "midnight-operations" ? "Graphite Layer" : "Executive Warm"}</span>
+              <span className="text-[9px] text-blue-400 font-mono mt-1 block">var(--backdrop-blur)</span>
+            </div>
+
+            <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
+              isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
+            }`}>
+              <span className="text-[10px] text-gray-400 font-semibold block">Tactile Feed Response</span>
+              <span className="text-lg font-bold tracking-tight block mt-1">{tactileFeedback ? "Active Lifts" : "Fixed Plane"}</span>
+              <span className="text-[9px] text-purple-400 font-mono mt-1 block">hover:translateY(-1.5px)</span>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-inherit/10 flex justify-end gap-2">
+            <AppButton variant="secondary" size="sm" id="sandbox-demo-btn-1" onClick={() => triggerToast("Interactive trigger test successful")}>
+              Test Button Trigger
+            </AppButton>
+            <AppButton variant="primary" size="sm" id="sandbox-demo-btn-2" onClick={() => triggerToast("Bento settings fully synchronized")}>
+              Confirm Config Binding
+            </AppButton>
+          </div>
+        </div>
+      </section>
+
+      {/* Row 4: End-to-End Dynamic Custom Fields Dictionaries Map */}
+      <section className="space-y-4 pt-4">
+        <CustomFieldsConfigurator />
+      </section>
+    </div>
+  );
+}

@@ -1,0 +1,34 @@
+/* Theme 2: Midnight Operations — Layered High-Performance Dark Foundation */
+[data-theme="midnight-operations"] {
+  /* Rich Layered Midnight Sapphire Backgrounds */
+  --bg-primary: #050B14;
+  --bg-surface: #0B132B;
+  --bg-elevated: #1C2541;
+
+  /* Premium High-Contrast Readable Text Tokens */
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E6ED;
+  --text-muted: #94A3B8;
+
+  /* Thin Translucent Accented Borders */
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(255, 255, 255, 0.2);
+
+  /* Technical Operational Accents */
+  --accent-primary: #10B981;
+  --accent-secondary: #0EA5E9;
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #EF4444;
+
+  /* Elevation Layers with Tactical Glow Separation */
+  --shadow-ambient: 0 4px 12px 0 rgba(0, 0, 0, 0.6);
+  --shadow-elevation: 0 10px 20px -3px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Safety Net Overrides: automatically convert overlapping dark texts to highly visible luminous text on dark backgrounds */
+[data-theme="midnight-operations"] .text-gray-700,
+[data-theme="midnight-operations"] .text-gray-800,
+[data-theme="midnight-operations"] .text-gray-900 {
+  color: #FFFFFF !important;
+}
