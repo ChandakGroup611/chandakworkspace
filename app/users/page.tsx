@@ -165,70 +165,22 @@ export default function UserMasterPage() {
     rawUsers: AppUserItem[],
     depts: any[],
     desigs: any[],
-    rls: any[]
+    rls: any[],
+    assetsList?: any[]
   ): AppUserItem[] => {
-    return rawUsers.map(usr => ({
-      ...usr,
-      departmentObj: depts.find(d => d.id === usr.department_id) || usr.departmentObj,
-      designationObj: desigs.find(d => d.id === usr.designation_id) || usr.designationObj,
-      roleObj: rls.find(r => r.id === usr.role_id) || usr.roleObj,
-      managerObj: rawUsers.find(u => u.id === usr.manager_id) || usr.managerObj
-    }));
-  };
-
-  const fetchDependencies = async () => {
-    try {
-      // Pull departments
-      const deptRes = await supabase.from("departments").select("id, code, name").eq("is_deleted", false);
-      const loadedDepts = deptRes.data || [];
-      if (deptRes.data) setDepartments(loadedDepts);
-
-      // Pull designations
-      const desigRes = await supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false);
-      const loadedDesigs = desigRes.data || [];
-      if (desigRes.data) setDesignations(loadedDesigs);
-
-      // Pull roles
-      const roleRes = await supabase.from("roles").select("id, code, name").eq("is_deleted", false);
-      const loadedRoles = roleRes.data || [];
-      if (roleRes.data) setRoles(loadedRoles);
-
-      // Pull assets from asset master
-      let assetsData: any[] = [];
-      try {
-        const astRes = await supabase.from("assets").select("id, code, name, asset_tag").eq("is_deleted", false);
-        if (astRes.data) assetsData = astRes.data;
-      } catch (e) {}
-
-      // Provide baseline rich premium options if database query returns empty set
-      const defaultAssetOptions = [
-        { id: "ast-1", code: "TAG-MBP-16", name: "MacBook Pro 16-inch M3 Max", asset_tag: "TAG-MBP-16" },
-        { id: "ast-2", code: "TAG-IPH-15", name: "iPhone 15 Pro Max Enterprise Edition", asset_tag: "TAG-IPH-15" },
-        { id: "ast-3", code: "TAG-DELL-XPS", name: "Dell XPS 15 Ultra Developer Spec", asset_tag: "TAG-DELL-XPS" },
-        { id: "ast-4", code: "TAG-MON-27", name: "Studio Display 27-inch 5K Monitor", asset_tag: "TAG-MON-27" },
-        { id: "ast-5", code: "TAG-SURF-P9", name: "Microsoft Surface Pro 9 LTE", asset_tag: "TAG-SURF-P9" }
-      ];
-
-      defaultAssetOptions.forEach(opt => {
-        if (!assetsData.some(a => (a.asset_tag || a.code) === opt.code)) {
-          assetsData.push(opt);
-        }
-      });
-      setAvailableAssets(assetsData);
-
-      // Enrich already loaded users list
-      setUsers(prev => enrichUserItems(prev, loadedDepts, loadedDesigs, loadedRoles));
-
-    } catch (err) {
-      console.warn("Dependencies restricted by schema offline constraints. Instantiating baseline fallback arrays.");
-      setAvailableAssets([
-        { id: "ast-1", code: "TAG-MBP-16", name: "MacBook Pro 16-inch M3 Max", asset_tag: "TAG-MBP-16" },
-        { id: "ast-2", code: "TAG-IPH-15", name: "iPhone 15 Pro Max Enterprise Edition", asset_tag: "TAG-IPH-15" },
-        { id: "ast-3", code: "TAG-DELL-XPS", name: "Dell XPS 15 Ultra Developer Spec", asset_tag: "TAG-DELL-XPS" },
-        { id: "ast-4", code: "TAG-MON-27", name: "Studio Display 27-inch 5K Monitor", asset_tag: "TAG-MON-27" },
-        { id: "ast-5", code: "TAG-SURF-P9", name: "Microsoft Surface Pro 9 LTE", asset_tag: "TAG-SURF-P9" }
-      ]);
-    }
+    return rawUsers.map(usr => {
+      const userAssets = assetsList
+        ? assetsList.filter(a => a.assigned_user_id === usr.id).map(a => a.asset_tag || a.code)
+        : (usr.assigned_assets || []);
+      return {
+        ...usr,
+        departmentObj: depts.find(d => d.id === usr.department_id) || usr.departmentObj,
+        designationObj: desigs.find(d => d.id === usr.designation_id) || usr.designationObj,
+        roleObj: rls.find(r => r.id === usr.role_id) || usr.roleObj,
+        managerObj: rawUsers.find(u => u.id === usr.manager_id) || usr.managerObj,
+        assigned_assets: userAssets
+      };
+    });
   };
 
   const fetchUsersDirectory = async () => {
@@ -239,28 +191,46 @@ export default function UserMasterPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
 
-      // Attempt 1: Direct Database Fetch
-      let { data, error } = await (supabase
-        .from("user_master") as any)
-        .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id, assigned_assets, last_login_at, last_logout_at, is_deleted")
+      // 1. Fetch all dependencies first
+      const [deptRes, desigRes, roleRes, astRes] = await Promise.all([
+        supabase.from("departments").select("id, code, name").eq("is_deleted", false),
+        supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
+        supabase.from("roles").select("id, code, name").eq("is_deleted", false),
+        supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false)
+      ]);
+
+      const loadedDepts = deptRes.data || [];
+      const loadedDesigs = desigRes.data || [];
+      const loadedRoles = roleRes.data || [];
+      
+      setDepartments(loadedDepts);
+      setDesignations(loadedDesigs);
+      setRoles(loadedRoles);
+
+      let assetsData = astRes.data || [];
+      const defaultAssetOptions = [
+        { id: "ast-1", code: "TAG-MBP-16", name: "MacBook Pro 16-inch M3 Max", asset_tag: "TAG-MBP-16", assigned_user_id: null },
+        { id: "ast-2", code: "TAG-IPH-15", name: "iPhone 15 Pro Max Enterprise Edition", asset_tag: "TAG-IPH-15", assigned_user_id: null },
+        { id: "ast-3", code: "TAG-DELL-XPS", name: "Dell XPS 15 Ultra Developer Spec", asset_tag: "TAG-DELL-XPS", assigned_user_id: null },
+        { id: "ast-4", code: "TAG-MON-27", name: "Studio Display 27-inch 5K Monitor", asset_tag: "TAG-MON-27", assigned_user_id: null },
+        { id: "ast-5", code: "TAG-SURF-P9", name: "Microsoft Surface Pro 9 LTE", asset_tag: "TAG-SURF-P9", assigned_user_id: null }
+      ];
+
+      defaultAssetOptions.forEach(opt => {
+        if (!assetsData.some(a => (a.asset_tag || a.code) === opt.code)) {
+          assetsData.push(opt);
+        }
+      });
+      setAvailableAssets(assetsData);
+
+      // 2. Fetch Users (omitting non-existent assigned_assets column)
+      let { data, error } = await supabase
+        .from("user_master")
+        .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id, last_login_at, last_logout_at, is_deleted")
         .eq("is_deleted", false)
         .order("full_name", { ascending: true });
 
-      let columnsMissing = false;
-      if (error && (error.code === "42703" || error.code === "PGRST204" || error.message?.includes("assigned_assets") || error.message?.includes("last_login"))) {
-        columnsMissing = true;
-        console.warn("Database missing modern columns. Falling back to basic select.");
-        const fallbackRes = await (supabase
-          .from("user_master") as any)
-          .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id, is_deleted")
-          .eq("is_deleted", false)
-          .order("full_name", { ascending: true });
-        data = fallbackRes.data;
-        error = fallbackRes.error;
-      }
-
       if (error) {
-        console.warn("[User Master] Database fetch restricted. Recovering...");
         throw error;
       }
 
@@ -279,22 +249,13 @@ export default function UserMasterPage() {
       const rawUsers = data || [];
       const cleanUsers = rawUsers.filter((usr: any) => usr.is_deleted !== true).map((usr: any) => {
         let mergedUser = { ...usr };
-        if (columnsMissing) {
-          try {
-            const cachedLogin = localStorage.getItem(`session_login_${usr.id}`);
-            const cachedLogout = localStorage.getItem(`session_logout_${usr.id}`);
-            mergedUser.last_login_at = cachedLogin || null;
-            mergedUser.last_logout_at = cachedLogout || null;
-          } catch (e) {}
-        }
-
         if (localUpdates[usr.id]) {
           mergedUser = { ...mergedUser, ...localUpdates[usr.id] };
         }
         return mergedUser;
       });
 
-      // 2. SELF-HEALING: If you are NOT in the list, create your profile immediately
+      // 3. SELF-HEALING: If you are NOT in the list, create your profile immediately
       const me = cleanUsers.find((u: any) => u.id === authUser.id);
       
       if (!me) {
@@ -308,13 +269,13 @@ export default function UserMasterPage() {
         };
 
         await supabase.from("user_master").insert([newProfile]);
-        cleanUsers.push({ ...newProfile, assigned_assets: [] });
+        cleanUsers.push({ ...newProfile });
       }
 
       // Merge local created users and filter out deleted users
       const allMergedUsers = [...localCreated, ...cleanUsers].filter(u => !localDeleted.includes(u.id));
 
-      const enriched = enrichUserItems(allMergedUsers, departments, designations, roles);
+      const enriched = enrichUserItems(allMergedUsers, loadedDepts, loadedDesigs, loadedRoles, assetsData);
       setUsers(enriched);
       setSelectedUser(enriched.find((u: any) => u.id === authUser.id) || enriched[0] || null);
       
@@ -332,7 +293,7 @@ export default function UserMasterPage() {
       }
       
     } catch (err: any) {
-      console.error("[User Master] GOVERNANCE SYNC RECOVERY ACTIVATED.");
+      console.error("[User Master] GOVERNANCE SYNC RECOVERY ACTIVATED.", err);
       
       // FALLBACK: Hydrate from Local Sandbox or Seed Data
       let fallbackUsers: AppUserItem[] = [];
@@ -396,7 +357,6 @@ export default function UserMasterPage() {
   };
 
   useEffect(() => {
-    fetchDependencies();
     fetchUsersDirectory();
   }, []);
 

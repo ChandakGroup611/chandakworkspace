@@ -94,6 +94,9 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       throw new Error(`Database Update Failed: ${dbError.message}`);
     }
 
+    // C. Update asset assignments in the assets table
+    await updateAssetAssignments(adminClient, editUserId, payload.assigned_assets || []);
+
   } else {
     // ── CREATE NEW USER ──
     const targetPassword = password || "DefaultWelcomePass123!";
@@ -139,9 +142,55 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       await adminClient.auth.admin.deleteUser(newUserId);
       throw new Error(`Database Profile Creation Failed: ${dbError.message}`);
     }
+
+    // C. Update asset assignments in the assets table for new user
+    await updateAssetAssignments(adminClient, newUserId, payload.assigned_assets || []);
   }
 
   // 4. Revalidate cache
   revalidatePath("/users");
   return { success: true };
+}
+
+async function updateAssetAssignments(adminClient: any, userId: string, newAssetTags: string[]) {
+  // Get all currently assigned assets
+  const { data: currentAssets } = await adminClient
+    .from("assets")
+    .select("id, code, asset_tag")
+    .eq("assigned_user_id", userId)
+    .eq("is_deleted", false);
+
+  const currentAssetTags = (currentAssets || []).map((a: any) => a.asset_tag || a.code).filter(Boolean);
+
+  // 1. Assets to unassign: in current but not in new
+  const tagsToUnassign = currentAssetTags.filter((t: string) => !newAssetTags.includes(t));
+  if (tagsToUnassign.length > 0) {
+    const { data: assetsToUnassign } = await adminClient
+      .from("assets")
+      .select("id")
+      .or(`asset_tag.in.(${tagsToUnassign.map((t: string) => `"${t}"`).join(",")}),code.in.(${tagsToUnassign.map((t: string) => `"${t}"`).join(",")})`);
+
+    if (assetsToUnassign && assetsToUnassign.length > 0) {
+      await adminClient
+        .from("assets")
+        .update({ assigned_user_id: null })
+        .in("id", assetsToUnassign.map((a: any) => a.id));
+    }
+  }
+
+  // 2. Assets to assign: in new but not in current
+  const tagsToAssign = newAssetTags.filter((t: string) => !currentAssetTags.includes(t));
+  if (tagsToAssign.length > 0) {
+    const { data: assetsToAssign } = await adminClient
+      .from("assets")
+      .select("id")
+      .or(`asset_tag.in.(${tagsToAssign.map((t: string) => `"${t}"`).join(",")}),code.in.(${tagsToAssign.map((t: string) => `"${t}"`).join(",")})`);
+
+    if (assetsToAssign && assetsToAssign.length > 0) {
+      await adminClient
+        .from("assets")
+        .update({ assigned_user_id: userId })
+        .in("id", assetsToAssign.map((a: any) => a.id));
+    }
+  }
 }

@@ -43,34 +43,34 @@ import {
 // List of all master tables mapped to labels and icons
 const MASTER_TABLES = [
   // ── IT INFRA Category (Tier 1) ──
-  { id: "infra_issue_types", table: "issue_types", scopeId: "00000000-0000-0000-0000-000000000001", label: "Issue Type", category: "IT INFRA", icon: Activity, desc: "Infra fault types and support requests", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "infra_issue_subtypes", table: "issue_subtypes", scopeId: "00000000-0000-0000-0000-000000000001", label: "Issue Sub Type", category: "IT INFRA", icon: FileText, desc: "Specific infra problem details", parentTable: "issue_types", parentKey: "issue_type_id", parentRequired: true },
-  { id: "infra_ticket_categories", table: "ticket_categories", scopeId: "00000000-0000-0000-0000-000000000001", label: "Issue Category", category: "IT INFRA", icon: FolderTree, desc: "Main categories for logging physical faults", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "infra_ticket_subcategories", table: "ticket_subcategories", scopeId: "00000000-0000-0000-0000-000000000001", label: "Issue Sub Category", category: "IT INFRA", icon: Box, desc: "Specific infra topics under each category", parentTable: "ticket_categories", parentKey: "category_id", parentRequired: true },
-  { id: "infra_workflow_states", table: "workflow_states", scopeId: "00000000-0000-0000-0000-000000000001", label: "Status", category: "IT INFRA", icon: Activity, desc: "Application stages for infra tickets", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "infra_master_priorities", table: "master_priorities", scopeId: "00000000-0000-0000-0000-000000000001", label: "Priority", category: "IT INFRA", icon: Hash, desc: "Infra priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "assets", table: "assets", scopeId: "00000000-0000-0000-0000-000000000001", label: "Assets", category: "IT INFRA", icon: ShieldCheck, desc: "Physical hardware devices and asset tags", parentTable: "departments", parentKey: "department_id", parentRequired: false },
+  { id: "infra_issue_types", table: "issue_types", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Issue Type", category: "IT INFRA", icon: Activity, desc: "Infra fault types and support requests", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "infra_issue_subtypes", table: "issue_subtypes", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Issue Sub Type", category: "IT INFRA", icon: FileText, desc: "Specific infra problem details", parentTable: "issue_types", parentKey: "issue_type_id", parentRequired: true },
+  { id: "infra_ticket_categories", table: "ticket_categories", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Issue Category", category: "IT INFRA", icon: FolderTree, desc: "Main categories for logging physical faults", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "infra_ticket_subcategories", table: "ticket_subcategories", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Issue Sub Category", category: "IT INFRA", icon: Box, desc: "Specific infra topics under each category", parentTable: "ticket_categories", parentKey: "category_id", parentRequired: true },
+  { id: "infra_workflow_states", table: "workflow_states", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Status", category: "IT INFRA", icon: Activity, desc: "Application stages for infra tickets", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "infra_master_priorities", table: "master_priorities", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Priority", category: "IT INFRA", icon: Hash, desc: "Infra priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "assets", table: "assets", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Assets", category: "IT INFRA", icon: ShieldCheck, desc: "Physical hardware devices and asset tags", parentTable: "departments", parentKey: "department_id", parentRequired: false },
 
   // ── ERP Category (Tier 2) ──
-  { id: "erp_software_systems", table: "software_systems", scopeId: "00000000-0000-0000-0000-000000000002", label: "Software System", category: "ERP", icon: Server, desc: "Internal software applications and platforms", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "erp_software_modules", table: "software_modules", scopeId: "00000000-0000-0000-0000-000000000002", label: "Module", category: "ERP", icon: Cpu, desc: "Features within a software system", parentTable: "software_systems", parentKey: "system_id", parentRequired: true },
-  { id: "erp_software_submodules", table: "software_submodules", scopeId: "00000000-0000-0000-0000-000000000002", label: "Sub Module", category: "ERP", icon: Database, desc: "Specific actions inside a module", parentTable: "software_modules", parentKey: "module_id", parentRequired: true },
-  { id: "erp_ticket_categories", table: "ticket_categories", scopeId: "00000000-0000-0000-0000-000000000002", label: "Issue Category", category: "ERP", icon: FolderTree, desc: "Main categories for software logging", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "erp_ticket_subcategories", table: "ticket_subcategories", scopeId: "00000000-0000-0000-0000-000000000002", label: "Issue Sub Category", category: "ERP", icon: Box, desc: "Specific software topics under each category", parentTable: "ticket_categories", parentKey: "category_id", parentRequired: true },
-  { id: "erp_workflow_states", table: "workflow_states", scopeId: "00000000-0000-0000-0000-000000000002", label: "Status", category: "ERP", icon: Activity, desc: "Application stages for software tickets", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "erp_master_priorities", table: "master_priorities", scopeId: "00000000-0000-0000-0000-000000000002", label: "Priority", category: "ERP", icon: Hash, desc: "Software priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "erp_software_systems", table: "software_systems", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Software System", category: "ERP", icon: Server, desc: "Internal software applications and platforms", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "erp_software_modules", table: "software_modules", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Module", category: "ERP", icon: Cpu, desc: "Features within a software system", parentTable: "software_systems", parentKey: "system_id", parentRequired: true },
+  { id: "erp_software_submodules", table: "software_submodules", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Sub Module", category: "ERP", icon: Database, desc: "Specific actions inside a module", parentTable: "software_modules", parentKey: "module_id", parentRequired: true },
+  { id: "erp_ticket_categories", table: "ticket_categories", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Issue Category", category: "ERP", icon: FolderTree, desc: "Main categories for software logging", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "erp_ticket_subcategories", table: "ticket_subcategories", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Issue Sub Category", category: "ERP", icon: Box, desc: "Specific software topics under each category", parentTable: "ticket_categories", parentKey: "category_id", parentRequired: true },
+  { id: "erp_workflow_states", table: "workflow_states", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Status", category: "ERP", icon: Activity, desc: "Application stages for software tickets", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "erp_master_priorities", table: "master_priorities", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Priority", category: "ERP", icon: Hash, desc: "Software priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
 
   // ── USERS Category ──
   { id: "departments", table: "departments", scopeId: null, label: "Department", category: "USERS", icon: Layers, desc: "Company departments and business units", parentTable: null, parentKey: null, parentRequired: false },
   { id: "designations", table: "designations", scopeId: null, label: "Job Roles", category: "USERS", icon: UsersIcon, desc: "Employee job titles and designations", parentTable: "departments", parentKey: "department_id", parentRequired: true },
 
   // ── OTHERS Category (Tier 3) ──
-  { id: "other_software_modules", table: "software_modules", scopeId: "00000000-0000-0000-0000-000000000003", label: "Module", category: "OTHERS", icon: Cpu, desc: "General feature sets", parentTable: "software_systems", parentKey: "system_id", parentRequired: false },
-  { id: "other_software_submodules", table: "software_submodules", scopeId: "00000000-0000-0000-0000-000000000003", label: "Sub Module", category: "OTHERS", icon: Database, desc: "General sub-features", parentTable: "software_modules", parentKey: "module_id", parentRequired: false },
-  { id: "other_issue_types", table: "issue_types", scopeId: "00000000-0000-0000-0000-000000000003", label: "Issue Type", category: "OTHERS", icon: Activity, desc: "General fault types", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "other_issue_subtypes", table: "issue_subtypes", scopeId: "00000000-0000-0000-0000-000000000003", label: "Issue Sub Type", category: "OTHERS", icon: FileText, desc: "General fault details", parentTable: "issue_types", parentKey: "issue_type_id", parentRequired: true },
-  { id: "other_workflow_states", table: "workflow_states", scopeId: "00000000-0000-0000-0000-000000000003", label: "Status", category: "OTHERS", icon: Activity, desc: "General workflow stages", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "other_master_priorities", table: "master_priorities", scopeId: "00000000-0000-0000-0000-000000000003", label: "Priority", category: "OTHERS", icon: Hash, desc: "General priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "other_software_modules", table: "software_modules", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Module", category: "OTHERS", icon: Cpu, desc: "General feature sets", parentTable: "software_systems", parentKey: "system_id", parentRequired: false },
+  { id: "other_software_submodules", table: "software_submodules", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Sub Module", category: "OTHERS", icon: Database, desc: "General sub-features", parentTable: "software_modules", parentKey: "module_id", parentRequired: false },
+  { id: "other_issue_types", table: "issue_types", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Issue Type", category: "OTHERS", icon: Activity, desc: "General fault types", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "other_issue_subtypes", table: "issue_subtypes", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Issue Sub Type", category: "OTHERS", icon: FileText, desc: "General fault details", parentTable: "issue_types", parentKey: "issue_type_id", parentRequired: true },
+  { id: "other_workflow_states", table: "workflow_states", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Status", category: "OTHERS", icon: Activity, desc: "General workflow stages", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "other_master_priorities", table: "master_priorities", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Priority", category: "OTHERS", icon: Hash, desc: "General priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
 ];
 
 function UsersIcon(props: any) {
@@ -124,7 +124,7 @@ export default function MastersPage() {
   const [formSlaStandard, setFormSlaStandard] = useState<number>(120);
   const [formAssetTag, setFormAssetTag] = useState("");
   const [formModule, setFormModule] = useState("tickets");
-  const [formScopeId, setFormScopeId] = useState<string | number | null>(1);
+  const [formScopeId, setFormScopeId] = useState<string | number | null>("e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1");
 
   const currentConfig = MASTER_TABLES.find(t => t.id === activeTab)!;
 
@@ -382,7 +382,7 @@ export default function MastersPage() {
     setFormSlaStandard(120);
     setFormAssetTag("");
     setFormModule("tickets");
-    setFormScopeId(currentConfig.scopeId || 1);
+    setFormScopeId(currentConfig.scopeId || null);
     setShowModal(true);
   };
 
@@ -402,7 +402,7 @@ export default function MastersPage() {
     setFormSlaStandard(rec.sla_standard_minutes || 120);
     setFormAssetTag(rec.asset_tag || "");
     setFormModule(rec.module || "tickets");
-    setFormScopeId(rec.scope_id || 1);
+    setFormScopeId(rec.scope_id || null);
     setShowModal(true);
   };
 
@@ -421,7 +421,7 @@ export default function MastersPage() {
       name: formName.trim(),
       description: formDesc.trim() || null,
       is_active: true,
-      scope_id: Number(formScopeId)
+      scope_id: formScopeId || null
     };
 
     // Table specific mappings
@@ -982,11 +982,17 @@ export default function MastersPage() {
                                   <div className="flex items-center gap-2">
                                     <span className={`font-bold text-xs block ${isLightMode ? "text-gray-900" : "text-white"}`}>{rec.name}</span>
                                     <span className={`text-[8px] font-bold px-1 rounded border tracking-tighter ${
-                                      rec.scope_id === 2 
+                                      rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
                                         ? "text-purple-400 border-purple-500/30 bg-purple-500/5"
+                                        : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
+                                        ? "text-amber-400 border-amber-500/30 bg-amber-500/5"
                                         : "text-blue-400 border-blue-500/30 bg-blue-500/5"
                                     }`}>
-                                      {rec.scope_id === 2 ? "FLAG 2 (ERP)" : "FLAG 1 (INFRA)"}
+                                      {rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
+                                        ? "FLAG 2 (ERP)"
+                                        : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
+                                        ? "FLAG 3 (OTHERS)"
+                                        : "FLAG 1 (INFRA)"}
                                     </span>
                                   </div>
                                   {rec.description && (
@@ -1276,17 +1282,17 @@ export default function MastersPage() {
                   Operational Governance Scope <span className="text-rose-400">*</span>
                 </label>
                 <select
-                  value={formScopeId || 0}
-                  onChange={(e) => setFormScopeId(Number(e.target.value))}
+                  value={formScopeId || ""}
+                  onChange={(e) => setFormScopeId(e.target.value || null)}
                   className={`w-full h-9 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:border-indigo-500/50 cursor-pointer ${
                     isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-indigo-400"
                   }`}
                   required
                 >
-                  <option value={1} className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 1] IT INFRASTRUCTURE</option>
-                  <option value={2} className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 2] ERP / SOFTWARE</option>
-                  <option value={3} className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 3] OTHERS / GENERAL</option>
-                  <option value={0} className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 0] UNIVERSAL / SHARED</option>
+                  <option value="e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 1] IT INFRASTRUCTURE</option>
+                  <option value="e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 2] ERP / SOFTWARE</option>
+                  <option value="e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 3] OTHERS / GENERAL</option>
+                  <option value="" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 0] UNIVERSAL / SHARED</option>
                 </select>
                 <span className="text-[9px] text-gray-500 block">Determines which operational flow this master record appears in.</span>
               </div>
