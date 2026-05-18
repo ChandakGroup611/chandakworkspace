@@ -18,6 +18,7 @@ import {
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
+import { saveUserAction } from "@/lib/actions/users";
 import { 
   Users, 
   UserPlus, 
@@ -553,41 +554,25 @@ export default function UserMasterPage() {
       }
     }
 
-      const payload: any = {
-        full_name: formFullName,
-        email: formEmail,
-        user_code: formUserCode,
-        profile_photo: formPhoto,
-        is_active: formIsActive,
-        role_id: formRoleId || null,
+    const payload: any = {
+      full_name: formFullName,
+      email: formEmail,
+      user_code: formUserCode,
+      profile_photo: formPhoto,
+      is_active: formIsActive,
+      role_id: formRoleId || null,
       department_id: formDeptId || null,
       designation_id: formDesigId || null,
       manager_id: formManagerId || null,
-      assigned_assets: formAssignedAssets.split(",").map(a => a.trim()).filter(Boolean),
-      updated_at: new Date().toISOString()
+      assigned_assets: formAssignedAssets.split(",").map(a => a.trim()).filter(Boolean)
     };
 
+    setLoading(true);
+
     try {
+      await saveUserAction(isEditingMode ? editUserId : null, payload, formPassword);
+
       if (isEditingMode && editUserId) {
-        // Step 1: Attempt Full Update
-        const { error: updateError } = await supabase
-          .from("user_master")
-          .update(payload)
-          .eq("id", editUserId);
-
-        // Step 2: Adaptive Fallback (If column is missing, try without assets)
-        if (updateError && (updateError.code === "42703" || updateError.code === "PGRST204" || updateError.message?.includes("assigned_assets"))) {
-          console.warn("Database missing 'assigned_assets' column. Falling back to basic profile update.");
-          const { assigned_assets, ...basicPayload } = payload;
-          const { error: fallbackError } = await supabase
-            .from("user_master")
-            .update(basicPayload)
-            .eq("id", editUserId);
-          if (fallbackError) throw fallbackError;
-        } else if (updateError) {
-          throw updateError;
-        }
-
         const updatedItem = {
           ...users.find(u => u.id === editUserId),
           ...payload,
@@ -602,133 +587,17 @@ export default function UserMasterPage() {
           setSelectedUser(updatedItem);
         }
         appendLocalAudit(editUserId, "UPDATE", { fieldsModified: Object.keys(payload), email: payload.email });
-        
-        // Dispatch dedicated Mail Notification broadcast for profile change update
-        await supabase.from("notification_queue").insert([{
-          entity_type: "user_master",
-          entity_id: selectedUser?.id || "unknown",
-          module: "users",
-          action_type: "update",
-          actor: "System",
-          target_user_id: "ADMIN",
-          payload: { message: `Profile updated for ${payload.email}` }
-        }]);
-
         triggerToast(`Success: Profile for '${payload.full_name}' updated.`);
       } else {
-        // CREATE: Profile provisioning
-        const newUserId = crypto.randomUUID();
-        const { error: insertError } = await supabase
-          .from("user_master")
-          .insert([{ ...payload, id: newUserId }]);
-
-        // Adaptive Fallback for Insert if assigned_assets is missing
-        if (insertError && (insertError.code === "42703" || insertError.code === "PGRST204" || insertError.message?.includes("assigned_assets"))) {
-          console.warn("Database missing 'assigned_assets' column. Falling back to basic profile insert.");
-          const { assigned_assets, ...basicPayload } = payload;
-          const { error: fallbackError } = await supabase
-            .from("user_master")
-            .insert([{ ...basicPayload, id: newUserId }]);
-          if (fallbackError) throw fallbackError;
-        } else if (insertError) {
-          throw insertError;
-        }
-
         triggerToast(`Success: Record for '${payload.full_name}' provisioned.`);
       }
 
       fetchUsersDirectory();
       setShowModal(false);
     } catch (err: any) {
-      if (isEditingMode && editUserId) {
-        console.warn("[Self-Healing] Database update restricted. Blending change persistently into local sandbox registry:", err.message || err);
-        try {
-          let localUpdates: Record<string, any> = {};
-          try {
-            const stored = localStorage.getItem("local_users_updates");
-            if (stored) localUpdates = JSON.parse(stored);
-          } catch (e) {}
-
-          localUpdates[editUserId] = {
-            ...localUpdates[editUserId],
-            ...payload
-          };
-          localStorage.setItem("local_users_updates", JSON.stringify(localUpdates));
-
-          const updatedItem = {
-            ...users.find(u => u.id === editUserId),
-            ...payload,
-            departmentObj: departments.find(d => d.id === formDeptId) || undefined,
-            designationObj: designations.find(dg => dg.id === formDesigId) || undefined,
-            roleObj: roles.find(r => r.id === formRoleId) || undefined,
-            managerObj: users.find(u => u.id === formManagerId) || undefined
-          };
-
-          setUsers(prev => prev.map(u => u.id === editUserId ? updatedItem : u));
-          if (selectedUser?.id === editUserId) {
-            setSelectedUser(updatedItem);
-          }
-          appendLocalAudit(editUserId, "UPDATE", { fieldsModified: Object.keys(payload), email: payload.email, notes: "Persisted locally via self-healing storage override" });
-          
-          triggerToast(`Profile updated persistently (Self-Healing Local Mode).`);
-          setShowModal(false);
-          return;
-        } catch (e) {
-          console.error("Local caching override failed:", e);
-        }
-      } else if (!isEditingMode) {
-        console.warn("[Self-Healing] Database creation restricted. Registering persistently in local sandbox registry:", err.message || err);
-        try {
-          const fallbackId = `local-${crypto.randomUUID()}`;
-          const newLocalUser = {
-            id: fallbackId,
-            full_name: formFullName,
-            email: formEmail,
-            user_code: formUserCode || `USR-${fallbackId.substring(6, 14).toUpperCase()}`,
-            profile_photo: formPhoto,
-            is_active: formIsActive,
-            role_id: formRoleId || undefined,
-            department_id: formDeptId || undefined,
-            designation_id: formDesigId || undefined,
-            manager_id: formManagerId || undefined,
-            assigned_assets: formAssignedAssets.split(",").map(a => a.trim()).filter(Boolean),
-            updated_at: new Date().toISOString(),
-            departmentObj: departments.find(d => d.id === formDeptId) || undefined,
-            designationObj: designations.find(dg => dg.id === formDesigId) || undefined,
-            roleObj: roles.find(r => r.id === formRoleId) || undefined,
-            managerObj: users.find(u => u.id === formManagerId) || undefined
-          };
-
-          let localCreated: any[] = [];
-          try {
-            const stored = localStorage.getItem("local_created_users");
-            if (stored) localCreated = JSON.parse(stored);
-          } catch (e) {}
-
-          localCreated.push(newLocalUser);
-          localStorage.setItem("local_created_users", JSON.stringify(localCreated));
-
-          setUsers(prev => [newLocalUser, ...prev]);
-          setSelectedUser(newLocalUser);
-          appendLocalAudit(fallbackId, "CREATE", { email: formEmail, full_name: formFullName, notes: "Provisioned locally via self-healing storage override" });
-
-          triggerToast(`Success: Record for '${formFullName}' provisioned (Self-Healing Local Mode).`);
-          setShowModal(false);
-          return;
-        } catch (e) {
-          console.error("Local creation fallback override failed:", e);
-        }
-      }
-
-      console.error("CRITICAL DATABASE FAILURE:", {
-        message: err.message,
-        code: err.code,
-        details: err.details,
-        hint: err.hint,
-        error: err
-      });
-      const msg = err.message || "Unknown Error Detail";
-      triggerToast(`Database Rejection: ${msg}`, true);
+      console.error("Failed to save user:", err);
+      setErrorAlert(err.message || "Failed to save user record.");
+      triggerToast(err.message || "Failed to save user record.", true);
     } finally {
       setLoading(false);
     }
@@ -1632,12 +1501,12 @@ export default function UserMasterPage() {
                     value={formDeptId}
                     onChange={(e) => setFormDeptId(e.target.value)}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-gray-200"
+                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-gray-200"
                     }`}
                   >
-                    <option value="" className="text-gray-500 bg-[#0A0D14]">-- Select Department Scope --</option>
+                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- Select Department Scope --</option>
                     {departments.map(d => (
-                      <option key={d.id} value={d.id} className={isLightMode ? "bg-white text-gray-900" : "bg-[#0A0D14]"}>
+                      <option key={d.id} value={d.id} className={isLightMode ? "text-gray-900 bg-white" : "text-gray-200 bg-[#0F131D]"}>
                         {d.name} ({d.code})
                       </option>
                     ))}
@@ -1652,12 +1521,12 @@ export default function UserMasterPage() {
                     value={formDesigId}
                     onChange={(e) => setFormDesigId(e.target.value)}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-gray-200"
+                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-gray-200"
                     }`}
                   >
-                    <option value="" className="text-gray-500 bg-[#0A0D14]">-- Select Designation --</option>
+                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- Select Designation --</option>
                     {designations.map(dg => (
-                      <option key={dg.id} value={dg.id} className={isLightMode ? "bg-white text-gray-900" : "bg-[#0A0D14]"}>
+                      <option key={dg.id} value={dg.id} className={isLightMode ? "text-gray-900 bg-white" : "text-gray-200 bg-[#0F131D]"}>
                         {dg.name}
                       </option>
                     ))}
@@ -1675,12 +1544,12 @@ export default function UserMasterPage() {
                     value={formRoleId}
                     onChange={(e) => setFormRoleId(e.target.value)}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-purple-500/50 cursor-pointer ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-purple-300"
+                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-purple-300"
                     }`}
                   >
-                    <option value="" className="text-gray-500 bg-[#0A0D14]">-- Default Basic Identity --</option>
+                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- Default Basic Identity --</option>
                     {roles.map(r => (
-                      <option key={r.id} value={r.id} className={isLightMode ? "bg-white text-gray-900" : "bg-[#0A0D14]"}>
+                      <option key={r.id} value={r.id} className={isLightMode ? "text-gray-900 bg-white" : "text-purple-300 bg-[#0F131D]"}>
                         {r.name}
                       </option>
                     ))}
@@ -1695,12 +1564,12 @@ export default function UserMasterPage() {
                     value={formManagerId}
                     onChange={(e) => setFormManagerId(e.target.value)}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-indigo-500/50 cursor-pointer ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-indigo-300"
+                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-indigo-300"
                     }`}
                   >
-                    <option value="" className="text-gray-500 bg-[#0A0D14]">-- None (Top Executive) --</option>
+                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- None (Top Executive) --</option>
                     {availableManagers.map(mgr => (
-                      <option key={mgr.id} value={mgr.id} className={isLightMode ? "bg-white text-gray-900" : "bg-[#0A0D14]"}>
+                      <option key={mgr.id} value={mgr.id} className={isLightMode ? "text-gray-900 bg-white" : "text-indigo-300 bg-[#0F131D]"}>
                         {mgr.full_name} ({mgr.user_code})
                       </option>
                     ))}
