@@ -496,7 +496,7 @@ export default function WorkspacesPage() {
                   <p className="text-[11px] text-gray-500">Live operational tasks under active sprint context.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Link href="/workspaces/tasks" className="rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">
+                  <Link href={`/workspaces/tasks?workspaceId=${activeWorkspace.id}`} className="rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">
                     View All Tasks
                   </Link>
                   <AppButton variant="outline" size="sm" leftIcon={<Plus className="h-3 w-3" />} onClick={() => setIsCreatingTask(true)}>

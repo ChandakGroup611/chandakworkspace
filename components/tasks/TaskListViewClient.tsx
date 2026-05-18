@@ -41,6 +41,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [directReportIds, setDirectReportIds] = useState<string[]>([]);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
 
   useEffect(() => {
     async function whoami() {
@@ -60,11 +61,30 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       }
     }
     whoami();
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const wsId = params.get("workspaceId");
+      setSelectedWorkspaceId(wsId || null);
+    }
   }, []);
+
+  const uniqueWorkspaces = useMemo(() => {
+    const map = new Map();
+    tasks.forEach(t => {
+      if (t.workspace) {
+        map.set(t.workspace.id || t.workspace_id, t.workspace);
+      }
+    });
+    return Array.from(map.values()) as any[];
+  }, [tasks]);
 
   const filtered = useMemo(() => {
     return tasks.filter(t => {
-      // All tasks shown to user are already visibility-checked by server
+      // 1. Pre-filter by workspace selection if any
+      if (selectedWorkspaceId && t.workspace_id !== selectedWorkspaceId) return false;
+
+      // 2. All tasks shown to user are already visibility-checked by server
       // This filter is just for scope refinement
       if (scope === "ALL") return true;
       if (!currentUserId) return true;
@@ -94,7 +114,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         (t.workspace?.name || "").toLowerCase().includes(q)
       );
     });
-  }, [tasks, scope, query, currentUserId, directReportIds]);
+  }, [tasks, scope, query, currentUserId, directReportIds, selectedWorkspaceId]);
 
   const refresh = async () => {
     setLoading(true);
@@ -114,7 +134,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/5">
             {(["ALL","ASSIGNEE","CREATOR","MANAGER"] as const).map(sc => (
@@ -129,7 +149,24 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-3">
+          {/* Workspace Filter Select */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Workspace:</span>
+            <select
+              value={selectedWorkspaceId || ""}
+              onChange={(e) => setSelectedWorkspaceId(e.target.value || null)}
+              className="text-xs font-bold px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:border-white/20 focus:outline-none"
+            >
+              <option value="" className="bg-[#0f111a] text-gray-300">All Workspaces</option>
+              {uniqueWorkspaces.map((ws: any) => (
+                <option key={ws.id} value={ws.id} className="bg-[#0f111a] text-gray-300">
+                  {ws.code} - {ws.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-center gap-2">
             <AppInput placeholder="Search tasks, code, workspace..." value={query} onChange={(e:any) => setQuery(e.target.value)} className="w-72 text-sm" />
             <AppButton variant="outline" size="sm" onClick={refresh} leftIcon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />}>
