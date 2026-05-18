@@ -146,25 +146,29 @@ export default function MastersPage() {
 
       let dbData = (data || []).filter((r: any) => r.is_deleted !== true);
       
-      // HYBRID PERSISTENCE: Merge local sandbox records to prevent 'vanishing' records
+      // HYBRID PERSISTENCE: Merge local sandbox records to prevent 'vanishing' records (Disabled for Assets)
       let localSaved: any[] = [];
-      try {
-        const stored = localStorage.getItem(`demo_masters_cache_${activeTab}`);
-        if (stored) {
-          localSaved = JSON.parse(stored);
-        }
-      } catch (e) {}
+      if (activeTab !== "assets") {
+        try {
+          const stored = localStorage.getItem(`demo_masters_cache_${activeTab}`);
+          if (stored) {
+            localSaved = JSON.parse(stored);
+          }
+        } catch (e) {}
+      }
 
       // Avoid duplicates between DB and Local
       const merged = [...dbData];
-      localSaved.forEach(ls => {
-        if (!merged.some(m => m.id === ls.id || m.code === ls.code)) {
-          merged.push(ls);
-        }
-      });
+      if (activeTab !== "assets") {
+        localSaved.forEach(ls => {
+          if (!merged.some(m => m.id === ls.id || m.code === ls.code)) {
+            merged.push(ls);
+          }
+        });
+      }
 
-      // If absolutely no records found, hydrate seeds
-      if (merged.length === 0 && currentConfig.scopeId) {
+      // If absolutely no records found, hydrate seeds (Disabled for Assets)
+      if (merged.length === 0 && currentConfig.scopeId && activeTab !== "assets") {
         merged.push(
           { id: `seed-1-${activeTab}`, code: `${activeTab.slice(0, 3).toUpperCase()}-001`, name: `Primary ${currentConfig.label}`, description: `Baseline ${currentConfig.category} configuration`, is_active: true, created_at: new Date().toISOString(), scope_id: currentConfig.scopeId },
           { id: `seed-2-${activeTab}`, code: `${activeTab.slice(0, 3).toUpperCase()}-002`, name: `Secondary ${currentConfig.label}`, description: `Standard ${currentConfig.category} flow`, is_active: true, created_at: new Date().toISOString(), scope_id: currentConfig.scopeId }

@@ -208,19 +208,6 @@ export default function UserMasterPage() {
       setRoles(loadedRoles);
 
       let assetsData = astRes.data || [];
-      const defaultAssetOptions = [
-        { id: "ast-1", code: "TAG-MBP-16", name: "MacBook Pro 16-inch M3 Max", asset_tag: "TAG-MBP-16", assigned_user_id: null },
-        { id: "ast-2", code: "TAG-IPH-15", name: "iPhone 15 Pro Max Enterprise Edition", asset_tag: "TAG-IPH-15", assigned_user_id: null },
-        { id: "ast-3", code: "TAG-DELL-XPS", name: "Dell XPS 15 Ultra Developer Spec", asset_tag: "TAG-DELL-XPS", assigned_user_id: null },
-        { id: "ast-4", code: "TAG-MON-27", name: "Studio Display 27-inch 5K Monitor", asset_tag: "TAG-MON-27", assigned_user_id: null },
-        { id: "ast-5", code: "TAG-SURF-P9", name: "Microsoft Surface Pro 9 LTE", asset_tag: "TAG-SURF-P9", assigned_user_id: null }
-      ];
-
-      defaultAssetOptions.forEach(opt => {
-        if (!assetsData.some(a => (a.asset_tag || a.code) === opt.code)) {
-          assetsData.push(opt);
-        }
-      });
       setAvailableAssets(assetsData);
 
       // 2. Fetch Users (omitting non-existent assigned_assets column)
@@ -1601,7 +1588,9 @@ export default function UserMasterPage() {
                     </div>
 
                     <div className="space-y-1 pt-1.5">
-                      {availableAssets.map((ast) => {
+                      {availableAssets
+                        .filter((ast) => !ast.assigned_user_id || ast.assigned_user_id === editUserId)
+                        .map((ast) => {
                         const tagValue = ast.asset_tag || ast.code;
                         const selectedTags = formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean);
                         const isAssigned = selectedTags.includes(tagValue);
