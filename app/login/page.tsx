@@ -70,7 +70,7 @@ export default function LoginPage() {
 
       setSuccessMsg("Signed in securely. Loading dashboard...");
       setTimeout(() => {
-        router.push("/tickets");
+        router.push("/workspaces");
       }, 1000);
 
     } catch (err: any) {
