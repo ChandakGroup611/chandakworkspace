@@ -184,8 +184,9 @@ export default function MastersPage() {
           // Attempt query directly without assuming is_deleted column existence
           let pQuery = supabase.from(currentConfig.parentTable).select('id, code, name');
           
-          // Apply strict scope isolation for parent lookups if scope is defined
-          if (currentConfig.scopeId !== null && currentConfig.scopeId !== undefined) {
+          // Apply strict scope isolation for parent lookups if scope is defined and parent table itself is scope-restricted
+          const parentConfig = MASTER_TABLES.find(t => t.table === currentConfig.parentTable && t.scopeId !== null);
+          if (parentConfig && currentConfig.scopeId !== null && currentConfig.scopeId !== undefined) {
             pQuery = pQuery.eq('scope_id', currentConfig.scopeId);
           }
           
