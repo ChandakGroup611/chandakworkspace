@@ -14,16 +14,8 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
           return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              const { maxAge, expires, ...restOptions } = options;
-              cookieStore.set(name, value, restOptions);
-            })
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
+          // No-op inside server components to avoid prohibited cookie mutation render crashes.
+          // Middleware handles cookie refreshes.
         },
       },
     },

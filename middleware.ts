@@ -13,14 +13,26 @@ export async function middleware(request: NextRequest) {
   if (!user && !isAuthRoute && !isApiRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
-    return NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(redirectUrl);
+    
+    // Copy refreshed Supabase cookies to avoid session desynchronization
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return response;
   }
 
   // If user is authenticated and trying to access login/register, redirect to home page
   if (user && isAuthRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/";
-    return NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(redirectUrl);
+    
+    // Copy refreshed Supabase cookies to avoid session desynchronization
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return response;
   }
 
   return supabaseResponse;
