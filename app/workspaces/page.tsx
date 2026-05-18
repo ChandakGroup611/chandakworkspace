@@ -6,7 +6,6 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { createClient } from "@/utils/supabase/client";
 import { 
   FolderKanban, Users, Activity, Plus, Send, 
   Layers, GitMerge, ChevronDown, Building2, Calendar, Target,
@@ -15,7 +14,7 @@ import {
 import { 
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
   fetchWorkspaceStakeholders, createWorkspace, createTask, fetchCompanies, fetchPriorities,
-  updateWorkspace, deleteWorkspace, fetchWorkspacesInitialData
+  updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData
 } from "@/lib/actions/workspaces";
 import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
@@ -112,87 +111,54 @@ export default function WorkspacesPage() {
 
   useEffect(() => {
     async function init() {
-      // 1. Prepare Supabase client for user profile hydration
-      const supabase = createClient();
-
-      // 2. Define parallel user profile hydration promise
-      const hydrateUserPromise = (async () => {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const [profileRes, managedDeptsRes] = await Promise.all([
-              supabase.from("user_master").select("*, department:departments(*)").eq("id", user.id).single(),
-              supabase.from("departments").select("id").eq("manager_id", user.id)
-            ]);
-            
-            const profile = profileRes.data;
-            const managedDepts = managedDeptsRes.data;
-            const managedDeptIds = managedDepts?.map(d => d.id) || [];
-            return { ...profile, id: user.id, managedDeptIds };
-          }
-        } catch (err) {
-          console.error("Error fetching user profile:", err);
-        }
-        return null;
-      })();
-
-      // 3. Trigger initial workspaces/companies/priorities fetch and user profile fetch in parallel!
-      const [initialRes, userData] = await Promise.all([
-        fetchWorkspacesInitialData(),
-        hydrateUserPromise
-      ]);
-
-      const { workspaces: wsData, companies: compData, priorities: prioData } = initialRes;
-
-      setWorkspaces(wsData);
-      setCompanies(compData);
-      setPriorities(prioData);
-      
-      if (userData) {
-        setCurrentUser(userData);
-      }
-
-      if (wsData.length > 0) {
-        const firstWS = wsData[0];
-        setActiveWorkspace(firstWS);
-
-        // Prefetch first active workspace's tasks & stakeholders immediately in parallel!
-        lastFetchedWorkspaceId.current = firstWS.id;
-        const [tData, sData] = await Promise.all([
-          fetchTasksByWorkspace(firstWS.id),
-          fetchWorkspaceStakeholders(firstWS.id)
-        ]);
-        setTasks(tData);
-        setStakeholders(sData);
-        if (tData.length > 0) {
-          setSelectedTask(tData[0]);
-        }
-      }
-
-      // If ?task=... present, attempt to open that task directly
+      // 1. Determine if there is a task query param in the URL to prefetch that specific workspace
+      let taskWorkspaceId: string | null = null;
+      let urlTaskDetails: any = null;
       try {
         let taskQ: string | null = null;
-        try {
-          const url = typeof window !== 'undefined' ? new URL(window.location.href) : null;
-          taskQ = url ? url.searchParams.get('task') : null;
-        } catch (e) {
-          taskQ = null;
-        }
+        const url = typeof window !== 'undefined' ? new URL(window.location.href) : null;
+        taskQ = url ? url.searchParams.get('task') : null;
         if (taskQ) {
-          const taskDetails = await getTaskDetails(taskQ);
-          if (taskDetails) {
-            const ws = wsData.find((w: any) => w.id === taskDetails.workspace_id);
-            if (ws) {
-              setActiveWorkspace(ws);
-              setSelectedTask(taskDetails);
-              await fetch('/api/mentions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _action: 'mark_read', taskId: taskQ }) });
-            }
+          urlTaskDetails = await getTaskDetails(taskQ);
+          if (urlTaskDetails) {
+            taskWorkspaceId = urlTaskDetails.workspace_id;
           }
         }
-      } catch (e) {
-        console.error('Failed to auto-open task from URL', e);
+      } catch (e) {}
+
+      // 2. Fetch all landing data (workspaces, profile, companies, priorities, and pre-fetched workspace tasks/stakeholders) in one Server request!
+      const dashboard = await fetchWorkspaceDashboardData(taskWorkspaceId);
+
+      if (dashboard.userProfile) {
+        setCurrentUser(dashboard.userProfile);
       }
-      
+      setWorkspaces(dashboard.workspaces);
+      setCompanies(dashboard.companies);
+      setPriorities(dashboard.priorities);
+
+      // 3. Populate pre-fetched tasks and stakeholders for the active workspace
+      if (dashboard.prefetchWorkspaceId) {
+        const prefetchWS = dashboard.workspaces.find((w: any) => w.id === dashboard.prefetchWorkspaceId);
+        if (prefetchWS) {
+          setActiveWorkspace(prefetchWS);
+          lastFetchedWorkspaceId.current = prefetchWS.id;
+          setTasks(dashboard.prefetchTasks);
+          setStakeholders(dashboard.prefetchStakeholders);
+
+          if (urlTaskDetails) {
+            setSelectedTask(urlTaskDetails);
+            // Mark read asynchronously
+            fetch('/api/mentions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ _action: 'mark_read', taskId: urlTaskDetails.id })
+            }).catch(() => {});
+          } else if (dashboard.prefetchTasks.length > 0) {
+            setSelectedTask(dashboard.prefetchTasks[0]);
+          }
+        }
+      }
+
       setLoading(false);
     }
     init();

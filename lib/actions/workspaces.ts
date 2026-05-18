@@ -159,6 +159,67 @@ export async function fetchWorkspacesInitialData() {
   return { workspaces, companies, priorities };
 }
 
+export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string | null) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  // 1. Get current authenticated user
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
+  
+  if (!user) {
+    return {
+      userProfile: null,
+      workspaces: [],
+      companies: [],
+      priorities: [],
+      prefetchWorkspaceId: null,
+      prefetchTasks: [],
+      prefetchStakeholders: []
+    };
+  }
+
+  // 2. Run all initial database queries in parallel on the server
+  const [profileRes, managedDeptsRes, workspaces, companies, priorities] = await Promise.all([
+    supabase.from("user_master").select("*, department:departments(*)").eq("id", user.id).single(),
+    supabase.from("departments").select("id").eq("manager_id", user.id),
+    fetchWorkspaces(),
+    fetchCompanies(),
+    fetchPriorities()
+  ]);
+
+  const profile = profileRes.data;
+  const managedDepts = managedDeptsRes.data;
+  const managedDeptIds = managedDepts?.map((d: any) => d.id) || [];
+  const userProfile = profile ? { ...profile, id: user.id, managedDeptIds } : null;
+
+  // Determine active workspace ID to prefetch
+  const activeWSId = preferredWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
+
+  // 3. Prefetch tasks & stakeholders for active workspace in parallel on server
+  let prefetchTasks: any[] = [];
+  let prefetchStakeholders: any[] = [];
+
+  if (activeWSId) {
+    const [tData, sData] = await Promise.all([
+      fetchTasksByWorkspace(activeWSId),
+      fetchWorkspaceStakeholders(activeWSId)
+    ]);
+    prefetchTasks = tData;
+    prefetchStakeholders = sData;
+  }
+
+  return {
+    userProfile,
+    workspaces,
+    companies,
+    priorities,
+    prefetchWorkspaceId: activeWSId,
+    prefetchTasks,
+    prefetchStakeholders
+  };
+}
+
 export async function updateWorkspace(id: string, formData: any) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
