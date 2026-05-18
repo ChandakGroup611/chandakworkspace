@@ -1062,11 +1062,10 @@ export default function UserMasterPage() {
                     <AppTableHeader>
                       <tr>
                         <AppTableHead className="w-10 text-center">Avatar</AppTableHead>
-                        <AppTableHead>Staff Identity</AppTableHead>
-                        <AppTableHead>Assignment Scope</AppTableHead>
+                        <AppTableHead>Staff Identity &amp; Scope</AppTableHead>
                         <AppTableHead>Assigned Assets</AppTableHead>
                         <AppTableHead className="text-center">Status</AppTableHead>
-                        <AppTableHead className="text-right">Actions</AppTableHead>
+                        <AppTableHead className="text-right w-20 shrink-0">Actions</AppTableHead>
                       </tr>
                     </AppTableHeader>
                     <AppTableBody>
@@ -1092,7 +1091,7 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <div className="space-y-0.5 min-w-0">
+                              <div className="space-y-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className={`text-xs font-bold truncate block ${
                                     isLightMode ? "text-gray-900" : "text-white"
@@ -1104,21 +1103,21 @@ export default function UserMasterPage() {
                                   }`}>
                                     {usr.user_code}
                                   </span>
+                                  <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded border uppercase tracking-wider ${
+                                    isLightMode ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                                  }`}>
+                                    {usr.designationObj?.name || "General Assignee"}
+                                  </span>
                                 </div>
-                                <span className={`text-[10px] block truncate ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
-                                  {usr.email}
-                                </span>
-                              </div>
-                            </AppTableCell>
-
-                            <AppTableCell>
-                              <div className="space-y-0.5 min-w-0">
-                                <span className={`text-[11px] font-bold truncate block ${isLightMode ? "text-gray-800" : "text-gray-300"}`}>
-                                  {usr.designationObj?.name || "General Assignee"}
-                                </span>
-                                <span className="text-[10px] text-purple-500 font-medium truncate block">
-                                  {usr.departmentObj?.name || "Global Scope"}
-                                </span>
+                                <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                                  <span className={isLightMode ? "text-gray-600" : "text-gray-400"}>
+                                    {usr.email}
+                                  </span>
+                                  <span className="text-gray-500 font-bold">•</span>
+                                  <span className="text-purple-500 font-medium">
+                                    {usr.departmentObj?.name || "Global Scope"}
+                                  </span>
+                                </div>
                               </div>
                             </AppTableCell>
 
@@ -1148,8 +1147,8 @@ export default function UserMasterPage() {
                               </span>
                             </AppTableCell>
 
-                            <AppTableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-end gap-1">
+                            <AppTableCell className="text-right w-20 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                                 <button
                                   type="button"
                                   onClick={() => openModifyForm(usr)}
