@@ -1587,7 +1587,6 @@ export default function UserMasterPage() {
                     onChange={(e) => setFormFullName(e.target.value)}
                     className="text-xs"
                     required
-                    disabled={isEditingMode && !isSuperAdmin}
                   />
                 </div>
 
@@ -1601,7 +1600,6 @@ export default function UserMasterPage() {
                     onChange={(e) => setFormUserCode(e.target.value)}
                     className="font-mono text-xs uppercase"
                     required
-                    disabled={isEditingMode && !isSuperAdmin}
                   />
                   <span className="text-[9px] text-gray-500 block">Unique code string indexing tuple logic.</span>
                 </div>
@@ -1619,7 +1617,6 @@ export default function UserMasterPage() {
                   onChange={(e) => setFormEmail(e.target.value)}
                   className="text-xs"
                   required
-                  disabled={isEditingMode && !isSuperAdmin}
                 />
               </div>
 
@@ -1632,10 +1629,9 @@ export default function UserMasterPage() {
                   <select
                     value={formDeptId}
                     onChange={(e) => setFormDeptId(e.target.value)}
-                    disabled={isEditingMode && !isSuperAdmin}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-gray-200"
-                    } ${isEditingMode && !isSuperAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
+                    }`}
                   >
                     <option value="" className="text-gray-500 bg-[#0A0D14]">-- Select Department Scope --</option>
                     {departments.map(d => (
@@ -1653,10 +1649,9 @@ export default function UserMasterPage() {
                   <select
                     value={formDesigId}
                     onChange={(e) => setFormDesigId(e.target.value)}
-                    disabled={isEditingMode && !isSuperAdmin}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-gray-200"
-                    } ${isEditingMode && !isSuperAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
+                    }`}
                   >
                     <option value="" className="text-gray-500 bg-[#0A0D14]">-- Select Designation --</option>
                     {designations.map(dg => (
@@ -1677,10 +1672,9 @@ export default function UserMasterPage() {
                   <select
                     value={formRoleId}
                     onChange={(e) => setFormRoleId(e.target.value)}
-                    disabled={isEditingMode && !isSuperAdmin}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-purple-500/50 cursor-pointer ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-purple-300"
-                    } ${isEditingMode && !isSuperAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
+                    }`}
                   >
                     <option value="" className="text-gray-500 bg-[#0A0D14]">-- Default Basic Identity --</option>
                     {roles.map(r => (
@@ -1698,10 +1692,9 @@ export default function UserMasterPage() {
                   <select
                     value={formManagerId}
                     onChange={(e) => setFormManagerId(e.target.value)}
-                    disabled={isEditingMode && !isSuperAdmin}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-indigo-500/50 cursor-pointer ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-indigo-300"
-                    } ${isEditingMode && !isSuperAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
+                    }`}
                   >
                     <option value="" className="text-gray-500 bg-[#0A0D14]">-- None (Top Executive) --</option>
                     {availableManagers.map(mgr => (
@@ -1721,12 +1714,12 @@ export default function UserMasterPage() {
                 
                 {/* Custom multi selection trigger wrapper */}
                 <div 
-                  onClick={() => { if (!isEditingMode || isSuperAdmin) setIsAssetDropdownOpen(!isAssetDropdownOpen); }}
+                  onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
                   className={`min-h-9 p-1.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
                     isLightMode 
                       ? "bg-white border-gray-300 hover:border-gray-400" 
                       : "bg-white/5 border-white/10 hover:border-white/20"
-                  } ${isEditingMode && !isSuperAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
+                  }`}
                 >
                   <div className="flex flex-wrap items-center gap-1 flex-1 min-w-0 px-1">
                     {formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean).length > 0 ? (
@@ -1736,7 +1729,6 @@ export default function UserMasterPage() {
                           <span 
                             key={tagIdx}
                             onClick={(e) => {
-                              if (isEditingMode && !isSuperAdmin) return;
                               e.stopPropagation(); // prevent toggling dropdown
                               const currentArr = formAssignedAssets.split(",").map(x => x.trim()).filter(Boolean);
                               setFormAssignedAssets(currentArr.filter(x => x !== tagStr).join(", "));
@@ -1745,12 +1737,12 @@ export default function UserMasterPage() {
                               isLightMode 
                                 ? "bg-amber-50 text-amber-900 border-amber-200" 
                                 : "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                            } ${isEditingMode && !isSuperAdmin ? "cursor-not-allowed" : ""}`}
-                            title={isEditingMode && !isSuperAdmin ? "" : "Click to deselect asset tag"}
+                            }`}
+                            title="Click to deselect asset tag"
                           >
                             <span>💻 {matchedAst ? matchedAst.name.split(" ")[0] : tagStr}</span>
                             <span className="text-[9px] opacity-60">({tagStr})</span>
-                            {(!isEditingMode || isSuperAdmin) && <span className="font-bold ml-0.5 hover:text-rose-400">×</span>}
+                            <span className="font-bold ml-0.5 hover:text-rose-400">×</span>
                           </span>
                         );
                       })
