@@ -3,14 +3,17 @@ import { createBrowserClient } from "@supabase/ssr";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-export const createClient = () =>
-  createBrowserClient(
+export const createClient = () => {
+  const options: any = {};
+  if (typeof window !== "undefined") {
+    options.auth = {
+      storage: window.sessionStorage,
+      persistSession: true,
+    };
+  }
+  return createBrowserClient(
     supabaseUrl!,
     supabaseKey!,
-    {
-      auth: {
-        storage: typeof window !== "undefined" ? window.sessionStorage : undefined,
-        persistSession: true,
-      }
-    }
+    options
   );
+};
