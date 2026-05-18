@@ -747,8 +747,8 @@ export default function UserMasterPage() {
 
     try {
       const [ticketsRes, tasksRes, reqsRes] = await Promise.all([
-        supabase.from("tickets").select("id", { count: "exact", head: true }).eq("creator_id", usr.id).eq("is_deleted", false),
-        supabase.from("workspace_tasks").select("id", { count: "exact", head: true }).eq("creator_id", usr.id).eq("is_deleted", false),
+        supabase.from("tickets").select("id", { count: "exact", head: true }).or(`creator_id.eq.${usr.id},assignee_id.eq.${usr.id}`).eq("is_deleted", false),
+        supabase.from("workspace_tasks").select("id", { count: "exact", head: true }).or(`creator_id.eq.${usr.id},assignee_id.eq.${usr.id}`).eq("is_deleted", false),
         supabase.from("requirements").select("id", { count: "exact", head: true }).eq("creator_id", usr.id).eq("is_deleted", false),
       ]);
 
@@ -1973,22 +1973,22 @@ export default function UserMasterPage() {
                   Performing Security Integrity Checks...
                 </p>
                 <p className="text-[10px] text-gray-500">
-                  Scanning Tickets, Workspace Tasks, and Requirements creator records.
+                  Scanning Tickets, Workspace Tasks, and Requirements creator and assignee records.
                 </p>
               </div>
             ) : deleteWarningData.hasReferences ? (
               <>
-                {/* Deletion Blocked Alert Style */}
+                {/* Deletion Warning Alert Style */}
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 shrink-0">
+                  <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
                     <ShieldAlert className="h-6 w-6 animate-pulse" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold tracking-tight text-rose-500">
-                      Deletion Blocked: Active References
+                    <h3 className="text-sm font-bold tracking-tight text-amber-500">
+                      Delete Warning: Active Assignments
                     </h3>
                     <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
-                      Personnel <strong className={isLightMode ? "text-gray-900" : "text-white"}>{deleteInspectUser.full_name}</strong> is associated as the creator of active records.
+                      Personnel <strong className={isLightMode ? "text-gray-900" : "text-white"}>{deleteInspectUser.full_name}</strong> is associated with active assignments.
                     </p>
                   </div>
                 </div>
@@ -2043,29 +2043,39 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className={`p-3 rounded-lg border text-[11px] leading-relaxed ${
-                  isLightMode ? "bg-amber-50/50 border-amber-200 text-amber-900" : "bg-amber-500/5 border-amber-500/10 text-amber-300"
+                  isLightMode ? "bg-rose-50/50 border-rose-200 text-rose-900" : "bg-rose-500/5 border-rose-500/10 text-rose-300"
                 }`}>
-                  <strong>Notice:</strong> To preserve relational integrity and prevent broken foreign key linkages across historic logs, actual deletion is restricted. You may deactivate the account to disable login capabilities.
+                  <strong>Warning:</strong> Deleting this user will archive their account and remove them from active views. Relational historic logs will be preserved as soft-deleted. Are you sure you want to proceed?
                 </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-2">
+                <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-2 w-full">
                   <AppButton 
                     type="button" 
                     variant="outline" 
                     size="sm"
                     onClick={() => { setDeleteInspectUser(null); setDeleteWarningData(null); }}
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </AppButton>
                   <AppButton 
                     type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleDeactivateUser(deleteInspectUser)}
+                    className="w-full sm:w-auto text-amber-500 border-amber-500/30 hover:bg-amber-500/10"
+                  >
+                    Deactivate Only
+                  </AppButton>
+                  <AppButton 
+                    type="button" 
                     variant="primary" 
                     size="sm"
-                    leftIcon={<Lock className="h-3.5 w-3.5" />}
-                    onClick={() => handleDeactivateUser(deleteInspectUser)}
-                    className="bg-amber-600 hover:bg-amber-700 text-white border-none"
+                    leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                    onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
+                    className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white border-none"
                   >
-                    Deactivate Account
+                    Force Delete &amp; Archive
                   </AppButton>
                 </div>
               </>
@@ -2078,7 +2088,7 @@ export default function UserMasterPage() {
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-sm font-bold tracking-tight text-emerald-500">
-                      Safe Account Operations
+                      Delete Account Confirmation
                     </h3>
                     <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
                       Personnel <strong className={isLightMode ? "text-gray-900" : "text-white"}>{deleteInspectUser.full_name}</strong> has no active references in Tickets, Tasks, or Requirements.
@@ -2087,7 +2097,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <p className={`text-xs leading-relaxed ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
-                  You have full permissions to either soft-delete (archive) this personnel record, or deactivate their login capability while preserving the metadata record.
+                  Are you sure you want to permanently archive and delete this user?
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-4 border-t border-white/5 w-full">
@@ -2117,7 +2127,7 @@ export default function UserMasterPage() {
                     onClick={() => handleConfirmSoftDelete(deleteInspectUser)}
                     className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white border-none"
                   >
-                    Archive & Delete
+                    Confirm Delete
                   </AppButton>
                 </div>
               </>
