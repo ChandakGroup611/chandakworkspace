@@ -26,8 +26,8 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 
 // Configured Session Idle Constants
-const SESSION_TIMEOUT_SECONDS = 900; // 15 Minutes total idle budget
-const WARNING_THRESHOLD_SECONDS = 60; // Show pop-up when 60s remaining
+const SESSION_TIMEOUT_SECONDS = 300; // 5 Minutes total idle budget
+const WARNING_THRESHOLD_SECONDS = 30; // Show pop-up when 30s remaining
 
 export default function Navbar() {
   const router = useRouter();
