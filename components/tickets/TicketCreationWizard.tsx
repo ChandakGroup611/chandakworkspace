@@ -77,9 +77,9 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
       }]).then(() => {});
 
       onSuccess(nextCode);
-    } catch (err) {
-      console.error("Critical submission error:", err);
-      alert("Failed to initialize operational ticket. Verify database connectivity.");
+    } catch (err: any) {
+      console.error("Critical submission error details:", err.message || err.details || err.hint || err);
+      alert(`Failed to initialize operational ticket: ${err.message || "Please verify database connectivity"}`);
     }
   };
 

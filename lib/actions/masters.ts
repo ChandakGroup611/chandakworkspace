@@ -65,10 +65,16 @@ export async function fetchMastersByScope(scopeId: string) {
     
     if (!tableName) return { key, data: [] };
 
-    const { data, error } = await supabase
-      .from(tableName)
-      .select("*")
-      .eq("scope_id", scopeId)
+    let query = supabase.from(tableName).select("*");
+    
+    // Support global/shared masters (scope_id is null)
+    if (key === "workflow_state" || key === "master_priority") {
+      query = query.or(`scope_id.eq.${scopeId},scope_id.is.null`);
+    } else {
+      query = query.eq("scope_id", scopeId);
+    }
+
+    const { data, error } = await query
       .eq("is_active", true)
       .eq("is_deleted", false);
     

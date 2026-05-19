@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { TicketListSidebar } from "@/components/tickets/TicketListSidebar";
-import { TicketInspector } from "@/components/tickets/TicketInspector";
-import { TicketOpsSidebar } from "@/components/tickets/TicketOpsSidebar";
+import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Plus, LayoutGrid, RefreshCw, AlertCircle, CheckCircle2, Database } from "lucide-react";
-import { AppBadge } from "@/components/ui/AppBadge";
+import { Plus, RefreshCw, CheckCircle2, Database, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 export default function TicketsPage() {
@@ -18,13 +16,19 @@ export default function TicketsPage() {
   
   // Master Data
   const [departments, setDepartments] = useState<any[]>([]);
+  const [priorities, setPriorities] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
+  const [issueTypes, setIssueTypes] = useState<any[]>([]);
+  const [scopesList, setScopesList] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   
   // UI State
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDept, setSelectedDept] = useState("ALL");
+  const [selectedScope, setSelectedScope] = useState("ALL");
   const [showWizard, setShowWizard] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -38,60 +42,92 @@ export default function TicketsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Use a resilient multi-fetch that doesn't crash the whole page if one table fails
-      const [deptRes, ticketRes, prioRes, stateRes, catRes, subcatRes, typeRes] = await Promise.all([
+      // Robust multi-fetch including creator metadata joins to support detailed audit reports
+      const [deptRes, ticketResInitial, prioRes, stateRes, catRes, subcatRes, typeRes, scopeRes] = await Promise.all([
         supabase.from("departments").select("*").eq("is_deleted", false),
-        supabase.from("tickets").select("*").eq("is_deleted", false).order("created_at", { ascending: false }),
+        supabase.from("tickets").select(`
+          *,
+          creator:user_master!creator_id(full_name, email, department:departments(name)),
+          assignee:user_master!assignee_id(full_name, email)
+        `).eq("is_deleted", false).order("created_at", { ascending: false }),
         supabase.from("master_priorities").select("*").eq("is_deleted", false),
         supabase.from("workflow_states").select("*"),
         supabase.from("ticket_categories").select("*").eq("is_deleted", false),
         supabase.from("ticket_subcategories").select("*").eq("is_deleted", false),
         supabase.from("issue_types").select("*").eq("is_deleted", false),
+        supabase.from("ticket_scopes").select("*")
       ]);
 
-      if (ticketRes.error) {
-        console.warn("[Tickets] Database fetch restricted by RLS. Hydrating sandbox fallback stream:", ticketRes.error);
+      let finalTicketData = ticketResInitial.data || [];
+
+      // Defensive Programming Fallback: If PostgREST relationship cache hasn't loaded yet
+      if (ticketResInitial.error) {
+        console.warn("[Tickets] Metadata-joined tickets query failed, triggering flat tickets query fallback:", ticketResInitial.error.message);
+        
+        const fallbackRes = await supabase
+          .from("tickets")
+          .select("*")
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: false });
+
+        if (fallbackRes.error) {
+          console.error("[Tickets] Fallback tickets query failed:", fallbackRes.error.message);
+        } else {
+          finalTicketData = fallbackRes.data || [];
+        }
       }
 
-      setDepartments(deptRes.data || []);
+      const activeDepts = deptRes.data || [];
+      const activePrios = prioRes.data || [];
+      const activeStates = stateRes.data || [];
+      const activeCats = catRes.data || [];
+      const activeSubcats = subcatRes.data || [];
+      const activeTypes = typeRes.data || [];
+      const activeScopes = scopeRes.data || [];
+
+      setDepartments(activeDepts);
+      setPriorities(activePrios);
+      setStates(activeStates);
+      setCategories(activeCats);
+      setSubcategories(activeSubcats);
+      setIssueTypes(activeTypes);
       
-      const states = stateRes.data || [];
-      const priorities = prioRes.data || [];
+      // Map scopes for the list filter pills (requires id and name properties)
+      setScopesList(activeScopes.map(s => ({
+        id: s.id,
+        name: s.name,
+        code: s.code
+      })));
       
-      const mappedTickets = (ticketRes.data || []).map(t => {
+      const mappedTickets = (finalTicketData || []).map(t => {
         const custom = t.custom_fields || {};
         return {
           ...t,
           dbId: t.id,
           id: t.code || `INC-${t.id.slice(0, 8)}`,
-          priorityObj: priorities.find(p => p.id === t.priority_id),
-          statusObj: states.find(s => s.id === t.status_id),
-          departmentObj: (deptRes.data || []).find(d => d.id === t.department_id),
-          categoryObj: (catRes.data || []).find(c => c.id === custom.category_id),
-          subcategoryObj: (subcatRes.data || []).find(sc => sc.id === custom.subcategory_id),
-          issueTypeObj: (typeRes.data || []).find(it => it.id === custom.issue_type_id),
-          assignedTo: custom.assigned_to || "Unassigned Operations Swarm",
+          priorityObj: activePrios.find(p => p.id === t.priority_id),
+          statusObj: activeStates.find(s => s.id === t.status_id),
+          departmentObj: activeDepts.find(d => d.id === t.department_id),
+          categoryObj: activeCats.find(c => c.id === custom.category_id),
+          subcategoryObj: activeSubcats.find(sc => sc.id === custom.subcategory_id),
+          issueTypeObj: activeTypes.find(it => it.id === custom.issue_type_id),
+          assignedTo: t.assignee?.full_name || "Unassigned Operations Swarm",
           createdAt: t.created_at
         };
       });
 
-      // If no tickets found in DB, hydrate high-density seed data for Admin preview
-      if (mappedTickets.length === 0) {
-        const seedStates = states.length > 0 ? states : [{ id: '1', name: 'OPEN', code: 'ST_OPEN' }];
-        mappedTickets.push({
-          id: 'INC-DEMO-999',
-          dbId: 'demo-uuid',
-          title: 'Welcome to Governance Master Mode',
-          description: 'This is an operational heartbeat record demonstrating full system visibility.',
-          statusObj: seedStates[0],
-          priorityObj: priorities[0] || { name: 'STANDARD' },
-          createdAt: new Date().toISOString()
-        });
-      }
-
       setTickets(mappedTickets);
-      if (mappedTickets.length > 0 && !selectedTicket) {
-        setSelectedTicket(mappedTickets[0]);
+
+      // Preserve currently selected ticket or default to the first one in list
+      if (mappedTickets.length > 0) {
+        if (selectedTicket) {
+          const updated = mappedTickets.find(t => t.dbId === selectedTicket.dbId);
+          setSelectedTicket(updated || mappedTickets[0]);
+        } else {
+          setSelectedTicket(mappedTickets[0]);
+        }
+      } else {
+        setSelectedTicket(null);
       }
     } catch (err) {
       console.error("Critical recovery during ticket hydration:", err);
@@ -100,68 +136,10 @@ export default function TicketsPage() {
     }
   };
 
-  const handleWorkflowAction = async (action: string) => {
-    if (!selectedTicket) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    try {
-      let updatePayload: any = {};
-      let activityAction = "";
-
-      // Dynamic Status Resolution (Bypass hard-coded UUIDs)
-      const { data: states } = await supabase.from("workflow_states").select("id, code");
-      const findStateId = (code: string) => states?.find(s => s.code === code)?.id;
-
-      if (action === "ASSIGN") {
-        updatePayload = {
-          assignee_id: user.id,
-          custom_fields: { ...selectedTicket.custom_fields, assigned_to: user.email?.split("@")[0] }
-        };
-        activityAction = "Ticket assigned to staff member.";
-      } else if (action === "RESOLVE") {
-        const sid = findStateId("ST_RESOLVED") || findStateId("ST_CLOSED");
-        if (sid) updatePayload = { status_id: sid };
-        activityAction = "Ticket marked as RESOLVED.";
-      } else if (action === "HOLD") {
-        const sid = findStateId("ST_ON_HOLD") || findStateId("ST_PENDING");
-        if (sid) updatePayload = { status_id: sid };
-        activityAction = "Ticket placed ON HOLD for review.";
-      } else if (action === "ESCALATE") {
-        activityAction = "Ticket ESCALATED to management bridge.";
-      } else if (action === "DELETE") {
-        updatePayload = { is_deleted: true, deleted_at: new Date().toISOString() };
-        activityAction = "Ticket moved to DELETED lifecycle.";
-      }
-
-      if (Object.keys(updatePayload).length > 0) {
-        const { error } = await supabase
-          .from("tickets")
-          .update(updatePayload)
-          .eq("id", selectedTicket.dbId);
-        if (error) throw error;
-      }
-
-      const { error: activityError } = await supabase.from("ticket_activity_stream").insert([{
-        ticket_id: selectedTicket.dbId,
-        actor: user.email?.split("@")[0],
-        action: activityAction,
-        event_type: action === "ESCALATE" ? "SLA_ESCALATION" : "STATE_CHANGE"
-      }]);
-      if (activityError) throw activityError;
-
-      await fetchData();
-      setToastMessage(`Workflow action '${action}' processed successfully.`);
-    } catch (err: any) {
-      console.error("Workflow execution failed:", err.message || err);
-      setToastMessage(`Failed: ${err.message || "Unknown error"}`);
-    }
-  };
-
   useEffect(() => {
     fetchData();
 
-    // Global realtime listener for new tickets
+    // Global realtime listener for new tickets, updates or deletions
     const channel = supabase
       .channel("tickets_global")
       .on(
@@ -176,11 +154,21 @@ export default function TicketsPage() {
     };
   }, []);
 
+  // Filter tickets by scope selection (INFRA, ERP, OTHERS) and search queries
   const filteredTickets = tickets.filter(t => {
-    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          t.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDept = selectedDept === "ALL" || t.department_id === selectedDept;
-    return matchesSearch && matchesDept;
+    const matchesSearch = 
+      (t.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (t.id || "").toLowerCase().includes(searchQuery.toLowerCase());
+      
+    // Matches ticket custom_fields flow_scope ID or code
+    const scopeIdOrCode = t.custom_fields?.flow_scope?.id || t.custom_fields?.flow_scope?.code || "";
+    const matchesScope = 
+      selectedScope === "ALL" || 
+      scopeIdOrCode === selectedScope || 
+      t.custom_fields?.flow_scope?.id === selectedScope ||
+      t.custom_fields?.flow_scope?.code === selectedScope;
+      
+    return matchesSearch && matchesScope;
   });
 
   return (
@@ -188,8 +176,8 @@ export default function TicketsPage() {
       isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
     }`}>
       {/* Premium Command Header */}
-      <header className={`h-20 shrink-0 px-8 flex items-center justify-between border-b backdrop-blur-md z-50 ${
-        isLightMode ? "border-gray-200 bg-white/80" : "border-white/5 bg-white/[0.01]"
+      <header className={`h-20 shrink-0 px-8 flex items-center justify-between border-b backdrop-blur-md z-50 transition-all duration-300 ${
+        isLightMode ? "border-gray-200 bg-white/80" : "border-white/5 bg-[#070913]/80"
       }`}>
         <div className="flex items-center gap-6">
           <div className="flex flex-col">
@@ -247,8 +235,9 @@ export default function TicketsPage() {
         </div>
       </header>
 
+      {/* Main Two-Column Layout */}
       <main className="flex-1 flex overflow-hidden mt-2 px-6 pb-4 gap-4">
-        {/* Left Column: Intelligence List */}
+        {/* Left Column: Scope filtering sidebar */}
         <div className={`w-[380px] shrink-0 border-r ${isLightMode ? "border-gray-200" : "border-white/5"}`}>
           <TicketListSidebar 
             tickets={filteredTickets}
@@ -256,30 +245,38 @@ export default function TicketsPage() {
             onSelect={setSelectedTicket}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            selectedDept={selectedDept}
-            onDeptChange={setSelectedDept}
-            departments={departments}
+            selectedDept={selectedScope}
+            onDeptChange={setSelectedScope}
+            departments={scopesList} // Pass scopes list in place of departments
           />
         </div>
 
-        {/* Center Column: Core Inspection Area */}
-        <div className="flex-1 min-w-0 bg-transparent">
-          <TicketInspector 
-            ticket={selectedTicket} 
-            onRefresh={fetchData}
-          />
-        </div>
-
-        {/* Right Column: Operations & SLA */}
-        <div className={`w-80 shrink-0 border-l ${isLightMode ? "border-gray-200" : "border-white/5"}`}>
-          <TicketOpsSidebar 
-            ticket={selectedTicket} 
-            onAction={handleWorkflowAction}
-          />
+        {/* Right/Center Column: Consolidated Ticket Workspace Console */}
+        <div className="flex-1 min-w-0 bg-transparent flex flex-col">
+          {loading && tickets.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+            </div>
+          ) : (
+            <div className={`flex-1 border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 ${
+              isLightMode ? "bg-white border-gray-200" : "bg-[#090f1e]/40 border-white/5"
+            }`}>
+              <TicketWorkspaceConsole 
+                ticket={selectedTicket}
+                onUpdate={fetchData}
+                departments={departments}
+                priorities={priorities}
+                states={states}
+                categories={categories}
+                subcategories={subcategories}
+                issueTypes={issueTypes}
+              />
+            </div>
+          )}
         </div>
       </main>
 
-      {/* Creation Flow Overlay */}
+      {/* Creation Wizard */}
       {showWizard && (
         <TicketCreationWizard 
           onClose={() => setShowWizard(false)}

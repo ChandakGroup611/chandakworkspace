@@ -271,3 +271,28 @@ async function updateAssetAssignments(dbClient: any, userId: string, newAssetTag
     }
   }
 }
+
+/**
+ * Fetches all active assignees for ticket selection dropdowns
+ * Bypasses SELECT RLS limits via service role if available
+ */
+export async function fetchAssignees() {
+  const cookieStore = await cookies();
+  const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const adminClient = getAdminClient();
+  const supabase = isServiceRoleAvailable ? adminClient : createServerClient(cookieStore);
+
+  const { data, error } = await supabase
+    .from("user_master")
+    .select("id, full_name, email, department_id, department:departments(name)")
+    .eq("is_active", true)
+    .eq("is_deleted", false)
+    .order("full_name");
+
+  if (error) {
+    console.error("[Server Action] Error fetching assignees:", error);
+    return [];
+  }
+  return data || [];
+}
+
