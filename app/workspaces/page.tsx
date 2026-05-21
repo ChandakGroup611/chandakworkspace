@@ -53,10 +53,10 @@ export default function WorkspacesPage() {
       return w.owner_id === currentUser.id;
     }
     if (selectedScope === "ASSIGNEE") {
-      // Workspaces where current user is owner, enrolled in workspace_members, or has tasks assigned to them inside it
-      return w.owner_id === currentUser.id || 
-             w.workspace_members?.some((m: any) => m.user_id === currentUser.id) ||
-             w.tasks?.some((t: any) => t.assignee_id === currentUser.id || t.assignees?.some((a: any) => a.user?.id === currentUser.id) || t.teams?.some((tt: any) => tt.members?.some((m: any) => m.user?.id === currentUser.id)));
+      // Since RLS already filters workspaces to those where the user is an owner, member, or has assigned tasks,
+      // we can just return true here to show all workspaces they have access to. The task list itself will be
+      // filtered to only show assigned tasks by the filteredTasks array below.
+      return true;
     }
     if (selectedScope === "MANAGER") {
       // Check if current user is the manager of the workspace owner (creator)
