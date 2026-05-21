@@ -1,5 +1,5 @@
+const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
-const fetch = require('node-fetch');
 const path = require('path');
 
 const envPath = path.resolve(process.cwd(), '.env.local');
@@ -16,13 +16,15 @@ if (fs.existsSync(envPath)) {
 }
 
 const supabaseUrl = env['NEXT_PUBLIC_SUPABASE_URL'] || '';
-const supabaseKey = env['NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'] || '';
-const table = process.argv[2] || 'workspace_tasks';
+const supabaseKey = env['SUPABASE_SERVICE_ROLE_KEY'] || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function check() {
-  const res = await fetch(`${supabaseUrl}/rest/v1/?apikey=${supabaseKey}`);
-  const data = await res.json();
-  const schema = data.definitions[table];
-  console.log(JSON.stringify(schema, null, 2));
+  const { data, error } = await supabase.rpc('execute_sql', { sql: `
+    SELECT tablename, policyname, permissive, roles, cmd, qual, with_check 
+    FROM pg_policies 
+    WHERE tablename = 'user_master'
+  `});
+  console.log(data);
 }
 check();
