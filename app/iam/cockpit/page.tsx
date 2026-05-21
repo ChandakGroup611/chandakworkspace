@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: "Enterprise Identity & Access Management Governance Dashboard",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function IAMCockpitPage() {
   const [roles, permissions] = await Promise.all([
     fetchRoles(),

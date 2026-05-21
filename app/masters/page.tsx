@@ -15,6 +15,7 @@ import {
   AppTableCell 
 } from "@/components/ui/AppTable";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 import { createClient } from "@/utils/supabase/client";
 import { 
   Database, 
@@ -97,6 +98,7 @@ function UsersIcon(props: any) {
 
 export default function MastersPage() {
   const supabase = createClient();
+  const { hasPermission, loading: permsLoading } = usePermissions();
   let isLightMode = false;
   try {
     const { theme } = useTheme();
@@ -110,6 +112,11 @@ export default function MastersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
   const [successAlert, setSuccessAlert] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -684,6 +691,33 @@ export default function MastersPage() {
     (r.id && r.id.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  if (!mounted || permsLoading) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
+        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+          Verifying Credentials...
+        </span>
+      </div>
+    );
+  }
+
+  if (!hasPermission("MASTERS_VIEW")) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Lock className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view the Master Data Configuration Directory.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
       {/* Primary Module Header */}
@@ -714,6 +748,7 @@ export default function MastersPage() {
             size="sm" 
             leftIcon={<Plus className="h-3.5 w-3.5" />}
             onClick={openCreateModal}
+            disabled={!hasPermission("MASTERS_CREATE")}
           >
             Add New Record
           </AppButton>
@@ -1059,7 +1094,8 @@ export default function MastersPage() {
                                 <button
                                   type="button"
                                   onClick={() => toggleActive(rec)}
-                                  className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase transition-all duration-200 cursor-pointer ${
+                                  disabled={!hasPermission("MASTERS_UPDATE")}
+                                  className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
                                       ? (isLightMode ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20")
                                       : (isLightMode ? "bg-gray-50 border-gray-200 text-gray-400 line-through hover:bg-gray-100" : "bg-white/[0.01] border-white/5 text-gray-600 line-through hover:bg-white/[0.03]")
@@ -1074,7 +1110,8 @@ export default function MastersPage() {
                                   <button
                                     type="button"
                                     onClick={() => openEditModal(rec)}
-                                    className={`p-1.5 rounded-lg border transition-colors ${
+                                    disabled={!hasPermission("MASTERS_UPDATE")}
+                                    className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                       isLightMode ? "bg-white border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-blue-400 hover:border-blue-500/30"
                                     }`}
                                     title="Edit Record Details"
@@ -1084,7 +1121,8 @@ export default function MastersPage() {
                                   <button
                                     type="button"
                                     onClick={() => handleDelete(rec)}
-                                    className={`p-1.5 rounded-lg border transition-colors ${
+                                    disabled={!hasPermission("MASTERS_DELETE")}
+                                    className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                       isLightMode ? "bg-white border-gray-200 text-gray-400 hover:text-rose-600 hover:border-rose-300" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-rose-400 hover:border-rose-500/30"
                                     }`}
                                     title="Delete Record"

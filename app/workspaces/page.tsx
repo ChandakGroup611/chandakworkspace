@@ -16,6 +16,7 @@ import {
   fetchWorkspaceStakeholders, createWorkspace, createTask, fetchCompanies, fetchPriorities,
   updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData
 } from "@/lib/actions/workspaces";
+import { usePermissions } from "@/hooks/usePermissions";
 import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskRealtimeChat from "@/components/tasks/TaskRealtimeChat";
@@ -25,6 +26,7 @@ import { getTaskDetails } from "@/lib/actions/tasks";
 
 export default function WorkspacesPage() {
   const { theme } = useTheme();
+  const { hasPermission, loading: permsLoading } = usePermissions();
   const isLightMode = theme === "executive-light";
 
   const [workspaces, setWorkspaces] = useState<any[]>([]);
@@ -36,7 +38,12 @@ export default function WorkspacesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedScope, setSelectedScope] = useState<"ALL" | "CREATOR" | "ASSIGNEE" | "MANAGER">("ALL");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
   const lastFetchedWorkspaceId = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filteredWorkspaces = workspaces.filter(w => {
     if (selectedScope === "ALL") return true;
@@ -52,7 +59,8 @@ export default function WorkspacesPage() {
              !!w.has_assigned_tasks;
     }
     if (selectedScope === "MANAGER") {
-      return currentUser.managedDeptIds?.includes(w.department_id);
+      // Check if current user is the manager of the workspace owner (creator)
+      return w.owner?.manager_id === currentUser.id;
     }
     return true;
   });
@@ -71,7 +79,8 @@ export default function WorkspacesPage() {
       return t.creator_id === currentUser.id || isExplicit || isTeamMember;
     }
     if (selectedScope === "MANAGER") {
-      return currentUser.managedDeptIds?.includes(t.department_id) || currentUser.managedDeptIds?.includes(activeWorkspace?.department_id);
+      // Check if current user is the manager of the task creator
+      return t.creator?.manager_id === currentUser.id;
     }
     return true;
   });
@@ -126,40 +135,44 @@ export default function WorkspacesPage() {
         }
       } catch (e) {}
 
-      // 2. Fetch all landing data (workspaces, profile, companies, priorities, and pre-fetched workspace tasks/stakeholders) in one Server request!
-      const dashboard = await fetchWorkspaceDashboardData(taskWorkspaceId);
+      try {
+        // 2. Fetch all landing data (workspaces, profile, companies, priorities, and pre-fetched workspace tasks/stakeholders) in one Server request!
+        const dashboard = await fetchWorkspaceDashboardData(taskWorkspaceId);
 
-      if (dashboard.userProfile) {
-        setCurrentUser(dashboard.userProfile);
-      }
-      setWorkspaces(dashboard.workspaces);
-      setCompanies(dashboard.companies);
-      setPriorities(dashboard.priorities);
+        if (dashboard.userProfile) {
+          setCurrentUser(dashboard.userProfile);
+        }
+        setWorkspaces(dashboard.workspaces || []);
+        setCompanies(dashboard.companies || []);
+        setPriorities(dashboard.priorities || []);
 
-      // 3. Populate pre-fetched tasks and stakeholders for the active workspace
-      if (dashboard.prefetchWorkspaceId) {
-        const prefetchWS = dashboard.workspaces.find((w: any) => w.id === dashboard.prefetchWorkspaceId);
-        if (prefetchWS) {
-          setActiveWorkspace(prefetchWS);
-          lastFetchedWorkspaceId.current = prefetchWS.id;
-          setTasks(dashboard.prefetchTasks);
-          setStakeholders(dashboard.prefetchStakeholders);
+        // 3. Populate pre-fetched tasks and stakeholders for the active workspace
+        if (dashboard.prefetchWorkspaceId) {
+          const prefetchWS = (dashboard.workspaces || []).find((w: any) => w.id === dashboard.prefetchWorkspaceId);
+          if (prefetchWS) {
+            setActiveWorkspace(prefetchWS);
+            lastFetchedWorkspaceId.current = prefetchWS.id;
+            setTasks(dashboard.prefetchTasks || []);
+            setStakeholders(dashboard.prefetchStakeholders || []);
 
-          if (urlTaskDetails) {
-            setSelectedTask(urlTaskDetails);
-            // Mark read asynchronously
-            fetch('/api/mentions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ _action: 'mark_read', taskId: urlTaskDetails.id })
-            }).catch(() => {});
-          } else if (dashboard.prefetchTasks.length > 0) {
-            setSelectedTask(dashboard.prefetchTasks[0]);
+            if (urlTaskDetails) {
+              setSelectedTask(urlTaskDetails);
+              // Mark read asynchronously
+              fetch('/api/mentions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ _action: 'mark_read', taskId: urlTaskDetails.id })
+              }).catch(() => {});
+            } else if ((dashboard.prefetchTasks || []).length > 0) {
+              setSelectedTask(dashboard.prefetchTasks[0]);
+            }
           }
         }
+      } catch (err) {
+        console.error("Failed to load workspace dashboard data:", err);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
     init();
   }, []);
@@ -291,11 +304,27 @@ export default function WorkspacesPage() {
     }
   };
 
-  if (loading) {
+  if (!mounted || permsLoading || loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-40 space-y-4">
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
         <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
         <p className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Hydrating Enterprise Workspaces...</p>
+      </div>
+    );
+  }
+
+  if (!hasPermission("WORKSPACES_VIEW")) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <ShieldAlert className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view the Workspace & Task Engine Dashboard.</p>
       </div>
     );
   }
@@ -340,7 +369,13 @@ export default function WorkspacesPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => setIsCreatingWS(true)}>
+          <AppButton 
+            variant="primary" 
+            size="sm" 
+            leftIcon={<Plus className="h-4 w-4" />} 
+            onClick={() => setIsCreatingWS(true)}
+            disabled={!hasPermission("WORKSPACES_CREATE")}
+          >
             New Workspace
           </AppButton>
           
@@ -644,14 +679,16 @@ export default function WorkspacesPage() {
                   <button 
                     type="button"
                     onClick={() => openEditWorkspace(activeWorkspace)}
-                    className="px-2 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold transition-all active:scale-95"
+                    disabled={!hasPermission("WORKSPACES_UPDATE")}
+                    className="px-2 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Edit Workspace
                   </button>
                   <button 
                     type="button"
                     onClick={() => handleDeleteWorkspace(activeWorkspace.id)}
-                    className="px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold transition-all active:scale-95"
+                    disabled={!hasPermission("WORKSPACES_DELETE")}
+                    className="px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Delete
                   </button>
@@ -721,7 +758,7 @@ export default function WorkspacesPage() {
           <FolderKanban className="h-12 w-12 text-gray-400 opacity-50" />
           <h2 className={`text-lg font-bold ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>No Active Workspaces Found</h2>
           <p className="text-xs text-gray-500">Initialize a new enterprise workspace to begin orchestrating tasks.</p>
-          <AppButton variant="primary" onClick={() => setIsCreatingWS(true)}>Create Workspace</AppButton>
+          <AppButton variant="primary" onClick={() => setIsCreatingWS(true)} disabled={!hasPermission("WORKSPACES_CREATE")}>Create Workspace</AppButton>
         </div>
       )}
 

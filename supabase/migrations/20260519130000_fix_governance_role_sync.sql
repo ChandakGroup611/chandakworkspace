@@ -25,16 +25,16 @@ BEGIN
         )
     ) THEN RETURN TRUE; END IF;
 
-    -- RULE 1.5: USER_MANAGE permission holders see/update all personnel (For HR/Management)
+    -- RULE 1.5: USERS_MANAGE permission holders see/update all personnel (For HR/Management)
     IF EXISTS (
         SELECT 1 FROM public.user_master um
         JOIN public.roles r ON um.role_id = r.id
         JOIN public.role_permissions rp ON r.id = rp.role_id
         JOIN public.permissions p ON rp.permission_id = p.id
-        WHERE um.id = auth.uid() AND p.code = 'USER_MANAGE'
+        WHERE um.id = auth.uid() AND p.code = 'USERS_MANAGE'
     ) OR EXISTS (
         SELECT 1 FROM public.user_permissions_snapshot ups
-        WHERE ups.user_id = auth.uid() AND 'USER_MANAGE' = ANY(ups.permissions)
+        WHERE ups.user_id = auth.uid() AND ups.permission_code = 'USERS_MANAGE'
     ) THEN RETURN TRUE; END IF;
 
     -- RULE 2: Ownership Check (Dynamic ID Check)
@@ -56,23 +56,9 @@ BEGIN
 END;
 $$;
 
--- 2. Populate legacy user_roles and user_permissions_snapshot table for role compatibility
+-- 2. Populate legacy user_roles for role compatibility
+-- Note: user_permissions_snapshot is now managed by triggers in the comprehensive migration
 INSERT INTO public.user_roles (user_id, role_id)
 SELECT id, role_id FROM public.user_master 
 WHERE role_id IS NOT NULL
 ON CONFLICT (user_id, role_id) DO NOTHING;
-
--- 3. Flatten snapshot permissions for instant RLS validation
-INSERT INTO public.user_permissions_snapshot (user_id, permissions, updated_at)
-SELECT 
-    um.id as user_id,
-    COALESCE(array_agg(DISTINCT p.code), '{}') as permissions,
-    now()
-FROM public.user_master um
-JOIN public.roles r ON um.role_id = r.id
-JOIN public.role_permissions rp ON r.id = rp.role_id
-JOIN public.permissions p ON rp.permission_id = p.id
-GROUP BY um.id
-ON CONFLICT (user_id) DO UPDATE SET
-    permissions = EXCLUDED.permissions,
-    updated_at = now();

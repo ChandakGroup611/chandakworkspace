@@ -71,8 +71,14 @@ export default function UserProfileEditor() {
 
   const loadUserProfile = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
       if (!authUser) throw new Error("No authenticated user");
+
+      console.log("Loading profile for user:", authUser.id);
 
       const { data, error } = await supabase
         .from("user_master")
@@ -80,14 +86,22 @@ export default function UserProfileEditor() {
         .eq("id", authUser.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Profile fetch error:", {
+          code: error.code,
+          message: error.message,
+          details: error.details
+        });
+        throw error;
+      }
 
+      console.log("Profile loaded:", data);
       setProfile(data);
       setFormFullName(data.full_name || "");
       setFormEmail(data.email || authUser.email || "");
       setFormPhoto(data.profile_photo || PRESET_AVATARS[0]);
       setLoading(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error loading profile:", err);
       setErrorMsg("Failed to load profile");
       setLoading(false);
@@ -115,11 +129,17 @@ export default function UserProfileEditor() {
 
     setPhotoUploading(true);
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error("Auth error during upload:", userError);
+        throw userError;
+      }
       if (!authUser) throw new Error("Unauthenticated");
 
       const fileExt = file.name.split(".").pop();
       const fileName = `${authUser.id}/${Date.now()}.${fileExt}`;
+
+      console.log("Uploading file:", fileName, "Size:", file.size);
 
       const { data, error: uploadError } = await supabase.storage
         .from("profiles")
@@ -128,12 +148,18 @@ export default function UserProfileEditor() {
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+
+      console.log("Upload successful:", data);
 
       const { data: { publicUrl } } = supabase.storage
         .from("profiles")
         .getPublicUrl(fileName);
 
+      console.log("Public URL:", publicUrl);
       setFormPhoto(publicUrl);
       triggerToast("Profile picture updated successfully!");
     } catch (err: any) {
@@ -164,17 +190,26 @@ export default function UserProfileEditor() {
 
     setIsSaving(true);
     try {
+      console.log("Attempting password update...");
+      
       const { error } = await supabase.auth.updateUser({
         password: formPassword
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Password update error:", {
+          code: error.code,
+          message: error.message,
+          status: error.status
+        });
+        throw error;
+      }
 
       setFormPassword("");
       setFormConfirmPassword("");
       triggerToast("Password changed successfully!");
     } catch (err: any) {
-      console.error("Password update error:", err);
+      console.error("Password change error:", err);
       triggerToast(`Failed to change password: ${err.message || err}`, true);
     } finally {
       setIsSaving(false);
@@ -184,15 +219,16 @@ export default function UserProfileEditor() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isSuperAdmin) {
-      triggerToast("Only Super Admin can edit profile details.", true);
-      return;
-    }
-
     setIsSaving(true);
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error("Unauthenticated");
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error("Auth getUser error:", userError);
+        throw new Error(`Authentication failed: ${userError.message}`);
+      }
+      if (!authUser) throw new Error("Unauthenticated - no user session");
+
+      console.log("Authenticated user:", authUser.id);
 
       const updatePayload: any = {
         full_name: formFullName,
@@ -200,12 +236,30 @@ export default function UserProfileEditor() {
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      console.log("Updating profile with payload:", updatePayload);
+
+      const { data, error } = await supabase
         .from("user_master")
         .update(updatePayload)
-        .eq("id", authUser.id);
+        .eq("id", authUser.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase update error:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
+
+      console.log("Update response:", data);
+
+      if (!data || data.length === 0) {
+        console.warn("Update returned 0 rows - may indicate RLS policy rejection");
+        throw new Error("Failed to update profile - permission denied or record not found");
+      }
 
       setProfile(prev => prev ? { ...prev, ...updatePayload } : null);
       triggerToast("Profile updated successfully!");
@@ -330,9 +384,7 @@ export default function UserProfileEditor() {
             <AppCardTitle>Profile Details</AppCardTitle>
           </div>
           <p className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
-            {isSuperAdmin 
-              ? "You can edit all profile fields as Super Admin" 
-              : "Profile details are read-only. Only Super Admin can edit."}
+            Manage and update your personal profile details.
           </p>
         </AppCardHeader>
         <AppCardContent>
@@ -349,12 +401,8 @@ export default function UserProfileEditor() {
                 placeholder="Your full name"
                 value={formFullName}
                 onChange={(e) => setFormFullName(e.target.value)}
-                disabled={!isSuperAdmin}
-                className={`text-sm ${!isSuperAdmin ? "opacity-60 cursor-not-allowed" : ""}`}
+                className="text-sm"
               />
-              {!isSuperAdmin && (
-                <p className="text-xs text-amber-500">Read-only (Super Admin only)</p>
-              )}
             </div>
 
             {/* Email */}
@@ -402,21 +450,19 @@ export default function UserProfileEditor() {
               <p><strong>Role:</strong> {isSuperAdmin ? "Super Admin" : "Standard User"}</p>
             </div>
 
-            {/* Save Button - Only for Super Admin */}
-            {isSuperAdmin && (
-              <div className="pt-2 border-t border-white/5">
-                <AppButton
-                  type="submit"
-                  disabled={isSaving}
-                  variant="primary"
-                  size="md"
-                  leftIcon={isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  className="w-full"
-                >
-                  {isSaving ? "Saving..." : "Save Profile Changes"}
-                </AppButton>
-              </div>
-            )}
+            {/* Save Button */}
+            <div className="pt-2 border-t border-white/5">
+              <AppButton
+                type="submit"
+                disabled={isSaving}
+                variant="primary"
+                size="md"
+                leftIcon={isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                className="w-full"
+              >
+                {isSaving ? "Saving..." : "Save Profile Changes"}
+              </AppButton>
+            </div>
           </form>
         </AppCardContent>
       </AppCard>

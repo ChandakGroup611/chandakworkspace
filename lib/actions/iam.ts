@@ -7,9 +7,82 @@ import { revalidatePath } from "next/cache";
 /**
  * Enterprise IAM & RBAC Server Actions
  * Architecture: Centralized identity governance for Roles and Permissions.
+ * Gated by: checkIAMAuthorization helper for strict capability checking.
  */
 
+async function checkIAMAuthorization(requiredPermission?: string) {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error("Unauthenticated request. Please log in.");
+    }
+    
+    // 1. Fetch user's profile and check if they are SUPER_ADMIN via role_id
+    const { data: profileData } = await supabase
+      .from("user_master")
+      .select("role_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileData?.role_id) {
+      const { data: roleData } = await supabase
+        .from("roles")
+        .select("code")
+        .eq("id", profileData.role_id)
+        .single();
+
+      if (roleData?.code === "SUPER_ADMIN") {
+        console.log("[checkIAMAuthorization] User is SUPER_ADMIN");
+        return; // SUPER_ADMIN has full access
+      }
+    }
+
+    // Also check user_roles table
+    const { data: userRoles } = await supabase
+      .from("user_roles")
+      .select("role:roles(code)")
+      .eq("user_id", user.id);
+
+    if (userRoles && userRoles.length > 0) {
+      for (const ur of userRoles) {
+        const role = ur.role as any;
+        const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
+        if (roleCode === "SUPER_ADMIN") {
+          console.log("[checkIAMAuthorization] User is SUPER_ADMIN via user_roles");
+          return;
+        }
+      }
+    }
+    
+    // 2. Check for IAM_MANAGE or the specific requested permission in user snapshot
+    const { data: userPerms } = await supabase
+      .from("user_permissions_snapshot")
+      .select("permission_code")
+      .eq("user_id", user.id);
+      
+    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
+    
+    if (perms.includes("IAM_MANAGE")) {
+      return; // IAM_MANAGE allows all IAM actions
+    }
+    
+    if (requiredPermission && perms.includes(requiredPermission)) {
+      return;
+    }
+    
+    throw new Error("Unauthorized: You do not have capabilities to perform this IAM operation.");
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    console.error(`[checkIAMAuthorization] Error: ${msg}`);
+    throw new Error(msg);
+  }
+}
+
 export async function fetchRoles() {
+  await checkIAMAuthorization("IAM_VIEW");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -28,6 +101,7 @@ export async function fetchRoles() {
 }
 
 export async function fetchPermissions() {
+  await checkIAMAuthorization("IAM_VIEW");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -45,6 +119,7 @@ export async function fetchPermissions() {
 }
 
 export async function fetchRolePermissions(roleId: string) {
+  await checkIAMAuthorization("IAM_VIEW");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -61,6 +136,7 @@ export async function fetchRolePermissions(roleId: string) {
 }
 
 export async function createRole(formData: { name: string, code: string, description: string, department_id?: string }) {
+  await checkIAMAuthorization("IAM_MANAGE");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -84,6 +160,7 @@ export async function createRole(formData: { name: string, code: string, descrip
 }
 
 export async function updateRole(roleId: string, updates: any) {
+  await checkIAMAuthorization("IAM_MANAGE");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -107,6 +184,7 @@ export async function updateRole(roleId: string, updates: any) {
 }
 
 export async function syncRolePermissions(roleId: string, permissionIds: string[]) {
+  await checkIAMAuthorization("IAM_MANAGE");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -142,6 +220,7 @@ export async function syncRolePermissions(roleId: string, permissionIds: string[
 }
 
 export async function cloneRole(sourceRoleId: string, newRoleName: string, newRoleCode: string) {
+  await checkIAMAuthorization("IAM_MANAGE");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -181,6 +260,7 @@ export async function cloneRole(sourceRoleId: string, newRoleName: string, newRo
 }
 
 export async function deleteRole(roleId: string) {
+  await checkIAMAuthorization("IAM_MANAGE");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   

@@ -85,6 +85,11 @@ export default function UserMasterPage() {
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
   const isLightMode = theme === "executive-light";
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Data mapping lists
   const [users, setUsers] = useState<AppUserItem[]>([]);
@@ -280,7 +285,7 @@ export default function UserMasterPage() {
       }
       
     } catch (err: any) {
-      console.error("[User Master] GOVERNANCE SYNC RECOVERY ACTIVATED.", err);
+      console.error("[User Master] GOVERNANCE SYNC RECOVERY ACTIVATED. Error:", err?.message || err?.code || err, JSON.stringify(err, null, 2));
       
       // FALLBACK: Hydrate from Local Sandbox or Seed Data
       let fallbackUsers: AppUserItem[] = [];
@@ -742,6 +747,33 @@ export default function UserMasterPage() {
   // Filter out the selected user from available managers selection to prevent cyclical hierarchy loops
   const availableManagers = users.filter(u => !isEditingMode || u.id !== editUserId);
 
+  if (!mounted || permsLoading) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
+        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+          Verifying Credentials...
+        </span>
+      </div>
+    );
+  }
+
+  if (!hasPermission("USERS_VIEW")) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <ShieldAlert className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view the Personnel Registry.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
       {/* Platform Page Header */}
@@ -772,7 +804,7 @@ export default function UserMasterPage() {
             size="sm" 
             leftIcon={<UserPlus className="h-3.5 w-3.5" />}
             onClick={openProvisionForm}
-            disabled={!hasPermission("USER_MANAGE")}
+            disabled={!(hasPermission("USERS_CREATE") || isSuperAdmin)}
           >
             Register User Account
           </AppButton>
@@ -968,26 +1000,30 @@ export default function UserMasterPage() {
 
                             <AppTableCell className="text-right w-20 shrink-0" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                                <button
-                                  type="button"
-                                  onClick={() => openModifyForm(usr)}
-                                  className={`p-1.5 rounded-md border transition-all ${
-                                    isLightMode ? "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-white hover:border-white/10"
-                                  }`}
-                                  title="Edit Staff Configuration"
-                                >
-                                  <Edit3 className="h-3 w-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => initiateDeleteCheck(usr)}
-                                  className={`p-1.5 rounded-md border transition-all ${
-                                    isLightMode ? "bg-white border-gray-200 text-gray-400 hover:border-rose-300 hover:text-rose-600" : "bg-white/[0.01] border-white/5 text-gray-500 hover:text-rose-400 hover:border-rose-500/30"
-                                  }`}
-                                  title="Archive / Remove Account"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
+                                {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openModifyForm(usr)}
+                                    className={`p-1.5 rounded-md border transition-all ${
+                                      isLightMode ? "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-white hover:border-white/10"
+                                    }`}
+                                    title="Edit Staff Configuration"
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </button>
+                                )}
+                                {hasPermission("USERS_DELETE") && (
+                                  <button
+                                    type="button"
+                                    onClick={() => initiateDeleteCheck(usr)}
+                                    className={`p-1.5 rounded-md border transition-all ${
+                                      isLightMode ? "bg-white border-gray-200 text-gray-400 hover:border-rose-300 hover:text-rose-600" : "bg-white/[0.01] border-white/5 text-gray-500 hover:text-rose-400 hover:border-rose-500/30"
+                                    }`}
+                                    title="Archive / Remove Account"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                )}
                               </div>
                             </AppTableCell>
                           </AppTableRow>
@@ -1012,16 +1048,18 @@ export default function UserMasterPage() {
                 isLightMode ? "border-gray-100 bg-gradient-to-b from-blue-50/40 to-transparent" : "border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent"
               }`}>
                 {/* Embedded quick edit icon icon overlay */}
-                <button
-                  type="button"
-                  onClick={() => openModifyForm(selectedUser)}
-                  className={`absolute top-4 right-4 p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/5 border-white/10 text-gray-300 hover:text-white"
-                  }`}
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  <span>Update</span>
-                </button>
+                {hasPermission("USERS_UPDATE") && (
+                  <button
+                    type="button"
+                    onClick={() => openModifyForm(selectedUser)}
+                    className={`absolute top-4 right-4 p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all ${
+                      isLightMode ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/5 border-white/10 text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>Update</span>
+                  </button>
+                )}
 
                 <img 
                   src={selectedUser.profile_photo || PRESET_AVATARS[0]} 
@@ -1153,7 +1191,8 @@ export default function UserMasterPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleSimulateLoginTime(selectedUser)}
-                        className="text-[10px] h-7 px-2"
+                        disabled={!(hasPermission("USERS_UPDATE") || isSuperAdmin)}
+                        className="text-[10px] h-7 px-2 disabled:opacity-50"
                       >
                         Stamp Log-In
                       </AppButton>
@@ -1177,7 +1216,8 @@ export default function UserMasterPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleSimulateLogoutTime(selectedUser)}
-                        className="text-[10px] h-7 px-2"
+                        disabled={!hasPermission("USERS_UPDATE")}
+                        className="text-[10px] h-7 px-2 disabled:opacity-50"
                       >
                         Stamp Log-Out
                       </AppButton>
@@ -1196,7 +1236,8 @@ export default function UserMasterPage() {
                   <button
                     type="button"
                     onClick={() => handleTriggerPasswordReset(selectedUser)}
-                    className={`w-full p-2.5 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    disabled={!hasPermission("USERS_UPDATE")}
+                    className={`w-full p-2.5 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                       isLightMode 
                         ? "bg-white border-blue-200 text-blue-700 hover:bg-blue-50 shadow-2xs" 
                         : "bg-white/[0.02] border-blue-500/20 text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/30"

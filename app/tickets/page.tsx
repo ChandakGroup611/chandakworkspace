@@ -8,11 +8,13 @@ import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard"
 import { AppButton } from "@/components/ui/AppButton";
 import { Plus, RefreshCw, CheckCircle2, Database, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TicketsPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const isLightMode = theme === "executive-light";
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
   
   // Master Data
   const [departments, setDepartments] = useState<any[]>([]);
@@ -31,6 +33,11 @@ export default function TicketsPage() {
   const [selectedScope, setSelectedScope] = useState("ALL");
   const [showWizard, setShowWizard] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (toastMessage) {
@@ -171,6 +178,33 @@ export default function TicketsPage() {
     return matchesSearch && matchesScope;
   });
 
+  if (!mounted || permissionsLoading) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
+        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+          Verifying Capabilities...
+        </span>
+      </div>
+    );
+  }
+
+  if (!hasPermission("TICKETS_VIEW")) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+      }`}>
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Database className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view Operations Tickets.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`h-screen flex flex-col overflow-hidden font-sans transition-colors duration-300 ${
       isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
@@ -223,15 +257,17 @@ export default function TicketsPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Sync
           </AppButton>
-          <AppButton 
-            variant="primary" 
-            size="sm" 
-            onClick={() => setShowWizard(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 px-6"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Initialize Ticket
-          </AppButton>
+          {hasPermission("TICKETS_CREATE") && (
+            <AppButton 
+              variant="primary" 
+              size="sm" 
+              onClick={() => setShowWizard(true)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 px-6"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Initialize Ticket
+            </AppButton>
+          )}
         </div>
       </header>
 

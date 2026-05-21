@@ -40,7 +40,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [loading, setLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [directReportIds, setDirectReportIds] = useState<string[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,15 +48,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         setCurrentUserId(user?.id || null);
-
-        if (user?.id) {
-          // fetch direct reports (users managed by this user)
-          const { data: reports } = await supabase.from("user_master").select("id").eq("manager_id", user.id);
-          setDirectReportIds((reports || []).map((u: any) => u.id));
-        }
       } catch (e) {
         setCurrentUserId(null);
-        setDirectReportIds([]);
       }
     }
     whoami();
@@ -98,9 +90,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       }
 
       if (scope === "MANAGER") {
-        // Show tasks where current user is managing the assignee
-        return (t.assignee_id && directReportIds.includes(t.assignee_id)) ||
-               (Array.isArray(t.assignees) && t.assignees.some((a: any) => directReportIds.includes(a.user?.id)));
+        // Check if current user is the manager of the task creator (matches database RLS)
+        return t.creator?.manager_id === currentUserId;
       }
 
       return true;
@@ -114,14 +105,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         (t.workspace?.name || "").toLowerCase().includes(q)
       );
     });
-  }, [tasks, scope, query, currentUserId, directReportIds, selectedWorkspaceId]);
+  }, [tasks, scope, query, currentUserId, selectedWorkspaceId]);
 
   const refresh = async () => {
     setLoading(true);
     try {
       const supabase = createClient();
       const { data } = await supabase.from("workspace_tasks").select(`
-        *, workspace:workspaces(id,name,code), status:workflow_states(name,code), priority:master_priorities(name,code), assignees:task_assignees(user:user_master(id,full_name,profile_photo)), assignee:user_master!assignee_id(id,full_name,profile_photo), parent_task:workspace_tasks!parent_task_id(id,code,title)`)
+        *, workspace:workspaces(id,name,code), status:workflow_states(name,code), priority:master_priorities(name,code), assignees:task_assignees(user:user_master(id,full_name,profile_photo)), assignee:user_master!assignee_id(id,full_name,profile_photo), creator:user_master!creator_id(id,manager_id), parent_task:workspace_tasks!parent_task_id(id,code,title)`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
       setTasks(data || []);

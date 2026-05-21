@@ -53,12 +53,14 @@ export async function getTaskDetails(taskId: string) {
     throw new Error("Failed to load task details.");
   }
 
-  // Enforce visibility: creator, explicit assignee, team member, workspace member, or super admin
+  // Enforce visibility: creator, explicit assignee, team member, workspace member, creator's manager, or super admin
   try {
-    // SUPER_ADMIN bypass
-    const { data: roleCheck } = await supabase.from('user_roles').select('role_id').eq('user_id', userId).limit(1);
     // if user is creator
     if (data.creator_id === userId) return data;
+
+    // check if user is the manager of the task creator
+    const { data: creatorProfile } = await supabase.from('user_master').select('manager_id').eq('id', data.creator_id).single();
+    if (creatorProfile?.manager_id === userId) return data;
 
     // check explicit assignees
     const explicit = await supabase.from('task_assignees').select('user_id').eq('task_id', taskId).eq('user_id', userId).limit(1);
@@ -77,7 +79,7 @@ export async function getTaskDetails(taskId: string) {
     const { data: wm } = await supabase.from('workspace_members').select('user_id').eq('workspace_id', wsId).eq('user_id', userId).limit(1);
     if (wm && wm.length > 0) return data;
 
-    // super admin check (fallback via app metadata role)
+    // super admin check
     const { data: profile } = await supabase.from('user_master').select('role_id').eq('id', userId).single();
     if (profile?.role_id) {
       const { data: r } = await supabase.from('roles').select('code').eq('id', profile.role_id).single();
@@ -88,6 +90,7 @@ export async function getTaskDetails(taskId: string) {
   }
 
   throw new Error('Access denied to task details');
+
 }
 
 // 2. Status Flow & Resolution

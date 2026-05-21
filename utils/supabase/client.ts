@@ -7,8 +7,10 @@ export const createClient = () => {
   const options: any = {};
   if (typeof window !== "undefined") {
     options.auth = {
-      storage: window.sessionStorage,
+      storage: window.localStorage,
       persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
     };
   }
   return createBrowserClient(

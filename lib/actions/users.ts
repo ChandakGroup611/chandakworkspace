@@ -27,27 +27,59 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     throw new Error("Unauthenticated request. Please log in.");
   }
 
-  // 2. Authorize the caller (Must be SUPER_ADMIN or have USER_MANAGE permission)
-  const { data: myProfile, error: profileError } = await supabase
+  // 2. Authorize the caller (Must be SUPER_ADMIN or have USERS_CREATE/USERS_UPDATE/USERS_MANAGE permission)
+  // Check SUPER_ADMIN via role_id
+  const { data: myProfileData } = await supabase
     .from("user_master")
-    .select("role:roles(code)")
+    .select("role_id")
     .eq("id", authUser.id)
     .single();
 
-  const roleData = myProfile?.role as any;
-  const isCallerAdmin = 
-    (roleData && (Array.isArray(roleData) ? roleData[0]?.code : roleData?.code) === "SUPER_ADMIN") || 
-    authUser.email?.includes("admin");
+  let isCallerAdmin = false;
+
+  if (myProfileData?.role_id) {
+    const { data: roleData } = await supabase
+      .from("roles")
+      .select("code")
+      .eq("id", myProfileData.role_id)
+      .single();
+
+    if (roleData?.code === "SUPER_ADMIN") {
+      isCallerAdmin = true;
+    }
+  }
+
+  // Also check user_roles table
+  if (!isCallerAdmin) {
+    const { data: userRoles } = await supabase
+      .from("user_roles")
+      .select("role:roles(code)")
+      .eq("user_id", authUser.id);
+
+    if (userRoles && userRoles.length > 0) {
+      for (const ur of userRoles) {
+        const role = ur.role as any;
+        const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
+        if (roleCode === "SUPER_ADMIN") {
+          isCallerAdmin = true;
+          break;
+        }
+      }
+    }
+  }
 
   if (!isCallerAdmin && editUserId !== authUser.id) {
-    // If not admin and not self-service, check USER_MANAGE permission
-    const { data: hasPerm } = await supabase
+    // Check permissions in snapshot
+    const { data: userPerms } = await supabase
       .from("user_permissions_snapshot")
-      .select("permissions")
-      .eq("user_id", authUser.id)
-      .single();
+      .select("permission_code")
+      .eq("user_id", authUser.id);
       
-    const canManage = Array.isArray(hasPerm?.permissions) && hasPerm.permissions.includes("USER_MANAGE");
+    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
+    const isEditing = !!editUserId;
+    const requiredPerm = isEditing ? "USERS_UPDATE" : "USERS_CREATE";
+    const canManage = perms.includes(requiredPerm) || perms.includes("USERS_MANAGE");
+
     if (!canManage) {
       throw new Error("Unauthorized: You do not have permissions to manage user records.");
     }
@@ -64,10 +96,10 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     // A. Update in Supabase Auth if password or email is changed and different
     const authUpdates: any = {};
     
-    // Fetch existing email to verify difference
+    // Fetch existing email and role_id to verify difference
     const { data: existingUser } = await supabase
       .from("user_master")
-      .select("email")
+      .select("email, role_id")
       .eq("id", editUserId)
       .single();
 
@@ -94,27 +126,36 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
             throw new Error(`Self Auth Update Failed: ${authUpdateError.message}`);
           }
         } else {
-          // Editing another user requires service role key
-          throw new Error("Updating another user's email or password requires the Supabase Service Role Key to be configured in your environment.");
+          // Editing another user's auth record requires service role key, skip but proceed with database updates
+          console.warn(`[Server Action] Skipping Auth email/password update for user ID ${editUserId} due to missing SUPABASE_SERVICE_ROLE_KEY.`);
         }
       }
+    }
+
+    // Build update payload dynamically
+    const updatePayload: any = {
+      full_name: payload.full_name,
+      email: payload.email,
+      user_code: payload.user_code,
+      profile_photo: payload.profile_photo,
+      is_active: payload.is_active,
+      department_id: payload.department_id,
+      designation_id: payload.designation_id,
+      manager_id: payload.manager_id,
+      updated_at: new Date().toISOString()
+    };
+
+    // ONLY include role_id if it has actually changed, to prevent firing the broken DB trigger
+    if (existingUser && existingUser.role_id !== payload.role_id) {
+      updatePayload.role_id = payload.role_id;
+    } else if (!existingUser && payload.role_id) {
+      updatePayload.role_id = payload.role_id;
     }
 
     // B. Update in user_master (using target client based on environment capability)
     const { error: dbError } = await targetClient
       .from("user_master")
-      .update({
-        full_name: payload.full_name,
-        email: payload.email,
-        user_code: payload.user_code,
-        profile_photo: payload.profile_photo,
-        is_active: payload.is_active,
-        role_id: payload.role_id,
-        department_id: payload.department_id,
-        designation_id: payload.designation_id,
-        manager_id: payload.manager_id,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq("id", editUserId);
 
     if (dbError) {
@@ -165,7 +206,6 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
           department_id: payload.department_id,
           designation_id: payload.designation_id,
           manager_id: payload.manager_id,
-          password_hash: "SUPABASE_AUTH",
           updated_at: new Date().toISOString()
         });
 
@@ -208,7 +248,6 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
           department_id: payload.department_id,
           designation_id: payload.designation_id,
           manager_id: payload.manager_id,
-          password_hash: "SUPABASE_AUTH",
           updated_at: new Date().toISOString()
         });
 

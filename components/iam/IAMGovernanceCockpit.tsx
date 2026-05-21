@@ -24,6 +24,7 @@ import {
   Filter,
   Check
 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import { 
   fetchRoles, 
   fetchPermissions, 
@@ -50,6 +51,7 @@ export default function IAMGovernanceCockpit({
   permissions = []
 }: IAMGovernanceCockpitProps) {
   const { theme } = useTheme();
+  const { hasPermission, loading: permsLoading } = usePermissions();
   const isLight = theme === "executive-light";
 
   const resolvedRoles = initialRoles.length > 0 ? initialRoles : roles;
@@ -69,6 +71,11 @@ export default function IAMGovernanceCockpit({
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load initial roles and permissions if not provided
   useEffect(() => {
@@ -172,6 +179,87 @@ export default function IAMGovernanceCockpit({
     return groups;
   }, [filteredPermissions]);
 
+  // Group the standard permissions by module for the 5-column grid representation
+  const gridModules = useMemo(() => {
+    const modulesMap = new Map<string, { name: string; code: string; perms: any[] }>();
+    
+    permissionsList.forEach((p: any) => {
+      if (!p.module) return;
+      if (!modulesMap.has(p.module)) {
+        const baseCode = p.code.split("_")[0];
+        modulesMap.set(p.module, { name: p.module, code: baseCode, perms: [] });
+      }
+      modulesMap.get(p.module)!.perms.push(p);
+    });
+
+    return Array.from(modulesMap.values()).filter(m => {
+      const matchesSearch = m.name.toLowerCase().includes(permSearchQuery.toLowerCase()) ||
+                            m.perms.some(p => p.name.toLowerCase().includes(permSearchQuery.toLowerCase()) || p.code.toLowerCase().includes(permSearchQuery.toLowerCase()));
+      const matchesTab = selectedModule === "ALL" || m.name === selectedModule;
+      return matchesSearch && matchesTab;
+    });
+  }, [permissionsList, permSearchQuery, selectedModule]);
+
+  const handleTogglePermissionByCode = async (moduleCode: string, action: string) => {
+    if (!activeRoleID) return;
+    if (activeRole?.code === "SUPER_ADMIN") return;
+
+    const targetCode = `${moduleCode}_${action}`;
+    const permission = permissionsList.find((p: any) => p.code === targetCode);
+    if (!permission) return;
+
+    const isCurrentlyEnabled = activeRolePerms.includes(permission.id);
+    let newPermIds = [...activeRolePerms];
+
+    const modulePerms = permissionsList.filter((p: any) => p.module === permission.module);
+    const viewPerm = modulePerms.find((p: any) => p.action === "VIEW");
+    const createPerm = modulePerms.find((p: any) => p.action === "CREATE");
+    const updatePerm = modulePerms.find((p: any) => p.action === "UPDATE");
+    const deletePerm = modulePerms.find((p: any) => p.action === "DELETE");
+    const managePerm = modulePerms.find((p: any) => p.action === "MANAGE");
+
+    if (!isCurrentlyEnabled) {
+      newPermIds.push(permission.id);
+
+      if (["CREATE", "UPDATE", "DELETE", "MANAGE"].includes(action) && viewPerm) {
+        if (!newPermIds.includes(viewPerm.id)) newPermIds.push(viewPerm.id);
+      }
+
+      if (action === "MANAGE") {
+        if (createPerm && !newPermIds.includes(createPerm.id)) newPermIds.push(createPerm.id);
+        if (updatePerm && !newPermIds.includes(updatePerm.id)) newPermIds.push(updatePerm.id);
+        if (deletePerm && !newPermIds.includes(deletePerm.id)) newPermIds.push(deletePerm.id);
+      }
+    } else {
+      newPermIds = newPermIds.filter(id => id !== permission.id);
+
+      if (action === "VIEW") {
+        if (createPerm) newPermIds = newPermIds.filter(id => id !== createPerm.id);
+        if (updatePerm) newPermIds = newPermIds.filter(id => id !== updatePerm.id);
+        if (deletePerm) newPermIds = newPermIds.filter(id => id !== deletePerm.id);
+        if (managePerm) newPermIds = newPermIds.filter(id => id !== managePerm.id);
+      }
+
+      if (["CREATE", "UPDATE", "DELETE"].includes(action) && managePerm) {
+        newPermIds = newPermIds.filter(id => id !== managePerm.id);
+      }
+    }
+
+    newPermIds = Array.from(new Set(newPermIds));
+    const previousPerms = activeRolePerms;
+    setActiveRolePerms(newPermIds);
+
+    setIsSaving(true);
+    try {
+      await syncRolePermissions(activeRoleID, newPermIds);
+    } catch (err) {
+      console.error("Failed to sync permissions:", err);
+      setActiveRolePerms(previousPerms);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Database Actions
   const handleTogglePermission = async (permissionId: string) => {
     if (!activeRoleID) return;
@@ -264,6 +352,29 @@ export default function IAMGovernanceCockpit({
       setIsLoading(false);
     }
   };
+
+  if (!mounted || permsLoading) {
+    return (
+      <div className="h-96 flex flex-col items-center justify-center space-y-4">
+        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <span className={cn("text-xs font-bold uppercase tracking-widest animate-pulse", isLight ? "text-gray-400" : "text-gray-500")}>
+          Verifying Credentials...
+        </span>
+      </div>
+    );
+  }
+
+  if (!hasPermission("IAM_VIEW")) {
+    return (
+      <div className="h-96 flex flex-col items-center justify-center space-y-4 text-center">
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Lock className="h-10 w-10" />
+        </div>
+        <h2 className={cn("text-lg font-bold", isLight ? "text-gray-900" : "text-white")}>Access Denied</h2>
+        <p className="text-xs text-gray-500 max-w-sm">You do not have capabilities to view the IAM Governance Cockpit.</p>
+      </div>
+    );
+  }
 
   if (isLoading && rolesList.length === 0) {
     return (
@@ -403,12 +514,18 @@ export default function IAMGovernanceCockpit({
                 </div>
                 <div className="flex gap-2">
                   <AppInput 
-                    placeholder="New role name..." 
+                    placeholder={hasPermission("IAM_MANAGE") ? "New role name..." : "No permissions to add roles"}
                     value={newRoleName}
                     onChange={(e) => setNewRoleName(e.target.value)}
-                    className={cn("h-10 text-xs", isLight ? "bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:bg-white" : "bg-black/40 border-white/5 focus:border-indigo-500/50 text-white")}
+                    disabled={!hasPermission("IAM_MANAGE")}
+                    className={cn("h-10 text-xs disabled:opacity-50", isLight ? "bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:bg-white" : "bg-black/40 border-white/5 focus:border-indigo-500/50 text-white")}
                   />
-                  <AppButton variant="secondary" type="submit" className="h-10 px-4 bg-indigo-500 hover:bg-indigo-400 text-white border-none shadow-lg shadow-indigo-500/20">
+                  <AppButton 
+                    variant="secondary" 
+                    type="submit" 
+                    disabled={!hasPermission("IAM_MANAGE")}
+                    className="h-10 px-4 bg-indigo-500 hover:bg-indigo-400 text-white border-none shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                  >
                     <Plus className="h-4 w-4" />
                   </AppButton>
                 </div>
@@ -451,7 +568,8 @@ export default function IAMGovernanceCockpit({
                     <div className="flex items-center gap-2">
                       <AppButton
                         onClick={() => handleToggleStatus(activeRole)}
-                        className={cn("h-9 px-3 text-xs font-semibold gap-1.5 transition-all border",
+                        disabled={!hasPermission("IAM_MANAGE")}
+                        className={cn("h-9 px-3 text-xs font-semibold gap-1.5 transition-all border disabled:opacity-50 disabled:cursor-not-allowed",
                           activeRole.is_active
                             ? "bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 border-rose-500/20"
                             : "bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
@@ -463,7 +581,8 @@ export default function IAMGovernanceCockpit({
                       
                       <AppButton
                         onClick={() => handleCloneRole(activeRole)}
-                        className="h-9 px-3 text-xs font-semibold gap-1.5 bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 border border-indigo-500/20"
+                        disabled={!hasPermission("IAM_MANAGE")}
+                        className="h-9 px-3 text-xs font-semibold gap-1.5 bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Copy className="h-3.5 w-3.5" />
                         Clone Role
@@ -472,7 +591,8 @@ export default function IAMGovernanceCockpit({
                       {!activeRole.is_system && (
                         <AppButton
                           onClick={() => handleDeleteRole(activeRole)}
-                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20"
+                          disabled={!hasPermission("IAM_MANAGE")}
+                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Delete
@@ -533,96 +653,89 @@ export default function IAMGovernanceCockpit({
                   </div>
                 </div>
 
-                {/* Matrix Redesigned spacious Row List with Visual Module Groupings */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 max-h-[600px] custom-scrollbar">
-                  {filteredPermissions.length > 0 ? (
-                    Object.entries(groupedFilteredPermissions).map(([moduleName, perms]: any) => (
-                      <div key={moduleName} className="space-y-3">
-                        {/* Beautiful Visual Module Section Header */}
-                        <div className="flex items-center gap-3 px-1 py-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-                          <span className={cn("text-[10px] font-extrabold uppercase tracking-[0.25em] font-mono",
-                            isLight ? "text-indigo-600" : "text-indigo-400"
-                          )}>
-                            {moduleName}
-                          </span>
-                          <AppBadge className={cn("font-mono text-[8px] py-0 px-1.5 border", 
-                            isLight ? "bg-gray-150 text-gray-500 border-gray-200" : "bg-white/5 text-gray-400 border-white/5"
-                          )}>
-                            {perms.length} {perms.length === 1 ? 'Gate' : 'Gates'}
-                          </AppBadge>
-                          <div className={cn("flex-1 h-[1px]", isLight ? "bg-gray-100" : "bg-white/5")} />
-                        </div>
+                {/* Matrix Grid: Responsive 5-column Table */}
+                <div className="flex-1 overflow-y-auto p-6 max-h-[600px] custom-scrollbar">
+                  {gridModules.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className={cn("border-b text-[10px] font-extrabold uppercase tracking-wider text-left", isLight ? "border-gray-200 text-gray-500" : "border-white/5 text-gray-400")}>
+                            <th className="py-3 px-4 font-mono">Module Directory</th>
+                            <th className="py-3 px-4 text-center font-mono">View</th>
+                            <th className="py-3 px-4 text-center font-mono">Create</th>
+                            <th className="py-3 px-4 text-center font-mono">Update</th>
+                            <th className="py-3 px-4 text-center font-mono">Delete</th>
+                            <th className="py-3 px-4 text-center font-mono">Manage</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-transparent">
+                          {gridModules.map((m) => {
+                            const isSuperAdmin = activeRole?.code === "SUPER_ADMIN";
 
-                        {/* List of Permissions in this group */}
-                        <div className="space-y-3">
-                          {perms.map((p: any) => {
-                            const isEnabled = activeRolePerms.includes(p.id);
+                            // Resolve if each action is enabled
+                            const getPermIdByAction = (action: string) => m.perms.find(p => p.action === action)?.id;
+                            const isActionChecked = (action: string) => {
+                              if (isSuperAdmin) return true;
+                              const id = getPermIdByAction(action);
+                              return id ? activeRolePerms.includes(id) : false;
+                            };
+
+                            const actions = ["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"];
+
                             return (
-                              <div
-                                key={p.id}
+                              <tr 
+                                key={m.name}
                                 className={cn(
-                                  "group flex items-center justify-between p-4 rounded-2xl border transition-all duration-200",
-                                  isLight
-                                    ? "bg-gray-50/20 border-gray-100 hover:border-gray-200/80 hover:bg-gray-50/50"
-                                    : "bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]"
+                                  "group/row transition-colors hover:bg-white/[0.01]",
+                                  isLight ? "hover:bg-gray-50/40" : "hover:bg-white/[0.02]"
                                 )}
                               >
-                                <div className="flex items-center gap-4 flex-1">
-                                  {/* Active access indicator dot */}
-                                  <div className={cn(
-                                    "w-2 h-2 rounded-full transition-all duration-300 flex-shrink-0",
-                                    isEnabled
-                                      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
-                                      : (isLight ? "bg-gray-200" : "bg-gray-800")
-                                  )} />
-
-                                  {/* Permission Metadata */}
-                                  <div className="space-y-1 flex-1 pr-4">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className={cn("text-xs font-bold transition-colors", isLight ? "text-gray-800 group-hover:text-indigo-600" : "text-gray-200 group-hover:text-white")}>
-                                        {p.name}
-                                      </span>
+                                <td className="py-4 px-4">
+                                  <div className="space-y-0.5">
+                                    <div className={cn("text-xs font-bold transition-colors", isLight ? "text-gray-900 group-hover/row:text-indigo-600" : "text-gray-100 group-hover/row:text-white")}>
+                                      {m.name}
                                     </div>
-                                    <div className={cn("text-[10px] flex items-center gap-1.5", isLight ? "text-gray-400" : "text-gray-500")}>
-                                      <span>{p.submodule || "General"}</span>
-                                      <ArrowRight className="h-2.5 w-2.5 opacity-60" />
-                                      <span className="font-semibold uppercase text-[9px]">{p.action}</span>
+                                    <div className="text-[9px] font-mono text-gray-500 uppercase tracking-tighter">
+                                      {m.code}_*
                                     </div>
                                   </div>
-                                </div>
-
-                                {/* Switch & Badge Action Side */}
-                                <div className="flex items-center gap-6">
-                                  <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded-md border hidden sm:inline-block",
-                                    isLight ? "text-gray-500 bg-gray-50 border-gray-150" : "text-gray-600 bg-white/[0.03] border-white/5"
-                                  )}>
-                                    {p.code}
-                                  </span>
-                                  
-                                  <button
-                                    onClick={() => handleTogglePermission(p.id)}
-                                    disabled={activeRole?.is_system && activeRole?.code === 'SUPER_ADMIN'}
-                                    className={cn(
-                                      "group/switch relative h-5.5 w-11 rounded-full transition-all duration-300 flex-shrink-0",
-                                      isEnabled 
-                                        ? "bg-indigo-500 shadow-md shadow-indigo-500/20" 
-                                        : (isLight ? "bg-gray-200" : "bg-white/10"),
-                                      (activeRole?.is_system && activeRole?.code === 'SUPER_ADMIN') ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
-                                    )}
-                                  >
-                                    <div className={cn(
-                                      "absolute h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-300 top-0.75",
-                                      isEnabled ? "left-6" : "left-0.75"
-                                    )} />
-                                  </button>
-                                </div>
-                              </div>
+                                </td>
+                                {actions.map((act) => {
+                                  const checked = isActionChecked(act);
+                                  const exists = !!getPermIdByAction(act);
+                                  return (
+                                    <td key={act} className="py-4 px-4 text-center">
+                                      {exists ? (
+                                        <div className="flex justify-center">
+                                          <button
+                                            type="button"
+                                            disabled={isSuperAdmin || !hasPermission("IAM_MANAGE")}
+                                            onClick={() => handleTogglePermissionByCode(m.code, act)}
+                                            className={cn(
+                                              "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
+                                              checked
+                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-105"
+                                                : isLight
+                                                  ? "border-gray-300 bg-white hover:border-indigo-400"
+                                                  : "border-white/10 bg-black/40 hover:border-indigo-500/50",
+                                              isSuperAdmin || !hasPermission("IAM_MANAGE") ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                                            )}
+                                          >
+                                            {checked && <Check className="h-3.5 w-3.5 stroke-[3] animate-in zoom-in-50 duration-200" />}
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <span className="text-[10px] text-gray-600 font-mono">-</span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
                             );
                           })}
-                        </div>
-                      </div>
-                    ))
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
                     <div className="h-60 flex flex-col items-center justify-center space-y-2 border border-dashed rounded-2xl border-white/5">
                       <Filter className={cn("h-6 w-6", isLight ? "text-gray-300" : "text-gray-600")} />

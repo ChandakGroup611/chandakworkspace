@@ -7,6 +7,7 @@ import {
   ChevronRight, ArrowRight, Loader2, Play 
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 import { fetchAssignees } from "@/lib/actions/users";
 import { 
   fetchTicketComments, 
@@ -39,6 +40,7 @@ export function TicketWorkspaceConsole({
 }: TicketWorkspaceConsoleProps) {
   const { theme } = useTheme();
   const isLightMode = theme === "executive-light";
+  const { hasPermission } = usePermissions();
 
   // Active Assignees
   const [assigneesList, setAssigneesList] = useState<any[]>([]);
@@ -333,7 +335,7 @@ export function TicketWorkspaceConsole({
           ) : (
             <button 
               onClick={generateTeamsMeeting}
-              disabled={isGeneratingTeams}
+              disabled={isGeneratingTeams || !hasPermission("TICKETS_UPDATE")}
               className={`flex items-center gap-1.5 px-3 h-9 text-xs font-semibold rounded-lg border transition-all ${
                 isLightMode 
                   ? "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100" 
@@ -459,39 +461,43 @@ export function TicketWorkspaceConsole({
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Incident Details
               </span>
-              {!isEditingDetails ? (
-                <button 
-                  onClick={() => setIsEditingDetails(true)}
-                  className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-600 font-semibold"
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  <span>Modify</span>
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={saveTitleDesc}
-                    disabled={savingDetails}
-                    className="flex items-center gap-1 text-xs text-green-500 hover:text-green-600 font-bold"
-                  >
-                    {savingDetails ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Save className="h-3.5 w-3.5" />
-                    )}
-                    <span>Save</span>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setTitle(ticket.title || "");
-                      setDescription(ticket.description || "");
-                      setIsEditingDetails(false);
-                    }}
-                    className="text-xs text-gray-500 hover:text-gray-600 font-medium"
-                  >
-                    Cancel
-                  </button>
-                </div>
+              {hasPermission("TICKETS_UPDATE") && (
+                <>
+                  {!isEditingDetails ? (
+                    <button 
+                      onClick={() => setIsEditingDetails(true)}
+                      className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-600 font-semibold"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      <span>Modify</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={saveTitleDesc}
+                        disabled={savingDetails}
+                        className="flex items-center gap-1 text-xs text-green-500 hover:text-green-600 font-bold"
+                      >
+                        {savingDetails ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Save className="h-3.5 w-3.5" />
+                        )}
+                        <span>Save</span>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setTitle(ticket.title || "");
+                          setDescription(ticket.description || "");
+                          setIsEditingDetails(false);
+                        }}
+                        className="text-xs text-gray-500 hover:text-gray-600 font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -548,7 +554,8 @@ export function TicketWorkspaceConsole({
               <select 
                 value={selectedCatId}
                 onChange={(e) => handleCategoryChange(e.target.value)}
-                className={`w-full h-10 px-3 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                disabled={!hasPermission("TICKETS_UPDATE")}
+                className={`w-full h-10 px-3 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-40 transition-all ${
                   isLightMode 
                     ? "bg-white border-gray-200 text-gray-900" 
                     : "bg-[#1e293b]/70 border-white/5 text-white"
@@ -569,7 +576,7 @@ export function TicketWorkspaceConsole({
               <select 
                 value={selectedSubcatId}
                 onChange={(e) => handleSubcategoryChange(e.target.value)}
-                disabled={!selectedCatId}
+                disabled={!selectedCatId || !hasPermission("TICKETS_UPDATE")}
                 className={`w-full h-10 px-3 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-40 transition-all ${
                   isLightMode 
                     ? "bg-white border-gray-200 text-gray-900" 
@@ -650,10 +657,11 @@ export function TicketWorkspaceConsole({
             <form onSubmit={submitRemark} className="flex gap-2">
               <input 
                 type="text"
-                placeholder="Add standard remark / update comments..."
+                placeholder={hasPermission("TICKETS_UPDATE") ? "Add standard remark / update comments..." : "You do not have permission to add remarks."}
                 value={newRemark}
                 onChange={(e) => setNewRemark(e.target.value)}
-                className={`flex-1 h-10 px-3 border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                disabled={!hasPermission("TICKETS_UPDATE")}
+                className={`flex-1 h-10 px-3 border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-55 ${
                   isLightMode 
                     ? "bg-white border-gray-200 text-gray-900" 
                     : "bg-[#1e293b]/70 border-white/5 text-white"
@@ -661,7 +669,7 @@ export function TicketWorkspaceConsole({
               />
               <button 
                 type="submit"
-                disabled={!newRemark.trim() || loadingRemarks}
+                disabled={!newRemark.trim() || loadingRemarks || !hasPermission("TICKETS_UPDATE")}
                 className="px-4 h-10 text-xs font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-lg disabled:opacity-50 disabled:hover:shadow-none transition-all flex items-center gap-1.5"
               >
                 {loadingRemarks && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -685,7 +693,8 @@ export function TicketWorkspaceConsole({
             <select 
               value={ticket.status_id}
               onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
-              className={`w-full h-11 px-3 border rounded-xl text-xs font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+              disabled={!hasPermission("TICKETS_UPDATE")}
+              className={`w-full h-11 px-3 border rounded-xl text-xs font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-40 transition-all ${
                 isLightMode 
                   ? "bg-white border-gray-200 text-gray-900" 
                   : "bg-[#1e293b]/80 border-white/5 text-white"
@@ -705,7 +714,8 @@ export function TicketWorkspaceConsole({
             <select 
               value={ticket.priority_id}
               onChange={(e) => handleFieldUpdate({ priority_id: e.target.value })}
-              className={`w-full h-11 px-3 border rounded-xl text-xs font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+              disabled={!hasPermission("TICKETS_UPDATE")}
+              className={`w-full h-11 px-3 border rounded-xl text-xs font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-40 transition-all ${
                 isLightMode 
                   ? "bg-white border-gray-200 text-gray-900" 
                   : "bg-[#1e293b]/80 border-white/5 text-white"
@@ -725,7 +735,8 @@ export function TicketWorkspaceConsole({
             <select 
               value={ticket.department_id || ""}
               onChange={(e) => handleFieldUpdate({ department_id: e.target.value })}
-              className={`w-full h-11 px-3 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+              disabled={!hasPermission("TICKETS_UPDATE")}
+              className={`w-full h-11 px-3 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-40 transition-all ${
                 isLightMode 
                   ? "bg-white border-gray-200 text-gray-900" 
                   : "bg-[#1e293b]/80 border-white/5 text-white"
@@ -746,7 +757,8 @@ export function TicketWorkspaceConsole({
             <select 
               value={ticket.assignee_id || ""}
               onChange={(e) => handleFieldUpdate({ assignee_id: e.target.value || null })}
-              className={`w-full h-11 px-3 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+              disabled={!hasPermission("TICKETS_UPDATE")}
+              className={`w-full h-11 px-3 border rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-40 transition-all ${
                 isLightMode 
                   ? "bg-white border-gray-200 text-gray-900" 
                   : "bg-[#1e293b]/80 border-white/5 text-white"

@@ -66,21 +66,9 @@ BEGIN
         END IF;
     END LOOP;
 
-    -- 3. High-Performance Permission Snapshot Refresh
-    -- Flattens all roles and permissions into a single row for instant RLS checks
-    INSERT INTO public.user_permissions_snapshot (user_id, permissions, updated_at)
-    SELECT 
-        NEW.id,
-        COALESCE(array_agg(DISTINCT p.code), '{}') as permissions,
-        now()
-    FROM public.user_roles ur
-    JOIN public.role_permissions rp ON ur.role_id = rp.role_id
-    JOIN public.permissions p ON rp.permission_id = p.id
-    WHERE ur.user_id = NEW.id
-    GROUP BY ur.user_id
-    ON CONFLICT (user_id) DO UPDATE SET
-        permissions = EXCLUDED.permissions,
-        updated_at = now();
+    -- 3. Refresh snapshot permissions (handled by triggers in comprehensive migration)
+    -- The user_permissions_snapshot table is now managed by automated triggers
+    -- that maintain the multi-row permission grant structure
 
     RETURN NEW;
 END;
@@ -113,7 +101,7 @@ CREATE POLICY policy_user_master_select_v2 ON user_master
         EXISTS (
             SELECT 1 FROM user_permissions_snapshot 
             WHERE user_id = auth.uid() 
-            AND 'SUPER_ADMIN' = ANY(permissions)
+            AND permission_code = 'SUPER_ADMIN'
         )
         OR
         -- 2. Department Admin / Manager sees their department
@@ -121,7 +109,7 @@ CREATE POLICY policy_user_master_select_v2 ON user_master
             EXISTS (
                 SELECT 1 FROM user_permissions_snapshot 
                 WHERE user_id = auth.uid() 
-                AND 'USER_MANAGE' = ANY(permissions)
+                AND permission_code = 'USERS_MANAGE'
             )
             AND 
             department_id = (SELECT department_id FROM user_master WHERE id = auth.uid())
@@ -138,14 +126,11 @@ CREATE POLICY policy_user_master_update ON user_master
         -- 1. Self-service
         (auth.uid() = id)
         OR
-        -- 2. Management Authority (Super Admin or User Manage permission)
+        -- 2. Management Authority (Super Admin or Users Manage permission)
         EXISTS (
             SELECT 1 FROM user_permissions_snapshot 
             WHERE user_id = auth.uid() 
-            AND (
-                'SUPER_ADMIN' = ANY(permissions) OR 
-                'USER_MANAGE' = ANY(permissions)
-            )
+            AND permission_code IN ('SUPER_ADMIN', 'USERS_MANAGE')
         )
     )
     WITH CHECK (true);
@@ -155,14 +140,14 @@ ALTER TABLE user_master FORCE ROW LEVEL SECURITY;
 
 
 -- 4. Seed User Management Permission
--- ----------------------------------------------------------------------------
+-- Note: Permissions are now managed by the comprehensive CRUD permissions migration (20260519180000)
+-- This section is kept for reference but disabled to avoid conflicts
+-- INSERT INTO permissions (code, name, module, submodule, action, resource_type)
+-- VALUES ('USERS_MANAGE', 'Manage User Directory', 'Personnel Registry', 'Users', 'MANAGE', 'PAGE')
+-- ON CONFLICT (code) DO NOTHING;
 
-INSERT INTO permissions (code, name, module, submodule, action, resource_type)
-VALUES ('USER_MANAGE', 'Manage User Directory', 'IAM', 'Users', 'MANAGE', 'PAGE')
-ON CONFLICT (code) DO NOTHING;
-
--- Map to Admin
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r, permissions p 
-WHERE r.code IN ('SUPER_ADMIN', 'ROLE_ADMIN') AND p.code = 'USER_MANAGE'
-ON CONFLICT DO NOTHING;
+-- Map to Admin (handled by comprehensive migration)
+-- INSERT INTO role_permissions (role_id, permission_id)
+-- SELECT r.id, p.id FROM roles r, permissions p 
+-- WHERE r.code IN ('SUPER_ADMIN', 'ROLE_ADMIN') AND p.code = 'USERS_MANAGE'
+-- ON CONFLICT DO NOTHING;

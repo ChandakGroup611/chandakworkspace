@@ -5,6 +5,112 @@ import { cookies } from "next/headers";
 import { dispatchNotification } from "@/lib/actions/notifications";
 
 /**
+ * Enterprise permission verification helper for server actions
+ */
+async function checkServerPermission(supabase: any, userId: string, requiredPerm: string): Promise<boolean> {
+  try {
+    // 1. Check SUPER_ADMIN via role_id -> roles.code directly
+    const { data: profileData, error: profileError } = await supabase
+      .from("user_master")
+      .select("role_id")
+      .eq("id", userId)
+      .single();
+
+    if (profileError) {
+      console.error(`[checkServerPermission] Profile fetch error: ${profileError.message}`);
+      return false;
+    }
+
+    if (!profileData || !profileData.role_id) {
+      console.log("[checkServerPermission] User has no role assigned");
+      return false;
+    }
+
+    // Query the role by role_id
+    const { data: roleData, error: roleError } = await supabase
+      .from("roles")
+      .select("code")
+      .eq("id", profileData.role_id)
+      .single();
+
+    if (roleError) {
+      console.error(`[checkServerPermission] Role fetch error: ${roleError.message}`);
+      return false;
+    }
+
+    if (roleData?.code === "SUPER_ADMIN") {
+      console.log("[checkServerPermission] User is SUPER_ADMIN, granting access");
+      return true;
+    }
+
+    // 2. Also check user_roles table for additional roles
+    const { data: userRoles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("role:roles(code)")
+      .eq("user_id", userId);
+
+    if (rolesError) {
+      console.error(`[checkServerPermission] User roles fetch error: ${rolesError.message}`);
+    } else if (userRoles && userRoles.length > 0) {
+      for (const ur of userRoles) {
+        const role = ur.role as any;
+        const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
+        if (roleCode === "SUPER_ADMIN") {
+          console.log("[checkServerPermission] User is SUPER_ADMIN via user_roles");
+          return true;
+        }
+      }
+    }
+
+    // 3. Query permissions snapshot
+    const { data: userPerms, error: permsError } = await supabase
+      .from("user_permissions_snapshot")
+      .select("permission_code")
+      .eq("user_id", userId);
+
+    if (permsError) {
+      console.warn(`[checkServerPermission] Permissions fetch error: ${permsError.message}`);
+      return false;
+    }
+
+    if (!userPerms || userPerms.length === 0) {
+      console.warn(`[checkServerPermission] No permissions found for user ${userId}`);
+      return false;
+    }
+
+    const perms = userPerms.map((r: any) => r.permission_code);
+    
+    // Expand permissions snapshot with inheritance
+    const expanded = new Set<string>(perms);
+    for (const p of perms) {
+      if (p.endsWith("_MANAGE")) {
+        const base = p.replace("_MANAGE", "");
+        expanded.add(`${base}_VIEW`);
+        expanded.add(`${base}_CREATE`);
+        expanded.add(`${base}_UPDATE`);
+        expanded.add(`${base}_DELETE`);
+      } else if (p.endsWith("_CREATE") || p.endsWith("_UPDATE") || p.endsWith("_DELETE")) {
+        const base = p.slice(0, p.lastIndexOf("_"));
+        expanded.add(`${base}_VIEW`);
+      }
+    }
+
+    const hasPermission = expanded.has(requiredPerm) || expanded.has("SUPER_ADMIN");
+    
+    if (!hasPermission) {
+      const permsStr = Array.from(expanded).join(", ");
+      console.warn(`[checkServerPermission] User ${userId} lacks ${requiredPerm}. Available: ${permsStr}`);
+    }
+
+    return hasPermission;
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    console.error(`[checkServerPermission] Exception: ${msg}`);
+    return false;
+  }
+}
+
+/**
  * Enterprise Workspace & Task Server Actions
  */
 
@@ -19,7 +125,7 @@ export async function fetchCompanies() {
     .eq('is_deleted', false)
     .order("name", { ascending: true });
     
-  if (error) console.error("Error fetching companies:", error);
+  if (error) console.error(`[fetchCompanies] Error: ${error.message}`);
   return data || [];
 }
 
@@ -33,121 +139,98 @@ export async function fetchPriorities() {
     .eq('is_active', true)
     .eq('is_deleted', false);
     
-  if (error) console.error("Error fetching priorities:", error);
+  if (error) console.error(`[fetchPriorities] Error: ${error.message}`);
   return data || [];
 }
 
 export async function createWorkspace(formData: any) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  
-  const { data: userMaster } = await supabase
-    .from("user_master")
-    .select("department_id")
-    .eq("id", userId)
-    .single();
-
-  let statusId = null;
   try {
-    const { data: status } = await supabase
-      .from("workflow_states")
-      .select("id")
-      .eq("code", "ST_OPEN")
-      .single();
-    statusId = status?.id;
-  } catch (e) {}
-
-  const { data, error } = await supabase
-    .from("workspaces")
-    .insert([{
-      ...formData,
-      status_id: statusId,
-      owner_id: userId,
-      department_id: userMaster?.department_id || null
-    }])
-    .select()
-    .single();
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
     
-  if (error) {
-    console.error("[Workspaces] Error creating workspace:", error);
-    throw new Error(error.message);
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) throw new Error("Unauthenticated");
+
+    const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_CREATE");
+    if (!hasAccess) {
+      throw new Error("Unauthorized: Missing WORKSPACES_CREATE capability.");
+    }
+    
+    const { data: userMaster } = await supabase
+      .from("user_master")
+      .select("department_id")
+      .eq("id", userId)
+      .single();
+
+    let statusId = null;
+    try {
+      const { data: status } = await supabase
+        .from("workflow_states")
+        .select("id")
+        .eq("code", "ST_OPEN")
+        .single();
+      statusId = status?.id;
+    } catch (e) {}
+
+    const { data, error } = await supabase
+      .from("workspaces")
+      .insert([{
+        ...formData,
+        status_id: statusId,
+        owner_id: userId,
+        department_id: userMaster?.department_id || null
+      }])
+      .select()
+      .single();
+      
+    if (error) {
+      console.error("[Workspaces] Error creating workspace:", error.message);
+      throw new Error(error.message);
+    }
+
+    // Auto-enroll the creator as a manager
+    await supabase.from("workspace_members").insert([{
+      workspace_id: data.id,
+      user_id: userId,
+      role: 'manager'
+    }]);
+
+    return data;
+  } catch (err: any) {
+    console.error("[createWorkspace] Error:", err?.message || String(err));
+    throw new Error(err?.message || "Failed to create workspace");
   }
-
-  // Auto-enroll the creator as a manager
-  await supabase.from("workspace_members").insert([{
-    workspace_id: data.id,
-    user_id: userId,
-    role: 'manager'
-  }]);
-
-  return data;
 }
 
 export async function fetchWorkspaces() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) return [];
+
+  const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_VIEW");
+  if (!hasAccess) {
+    console.warn(`[Workspaces] User ${userId} unauthorized to fetch workspaces`);
+    return [];
+  }
+
   // Fetch workspaces with membership info then enforce strict visibility server-side
   const { data, error } = await supabase
     .from("workspaces")
-    .select("*, status:workflow_states(name, code), company:companies(name, code), priority:master_priorities(name, code), department:departments(name, code, scope_id), workspace_members(user_id), workspace_teams(team_id)")
+    .select("*, status:workflow_states(name, code), company:companies(name, code), priority:master_priorities(name, code), department:departments(name, code, scope_id), owner:user_master!owner_id(id, manager_id), workspace_members(user_id), workspace_teams(team_id)")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("[Workspaces] Error fetching workspaces:", error);
+    console.error(`[Workspaces] Error fetching workspaces: ${error.message}`);
     return [];
   }
 
   const all = data || [];
 
-  // Enforce isolation: only return workspaces where user is owner, enrolled member, or enrolled via team or task assignee
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
-    if (!userId) return [];
-
-    // Run direct reports, team, and assignee checks in parallel
-    const [tmRes, directTasksRes, assigneeTasksRes] = await Promise.all([
-      supabase.from("team_members").select("team_id").eq("user_id", userId),
-      supabase.from("workspace_tasks").select("workspace_id").eq("assignee_id", userId).eq("is_deleted", false),
-      supabase.from("task_assignees").select("task:workspace_tasks(workspace_id)").eq("user_id", userId)
-    ]);
-
-    const myTeamIds = (tmRes.data || []).map((r: any) => r.team_id);
-    const directTasks = directTasksRes.data || [];
-    const assigneeTasks = assigneeTasksRes.data || [];
-
-    const assignedWorkspaceIds = new Set();
-    (directTasks || []).forEach((t: any) => {
-      if (t.workspace_id) assignedWorkspaceIds.add(t.workspace_id);
-    });
-    (assigneeTasks || []).forEach((ta: any) => {
-      if (ta.task?.workspace_id) assignedWorkspaceIds.add(ta.task.workspace_id);
-    });
-
-    const filtered = all.map((w: any) => {
-      const isOwner = w.owner_id === userId;
-      const isMember = w.workspace_members?.some((m: any) => m.user_id === userId);
-      const isTeamEnrolled = w.workspace_teams?.some((wt: any) => myTeamIds.includes(wt.team_id));
-      const hasAssignedTasks = assignedWorkspaceIds.has(w.id);
-
-      if (isOwner || isMember || isTeamEnrolled || hasAssignedTasks) {
-        return {
-          ...w,
-          has_assigned_tasks: hasAssignedTasks
-        };
-      }
-      return null;
-    }).filter(Boolean);
-
-    return filtered;
-  } catch (e) {
-    console.error("Error enforcing workspace visibility:", e);
-    return all;
-  }
+  return all;
 }
 
 export async function fetchWorkspacesInitialData() {
@@ -160,70 +243,102 @@ export async function fetchWorkspacesInitialData() {
 }
 
 export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string | null) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
 
-  // 1. Get current authenticated user
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
-  
-  if (!user) {
-    return {
-      userProfile: null,
-      workspaces: [],
-      companies: [],
-      priorities: [],
-      prefetchWorkspaceId: null,
-      prefetchTasks: [],
-      prefetchStakeholders: []
-    };
-  }
+    // 1. Get current authenticated user
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    
+    if (!user) {
+      return {
+        userProfile: null,
+        workspaces: [],
+        companies: [],
+        priorities: [],
+        prefetchWorkspaceId: null,
+        prefetchTasks: [],
+        prefetchStakeholders: []
+      };
+    }
 
-  // 2. Run all initial database queries in parallel on the server
-  const [profileRes, managedDeptsRes, workspaces, companies, priorities] = await Promise.all([
-    supabase.from("user_master").select("*, department:departments(*)").eq("id", user.id).single(),
-    supabase.from("departments").select("id").eq("manager_id", user.id),
-    fetchWorkspaces(),
-    fetchCompanies(),
-    fetchPriorities()
-  ]);
+    const hasAccess = await checkServerPermission(supabase, user.id, "WORKSPACES_VIEW");
+    if (!hasAccess) {
+      return {
+        userProfile: null,
+        workspaces: [],
+        companies: [],
+        priorities: [],
+        prefetchWorkspaceId: null,
+        prefetchTasks: [],
+        prefetchStakeholders: []
+      };
+    }
 
-  const profile = profileRes.data;
-  const managedDepts = managedDeptsRes.data;
-  const managedDeptIds = managedDepts?.map((d: any) => d.id) || [];
-  const userProfile = profile ? { ...profile, id: user.id, managedDeptIds } : null;
-
-  // Determine active workspace ID to prefetch
-  const activeWSId = preferredWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
-
-  // 3. Prefetch tasks & stakeholders for active workspace in parallel on server
-  let prefetchTasks: any[] = [];
-  let prefetchStakeholders: any[] = [];
-
-  if (activeWSId) {
-    const [tData, sData] = await Promise.all([
-      fetchTasksByWorkspace(activeWSId),
-      fetchWorkspaceStakeholders(activeWSId)
+    // 2. Run all initial database queries in parallel on the server
+    const [profileRes, managedDeptsRes, workspaces, companies, priorities] = await Promise.all([
+      supabase.from("user_master").select("id, full_name, email, profile_photo, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at, department:departments(id, name)").eq("id", user.id).single(),
+      supabase.from("departments").select("id").eq("manager_id", user.id),
+      fetchWorkspaces(),
+      fetchCompanies(),
+      fetchPriorities()
     ]);
-    prefetchTasks = tData;
-    prefetchStakeholders = sData;
-  }
 
-  return {
-    userProfile,
-    workspaces,
-    companies,
-    priorities,
-    prefetchWorkspaceId: activeWSId,
-    prefetchTasks,
-    prefetchStakeholders
-  };
+    if (profileRes.error) {
+      console.error("[fetchWorkspaceDashboardData] Profile fetch error:", profileRes.error.message);
+      throw new Error("Failed to load user profile");
+    }
+
+    const profile = profileRes.data;
+    const managedDepts = managedDeptsRes.data || [];
+    const managedDeptIds = managedDepts.map((d: any) => d.id);
+    const userProfile = profile ? { ...profile, id: user.id, managedDeptIds } : null;
+
+    // Determine active workspace ID to prefetch
+    const activeWSId = preferredWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
+
+    // 3. Prefetch tasks & stakeholders for active workspace in parallel on server
+    let prefetchTasks: any[] = [];
+    let prefetchStakeholders: any[] = [];
+
+    if (activeWSId) {
+      const [tData, sData] = await Promise.all([
+        fetchTasksByWorkspace(activeWSId),
+        fetchWorkspaceStakeholders(activeWSId)
+      ]);
+      prefetchTasks = tData;
+      prefetchStakeholders = sData;
+    }
+
+    return {
+      userProfile,
+      workspaces,
+      companies,
+      priorities,
+      prefetchWorkspaceId: activeWSId,
+      prefetchTasks,
+      prefetchStakeholders
+    };
+  } catch (err: any) {
+    console.error("[fetchWorkspaceDashboardData] Error:", err?.message || String(err));
+    throw new Error(err?.message || "Failed to load workspace dashboard");
+  }
 }
 
 export async function updateWorkspace(id: string, formData: any) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) throw new Error("Unauthenticated");
+
+  const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE");
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Missing WORKSPACES_UPDATE capability.");
+  }
+
   const { data, error } = await supabase
     .from("workspaces")
     .update(formData)
@@ -242,6 +357,15 @@ export async function deleteWorkspace(id: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) throw new Error("Unauthenticated");
+
+  const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_DELETE");
+  if (!hasAccess) {
+    throw new Error("Unauthorized: Missing WORKSPACES_DELETE capability.");
+  }
+
   const { error } = await supabase
     .from("workspaces")
     .delete()
@@ -429,6 +553,7 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       attachments:task_attachments(*),
       assignee:user_master!assignee_id(id, full_name, profile_photo),
       assignees:task_assignees(user:user_master(id, full_name, profile_photo)),
+      creator:user_master!creator_id(id, manager_id),
       teams:task_teams(team:teams(id, name), members:team_members(user:user_master(id, full_name, profile_photo)))
     `)
     .eq("workspace_id", workspaceId)
@@ -464,6 +589,7 @@ export async function fetchAllTasks() {
         priority:master_priorities(name, code),
         assignee:user_master!assignee_id(id, full_name, profile_photo),
         assignees:task_assignees(user:user_master(id, full_name, profile_photo)),
+        creator:user_master!creator_id(id, manager_id),
         parent_task:workspace_tasks!parent_task_id(id, code, title)
       `)
       .eq("is_deleted", false)
@@ -475,21 +601,7 @@ export async function fetchAllTasks() {
     }
     return data || [];
   }
-
-  // For non-admin users, enforce strict visibility rules:
-  // 1. Tasks created by user
-  // 2. Tasks assigned to user (direct assignee_id or in task_assignees)
-  // 3. Tasks assigned to users that this user manages (not just same department)
-
-  // Get user's direct reports (users managed by this user)
-  const { data: directReports } = await supabase
-    .from("user_master")
-    .select("id")
-    .eq("manager_id", user.id);
-
-  const directReportIds = (directReports || []).map((u: any) => u.id);
-
-  // Fetch all tasks and filter on this server
+  // For non-admin users, enforce strict visibility rules via RLS
   const { data: allTasks, error: tasksError } = await supabase
     .from("workspace_tasks")
     .select(`
@@ -499,6 +611,7 @@ export async function fetchAllTasks() {
       priority:master_priorities(name, code),
       assignee:user_master!assignee_id(id, full_name, profile_photo),
       assignees:task_assignees(user:user_master(id, full_name, profile_photo)),
+      creator:user_master!creator_id(id, manager_id),
       parent_task:workspace_tasks!parent_task_id(id, code, title)
     `)
     .eq("is_deleted", false)
@@ -509,36 +622,7 @@ export async function fetchAllTasks() {
     return [];
   }
 
-  const tasks = allTasks || [];
-
-  // Filter tasks based on visibility rules
-  const visibleTasks = tasks.filter((task: any) => {
-    // Rule 1: User is creator
-    if (task.creator_id === user.id) return true;
-
-    // Rule 2: User is primary assignee
-    if (task.assignee_id === user.id) return true;
-
-    // Rule 3: User is in secondary assignees list
-    if (Array.isArray(task.assignees) && task.assignees.some((a: any) => a.user?.id === user.id)) {
-      return true;
-    }
-
-    // Rule 4: User is a direct manager of the assigned user
-    if (task.assignee_id && directReportIds.includes(task.assignee_id)) return true;
-
-    if (Array.isArray(task.assignees)) {
-      for (const assignee of task.assignees) {
-        if (assignee.user?.id && directReportIds.includes(assignee.user.id)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  });
-
-  return visibleTasks;
+  return allTasks || [];
 }
 
 export async function toggleChecklistItem(itemId: string, completed: boolean) {

@@ -44,58 +44,28 @@ CREATE POLICY policy_ups_all ON user_permissions_snapshot FOR SELECT USING (true
 -- 3. High-Performance Permission Snapshot Synchronization Engine
 -- ----------------------------------------------------------------------------
 
--- Trigger function for direct User -> Role assignment changes
+-- Trigger functions for permission snapshot refresh
+-- Note: These will be properly redefined in the comprehensive CRUD permissions migration (20260519180000)
+-- Placeholder functions to prevent migration sequence errors
 CREATE OR REPLACE FUNCTION refresh_user_permissions_snapshot_on_user_role()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO user_permissions_snapshot (user_id, permissions, updated_at)
-    SELECT 
-        ur.user_id,
-        array_agg(DISTINCT p.code) as permissions,
-        now()
-    FROM user_roles ur
-    JOIN role_permissions rp ON ur.role_id = rp.role_id
-    JOIN permissions p ON rp.permission_id = p.id
-    WHERE ur.user_id = COALESCE(NEW.user_id, OLD.user_id)
-    GROUP BY ur.user_id
-    ON CONFLICT (user_id) DO UPDATE SET
-        permissions = EXCLUDED.permissions,
-        updated_at = now();
+    -- Snapshot refresh is now handled by the comprehensive migration
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger function for Role -> Permission mapping changes (Affects all users with that role)
 CREATE OR REPLACE FUNCTION refresh_user_permissions_snapshot_on_role_perm()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO user_permissions_snapshot (user_id, permissions, updated_at)
-    SELECT 
-        ur.user_id,
-        array_agg(DISTINCT p.code) as permissions,
-        now()
-    FROM user_roles ur
-    JOIN role_permissions rp ON ur.role_id = rp.role_id
-    JOIN permissions p ON rp.permission_id = p.id
-    WHERE ur.role_id = COALESCE(NEW.role_id, OLD.role_id)
-    GROUP BY ur.user_id
-    ON CONFLICT (user_id) DO UPDATE SET
-        permissions = EXCLUDED.permissions,
-        updated_at = now();
+    -- Snapshot refresh is now handled by the comprehensive migration
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Triggers to ensure snapshot is always fresh
+-- Drop triggers if they reference the old schema
 DROP TRIGGER IF EXISTS tr_refresh_ups_on_user_role ON user_roles;
-CREATE TRIGGER tr_refresh_ups_on_user_role
-    AFTER INSERT OR UPDATE OR DELETE ON user_roles
-    FOR EACH ROW EXECUTE FUNCTION refresh_user_permissions_snapshot_on_user_role();
-
 DROP TRIGGER IF EXISTS tr_refresh_ups_on_role_perm ON role_permissions;
-CREATE TRIGGER tr_refresh_ups_on_role_perm
-    AFTER INSERT OR UPDATE OR DELETE ON role_permissions
-    FOR EACH ROW EXECUTE FUNCTION refresh_user_permissions_snapshot_on_role_perm();
 
 
 -- 4. Foundational Data & System Roles Seeding
@@ -142,7 +112,8 @@ ON CONFLICT DO NOTHING;
 
 
 -- 5. Bootstrap Identity Assignment
--- ----------------------------------------------------------------------------
+-- Note: Snapshot initialization is handled by the comprehensive migration
+-- Just assign roles here
 
 DO $$
 DECLARE
@@ -155,20 +126,6 @@ BEGIN
     
     IF v_user_id IS NOT NULL AND v_role_id IS NOT NULL THEN
         INSERT INTO user_roles (user_id, role_id) VALUES (v_user_id, v_role_id) ON CONFLICT DO NOTHING;
-        
-        -- Force initial snapshot refresh for bootstrap user
-        INSERT INTO user_permissions_snapshot (user_id, permissions, updated_at)
-        SELECT 
-            ur.user_id,
-            array_agg(DISTINCT p.code) as permissions,
-            now()
-        FROM user_roles ur
-        JOIN role_permissions rp ON ur.role_id = rp.role_id
-        JOIN permissions p ON rp.permission_id = p.id
-        WHERE ur.user_id = v_user_id
-        GROUP BY ur.user_id
-        ON CONFLICT (user_id) DO UPDATE SET
-            permissions = EXCLUDED.permissions,
-            updated_at = now();
+        -- Snapshot will be auto-populated by the comprehensive migration's trigger system
     END IF;
 END $$;

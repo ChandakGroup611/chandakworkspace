@@ -74,19 +74,9 @@ CREATE OR REPLACE FUNCTION public.can_access_ticket(
 )
 RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
-    -- RULE 1: SUPER_ADMIN sees everything (Direct Role check or Legacy User Roles check)
+    -- RULE 1: SUPER_ADMIN sees everything (Fast JWT check)
     IF (
         (auth.jwt() -> 'app_metadata' ->> 'role') = 'SUPER_ADMIN'
-        OR EXISTS (
-            SELECT 1 FROM public.user_master um
-            JOIN public.roles r ON um.role_id = r.id
-            WHERE um.id = auth.uid() AND r.code = 'SUPER_ADMIN'
-        )
-        OR EXISTS (
-            SELECT 1 FROM public.user_roles ur
-            JOIN public.roles r ON ur.role_id = r.id
-            WHERE ur.user_id = auth.uid() AND r.code = 'SUPER_ADMIN'
-        )
     ) THEN RETURN TRUE; END IF;
 
     -- RULE 2: Ownership - Creator sees their own tickets
@@ -135,7 +125,11 @@ DECLARE
     v_notif_payload JSONB;
 BEGIN
     -- 4.1 Identify Action Caller (Actor)
-    v_actor_id := COALESCE(auth.uid(), COALESCE(NEW.creator_id, OLD.creator_id));
+    IF (TG_OP = 'DELETE') THEN
+        v_actor_id := COALESCE(auth.uid(), OLD.creator_id);
+    ELSE
+        v_actor_id := COALESCE(auth.uid(), NEW.creator_id);
+    END IF;
     SELECT full_name INTO v_actor_name FROM public.user_master WHERE id = v_actor_id;
     IF v_actor_name IS NULL THEN
         v_actor_name := 'System Operator';
@@ -234,7 +228,7 @@ BEGIN
 
     ELSIF (v_operation = 'UPDATE') THEN
         -- Check Status Change
-        IF (OLD.status_id <> NEW.status_id) THEN
+        IF (OLD.status_id IS DISTINCT FROM NEW.status_id) THEN
             SELECT name INTO v_old_status_name FROM public.workflow_states WHERE id = OLD.status_id;
             SELECT name INTO v_new_status_name FROM public.workflow_states WHERE id = NEW.status_id;
             
@@ -256,7 +250,7 @@ BEGIN
             END IF;
 
             -- Notify Assignee
-            IF NEW.assignee_id IS NOT NULL AND NEW.assignee_id <> NEW.creator_id THEN
+            IF NEW.assignee_id IS NOT NULL AND NEW.assignee_id IS DISTINCT FROM NEW.creator_id THEN
                 INSERT INTO public.notification_queue (recipient_id, payload) VALUES (NEW.assignee_id, v_notif_payload);
                 IF v_assignee_email IS NOT NULL THEN
                     INSERT INTO public.email_queue (recipient_email, subject, body_template) VALUES (v_assignee_email, v_subject, v_body);
@@ -291,12 +285,15 @@ BEGIN
             END IF;
             
             -- Notify Old Assignee
-            IF OLD.assignee_id IS NOT NULL AND OLD.assignee_id <> NEW.assignee_id AND OLD.assignee_id <> NEW.creator_id THEN
+            IF OLD.assignee_id IS NOT NULL AND OLD.assignee_id IS DISTINCT FROM NEW.assignee_id AND OLD.assignee_id IS DISTINCT FROM NEW.creator_id THEN
                 INSERT INTO public.notification_queue (recipient_id, payload) VALUES (OLD.assignee_id, v_notif_payload);
             END IF;
         END IF;
     END IF;
 
+    IF (TG_OP = 'DELETE') THEN
+        RETURN OLD;
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

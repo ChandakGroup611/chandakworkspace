@@ -6,6 +6,7 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { createClient } from "@/utils/supabase/client";
+import { usePermissions } from "@/hooks/usePermissions";
 import { 
   FileCheck2, 
   CheckCircle2, 
@@ -52,12 +53,18 @@ interface RequirementItem {
 
 export default function RequirementsPage() {
   const supabase = createClient();
+  const { hasPermission, loading: permsLoading } = usePermissions();
   
   // Realtime Database-Driven Selectors State
   const [regulatoryOptions, setRegulatoryOptions] = useState<string[]>([]);
   const [approvalTypesList, setApprovalTypesList] = useState<any[]>([]);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configWarnings, setConfigWarnings] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [reqs, setReqs] = useState<RequirementItem[]>([
     {
@@ -216,6 +223,29 @@ export default function RequirementsPage() {
 
   const stages = ["Draft", "Analysis", "Approval", "Development", "QA", "Released"];
 
+  if (!mounted || permsLoading) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-[#070913]">
+        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+          Verifying Credentials...
+        </span>
+      </div>
+    );
+  }
+
+  if (!hasPermission("REQUIREMENTS_VIEW")) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-[#070913] text-white">
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <ShieldAlert className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view the Requirement Engineering Lifecycle.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
       {/* Module Title Banner */}
@@ -239,7 +269,12 @@ export default function RequirementsPage() {
           >
             Sync Config Registry
           </AppButton>
-          <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>
+          <AppButton 
+            variant="primary" 
+            size="sm" 
+            leftIcon={<Plus className="h-3.5 w-3.5" />}
+            disabled={!hasPermission("REQUIREMENTS_CREATE")}
+          >
             Draft Scope
           </AppButton>
         </div>
@@ -392,7 +427,7 @@ export default function RequirementsPage() {
                     value={selectedReq.customFields?.regulatory_scope || ""}
                     onChange={(e) => handleCustomFieldChange("regulatory_scope", e.target.value)}
                     className="w-full h-8 px-2 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-200 focus:outline-none focus:border-amber-500/50 cursor-pointer disabled:opacity-50"
-                    disabled={regulatoryOptions.length === 0}
+                    disabled={regulatoryOptions.length === 0 || !hasPermission("REQUIREMENTS_UPDATE")}
                   >
                     {regulatoryOptions.length === 0 ? (
                       <option value="" className="bg-[#0A0D14] text-amber-500">-- Unconfigured in Registry --</option>
@@ -416,7 +451,8 @@ export default function RequirementsPage() {
                     placeholder="e.g. 15000"
                     value={selectedReq.customFields?.budget_allocation_usd || ""}
                     onChange={(e) => handleCustomFieldChange("budget_allocation_usd", Number(e.target.value))}
-                    className="h-8 text-xs font-mono"
+                    disabled={!hasPermission("REQUIREMENTS_UPDATE")}
+                    className="h-8 text-xs font-mono disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -431,8 +467,12 @@ export default function RequirementsPage() {
                 {selectedReq.criteria.map((c, cIdx) => (
                   <div
                     key={cIdx}
-                    onClick={() => toggleCriterion(cIdx)}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.02] cursor-pointer transition-colors text-xs text-gray-300 select-none"
+                    onClick={() => hasPermission("REQUIREMENTS_UPDATE") && toggleCriterion(cIdx)}
+                    className={`flex items-center gap-2.5 p-2 rounded-lg text-xs select-none transition-colors ${
+                      hasPermission("REQUIREMENTS_UPDATE") 
+                        ? "hover:bg-white/[0.02] cursor-pointer text-gray-300" 
+                        : "opacity-55 cursor-not-allowed text-gray-400"
+                    }`}
                   >
                     <div className={c.done ? "text-emerald-400" : "text-gray-600"}>
                       {c.done ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
@@ -470,7 +510,8 @@ export default function RequirementsPage() {
                       key={app.tier}
                       type="button"
                       onClick={() => toggleApproval(app.tier)}
-                      className={`p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer select-none flex flex-col justify-between h-16 ${
+                      disabled={!hasPermission("REQUIREMENTS_UPDATE")}
+                      className={`p-2.5 rounded-xl border text-left transition-all duration-200 select-none flex flex-col justify-between h-16 disabled:opacity-45 disabled:cursor-not-allowed ${
                         isApproved 
                           ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
                           : "bg-white/[0.01] border-white/5 hover:border-white/10 text-gray-500"
@@ -530,13 +571,20 @@ export default function RequirementsPage() {
               <form onSubmit={commitVersionSnapshot} className="flex gap-2 pt-1">
                 <div className="flex-1">
                   <AppInput 
-                    placeholder="Document functional mapping adjustments for next iteration tuple..." 
+                    placeholder={hasPermission("REQUIREMENTS_UPDATE") ? "Document functional mapping adjustments for next iteration tuple..." : "You do not have permissions to commit snapshots."}
                     value={newCommitMessage}
                     onChange={(e) => setNewCommitMessage(e.target.value)}
-                    className="h-9 text-xs"
+                    disabled={!hasPermission("REQUIREMENTS_UPDATE")}
+                    className="h-9 text-xs disabled:opacity-50"
                   />
                 </div>
-                <AppButton variant="primary" size="sm" className="h-9 px-3 shrink-0 text-xs" type="submit">
+                <AppButton 
+                  variant="primary" 
+                  size="sm" 
+                  className="h-9 px-3 shrink-0 text-xs disabled:opacity-50" 
+                  type="submit"
+                  disabled={!newCommitMessage.trim() || !hasPermission("REQUIREMENTS_UPDATE")}
+                >
                   Commit New Snapshot
                 </AppButton>
               </form>
