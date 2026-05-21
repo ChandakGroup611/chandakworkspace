@@ -576,7 +576,7 @@ export async function fetchAllTasks() {
   if (!user) return [];
 
   // Check if user is admin
-  const isAdmin = user.app_metadata?.role === "SUPER_ADMIN";
+  const isAdmin = user.app_metadata?.role === "SUPER_ADMIN" || user.app_metadata?.role === "ROLE_ADMIN";
 
   // If admin, return all tasks
   if (isAdmin) {

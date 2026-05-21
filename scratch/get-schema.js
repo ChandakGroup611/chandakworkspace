@@ -1,5 +1,4 @@
 const fs = require('fs');
-const fetch = require('node-fetch');
 const path = require('path');
 
 const envPath = path.resolve(process.cwd(), '.env.local');
