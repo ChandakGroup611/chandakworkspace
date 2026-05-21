@@ -20,7 +20,7 @@ const supabaseKey = env['SUPABASE_SERVICE_ROLE_KEY'] || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function check() {
-  const { data, error } = await supabase.from('workspace_tasks').select('*').eq('workspace_id', '79944a53-658d-4a73-bc25-38b9399928b0');
-  console.log(data);
+  const { data, error } = await supabase.from('workspaces').select('id, owner_id').eq('id', '79944a53-658d-4a73-bc25-38b9399928b0');
+  console.log("Workspace:", data);
 }
 check();

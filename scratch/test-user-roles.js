@@ -20,7 +20,14 @@ const supabaseKey = env['SUPABASE_SERVICE_ROLE_KEY'] || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function check() {
-  const { data, error } = await supabase.from('workspace_tasks').select('*').eq('workspace_id', '79944a53-658d-4a73-bc25-38b9399928b0');
-  console.log(data);
+  const { data, error } = await supabase.from('user_master').select('id, full_name, email, role_id, manager_id').eq('id', '53b7dbae-6049-44a7-a9c1-4ba769b4c324');
+  console.log("Creator:", data);
+  
+  const { data: d2 } = await supabase.from('user_master').select('id, full_name, email, role_id, manager_id').eq('id', '06cb4e59-b0b3-45d7-b929-c526fc33c429');
+  console.log("Assignee:", d2);
+  
+  // Who is the logged in user? Let's check all users to see who might be logged in.
+  const { data: users } = await supabase.from('user_master').select('id, full_name, email, role_id, manager_id');
+  console.log("All users:", users);
 }
 check();
