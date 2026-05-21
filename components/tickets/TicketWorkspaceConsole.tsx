@@ -872,7 +872,7 @@ export function TicketWorkspaceConsole({
 
       {/* ── 5. EMBEDDED PRINTABLE AUDIT REPORT DIALOG (MODAL) ── */}
       {showPrintReport && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 overflow-y-auto">
           <div className={`w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border animate-in zoom-in-95 duration-200 ${
             isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0f172a] border-white/10 text-white"
           }`}>

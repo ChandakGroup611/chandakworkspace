@@ -254,7 +254,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Modal */}
       {selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedTask(null)}>
+        <div className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 bg-black/50" onClick={() => setSelectedTask(null)}>
           <div className="w-full max-w-3xl bg-white/5 rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between">
               <div>

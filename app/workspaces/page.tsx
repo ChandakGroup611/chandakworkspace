@@ -73,10 +73,18 @@ export default function WorkspacesPage() {
       return t.creator_id === currentUser.id;
     }
     if (selectedScope === "ASSIGNEE") {
-      // Check explicit assignees, primary assignee, and team membership
-      const isExplicit = t.assignees?.some((a: any) => a.user?.id === currentUser.id) || t.assignee_id === currentUser.id;
-      const isTeamMember = t.teams?.some((tt: any) => tt.members?.some((m: any) => m.user?.id === currentUser.id));
-      return isExplicit || isTeamMember;
+      const uid = currentUser?.id;
+      if (!uid) return false;
+      
+      const isPrimary = t.assignee_id === uid || t.assignee?.id === uid;
+      const isExplicit = Array.isArray(t.assignees) 
+        ? t.assignees.some((a: any) => a.user?.id === uid || a.user_id === uid || a.id === uid)
+        : false;
+      const isTeamMember = Array.isArray(t.teams)
+        ? t.teams.some((tt: any) => Array.isArray(tt.members) && tt.members.some((m: any) => m.user?.id === uid || m.user_id === uid))
+        : false;
+        
+      return isPrimary || isExplicit || isTeamMember;
     }
     if (selectedScope === "MANAGER") {
       // Check if current user is the manager of the task creator OR if they manage the workspace itself
@@ -718,7 +726,7 @@ export default function WorkspacesPage() {
 
       {/* Creation Overlays */}
       {isCreatingWS && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
           <AppCard className={`w-full max-w-lg p-6 shadow-2xl border-t-4 ${isLightMode ? "border-t-indigo-600 border-x-0 border-b-0" : "border-t-indigo-500 border-white/10"}`}>
             <h3 className={`text-lg font-bold mb-4 ${isLightMode ? "text-gray-900" : "text-white"}`}>{editWSId ? "Edit" : "Initialize"} Workspace</h3>
             <form onSubmit={handleCreateWorkspace} className="space-y-4">

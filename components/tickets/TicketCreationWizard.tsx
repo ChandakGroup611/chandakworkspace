@@ -84,7 +84,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+    <div className="fixed inset-0 z-[100] flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 md:p-8">
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm animate-in fade-in duration-300 ${

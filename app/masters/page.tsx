@@ -1156,7 +1156,7 @@ export default function MastersPage() {
       {/* ── Dynamic Overlay Append Modal ── */}
       {showModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4"
           style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >

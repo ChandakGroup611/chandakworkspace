@@ -98,7 +98,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
       <AppCard className={`w-full max-w-2xl shadow-2xl border-t-4 ${isLightMode ? "border-t-purple-600 border-x-0 border-b-0 bg-white" : "border-t-purple-500 border-white/10 bg-[#0f111a]"}`}>
         
         <div className="p-6 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">

@@ -1319,7 +1319,7 @@ export default function UserMasterPage() {
       {/* ── Dynamic Personnel Register & Update Overlay Modal ── */}
       {showModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in-0 duration-150"
+          className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
           style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
@@ -1791,7 +1791,7 @@ export default function UserMasterPage() {
 
             {isViewingPhoto && (
               <div 
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in-0 duration-200"
+                className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-200"
                 style={{ backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
                 onClick={() => setIsViewingPhoto(false)}
               >
@@ -1819,7 +1819,7 @@ export default function UserMasterPage() {
       {/* ── Dynamic Premium Smart Delete & Deactivate User Warning Modal ── */}
       {deleteInspectUser && deleteWarningData && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in-0 duration-150"
+          className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
           style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
           onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
         >

@@ -6,35 +6,10 @@ export async function GET(request: Request) {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // 1. Get Arun's user ID
-  const { data: users, error: userError } = await supabase
-    .from('user_master')
-    .select('id, email, full_name')
-    .eq('full_name', 'Arun')
-    .limit(1);
+  // Arun (avi2@gmail.com)
+  const arunId = 'a585c2eb-e95b-4e5e-932f-ed13c7668e87';
 
-  if (userError || !users || users.length === 0) {
-    return NextResponse.json({ error: 'User Arun not found', details: userError });
-  }
-
-  const arunId = users[0].id;
-
-  // 2. Impersonate Arun and run query
-  const { data: rpcData, error: rpcError } = await supabase.rpc('execute_sql_query', {
-    query: `
-      BEGIN;
-      SELECT set_config('request.jwt.claim.sub', '${arunId}', true);
-      SELECT set_config('request.jwt.claim.role', 'authenticated', true);
-      
-      -- Try to fetch workspaces
-      SELECT id FROM public.workspaces;
-      COMMIT;
-    `
-  });
-
-  return NextResponse.json({
-    arunId,
-    rpcData,
-    rpcError
-  });
+  // We can't use execute_sql_query. But we CAN test RLS using the REST API if we create a signed JWT!
+  // BUT we don't need a JWT.
+  return NextResponse.json({ error: "Can't test this way easily" });
 }

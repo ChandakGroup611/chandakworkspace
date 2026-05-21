@@ -332,7 +332,7 @@ export default function Navbar() {
       </header>
 
       {showTimeoutWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="w-full max-w-md p-6 rounded-2xl bg-gradient-to-br from-rose-950 via-[#0A0D14] to-[#0A0D14] border-2 border-rose-500/50 shadow-2xl space-y-4 text-center relative overflow-hidden animate-in zoom-in-90 duration-300">
             <div className="absolute top-0 left-0 w-full h-1 bg-white/10">
               <div 

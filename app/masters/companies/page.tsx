@@ -276,7 +276,7 @@ export default function CompanyMasterPage() {
       </AppCard>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in-50">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
           <AppCard className="w-full max-w-xl p-6 shadow-2xl border-indigo-500/20">
             <h2 className="text-xl font-bold text-white mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
             <form onSubmit={handleSave} className="space-y-4">
