@@ -60,12 +60,12 @@ USING (
         -- Also visible if user is a member of the task's explicit team
         SELECT 1 FROM public.task_teams tt
         JOIN public.team_members tm ON tt.team_id = tm.team_id
-        WHERE tt.task_id = id AND tm.user_id = auth.uid()
+        WHERE tt.task_id = workspace_tasks.id AND tm.user_id = auth.uid()
     )
     OR EXISTS (
         -- Also visible if user is an explicit assignee in task_assignees
         SELECT 1 FROM public.task_assignees ta
-        WHERE ta.task_id = id AND ta.user_id = auth.uid()
+        WHERE ta.task_id = workspace_tasks.id AND ta.user_id = auth.uid()
     )
 );
 
@@ -77,7 +77,7 @@ USING (
     OR EXISTS (
         -- Visible if user is a member of the workspace
         SELECT 1 FROM public.workspace_members wm 
-        WHERE wm.workspace_id = id AND wm.user_id = auth.uid()
+        WHERE wm.workspace_id = workspaces.id AND wm.user_id = auth.uid()
     )
 );
 
