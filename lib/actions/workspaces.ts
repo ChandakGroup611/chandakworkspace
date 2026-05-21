@@ -554,7 +554,7 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       assignee:user_master!assignee_id(id, full_name, profile_photo),
       assignees:task_assignees(user:user_master(id, full_name, profile_photo)),
       creator:user_master!creator_id(id, manager_id),
-      teams:task_teams(team:teams(id, name), members:team_members(user:user_master(id, full_name, profile_photo)))
+      teams:task_teams(team:teams(id, name, members:team_members(user:user_master(id, full_name, profile_photo))))
     `)
     .eq("workspace_id", workspaceId)
     .eq("is_deleted", false)

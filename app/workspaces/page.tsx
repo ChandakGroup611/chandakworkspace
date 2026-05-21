@@ -79,23 +79,12 @@ export default function WorkspacesPage() {
       return t.creator_id === currentUser.id || isExplicit || isTeamMember;
     }
     if (selectedScope === "MANAGER") {
-      // Check if current user is the manager of the task creator
-      return t.creator?.manager_id === currentUser.id;
+      // Check if current user is the manager of the task creator OR if they manage the workspace itself
+      return t.creator?.manager_id === currentUser.id || activeWorkspace?.owner_id === currentUser.id || activeWorkspace?.workspace_members?.some((m: any) => m.user_id === currentUser.id && m.role === 'manager');
     }
     return true;
   });
 
-  // Auto-switch active workspace if current one gets filtered out
-  useEffect(() => {
-    if (filteredWorkspaces.length > 0) {
-      const isStillVisible = filteredWorkspaces.some(w => w.id === activeWorkspace?.id);
-      if (!isStillVisible) {
-        setActiveWorkspace(filteredWorkspaces[0]);
-      }
-    } else {
-      setActiveWorkspace(null);
-    }
-  }, [selectedScope, workspaces, currentUser]);
   
   // Modals
   const [isCreatingWS, setIsCreatingWS] = useState(false);
@@ -103,7 +92,7 @@ export default function WorkspacesPage() {
   const [editWSId, setEditWSId] = useState<string | null>(null);
   
   // Active selected task for side panel detail view (chat & timeline)
-  const [selectedTask, setSelectedTask] = useState<any>(null);
+
 
   
   // Forms
@@ -156,15 +145,12 @@ export default function WorkspacesPage() {
             setStakeholders(dashboard.prefetchStakeholders || []);
 
             if (urlTaskDetails) {
-              setSelectedTask(urlTaskDetails);
               // Mark read asynchronously
               fetch('/api/mentions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ _action: 'mark_read', taskId: urlTaskDetails.id })
               }).catch(() => {});
-            } else if ((dashboard.prefetchTasks || []).length > 0) {
-              setSelectedTask(dashboard.prefetchTasks[0]);
             }
           }
         }
@@ -181,7 +167,6 @@ export default function WorkspacesPage() {
     if (!activeWorkspace) {
       setTasks([]);
       setStakeholders([]);
-      setSelectedTask(null);
       lastFetchedWorkspaceId.current = null;
       return;
     }
@@ -197,11 +182,6 @@ export default function WorkspacesPage() {
       ]);
       setTasks(tData);
       setStakeholders(sData);
-      if (tData.length > 0) {
-        setSelectedTask(tData[0]);
-      } else {
-        setSelectedTask(null);
-      }
     }
     loadWorkspaceData();
   }, [activeWorkspace?.id]);
@@ -297,7 +277,7 @@ export default function WorkspacesPage() {
       const tData = await fetchTasksByWorkspace(activeWorkspace.id);
       setTasks(tData);
       const createdTask = tData.find((t: any) => t.id === data.id) || data;
-      setSelectedTask(createdTask);
+
       setIsCreatingTask(false);
     } catch (err: any) {
       console.error(err);
@@ -330,7 +310,7 @@ export default function WorkspacesPage() {
   }
 
   return (
-    <div className={`h-screen overflow-y-auto flex flex-col font-sans p-6 space-y-6 ${isLightMode ? "bg-gray-50" : "bg-[#070913]"}`}>
+    <div className={`min-h-screen flex flex-col font-sans p-6 space-y-6 ${isLightMode ? "bg-gray-50" : "bg-[#070913]"}`}>
       
       {/* Dynamic Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/5">
@@ -516,7 +496,7 @@ export default function WorkspacesPage() {
               </AppCard>
               <AppCard className={`p-4 flex flex-col justify-center border-l-4 ${isLightMode ? "border-l-purple-500" : "border-l-purple-400"}`}>
                 <span className="text-[10px] uppercase font-bold text-gray-500 mb-1 flex items-center gap-1"><Layers className="h-3 w-3"/> Total Tasks</span>
-                <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{filteredTasks.length} Directives</span>
+                <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{tasks.length} Directives</span>
               </AppCard>
             </div>
 
@@ -542,13 +522,13 @@ export default function WorkspacesPage() {
 
               <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin">
                 {filteredTasks.map(task => (
-                  <a
+                  <a 
                     key={task.id}
                     href={`/tasks/${task.id}`}
-                    className={`block p-4 rounded-xl border transition-all ${
-                      selectedTask?.id === task.id
-                        ? (isLightMode ? "bg-indigo-50/50 border-indigo-200 shadow-sm" : "bg-indigo-500/10 border-indigo-500/30")
-                        : (isLightMode ? "bg-white border-gray-200 hover:shadow-md" : "bg-white/[0.02] border-white/10 hover:border-white/20")
+                    className={`block p-4 rounded-xl transition-all duration-300 border backdrop-blur-sm group hover:-translate-y-0.5 shadow-sm hover:shadow-md ${
+                      isLightMode 
+                        ? "bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30" 
+                        : "bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.04]"
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -625,32 +605,6 @@ export default function WorkspacesPage() {
               </div>
             </AppCard>
 
-            {/* Active Selected Task Collab Matrix */}
-            {selectedTask && (
-              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-white/5 animate-in fade-in-30">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
-                  Task Governance & Collaboration Matrix
-                </span>
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                  <div className="xl:col-span-6">
-                    <TaskExecutionController 
-                      taskId={selectedTask.id}
-                      onUpdate={async () => {
-                        const tData = await fetchTasksByWorkspace(activeWorkspace.id);
-                        setTasks(tData);
-                        // Refresh active selected task reference
-                        const freshTask = tData.find((t: any) => t.id === selectedTask.id);
-                        if (freshTask) setSelectedTask(freshTask);
-                      }}
-                    />
-                  </div>
-                  <div className="xl:col-span-6 flex flex-col gap-6">
-                    <TaskRealtimeChat taskId={selectedTask.id} />
-                    <TaskActivityTimeline taskId={selectedTask.id} />
-                  </div>
-                </div>
-              </div>
-            )}
             
           </div>
 
@@ -679,7 +633,7 @@ export default function WorkspacesPage() {
                   <button 
                     type="button"
                     onClick={() => openEditWorkspace(activeWorkspace)}
-                    disabled={!hasPermission("WORKSPACES_UPDATE")}
+                    disabled={!(hasPermission("WORKSPACES_UPDATE") || hasPermission("WORKSPACES_MANAGE") || activeWorkspace.owner_id === currentUser?.id)}
                     className="px-2 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Edit Workspace
@@ -687,7 +641,7 @@ export default function WorkspacesPage() {
                   <button 
                     type="button"
                     onClick={() => handleDeleteWorkspace(activeWorkspace.id)}
-                    disabled={!hasPermission("WORKSPACES_DELETE")}
+                    disabled={!(hasPermission("WORKSPACES_DELETE") || hasPermission("WORKSPACES_MANAGE") || activeWorkspace.owner_id === currentUser?.id)}
                     className="px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Delete

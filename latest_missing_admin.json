@@ -1,0 +1,162 @@
+[
+  {
+    "file": "20260514000000_enterprise_core_schema.sql",
+    "policy": "CREATE POLICY policy_ticket_audit_select ON ticket_audit_logs\n    FOR SELECT USING (has_permission_snapshot('AUDIT_READ'));"
+  },
+  {
+    "file": "20260519180000_comprehensive_crud_permissions.sql",
+    "policy": "CREATE POLICY policy_cfd_select ON public.custom_field_definitions FOR SELECT TO authenticated\nUSING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514000002_enterprise_governance_platform.sql",
+    "policy": "CREATE POLICY policy_profiles_select ON user_profiles\n    FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514000002_enterprise_governance_platform.sql",
+    "policy": "CREATE POLICY policy_sessions_select ON auth_session_logs\n    FOR SELECT USING (user_id = auth.uid() OR has_permission_snapshot('SECURITY_READ'));"
+  },
+  {
+    "file": "20260514000002_enterprise_governance_platform.sql",
+    "policy": "CREATE POLICY policy_sessions_update ON auth_session_logs\n    FOR UPDATE USING (user_id = auth.uid() OR has_permission_snapshot('SECURITY_MANAGE'));"
+  },
+  {
+    "file": "20260514000002_enterprise_governance_platform.sql",
+    "policy": "CREATE POLICY policy_sla_policies_select ON ticket_sla_policies\n    FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514000002_enterprise_governance_platform.sql",
+    "policy": "CREATE POLICY policy_meetings_select ON ticket_meetings\n    FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_priorities_select ON master_priorities FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_tc_select ON ticket_categories FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_tsc_select ON ticket_subcategories FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_it_select ON issue_types FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_ist_select ON issue_subtypes FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_ss_select ON software_systems FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_sm_select ON software_modules FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_ssm_select ON software_submodules FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260516120000_scope_driven_governance.sql",
+    "policy": "CREATE POLICY policy_assets_scope_select ON assets \n    FOR SELECT \n    USING (\n        NOT is_deleted AND \n        assigned_user_id = auth.uid()\n    );"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_app_select ON approval_types FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260514160243_enterprise_dynamic_masters.sql",
+    "policy": "CREATE POLICY policy_tsk_select ON task_types FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260515084500_fix_masters_rls_policies.sql",
+    "policy": "CREATE POLICY policy_departments_select ON departments FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260515084500_fix_masters_rls_policies.sql",
+    "policy": "CREATE POLICY policy_designations_select ON designations FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260515084500_fix_masters_rls_policies.sql",
+    "policy": "CREATE POLICY policy_workflow_states_select ON workflow_states FOR SELECT USING (NOT is_deleted);"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_tasks_all ON public.workspace_tasks \n    FOR ALL TO authenticated \n    USING (\n        creator_id = auth.uid() \n        OR assignee_id = auth.uid() \n        OR public.is_workspace_member(workspace_id)\n        OR public.has_permission_snapshot('WORKSPACES_MANAGE')\n    )\n    WITH CHECK (\n        creator_id = auth.uid() \n        OR assignee_id = auth.uid() \n        OR public.is_workspace_member(workspace_id)\n        OR public.has_permission_snapshot('WORKSPACES_MANAGE')\n    );"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_chat_select ON public.task_chat_messages FOR SELECT TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_chat_insert ON public.task_chat_messages FOR INSERT TO authenticated \n    WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_attachments_select ON public.task_attachments FOR SELECT TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_attachments_insert ON public.task_attachments FOR INSERT TO authenticated \n    WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519000000_workspace_collaboration_rls.sql",
+    "policy": "CREATE POLICY policy_task_comments_select ON public.task_comments FOR SELECT TO authenticated USING (public.is_task_member(task_id));"
+  },
+  {
+    "file": "20260519000000_workspace_collaboration_rls.sql",
+    "policy": "CREATE POLICY policy_task_comments_insert ON public.task_comments FOR INSERT TO authenticated WITH CHECK (public.is_task_member(task_id));"
+  },
+  {
+    "file": "20260519000000_workspace_collaboration_rls.sql",
+    "policy": "CREATE POLICY policy_task_comments_all ON public.task_comments FOR ALL TO authenticated USING (public.is_task_member(task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_teams_select ON public.task_teams FOR SELECT TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_teams_insert ON public.task_teams FOR INSERT TO authenticated \n    WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_teams_delete ON public.task_teams FOR DELETE TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519000000_workspace_collaboration_rls.sql",
+    "policy": "CREATE POLICY policy_task_teams_all ON public.task_teams FOR ALL TO authenticated USING (public.is_task_member(task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_assignees_select ON public.task_assignees FOR SELECT TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_assignees_all ON public.task_assignees FOR ALL TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_activity_logs_select ON public.task_activity_logs \n    FOR SELECT TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_activity_logs_insert ON public.task_activity_logs \n    FOR INSERT TO authenticated \n    WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_notifications_select ON public.task_notifications \n    FOR SELECT TO authenticated \n    USING (user_id = auth.uid());"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_audit_logs_select ON public.task_audit_logs \n    FOR SELECT TO authenticated \n    USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  },
+  {
+    "file": "20260519110000_task_enhancements.sql",
+    "policy": "CREATE POLICY policy_task_audit_logs_insert ON public.task_audit_logs \n    FOR INSERT TO authenticated \n    WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));"
+  }
+]

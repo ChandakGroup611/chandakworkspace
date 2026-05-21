@@ -98,4 +98,16 @@ html {
   font-weight: 600;
 }
 
+/* Global Fix for Select Dropdown Options Legibility in Dark/Light Modes */
+select option {
+  background-color: var(--bg-primary, #0A0D14);
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.theme-light select option,
+[data-theme="executive-light"] select option {
+  background-color: #FFFFFF;
+  color: #0F172A;
+}
 
