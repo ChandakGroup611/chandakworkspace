@@ -56,7 +56,7 @@ export default function WorkspacesPage() {
       // Workspaces where current user is owner, enrolled in workspace_members, or has tasks assigned to them inside it
       return w.owner_id === currentUser.id || 
              w.workspace_members?.some((m: any) => m.user_id === currentUser.id) ||
-             !!w.has_assigned_tasks;
+             w.tasks?.some((t: any) => t.assignee_id === currentUser.id || t.assignees?.some((a: any) => a.user?.id === currentUser.id) || t.teams?.some((tt: any) => tt.members?.some((m: any) => m.user?.id === currentUser.id)));
     }
     if (selectedScope === "MANAGER") {
       // Check if current user is the manager of the workspace owner (creator)
@@ -76,7 +76,7 @@ export default function WorkspacesPage() {
       // Check explicit assignees, primary assignee, and team membership
       const isExplicit = t.assignees?.some((a: any) => a.user?.id === currentUser.id) || t.assignee_id === currentUser.id;
       const isTeamMember = t.teams?.some((tt: any) => tt.members?.some((m: any) => m.user?.id === currentUser.id));
-      return t.creator_id === currentUser.id || isExplicit || isTeamMember;
+      return isExplicit || isTeamMember;
     }
     if (selectedScope === "MANAGER") {
       // Check if current user is the manager of the task creator OR if they manage the workspace itself
