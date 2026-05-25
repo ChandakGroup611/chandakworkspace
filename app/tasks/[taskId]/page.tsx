@@ -36,13 +36,7 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
           <ArrowLeft className="h-4 w-4" />
           Back to workspace task list
         </Link>
-
-        <div className="rounded-2xl border border-gray-200 bg-white/90 p-3 text-right shadow-sm dark:border-white/10 dark:bg-slate-950/80">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-gray-500">Workspace</p>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            {task.workspace?.name || task.workspace?.code || "Workspace"}
-          </p>
-        </div>
+        {/* Removed redundant floating workspace widget */}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
@@ -50,9 +44,16 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
           <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/80">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-gray-500">Task detail</p>
-                <h1 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">{task.title}</h1>
-                <p className="mt-1 text-sm text-gray-500">{task.description}</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-[10px] uppercase tracking-[0.28em] text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-2 py-1 rounded font-bold">
+                    Task detail
+                  </p>
+                  <p className="text-[10px] uppercase tracking-[0.28em] text-gray-500 px-2 py-1 border border-gray-200 dark:border-white/10 rounded font-bold">
+                    Workspace: {task.workspace?.name || task.workspace?.code || "Unknown"}
+                  </p>
+                </div>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white">{task.title}</h1>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">{task.description}</p>
               </div>
               <div className="inline-flex items-center gap-2 rounded-2xl bg-purple-50 px-4 py-2 text-xs font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-200">
                 <ClipboardList className="h-4 w-4" />

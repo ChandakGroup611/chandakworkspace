@@ -4,110 +4,14 @@ import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
+import { hasPermission } from "@/lib/permissions";
+
 /**
  * Enterprise permission verification helper for server actions
+ * Replaced by the centralized Authorization Service
  */
 async function checkServerPermission(supabase: any, userId: string, requiredPerm: string): Promise<boolean> {
-  try {
-    // 1. Check SUPER_ADMIN via role_id -> roles.code directly
-    const { data: profileData, error: profileError } = await supabase
-      .from("user_master")
-      .select("role_id")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) {
-      console.error(`[checkServerPermission] Profile fetch error: ${profileError.message}`);
-      return false;
-    }
-
-    if (!profileData || !profileData.role_id) {
-      console.log("[checkServerPermission] User has no role assigned");
-      return false;
-    }
-
-    // Query the role by role_id
-    const { data: roleData, error: roleError } = await supabase
-      .from("roles")
-      .select("code")
-      .eq("id", profileData.role_id)
-      .single();
-
-    if (roleError) {
-      console.error(`[checkServerPermission] Role fetch error: ${roleError.message}`);
-      return false;
-    }
-
-    if (roleData?.code === "SUPER_ADMIN") {
-      console.log("[checkServerPermission] User is SUPER_ADMIN, granting access");
-      return true;
-    }
-
-    // 2. Also check user_roles table for additional roles
-    const { data: userRoles, error: rolesError } = await supabase
-      .from("user_roles")
-      .select("role:roles(code)")
-      .eq("user_id", userId);
-
-    if (rolesError) {
-      console.error(`[checkServerPermission] User roles fetch error: ${rolesError.message}`);
-    } else if (userRoles && userRoles.length > 0) {
-      for (const ur of userRoles) {
-        const role = ur.role as any;
-        const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
-        if (roleCode === "SUPER_ADMIN") {
-          console.log("[checkServerPermission] User is SUPER_ADMIN via user_roles");
-          return true;
-        }
-      }
-    }
-
-    // 3. Query permissions snapshot
-    const { data: userPerms, error: permsError } = await supabase
-      .from("user_permissions_snapshot")
-      .select("permission_code")
-      .eq("user_id", userId);
-
-    if (permsError) {
-      console.warn(`[checkServerPermission] Permissions fetch error: ${permsError.message}`);
-      return false;
-    }
-
-    if (!userPerms || userPerms.length === 0) {
-      console.warn(`[checkServerPermission] No permissions found for user ${userId}`);
-      return false;
-    }
-
-    const perms = userPerms.map((r: any) => r.permission_code);
-    
-    // Expand permissions snapshot with inheritance
-    const expanded = new Set<string>(perms);
-    for (const p of perms) {
-      if (p.endsWith("_MANAGE")) {
-        const base = p.replace("_MANAGE", "");
-        expanded.add(`${base}_VIEW`);
-        expanded.add(`${base}_CREATE`);
-        expanded.add(`${base}_UPDATE`);
-        expanded.add(`${base}_DELETE`);
-      } else if (p.endsWith("_CREATE") || p.endsWith("_UPDATE") || p.endsWith("_DELETE")) {
-        const base = p.slice(0, p.lastIndexOf("_"));
-        expanded.add(`${base}_VIEW`);
-      }
-    }
-
-    const hasPermission = expanded.has(requiredPerm) || expanded.has("SUPER_ADMIN");
-    
-    if (!hasPermission) {
-      const permsStr = Array.from(expanded).join(", ");
-      console.warn(`[checkServerPermission] User ${userId} lacks ${requiredPerm}. Available: ${permsStr}`);
-    }
-
-    return hasPermission;
-  } catch (err: any) {
-    const msg = err?.message || String(err);
-    console.error(`[checkServerPermission] Exception: ${msg}`);
-    return false;
-  }
+  return hasPermission(userId, requiredPerm);
 }
 
 /**
@@ -334,4 +238,177 @@ export async function generateTeamsMeetingLink(ticketId: string) {
 
   revalidatePath("/tickets");
   return { success: true, teamsMeeting: updatedCustomFields.teams_meeting };
+}
+
+/**
+ * Fetches all data required for the Tickets Dashboard
+ * Uses optimized repositories and explicit queries
+ */
+export async function fetchTicketDashboardData() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("Unauthenticated. Please log in first.");
+  }
+
+  // Import dynamically or ensure it's imported at top (we'll just use it)
+  // Actually since we are in actions/tickets.ts, we should import getVisibleTickets at the top.
+  // Wait, I can't put import at the bottom.
+  // Let me just import it inline for now, or use require.
+  const { getVisibleTickets } = await import('@/lib/repositories/tickets');
+
+  const tickets = await getVisibleTickets(user.id);
+
+  const [deptRes, prioRes, stateRes, catRes, subcatRes, typeRes, scopeRes] = await Promise.all([
+    supabase.from("departments").select("*").eq("is_deleted", false),
+    supabase.from("priority_master").select("*, name:priority_name, code:priority_code").eq("is_deleted", false),
+    supabase.from("status_master").select("*, name:status_name, code:status_code"),
+    supabase.from("ticket_categories").select("*").eq("is_deleted", false),
+    supabase.from("ticket_subcategories").select("*").eq("is_deleted", false),
+    supabase.from("issue_types").select("*").eq("is_deleted", false),
+    supabase.from("ticket_scopes").select("*")
+  ]);
+
+  return {
+    tickets,
+    departments: deptRes.data || [],
+    priorities: prioRes.data || [],
+    states: stateRes.data || [],
+    categories: catRes.data || [],
+    subcategories: subcatRes.data || [],
+    issueTypes: typeRes.data || [],
+    scopes: scopeRes.data || []
+  };
+}
+
+/**
+ * Enterprise Ticket Creation Flow
+ * Handles dynamic scope validation and manager assignment
+ */
+export async function createEnterpriseTicket(payload: any) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("Unauthenticated.");
+
+  const hasAccess = await hasPermission(user.id, "TICKETS_CREATE");
+  if (!hasAccess) throw new Error("Unauthorized: Missing TICKETS_CREATE capability.");
+
+  const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+  const { data: creatorInfo } = await supabaseAdmin
+    .from('user_master')
+    .select('manager_id, department_id')
+    .eq('id', user.id)
+    .single();
+
+  const validScopes = ['INFRA', 'ERP/SOFTWARE', 'OTHERS'];
+  if (!validScopes.includes(payload.scope_type)) {
+    throw new Error(`Invalid Scope Type: ${payload.scope_type}`);
+  }
+
+  // Fetch Category
+  let isRequirement = false;
+  if (payload.category_id) {
+    const { data: cat } = await supabaseAdmin
+      .from('ticket_categories')
+      .select('is_requirement_category')
+      .eq('id', payload.category_id)
+      .single();
+    if (cat?.is_requirement_category) {
+      isRequirement = true;
+    }
+  }
+
+  // Mandatory Requirement Validation
+  if (isRequirement) {
+    if (!payload.custom_fields?.requirement_description || 
+        !payload.custom_fields?.business_reason || 
+        !payload.attachments || payload.attachments.length === 0) {
+      throw new Error("Requirement Description, Business Reason, and Attachment are STRICTLY MANDATORY for Requirements.");
+    }
+  }
+
+  const dbScopeType = payload.scope_type === 'ERP/SOFTWARE' ? 'ERP' : payload.scope_type;
+
+  // Fetch 'NEW' status ID from status_master
+  const { data: newState } = await supabaseAdmin
+    .from('status_master')
+    .select('id')
+    .eq('status_code', 'NEW')
+    .eq('scope_type', dbScopeType)
+    .single();
+
+  if (!newState) throw new Error(`System Error: 'NEW' status_master state not found for ${dbScopeType}.`);
+
+  // Insert Ticket
+  const insertPayload = {
+    ...payload,
+    creator_id: user.id,
+    department_id: payload.department_id || creatorInfo?.department_id,
+    status_id: newState.id,
+    queue_owner_id: creatorInfo?.manager_id || null,
+    custom_fields: payload.custom_fields || {}
+  };
+
+  const { createTicket } = await import('@/lib/repositories/tickets');
+  const ticket = await createTicket(insertPayload);
+
+  // Requirement Auto-Creation Engine
+  if (isRequirement) {
+    const { data: reqState } = await supabaseAdmin
+      .from('status_master')
+      .select('id')
+      .eq('status_code', 'NEW')
+      .eq('scope_type', 'REQUIREMENT')
+      .single();
+
+    const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').insert({
+      title: ticket.title || ticket.subject || 'New Requirement',
+      description: payload.custom_fields.requirement_description,
+      business_justification: payload.custom_fields.business_reason,
+      department_id: insertPayload.department_id,
+      priority_id: payload.priority_id,
+      status_id: reqState?.id || newState.id,
+      created_by: user.id
+    }).select().single();
+
+    if (reqErr) throw new Error("Failed to auto-create Requirement: " + reqErr.message);
+
+    // Link Ticket and Requirement
+    await supabaseAdmin.from('ticket_requirements').insert({
+      ticket_id: ticket.id,
+      requirement_id: req.id,
+      linked_by: user.id
+    });
+
+    // Notify Queue / Assignees
+    await supabaseAdmin.from('notification_queue').insert({
+      recipient_id: creatorInfo?.manager_id || user.id, // e.g. Dept Manager
+      payload: {
+        type: 'REQUIREMENT_CREATED',
+        message: `New Requirement auto-generated from Ticket ${ticket.code}`,
+        requirement_id: req.id
+      },
+      status: 'pending'
+    });
+  }
+
+  // Trigger Ticket Notifications
+  if (creatorInfo?.manager_id && !isRequirement) {
+    await supabaseAdmin.from('notification_queue').insert({
+      recipient_id: creatorInfo.manager_id,
+      payload: {
+        type: 'TICKET_ASSIGNED',
+        message: `New ticket ${ticket.code} arrived in your queue.`,
+        ticket_id: ticket.id
+      },
+      status: 'pending'
+    });
+  }
+
+  revalidatePath("/tickets");
+  return { success: true, ticket };
 }

@@ -98,20 +98,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
   }
 
   return (
-    <div className="space-y-4 animate-in slide-in-from-right-4 duration-500">
-      <div className={`p-4 border rounded-2xl ${
-        isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-white/[0.02] border-white/5"
-      }`}>
-        <div className={`flex items-center gap-3 pb-4 mb-4 border-b ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
-          <div className={`p-2 rounded-lg ${isLightMode ? "bg-indigo-50" : "bg-indigo-500/20"}`}>
-            <Server className={`h-5 w-5 ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`} />
-          </div>
-          <div>
-            <h3 className={`text-lg font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>Infrastructure & Assets Intake</h3>
-            <p className="text-xs text-gray-500">Reporting hardware faults, connectivity issues, or asset failures</p>
-          </div>
-        </div>
-
+    <div className="animate-in slide-in-from-right-4 duration-500">
         <form 
           onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }}
           className="space-y-4"
@@ -298,7 +285,6 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </AppButton>
           </div>
         </form>
-      </div>
     </div>
   );
 }

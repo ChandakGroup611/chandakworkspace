@@ -26,7 +26,7 @@ $$ language 'plpgsql';
 -- ----------------------------------------------------------------------------
 
 -- Canonical system capabilities registry
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS public.permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE permissions (
 );
 
 -- Governed enterprise roles
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS public.roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -47,38 +47,37 @@ CREATE TABLE roles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
+DROP TRIGGER IF EXISTS update_roles_modtime ON public.roles;
 CREATE TRIGGER update_roles_modtime
-    BEFORE UPDATE ON roles
+    BEFORE UPDATE ON public.roles
     FOR EACH ROW EXECUTE FUNCTION update_modified_column();
-
--- Relational joins mapping specific capabilities to master roles
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS public.role_permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
-    permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE RESTRICT,
+    role_id UUID NOT NULL REFERENCES public.roles(id) ON DELETE RESTRICT,
+    permission_id UUID NOT NULL REFERENCES public.permissions(id) ON DELETE RESTRICT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_role_permission UNIQUE(role_id, permission_id)
 );
 
--- Identity attachments mapping active identities to roles
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL, -- References auth.users(id) conceptually
-    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    role_id UUID NOT NULL REFERENCES public.roles(id) ON DELETE RESTRICT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_user_role UNIQUE(user_id, role_id)
 );
 
 -- Highly optimized pre-flattened evaluation matrix snapshot store
-CREATE TABLE user_permissions_snapshot (
+DROP TABLE IF EXISTS public.user_permissions_snapshot;
+CREATE TABLE IF NOT EXISTS public.user_permissions_snapshot (
     user_id UUID PRIMARY KEY,
     permissions TEXT[] NOT NULL DEFAULT '{}',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 -- Security audit logging engine
-CREATE TABLE security_audit_logs (
+-- Security audit logging engine
+DROP TABLE IF EXISTS public.security_audit_logs;
+CREATE TABLE IF NOT EXISTS public.security_audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     actor_id UUID NOT NULL,
     operation TEXT NOT NULL,
@@ -86,7 +85,7 @@ CREATE TABLE security_audit_logs (
     ip_address TEXT,
     user_agent TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+);;
 
 
 -- ----------------------------------------------------------------------------
@@ -94,7 +93,8 @@ CREATE TABLE security_audit_logs (
 -- ----------------------------------------------------------------------------
 
 -- Relational masters representing distinct operational divisions
-CREATE TABLE departments (
+
+CREATE TABLE IF NOT EXISTS public.departments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
@@ -105,25 +105,26 @@ CREATE TABLE departments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
+DROP TRIGGER IF EXISTS update_departments_modtime ON public.departments;
 CREATE TRIGGER update_departments_modtime
-    BEFORE UPDATE ON departments
+    BEFORE UPDATE ON public.departments
     FOR EACH ROW EXECUTE FUNCTION update_modified_column();
 
 -- Relational masters representing job roles under parent departments
-CREATE TABLE designations (
+
+CREATE TABLE IF NOT EXISTS public.designations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
-    department_id UUID NOT NULL REFERENCES departments(id) ON DELETE RESTRICT,
+    department_id UUID NOT NULL REFERENCES public.departments(id) ON DELETE RESTRICT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Explicit boundary gates governing identity visibility scopes
-CREATE TABLE user_department_access (
+CREATE TABLE IF NOT EXISTS public.user_department_access (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    department_id UUID NOT NULL REFERENCES departments(id) ON DELETE RESTRICT,
+    department_id UUID NOT NULL REFERENCES public.departments(id) ON DELETE RESTRICT,
     access_level TEXT NOT NULL, -- Validated values: 'default', 'supplementary', 'manager'
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_user_department UNIQUE(user_id, department_id)
@@ -144,10 +145,11 @@ CREATE TABLE workflow_states (
 );
 
 -- Configurable validation matrix dictating allowable transitions
-CREATE TABLE workflow_transitions (
+
+CREATE TABLE IF NOT EXISTS public.workflow_transitions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    from_state_id UUID NOT NULL REFERENCES workflow_states(id) ON DELETE RESTRICT,
-    to_state_id UUID NOT NULL REFERENCES workflow_states(id) ON DELETE RESTRICT,
+    from_state_id UUID NOT NULL REFERENCES public.workflow_states(id) ON DELETE RESTRICT,
+    to_state_id UUID NOT NULL REFERENCES public.workflow_states(id) ON DELETE RESTRICT,
     is_deleted BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT uq_workflow_transition UNIQUE(from_state_id, to_state_id)

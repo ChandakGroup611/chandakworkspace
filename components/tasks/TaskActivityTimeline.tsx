@@ -24,6 +24,8 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
         
       if (error) {
         console.error("Error fetching task activity logs:", error);
+      } else {
+        console.log("Fetched logs:", data);
       }
       if (data) setLogs(data);
       setLoading(false);
@@ -103,8 +105,10 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
               </div>
             </div>
           ))}
-          {logs.length === 0 && (
-            <div className="pl-6 py-4 text-xs text-gray-500 italic">No historical audit logs found.</div>
+          {logs.length === 0 && !loading && (
+            <div className="text-center py-6 text-xs text-gray-500 italic">
+              No activity found for this task yet.
+            </div>
           )}
         </div>
       )}

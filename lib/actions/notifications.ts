@@ -40,28 +40,28 @@ export async function markNotificationAsRead(notificationId: string) {
   if (error) throw new Error("Failed to mark notification as read");
 }
 
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 import nodemailer from "nodemailer";
 
 export async function dispatchNotification(userId: string, title: string, message: string, link?: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
   
   // 1. Insert into DB (In-App Queue)
-  const { data: notif } = await supabase.from("task_notifications").insert([{
+  const { data: notif, error: notifError } = await supabaseAdmin.from("task_notifications").insert([{
     user_id: userId,
     title,
     message,
     link,
     is_read: false
   }]).select().single();
+  if (notifError) console.error("Error inserting task_notification:", notifError);
 
   // Also insert into global notification queue for realtime stream consumers
   try {
-    await supabase.from('notification_queue').insert([{
-      recipient_id: userId,
+    await supabaseAdmin.from('notification_queue').insert([{
+      target_user_id: userId,
       status: 'pending',
       payload: {
-        id: notif?.id || undefined,
+        id: notif?.id || null,
         entity_type: 'task',
         entity_id: link ? link.split('task=')[1] || null : null,
         module: 'tasks',
@@ -78,12 +78,12 @@ export async function dispatchNotification(userId: string, title: string, messag
   }
 
   // 2. Fetch User Email
-  const { data: user } = await supabase.from("user_master").select("email").eq("id", userId).single();
+  const { data: user } = await supabaseAdmin.from("user_master").select("email").eq("id", userId).single();
   if (!user?.email) return;
 
   // Insert into corporate email_queue table
   try {
-    await supabase.from('email_queue').insert([{
+    await supabaseAdmin.from('email_queue').insert([{
       recipient_email: user.email,
       subject: title,
       body_template: `${message}\n\nLink: ${link || 'N/A'}`,
@@ -121,40 +121,54 @@ export async function dispatchNotification(userId: string, title: string, messag
   }
 }
 
-export async function handleMentions(message: string, taskId: string, messageId: string) {
-  // Regex to find @username
-  const mentionRegex = /@(\w+)/g;
-  const matches = message.match(mentionRegex);
-  
-  if (!matches || matches.length === 0) return;
-
+export async function handleMentions(taskId: string, messageId: string, mentionedUserIds: string[] = [], isAll: boolean = false, senderId: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
-  // Extract usernames without the @
-  const usernames = matches.map(m => m.substring(1));
-  
-  // Find users by short code or full name (assuming short code for this example)
-  const { data: users } = await supabase
-    .from("user_master")
-    .select("id, user_code")
-    .in("user_code", usernames);
-    
-  if (!users || users.length === 0) return;
+  let targetUserIds = new Set<string>(mentionedUserIds);
 
-  const mentionsToInsert = users.map(u => ({
+  if (isAll) {
+    // Fetch all workspace members for this task's workspace
+    const { data: task } = await supabaseAdmin.from("tasks").select("workspace_id").eq("id", taskId).single();
+    if (task?.workspace_id) {
+      const { data: members } = await supabaseAdmin.from("workspace_members").select("user_id").eq("workspace_id", task.workspace_id);
+      if (members) {
+        members.forEach(m => targetUserIds.add(m.user_id));
+      }
+    }
+  }
+
+  // Remove the sender from the notification list so they don't notify themselves
+  if (senderId) {
+    targetUserIds.delete(senderId);
+  }
+
+  const matchedUserIds = Array.from(targetUserIds);
+  if (matchedUserIds.length === 0) return;
+
+  // Insert mentions into DB for tracking
+  const mentionsToInsert = matchedUserIds.map(uid => ({
     message_id: messageId,
-    mentioned_user_id: u.id
+    mentioned_user_id: uid
   }));
+  
+  await supabaseAdmin.from("task_mentions").insert(mentionsToInsert);
 
-  await supabase.from("task_mentions").insert(mentionsToInsert);
+  // Fetch sender name for better notification
+  const { data: sender } = await supabaseAdmin.from("user_master").select("full_name").eq("id", senderId).single();
+  const senderName = sender?.full_name || "Someone";
+
+  const notifTitle = isAll ? `Workspace Announcement from ${senderName}` : `You were mentioned by ${senderName}`;
+  const notifMessage = isAll 
+    ? `${senderName} mentioned @All in the task chat.`
+    : `${senderName} mentioned you in the task chat.`;
 
   // Trigger Notifications for each mention
-  for (const user of users) {
+  for (const uid of matchedUserIds) {
     await dispatchNotification(
-      user.id,
-      "You were mentioned in a task",
-      `Someone mentioned you in task chat for Task ID: ${taskId}`,
+      uid,
+      notifTitle,
+      notifMessage,
       `/workspaces?task=${taskId}`
     );
   }

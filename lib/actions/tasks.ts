@@ -1,437 +1,425 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
+import { supabaseAdmin } from '@/lib/supabase/service_role';
+import { revalidatePath } from 'next/cache';
+import { dispatchNotification } from '@/lib/actions/notifications';
+import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 
-/**
- * Enterprise Task Management Engine
- * Handles complex task lifecycles, workload analytics, and custom fields.
- */
+export async function createTask(payload: {
+  workspace_id: string;
+  subject?: string;
+  title?: string;
+  description?: string;
+  priority_id: string;
+  start_date?: string;
+  end_date?: string;
+  estimated_hours?: number;
+  custom_fields?: any;
+  created_by: string;
+  assigned_team_ids?: string[];
+  checklist_items?: string[];
+}) {
+  // Find default status for tasks
+  const { data: statusMaster } = await supabaseAdmin
+    .from('status_master')
+    .select('id')
+    .eq('is_default', true)
+    .eq('scope_type', 'TASK')
+    .eq('is_deleted', false)
+    .single();
 
-export async function fetchUsers() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data, error } = await supabase
-    .from("user_master")
-    .select("id, full_name, user_code")
-    .eq("is_active", true)
-    .eq("is_deleted", false)
-    .order("full_name", { ascending: true });
-    
-  if (error) {
-    console.error("Error fetching user directory:", error);
-    return [];
+  if (!statusMaster) {
+    throw new Error('No default task status found in status_master');
   }
+
+  // Create Task
+  const { data: task, error } = await supabaseAdmin
+    .from('tasks')
+    .insert([{
+      workspace_id: payload.workspace_id,
+      subject: payload.subject || payload.title || 'Untitled Task',
+      description: payload.description,
+      priority_id: payload.priority_id,
+      status_id: statusMaster.id,
+      start_date: payload.start_date,
+      end_date: payload.end_date,
+      estimated_hours: payload.estimated_hours,
+      custom_fields: payload.custom_fields,
+      created_by: payload.created_by
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  // Removed: Insert Assignees and Teams (No longer supported per workspace refactor)
+
+  // Insert Checklist Items
+  if (payload.checklist_items && payload.checklist_items.length > 0) {
+    const checklistData = payload.checklist_items.map((item: string) => ({
+      task_id: task.id,
+      label: item,
+      is_completed: false
+    }));
+    await supabaseAdmin.from('task_checklists').insert(checklistData);
+  }
+
+  // Log Activity is also now handled by the DB trigger, but if manual is preferred it can stay.
+  // Wait, DB trigger does it automatically. So we can remove manual logActivityEvent too to prevent duplicate timeline entries.
+  
+  revalidatePath(`/workspaces/${payload.workspace_id}`);
+  return task;
+}
+
+export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: string, performedBy?: string) {
+  // Get current status
+  const { data: task } = await supabaseAdmin
+    .from('tasks')
+    .select('status_id')
+    .eq('id', taskId)
+    .single();
+
+  if (!task) throw new Error("Task not found");
+
+  let targetStatusId = newStatusIdOrCode;
+
+  // Check if it's a UUID. If not, assume it's a status code and look up the ID.
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(newStatusIdOrCode)) {
+    const { data: stMaster } = await supabaseAdmin
+      .from('status_master')
+      .select('id')
+      .eq('status_code', newStatusIdOrCode)
+      .single();
+    if (stMaster) {
+      targetStatusId = stMaster.id;
+    } else {
+      throw new Error(`Invalid status code or ID: ${newStatusIdOrCode}`);
+    }
+  }
+
+  // Skip transition validation for now if no workflow is enforced, or we can enforce it:
+
+  // Validate transition
+  const { data: transition } = await supabaseAdmin
+    .from('workflow_transition_master')
+    .select('id, allowed_role_id')
+    .eq('from_status_id', task.status_id)
+    .eq('to_status_id', targetStatusId)
+    .eq('is_active', true)
+    .eq('is_deleted', false)
+    .single();
+
+  if (!transition) {
+    console.warn(`[Workflow Engine] No explicit transition mapped from ${task.status_id} to ${targetStatusId}. Permitting default free-form transition.`);
+  }
+
+  // Check role authorization if allowed_role_id is set
+  if (transition && transition.allowed_role_id) {
+    const { data: userRole } = await supabaseAdmin
+      .from('user_roles')
+      .select('role_id')
+      .eq('user_id', performedBy)
+      .eq('role_id', transition.allowed_role_id)
+      .single();
+    if (!userRole) throw new Error("Not authorized for this transition");
+  }
+
+  // Update status
+  const { error } = await supabaseAdmin
+    .from('tasks')
+    .update({ status_id: targetStatusId, updated_at: new Date().toISOString() })
+    .eq('id', taskId);
+
+  if (error) throw error;
+
+  await logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system");
+  revalidatePath(`/tasks/${taskId}`);
+}
+
+export async function logActivityEvent(moduleType: string, recordId: string, eventType: string, oldValue: any, newValue: any, performedBy: string) {
+  await supabaseAdmin.from('activity_events').insert([{
+    module_type: moduleType,
+    record_id: recordId,
+    event_type: eventType,
+    old_value: oldValue,
+    new_value: newValue,
+    performed_by: performedBy
+  }]);
+}
+
+export async function fetchCustomFields(workspaceId: string) {
+  const { data } = await supabaseAdmin
+    .from('task_custom_fields_master')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('is_deleted', false)
+    .order('created_at', { ascending: true });
   return data || [];
 }
 
-// 1. Task Operations
+export async function createCustomField(workspaceId: string, fieldName: string, fieldType: string) {
+  const fieldKey = fieldName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  
+  const { data, error } = await supabaseAdmin
+    .from('task_custom_fields_master')
+    .insert([{
+      workspace_id: workspaceId,
+      field_name: fieldName,
+      field_key: fieldKey,
+      field_type: fieldType,
+      created_by: null // Or omit if not required
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+import { unstable_noStore as noStore } from 'next/cache';
+
+export async function fetchUsers() {
+  noStore();
+  const { data } = await supabaseAdmin
+    .from('user_master')
+    .select('id, full_name, user_code')
+    .eq('is_active', true)
+    .eq('is_deleted', false)
+    .order('full_name', { ascending: true });
+  return data || [];
+}
+
 export async function getTaskDetails(taskId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-
-  const { data, error } = await supabase
-    .from("workspace_tasks")
-    .select(`
-      *,
-      workspace:workspaces(id, code, name),
-      status:workflow_states(name, code),
-      creator:user_master!creator_id(full_name, profile_photo),
-      assignees:task_assignees(user:user_master(id, full_name, profile_photo)),
-      teams:task_teams(team:teams(id, name)),
-      checklists:task_checklists(*),
-      attachments:task_attachments(*)
-    `)
-    .eq("id", taskId)
+  const { data: task, error } = await supabaseAdmin
+    .from('tasks')
+    .select('*')
+    .eq('id', taskId)
     .single();
 
-  if (error || !data) {
-    console.error("Error fetching task details:", error);
-    throw new Error("Failed to load task details.");
-  }
+  if (error || !task) throw error || new Error("Task not found");
 
-  // Enforce visibility: creator, explicit assignee, team member, workspace member, creator's manager, or super admin
-  try {
-    // if user is creator
-    if (data.creator_id === userId) return data;
+  // Fetch related data manually due to missing FKs in schema
+  const [
+    { data: status },
+    { data: priority },
+    { data: workspace },
+    { data: creator },
+    { data: checklists },
+    { data: attachments }
+  ] = await Promise.all([
+    task.status_id ? supabaseAdmin.from('status_master').select('id, name:status_name, code:status_code, is_closed').eq('id', task.status_id).single() : Promise.resolve({ data: null }),
+    task.priority_id ? supabaseAdmin.from('priority_master').select('id, name:priority_name, color:priority_color').eq('id', task.priority_id).single() : Promise.resolve({ data: null }),
+    task.workspace_id ? supabaseAdmin.from('workspaces').select('id, name:workspace_name').eq('id', task.workspace_id).single() : Promise.resolve({ data: null }),
+    task.created_by ? supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single() : Promise.resolve({ data: null }),
+    supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true }),
+    supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false })
+  ]);
 
-    // check if user is the manager of the task creator
-    const { data: creatorProfile } = await supabase.from('user_master').select('manager_id').eq('id', data.creator_id).single();
-    if (creatorProfile?.manager_id === userId) return data;
+  task.status = status;
+  task.priority = priority;
+  task.workspace = workspace;
+  task.creator = creator;
+  task.checklists = checklists || [];
+  task.attachments = attachments || [];
+  task.assignee = null;
+  
+  task.task_assignees = [];
+  
+  task.task_teams = [];
+  task.title = task.subject;
 
-    // check explicit assignees
-    const explicit = await supabase.from('task_assignees').select('user_id').eq('task_id', taskId).eq('user_id', userId).limit(1);
-    if (explicit.data && explicit.data.length > 0) return data;
-
-    // check team membership for task teams
-    const { data: taskTeams } = await supabase.from('task_teams').select('team_id').eq('task_id', taskId);
-    const teamIds = (taskTeams || []).map((t: any) => t.team_id);
-    if (teamIds.length > 0) {
-      const { data: tm } = await supabase.from('team_members').select('user_id').eq('user_id', userId).in('team_id', teamIds).limit(1);
-      if (tm && tm.length > 0) return data;
-    }
-
-    // check workspace membership
-    const wsId = data.workspace_id;
-    const { data: wm } = await supabase.from('workspace_members').select('user_id').eq('workspace_id', wsId).eq('user_id', userId).limit(1);
-    if (wm && wm.length > 0) return data;
-
-    // super admin check
-    const { data: profile } = await supabase.from('user_master').select('role_id').eq('id', userId).single();
-    if (profile?.role_id) {
-      const { data: r } = await supabase.from('roles').select('code').eq('id', profile.role_id).single();
-      if (r?.code === 'SUPER_ADMIN') return data;
-    }
-  } catch (e) {
-    console.error('Error while enforcing task visibility:', e);
-  }
-
-  throw new Error('Access denied to task details');
-
+  return task;
 }
 
-// 2. Status Flow & Resolution
-export async function transitionTaskStatus(taskId: string, statusCode: string) {
+export async function getWorkloadSnapshot(userId: string) {
+  // Get all visible workspaces for the user
+  const { getVisibleWorkspaces } = await import('@/lib/repositories/workspaces');
+  const visibleWorkspaces = await getVisibleWorkspaces(userId);
+  const workspaceIds = visibleWorkspaces.map((w: any) => w.id);
+
+  let activeTasks: any[] = [];
+  
+  if (workspaceIds.length > 0) {
+    const { data } = await supabaseAdmin
+      .from('tasks')
+      .select('id, end_date, estimated_hours, status:status_master(is_closed)')
+      .in('workspace_id', workspaceIds)
+      .eq('is_deleted', false);
+      
+    if (data) {
+      activeTasks = data.filter((t: any) => !t.status?.is_closed);
+    }
+  }
+  
+  const now = new Date();
+  const overdueTasks = activeTasks.filter(t => t.end_date && new Date(t.end_date) < now).length;
+  const estimatedHours = activeTasks.reduce((acc, t) => acc + (t.estimated_hours || 0), 0);
+
+  // Mock standard capacity as 40 hours per week
+  const standardCapacity = 40;
+  const capacityPercentage = Math.min(100, Math.round((estimatedHours / standardCapacity) * 100));
+
+  return {
+    active_tasks: activeTasks.length,
+    overdue_tasks: overdueTasks,
+    capacity_percentage: capacityPercentage,
+    estimated_hours: estimatedHours,
+    available_capacity: 100 - capacityPercentage
+  };
+}
+
+export async function updateTask(taskId: string, payload: any) {
+  const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
+  if (error) throw error;
+  revalidatePath(`/tasks/${taskId}`);
+}
+
+export async function deleteTask(taskId: string) {
+  // Get the task and check auth
+  const { data: task } = await supabaseAdmin.from('tasks').select('workspace_id, created_by').eq('id', taskId).single();
+  if (!task) throw new Error("Task not found");
+
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const { data: { session } } = await createClient(cookieStore).auth.getSession();
+  const userId = session?.user?.id;
+  
+  if (!userId) throw new Error("Unauthenticated");
 
-  const { data: status } = await supabase
-    .from("workflow_states")
-    .select("id")
-    .eq("code", statusCode)
-    .single();
+  if (task.created_by !== userId) {
+    const { data: member } = await supabaseAdmin
+      .from('workspace_members')
+      .select('role')
+      .eq('workspace_id', task.workspace_id)
+      .eq('user_id', userId)
+      .single();
+    
+    // Allow deletion if the user is owner/admin
+    const roleCode = member?.role?.toUpperCase();
+    if (roleCode !== 'OWNER' && roleCode !== 'ADMIN') {
+      throw new Error("You do not have permission to delete this task.");
+    }
+  }
 
-  if (!status) throw new Error(`Invalid status transition to ${statusCode}`);
+  const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
+  if (error) throw error;
+  revalidatePath(`/workspaces/${task.workspace_id}`);
+}
 
-  const { data, error } = await supabase
-    .from("workspace_tasks")
-    .update({ status_id: status.id, updated_at: new Date().toISOString() })
-    .eq("id", taskId)
+export async function resolveTask(taskId: string) {
+  return transitionTaskStatus(taskId, "ST_RESOLVED");
+}
+
+export async function approveResolution(taskId: string) {
+  return transitionTaskStatus(taskId, "ST_CLOSED");
+}
+
+export async function reopenTask(taskId: string) {
+  return transitionTaskStatus(taskId, "ST_REOPEN");
+}
+
+export async function createChecklistItem(taskId: string, label: string) {
+  const cookieStore = await cookies();
+  const { data: { session } } = await createClient(cookieStore).auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Unauthenticated");
+
+  const { data, error } = await supabaseAdmin
+    .from('task_checklists')
+    .insert([{ task_id: taskId, label, is_completed: false }])
     .select()
     .single();
-
-  if (error) throw new Error("Failed to transition task status.");
-
-  // Log activity
-  const { data: user } = await supabase.auth.getUser();
-  await supabase.from("task_activity_logs").insert([{
-    task_id: taskId,
-    actor_id: user.user?.id,
-    action: "STATUS_CHANGE",
-    new_state: { status: statusCode }
-  }]);
-
+  if (error) throw error;
+  
+  if (data) {
+    await supabaseAdmin.from('task_activity_logs').insert([{
+      task_id: taskId,
+      actor_id: userId,
+      action: 'CHECKLIST_UPDATE',
+      new_state: { label: data.label, is_completed: false, action: 'added' }
+    }]);
+  }
+  
   return data;
 }
 
-export async function updateTask(taskId: string, payload: { title?: string; description?: string; remarks?: string }) {
+export async function createTaskAttachment(taskId: string, fileName: string, base64Url: string, size: number) {
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const { data: { session } } = await createClient(cookieStore).auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Unauthenticated");
 
-  const { data, error } = await supabase
-    .from("workspace_tasks")
-    .update({ 
-      ...payload, 
-      updated_at: new Date().toISOString() 
-    })
-    .eq("id", taskId)
+  const { data, error } = await supabaseAdmin
+    .from('task_attachments')
+    .insert([{ task_id: taskId, file_name: fileName, file_url: base64Url, size, uploaded_by: userId, file_type: 'file' }])
     .select()
     .single();
-
-  if (error) {
-    console.error("Error updating task:", error);
-    throw new Error("Failed to update task.");
-  }
+  if (error) throw error;
   return data;
 }
+
+export async function fetchTeams() { return []; }
+export async function assignTeamToTask(taskId: string, teamId: string) { return {}; }
 
 export async function getTaskComments(taskId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  // 1. Fetch raw comments
-  const { data: comments, error: commentsError } = await supabase
-    .from("task_comments")
-    .select("*")
-    .eq("task_id", taskId)
-    .eq("is_deleted", false)
-    .order("created_at", { ascending: true });
-
-  if (commentsError) {
-    console.error("Error fetching raw task comments:", commentsError);
-    return [];
-  }
-
+  const { data: comments, error } = await supabaseAdmin
+    .from('task_comments')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: false });
+    
+  if (error) throw error;
   if (!comments || comments.length === 0) return [];
 
-  // 2. Fetch unique author profiles
-  const authorIds = Array.from(new Set(comments.map((c: any) => c.author_id)));
-  const { data: profiles, error: profilesError } = await supabase
-    .from("user_master")
-    .select("id, full_name, profile_photo")
-    .in("id", authorIds);
-
-  if (profilesError) {
-    console.error("Error fetching author profiles for comments:", profilesError);
-    return comments.map((c: any) => ({ ...c, author: null }));
+  // Fetch users manually
+  const userIds = Array.from(new Set(comments.map((c: any) => c.author_id).filter(Boolean)));
+  let users: any[] = [];
+  if (userIds.length > 0) {
+    const { data: userData } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').in('id', userIds);
+    if (userData) users = userData;
   }
 
-  const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
-
-  // 3. Merge profiles
   return comments.map((c: any) => ({
     ...c,
-    author: profileMap.get(c.author_id) || null
+    user: users.find(u => u.id === c.author_id) || null
   }));
 }
 
 export async function addTaskRemark(taskId: string, content: string) {
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const { data: { session } } = await createClient(cookieStore).auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Unauthenticated");
 
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-
-  if (!userId) {
-    throw new Error("Unauthorized to add remarks");
-  }
-
-  // 1. Insert remark into task_comments queue
-  const { data: comment, error: commentError } = await supabase
-    .from("task_comments")
-    .insert([{
-      task_id: taskId,
-      author_id: userId,
-      content
-    }])
-    .select()
+  const { data, error } = await supabaseAdmin
+    .from('task_comments')
+    .insert([{ task_id: taskId, author_id: userId, content }])
+    .select('*')
     .single();
-
-  if (commentError) {
-    console.error("Error adding task remark to queue:", commentError);
-    throw new Error(`Failed to add remark to queue. Details: ${commentError.message}`);
-  }
-
-  // 2. Fetch author profile
-  const { data: profile } = await supabase
-    .from("user_master")
-    .select("id, full_name, profile_photo")
-    .eq("id", userId)
-    .single();
-
-  // 3. Update the workspace_tasks.remarks with latest remark
-  await supabase
-    .from("workspace_tasks")
-    .update({ remarks: content, updated_at: new Date().toISOString() })
-    .eq("id", taskId);
-
-  return {
-    ...comment,
-    author: profile || null
-  };
-}
-
-
-export async function deleteTask(taskId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  // Soft-delete: mark as deleted so it can be restored later
-  const { error } = await supabase
-    .from("workspace_tasks")
-    .update({ is_deleted: true, deleted_at: new Date().toISOString() })
-    .eq("id", taskId);
-
-  if (error) {
-    console.error("Error soft-deleting task:", error);
-    throw new Error("Failed to delete task.");
-  }
-  return true;
-}
-
-export async function restoreTask(taskId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  const { error } = await supabase
-    .from("workspace_tasks")
-    .update({ is_deleted: false, deleted_at: null })
-    .eq("id", taskId);
-
-  if (error) {
-    console.error("Error restoring task:", error);
-    throw new Error("Failed to restore task.");
-  }
-  return true;
-}
-
-export async function resolveTask(taskId: string) {
-  return await transitionTaskStatus(taskId, "ST_RESOLVED");
-}
-
-export async function approveResolution(taskId: string) {
-  return await transitionTaskStatus(taskId, "ST_CLOSED");
-}
-
-export async function reopenTask(taskId: string) {
-  return await transitionTaskStatus(taskId, "ST_REOPEN");
-}
-
-// 3. Workload Analytics
-export async function getWorkloadSnapshot(userId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  // 1. Fetch assigned tasks
-  const { data: assignments, error } = await supabase
-    .from("task_assignees")
-    .select("task_id, workspace_tasks(status_id, due_date)")
-    .eq("user_id", userId);
-
-  if (error) {
-    console.error("Workload error:", error);
-    return null;
-  }
-
-  // Calculate active and overdue
-  const now = new Date();
-  let activeCount = 0;
-  let overdueCount = 0;
-
-  assignments?.forEach((a: any) => {
-    const task = a.workspace_tasks;
-    if (task) {
-      activeCount++;
-      if (task.due_date && new Date(task.due_date) < now) {
-        overdueCount++;
-      }
-    }
-  });
-
-  // Calculate generic capacity (e.g. max 10 active tasks = 100%)
-  const capacityMax = 10;
-  const utilization = Math.min(Math.round((activeCount / capacityMax) * 100), 100);
-
-  return {
-    active_tasks: activeCount,
-    overdue_tasks: overdueCount,
-    capacity_percentage: utilization,
-    estimated_hours: activeCount * 4.5, // Mock heuristic
-    available_capacity: Math.max(100 - utilization, 0)
-  };
-}
-
-// 4. Custom Fields Engine
-export async function fetchCustomFields() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  if (error) throw error;
   
-  const { data } = await supabase.from("custom_field_definitions").select("*").eq("module", "tasks");
+  if (data) {
+    await supabaseAdmin.from('task_activity_logs').insert([{
+      task_id: taskId,
+      actor_id: userId,
+      action: 'COMMENT',
+      new_state: { message: content }
+    }]);
+
+    const { data: user } = await supabaseAdmin.from('user_master').select('full_name, profile_photo').eq('id', userId).single();
+    data.user = user || null;
+  }
+  
+  return data;
+}
+
+export async function getTaskStatuses() {
+  const { data, error } = await supabaseAdmin
+    .from('status_master')
+    .select('id, name:status_name, code:status_code, color:status_color, is_closed, is_reopen')
+    .eq('scope_type', 'TASK')
+    .order('status_order', { ascending: true });
+  if (error) throw error;
   return data || [];
-}
-
-export async function createCustomField(name: string, type: string, options?: string[]) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data, error } = await supabase
-    .from("custom_field_definitions")
-    .insert([{
-      field_key: name.toLowerCase().replace(/\s+/g, '_'),
-      field_label: name,
-      field_type: type,
-      options: options || null,
-      module: "tasks"
-    }])
-    .select()
-    .single();
-
-  if (error) throw new Error("Failed to provision custom field");
-  return data;
-}
-
-// 5. Checklist & Attachments & Teams Extensions
-export async function createChecklistItem(taskId: string, label: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data, error } = await supabase
-    .from("task_checklists")
-    .insert([{
-      task_id: taskId,
-      label,
-      is_completed: false
-    }])
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("Error creating checklist item:", error);
-    throw new Error(error.message);
-  }
-  return data;
-}
-
-export async function createTaskAttachment(taskId: string, fileName: string, fileUrl: string, size: number) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data: userData } = await supabase.auth.getUser();
-  
-  const { data, error } = await supabase
-    .from("task_attachments")
-    .insert([{
-      task_id: taskId,
-      file_name: fileName,
-      file_url: fileUrl,
-      file_type: fileName.split('.').pop() || "unknown",
-      size,
-      uploaded_by: userData.user?.id
-    }])
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("Error creating task attachment:", error);
-    throw new Error(error.message);
-  }
-  return data;
-}
-
-export async function fetchTeams() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data, error } = await supabase
-    .from("teams")
-    .select("*")
-    .order("name", { ascending: true });
-    
-  if (error) {
-    console.error("Error fetching teams list:", error);
-    return [];
-  }
-  return data || [];
-}
-
-export async function assignTeamToTask(taskId: string, teamId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data, error } = await supabase
-    .from("task_teams")
-    .insert([{
-      task_id: taskId,
-      team_id: teamId
-    }])
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("Error assigning team to task:", error);
-    throw new Error(error.message);
-  }
-  return data;
 }

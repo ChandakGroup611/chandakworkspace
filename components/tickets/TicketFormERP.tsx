@@ -32,8 +32,12 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
     priorityId: "",
     subject: "",
     remark: "",
+    requirement_description: "",
+    business_reason: "",
     attachment: null as File | null,
   });
+
+  const [isReqCategory, setIsReqCategory] = useState(false);
 
   const [slaPreview, setSlaPreview] = useState<string | null>(null);
 
@@ -81,10 +85,14 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
   useEffect(() => {
     if (!formData.categoryId) {
       setSubcategories([]);
+      setIsReqCategory(false);
       return;
     }
+    const cat = (masters.ticket_category || []).find((c: any) => c.id === formData.categoryId);
+    setIsReqCategory(cat?.is_requirement_category || false);
+
     fetchDependentMasters("ticket_subcategory", formData.categoryId).then(setSubcategories);
-  }, [formData.categoryId]);
+  }, [formData.categoryId, masters.ticket_category]);
 
   const handlePriorityChange = (id: string) => {
     const prios = masters.master_priority || [];
@@ -105,20 +113,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
   }
 
   return (
-    <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
-      <div className={`p-4 border rounded-2xl ${
-        isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-white/[0.02] border-white/5"
-      }`}>
-        <div className={`flex items-center gap-3 pb-4 mb-4 border-b ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
-          <div className={`p-2 rounded-lg ${isLightMode ? "bg-indigo-50" : "bg-purple-500/20"}`}>
-            <Monitor className={`h-5 w-5 ${isLightMode ? "text-indigo-600" : "text-purple-400"}`} />
-          </div>
-          <div>
-            <h3 className={`text-lg font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>ERP & Software Intake</h3>
-            <p className="text-xs text-gray-500">Reporting software defects or requesting new capabilities</p>
-          </div>
-        </div>
-
+    <div className="animate-in slide-in-from-bottom-4 duration-500">
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
             
@@ -251,19 +246,52 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               placeholder="Describe the application fault, bug behavior, or system error in detail..."
               value={formData.remark}
               onChange={(e) => setFormData(prev => ({ ...prev, remark: e.target.value }))}
-              required
+              required={!isReqCategory}
             />
           </div>
+
+          {isReqCategory && (
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-2xl">
+              <h4 className="text-sm font-bold text-indigo-400 mb-2">Requirement Details (Mandatory)</h4>
+              
+              <div className="space-y-2">
+                <label className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Description <span className="text-red-500">*</span></label>
+                <textarea 
+                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[100px] resize-none ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                  }`}
+                  placeholder="Provide technical scope and required capabilities..."
+                  value={formData.requirement_description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Business Justification <span className="text-red-500">*</span></label>
+                <textarea 
+                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[80px] resize-none ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                  }`}
+                  placeholder="Explain why this requirement is needed for the business..."
+                  value={formData.business_reason}
+                  onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Technical Evidence (Screenshots / Logs)</label>
             <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
               isLightMode ? "border-gray-100 hover:border-indigo-200 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
-            }`}>
+            } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-red-500/5' : ''}`}>
               <input 
                 type="file" 
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
                 onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
+                required={isReqCategory && !formData.attachment}
               />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -300,7 +328,6 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </AppButton>
           </div>
         </form>
-      </div>
     </div>
   );
 }

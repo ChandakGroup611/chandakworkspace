@@ -315,7 +315,10 @@ async function updateAssetAssignments(dbClient: any, userId: string, newAssetTag
  * Fetches all active assignees for ticket selection dropdowns
  * Bypasses SELECT RLS limits via service role if available
  */
+import { unstable_noStore as noStore } from 'next/cache';
+
 export async function fetchAssignees() {
+  noStore();
   const cookieStore = await cookies();
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
   const adminClient = getAdminClient();
@@ -333,5 +336,38 @@ export async function fetchAssignees() {
     return [];
   }
   return data || [];
+}
+
+/**
+ * Fetches all data required for the Users Dashboard
+ * Uses optimized repositories and explicit queries
+ */
+export async function fetchUsersDashboardData() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error("Unauthenticated. Please log in first.");
+  }
+
+  const { getVisibleUsers } = await import('@/lib/repositories/users');
+  const users = await getVisibleUsers(user.id);
+
+  const [deptRes, desigRes, roleRes, astRes] = await Promise.all([
+    supabase.from("departments").select("id, code, name").eq("is_deleted", false),
+    supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
+    supabase.from("roles").select("id, code, name").eq("is_deleted", false),
+    supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false)
+  ]);
+
+  return {
+    users,
+    authUser: user,
+    departments: deptRes.data || [],
+    designations: desigRes.data || [],
+    roles: roleRes.data || [],
+    assets: astRes.data || []
+  };
 }
 

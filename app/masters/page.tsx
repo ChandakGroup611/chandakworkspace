@@ -48,8 +48,8 @@ const MASTER_TABLES = [
   { id: "infra_issue_subtypes", table: "issue_subtypes", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Issue Sub Type", category: "IT INFRA", icon: FileText, desc: "Specific infra problem details", parentTable: "issue_types", parentKey: "issue_type_id", parentRequired: true },
   { id: "infra_ticket_categories", table: "ticket_categories", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Issue Category", category: "IT INFRA", icon: FolderTree, desc: "Main categories for logging physical faults", parentTable: null, parentKey: null, parentRequired: false },
   { id: "infra_ticket_subcategories", table: "ticket_subcategories", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Issue Sub Category", category: "IT INFRA", icon: Box, desc: "Specific infra topics under each category", parentTable: "ticket_categories", parentKey: "category_id", parentRequired: true },
-  { id: "infra_workflow_states", table: "workflow_states", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Status", category: "IT INFRA", icon: Activity, desc: "Application stages for infra tickets", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "infra_master_priorities", table: "master_priorities", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Priority", category: "IT INFRA", icon: Hash, desc: "Infra priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "infra_workflow_states", table: "status_master", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Status", category: "IT INFRA", icon: Activity, desc: "Application stages for infra tickets", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "infra_master_priorities", table: "priority_master", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Priority", category: "IT INFRA", icon: Hash, desc: "Infra priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
   { id: "assets", table: "assets", scopeId: "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1", label: "Assets", category: "IT INFRA", icon: ShieldCheck, desc: "Physical hardware devices and asset tags", parentTable: "departments", parentKey: "department_id", parentRequired: false },
 
   // ── ERP Category (Tier 2) ──
@@ -58,8 +58,8 @@ const MASTER_TABLES = [
   { id: "erp_software_submodules", table: "software_submodules", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Sub Module", category: "ERP", icon: Database, desc: "Specific actions inside a module", parentTable: "software_modules", parentKey: "module_id", parentRequired: true },
   { id: "erp_ticket_categories", table: "ticket_categories", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Issue Category", category: "ERP", icon: FolderTree, desc: "Main categories for software logging", parentTable: null, parentKey: null, parentRequired: false },
   { id: "erp_ticket_subcategories", table: "ticket_subcategories", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Issue Sub Category", category: "ERP", icon: Box, desc: "Specific software topics under each category", parentTable: "ticket_categories", parentKey: "category_id", parentRequired: true },
-  { id: "erp_workflow_states", table: "workflow_states", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Status", category: "ERP", icon: Activity, desc: "Application stages for software tickets", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "erp_master_priorities", table: "master_priorities", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Priority", category: "ERP", icon: Hash, desc: "Software priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "erp_workflow_states", table: "status_master", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Status", category: "ERP", icon: Activity, desc: "Application stages for software tickets", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "erp_master_priorities", table: "priority_master", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Priority", category: "ERP", icon: Hash, desc: "Software priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
 
   // ── USERS Category ──
   { id: "departments", table: "departments", scopeId: null, label: "Department", category: "USERS", icon: Layers, desc: "Company departments and business units", parentTable: null, parentKey: null, parentRequired: false },
@@ -70,8 +70,8 @@ const MASTER_TABLES = [
   { id: "other_software_submodules", table: "software_submodules", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Sub Module", category: "OTHERS", icon: Database, desc: "General sub-features", parentTable: "software_modules", parentKey: "module_id", parentRequired: false },
   { id: "other_issue_types", table: "issue_types", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Issue Type", category: "OTHERS", icon: Activity, desc: "General fault types", parentTable: null, parentKey: null, parentRequired: false },
   { id: "other_issue_subtypes", table: "issue_subtypes", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Issue Sub Type", category: "OTHERS", icon: FileText, desc: "General fault details", parentTable: "issue_types", parentKey: "issue_type_id", parentRequired: true },
-  { id: "other_workflow_states", table: "workflow_states", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Status", category: "OTHERS", icon: Activity, desc: "General workflow stages", parentTable: null, parentKey: null, parentRequired: false },
-  { id: "other_master_priorities", table: "master_priorities", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Priority", category: "OTHERS", icon: Hash, desc: "General priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "other_workflow_states", table: "status_master", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Status", category: "OTHERS", icon: Activity, desc: "General workflow stages", parentTable: null, parentKey: null, parentRequired: false },
+  { id: "other_master_priorities", table: "priority_master", scopeId: "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3", label: "Priority", category: "OTHERS", icon: Hash, desc: "General priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
 ];
 
 function UsersIcon(props: any) {
@@ -152,37 +152,7 @@ export default function MastersPage() {
       if (error) throw error;
 
       let dbData = (data || []).filter((r: any) => r.is_deleted !== true);
-      
-      // HYBRID PERSISTENCE: Merge local sandbox records to prevent 'vanishing' records (Disabled for Assets)
-      let localSaved: any[] = [];
-      if (activeTab !== "assets") {
-        try {
-          const stored = localStorage.getItem(`demo_masters_cache_${activeTab}`);
-          if (stored) {
-            localSaved = JSON.parse(stored);
-          }
-        } catch (e) {}
-      }
-
-      // Avoid duplicates between DB and Local
-      const merged = [...dbData];
-      if (activeTab !== "assets") {
-        localSaved.forEach(ls => {
-          if (!merged.some(m => m.id === ls.id || m.code === ls.code)) {
-            merged.push(ls);
-          }
-        });
-      }
-
-      // If absolutely no records found, hydrate seeds (Disabled for Assets)
-      if (merged.length === 0 && currentConfig.scopeId && activeTab !== "assets") {
-        merged.push(
-          { id: `seed-1-${activeTab}`, code: `${activeTab.slice(0, 3).toUpperCase()}-001`, name: `Primary ${currentConfig.label}`, description: `Baseline ${currentConfig.category} configuration`, is_active: true, created_at: new Date().toISOString(), scope_id: currentConfig.scopeId },
-          { id: `seed-2-${activeTab}`, code: `${activeTab.slice(0, 3).toUpperCase()}-002`, name: `Secondary ${currentConfig.label}`, description: `Standard ${currentConfig.category} flow`, is_active: true, created_at: new Date().toISOString(), scope_id: currentConfig.scopeId }
-        );
-      }
-
-      setRecords(merged);
+      setRecords(dbData);
 
       // Fetch parent lookup list if required
       if (currentConfig.parentTable) {
@@ -237,32 +207,8 @@ export default function MastersPage() {
         setFormParentId("");
       }
     } catch (err: any) {
-      console.warn("Master Table query restricted by strict RLS access schemas. Hydrating baseline fallback matrix records to unblock administrator UI configuration previews:", err);
-      
-      // Seed rich premium starter data sets
-      const starterSeeds: any[] = [
-        { id: `seed-1-${activeTab}`, code: `${activeTab.slice(0, 3).toUpperCase()}-001`, name: `Primary Operational ${currentConfig.label.split(" ")[0]}`, description: "Baseline core governance configuration matrix", is_active: true, created_at: new Date().toISOString() },
-        { id: `seed-2-${activeTab}`, code: `${activeTab.slice(0, 3).toUpperCase()}-002`, name: `Secondary Escrow ${currentConfig.label.split(" ")[0]}`, description: "Standard execution fallback tier parameters", is_active: true, created_at: new Date().toISOString() }
-      ];
-      
-      // Load any locally cached persistent sandbox additions
-      let localSaved: any[] = [];
-      try {
-        const stored = localStorage.getItem(`demo_masters_cache_${activeTab}`);
-        if (stored) {
-          localSaved = JSON.parse(stored);
-        }
-      } catch (e) {}
-
-      // Merge local storage items ahead of baseline seeds, avoiding duplicate keys
-      const merged = [...localSaved];
-      starterSeeds.forEach(seed => {
-        if (!merged.some(m => m.code === seed.code || m.id === seed.id)) {
-          merged.push(seed);
-        }
-      });
-
-      setRecords(merged);
+      console.warn("Master Table query restricted by strict RLS access schemas:", err);
+      setRecords([]);
 
       // Hydrate parent configuration dropmenu lists similarly if parent constraint defined
       if (currentConfig.parentTable) {
@@ -437,22 +383,49 @@ export default function MastersPage() {
     };
 
     // Table specific mappings
+    if (currentConfig.table === "status_master") {
+      payload.status_code = payload.code;
+      payload.status_name = payload.name;
+      delete payload.code;
+      delete payload.name;
+    }
+    
+    if (currentConfig.table === "priority_master") {
+      payload.priority_code = payload.code;
+      payload.priority_name = payload.name;
+      delete payload.code;
+      delete payload.name;
+    }
+
     if (currentConfig.parentKey && formParentId) {
       payload[currentConfig.parentKey] = formParentId;
     }
-    if (currentConfig.table === "master_priorities") {
+    if (currentConfig.table === "priority_master") {
       const standard = Number(formSlaStandard) || 120;
       payload.sla_standard_minutes = standard;
       payload.sla_target_minutes = standard;
       payload.sla_min_minutes = Number(formSlaMin) || Math.floor(standard * 0.5);
       payload.sla_max_minutes = Number(formSlaMax) || Math.floor(standard * 1.5);
     }
-    if (activeTab === "assets") {
+    if (currentConfig.table === "assets") {
       payload.asset_tag = formAssetTag.trim().toUpperCase() || `TAG-${Date.now().toString().slice(-6)}`;
       payload.status = "OPERATIONAL";
     }
-    if (activeTab === "workflow_states") {
-      payload.module = formModule;
+    if (currentConfig.table === "workflow_states" || currentConfig.table === "status_master") {
+      // Automap module and scope_type based on the Operational Governance Scope selected
+      if (formScopeId === 'e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1') {
+        payload.module = 'infra';
+        payload.scope_type = 'INFRA';
+      } else if (formScopeId === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2') {
+        payload.module = 'erp';
+        payload.scope_type = 'ERP';
+      } else if (formScopeId === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3') {
+        payload.module = 'workspaces';
+        payload.scope_type = 'TASK';
+      } else {
+        payload.module = 'requirements';
+        payload.scope_type = 'REQUIREMENT';
+      }
     }
 
     if (editRecordId) {
@@ -500,14 +473,7 @@ export default function MastersPage() {
         fetchRecords();
       } catch (err: any) {
         console.warn("Master Update intercepted by sandbox state fallback:", err);
-        setRecords(prev => {
-          const updatedList = prev.map(r => r.id === editRecordId ? { ...r, ...payload, updated_at: new Date().toISOString() } : r);
-          try {
-            localStorage.setItem(`demo_masters_cache_${activeTab}`, JSON.stringify(updatedList));
-          } catch (e) {}
-          return updatedList;
-        });
-        setSuccessAlert(`Successfully updated dynamic master record '${payload.code}' (Locally Persisted).`);
+        alert("Database Error on Update: " + (err.message || err.details || JSON.stringify(err)));
         setShowModal(false);
         setEditRecordId(null);
         setFormCode("");
@@ -544,11 +510,6 @@ export default function MastersPage() {
         module: "masters",
         action_type: "create",
         actor: "System Administrator",
-        target_user_id: "GLOBAL_OPS",
-        payload: { message: `Master record '${payload.code}' initialized in relation '${currentConfig.table}'.`, values: payload },
-        redirect_url: `/masters?scope=OTHER`,
-        priority_level: "HIGH",
-        is_read: false
       }]).then(() => {}, () => {});
 
       setSuccessAlert(`Successfully provisioned dynamic master record '${payload.code}'.`);
@@ -559,23 +520,11 @@ export default function MastersPage() {
       setFormAssetTag("");
       fetchRecords();
     } catch (err: any) {
-      console.warn("Master Creation strict validation condition intercepted. Retaining dynamically inside sandbox state buffers to guarantee operational preview visibility:", err);
+      console.warn("Master Creation validation intercepted:", err);
       
-      const cachedMasterItem = {
-        id: `local-master-${Date.now()}`,
-        ...payload,
-        created_at: new Date().toISOString()
-      };
+      // ALERTS THE ACTUAL DATABASE ERROR SO THE USER SEES IT IMMEDIATELY
+      alert("Database Error: " + (err.message || err.details || JSON.stringify(err)));
 
-      setRecords(prev => {
-        const updatedList = [cachedMasterItem, ...prev];
-        try {
-          localStorage.setItem(`demo_masters_cache_${activeTab}`, JSON.stringify(updatedList));
-        } catch (e) {}
-        return updatedList;
-      });
-
-      setSuccessAlert(`Successfully provisioned dynamic master record '${payload.code}' (Locally Persisted).`);
       setShowModal(false);
       setFormCode("");
       setFormName("");
@@ -623,13 +572,8 @@ export default function MastersPage() {
       setRecords(records.map(r => r.id === record.id ? { ...r, is_active: updatedStatus } : r));
       setSuccessAlert(`Record status successfully updated.`);
     } catch (err: any) {
-      console.warn("Status toggle backend verification filtered. Applying local interactive state update to ensure UI testing continuity:", err);
-      const updatedList = records.map(r => r.id === record.id ? { ...r, is_active: updatedStatus } : r);
-      setRecords(updatedList);
-      try {
-        localStorage.setItem(`demo_masters_cache_${activeTab}`, JSON.stringify(updatedList));
-      } catch (e) {}
-      setSuccessAlert(`Record status successfully updated (Locally Persisted).`);
+      console.warn("Status toggle backend verification filtered:", err);
+      alert("Database Error on Toggle: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 
@@ -638,15 +582,20 @@ export default function MastersPage() {
     setSuccessAlert(null);
     
     try {
-      // Implement Soft Delete natively if column present, else fail with constraint error warning
-      // We added is_deleted to all dynamic master extensions
-      const { error } = await supabase
+      // Hard delete from database. This guarantees constraint errors are thrown back to the user if the record is in use.
+      const { data, error } = await supabase
         .from(currentConfig.table)
-        .update({ is_deleted: true, is_active: false, updated_at: new Date().toISOString() })
-        .eq('id', record.id);
+        .delete()
+        .eq('id', record.id)
+        .select();
 
       if (error) {
         throw error;
+      }
+      
+      // If data is empty and there was no error, RLS blocked it (silent failure)
+      if (!data || data.length === 0) {
+        throw new Error("Deletion failed. It may have already been deleted, or you don't have permission.");
       }
 
       // Log audit
@@ -672,15 +621,10 @@ export default function MastersPage() {
       }]).then(() => {}, () => {});
 
       setRecords(records.filter(r => r.id !== record.id));
-      setSuccessAlert(`Master entity softly expunged to preserve referencing parent-child tree parameters.`);
+      setSuccessAlert(`Master entity successfully deleted.`);
     } catch (err: any) {
-      console.warn("Deletion restricted by remote relation models. Expunging locally from view cache to guarantee fluid admin UI simulation:", err);
-      const updatedList = records.filter(r => r.id !== record.id);
-      setRecords(updatedList);
-      try {
-        localStorage.setItem(`demo_masters_cache_${activeTab}`, JSON.stringify(updatedList));
-      } catch (e) {}
-      setSuccessAlert(`Master entity softly expunged (Locally Persisted).`);
+      console.warn("Deletion restricted by remote relation models:", err);
+      alert("Database Error on Delete: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 
@@ -1261,7 +1205,7 @@ export default function MastersPage() {
               )}
 
               {/* Target SLA target minutes input */}
-              {activeTab === "master_priorities" && (
+              {currentConfig.table === "master_priorities" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">
@@ -1299,25 +1243,7 @@ export default function MastersPage() {
                 </div>
               )}
 
-              {/* Status Master target module selector */}
-              {activeTab === "workflow_states" && (
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-blue-400 uppercase tracking-wider block">
-                    Associated System Module <span className="text-rose-400">*</span>
-                  </label>
-                  <select
-                    value={formModule}
-                    onChange={(e) => setFormModule(e.target.value)}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-blue-300"
-                    }`}
-                  >
-                    <option value="tickets" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>Ticketing (ITSM)</option>
-                    <option value="workspaces" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>Workspace Tasks</option>
-                    <option value="requirements" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>Requirements</option>
-                  </select>
-                </div>
-              )}
+              {/* Associated System Module dropdown removed - dynamically assigned based on Governance Scope */}
 
               {/* Operational Scope Flag (1=INFRA, 2=ERP) */}
               <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">

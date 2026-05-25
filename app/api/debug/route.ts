@@ -1,15 +1,42 @@
+
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: Request) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const cookieStore = await cookies();
+  
+  // Create an anon client that relies on the user's browser cookies
+  const { createServerClient } = await import('@supabase/ssr');
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll() {}
+      }
+    }
+  );
 
-  // Arun (avi2@gmail.com)
-  const arunId = 'a585c2eb-e95b-4e5e-932f-ed13c7668e87';
+  const { data: user, error: authErr } = await supabase.auth.getUser();
+  
+  if (authErr || !user.user) {
+    return NextResponse.json({ error: 'Not authenticated', details: authErr });
+  }
 
-  // We can't use execute_sql_query. But we CAN test RLS using the REST API if we create a signed JWT!
-  // BUT we don't need a JWT.
-  return NextResponse.json({ error: "Can't test this way easily" });
+  // Attempt to insert into status_master using the user's auth context
+  const { data, error } = await supabase.from('status_master').insert([
+    { status_code: 'DEBUG_TEST', status_name: 'DEBUG_TEST', module: 'tickets', is_active: true }
+  ]).select();
+
+  // Attempt to delete it immediately if it succeeded
+  if (!error && data && data.length > 0) {
+    await supabase.from('status_master').delete().eq('id', data[0].id);
+  }
+
+  return NextResponse.json({
+    user: user.user.email,
+    insert_result: data,
+    insert_error: error
+  });
 }

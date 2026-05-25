@@ -94,20 +94,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
   }
 
   return (
-    <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
-      <div className={`p-4 border rounded-2xl ${
-        isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-white/[0.02] border-white/5"
-      }`}>
-        <div className={`flex items-center gap-3 pb-4 mb-4 border-b ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
-          <div className={`p-2 rounded-lg ${isLightMode ? "bg-indigo-50" : "bg-emerald-500/20"}`}>
-            <Layers className={`h-5 w-5 ${isLightMode ? "text-indigo-600" : "text-emerald-400"}`} />
-          </div>
-          <div>
-            <h3 className={`text-lg font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>General Support Intake</h3>
-            <p className="text-xs text-gray-500">Request assistance for general operational or miscellaneous needs</p>
-          </div>
-        </div>
-
+    <div className="animate-in slide-in-from-bottom-4 duration-500">
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
             
@@ -273,7 +260,6 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             </AppButton>
           </div>
         </form>
-      </div>
     </div>
   );
 }

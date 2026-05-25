@@ -5,9 +5,10 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { Plus, X, Activity } from "lucide-react";
-import { fetchCustomFields, createCustomField, fetchUsers } from "@/lib/actions/tasks";
-import { fetchPriorities, fetchTasksByWorkspace } from "@/lib/actions/workspaces";
+import { Plus, X, Activity, Paperclip } from "lucide-react";
+import { fetchCustomFields, createCustomField } from "@/lib/actions/tasks";
+import { fetchPriorities, fetchTasksByWorkspace, fetchStatusesByScope } from "@/lib/actions/workspaces";
+import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 
 export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: { workspaceId: string, onClose: () => void, onSuccess: (data: any) => void }) {
@@ -18,9 +19,6 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
-  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
   
   const [customFields, setCustomFields] = useState<any[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -28,10 +26,12 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
 
-  const [showWorkload, setShowWorkload] = useState(false);
+
 
   const [priorityId, setPriorityId] = useState("");
   const [priorities, setPriorities] = useState<any[]>([]);
+  const [statusId, setStatusId] = useState("");
+  const [statuses, setStatuses] = useState<any[]>([]);
   const [parentTaskId, setParentTaskId] = useState("");
   const [workspaceTasks, setWorkspaceTasks] = useState<any[]>([]);
 
@@ -44,16 +44,16 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
 
   useEffect(() => {
     async function initData() {
-      const [fields, userList, priorityList, existingTasks] = await Promise.all([
-        fetchCustomFields(),
-        fetchUsers(),
+      const [fields, priorityList, existingTasks, statusList] = await Promise.all([
+        fetchCustomFields(workspaceId),
         fetchPriorities(),
-        fetchTasksByWorkspace(workspaceId)
+        fetchTasksByWorkspace(workspaceId),
+        fetchStatusesByScope('REQUIREMENT')
       ]);
       setCustomFields(fields);
-      setUsers(userList);
       setPriorities(priorityList);
       setWorkspaceTasks(existingTasks);
+      setStatuses(statusList);
     }
     initData();
   }, [workspaceId]);
@@ -61,30 +61,31 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   const handleAddField = async () => {
     if (!newFieldName) return;
     try {
-      const field = await createCustomField(newFieldName, newFieldType);
+      const field = await createCustomField(workspaceId, newFieldName, newFieldType);
       setCustomFields([...customFields, field]);
       setIsAddingField(false);
       setNewFieldName("");
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error("[TaskCreationWizard] Error:", e);
+      alert("Database Error on Custom Field Creation: " + (e.message || e.details || JSON.stringify(e)));
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const explicitAssigneeIds = Array.from(new Set([
-      ...assigneeIds,
-      ...(assigneeId ? [assigneeId] : [])
-    ].filter(Boolean)));
+
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      alert("Due date cannot be earlier than the start date.");
+      return;
+    }
 
     onSuccess({
       title,
       description,
       start_date: startDate || null,
       end_date: endDate || null,
-      assignee_id: assigneeId || null,
-      assignee_ids: explicitAssigneeIds,
       priority_id: priorityId || null,
+      status_id: statusId || null,
       parent_task_id: parentTaskId || null,
       custom_fields: fieldValues,
       checklist_items: checklistItems,
@@ -98,15 +99,20 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
-      <AppCard className={`w-full max-w-2xl shadow-2xl border-t-4 ${isLightMode ? "border-t-purple-600 border-x-0 border-b-0 bg-white" : "border-t-purple-500 border-white/10 bg-[#0f111a]"}`}>
-        
-        <div className="p-6 border-b border-gray-200 dark:border-white/5 flex items-center justify-between">
-          <h3 className={`text-lg font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Initialize Enterprise Task</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-white"><X className="h-5 w-5" /></button>
+    <EnterpriseWizardShell
+      title="Initialize Enterprise Task"
+      subtitle="Configure task details, assignments, and requirements."
+      onClose={onClose}
+      size="md"
+      headerAccent="purple"
+      footer={
+        <div className="flex justify-end gap-3 w-full">
+          <AppButton variant="ghost" type="button" onClick={onClose}>Cancel</AppButton>
+          <AppButton variant="primary" onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700">Deploy Directive</AppButton>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[70vh] overflow-y-auto scrollbar-thin">
+      }
+    >
+        <form onSubmit={handleSubmit} className="space-y-5">
           
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-1.5">
@@ -130,33 +136,6 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
-              <span>Primary Assignee</span>
-              <button 
-                type="button" 
-                onClick={() => setShowWorkload(true)}
-                className="text-purple-500 hover:text-purple-600 flex items-center gap-1"
-              >
-                <Activity className="h-3 w-3" /> Check Workload Capacity
-              </button>
-            </label>
-            <select
-              className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
-                isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-              }`}
-              value={assigneeId}
-              onChange={e => setAssigneeId(e.target.value)}
-            >
-              <option value="">-- Select primary assignee --</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.full_name} ({u.user_code})
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
@@ -173,25 +152,20 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                 ))}
               </select>
             </div>
-
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Assigned Corporate Team Members</label>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
               <select
-                multiple
-                size={5}
                 className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                   isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
                 }`}
-                value={assigneeIds}
-                onChange={e => setAssigneeIds(Array.from(e.target.selectedOptions, option => option.value))}
+                value={statusId}
+                onChange={e => setStatusId(e.target.value)}
               >
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.full_name} ({u.user_code})
-                  </option>
+                <option value="">-- Default Status --</option>
+                {statuses.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
-              <p className="text-[10px] text-gray-500">Hold Ctrl/Cmd to select multiple users.</p>
             </div>
           </div>
 
@@ -263,7 +237,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
             <div className="grid grid-cols-2 gap-4">
               {customFields.map(f => (
                 <div key={f.field_key} className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{f.field_label}</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
                   <AppInput 
                     type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
                     value={fieldValues[f.field_key] || ""} 
@@ -324,34 +298,36 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                 <p className="text-[10px] text-gray-500">Link files or docs for the task.</p>
               </div>
 
-              <div className="grid grid-cols-12 gap-3 items-end">
-                <div className="col-span-4 space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">File Name</label>
-                  <AppInput value={attachmentName} onChange={e => setAttachmentName(e.target.value)} placeholder="deployment_plan.pdf" />
-                </div>
-                <div className="col-span-5 space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">URL</label>
-                  <AppInput type="url" value={attachmentUrl} onChange={e => setAttachmentUrl(e.target.value)} placeholder="https://..." />
-                </div>
-                <div className="col-span-2 space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Size (KB)</label>
-                  <AppInput type="number" value={attachmentSizeKb} onChange={e => setAttachmentSizeKb(e.target.value)} placeholder="0" />
-                </div>
-                <div className="col-span-1">
-                  <AppButton type="button" variant="primary" onClick={() => {
-                    if (!attachmentName.trim() || !attachmentUrl.trim()) return;
-                    const fileType = attachmentName.split('.').pop()?.trim().toLowerCase() || "unknown";
+              <div className="flex items-center gap-4">
+                <input 
+                  type="file" 
+                  id="task-attachment" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const mockUrl = URL.createObjectURL(file);
+                    const fileType = file.name.split('.').pop()?.trim().toLowerCase() || "unknown";
                     setAttachments([...attachments, {
-                      file_name: attachmentName.trim(),
-                      file_url: attachmentUrl.trim(),
+                      file_name: file.name,
+                      file_url: mockUrl,
                       file_type: fileType,
-                      size: attachmentSizeKb ? Math.max(0, Math.round(Number(attachmentSizeKb) * 1024)) : 0
-                    }] );
-                    setAttachmentName("");
-                    setAttachmentUrl("");
-                    setAttachmentSizeKb("");
-                  }}>Add</AppButton>
-                </div>
+                      size: file.size
+                    }]);
+                    e.target.value = "";
+                  }}
+                />
+                <label 
+                  htmlFor="task-attachment"
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border cursor-pointer transition-colors shadow-sm ${
+                    isLightMode 
+                      ? "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-indigo-600" 
+                      : "bg-[#1e293b]/70 border-white/10 text-gray-300 hover:bg-[#1e293b] hover:text-indigo-400"
+                  }`}
+                >
+                  <Paperclip className="h-4 w-4" />
+                  <span>Attach File</span>
+                </label>
               </div>
 
               <div className="space-y-2">
@@ -377,17 +353,9 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
               </div>
             </div>
           </div>
-
-          <div className="flex justify-end gap-3 pt-6">
-            <AppButton variant="ghost" type="button" onClick={onClose}>Cancel</AppButton>
-            <AppButton variant="primary" type="submit" className="bg-purple-600 hover:bg-purple-700">Deploy Directive</AppButton>
-          </div>
         </form>
 
-        {showWorkload && (
-          <WorkloadAnalyzer userId={assigneeId} onClose={() => setShowWorkload(false)} />
-        )}
-      </AppCard>
-    </div>
+
+    </EnterpriseWizardShell>
   );
 }

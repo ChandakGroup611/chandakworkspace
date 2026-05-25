@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { 
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 
 export interface NotificationItem {
   id: string;
@@ -203,8 +205,9 @@ export default function RealtimeNotificationsDrawer() {
       </button>
 
       {/* Mobile Toast Notification Overlay - Displays for 2 seconds on new mutations */}
-      <div className="fixed top-6 right-6 z-[999999] flex flex-col gap-3 w-full max-w-sm px-4 pointer-events-none">
-        {toasts.map(toast => {
+      {mounted && createPortal(
+        <div className="fixed top-6 right-6 z-[999999] flex flex-col gap-3 w-full max-w-sm px-4 pointer-events-none">
+          {toasts.map(toast => {
           const isCritical = toast.priority_level === "CRITICAL";
           const displayMessage = toast.payload?.message || "Operational mutation execution.";
           
@@ -258,74 +261,74 @@ export default function RealtimeNotificationsDrawer() {
             </div>
           );
         })}
-      </div>
+      </div>,
+      document.body
+      )}
 
       {isOpen && (
-        <>
-          <div className="fixed inset-0 z-[99998]" onClick={() => setIsOpen(false)} />
-          <div 
-            className={`absolute right-0 top-12 mt-2 w-[420px] max-h-[540px] rounded-2xl border flex flex-col shadow-2xl z-[99999] overflow-hidden font-sans animate-in fade-in zoom-in-95 duration-150 ${
-              isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0A0D14] border-white/10 text-white"
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={`p-3 border-b flex items-center justify-between ${
-              isLightMode ? "border-gray-100 bg-gray-50/80" : "border-white/10 bg-white/[0.01]"
-            }`}>
-              <div className="flex items-center gap-2">
-                <div className="p-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 shrink-0">
-                  <Sparkles className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h3 className={`text-[11px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-900" : "text-white"}`}>Enterprise Stream</h3>
-                  <span className={`text-[9px] block ${isLightMode ? "text-gray-500" : "text-gray-500"}`}>Live Database Mutations</span>
-                </div>
+        <EnterpriseDrawerShell
+          title={
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 shrink-0">
+                <Sparkles className="h-4 w-4" />
               </div>
-              <div className="flex items-center gap-1">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className={`px-2 py-1 rounded-lg border text-[9px] font-bold transition-colors ${
-                      isLightMode ? "bg-white border-gray-200 text-cyan-600 hover:bg-gray-50" : "bg-white/5 border-white/5 text-cyan-400 hover:bg-white/10"
-                    }`}
-                  >
-                    Clear Badges
-                  </button>
-                )}
-                <button onClick={() => setIsOpen(false)} className={`p-1 rounded-lg transition-colors ${isLightMode ? "text-gray-400 hover:text-gray-700 hover:bg-gray-100" : "text-gray-500 hover:text-white hover:bg-white/5"}`}>
-                  <X className="h-3.5 w-3.5" />
+              <span className={`text-lg font-bold tracking-wider ${isLightMode ? "text-gray-900" : "text-white"}`}>Enterprise Stream</span>
+            </div>
+          }
+          subtitle="Live Database Mutations"
+          onClose={() => setIsOpen(false)}
+          size="sm"
+          footer={
+            <div className={`w-full p-2 text-[10px] text-gray-500 flex items-center justify-between gap-2`}>
+              <span>Auto-redirect anchors bound instantly</span>
+              <ExternalLink className="h-3 w-3 text-cyan-500" />
+            </div>
+          }
+        >
+          <div className="flex flex-col h-full space-y-4">
+            <div className="flex items-center justify-between">
+              <div className={`p-1.5 rounded-xl flex items-center gap-1 ${isLightMode ? "bg-gray-100" : "bg-white/5"}`}>
+                <button
+                  onClick={() => setActiveFilter("UNREAD")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    activeFilter === "UNREAD" ? "bg-cyan-500 text-white shadow" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
+                  }`}
+                >
+                  Unread ({unreadCount})
+                </button>
+                <button
+                  onClick={() => setActiveFilter("CRITICAL")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    activeFilter === "CRITICAL" ? "bg-rose-500/20 text-rose-500 border border-rose-500/30" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
+                  }`}
+                >
+                  Escalations ({criticalCount})
+                </button>
+                <button
+                  onClick={() => setActiveFilter("ALL")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    activeFilter === "ALL" ? isLightMode ? "bg-white shadow text-gray-800" : "bg-white/10 text-white" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
+                  }`}
+                >
+                  All ({notifications.length})
                 </button>
               </div>
+              
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
+                    isLightMode ? "bg-white border-gray-200 text-cyan-600 hover:bg-gray-50" : "bg-white/5 border-white/5 text-cyan-400 hover:bg-white/10"
+                  }`}
+                >
+                  Clear Badges
+                </button>
+              )}
             </div>
 
-            <div className={`px-3 py-1.5 border-b flex items-center gap-1 ${isLightMode ? "border-gray-100 bg-gray-50/40" : "border-white/5 bg-white/[0.005]"}`}>
-              <button
-                onClick={() => setActiveFilter("UNREAD")}
-                className={`px-2 py-0.5 rounded-md text-[9px] font-bold transition-all ${
-                  activeFilter === "UNREAD" ? "bg-cyan-500 text-white shadow" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                Unread ({unreadCount})
-              </button>
-              <button
-                onClick={() => setActiveFilter("CRITICAL")}
-                className={`px-2 py-0.5 rounded-md text-[9px] font-bold transition-all ${
-                  activeFilter === "CRITICAL" ? "bg-rose-500/20 text-rose-500 border border-rose-500/30" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                Escalations ({criticalCount})
-              </button>
-              <button
-                onClick={() => setActiveFilter("ALL")}
-                className={`px-2 py-0.5 rounded-md text-[9px] font-bold transition-all ${
-                  activeFilter === "ALL" ? isLightMode ? "bg-gray-200 text-gray-800" : "bg-white/10 text-white" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                All ({notifications.length})
-              </button>
-            </div>
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[380px]">
+
+            <div className="flex-1 space-y-2 pb-4">
               {loading ? (
                 <div className="space-y-2 py-8">
                   {[1, 2, 3].map(i => (
@@ -384,12 +387,8 @@ export default function RealtimeNotificationsDrawer() {
               )}
             </div>
 
-            <div className={`p-2 border-t text-[9px] text-gray-500 flex items-center justify-between gap-2 ${isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.005]"}`}>
-              <span>Auto-redirect anchors bound instantly</span>
-              <ExternalLink className="h-2.5 w-2.5 text-cyan-500" />
             </div>
-          </div>
-        </>
+        </EnterpriseDrawerShell>
       )}
     </>
   );

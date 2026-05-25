@@ -5,11 +5,19 @@ import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/componen
 import { AppBadge } from "@/components/ui/AppBadge";
 import { ShieldAlert, Clock, ArrowRight } from "lucide-react";
 
-export default function EscalationMonitor() {
-  const escalations = [
-    { id: "ESC-102", title: "Database Failover Latency Spike", level: "Level 3", timeRemaining: "4m left", risk: "danger" },
-    { id: "ESC-089", title: "RBAC Middleware Token Expired", level: "Level 2", timeRemaining: "18m left", risk: "warning" },
-  ];
+export default function EscalationMonitor({ activities = [] }: { activities?: any[] }) {
+  const escalations = React.useMemo(() => {
+    return activities
+      .filter(act => act.status === "escalated" || act.impact === "Critical")
+      .map(act => ({
+         id: act.id,
+         title: act.title,
+         level: act.status === "escalated" ? "SLA Breach" : "Critical",
+         timeRemaining: "Live Event",
+         risk: act.status === "escalated" ? "danger" : "warning"
+      }))
+      .slice(0, 5); // Max 5 items to fit nicely
+  }, [activities]);
 
   return (
     <AppCard className="flex flex-col h-full border-rose-500/10 bg-gradient-to-b from-rose-950/10 via-white/[0.01] to-transparent">
@@ -27,7 +35,7 @@ export default function EscalationMonitor() {
         </p>
 
         <div className="space-y-2">
-          {escalations.map((esc) => (
+          {escalations.length > 0 ? escalations.map((esc) => (
             <div 
               key={esc.id} 
               className="p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 flex items-center justify-between transition-colors duration-200"
@@ -54,7 +62,11 @@ export default function EscalationMonitor() {
                 </div>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="p-4 text-center text-xs text-gray-500 rounded-xl bg-white/[0.01] border border-white/5">
+              No active escalations or critical SLA breaches detected.
+            </div>
+          )}
         </div>
 
         <div className="pt-1 flex items-center justify-between text-[10px] text-gray-500">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   TrendingUp, 
   Layers, 
@@ -44,7 +44,7 @@ import WorkloadDistributionMap from "@/components/dashboard/WorkloadDistribution
 import EscalationMonitor from "@/components/dashboard/EscalationMonitor";
 
 interface DashboardCommandCenterProps {
-  initialTodos: any[];
+  initialActivities: any[];
   dbError: string | null;
 }
 
@@ -60,52 +60,40 @@ interface HistoryItem {
   impact: "Critical" | "High" | "Medium" | "Low";
 }
 
-export default function DashboardCommandCenter({ initialTodos, dbError }: DashboardCommandCenterProps) {
+export default function DashboardCommandCenter({ initialActivities, dbError }: DashboardCommandCenterProps) {
   const [activeModule, setActiveModule] = useState<"all" | "tickets" | "tasks" | "requirements">("all");
   const [activeStatus, setActiveStatus] = useState<"all" | "active" | "resolved" | "review" | "escalated">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const triggerSync = () => {
     setIsSyncing(true);
     setTimeout(() => setIsSyncing(false), 1200);
   };
 
-  // Comprehensive static demonstration module audit history records mapping advanced transactions
-  const baseTransactions: HistoryItem[] = [
-    { id: "INC-8902", module: "tickets", moduleLabel: "ITSM Ticket", title: "Database kernel memory corruption event", status: "escalated", statusLabel: "Escalated", timestamp: "10 mins ago", operator: "S. Varma", impact: "Critical" },
-    { id: "TSK-401", module: "tasks", moduleLabel: "Workspace Task", title: "Refactor dynamic bento layout parameters", status: "resolved", statusLabel: "Resolved", timestamp: "25 mins ago", operator: "A. Vance", impact: "Medium" },
-    { id: "REQ-112", module: "requirements", moduleLabel: "Requirement", title: "Enforce multi-tier state gate RBAC checks", status: "review", statusLabel: "Pending Review", timestamp: "1 hour ago", operator: "M. Sterling", impact: "High" },
-    { id: "INC-8895", module: "tickets", moduleLabel: "ITSM Ticket", title: "API Gateway rate-limiting throttle breach", status: "active", statusLabel: "Active Ingress", timestamp: "2 hours ago", operator: "R. Chen", impact: "High" },
-    { id: "TSK-405", module: "tasks", moduleLabel: "Workspace Task", title: "Hydrate database storage tables canonical schema", status: "active", statusLabel: "In Progress", timestamp: "3 hours ago", operator: "A. Vance", impact: "Critical" },
-    { id: "REQ-098", module: "requirements", moduleLabel: "Requirement", title: "Validate tactile feedback motion bounce limits", status: "resolved", statusLabel: "Approved", timestamp: "5 hours ago", operator: "L. Kross", impact: "Low" },
-    { id: "INC-8850", module: "tickets", moduleLabel: "ITSM Ticket", title: "SSO Identity provider signature verification fault", status: "resolved", statusLabel: "Resolved", timestamp: "1 day ago", operator: "S. Varma", impact: "Critical" },
-    { id: "TSK-390", module: "tasks", moduleLabel: "Workspace Task", title: "Map global text contrast safety net overrides", status: "resolved", statusLabel: "Completed", timestamp: "1 day ago", operator: "System Daemon", impact: "Medium" },
-  ];
-
-  // Merge server props data dynamically if desired to enrich listing
   const allHistory = useMemo(() => {
-    const list = [...baseTransactions];
-    if (initialTodos && initialTodos.length > 0) {
-      initialTodos.forEach((t, i) => {
-        // Prevent duplicate IDs
-        if (!list.some(x => x.id === `DB-${t.id}`)) {
-          list.push({
-            id: `DB-${String(t.id).slice(0, 5)}`,
-            module: i % 2 === 0 ? "tasks" : "tickets",
-            moduleLabel: i % 2 === 0 ? "Workspace Task" : "ITSM Ticket",
-            title: t.name || "Synchronized database entry entity",
-            status: "resolved",
-            statusLabel: "Operational",
-            timestamp: "Synced feed",
-            operator: "Postgres Storage",
-            impact: "Low"
-          });
-        }
-      });
-    }
-    return list;
-  }, [initialTodos]);
+    // Format the timestamp nicely for the UI
+    const timeAgo = (dateStr: string) => {
+      if (!mounted) return "";
+      const ms = Date.now() - new Date(dateStr).getTime();
+      const mins = Math.floor(ms / 60000);
+      if (mins < 60) return `${mins} mins ago`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs} hours ago`;
+      return `${Math.floor(hrs / 24)} days ago`;
+    };
+
+    return (initialActivities || []).map(act => ({
+      ...act,
+      rawTimestamp: act.timestamp,
+      timestamp: mounted ? timeAgo(act.timestamp) : ""
+    }));
+  }, [initialActivities, mounted]);
 
   // Handle KPI card dispatch clicks targeting related history views directly
   const selectFilterPreset = (module: "all" | "tickets" | "tasks" | "requirements", status: "all" | "active" | "resolved" | "review" | "escalated") => {
@@ -131,60 +119,68 @@ export default function DashboardCommandCenter({ initialTodos, dbError }: Dashbo
     });
   }, [allHistory, activeModule, activeStatus, searchQuery]);
 
-  const kpis = [
-    { 
-      label: "Active Operational Scope", 
-      value: "1,248", 
-      change: "View All Modules", 
-      trend: "up", 
-      icon: Layers, 
-      color: "text-blue-400", 
-      bg: "bg-blue-500/10", 
-      border: "border-blue-500/20",
-      targetModule: "all" as const,
-      targetStatus: "all" as const,
-      desc: "Click to clear filters"
-    },
-    { 
-      label: "SLA Adherence Ratio", 
-      value: "99.4%", 
-      change: "Resolved History", 
-      trend: "up", 
-      icon: CheckCircle2, 
-      color: "text-emerald-400", 
-      bg: "bg-emerald-500/10", 
-      border: "border-emerald-500/20",
-      targetModule: "all" as const,
-      targetStatus: "resolved" as const,
-      desc: "Click to view passing items"
-    },
-    { 
-      label: "Critical Escalations", 
-      value: "2", 
-      change: "Active Breaches", 
-      trend: "down", 
-      icon: AlertTriangle, 
-      color: "text-rose-400", 
-      bg: "bg-rose-500/10", 
-      border: "border-rose-500/20",
-      targetModule: "tickets" as const,
-      targetStatus: "escalated" as const,
-      desc: "Click to target critical ITSM"
-    },
-    { 
-      label: "Pending Requirements", 
-      value: "3 Gate", 
-      change: "Review Tier", 
-      trend: "up", 
-      icon: FileCheck2, 
-      color: "text-amber-400", 
-      bg: "bg-amber-500/10", 
-      border: "border-amber-500/20",
-      targetModule: "requirements" as const,
-      targetStatus: "review" as const,
-      desc: "Click to check approvals"
-    },
-  ];
+  const kpis = useMemo(() => {
+    const totalCount = allHistory.length;
+    const resolvedCount = allHistory.filter(h => h.status === "resolved").length;
+    const slaAdherence = totalCount > 0 ? ((resolvedCount / totalCount) * 100).toFixed(1) + "%" : "100%";
+    const escalations = allHistory.filter(h => h.status === "escalated").length;
+    const requirements = allHistory.filter(h => h.module === "requirements").length;
+
+    return [
+      { 
+        label: "Active Operational Scope", 
+        value: totalCount.toString(), 
+        change: "Live Feed", 
+        trend: "up", 
+        icon: Layers, 
+        color: "text-blue-400", 
+        bg: "bg-blue-500/10", 
+        border: "border-blue-500/20",
+        targetModule: "all" as const,
+        targetStatus: "all" as const,
+        desc: "Total scoped records"
+      },
+      { 
+        label: "SLA Adherence Ratio", 
+        value: slaAdherence, 
+        change: "Resolved/Total", 
+        trend: "up", 
+        icon: CheckCircle2, 
+        color: "text-emerald-400", 
+        bg: "bg-emerald-500/10", 
+        border: "border-emerald-500/20",
+        targetModule: "all" as const,
+        targetStatus: "resolved" as const,
+        desc: "System throughput health"
+      },
+      { 
+        label: "Critical Escalations", 
+        value: escalations.toString(), 
+        change: "Active Breaches", 
+        trend: escalations > 0 ? "up" : "down", 
+        icon: AlertTriangle, 
+        color: escalations > 0 ? "text-rose-400" : "text-gray-400", 
+        bg: escalations > 0 ? "bg-rose-500/10" : "bg-gray-500/10", 
+        border: escalations > 0 ? "border-rose-500/20" : "border-gray-500/20",
+        targetModule: "tickets" as const,
+        targetStatus: "escalated" as const,
+        desc: "Tickets requiring attention"
+      },
+      { 
+        label: "Active Workspaces", 
+        value: requirements.toString(), 
+        change: "Environment Tier", 
+        trend: "up", 
+        icon: FileCheck2, 
+        color: "text-amber-400", 
+        bg: "bg-amber-500/10", 
+        border: "border-amber-500/20",
+        targetModule: "requirements" as const,
+        targetStatus: "all" as const,
+        desc: "Active workspace clusters"
+      },
+    ];
+  }, [allHistory]);
 
   const getStatusBadgeVariant = (status: string) => {
     switch(status) {
@@ -282,12 +278,12 @@ export default function DashboardCommandCenter({ initialTodos, dbError }: Dashbo
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Span 2: Operational Heatmap Matrix */}
         <div className="lg:col-span-2">
-          <OperationalHeatmap />
+          <OperationalHeatmap activities={allHistory} />
         </div>
 
         {/* Right Span 1: Workload Saturation Engine */}
         <div>
-          <WorkloadDistributionMap />
+          <WorkloadDistributionMap activities={allHistory} />
         </div>
       </div>
 
@@ -460,7 +456,7 @@ export default function DashboardCommandCenter({ initialTodos, dbError }: Dashbo
                 <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400">
                   Database binding connection message: {dbError}
                 </div>
-              ) : initialTodos && initialTodos.length > 0 ? (
+              ) : initialActivities && initialActivities.length > 0 ? (
                 <AppTableContainer>
                   <AppTable>
                     <AppTableHeader>
@@ -471,10 +467,10 @@ export default function DashboardCommandCenter({ initialTodos, dbError }: Dashbo
                       </tr>
                     </AppTableHeader>
                     <AppTableBody>
-                      {initialTodos.map((todo: any) => (
+                      {initialActivities.slice(0, 5).map((todo: any) => (
                         <AppTableRow key={todo.id}>
                           <AppTableCell className="font-mono text-gray-500">#{String(todo.id).slice(0, 8)}</AppTableCell>
-                          <AppTableCell className="font-semibold text-gray-200">{todo.name || "Default System Channel Block"}</AppTableCell>
+                          <AppTableCell className="font-semibold text-gray-200">{todo.title || "Default System Channel Block"}</AppTableCell>
                           <AppTableCell className="text-right">
                             <AppBadge variant="success">Synchronized</AppBadge>
                           </AppTableCell>
@@ -494,7 +490,7 @@ export default function DashboardCommandCenter({ initialTodos, dbError }: Dashbo
 
         {/* Right Span 1: SLA Breach Governance Console */}
         <div>
-          <EscalationMonitor />
+          <EscalationMonitor activities={allHistory} />
         </div>
       </div>
     </div>

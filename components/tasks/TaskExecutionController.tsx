@@ -14,8 +14,7 @@ import {
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
   approveResolution, reopenTask, createChecklistItem, 
-  createTaskAttachment, fetchTeams, assignTeamToTask,
-  getTaskComments, addTaskRemark
+  createTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses
 } from "@/lib/actions/tasks";
 import { toggleChecklistItem } from "@/lib/actions/workspaces";
 import { useRouter } from "next/navigation";
@@ -26,16 +25,16 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
 
   const router = useRouter();
   const [task, setTask] = useState<any>(null);
+  const [statuses, setStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"checklist" | "attachments" | "teams">("checklist");
+  const [activeTab, setActiveTab] = useState<"checklist" | "attachments">("checklist");
   
   // Input fields
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [newChecklistLabel, setNewChecklistLabel] = useState("");
   const [newFileName, setNewFileName] = useState("");
-  const [selectedTeamId, setSelectedTeamId] = useState("");
-  const [teams, setTeams] = useState<any[]>([]);
+
   const [showAttachmentInput, setShowAttachmentInput] = useState(false);
   const [remarksDraft, setRemarksDraft] = useState("");
   const [saveRemarksLoading, setSaveRemarksLoading] = useState(false);
@@ -46,6 +45,10 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [localCustomFields, setLocalCustomFields] = useState<Record<string, any>>({});
+  const [pendingChecklists, setPendingChecklists] = useState<string[]>([]);
+  const [editedChecklists, setEditedChecklists] = useState<Record<string, boolean>>({});
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const loadTaskDetails = async () => {
     setLoading(true);
@@ -55,6 +58,11 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
       const details = await getTaskDetails(taskId);
       setTask(details);
       setRemarksDraft("");
+      // Initialize editable custom fields
+      setLocalCustomFields(details.custom_fields || {});
+      
+      const st = await getTaskStatuses();
+      setStatuses(st);
       
       setRemarksHistoryLoading(true);
       const comments = await getTaskComments(taskId);
@@ -88,17 +96,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
     clearMentions();
   }, [taskId]);
 
-  useEffect(() => {
-    async function loadTeams() {
-      try {
-        const teamList = await fetchTeams();
-        setTeams(teamList);
-      } catch (e: any) {
-        console.error("Failed to load teams catalog:", e);
-      }
-    }
-    loadTeams();
-  }, []);
+
 
   const handleStatusTransition = (action: "start" | "resolve" | "approve" | "reopen") => {
     if (action === "start") {
@@ -114,40 +112,29 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
 
   const handleToggleChecklist = async (itemId: string, currentStatus: boolean) => {
     setError(null);
-    try {
-      await toggleChecklistItem(itemId, !currentStatus);
-      // Local state update for instant response
-      setTask((prev: any) => ({
-        ...prev,
-        checklists: prev.checklists.map((item: any) => 
-          item.id === itemId ? { ...item, is_completed: !currentStatus } : item
-        )
-      }));
-      onUpdate?.();
-      router.refresh();
-    } catch (e: any) {
-      console.error(e);
-      setError(e.message || "Failed to update checklist item status.");
-      setTimeout(() => setError(null), 6000);
-    }
+    // Record edit locally; DB update will be performed on batch save
+    setEditedChecklists(prev => ({ ...prev, [itemId]: !currentStatus }));
+    // Optimistically update UI
+    setTask((prev: any) => ({
+      ...prev,
+      checklists: prev.checklists.map((item: any) =>
+        item.id === itemId ? { ...item, is_completed: !currentStatus } : item
+      )
+    }));
   };
 
   const handleAddChecklist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChecklistLabel.trim()) return;
     setError(null);
-    try {
-      const newItem = await createChecklistItem(taskId, newChecklistLabel.trim());
-      setTask((prev: any) => ({
-        ...prev,
-        checklists: [...(prev.checklists || []), newItem]
-      }));
-      setNewChecklistLabel("");
-    } catch (e: any) {
-      console.error(e);
-      setError(e.message || "Failed to add checklist item. Verify database RLS policies.");
-      setTimeout(() => setError(null), 8000);
-    }
+    // Queue new checklist label for batch creation
+    setPendingChecklists(prev => [...prev, newChecklistLabel.trim()]);
+    // Optimistically add placeholder to UI
+    setTask((prev: any) => ({
+      ...prev,
+      checklists: [...(prev.checklists || []), { id: `temp-${Date.now()}`, label: newChecklistLabel.trim(), is_completed: false }]
+    }));
+    setNewChecklistLabel("");
   };
 
   const triggerFileSelect = () => {
@@ -157,54 +144,17 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingFile(true);
     setError(null);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64Url = event.target?.result as string;
-        try {
-          const newFile = await createTaskAttachment(taskId, file.name, base64Url, file.size);
-          setTask((prev: any) => ({
-            ...prev,
-            attachments: [...(prev.attachments || []), newFile]
-          }));
-          router.refresh();
-        } catch (err: any) {
-          console.error(err);
-          setError(err.message || "Failed to attach file. Check RLS policies.");
-          setTimeout(() => setError(null), 8000);
-        } finally {
-          setUploadingFile(false);
-        }
-      };
-      reader.onerror = () => {
-        setError("Failed to read file.");
-        setUploadingFile(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err: any) {
-      console.error(err);
-      setError("File upload processing failed.");
-      setUploadingFile(false);
-    }
+    // Queue file for batch upload
+    setPendingFiles(prev => [...prev, file]);
+    // Optimistically add placeholder attachment to UI
+    setTask((prev: any) => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), { id: `temp-file-${Date.now()}`, file_name: file.name, is_temp: true }]
+    }));
   };
 
-  const handleAssignTeam = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTeamId) return;
-    setError(null);
-    try {
-      await assignTeamToTask(taskId, selectedTeamId);
-      // Reload task details to map structural joint info
-      await loadTaskDetails();
-      setSelectedTeamId("");
-    } catch (e: any) {
-      console.error(e);
-      setError(e.message || "Failed to enroll team. Verify database RLS policies on task_teams.");
-      setTimeout(() => setError(null), 8000);
-    }
-  };
+
 
   if (loading) {
     return (
@@ -215,13 +165,13 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
     );
   }
 
-  const handleSaveRemarks = async () => {
-    if (!task || !remarksDraft.trim()) return;
+  const handleBatchSave = async () => {
+    if (!task) return;
     setSaveRemarksLoading(true);
     setError(null);
     try {
+      // 1. Process pending status change
       if (pendingStatus) {
-        // 1. Transition the status
         if (pendingStatus === "ST_IN_PROGRESS") {
           await transitionTaskStatus(taskId, "ST_IN_PROGRESS");
         } else if (pendingStatus === "ST_RESOLVED") {
@@ -233,25 +183,58 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         } else {
           await transitionTaskStatus(taskId, pendingStatus);
         }
-        
-        // 2. Save the remark
-        const newComment = await addTaskRemark(taskId, remarksDraft);
-        setRemarksHistory(prev => [...prev, newComment]);
-        setPendingStatus(null);
-      } else {
-        // Normal save remark
-        const newComment = await addTaskRemark(taskId, remarksDraft);
-        setRemarksHistory(prev => [...prev, newComment]);
-        setTask((prev: any) => ({ ...prev, remarks: remarksDraft }));
       }
-      
+
+      // 2. Create new checklists
+      for (const label of pendingChecklists) {
+        const newItem = await createChecklistItem(taskId, label);
+        // replace temp placeholder with real item
+        setTask((prev: any) => {
+          const updated = prev.checklists.map((c: any) => c.label === label && c.is_temp ? newItem : c);
+          return { ...prev, checklists: updated };
+        });
+      }
+
+      // 3. Apply edited checklist statuses
+      for (const [chkId, newStatus] of Object.entries(editedChecklists)) {
+        await toggleChecklistItem(chkId, newStatus);
+      }
+
+      // 4. Upload pending files
+      for (const file of pendingFiles) {
+        const reader = new FileReader();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        await createTaskAttachment(taskId, file.name, dataUrl, file.size);
+      }
+
+      // 5. Save custom fields if changed
+      if (Object.keys(localCustomFields).length) {
+        await updateTask(taskId, { custom_fields: localCustomFields });
+      }
+
+      // 6. Save remark if present
+      if (remarksDraft.trim()) {
+        const newComment = await addTaskRemark(taskId, remarksDraft);
+        setRemarksHistory(prev => [...prev, newComment]);
+      }
+
+      // Reset pending states
+      setPendingStatus(null);
+      setPendingChecklists([]);
+      setEditedChecklists({});
+      setPendingFiles([]);
       setRemarksDraft("");
+
       await loadTaskDetails();
       onUpdate?.();
       router.refresh();
     } catch (e: any) {
       console.error(e);
-      setError(e.message || "Failed to save remarks.");
+      setError(e.message || "Failed to save changes.");
       setTimeout(() => setError(null), 8000);
     } finally {
       setSaveRemarksLoading(false);
@@ -292,28 +275,56 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         </div>
       )}
 
-      {/* Title & Core Meta */}
-      <div className="border-b pb-3 border-gray-200 dark:border-white/5 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              {task.code}
-            </span>
-            <h3 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
-              {task.title}
-            </h3>
+      {/* Title & Core Meta removed to avoid duplication with parent page layout */}
+      
+      {/* Extended Metadata Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 bg-gray-50/50 dark:bg-white/[0.02] p-4 rounded-xl border border-gray-100 dark:border-white/5">
+          <div className="space-y-1">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Priority</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
+              <span className="text-xs font-medium dark:text-gray-200">{task.priority?.name || "Standard"}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <AppBadge variant={currentStatusCode === "ST_CLOSED" ? "success" : currentStatusCode === "ST_IN_PROGRESS" ? "info" : "neutral"}>
-              {task.status?.name || "Open"}
-            </AppBadge>
-            <AppButton variant="outline" size="sm" className="text-rose-400 hover:bg-rose-500/10" onClick={handleDeleteTask} disabled={deleteLoading}>
-              <Trash2 className="h-3.5 w-3.5" /> Delete
-            </AppButton>
+          <div className="space-y-1">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Start Date</span>
+            <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              {task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Due Date</span>
+            <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              {task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Est. Hours</span>
+            <div className="text-xs font-medium dark:text-gray-200">{task.estimated_hours || "0"} hrs</div>
           </div>
         </div>
-        <p className="text-xs text-gray-500 leading-relaxed">{task.description}</p>
-      </div>
+
+        {/* Editable Custom Fields */}
+        {localCustomFields && Object.keys(localCustomFields).length > 0 && (
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/5">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">Custom Properties</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(localCustomFields).map(([key, val]) => (
+                <div key={key} className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    {key.replace(/_/g, ' ')}
+                  </label>
+                  <AppInput 
+                    value={String(val)} 
+                    onChange={e => setLocalCustomFields({...localCustomFields, [key]: e.target.value})} 
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       {/* Interactive Lifecycle State Transition Panel */}
       <div className={`p-4 rounded-xl border space-y-4 ${
@@ -336,11 +347,9 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                 isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"
               }`}
             >
-              <option value="ST_OPEN">Open</option>
-              <option value="ST_IN_PROGRESS">In Progress</option>
-              <option value="ST_RESOLVED">Resolved</option>
-              <option value="ST_CLOSED">Closed</option>
-              <option value="ST_REOPEN">Reopened</option>
+              {statuses.map(st => (
+                <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
+              ))}
             </select>
           </div>
           
@@ -411,13 +420,24 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                   Reopen Task
                 </AppButton>
               )}
+
+              <div className="flex-1" />
+              <AppButton 
+                variant="outline" 
+                size="sm" 
+                className="text-rose-400 hover:bg-rose-500/10 border-rose-500/20 hover:border-rose-500/50" 
+                onClick={handleDeleteTask} 
+                disabled={deleteLoading}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Task
+              </AppButton>
             </div>
           </div>
         </div>
 
         {pendingStatus && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
-            <span>Status change to <strong>{pendingStatus === "ST_IN_PROGRESS" ? "In Progress" : pendingStatus === "ST_RESOLVED" ? "Resolved" : pendingStatus === "ST_CLOSED" ? "Closed" : "Reopened"}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Status & Save Remark"</strong> to save both.</span>
+            <span>Status change to <strong>{statuses.find(s => s.status_code === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Status & Save Remark"</strong> to save both.</span>
             <button onClick={() => setPendingStatus(null)} className="text-[10px] text-amber-400/60 hover:text-amber-400 font-bold px-2 underline hover:no-underline">Cancel Change</button>
           </div>
         )}
@@ -434,7 +454,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
           />
           <div className="flex items-center justify-between gap-3">
             <span className="text-[10px] text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
-            <AppButton type="button" variant="primary" size="sm" onClick={handleSaveRemarks} disabled={saveRemarksLoading}>
+            <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
               {saveRemarksLoading ? "Saving..." : pendingStatus ? "Commit Status & Save Remark" : "Save Remarks"}
             </AppButton>
           </div>
@@ -491,7 +511,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                 ) : (
                   <div className="relative pl-4 border-l border-purple-500/20 space-y-5">
                     {remarksHistory.map((item, index) => {
-                      const initials = (item.author?.full_name || "Unknown")
+                      const initials = (item.user?.full_name || "Unknown")
                         .split(" ")
                         .map((n: string) => n[0])
                         .join("")
@@ -505,10 +525,10 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                           
                           <div className="flex items-start gap-3">
                             {/* Avatar */}
-                            {item.author?.profile_photo ? (
+                            {item.user?.profile_photo ? (
                               <img 
-                                src={item.author.profile_photo} 
-                                alt={item.author.full_name} 
+                                src={item.user.profile_photo} 
+                                alt={item.user.full_name} 
                                 className="h-7 w-7 rounded-full border border-purple-500/20 object-cover"
                               />
                             ) : (
@@ -523,7 +543,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                                 <span className={`text-xs font-bold transition-colors ${
                                   isLightMode ? "text-gray-800 group-hover/item:text-purple-600" : "text-gray-200 group-hover/item:text-purple-300"
                                 }`}>
-                                  {item.author?.full_name || "System Actor"}
+                                  {item.user?.full_name || "System Actor"}
                                 </span>
                                 <div className="flex items-center gap-1 text-[10px] text-gray-500 font-medium">
                                   <Clock className="h-3 w-3" />
@@ -534,7 +554,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                               <p className={`text-xs rounded-lg p-2.5 leading-relaxed break-words whitespace-pre-wrap border ${
                                 isLightMode ? "bg-gray-100 border-gray-200/50 text-gray-700" : "bg-black/30 border-white/5 text-gray-300"
                               }`}>
-                                {item.content}
+                                {item.message || item.content}
                               </p>
                             </div>
                           </div>
@@ -551,7 +571,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
 
       {/* Tabs Menu */}
       <div className={`flex border-b border-gray-200 dark:border-white/5`}>
-        {(["checklist", "attachments", "teams"] as const).map((tab) => (
+        {(["checklist", "attachments"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -563,7 +583,6 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
           >
             {tab === "checklist" && <CheckSquare className="h-3.5 w-3.5" />}
             {tab === "attachments" && <Paperclip className="h-3.5 w-3.5" />}
-            {tab === "teams" && <Users2 className="h-3.5 w-3.5" />}
             <span>{tab}</span>
           </button>
         ))}
@@ -690,47 +709,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
           </div>
         )}
 
-        {/* Teams Assignment Tab */}
-        {activeTab === "teams" && (
-          <div className="space-y-4">
-            <form onSubmit={handleAssignTeam} className="flex gap-2">
-              <select 
-                className={`w-full p-2.5 h-9 rounded-xl text-xs border focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                  isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-                }`}
-                value={selectedTeamId}
-                onChange={e => setSelectedTeamId(e.target.value)}
-                required
-              >
-                <option value="" disabled>-- Assign Corporate Team --</option>
-                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-              <AppButton type="submit" variant="primary" size="sm" className="h-9 shrink-0">Enroll</AppButton>
-            </form>
 
-            <div className="space-y-2">
-              {(task.teams || []).map((tJoint: any) => (
-                <div 
-                  key={tJoint.id || tJoint.team?.id} 
-                  className={`flex items-center gap-3 p-3 rounded-xl border ${
-                    isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5"
-                  }`}
-                >
-                  <Users2 className="h-4 w-4 text-purple-400" />
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-xs font-bold block truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>
-                      {tJoint.team?.name}
-                    </span>
-                    <span className="text-[9px] text-gray-500 block truncate">{tJoint.team?.description || "Corporate Squad"}</span>
-                  </div>
-                </div>
-              ))}
-              {(task.teams || []).length === 0 && (
-                <div className="text-center py-8 text-xs text-gray-500">No corporate teams assigned.</div>
-              )}
-            </div>
-          </div>
-        )}
 
       </div>
     </AppCard>

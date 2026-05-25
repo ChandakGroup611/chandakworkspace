@@ -32,11 +32,12 @@ export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allTeams, setAllTeams] = useState<any[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedScope, setSelectedScope] = useState<"ALL" | "CREATOR" | "ASSIGNEE" | "MANAGER">("ALL");
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
   const lastFetchedWorkspaceId = React.useRef<string | null>(null);
@@ -45,75 +46,83 @@ export default function WorkspacesPage() {
     setMounted(true);
   }, []);
 
-  const filteredWorkspaces = workspaces.filter(w => {
-    if (selectedScope === "ALL") return true;
-    if (!currentUser) return true;
-    
-    if (selectedScope === "CREATOR") {
-      return w.owner_id === currentUser.id;
-    }
-    if (selectedScope === "ASSIGNEE") {
-      // Since RLS already filters workspaces to those where the user is an owner, member, or has assigned tasks,
-      // we can just return true here to show all workspaces they have access to. The task list itself will be
-      // filtered to only show assigned tasks by the filteredTasks array below.
-      return true;
-    }
-    if (selectedScope === "MANAGER") {
-      // Check if current user is the manager of the workspace owner (creator)
-      return w.owner?.manager_id === currentUser.id;
-    }
-    return true;
-  });
+  const filteredWorkspaces = workspaces;
 
-  const filteredTasks = tasks.filter(t => {
-    if (selectedScope === "ALL") return true;
-    if (!currentUser) return true;
-    
-    if (selectedScope === "CREATOR") {
-      return t.creator_id === currentUser.id;
-    }
-    if (selectedScope === "ASSIGNEE") {
-      const uid = currentUser?.id;
-      if (!uid) return false;
-      
-      const isPrimary = t.assignee_id === uid || t.assignee?.id === uid;
-      const isExplicit = Array.isArray(t.assignees) 
-        ? t.assignees.some((a: any) => a.user?.id === uid || a.user_id === uid || a.id === uid)
-        : false;
-      const isTeamMember = Array.isArray(t.teams)
-        ? t.teams.some((tt: any) => Array.isArray(tt.members) && tt.members.some((m: any) => m.user?.id === uid || m.user_id === uid))
-        : false;
-        
-      return isPrimary || isExplicit || isTeamMember;
-    }
-    if (selectedScope === "MANAGER") {
-      // Check if current user is the manager of the task creator OR if they manage the workspace itself
-      return t.creator?.manager_id === currentUser.id || activeWorkspace?.owner_id === currentUser.id || activeWorkspace?.workspace_members?.some((m: any) => m.user_id === currentUser.id && m.role === 'manager');
-    }
-    return true;
-  });
+  const filteredTasks = tasks;
+
+  const workspaceHierarchy = React.useMemo(() => {
+    const wsMap = new Map();
+    const roots: any[] = [];
+    workspaces.forEach(w => {
+      wsMap.set(w.id, { ...w, subWorkspaces: [] });
+    });
+    workspaces.forEach(w => {
+      if (w.parent_workspace_id && wsMap.has(w.parent_workspace_id)) {
+        wsMap.get(w.parent_workspace_id).subWorkspaces.push(wsMap.get(w.id));
+      } else {
+        roots.push(wsMap.get(w.id));
+      }
+    });
+    return roots;
+  }, [workspaces]);
+
+  const renderWorkspaceTree = (nodes: any[], depth = 0) => {
+    return nodes.map(w => (
+      <React.Fragment key={w.id}>
+        <button 
+          onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
+          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${
+            isLightMode 
+              ? (activeWorkspace?.id === w.id ? 'bg-indigo-50 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
+              : (activeWorkspace?.id === w.id ? 'bg-indigo-500/10 border-white/5' : 'hover:bg-white/5 border-white/5')
+          }`}
+          style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
+        >
+          <div className="flex items-center gap-2">
+            {depth > 0 && <span className={isLightMode ? "text-gray-400" : "text-gray-600"}>↳</span>}
+            <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{w.code}</div>
+          </div>
+          <div className={`text-[10px] text-gray-500 truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
+        </button>
+        {w.subWorkspaces && w.subWorkspaces.length > 0 && renderWorkspaceTree(w.subWorkspaces, depth + 1)}
+      </React.Fragment>
+    ));
+  };
 
   
   // Modals
-  const [isCreatingWS, setIsCreatingWS] = useState(false);
+  const [wsModalMode, setWsModalMode] = useState<'ROOT' | 'SUB' | 'EDIT' | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [editWSId, setEditWSId] = useState<string | null>(null);
-  
-  // Active selected task for side panel detail view (chat & timeline)
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
+  const [teamSearch, setTeamSearch] = useState("");
+  const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
 
-
-  
-  // Forms
   const [newWS, setNewWS] = useState({ 
     name: "", 
     code: "", 
     description: "", 
     company_id: "", 
-    priority_id: "",
+    parent_workspace_id: "",
+    assigneeIds: [] as string[],
+    teamIds: [] as string[],
     start_date: "", 
     end_date: "",
     is_public: false
   });
+
+  const parentWorkspace = newWS.parent_workspace_id 
+    ? workspaces.find(w => w.id === newWS.parent_workspace_id) 
+    : null;
+
+  const availableUsers = parentWorkspace 
+    ? allUsers.filter(u => parentWorkspace.workspace_members?.some((m: any) => m.user_id === u.id) || u.id === currentUser?.id)
+    : allUsers;
+
+  const availableTeams = parentWorkspace 
+    ? allTeams.filter(t => parentWorkspace.workspace_teams?.some((wt: any) => wt.team_id === t.id))
+    : allTeams;
 
   useEffect(() => {
     async function init() {
@@ -142,6 +151,8 @@ export default function WorkspacesPage() {
         setWorkspaces(dashboard.workspaces || []);
         setCompanies(dashboard.companies || []);
         setPriorities(dashboard.priorities || []);
+        setAllUsers(dashboard.users || []);
+        setAllTeams(dashboard.teams || []);
 
         // 3. Populate pre-fetched tasks and stakeholders for the active workspace
         if (dashboard.prefetchWorkspaceId) {
@@ -196,14 +207,27 @@ export default function WorkspacesPage() {
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (newWS.start_date && newWS.end_date && new Date(newWS.end_date) < new Date(newWS.start_date)) {
+      alert("Target End Date cannot be earlier than the Start Date.");
+      return;
+    }
     try {
+      let finalName = newWS.name;
+      if (wsModalMode === 'SUB' && newWS.parent_workspace_id) {
+        const pName = workspaces.find(w => w.id === newWS.parent_workspace_id)?.name;
+        if (pName) {
+          finalName = `${pName} - ${newWS.name}`;
+        }
+      }
+
       const payload = {
-        name: newWS.name,
+        name: finalName,
         description: newWS.description,
         company_id: newWS.company_id || null,
-        priority_id: newWS.priority_id || null,
         start_date: newWS.start_date || null,
         end_date: newWS.end_date || null,
+        assigneeIds: newWS.assigneeIds,
+        teamIds: newWS.teamIds,
         visibility_settings: { public: newWS.is_public }
       };
       
@@ -212,9 +236,7 @@ export default function WorkspacesPage() {
         data = await updateWorkspace(editWSId, payload);
         
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
-        const selectedPriority = priorities.find(p => p.id === newWS.priority_id);
         if (selectedCompany) data.company = selectedCompany;
-        if (selectedPriority) data.priority = selectedPriority;
         
         const updatedList = workspaces.map(w => w.id === editWSId ? data : w);
         setWorkspaces(updatedList);
@@ -223,28 +245,33 @@ export default function WorkspacesPage() {
         data = await createWorkspace(payload);
         
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
-        const selectedPriority = priorities.find(p => p.id === newWS.priority_id);
         if (selectedCompany) data.company = selectedCompany;
-        if (selectedPriority) data.priority = selectedPriority;
         
         setWorkspaces([data, ...workspaces]);
         setActiveWorkspace(data);
       }
       
-      setIsCreatingWS(false);
+      setWsModalMode(null);
       setEditWSId(null);
       setNewWS({ 
         name: "", 
         code: "", 
         description: "", 
         company_id: "", 
-        priority_id: "",
+        parent_workspace_id: "",
+        assigneeIds: [],
+        teamIds: [],
         start_date: "", 
         end_date: "",
         is_public: false
       });
+      setAssigneeSearch("");
+      setTeamSearch("");
+      setAssigneeDropdownOpen(false);
+      setTeamDropdownOpen(false);
     } catch (err: any) {
-      console.error(err);
+      console.error("[Workspace Creation] Intercepted:", err.message || err);
+      alert("Database Error on Workspace Save: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 
@@ -255,12 +282,18 @@ export default function WorkspacesPage() {
       code: ws.code,
       description: ws.description || "",
       company_id: ws.company_id || "",
-      priority_id: ws.priority_id || "",
-      start_date: ws.start_date || "",
-      end_date: ws.end_date || "",
+      parent_workspace_id: ws.parent_workspace_id || "",
+      assigneeIds: ws.members?.map((m: any) => m.user_id) || [],
+      teamIds: ws.teams?.map((t: any) => t.team_id) || [],
+      start_date: ws.start_date ? new Date(ws.start_date).toISOString().split('T')[0] : "",
+      end_date: ws.end_date ? new Date(ws.end_date).toISOString().split('T')[0] : "",
       is_public: !!ws.visibility_settings?.public
     });
-    setIsCreatingWS(true);
+    setAssigneeSearch("");
+    setTeamSearch("");
+    setAssigneeDropdownOpen(false);
+    setTeamDropdownOpen(false);
+    setWsModalMode('EDIT');
   };
 
   const handleDeleteWorkspace = async (id: string) => {
@@ -275,7 +308,8 @@ export default function WorkspacesPage() {
         setActiveWorkspace(null);
       }
     } catch (e: any) {
-      console.error(e);
+      console.error("[Workspace Deletion] Intercepted:", e.message || e);
+      alert("Database Error on Workspace Deletion: " + (e.message || e.details || JSON.stringify(e)));
     }
   };
 
@@ -288,7 +322,8 @@ export default function WorkspacesPage() {
 
       setIsCreatingTask(false);
     } catch (err: any) {
-      console.error(err);
+      console.error("[Task Creation] Intercepted:", err.message || err);
+      alert("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 
@@ -331,40 +366,30 @@ export default function WorkspacesPage() {
           <p className="text-xs text-gray-500">Real-time collaborative project workspaces linked to corporate masters.</p>
         </div>
 
-        {/* Scope Selector Tabs */}
-        <div className={`flex items-center p-1 rounded-xl shrink-0 ${isLightMode ? "bg-gray-100/80" : "bg-white/5 border border-white/10"}`}>
-          {(["ALL", "ASSIGNEE", "CREATOR", "MANAGER"] as const).map(sc => {
-            const label = 
-              sc === "ALL" ? "All Operations" : 
-              sc === "ASSIGNEE" ? "Assigned To Me" : 
-              sc === "CREATOR" ? "Created By Me" : "Managed By Me";
-            
-            const active = selectedScope === sc;
-            return (
-              <button
-                key={sc}
-                onClick={() => setSelectedScope(sc)}
-                className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all ${
-                  active 
-                    ? (isLightMode ? "bg-white text-gray-900 shadow-sm" : "bg-indigo-600 text-white shadow-md shadow-indigo-500/20")
-                    : (isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-white")
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+
 
         <div className="flex items-center gap-3">
           <AppButton 
             variant="primary" 
             size="sm" 
             leftIcon={<Plus className="h-4 w-4" />} 
-            onClick={() => setIsCreatingWS(true)}
+            onClick={() => {
+              setNewWS({...newWS, parent_workspace_id: ""});
+              setWsModalMode('ROOT');
+            }}
             disabled={!hasPermission("WORKSPACES_CREATE")}
           >
             New Workspace
+          </AppButton>
+
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            leftIcon={<Plus className="h-4 w-4" />} 
+            onClick={() => setWsModalMode('SUB')}
+            disabled={!hasPermission("WORKSPACES_CREATE")}
+          >
+            Add Sub Workspace
           </AppButton>
           
           <div className="relative group z-50">
@@ -378,102 +403,7 @@ export default function WorkspacesPage() {
               isLightMode ? "bg-white border border-gray-200" : "bg-[#0f111a] border border-white/10"
             }`}>
               <div className="max-h-80 overflow-y-auto divide-y divide-white/5">
-                {currentUser ? (
-                  <>
-                    {/* Created by Me */}
-                    {workspaces.filter(w => w.owner_id === currentUser.id).length > 0 && (
-                      <div>
-                        <div className={`px-4 py-2 text-[9px] font-bold tracking-widest uppercase flex items-center justify-between ${
-                          isLightMode ? "bg-gray-50 border-y border-gray-100" : "bg-white/[0.02] border-y border-white/5"
-                        }`}>
-                          <span className={isLightMode ? "text-gray-500" : "text-gray-400"}>My Created Workspaces</span>
-                          <span className="text-[8px] px-1.5 py-0.5 rounded font-bold bg-indigo-500/10 text-indigo-400">{workspaces.filter(w => w.owner_id === currentUser.id).length}</span>
-                        </div>
-                        {workspaces.filter(w => w.owner_id === currentUser.id).map(w => (
-                          <button 
-                            key={w.id}
-                            onClick={() => setActiveWorkspace(w)}
-                            className={`w-full text-left px-4 py-3 text-xs transition-colors border-b last:border-0 ${
-                              isLightMode 
-                                ? (activeWorkspace?.id === w.id ? 'bg-indigo-50 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
-                                : (activeWorkspace?.id === w.id ? 'bg-indigo-500/10 border-white/5' : 'hover:bg-white/5 border-white/5')
-                            }`}
-                          >
-                            <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{w.code}</div>
-                            <div className="text-[10px] text-gray-500 truncate">{w.name}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Managed by Me */}
-                    {workspaces.filter(w => w.owner_id !== currentUser.id && currentUser.managedDeptIds?.includes(w.department_id)).length > 0 && (
-                      <div>
-                        <div className={`px-4 py-2 text-[9px] font-bold tracking-widest uppercase flex items-center justify-between ${
-                          isLightMode ? "bg-gray-50 border-y border-gray-100" : "bg-white/[0.02] border-y border-white/5"
-                        }`}>
-                          <span className={isLightMode ? "text-gray-500" : "text-gray-400"}>Managed Departments</span>
-                          <span className="text-[8px] px-1.5 py-0.5 rounded font-bold bg-emerald-500/10 text-emerald-400">{workspaces.filter(w => w.owner_id !== currentUser.id && currentUser.managedDeptIds?.includes(w.department_id)).length}</span>
-                        </div>
-                        {workspaces.filter(w => w.owner_id !== currentUser.id && currentUser.managedDeptIds?.includes(w.department_id)).map(w => (
-                          <button 
-                            key={w.id}
-                            onClick={() => setActiveWorkspace(w)}
-                            className={`w-full text-left px-4 py-3 text-xs transition-colors border-b last:border-0 ${
-                              isLightMode 
-                                ? (activeWorkspace?.id === w.id ? 'bg-indigo-50 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
-                                : (activeWorkspace?.id === w.id ? 'bg-indigo-500/10 border-white/5' : 'hover:bg-white/5 border-white/5')
-                            }`}
-                          >
-                            <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{w.code}</div>
-                            <div className="text-[10px] text-gray-500 truncate">{w.name}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* General / Other Workspaces */}
-                    {workspaces.filter(w => w.owner_id !== currentUser.id && !currentUser.managedDeptIds?.includes(w.department_id)).length > 0 && (
-                      <div>
-                        <div className={`px-4 py-2 text-[9px] font-bold tracking-widest uppercase flex items-center justify-between ${
-                          isLightMode ? "bg-gray-50 border-y border-gray-100" : "bg-white/[0.02] border-y border-white/5"
-                        }`}>
-                          <span className={isLightMode ? "text-gray-500" : "text-gray-400"}>General Operations</span>
-                          <span className="text-[8px] px-1.5 py-0.5 rounded font-bold bg-purple-500/10 text-purple-400">{workspaces.filter(w => w.owner_id !== currentUser.id && !currentUser.managedDeptIds?.includes(w.department_id)).length}</span>
-                        </div>
-                        {workspaces.filter(w => w.owner_id !== currentUser.id && !currentUser.managedDeptIds?.includes(w.department_id)).map(w => (
-                          <button 
-                            key={w.id}
-                            onClick={() => setActiveWorkspace(w)}
-                            className={`w-full text-left px-4 py-3 text-xs transition-colors border-b last:border-0 ${
-                              isLightMode 
-                                ? (activeWorkspace?.id === w.id ? 'bg-indigo-50 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
-                                : (activeWorkspace?.id === w.id ? 'bg-indigo-500/10 border-white/5' : 'hover:bg-white/5 border-white/5')
-                            }`}
-                          >
-                            <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{w.code}</div>
-                            <div className="text-[10px] text-gray-500 truncate">{w.name}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  workspaces.map(w => (
-                    <button 
-                      key={w.id}
-                      onClick={() => setActiveWorkspace(w)}
-                      className={`w-full text-left px-4 py-3 text-xs transition-colors border-b last:border-0 ${
-                        isLightMode 
-                          ? (activeWorkspace?.id === w.id ? 'bg-indigo-50 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
-                          : (activeWorkspace?.id === w.id ? 'bg-indigo-500/10 border-white/5' : 'hover:bg-white/5 border-white/5')
-                      }`}
-                    >
-                      <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{w.code}</div>
-                      <div className="text-[10px] text-gray-500 truncate">{w.name}</div>
-                    </button>
-                  ))
-                )}
+                {renderWorkspaceTree(workspaceHierarchy)}
                 {workspaces.length === 0 && <div className="p-4 text-xs text-gray-500 text-center">No workspaces found.</div>}
               </div>
             </div>
@@ -561,24 +491,6 @@ export default function WorkspacesPage() {
 
                             <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{task.title}</span>
                           </div>
-                          {task.assignee && (
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {task.assignee.profile_photo ? (
-                                <img 
-                                  src={task.assignee.profile_photo} 
-                                  alt={task.assignee.full_name} 
-                                  className="h-5 w-5 rounded-full object-cover border border-white/10"
-                                />
-                              ) : (
-                                <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                                  isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-300"
-                                }`}>
-                                  {task.assignee.full_name?.charAt(0).toUpperCase() || "A"}
-                                </div>
-                              )}
-                              <span className="text-[10px] font-semibold text-gray-500 hidden sm:inline">{task.assignee.full_name?.split(" ")[0]}</span>
-                            </div>
-                          )}
                         </div>
                         <p className="text-xs text-gray-500 line-clamp-1">{task.description}</p>
                         
@@ -720,18 +632,18 @@ export default function WorkspacesPage() {
           <FolderKanban className="h-12 w-12 text-gray-400 opacity-50" />
           <h2 className={`text-lg font-bold ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>No Active Workspaces Found</h2>
           <p className="text-xs text-gray-500">Initialize a new enterprise workspace to begin orchestrating tasks.</p>
-          <AppButton variant="primary" onClick={() => setIsCreatingWS(true)} disabled={!hasPermission("WORKSPACES_CREATE")}>Create Workspace</AppButton>
+          <AppButton variant="primary" onClick={() => setWsModalMode('ROOT')} disabled={!hasPermission("WORKSPACES_CREATE")}>Create Workspace</AppButton>
         </div>
       )}
 
       {/* Creation Overlays */}
-      {isCreatingWS && (
+      {wsModalMode !== null && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
           <AppCard className={`w-full max-w-lg p-6 shadow-2xl border-t-4 ${isLightMode ? "border-t-indigo-600 border-x-0 border-b-0" : "border-t-indigo-500 border-white/10"}`}>
-            <h3 className={`text-lg font-bold mb-4 ${isLightMode ? "text-gray-900" : "text-white"}`}>{editWSId ? "Edit" : "Initialize"} Workspace</h3>
+            <h3 className={`text-lg font-bold mb-4 ${isLightMode ? "text-gray-900" : "text-white"}`}>{wsModalMode === 'EDIT' ? "Edit Workspace" : (wsModalMode === 'SUB' ? "New Sub Workspace" : "New Workspace")}</h3>
             <form onSubmit={handleCreateWorkspace} className="space-y-4">
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Company Link</label>
                   <select 
@@ -746,31 +658,113 @@ export default function WorkspacesPage() {
                     {companies.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
                   </select>
                 </div>
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Priority Master</label>
-                  <select 
-                    className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-                    }`}
-                    value={newWS.priority_id}
-                    onChange={e => setNewWS({...newWS, priority_id: e.target.value})}
-                    required
+              <div className="grid grid-cols-1 gap-4">
+                {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Name</label>
+                    <select 
+                      className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                        isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
+                      }`}
+                      value={newWS.parent_workspace_id}
+                      onChange={e => setNewWS({...newWS, parent_workspace_id: e.target.value})}
+                      required={wsModalMode === 'SUB'}
+                    >
+                      <option value="" disabled>-- Select Parent Workspace --</option>
+                      {workspaces.filter(w => w.id !== editWSId).map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1 relative">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Assignee To (Users)</label>
+                  <div 
+                    onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
+                    className={`w-full p-2.5 rounded-xl text-sm border flex justify-between items-center cursor-pointer ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-white/10 text-white"}`}
                   >
-                    <option value="" disabled>-- Select Priority --</option>
-                    {priorities.map(p => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
-                  </select>
+                    <span className="truncate">{newWS.assigneeIds.length} Selected</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${assigneeDropdownOpen ? "rotate-180" : ""}`} />
+                  </div>
+                  {assigneeDropdownOpen && (
+                    <div className={`absolute z-10 w-full mt-1 p-2 rounded-xl border shadow-xl max-h-[200px] overflow-y-auto scrollbar-thin ${isLightMode ? "bg-white border-gray-300" : "bg-[#0B0D17] border-white/10"}`}>
+                      <input 
+                        type="text" 
+                        placeholder="Search users..." 
+                        value={assigneeSearch} 
+                        onChange={e => setAssigneeSearch(e.target.value)} 
+                        onClick={e => e.stopPropagation()}
+                        className={`w-full mb-2 p-1.5 text-xs rounded border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"}`}
+                      />
+                      {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
+                        <label key={u.id} className="flex items-center gap-2 text-sm p-1.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded cursor-pointer transition-colors">
+                          <input 
+                            type="checkbox" 
+                            checked={newWS.assigneeIds.includes(u.id)} 
+                            onChange={e => {
+                              if (e.target.checked) setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
+                              else setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
+                            }} 
+                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4" 
+                          />
+                          <span className={isLightMode ? "text-gray-700" : "text-gray-300"}>{u.full_name} <span className="opacity-50 text-[10px]">({u.user_code})</span></span>
+                        </label>
+                      ))}
+                      {availableUsers.length === 0 && <p className="text-xs text-gray-500 p-2">No users available.</p>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1 relative">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Assign Teams</label>
+                  <div 
+                    onClick={() => setTeamDropdownOpen(!teamDropdownOpen)}
+                    className={`w-full p-2.5 rounded-xl text-sm border flex justify-between items-center cursor-pointer ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-white/10 text-white"}`}
+                  >
+                    <span className="truncate">{newWS.teamIds.length} Selected</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${teamDropdownOpen ? "rotate-180" : ""}`} />
+                  </div>
+                  {teamDropdownOpen && (
+                    <div className={`absolute z-10 w-full mt-1 p-2 rounded-xl border shadow-xl max-h-[200px] overflow-y-auto scrollbar-thin ${isLightMode ? "bg-white border-gray-300" : "bg-[#0B0D17] border-white/10"}`}>
+                      <input 
+                        type="text" 
+                        placeholder="Search teams..." 
+                        value={teamSearch} 
+                        onChange={e => setTeamSearch(e.target.value)} 
+                        onClick={e => e.stopPropagation()}
+                        className={`w-full mb-2 p-1.5 text-xs rounded border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"}`}
+                      />
+                      {availableTeams.filter(t => t.team_name?.toLowerCase().includes(teamSearch.toLowerCase())).map(t => (
+                        <label key={t.id} className="flex items-center gap-2 text-sm p-1.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded cursor-pointer transition-colors">
+                          <input 
+                            type="checkbox" 
+                            checked={newWS.teamIds.includes(t.id)} 
+                            onChange={e => {
+                              if (e.target.checked) setNewWS({...newWS, teamIds: [...newWS.teamIds, t.id]});
+                              else setNewWS({...newWS, teamIds: newWS.teamIds.filter((id: string) => id !== t.id)});
+                            }} 
+                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4" 
+                          />
+                          <span className={isLightMode ? "text-gray-700" : "text-gray-300"}>{t.team_name}</span>
+                        </label>
+                      ))}
+                      {availableTeams.length === 0 && <p className="text-xs text-gray-500 p-2">No teams available.</p>}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Name</label>
-                  <AppInput placeholder="e.g. Q4 Migration" value={newWS.name} onChange={e => setNewWS({...newWS, name: e.target.value})} required />
+                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Migration" value={newWS.name} onChange={e => setNewWS({...newWS, name: e.target.value})} required />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
-                  <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" />
+                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? newWS.code : "[Auto-Generated]"} />
                 </div>
               </div>
 
@@ -811,7 +805,7 @@ export default function WorkspacesPage() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
-                <AppButton variant="ghost" type="button" onClick={() => { setIsCreatingWS(false); setEditWSId(null); }}>Cancel</AppButton>
+                <AppButton variant="ghost" type="button" onClick={() => { setWsModalMode(null); setEditWSId(null); }}>Cancel</AppButton>
                 <AppButton variant="primary" type="submit">{editWSId ? "Save Changes" : "Provision Workspace"}</AppButton>
               </div>
             </form>

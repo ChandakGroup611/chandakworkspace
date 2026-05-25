@@ -13,10 +13,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const { message, taskId, messageId } = body;
-    if (!message || !taskId || !messageId) return NextResponse.json({ ok: false, error: 'missing_fields' }, { status: 400 });
+    const { taskId, messageId, mentionedUserIds, isAll, senderId } = body;
+    if (!taskId || !messageId || !senderId) return NextResponse.json({ ok: false, error: 'missing_fields' }, { status: 400 });
 
-    await handleMentions(message, taskId, messageId);
+    await handleMentions(taskId, messageId, mentionedUserIds, isAll, senderId);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     console.error('Mentions route error', e);

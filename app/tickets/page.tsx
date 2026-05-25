@@ -9,6 +9,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { Plus, RefreshCw, CheckCircle2, Database, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
+import { fetchTicketDashboardData } from "@/lib/actions/tickets";
 
 export default function TicketsPage() {
   const supabase = createClient();
@@ -49,48 +50,16 @@ export default function TicketsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Robust multi-fetch including creator metadata joins to support detailed audit reports
-      const [deptRes, ticketResInitial, prioRes, stateRes, catRes, subcatRes, typeRes, scopeRes] = await Promise.all([
-        supabase.from("departments").select("*").eq("is_deleted", false),
-        supabase.from("tickets").select(`
-          *,
-          creator:user_master!creator_id(full_name, email, department:departments(name)),
-          assignee:user_master!assignee_id(full_name, email)
-        `).eq("is_deleted", false).order("created_at", { ascending: false }),
-        supabase.from("master_priorities").select("*").eq("is_deleted", false),
-        supabase.from("workflow_states").select("*"),
-        supabase.from("ticket_categories").select("*").eq("is_deleted", false),
-        supabase.from("ticket_subcategories").select("*").eq("is_deleted", false),
-        supabase.from("issue_types").select("*").eq("is_deleted", false),
-        supabase.from("ticket_scopes").select("*")
-      ]);
+      const data = await fetchTicketDashboardData();
 
-      let finalTicketData = ticketResInitial.data || [];
-
-      // Defensive Programming Fallback: If PostgREST relationship cache hasn't loaded yet
-      if (ticketResInitial.error) {
-        console.warn("[Tickets] Metadata-joined tickets query failed, triggering flat tickets query fallback:", ticketResInitial.error.message);
-        
-        const fallbackRes = await supabase
-          .from("tickets")
-          .select("*")
-          .eq("is_deleted", false)
-          .order("created_at", { ascending: false });
-
-        if (fallbackRes.error) {
-          console.error("[Tickets] Fallback tickets query failed:", fallbackRes.error.message);
-        } else {
-          finalTicketData = fallbackRes.data || [];
-        }
-      }
-
-      const activeDepts = deptRes.data || [];
-      const activePrios = prioRes.data || [];
-      const activeStates = stateRes.data || [];
-      const activeCats = catRes.data || [];
-      const activeSubcats = subcatRes.data || [];
-      const activeTypes = typeRes.data || [];
-      const activeScopes = scopeRes.data || [];
+      const finalTicketData = data.tickets || [];
+      const activeDepts = data.departments || [];
+      const activePrios = data.priorities || [];
+      const activeStates = data.states || [];
+      const activeCats = data.categories || [];
+      const activeSubcats = data.subcategories || [];
+      const activeTypes = data.issueTypes || [];
+      const activeScopes = data.scopes || [];
 
       setDepartments(activeDepts);
       setPriorities(activePrios);

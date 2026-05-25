@@ -18,7 +18,7 @@ import {
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
-import { saveUserAction } from "@/lib/actions/users";
+import { saveUserAction, fetchUsersDashboardData } from "@/lib/actions/users";
 import { 
   Users, 
   UserPlus, 
@@ -193,38 +193,20 @@ export default function UserMasterPage() {
     try {
       console.log("[User Master] Initiating Global Governance Sync...");
       
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const data = await fetchUsersDashboardData();
+      const authUser = data.authUser;
       if (!authUser) return;
 
-      // 1. Fetch all dependencies first
-      const [deptRes, desigRes, roleRes, astRes] = await Promise.all([
-        supabase.from("departments").select("id, code, name").eq("is_deleted", false),
-        supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
-        supabase.from("roles").select("id, code, name").eq("is_deleted", false),
-        supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false)
-      ]);
-
-      const loadedDepts = deptRes.data || [];
-      const loadedDesigs = desigRes.data || [];
-      const loadedRoles = roleRes.data || [];
+      const loadedDepts = data.departments;
+      const loadedDesigs = data.designations;
+      const loadedRoles = data.roles;
       
       setDepartments(loadedDepts);
       setDesignations(loadedDesigs);
       setRoles(loadedRoles);
 
-      let assetsData = astRes.data || [];
+      let assetsData = data.assets;
       setAvailableAssets(assetsData);
-
-      // 2. Fetch Users (omitting non-existent assigned_assets column)
-      let { data, error } = await supabase
-        .from("user_master")
-        .select("id, full_name, email, user_code, is_active, profile_photo, role_id, department_id, designation_id, manager_id, last_login_at, last_logout_at, is_deleted")
-        .eq("is_deleted", false)
-        .order("full_name", { ascending: true });
-
-      if (error) {
-        throw error;
-      }
 
       let localUpdates: Record<string, any> = {};
       let localCreated: any[] = [];
@@ -238,7 +220,7 @@ export default function UserMasterPage() {
         if (storedDeleted) localDeleted = JSON.parse(storedDeleted);
       } catch (e) {}
 
-      const rawUsers = data || [];
+      const rawUsers = data.users || [];
       const cleanUsers = rawUsers.filter((usr: any) => usr.is_deleted !== true).map((usr: any) => {
         let mergedUser = { ...usr };
         if (localUpdates[usr.id]) {
@@ -572,7 +554,7 @@ export default function UserMasterPage() {
     try {
       const [ticketsRes, tasksRes, reqsRes] = await Promise.all([
         supabase.from("tickets").select("id", { count: "exact", head: true }).or(`creator_id.eq.${usr.id},assignee_id.eq.${usr.id}`).eq("is_deleted", false),
-        supabase.from("workspace_tasks").select("id", { count: "exact", head: true }).or(`creator_id.eq.${usr.id},assignee_id.eq.${usr.id}`).eq("is_deleted", false),
+        supabase.from("tasks").select("id", { count: "exact", head: true }).eq("created_by", usr.id).eq("is_deleted", false),
         supabase.from("requirements").select("id", { count: "exact", head: true }).eq("creator_id", usr.id).eq("is_deleted", false),
       ]);
 

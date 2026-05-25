@@ -35,7 +35,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 export default function TaskListViewClient({ initialTasks }: { initialTasks: Task[] }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
-  const [scope, setScope] = useState<"ALL" | "ASSIGNEE" | "CREATOR" | "MANAGER">("ALL");
+  const [scope, setScope] = useState<"ALL" | "CREATOR" | "MANAGER">("ALL");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -79,15 +79,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       // 2. All tasks shown to user are already visibility-checked by server
       // This filter is just for scope refinement
       if (scope === "ALL") return true;
-      if (!currentUserId) return true;
+      if (!currentUserId) return false;
 
-      if (scope === "CREATOR") return t.creator_id === currentUserId;
-
-      if (scope === "ASSIGNEE") {
-        const explicit = Array.isArray(t.assignees) && t.assignees.some((a: any) => a.user?.id === currentUserId);
-        const primary = t.assignee_id === currentUserId;
-        return explicit || primary;
-      }
+      if (scope === "CREATOR") return t.created_by === currentUserId;
 
       if (scope === "MANAGER") {
         // Check if current user is the manager of the task creator (matches database RLS)
@@ -111,10 +105,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     setLoading(true);
     try {
       const supabase = createClient();
-      const { data } = await supabase.from("workspace_tasks").select(`
-        *, workspace:workspaces(id,name,code), status:workflow_states(name,code), priority:master_priorities(name,code), assignees:task_assignees(user:user_master(id,full_name,profile_photo)), assignee:user_master!assignee_id(id,full_name,profile_photo), creator:user_master!creator_id(id,manager_id), parent_task:workspace_tasks!parent_task_id(id,code,title)`)
+      const { data } = await supabase.from("tasks").select(`
+        *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code), creator:user_master!created_by(id,manager_id)`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
+        
+      if (data && data.length > 0) {
+        const wsIds = Array.from(new Set(data.map((t: any) => t.workspace_id).filter(Boolean)));
+        const { data: workspaces } = await supabase.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
+        data.forEach((t: any) => {
+          t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
+        });
+      }
+      
       setTasks(data || []);
     } catch (e) {
       console.error(e);
@@ -128,13 +131,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/5">
-            {(["ALL","ASSIGNEE","CREATOR","MANAGER"] as const).map(sc => (
+            {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
               <button
                 key={sc}
                 onClick={() => setScope(sc)}
                 className={`text-[12px] font-semibold px-3 py-1 rounded-lg ${scope === sc ? "bg-indigo-600 text-white" : "text-gray-300 hover:text-white"}`}
               >
-                {sc === "ALL" ? "All Operations" : sc === "ASSIGNEE" ? "Assigned To Me" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
+                {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
               </button>
             ))}
           </div>
@@ -211,7 +214,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               <AppTableHead>Title & Description</AppTableHead>
               <AppTableHead>Workspace</AppTableHead>
               <AppTableHead>Priority</AppTableHead>
-              <AppTableHead>Assignee</AppTableHead>
               <AppTableHead>Due</AppTableHead>
               <AppTableHead>Status</AppTableHead>
               <AppTableHead className="text-right">Created</AppTableHead>
@@ -221,7 +223,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <AppTableBody>
             {filtered.map((task: any, index: number) => (
               <AppTableRow key={task.id} className="transition-colors duration-150">
-                <AppTableCell className="font-mono text-xs text-purple-400 font-bold">{task.code}</AppTableCell>
+                <AppTableCell className="font-mono text-xs text-purple-400 font-bold">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                 <AppTableCell>
                   <div className="font-semibold truncate text-gray-100">{task.title}</div>
                   <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
@@ -230,8 +232,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <AppTableCell>
                   <AppBadge variant="info">{task.priority?.name || '—'}</AppBadge>
                 </AppTableCell>
-                <AppTableCell className="text-gray-300">{task.assignee?.full_name || (task.assignees?.[0]?.user?.full_name) || 'Unassigned'}</AppTableCell>
-                <AppTableCell className="text-gray-400 text-sm">{task.due_date || '—'}</AppTableCell>
+                <AppTableCell className="text-gray-400 text-sm">{task.end_date || '—'}</AppTableCell>
                 <AppTableCell>
                   <AppBadge variant="neutral">{task.status?.name || '—'}</AppBadge>
                 </AppTableCell>
@@ -277,7 +278,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <div className="mt-2 text-sm text-gray-200 space-y-1">
                   <div><strong>Priority:</strong> {selectedTask.priority?.name || 'N/A'}</div>
                   <div><strong>Status:</strong> {selectedTask.status?.name || 'N/A'}</div>
-                  <div><strong>Assignee:</strong> {selectedTask.assignee?.full_name || selectedTask.assignees?.[0]?.user?.full_name || 'Unassigned'}</div>
                 </div>
               </div>
             </div>

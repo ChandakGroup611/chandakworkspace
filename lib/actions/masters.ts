@@ -55,8 +55,8 @@ export async function fetchMastersByScope(scopeId: string) {
       case "issue_subtype": tableName = "issue_subtypes"; break;
       case "ticket_category": tableName = "ticket_categories"; break;
       case "ticket_subcategory": tableName = "ticket_subcategories"; break;
-      case "workflow_state": tableName = "workflow_states"; break;
-      case "master_priority": tableName = "master_priorities"; break;
+      case "workflow_state": tableName = "status_master"; break;
+      case "master_priority": tableName = "priority_master"; break;
       case "asset": tableName = "assets"; break;
       case "software_system": tableName = "software_systems"; break;
       case "software_module": tableName = "software_modules"; break;
@@ -82,7 +82,22 @@ export async function fetchMastersByScope(scopeId: string) {
       console.warn(`[Masters] Failed to fetch ${key}:`, error.message);
       return { key, data: [] };
     }
-    return { key, data: data || [] };
+    
+    // Polyfill renamed columns from Phase 4 Migration
+    let finalData = data || [];
+    if (tableName === "priority_master") {
+      finalData = finalData.map(d => ({ 
+        ...d, 
+        name: d.priority_name || d.name, 
+        code: d.priority_code || d.code,
+        sla_target_minutes: d.max_sla_hours ? d.max_sla_hours * 60 : undefined
+      }));
+    }
+    if (tableName === "status_master") {
+      finalData = finalData.map(d => ({ ...d, name: d.status_name || d.name, code: d.status_code || d.code }));
+    }
+    
+    return { key, data: finalData };
   }));
 
   const results: Record<string, any[]> = {};

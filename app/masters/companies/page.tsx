@@ -35,16 +35,25 @@ export default function CompanyMasterPage() {
   
   const fetchCompanies = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('companies')
-      .select('*')
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false });
-      
-    if (error) {
-      console.error("Error fetching companies:", error);
-    } else {
-      setCompanies(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('company_master')
+        .select('*')
+        .eq('is_deleted', false)
+        .order('company_name', { ascending: true });
+        
+      if (error) {
+        console.error("Error fetching companies:", error);
+      } else {
+        const mappedData = data?.map(c => ({
+          ...c,
+          name: c.company_name,
+          code: c.company_code
+        })) || [];
+        setCompanies(mappedData);
+      }
+    } catch (e) {
+      console.error(e);
     }
     setLoading(false);
   };
@@ -77,11 +86,11 @@ export default function CompanyMasterPage() {
 
   const openEditModal = (company: any) => {
     setEditId(company.id);
-    setFormCode(company.code);
-    setFormName(company.name);
+    setFormCode(company.company_code);
+    setFormName(company.company_name);
     setFormShortName(company.short_name || "");
     setFormEmail(company.email || "");
-    setFormContact(company.contact || "");
+    setFormContact(company.phone || "");
     setFormAddress(company.address || "");
     setFormRemarks(company.remarks || "");
     setShowModal(true);
@@ -89,16 +98,16 @@ export default function CompanyMasterPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName || (editId && !formCode)) {
+    if (!formName) {
       setErrorAlert("Company Name is required.");
       return;
     }
 
     const payload: any = {
-      name: formName.trim(),
+      company_name: formName.trim(),
       short_name: formShortName.trim(),
       email: formEmail.trim(),
-      contact: formContact.trim(),
+      phone: formContact.trim(),
       address: formAddress.trim(),
       remarks: formRemarks.trim(),
     };
@@ -106,14 +115,14 @@ export default function CompanyMasterPage() {
     try {
       if (editId) {
         const { error } = await supabase
-          .from('companies')
+          .from('company_master')
           .update(payload)
           .eq('id', editId);
         if (error) throw error;
         setSuccessAlert("Company successfully updated.");
       } else {
         const { error } = await supabase
-          .from('companies')
+          .from('company_master')
           .insert([payload]);
         if (error) throw error;
         setSuccessAlert("Company successfully created.");
@@ -128,7 +137,7 @@ export default function CompanyMasterPage() {
   const toggleActive = async (company: any) => {
     try {
       const { error } = await supabase
-        .from('companies')
+        .from('company_master')
         .update({ is_active: !company.is_active })
         .eq('id', company.id);
       if (error) throw error;
@@ -143,7 +152,7 @@ export default function CompanyMasterPage() {
     if (!confirm(`Are you sure you want to delete ${company.name}?`)) return;
     try {
       const { error } = await supabase
-        .from('companies')
+        .from('company_master')
         .update({ is_deleted: true, is_active: false })
         .eq('id', company.id);
       if (error) throw error;

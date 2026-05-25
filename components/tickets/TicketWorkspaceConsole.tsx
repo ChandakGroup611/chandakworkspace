@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { 
   Clock, User, Video, ShieldAlert, CheckCircle2, MessageSquare, 
   History, Calendar, Users, Edit3, Save, Printer, HelpCircle, 
-  ChevronRight, ArrowRight, Loader2, Play 
+  ChevronRight, ArrowRight, Loader2, Play, Paperclip
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -16,6 +16,8 @@ import {
   updateTicketDetails, 
   generateTeamsMeetingLink 
 } from "@/lib/actions/tickets";
+import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
+import { EnterpriseModalShell } from "@/components/ui/enterprise/EnterpriseModalShell";
 
 interface TicketWorkspaceConsoleProps {
   ticket: any;
@@ -678,6 +680,30 @@ export function TicketWorkspaceConsole({
             </form>
           </div>
 
+          {/* ── ENTERPRISE ATTACHMENTS ── */}
+          <div className="space-y-4 pt-4 border-t border-white/5">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Paperclip className="h-4 w-4" />
+              <span>Attachments & Evidence</span>
+            </h3>
+            {hasPermission("ATTACHMENTS_UPLOAD") ? (
+              <EnterpriseUploader 
+                moduleType="ticket" 
+                recordId={ticket.dbId} 
+                isLightMode={isLightMode} 
+                onUploadComplete={() => {
+                  // Optionally reload attachments list
+                }}
+              />
+            ) : (
+              <div className={`p-4 text-center text-xs rounded-xl border border-dashed ${
+                isLightMode ? "border-gray-200 text-gray-500" : "border-white/5 text-gray-600"
+              }`}>
+                You do not have permission to upload attachments.
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* RIGHT COLUMN: WORKFLOW CONTROLS, ACTIVE ASSIGNEES, EVENT TIMELINE */}
@@ -870,37 +896,31 @@ export function TicketWorkspaceConsole({
 
       </div>
 
-      {/* ── 5. EMBEDDED PRINTABLE AUDIT REPORT DIALOG (MODAL) ── */}
       {showPrintReport && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 overflow-y-auto">
-          <div className={`w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border animate-in zoom-in-95 duration-200 ${
-            isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0f172a] border-white/10 text-white"
-          }`}>
-            {/* Modal Controls */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-black/20">
-              <h3 className="font-bold flex items-center gap-1.5 text-sm">
-                <Printer className="h-4 w-4 text-indigo-500" />
-                Preview Executive Audit Report
-              </h3>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  <span>Print / PDF</span>
-                </button>
-                <button 
-                  onClick={() => setShowPrintReport(false)}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10"
-                >
-                  Close
-                </button>
-              </div>
+        <EnterpriseModalShell
+          title="Preview Executive Audit Report"
+          onClose={() => setShowPrintReport(false)}
+          size="lg"
+          footer={
+            <div className="flex items-center justify-end gap-3 w-full">
+              <button 
+                onClick={() => setShowPrintReport(false)}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg border transition-colors ${isLightMode ? "bg-white border-gray-200 hover:bg-gray-50 text-gray-700" : "bg-white/5 hover:bg-white/10 border-white/10 text-white"}`}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => window.print()}
+                className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                <span>Print / PDF</span>
+              </button>
             </div>
-
+          }
+        >
             {/* Printable Frame */}
-            <div id="printable-audit-trail" className="flex-1 overflow-y-auto p-8 space-y-8 bg-white text-black text-left">
+            <div id="printable-audit-trail" className="space-y-8 bg-white text-black text-left p-8 rounded-2xl shadow-inner border border-gray-200">
               {/* Report Header */}
               <div className="border-b-2 border-gray-900 pb-6 flex justify-between items-start">
                 <div>
@@ -1030,8 +1050,7 @@ export function TicketWorkspaceConsole({
                 End of Incident Report • Confidentially Protected by ADIOS Security Shield
               </div>
             </div>
-          </div>
-        </div>
+        </EnterpriseModalShell>
       )}
 
       {/* Embedded CSS for printable reports */}
