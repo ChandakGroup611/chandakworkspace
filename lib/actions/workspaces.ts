@@ -596,7 +596,8 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code)
+      priority:priority_master(name:priority_name, code:priority_code),
+      checklists:task_checklists(id, is_completed)
     `)
     .eq("workspace_id", workspaceId)
     .eq("is_deleted", false)
@@ -623,6 +624,23 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
       t.creator = users?.find((u: any) => u.id === t.created_by) || null;
       t.assignees = []; // Assignees are implicitly workspace members now
+      
+      // Calculate progress percentage
+      if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
+        t.progress_percentage = 100;
+      } else if (t.checklists && t.checklists.length > 0) {
+        const completed = t.checklists.filter((c: any) => c.is_completed).length;
+        t.progress_percentage = Math.round((completed / t.checklists.length) * 100);
+      } else {
+        // Fallback: Use status to infer progress if no checklists exist
+        if (t.status?.code === "IN_PROGRESS" || t.status?.code === "WIP") {
+          t.progress_percentage = 50;
+        } else if (t.status?.code === "REVIEW" || t.status?.code === "TESTING") {
+          t.progress_percentage = 80;
+        } else {
+          t.progress_percentage = 0;
+        }
+      }
     });
   }
   
@@ -646,7 +664,8 @@ export async function fetchAllTasks() {
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code)
+      priority:priority_master(name:priority_name, code:priority_code),
+      checklists:task_checklists(id, is_completed)
     `)
     .eq("is_deleted", false)
     .order("created_at", { ascending: false });
@@ -671,8 +690,24 @@ export async function fetchAllTasks() {
       allTasks.forEach((t: any) => {
         t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
         t.creator = users?.find((u: any) => u.id === t.created_by) || null;
-        t.assignees = [];
-        t.assignee = null;
+        t.assignees = []; // Implicitly workspace members
+
+        // Calculate progress percentage
+        if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
+          t.progress_percentage = 100;
+        } else if (t.checklists && t.checklists.length > 0) {
+          const completed = t.checklists.filter((c: any) => c.is_completed).length;
+          t.progress_percentage = Math.round((completed / t.checklists.length) * 100);
+        } else {
+          // Fallback: Use status to infer progress if no checklists exist
+          if (t.status?.code === "IN_PROGRESS" || t.status?.code === "WIP") {
+            t.progress_percentage = 50;
+          } else if (t.status?.code === "REVIEW" || t.status?.code === "TESTING") {
+            t.progress_percentage = 80;
+          } else {
+            t.progress_percentage = 0;
+          }
+        }
       });
   }
 
