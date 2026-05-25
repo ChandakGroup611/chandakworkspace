@@ -596,8 +596,7 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code),
-      checklists:task_checklists(id, is_completed)
+      priority:priority_master(name:priority_name, code:priority_code)
     `)
     .eq("workspace_id", workspaceId)
     .eq("is_deleted", false)
@@ -664,8 +663,7 @@ export async function fetchAllTasks() {
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code),
-      checklists:task_checklists(id, is_completed)
+      priority:priority_master(name:priority_name, code:priority_code)
     `)
     .eq("is_deleted", false)
     .order("created_at", { ascending: false });
