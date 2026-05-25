@@ -152,6 +152,18 @@ export default function MastersPage() {
       if (error) throw error;
 
       let dbData = (data || []).filter((r: any) => r.is_deleted !== true);
+
+      // Normalize specific tables to ensure generic grid/modal works seamlessly
+      dbData = dbData.map((r: any) => {
+        if (currentConfig.table === "status_master") {
+          return { ...r, code: r.status_code, name: r.status_name };
+        }
+        if (currentConfig.table === "priority_master") {
+          return { ...r, code: r.priority_code, name: r.priority_name };
+        }
+        return r;
+      });
+
       setRecords(dbData);
 
       // Fetch parent lookup list if required
