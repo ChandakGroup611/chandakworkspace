@@ -167,6 +167,8 @@ export async function createWorkspace(formData: any) {
       ...data,
       name: data.workspace_name,
       code: data.workspace_code,
+      members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || [],
+      teams: formData.teamIds?.map((tid: any) => ({ team_id: tid })) || []
     };
   } catch (err: any) {
     console.error("[createWorkspace] Error:", err?.message || String(err));
@@ -379,6 +381,8 @@ export async function updateWorkspace(id: string, formData: any) {
     ...data,
     name: data.workspace_name,
     code: data.workspace_code,
+    members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || [],
+    teams: formData.teamIds?.map((tid: any) => ({ team_id: tid })) || []
   };
 }
 
