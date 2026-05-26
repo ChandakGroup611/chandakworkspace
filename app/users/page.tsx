@@ -100,9 +100,8 @@ export default function UserMasterPage() {
 
   // Helper to determine if current logged in user has administrative privileges
   const isSuperAdmin = currentUserProfile?.roleObj?.code === "SUPER_ADMIN" || 
-                       currentUserProfile?.role_id === "admin-role-id" || 
-                       currentUserProfile?.email?.toLowerCase().includes("admin") ||
-                       currentUserProfile?.email === "system@adios.enterprise";
+                       currentUserProfile?.roleObj?.code === "ROLE_ADMIN" || 
+                       currentUserProfile?.role_id === "admin-role-id";
 
   // Lookup selections
   const [departments, setDepartments] = useState<any[]>([]);
@@ -1432,6 +1431,7 @@ export default function UserMasterPage() {
                     onChange={(e) => setFormFullName(e.target.value)}
                     className="text-xs"
                     required
+                    disabled={!isSuperAdmin}
                   />
                 </div>
 
@@ -1445,6 +1445,7 @@ export default function UserMasterPage() {
                     onChange={(e) => setFormUserCode(e.target.value)}
                     className="font-mono text-xs uppercase"
                     required
+                    disabled={!isSuperAdmin}
                   />
                   <span className="text-[9px] text-gray-500 block">Unique code string indexing tuple logic.</span>
                 </div>
@@ -1462,6 +1463,7 @@ export default function UserMasterPage() {
                   onChange={(e) => setFormEmail(e.target.value)}
                   className="text-xs"
                   required
+                  disabled={!isSuperAdmin}
                 />
               </div>
 
@@ -1474,7 +1476,10 @@ export default function UserMasterPage() {
                   <select
                     value={formDeptId}
                     onChange={(e) => setFormDeptId(e.target.value)}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer ${
+                    disabled={!isSuperAdmin}
+                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 ${
+                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                    } ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-gray-200"
                     }`}
                   >
@@ -1494,7 +1499,10 @@ export default function UserMasterPage() {
                   <select
                     value={formDesigId}
                     onChange={(e) => setFormDesigId(e.target.value)}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 cursor-pointer ${
+                    disabled={!isSuperAdmin}
+                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 ${
+                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                    } ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-gray-200"
                     }`}
                   >
@@ -1517,7 +1525,10 @@ export default function UserMasterPage() {
                   <select
                     value={formRoleId}
                     onChange={(e) => setFormRoleId(e.target.value)}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-purple-500/50 cursor-pointer ${
+                    disabled={!isSuperAdmin}
+                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-purple-500/50 ${
+                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                    } ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-purple-300"
                     }`}
                   >
@@ -1537,7 +1548,10 @@ export default function UserMasterPage() {
                   <select
                     value={formManagerId}
                     onChange={(e) => setFormManagerId(e.target.value)}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-indigo-500/50 cursor-pointer ${
+                    disabled={!isSuperAdmin}
+                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-indigo-500/50 ${
+                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                    } ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-indigo-300"
                     }`}
                   >
@@ -1559,8 +1573,12 @@ export default function UserMasterPage() {
                 
                 {/* Custom multi selection trigger wrapper */}
                 <div 
-                  onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
-                  className={`min-h-9 p-1.5 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
+                  onClick={() => {
+                    if (isSuperAdmin) setIsAssetDropdownOpen(!isAssetDropdownOpen)
+                  }}
+                  className={`min-h-9 p-1.5 rounded-xl border flex items-center justify-between gap-2 transition-all ${
+                    !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                  } ${
                     isLightMode 
                       ? "bg-white border-gray-300 hover:border-gray-400" 
                       : "bg-white/5 border-white/10 hover:border-white/20"
@@ -1707,7 +1725,9 @@ export default function UserMasterPage() {
                     Account Access Status
                   </label>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all flex-1 w-full justify-center ${
+                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all flex-1 w-full justify-center ${
+                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                    } ${
                       formIsActive
                         ? (isLightMode ? "bg-emerald-50 border-emerald-300 text-emerald-800" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300")
                         : (isLightMode ? "bg-transparent border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-transparent border-white/10 text-gray-400 hover:bg-white/[0.02]")
@@ -1718,12 +1738,15 @@ export default function UserMasterPage() {
                         checked={formIsActive === true} 
                         onChange={() => setFormIsActive(true)}
                         className="sr-only"
+                        disabled={!isSuperAdmin}
                       />
                       <UserCheck className={`h-4 w-4 ${formIsActive ? "text-emerald-500" : "text-gray-400"}`} />
                       <span>Active & Authorized</span>
                     </label>
 
-                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all flex-1 w-full justify-center ${
+                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all flex-1 w-full justify-center ${
+                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                    } ${
                       !formIsActive
                         ? (isLightMode ? "bg-rose-50 border-rose-300 text-rose-800" : "bg-rose-500/10 border-rose-500/30 text-rose-300")
                         : (isLightMode ? "bg-transparent border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-transparent border-white/10 text-gray-400 hover:bg-white/[0.02]")
@@ -1734,6 +1757,7 @@ export default function UserMasterPage() {
                         checked={formIsActive === false} 
                         onChange={() => setFormIsActive(false)}
                         className="sr-only"
+                        disabled={!isSuperAdmin}
                       />
                       <Lock className={`h-4 w-4 ${!formIsActive ? "text-rose-500" : "text-gray-400"}`} />
                       <span>Disabled / Restrained</span>
