@@ -103,7 +103,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
       title="Initialize Enterprise Task"
       subtitle="Configure task details, assignments, and requirements."
       onClose={onClose}
-      size="md"
+      size="lg"
       headerAccent="purple"
       footer={
         <div className="flex justify-end gap-3 w-full">

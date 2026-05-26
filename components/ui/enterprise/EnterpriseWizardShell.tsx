@@ -67,7 +67,7 @@ export function EnterpriseWizardShell({
             ? "bg-white border-x-0 border-b-0 shadow-2xl" 
             : "bg-[#0B0F19] border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.6)]"
         } ${className}`}
-        style={{ maxHeight: "calc(100vh - 40px)" }}
+        style={{ maxHeight: "90vh" }}
       >
         {/* Header */}
         <div className={`shrink-0 p-3 md:px-5 md:py-3 flex items-center justify-between gap-4 border-b ${

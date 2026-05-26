@@ -638,8 +638,8 @@ export default function WorkspacesPage() {
 
       {/* Creation Overlays */}
       {wsModalMode !== null && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
-          <AppCard className={`w-full max-w-lg p-6 shadow-2xl border-t-4 ${isLightMode ? "border-t-indigo-600 border-x-0 border-b-0" : "border-t-indigo-500 border-white/10"}`}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in-50">
+          <AppCard className={`w-full max-w-2xl p-6 shadow-2xl border-t-4 max-h-[85vh] overflow-y-auto ${isLightMode ? "border-t-indigo-600 border-x-0 border-b-0" : "border-t-indigo-500 border-white/10"}`}>
             <h3 className={`text-lg font-bold mb-4 ${isLightMode ? "text-gray-900" : "text-white"}`}>{wsModalMode === 'EDIT' ? "Edit Workspace" : (wsModalMode === 'SUB' ? "New Sub Workspace" : "New Workspace")}</h3>
             <form onSubmit={handleCreateWorkspace} className="space-y-4">
               
