@@ -57,20 +57,20 @@ export async function dispatchNotification(userId: string, title: string, messag
 
   // Also insert into global notification queue for realtime stream consumers
   try {
+    const isWorkspace = link?.includes('workspaces') && !link?.includes('task=');
     await supabaseAdmin.from('notification_queue').insert([{
       target_user_id: userId,
-      status: 'pending',
-      payload: {
+      entity_type: isWorkspace ? 'workspace' : 'task',
+      entity_id: link ? (link.includes('task=') ? link.split('task=')[1] : link.split('/').pop()) || 'SYS' : 'SYS',
+      module: isWorkspace ? 'workspaces' : 'tasks',
+      action_type: 'assignment',
+      actor: 'System',
+      redirect_url: link || null,
+      priority_level: 'LOW',
+      is_read: false,
+      payload: { 
         id: notif?.id || null,
-        entity_type: 'task',
-        entity_id: link ? link.split('task=')[1] || null : null,
-        module: 'tasks',
-        action_type: 'assignment',
-        actor: null,
-        message,
-        redirect_url: link || null,
-        priority_level: 'LOW',
-        is_read: false
+        message 
       }
     }]);
   } catch (e) {
