@@ -658,8 +658,13 @@ export async function fetchAllTasks() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  // Check if user is admin
-  const isAdmin = user.app_metadata?.role === "SUPER_ADMIN" || user.app_metadata?.role === "ROLE_ADMIN";
+  // Fetch workspaces the user has access to
+  const visibleWorkspaces = await getVisibleWorkspaces(user.id);
+  const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
+
+  if (visibleWsIds.length === 0) {
+    return [];
+  }
 
   const { data: allTasks, error: tasksError } = await supabase
     .from("tasks")
@@ -669,6 +674,7 @@ export async function fetchAllTasks() {
       status:status_master(name:status_name, code:status_code, status_color),
       priority:priority_master(name:priority_name, code:priority_code)
     `)
+    .in("workspace_id", visibleWsIds)
     .eq("is_deleted", false)
     .order("created_at", { ascending: false });
 
