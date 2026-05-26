@@ -365,9 +365,9 @@ export default function UserMasterPage() {
   const openModifyForm = (usr: AppUserItem) => {
     setIsEditingMode(true);
     setEditUserId(usr.id);
-    setFormFullName(usr.full_name);
-    setFormUserCode(usr.user_code);
-    setFormEmail(usr.email);
+    setFormFullName(usr.full_name || "");
+    setFormUserCode(usr.user_code || "");
+    setFormEmail(usr.email || "");
     setFormDeptId(usr.department_id || "");
     setFormDesigId(usr.designation_id || "");
     setFormRoleId(usr.role_id || "");
@@ -375,7 +375,7 @@ export default function UserMasterPage() {
     setFormPassword(""); // Leave empty to keep unchanged
     setFormConfirmPassword("");
     setFormPhoto(usr.profile_photo || PRESET_AVATARS[0]);
-    setFormIsActive(usr.is_active);
+    setFormIsActive(usr.is_active ?? true);
     setFormAssignedAssets((usr.assigned_assets || []).join(", "));
     setIsViewingPhoto(false);
     setPhotoUploading(false);
@@ -504,7 +504,11 @@ export default function UserMasterPage() {
     setLoading(true);
 
     try {
-      await saveUserAction(isEditingMode ? editUserId : null, payload, formPassword);
+      const result = await saveUserAction(isEditingMode ? editUserId : null, payload, formPassword);
+      
+      if (result && !result.success) {
+        throw new Error(result.error || "An unknown error occurred during save.");
+      }
 
       if (isEditingMode && editUserId) {
         const updatedItem = {

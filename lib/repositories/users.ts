@@ -12,6 +12,7 @@ export async function getVisibleUsers(userId: string) {
     .from('user_master')
     .select(`
       id,
+      user_code,
       full_name,
       email,
       profile_photo,

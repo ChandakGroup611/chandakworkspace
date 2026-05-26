@@ -24,7 +24,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
   // 1. Authenticate the caller
   const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
   if (authError || !authUser) {
-    throw new Error("Unauthenticated request. Please log in.");
+    return { success: false, error: "Unauthenticated request. Please log in." };
   }
 
   // 2. Authorize the caller (Must be SUPER_ADMIN or have USERS_CREATE/USERS_UPDATE/USERS_MANAGE permission)
@@ -81,7 +81,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     const canManage = perms.includes(requiredPerm) || perms.includes("USERS_MANAGE");
 
     if (!canManage) {
-      throw new Error("Unauthorized: You do not have permissions to manage user records.");
+      return { success: false, error: "Unauthorized: You do not have permissions to manage user records." };
     }
   }
 
@@ -115,7 +115,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
         const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(editUserId, authUpdates);
         if (authUpdateError) {
           console.error("[Server Action] Auth update error:", authUpdateError);
-          throw new Error(`Auth Update Failed: ${authUpdateError.message}`);
+          return { success: false, error: `Auth Update Failed: ${authUpdateError.message}` };
         }
       } else {
         // Fallback: If editing self, we can update via the authenticated client
@@ -123,7 +123,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
           const { error: authUpdateError } = await supabase.auth.updateUser(authUpdates);
           if (authUpdateError) {
             console.error("[Server Action] Self Auth update error:", authUpdateError);
-            throw new Error(`Self Auth Update Failed: ${authUpdateError.message}`);
+            return { success: false, error: `Self Auth Update Failed: ${authUpdateError.message}` };
           }
         } else {
           // Editing another user's auth record requires service role key, skip but proceed with database updates
@@ -160,7 +160,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
 
     if (dbError) {
       console.error("[Server Action] DB update error:", dbError);
-      throw new Error(`Database Update Failed: ${dbError.message}`);
+      return { success: false, error: `Database Update Failed: ${dbError.message}` };
     }
 
     // C. Update asset assignments in the assets table
@@ -177,19 +177,20 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
         password: targetPassword,
         options: {
           data: {
-            full_name: payload.full_name
+            full_name: payload.full_name,
+            user_code: payload.user_code
           }
         }
       });
 
       if (signUpError) {
         console.error("[Server Action] Local SignUp error:", signUpError);
-        throw new Error(`User Creation Failed: ${signUpError.message}`);
+        return { success: false, error: `User Creation Failed: ${signUpError.message}` };
       }
 
       const newUserId = signUpData.user?.id;
       if (!newUserId) {
-        throw new Error("User creation failed: No ID returned.");
+        return { success: false, error: "User creation failed: No ID returned." };
       }
 
       // Update in user_master
@@ -211,7 +212,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
 
       if (dbError) {
         console.error("[Server Action] DB create error:", dbError);
-        throw new Error(`Database Profile Creation Failed: ${dbError.message}`);
+        return { success: false, error: `Database Profile Creation Failed: ${dbError.message}` };
       }
 
       await updateAssetAssignments(supabase, newUserId, payload.assigned_assets || []);
@@ -223,13 +224,14 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
         password: targetPassword,
         email_confirm: true,
         user_metadata: {
-          full_name: payload.full_name
+          full_name: payload.full_name,
+          user_code: payload.user_code
         }
       });
 
       if (authCreateError) {
         console.error("[Server Action] Auth create error:", authCreateError);
-        throw new Error(`Auth Creation Failed: ${authCreateError.message}`);
+        return { success: false, error: `Auth Creation Failed: ${authCreateError.message}` };
       }
 
       const newUserId = newAuthUser.user.id;
@@ -255,7 +257,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
         console.error("[Server Action] DB create error:", dbError);
         // Clean up the auth user if DB insert fails
         await adminClient.auth.admin.deleteUser(newUserId);
-        throw new Error(`Database Profile Creation Failed: ${dbError.message}`);
+        return { success: false, error: `Database Profile Creation Failed: ${dbError.message}` };
       }
 
       // C. Update asset assignments in the assets table for new user
