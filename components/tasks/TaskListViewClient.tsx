@@ -13,9 +13,14 @@ import {
   AppTableHead,
   AppTableCell
 } from "@/components/ui/AppTable";
-import { Loader2, Eye, Filter, Search, Users, Calendar } from "lucide-react";
+import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Task = any;
 
@@ -41,6 +46,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function whoami() {
@@ -126,10 +132,77 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     }
   };
 
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Tasks");
+
+    worksheet.columns = [
+      { header: "Code", key: "code", width: 15 },
+      { header: "Title", key: "title", width: 40 },
+      { header: "Workspace", key: "workspace", width: 25 },
+      { header: "Priority", key: "priority", width: 15 },
+      { header: "Due Date", key: "due", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Created At", key: "created", width: 20 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    worksheet.getRow(1).fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF4F46E5" },
+    };
+    worksheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+
+    filtered.forEach((t) => {
+      worksheet.addRow({
+        code: t.code || `TSK-${t.id.substring(0,4).toUpperCase()}`,
+        title: t.title || "—",
+        workspace: t.workspace?.name || t.workspace?.code || "—",
+        priority: t.priority?.name || "—",
+        due: t.end_date || "—",
+        status: t.status?.name || "—",
+        created: formatDate(t.created_at),
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "Workspace_Tasks_Export.xlsx");
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF("landscape");
+    doc.text("All Workspace Tasks", 14, 15);
+    
+    const tableData = filtered.map(t => [
+      t.code || `TSK-${t.id.substring(0,4).toUpperCase()}`,
+      t.title || "—",
+      t.workspace?.name || t.workspace?.code || "—",
+      t.priority?.name || "—",
+      t.end_date || "—",
+      t.status?.name || "—",
+      formatDate(t.created_at)
+    ]);
+
+    autoTable(doc, {
+      head: [["Code", "Title", "Workspace", "Priority", "Due Date", "Status", "Created At"]],
+      body: tableData,
+      startY: 20,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [79, 70, 229] },
+      alternateRowStyles: { fillColor: [243, 244, 246] }
+    });
+
+    doc.save("Workspace_Tasks_Export.pdf");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
+          <AppButton variant="outline" size="sm" onClick={() => router.push("/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+            Back
+          </AppButton>
           <div className="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/5">
             {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
               <button
@@ -144,6 +217,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         </div>
 
         <div className="flex items-center flex-wrap gap-3">
+          <div className="flex items-center gap-2 border-r border-white/10 pr-3 mr-1">
+            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-400" />}>
+              Excel
+            </AppButton>
+            <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-rose-400" />}>
+              PDF
+            </AppButton>
+          </div>
           {/* Workspace Filter Select */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Workspace:</span>

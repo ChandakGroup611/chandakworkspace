@@ -14,7 +14,11 @@
     "@supabase/supabase-js": "^2.106.1",
     "@tailwindcss/postcss": "^4.3.0",
     "clsx": "^2.1.1",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "jsonwebtoken": "^9.0.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.14.0",
     "next": "^16.2.6",
     "nodemailer": "^8.0.7",
@@ -24,6 +28,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^25.7.0",
     "@types/nodemailer": "^8.0.0",
     "@types/react": "^19.2.14",
