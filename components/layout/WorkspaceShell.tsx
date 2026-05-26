@@ -59,7 +59,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         {!isAuthRoute && <Navbar />}
 
         {/* Dynamic Scrollable Content Workspace */}
-        <main className={`flex-1 w-full relative z-10 pb-16 ${isAuthRoute ? 'p-0' : (isSidebarCompact ? 'p-4 sm:p-6 lg:p-8 w-full space-y-6' : 'p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-6')}`}>
+        <main className={`flex-1 w-full relative pb-24 ${isAuthRoute ? 'p-0' : 'p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6'}`}>
           {children}
         </main>
       </div>
