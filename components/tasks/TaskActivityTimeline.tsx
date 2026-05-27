@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const supabase = createClient();
   
   const [logs, setLogs] = useState<any[]>([]);
@@ -99,7 +99,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
                     {log.actor?.full_name || 'System Administrator'}
                   </strong> {getActionText(log)}
                 </p>
-                <span className="text-[10px] text-gray-500 font-mono mt-1 block">
+                <span className="text-xs text-gray-500 font-mono mt-1 block">
                   {new Date(log.created_at).toLocaleString()}
                 </span>
               </div>

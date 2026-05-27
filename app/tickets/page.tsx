@@ -14,7 +14,7 @@ import { fetchTicketDashboardData } from "@/lib/actions/tickets";
 export default function TicketsPage() {
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const { hasPermission, loading: permissionsLoading } = usePermissions();
   
   // Master Data
@@ -75,7 +75,7 @@ export default function TicketsPage() {
         code: s.code
       })));
       
-      const mappedTickets = (finalTicketData || []).map(t => {
+      const mappedTickets = (finalTicketData || []).map((t: any) => {
         const custom = t.custom_fields || {};
         return {
           ...t,
@@ -191,17 +191,17 @@ export default function TicketsPage() {
             </h1>
             <div className="flex items-center gap-2">
               <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-              <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? "text-gray-500" : "text-gray-500"}`}>Live Node: ADIOS-ENTERPRISE-01</span>
+              <span className={`text-xs font-bold uppercase tracking-widest ${isLightMode ? "text-gray-500" : "text-gray-500"}`}>Live Node: ADIOS-ENTERPRISE-01</span>
             </div>
           </div>
           <div className={`h-8 w-px ${isLightMode ? "bg-gray-200" : "bg-white/10"}`} />
           <div className="hidden md:flex items-center gap-4">
             <div className="flex flex-col">
-              <span className="text-[10px] text-gray-600 font-bold uppercase">Active Tickets</span>
+              <span className="text-xs text-gray-600 font-bold uppercase">Active Tickets</span>
               <span className="text-sm font-semibold">{tickets.length}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-gray-600 font-bold uppercase">SLA Stability</span>
+              <span className="text-xs text-gray-600 font-bold uppercase">SLA Stability</span>
               <span className="text-sm font-semibold text-emerald-400">98.4%</span>
             </div>
           </div>

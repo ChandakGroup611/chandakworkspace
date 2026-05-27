@@ -61,7 +61,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   <div className="mt-2 space-y-2">
                     {task.assignees?.map((a: any) => (
                       <div key={a.user.id} className="flex items-center gap-2 text-sm text-gray-300">
-                        <div className="w-6 h-6 rounded-full bg-indigo-900 flex items-center justify-center text-[10px] font-bold text-indigo-200">
+                        <div className="w-6 h-6 rounded-full bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-200">
                           {a.user.full_name?.charAt(0)}
                         </div>
                         {a.user.full_name}
@@ -84,7 +84,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <div className="mt-4 space-y-3">
                   {Object.entries(task.custom_fields || {}).map(([key, val]: any) => (
                     <div key={key}>
-                      <label className="text-[10px] text-gray-500 uppercase">{key}</label>
+                      <label className="text-xs text-gray-500 uppercase">{key}</label>
                       <p className="text-sm text-gray-300">{val}</p>
                     </div>
                   ))}

@@ -9,7 +9,7 @@ import { getWorkloadSnapshot } from "@/lib/actions/tasks";
 
 export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, onClose: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any>(null);
@@ -52,7 +52,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             </div>
             <div>
               <h3 className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Workload Intelligence</h3>
-              <p className="text-[10px] text-gray-500">Capacity & bandwidth analysis</p>
+              <p className="text-xs text-gray-500">Capacity & bandwidth analysis</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
@@ -86,7 +86,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                 />
               </div>
               {metrics.capacity_percentage > 80 && (
-                <p className="text-[10px] text-rose-500 flex items-center gap-1 mt-1">
+                <p className="text-xs text-rose-500 flex items-center gap-1 mt-1">
                   <AlertTriangle className="h-3 w-3" /> User is currently over-utilized. High risk of SLA breach.
                 </p>
               )}
@@ -97,20 +97,20 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <div className={`p-4 rounded-xl border ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 mb-2" />
                 <span className="block text-2xl font-bold text-gray-900 dark:text-white mb-1">{metrics.active_tasks}</span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Active Directives</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Active Directives</span>
               </div>
               <div className={`p-4 rounded-xl border ${isLightMode ? "bg-rose-50 border-rose-100" : "bg-rose-500/5 border-rose-500/20"}`}>
                 <AlertTriangle className="h-4 w-4 text-rose-500 mb-2" />
                 <span className="block text-2xl font-bold text-rose-600 dark:text-rose-400 mb-1">{metrics.overdue_tasks}</span>
-                <span className="text-[10px] text-rose-500/70 uppercase tracking-wider font-bold">Overdue SLA</span>
+                <span className="text-xs text-rose-500/70 uppercase tracking-wider font-bold">Overdue SLA</span>
               </div>
               <div className={`p-4 rounded-xl border ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
                 <Clock className="h-4 w-4 text-indigo-500 mb-2" />
                 <span className="block text-2xl font-bold text-gray-900 dark:text-white mb-1">{metrics.estimated_hours}h</span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Estimated Load</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Estimated Load</span>
               </div>
               <div className={`p-4 rounded-xl border flex flex-col justify-center ${isLightMode ? "bg-blue-50 border-blue-100" : "bg-blue-500/10 border-blue-500/20"}`}>
-                <span className="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
+                <span className="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
                 <span className="text-xl font-bold text-blue-700 dark:text-blue-300">{metrics.available_capacity}%</span>
               </div>
             </div>

@@ -24,7 +24,7 @@ interface TicketOpsSidebarProps {
 export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
   const [timeLeft, setTimeLeft] = useState(240); // Initial minutes from priority
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   
   useEffect(() => {
     if (ticket?.priorityObj?.sla_target_minutes) {
@@ -46,8 +46,8 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         {/* SLA Engine Block */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">SLA Performance</h3>
-            <AppBadge variant={isStable ? "success" : "warning"} className="text-[8px] py-0">STABLE</AppBadge>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">SLA Performance</h3>
+            <AppBadge variant={isStable ? "success" : "warning"} className="text-[0.65rem] py-0">STABLE</AppBadge>
           </div>
           <div className={`p-5 border rounded-2xl space-y-4 ${
             isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.03] border-white/5"
@@ -55,7 +55,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <span className={`text-2xl font-bold tabular-nums ${isLightMode ? "text-gray-900" : "text-white"}`}>{timeLeft}m</span>
-                <p className="text-[10px] text-gray-500 font-medium">Until Resolution Breach</p>
+                <p className="text-xs text-gray-500 font-medium">Until Resolution Breach</p>
               </div>
               <div className={`p-3 rounded-xl ${isLightMode ? "bg-indigo-50" : "bg-indigo-500/10"}`}>
                 <Clock className={`h-5 w-5 ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`} />
@@ -68,7 +68,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
                   style={{ width: `${slaPercentage}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[8px] text-gray-500 font-bold uppercase tracking-tighter">
+              <div className="flex justify-between text-[0.65rem] text-gray-500 font-bold uppercase tracking-tighter">
                 <span>0m</span>
                 <span>{ticket.priorityObj?.sla_target_minutes || 240}m Target</span>
               </div>
@@ -78,7 +78,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
         {/* Workflow Actions */}
         <section className="space-y-4">
-          <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Workflow Actions</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Workflow Actions</h3>
           <div className="grid grid-cols-1 gap-2">
             <AppButton 
               className={`w-full justify-start text-xs py-5 border ${
@@ -104,14 +104,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <div className="grid grid-cols-2 gap-2">
               <AppButton 
                 variant="ghost" 
-                className={`text-[10px] h-10 border ${isLightMode ? "bg-gray-50 border-gray-100 text-gray-600" : "bg-white/5 border-white/5 text-gray-400"}`}
+                className={`text-xs h-10 border ${isLightMode ? "bg-gray-50 border-gray-100 text-gray-600" : "bg-white/5 border-white/5 text-gray-400"}`}
                 onClick={() => onAction("HOLD")}
               >
                 <Pause className="h-3 w-3 mr-2" /> Put on Hold
               </AppButton>
               <AppButton 
                 variant="ghost" 
-                className={`text-[10px] h-10 border ${isLightMode ? "bg-gray-50 border-gray-100 text-gray-600" : "bg-white/5 border-white/5 text-gray-400"}`}
+                className={`text-xs h-10 border ${isLightMode ? "bg-gray-50 border-gray-100 text-gray-600" : "bg-white/5 border-white/5 text-gray-400"}`}
                 onClick={() => onAction("ESCALATE")}
               >
                 <AlertTriangle className="h-3 w-3 mr-2" /> Escalate
@@ -119,7 +119,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             </div>
             <AppButton 
               variant="ghost" 
-              className={`w-full justify-start text-red-500/80 hover:text-red-600 hover:bg-red-50 text-[10px] h-10 mt-2 border ${
+              className={`w-full justify-start text-red-500/80 hover:text-red-600 hover:bg-red-50 text-xs h-10 mt-2 border ${
                 isLightMode ? "border-red-100" : "border-red-500/10 text-red-400/50 hover:bg-red-500/10"
               }`}
               onClick={() => {
@@ -136,12 +136,12 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         {/* Watchers Registry */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Watchers</h3>
-            <span className="text-[10px] text-indigo-600 font-bold cursor-pointer">Manage</span>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Watchers</h3>
+            <span className="text-xs text-indigo-600 font-bold cursor-pointer">Manage</span>
           </div>
           <div className="flex -space-x-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white bg-indigo-500 ${
+              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-indigo-500 ${
                 isLightMode ? "border-white" : "border-[#070913]"
               }`}>
                 JD
@@ -157,14 +157,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
         {/* Attachment Zone */}
         <section className="space-y-4">
-          <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Quick Attachments</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Quick Attachments</h3>
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
             isLightMode ? "border-gray-200 bg-gray-50/50 hover:bg-gray-100/50" : "border-white/10 bg-transparent hover:bg-white/5"
           }`}>
             <div className={`p-2 rounded-lg ${isLightMode ? "bg-white" : "bg-white/5"} group-hover:bg-indigo-500/10`}>
               <Eye className={`h-4 w-4 ${isLightMode ? "text-gray-400" : "text-gray-600"} group-hover:text-indigo-500`} />
             </div>
-            <p className="text-[9px] text-gray-500">Drop files to link</p>
+            <p className="text-[0.7rem] text-gray-500">Drop files to link</p>
           </div>
         </section>
       </div>
@@ -176,7 +176,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         <button className={`p-2 rounded-lg transition-colors ${isLightMode ? "hover:bg-gray-200 text-gray-400" : "hover:bg-white/5 text-gray-500"}`}>
           <Workflow className="h-4 w-4" />
         </button>
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Governance ID: 9910-E</span>
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Governance ID: 9910-E</span>
       </div>
     </div>
   );

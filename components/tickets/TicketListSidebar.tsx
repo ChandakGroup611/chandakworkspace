@@ -27,7 +27,7 @@ export function TicketListSidebar({
   departments
 }: TicketListSidebarProps) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   return (
     <div className={`flex flex-col h-full overflow-hidden border-r transition-colors duration-300 ${
@@ -104,7 +104,7 @@ export function TicketListSidebar({
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`}>
+                  <span className={`text-xs font-mono font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`}>
                     {ticket.id}
                   </span>
                   <div className="flex items-center gap-1">
@@ -112,7 +112,7 @@ export function TicketListSidebar({
                       priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : 
                       priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-blue-500"
                     }`} />
-                    <span className="text-[10px] text-gray-500 font-medium">
+                    <span className="text-xs text-gray-500 font-medium">
                       {priority?.name || "P3"}
                     </span>
                   </div>
@@ -126,7 +126,7 @@ export function TicketListSidebar({
                   {ticket.title}
                 </h4>
 
-                <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                <div className="flex items-center gap-3 text-xs text-gray-500">
                   <div className="flex items-center gap-1">
                     <User className="h-3 w-3" />
                     <span className="truncate max-w-[80px]">{ticket.assignedTo || "Unassigned"}</span>
@@ -139,10 +139,10 @@ export function TicketListSidebar({
 
                 {isSelected && (
                   <div className="mt-3 flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
-                    <AppBadge variant={ticket.statusObj?.code === "ST_OPEN" ? "info" : "success"} className="text-[8px] py-0 px-1.5">
+                    <AppBadge variant={ticket.statusObj?.code === "ST_OPEN" ? "info" : "success"} className="text-[0.65rem] py-0 px-1.5">
                       {ticket.statusObj?.name || "Active"}
                     </AppBadge>
-                    <span className="text-[8px] text-indigo-300 font-medium bg-indigo-400/10 px-1.5 rounded">
+                    <span className="text-[0.65rem] text-indigo-300 font-medium bg-indigo-400/10 px-1.5 rounded">
                       SLA: STABLE
                     </span>
                   </div>
@@ -157,10 +157,10 @@ export function TicketListSidebar({
       <div className={`p-4 border-t transition-colors duration-300 ${
         isLightMode ? "border-gray-100 bg-gray-50/30" : "border-white/5 bg-white/[0.01]"
       } flex items-center justify-between`}>
-        <span className="text-[10px] text-gray-500 font-medium">{tickets.length} Incidents Found</span>
+        <span className="text-xs text-gray-500 font-medium">{tickets.length} Incidents Found</span>
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500" />
-          <span className="text-[10px] text-gray-500">Realtime Sync Active</span>
+          <span className="text-xs text-gray-500">Realtime Sync Active</span>
         </div>
       </div>
     </div>

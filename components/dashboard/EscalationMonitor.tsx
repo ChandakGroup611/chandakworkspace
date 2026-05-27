@@ -30,7 +30,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
       </AppCardHeader>
 
       <AppCardContent className="space-y-3 pt-2">
-        <p className="text-[11px] text-gray-400 font-medium">
+        <p className="text-[0.8rem] text-gray-400 font-medium">
           Automated event listener routing active operational bottlenecks before target timeout expiration.
         </p>
 
@@ -42,8 +42,8 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
             >
               <div className="space-y-1 truncate pr-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-gray-500">{esc.id}</span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                  <span className="text-xs font-bold text-gray-500">{esc.id}</span>
+                  <span className={`text-[0.7rem] font-bold px-1.5 py-0.2 rounded uppercase ${
                     esc.risk === "danger" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"
                   }`}>
                     {esc.level}
@@ -53,7 +53,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-1 text-[10px] font-semibold text-rose-400 bg-rose-500/5 px-2 py-1 rounded-lg border border-rose-500/10">
+                <div className="flex items-center gap-1 text-xs font-semibold text-rose-400 bg-rose-500/5 px-2 py-1 rounded-lg border border-rose-500/10">
                   <Clock className="h-3 w-3" />
                   <span>{esc.timeRemaining}</span>
                 </div>
@@ -69,7 +69,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
           )}
         </div>
 
-        <div className="pt-1 flex items-center justify-between text-[10px] text-gray-500">
+        <div className="pt-1 flex items-center justify-between text-xs text-gray-500">
           <span>Worker dispatch status: <strong className="text-emerald-500 font-bold">ONLINE</strong></span>
           <span className="underline hover:text-gray-300 cursor-pointer">SLA Escalation Matrix</span>
         </div>

@@ -33,7 +33,7 @@ export default function Navbar() {
   const router = useRouter();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
-  const isLight = theme === "executive-light";
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const [mounted, setMounted] = useState(false);
 
   // Session Security States
@@ -200,7 +200,7 @@ export default function Navbar() {
                   : "bg-white/5 border-white/5 text-white placeholder-gray-500 focus:border-blue-500/50 focus:bg-white/10"
               }`}
             />
-            <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold pointer-events-none ${
+            <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold pointer-events-none ${
               isLight ? "bg-gray-200/60 text-gray-500" : "bg-white/10 text-gray-400"
             }`}>
               <Command className="h-2.5 w-2.5" />
@@ -213,7 +213,7 @@ export default function Navbar() {
           <div 
             onClick={() => handleUserActivity()} 
             title="Session Activity Keep-Alive Timer. Click to manually refresh lease."
-            className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono select-none cursor-pointer transition-all ${
+            className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[0.8rem] font-mono select-none cursor-pointer transition-all ${
               secondsRemaining <= WARNING_THRESHOLD_SECONDS 
                 ? "bg-rose-500/20 border-rose-500/40 text-rose-400 animate-pulse" 
                 : isLight 
@@ -247,7 +247,7 @@ export default function Navbar() {
                   isLight ? "bg-white border-gray-200 text-gray-800" : "bg-[#0A0D14] border-white/10 text-gray-200"
                 }`}>
                   <div className="px-2 py-1.5 border-b border-white/5 mb-1">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase">Available Workspaces</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase">Available Workspaces</span>
                   </div>
                   
                   <div 
@@ -260,7 +260,7 @@ export default function Navbar() {
                   >
                     <Layers className="h-3.5 w-3.5" />
                     <span className={activeOpsShell === "Primary Ops Shell" ? "font-semibold" : "font-medium"}>Primary Ops Shell</span>
-                    {activeOpsShell === "Primary Ops Shell" && <span className="ml-auto text-[9px] font-bold">ACTIVE</span>}
+                    {activeOpsShell === "Primary Ops Shell" && <span className="ml-auto text-[0.7rem] font-bold">ACTIVE</span>}
                   </div>
 
                   <div 
@@ -273,7 +273,7 @@ export default function Navbar() {
                   >
                     <Layers className="h-3.5 w-3.5" />
                     <span className={activeOpsShell === "Development Sandbox" ? "font-semibold" : "font-medium"}>Development Sandbox</span>
-                    {activeOpsShell === "Development Sandbox" && <span className="ml-auto text-[9px] font-bold">ACTIVE</span>}
+                    {activeOpsShell === "Development Sandbox" && <span className="ml-auto text-[0.7rem] font-bold">ACTIVE</span>}
                   </div>
 
                   <div 
@@ -286,7 +286,7 @@ export default function Navbar() {
                   >
                     <Layers className="h-3.5 w-3.5" />
                     <span className={activeOpsShell === "Analytics & Archival" ? "font-semibold" : "font-medium"}>Analytics & Archival</span>
-                    {activeOpsShell === "Analytics & Archival" && <span className="ml-auto text-[9px] font-bold">ACTIVE</span>}
+                    {activeOpsShell === "Analytics & Archival" && <span className="ml-auto text-[0.7rem] font-bold">ACTIVE</span>}
                   </div>
                 </div>
               </>
@@ -295,7 +295,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 text-xs font-semibold text-emerald-500" title="All backend services passing SLA">
             <ShieldCheck className="h-3.5 w-3.5" />
-            <span className="hidden md:inline text-[11px]">SLA Stable</span>
+            <span className="hidden md:inline text-[0.8rem]">SLA Stable</span>
           </div>
 
           <div className={`h-4 w-[1px] ${isLight ? "bg-gray-200" : "bg-white/10"}`} />
@@ -345,14 +345,14 @@ export default function Navbar() {
                   isLight ? "bg-white border-gray-200 text-gray-800" : "bg-[#0c101b] border-white/10 text-white"
                 }`}>
                   <div className="px-2 py-2 border-b border-white/5 space-y-0.5">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Active Identity Bound</span>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Active Identity Bound</span>
                     <span className="text-xs font-bold text-white block truncate">{userData?.full_name}</span>
-                    <span className="text-[10px] font-medium text-blue-400 block truncate">{userData?.email}</span>
-                    <span className="text-[9px] font-mono text-emerald-500/80 block">✓ Session Signature Active</span>
+                    <span className="text-xs font-medium text-blue-400 block truncate">{userData?.email}</span>
+                    <span className="text-[0.7rem] font-mono text-emerald-500/80 block">✓ Session Signature Active</span>
                   </div>
 
                   <div className="py-1 space-y-0.5">
-                    <div className="px-2 py-1 flex items-center justify-between text-[10px] text-gray-400 font-mono">
+                    <div className="px-2 py-1 flex items-center justify-between text-xs text-gray-400 font-mono">
                       <span>Lease Countdown:</span>
                       <strong className="text-white">{formatTime(secondsRemaining)}</strong>
                     </div>
@@ -378,7 +378,7 @@ export default function Navbar() {
                         <LogOut className="h-3.5 w-3.5 text-rose-400 group-hover:rotate-12 transition-transform" />
                         <span>{loggingOut ? "Terminating Auth..." : "Log Out Securely"}</span>
                       </span>
-                      <span className="text-[9px] font-mono bg-rose-500/20 px-1 rounded text-rose-400">FLUSH</span>
+                      <span className="text-[0.7rem] font-mono bg-rose-500/20 px-1 rounded text-rose-400">FLUSH</span>
                     </button>
                   </div>
                 </div>
@@ -410,7 +410,7 @@ export default function Navbar() {
             </div>
 
             <div className="p-3 rounded-xl bg-white/5 border border-white/5 font-mono">
-              <span className="text-[10px] text-gray-500 uppercase block">Automatic Session Termination In:</span>
+              <span className="text-xs text-gray-500 uppercase block">Automatic Session Termination In:</span>
               <span className="text-2xl font-bold text-rose-400 animate-pulse">{secondsRemaining}s</span>
             </div>
 

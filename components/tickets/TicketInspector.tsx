@@ -28,7 +28,7 @@ interface TicketInspectorProps {
 export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
   const [activeTab, setActiveTab] = useState<"DETAILS" | "COLLAB" | "TIMELINE">("DETAILS");
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   if (!ticket) {
     return (
@@ -76,7 +76,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
         {/* Bento Metadata Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <ShieldCheck className="h-3 w-3" /> Priority
             </div>
             <div className="flex items-center gap-2">
@@ -88,21 +88,21 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <Building className="h-3 w-3" /> Department
             </div>
             <span className={`text-sm font-semibold truncate block ${isLightMode ? "text-gray-900" : "text-white"}`}>{dept?.name || "General"}</span>
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <User className="h-3 w-3" /> Assignee
             </div>
             <span className={`text-sm font-semibold truncate block ${isLightMode ? "text-gray-900" : "text-white"}`}>{ticket.assignedTo || "Unassigned"}</span>
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <Clock className="h-3 w-3" /> Created
             </div>
             <span className={`text-sm font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>
@@ -118,7 +118,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`py-4 text-[11px] font-bold uppercase tracking-widest transition-all relative ${
+            className={`py-4 text-[0.8rem] font-bold uppercase tracking-widest transition-all relative ${
               activeTab === tab 
                 ? (isLightMode ? "text-indigo-600" : "text-white") 
                 : "text-gray-500 hover:text-gray-400"

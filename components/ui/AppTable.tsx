@@ -31,7 +31,7 @@ export const AppTableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("border-b border-white/5 bg-white/[0.02] text-[10px] font-semibold text-gray-400 tracking-wider uppercase", className)}
+    className={cn("border-b border-white/5 bg-white/[0.02] text-xs font-semibold text-gray-400 tracking-wider uppercase", className)}
     {...props}
   />
 ));

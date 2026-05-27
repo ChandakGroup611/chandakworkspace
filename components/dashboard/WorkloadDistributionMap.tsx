@@ -48,7 +48,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
           <Users className="h-4 w-4 text-indigo-400" />
           <AppCardTitle>Workload Saturation Engine</AppCardTitle>
         </div>
-        <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-gray-400 font-semibold uppercase">
+        <span className="text-xs bg-white/5 border border-white/10 px-2 py-0.5 rounded text-gray-400 font-semibold uppercase">
           Live Pool
         </span>
       </AppCardHeader>
@@ -56,17 +56,17 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
       <AppCardContent className="space-y-4 pt-2">
         <div className="grid grid-cols-2 gap-3 mb-2">
           <div className="p-3 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col justify-between">
-            <span className="text-[10px] text-gray-500 font-medium tracking-wide">Total Concurrency</span>
+            <span className="text-xs text-gray-500 font-medium tracking-wide">Total Concurrency</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-xl font-bold text-white">{metrics.totalConcurrency}</span>
-              <span className="text-[9px] text-gray-600 font-bold uppercase">active</span>
+              <span className="text-[0.7rem] text-gray-600 font-bold uppercase">active</span>
             </div>
           </div>
           <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 flex flex-col justify-between">
-            <span className="text-[10px] text-rose-500 font-medium tracking-wide">Backlog Overdue</span>
+            <span className="text-xs text-rose-500 font-medium tracking-wide">Backlog Overdue</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-xl font-bold text-rose-400">{metrics.backlogOverdue}</span>
-              <span className="text-[9px] text-rose-600 font-bold uppercase">critical</span>
+              <span className="text-[0.7rem] text-rose-600 font-bold uppercase">critical</span>
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
             <div key={dept.name} className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-300 font-medium truncate max-w-[140px]">{dept.name} ({dept.active})</span>
-                <div className="flex items-center gap-2 text-[11px]">
+                <div className="flex items-center gap-2 text-[0.8rem]">
                   {dept.overdue > 0 && (
                     <span className="text-rose-400 font-bold flex items-center gap-0.5">
                       <AlertOctagon className="h-2.5 w-2.5" />

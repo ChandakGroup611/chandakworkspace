@@ -14,7 +14,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
             </div>
             {ws.status && (
               <span 
-                className="px-2 py-1 rounded-lg text-[10px] font-bold tracking-widest uppercase"
+                className="px-2 py-1 rounded-lg text-xs font-bold tracking-widest uppercase"
                 style={{ backgroundColor: `${ws.status.status_color}20`, color: ws.status.status_color }}
               >
                 {ws.status.status_name}

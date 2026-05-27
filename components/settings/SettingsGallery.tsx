@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTheme, ThemeType, DensityType, FontFamilyType, FontSizeScaleType } from "@/components/theme/ThemeProvider";
+import { useTheme, ThemeType, DensityType, FontFamilyType } from "@/components/theme/ThemeProvider";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent, AppCardDescription } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -29,12 +29,14 @@ export default function SettingsGallery() {
     density, 
     tactileFeedback, 
     fontFamily, 
-    fontSizeScale, 
-    setTheme, 
-    setDensity, 
-    setTactileFeedback, 
+    baseFontSize,
+    subtextFontSize,
+    setTheme,
+    setDensity,
+    setTactileFeedback,
     setFontFamily, 
-    setFontSizeScale 
+    setBaseFontSize,
+    setSubtextFontSize
   } = useTheme();
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
@@ -87,6 +89,28 @@ export default function SettingsGallery() {
       previewBorder: "border-gray-200",
       accentColor: "bg-blue-600",
     },
+    {
+      id: "material-ocean",
+      name: "Material Ocean",
+      tagline: "Crisp Material UI Inspired",
+      benefit: "Clean, high-contrast usability",
+      sentiment: "Familiar & Solid",
+      icon: Layers,
+      previewBg: "bg-[#F0F2F5] text-[#1E293B]",
+      previewBorder: "border-[#E2E8F0]",
+      accentColor: "bg-[#0284C7]",
+    },
+    {
+      id: "aurora-breeze",
+      name: "Aurora Breeze",
+      tagline: "Stylish Gradient Pastels",
+      benefit: "Vibrant and aesthetic",
+      sentiment: "Creative & Fresh",
+      icon: Zap,
+      previewBg: "bg-[#EEF2FF] text-[#312E81]",
+      previewBorder: "border-indigo-500/30",
+      accentColor: "bg-pink-500",
+    },
   ];
 
   const densitiesList: {
@@ -129,13 +153,7 @@ export default function SettingsGallery() {
     { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible structural forms.", css: "font-sans" }
   ];
 
-  const scalesList: { id: FontSizeScaleType; name: string; desc: string; baseRem: string }[] = [
-    { id: "sm", name: "Condensed Scaling", desc: "15px Root Base — highly optimized data metrics.", baseRem: "15px" },
-    { id: "base", name: "Executive Standard", desc: "17.5px Root Base — optimal multi-screen clarity.", baseRem: "17.5px" },
-    { id: "lg", name: "Maximized Immersive", desc: "19px Root Base — ultra-crisp presentation layer.", baseRem: "19px" }
-  ];
-
-  const isLightMode = theme === "executive-light";
+  const isLightMode = theme === "executive-light" || theme === "material-ocean" || theme === "aurora-breeze";
 
   return (
     <div className="space-y-8 pb-12">
@@ -192,9 +210,9 @@ export default function SettingsGallery() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <div className={`h-2.5 w-2.5 rounded-full ${t.accentColor}`} />
-                        <span className="text-[10px] font-bold opacity-80">{t.name}</span>
+                        <span className="text-xs font-bold opacity-80">{t.name}</span>
                       </div>
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-black/10 font-mono">CSS var</span>
+                      <span className="text-[0.7rem] px-1 py-0.2 rounded bg-black/10 font-mono">CSS var</span>
                     </div>
 
                     {/* Simulated content metrics */}
@@ -218,14 +236,14 @@ export default function SettingsGallery() {
                         {t.name}
                       </h3>
                     </div>
-                    <p className={`text-[11px] font-medium ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                    <p className={`text-[0.8rem] font-medium ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
                       {t.tagline}
                     </p>
                   </div>
                 </div>
 
                 {/* Benefits / Sentiment blocks */}
-                <div className={`mt-4 pt-3 border-t space-y-1 text-[11px] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-medium">Primary Benefit:</span>
                     <span className={`font-semibold text-right ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{t.benefit}</span>
@@ -283,15 +301,15 @@ export default function SettingsGallery() {
                   {/* Simulated spacing diagram */}
                   <div className={`rounded-xl border ${isLightMode ? "border-gray-200 bg-gray-50" : "border-white/5 bg-black/20"} flex ${d.gapClass} transition-all`}>
                     <div className="flex-1 h-8 rounded bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-                      <span className="text-[9px] font-mono opacity-60">Track</span>
+                      <span className="text-[0.7rem] font-mono opacity-60">Track</span>
                     </div>
                     <div className="w-8 h-8 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                      <span className="text-[9px] font-mono opacity-60">KPI</span>
+                      <span className="text-[0.7rem] font-mono opacity-60">KPI</span>
                     </div>
                   </div>
                 </div>
 
-                <div className={`mt-4 pt-3 border-t space-y-1 text-[11px] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-medium">Primary Benefit:</span>
                     <span className={`font-semibold ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{d.benefit}</span>
@@ -321,7 +339,7 @@ export default function SettingsGallery() {
 
         {/* Sub-grid A: Font Families Selection */}
         <div className="space-y-2">
-          <span className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Matrix</span>
+          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Matrix</span>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {fontsList.map((f) => {
               const isSelected = fontFamily === f.id;
@@ -343,7 +361,7 @@ export default function SettingsGallery() {
                       <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{f.name}</span>
                       {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
                     </div>
-                    <p className={`text-[11px] italic ${isLightMode ? "text-gray-600" : "text-gray-400"} ${f.css}`}>
+                    <p className={`text-[0.8rem] italic ${isLightMode ? "text-gray-600" : "text-gray-400"} ${f.css}`}>
                       "{f.sample}"
                     </p>
                   </div>
@@ -353,33 +371,63 @@ export default function SettingsGallery() {
           </div>
         </div>
 
-        {/* Sub-grid B: Base Scaler Matrix */}
+        {/* Sub-grid B: Custom Font Sizer */}
         <div className="space-y-2 pt-2">
-          <span className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">B. Literal Scaler Options</span>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {scalesList.map((s) => {
-              const isSelected = fontSizeScale === s.id;
-              return (
-                <div
-                  key={s.id}
-                  onClick={() => {
-                    setFontSizeScale(s.id);
-                    triggerToast(`Scale adjusted to ${s.baseRem}`);
-                  }}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
-                    isSelected 
-                      ? `ring-1 ring-emerald-500 bg-emerald-500/[0.04] ${isLightMode ? "border-emerald-500" : "border-emerald-500/40"}` 
-                      : `hover:border-white/10 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`
-                  }`}
-                >
-                  <div className="flex items-center justify-between pb-1 border-b border-inherit/10">
-                    <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{s.name}</span>
-                    <AppBadge variant={isSelected ? "success" : "info"}>{s.baseRem}</AppBadge>
-                  </div>
-                  <p className="text-[10px] text-gray-500 mt-2 font-medium">{s.desc}</p>
-                </div>
-              );
-            })}
+          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">B. Custom Numeric Sizing</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
+              <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
+                <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Base Text Size</span>
+                <AppBadge variant="info">{baseFontSize}px</AppBadge>
+              </div>
+              <div className="flex items-center gap-3">
+                <input 
+                  type="range" 
+                  min="12" 
+                  max="24" 
+                  value={baseFontSize} 
+                  onChange={(e) => setBaseFontSize(Number(e.target.value))}
+                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <input 
+                  type="number"
+                  min="12"
+                  max="24"
+                  value={baseFontSize}
+                  onChange={(e) => setBaseFontSize(Number(e.target.value))}
+                  className={`w-14 px-2 py-1 text-xs rounded border text-center ${isLightMode ? "bg-white border-gray-300" : "bg-black/20 border-white/10"}`}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2 font-medium">Controls the root scaling of the entire application.</p>
+            </div>
+
+            <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
+              <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
+                <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Subtext / UI Size</span>
+                <AppBadge variant="info">{subtextFontSize}px</AppBadge>
+              </div>
+              <div className="flex items-center gap-3">
+                <input 
+                  type="range" 
+                  min="10" 
+                  max="18" 
+                  value={subtextFontSize} 
+                  onChange={(e) => setSubtextFontSize(Number(e.target.value))}
+                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <input 
+                  type="number"
+                  min="10"
+                  max="18"
+                  value={subtextFontSize}
+                  onChange={(e) => setSubtextFontSize(Number(e.target.value))}
+                  className={`w-14 px-2 py-1 text-xs rounded border text-center ${isLightMode ? "bg-white border-gray-300" : "bg-black/20 border-white/10"}`}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-2 font-medium">Controls the sizes of secondary labels and badges.</p>
+            </div>
+
           </div>
         </div>
       </section>
@@ -404,7 +452,7 @@ export default function SettingsGallery() {
             <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
               Applies hardware-accelerated subtle lifts (`translateY`), targeted micro-animations, and visible focus boundaries across table elements and interactive buttons.
             </p>
-            <div className={`flex gap-4 pt-1 text-[11px] font-medium ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
+            <div className={`flex gap-4 pt-1 text-[0.8rem] font-medium ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
               <span><strong className="text-gray-400">Primary Benefit:</strong> Interactive feedback</span>
               <span>•</span>
               <span><strong className="text-gray-400">User Sentiment:</strong> <span className="text-blue-500 font-semibold">Satisfying & Reliable</span></span>
@@ -434,7 +482,7 @@ export default function SettingsGallery() {
           <span className={`text-xs font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
             Live Workspace Preview Sandbox
           </span>
-          <span className="text-[11px] text-gray-500 italic">Interacting reflects your active state instant mappings</span>
+          <span className="text-[0.8rem] text-gray-500 italic">Interacting reflects your active state instant mappings</span>
         </div>
 
         {/* Live dynamic card demonstrating padding, gaps, border colors, lift animations */}
@@ -445,7 +493,7 @@ export default function SettingsGallery() {
         }`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-inherit/10">
             <div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase tracking-wider">
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase tracking-wider">
                 Live Rendering Frame
               </span>
               <h4 className="text-sm font-bold tracking-tight mt-1">Simulated Component Primitive Response</h4>
@@ -462,25 +510,25 @@ export default function SettingsGallery() {
             <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
               isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
             }`}>
-              <span className="text-[10px] text-gray-400 font-semibold block">Component Density Pad</span>
+              <span className="text-xs text-gray-400 font-semibold block">Component Density Pad</span>
               <span className="text-lg font-bold tracking-tight block mt-1">{density === "dense" ? "12px base" : density === "compact" ? "16px base" : "24px base"}</span>
-              <span className="text-[9px] text-emerald-400 font-mono mt-1 block">var(--bento-gap)</span>
+              <span className="text-[0.7rem] text-emerald-400 font-mono mt-1 block">var(--bento-gap)</span>
             </div>
 
             <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
               isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
             }`}>
-              <span className="text-[10px] text-gray-400 font-semibold block">Active Visual Depth</span>
+              <span className="text-xs text-gray-400 font-semibold block">Active Visual Depth</span>
               <span className="text-lg font-bold tracking-tight block mt-1">{theme === "glass-intelligence" ? "Translucent" : theme === "midnight-operations" ? "Graphite Layer" : "Executive Warm"}</span>
-              <span className="text-[9px] text-blue-400 font-mono mt-1 block">var(--backdrop-blur)</span>
+              <span className="text-[0.7rem] text-blue-400 font-mono mt-1 block">var(--backdrop-blur)</span>
             </div>
 
             <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
               isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
             }`}>
-              <span className="text-[10px] text-gray-400 font-semibold block">Tactile Feed Response</span>
+              <span className="text-xs text-gray-400 font-semibold block">Tactile Feed Response</span>
               <span className="text-lg font-bold tracking-tight block mt-1">{tactileFeedback ? "Active Lifts" : "Fixed Plane"}</span>
-              <span className="text-[9px] text-purple-400 font-mono mt-1 block">hover:translateY(-1.5px)</span>
+              <span className="text-[0.7rem] text-purple-400 font-mono mt-1 block">hover:translateY(-1.5px)</span>
             </div>
           </div>
 

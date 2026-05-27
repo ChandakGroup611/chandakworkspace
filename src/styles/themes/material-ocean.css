@@ -1,0 +1,26 @@
+/* Theme 4: Material Ocean — Materialistic UI Feel */
+[data-theme="material-ocean"] {
+  --bg-primary: #F0F2F5;
+  
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+
+  --border-subtle: #E2E8F0;
+  --border-active: #94A3B8;
+
+  --accent-primary: #0284C7; /* Material Light Blue */
+  --accent-secondary: #0369A1;
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #E11D48;
+
+  --shadow-ambient: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-elevation: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+
+  --backdrop-blur: blur(0px);
+  --backdrop-saturate: saturate(100%);
+}

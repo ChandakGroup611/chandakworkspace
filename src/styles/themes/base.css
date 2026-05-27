@@ -10,7 +10,7 @@
     --spacing-dense: 4px;
 
     /* Base Typography Normalization */
-    --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-primary: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
     --font-secondary: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
 
     /* Standard Component Radius System */
@@ -58,42 +58,22 @@ html, body {
 
 /* Global Typography Escalation & Legibility Booster */
 html {
-  /* Globally scale up all rem-based font sizes across the entire application */
-  font-size: 17.5px !important;
-}
-
-/* Explicit scaling for literal fixed-pixel utility classes used in subtexts/badges */
-.text-\[10px\] {
-  font-size: 11.5px !important;
-}
-.text-\[11px\] {
-  font-size: 12.5px !important;
-}
-.text-xs {
-  font-size: 0.85rem !important;
-}
-.text-sm {
-  font-size: 0.95rem !important;
-}
-
-/* Subtext & Muted Text Saturation Boosters (Make faint text darker/stronger in existing color family) */
-.text-gray-400 {
-  color: var(--text-gray-400-boost, #cbd5e1) !important; /* Promoted to slate-300 for crisp high-contrast dark-mode clarity */
-  font-weight: 500;
-}
-.text-gray-500 {
-  color: var(--text-gray-500-boost, #94a3b8) !important; /* Promoted to slate-400 */
-  font-weight: 500;
+  /* Dynamic font size set via ThemeProvider (default 16px) */
+  font-size: var(--base-font-size, 16px) !important;
 }
 
 /* Corresponding dark/solid mapping when Light Mode is active */
 .theme-light .text-gray-400,
-[data-theme="executive-light"] .text-gray-400 {
+[data-theme="executive-light"] .text-gray-400,
+[data-theme="material-ocean"] .text-gray-400,
+[data-theme="aurora-breeze"] .text-gray-400 {
   color: #475569 !important; /* Deep dark slate-600 */
   font-weight: 600;
 }
 .theme-light .text-gray-500,
-[data-theme="executive-light"] .text-gray-500 {
+[data-theme="executive-light"] .text-gray-500,
+[data-theme="material-ocean"] .text-gray-500,
+[data-theme="aurora-breeze"] .text-gray-500 {
   color: #334155 !important; /* Deep dark slate-700 */
   font-weight: 600;
 }

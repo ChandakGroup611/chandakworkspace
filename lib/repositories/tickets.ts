@@ -8,19 +8,21 @@ import { hasPermission } from '@/lib/permissions';
 // Filtering MUST happen inside the DB query using explicit backend scopes.
 // =========================================================================
 
-export async function getVisibleTickets(userId: string) {
+export async function getVisibleTickets(userId: string, customSelect?: string) {
   const canViewAll = await hasPermission(userId, 'TICKETS_MANAGE');
   
-  let query = supabaseAdmin
-    .from('tickets')
-    .select(`
+  const defaultSelect = `
       *,
       creator:user_master!creator_id(full_name, profile_photo),
       assignee:user_master!assignee_id(full_name, profile_photo),
       department:departments(name),
       priority:priority_master(priority_name, priority_color),
       status:status_master(status_name, status_color, is_terminal)
-    `)
+  `;
+
+  let query = supabaseAdmin
+    .from('tickets')
+    .select(customSelect || defaultSelect)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 

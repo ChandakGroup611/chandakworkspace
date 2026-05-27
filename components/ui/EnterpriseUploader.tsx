@@ -172,16 +172,16 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                   {fileObj.file.name}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-[10px] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                  <span className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
                     {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
                   </span>
                   {fileObj.status === 'error' && (
-                    <span className="text-[10px] text-red-500 flex items-center gap-1">
+                    <span className="text-xs text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" /> {fileObj.errorMsg}
                     </span>
                   )}
                   {fileObj.status === 'success' && (
-                    <span className="text-[10px] text-green-500 flex items-center gap-1">
+                    <span className="text-xs text-green-500 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" /> Uploaded
                     </span>
                   )}

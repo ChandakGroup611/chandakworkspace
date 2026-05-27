@@ -285,11 +285,11 @@ export default function RequirementsPage() {
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5 animate-in fade-in-20">
           <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-0.5 flex-1">
-            <strong className="font-bold block uppercase tracking-wider text-[11px]">Configuration Missing Warning:</strong>
+            <strong className="font-bold block uppercase tracking-wider text-[0.8rem]">Configuration Missing Warning:</strong>
             {configWarnings.map((w, idx) => (
               <p key={idx} className="text-amber-200/90 leading-tight">• {w}</p>
             ))}
-            <p className="text-[10px] text-gray-400 pt-1 italic">
+            <p className="text-xs text-gray-400 pt-1 italic">
               Exclusive lookup queries active. Fallback placeholders disabled to ensure audit state machine adherence.
             </p>
           </div>
@@ -300,7 +300,7 @@ export default function RequirementsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column Span 4: Indexed Registry Catalog */}
         <div className="lg:col-span-4 space-y-3">
-          <span className="text-[11px] font-bold text-gray-400 tracking-wider uppercase select-none block">
+          <span className="text-[0.8rem] font-bold text-gray-400 tracking-wider uppercase select-none block">
             Indexed Requirement Directory
           </span>
 
@@ -320,7 +320,7 @@ export default function RequirementsPage() {
                   {isSelected && <div className="absolute left-0 top-0 w-1 h-full bg-amber-500" />}
 
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="font-mono text-[10px] font-bold text-gray-400">{r.id}</span>
+                    <span className="font-mono text-xs font-bold text-gray-400">{r.id}</span>
                     <AppBadge variant={r.stage === "Released" ? "success" : r.stage === "Approval" ? "warning" : "info"}>
                       {r.stage}
                     </AppBadge>
@@ -330,7 +330,7 @@ export default function RequirementsPage() {
                     {r.title}
                   </h3>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px]">
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
                     <span className={`font-semibold ${r.risk === "High" ? "text-rose-400" : "text-gray-400"}`}>
                       Risk: {r.risk}
                     </span>
@@ -354,13 +354,13 @@ export default function RequirementsPage() {
                   <span className="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                     {selectedReq.id}
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300 font-bold border border-white/10">
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300 font-bold border border-white/10">
                     {selectedReq.versionTag || "v1.0-DRAFT"}
                   </span>
                   <span className="text-gray-600">•</span>
                   <span className="text-xs text-gray-400 font-medium">Department Head Analysis Scope</span>
                 </div>
-                <span className="text-[10px] text-gray-500 font-mono">Immutable audit entry</span>
+                <span className="text-xs text-gray-500 font-mono">Immutable audit entry</span>
               </div>
               <h2 className="text-base text-white font-bold leading-relaxed pt-1">
                 {selectedReq.title}
@@ -368,7 +368,7 @@ export default function RequirementsPage() {
 
               {/* Lifecycle Track Ribbon */}
               <div className="pt-2 overflow-x-auto scrollbar-none pr-2">
-                <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 min-w-[360px]">
+                <div className="flex items-center justify-between text-xs font-bold text-gray-500 min-w-[360px]">
                   {stages.map((stg, sIdx) => {
                     const isCurrent = selectedReq.stage === stg;
                     const isPassed = stages.indexOf(selectedReq.stage) > sIdx;
@@ -386,7 +386,7 @@ export default function RequirementsPage() {
             {/* Scope Divisions Mapping */}
             <div className="space-y-4 text-xs font-sans">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Business Objective</span>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Business Objective</span>
                 <p className="text-gray-200 leading-relaxed bg-black/40 p-3.5 rounded-xl border border-white/5">
                   {selectedReq.objective}
                 </p>
@@ -394,13 +394,13 @@ export default function RequirementsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">Functional Scope</span>
+                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">Functional Scope</span>
                   <p className="text-gray-300 leading-relaxed bg-white/[0.005] p-3 rounded-xl border border-white/5">
                     {selectedReq.functionalScope}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Technical Scope</span>
+                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block">Technical Scope</span>
                   <p className="text-gray-300 leading-relaxed bg-white/[0.005] p-3 rounded-xl border border-white/5">
                     {selectedReq.technicalScope}
                   </p>
@@ -411,18 +411,18 @@ export default function RequirementsPage() {
             {/* Custom Implementation Attributes Map */}
             <div className="space-y-3 pt-2 border-t border-white/5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 select-none">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 select-none">
                   <Layers className="h-3 w-3" />
                   <span>Dynamic Custom Implementation Attributes</span>
                 </span>
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span className="text-[0.7rem] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
                   Database Selectors
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/[0.005] p-3 rounded-xl border border-white/5">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 block">Data Sovereignty Act Scope</label>
+                  <label className="text-xs font-bold text-gray-400 block">Data Sovereignty Act Scope</label>
                   <select
                     value={selectedReq.customFields?.regulatory_scope || ""}
                     onChange={(e) => handleCustomFieldChange("regulatory_scope", e.target.value)}
@@ -445,7 +445,7 @@ export default function RequirementsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 block">CAPEX Budget Allowance (USD)</label>
+                  <label className="text-xs font-bold text-gray-400 block">CAPEX Budget Allowance (USD)</label>
                   <AppInput 
                     type="number"
                     placeholder="e.g. 15000"
@@ -460,7 +460,7 @@ export default function RequirementsPage() {
 
             {/* Acceptance Criteria Engine */}
             <div className="space-y-2 pt-2 border-t border-white/5">
-              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
                 Acceptance Criteria Verification Matrix
               </span>
               <div className="space-y-1.5">
@@ -486,12 +486,12 @@ export default function RequirementsPage() {
             {/* Multi-Level Approval Switches Section */}
             <div className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 block">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 block">
                   <Users className="h-3 w-3" />
                   <span>Multi-Tier Authority Sign-Off Engine</span>
                 </span>
                 {approvalTypesList.length > 0 && (
-                  <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                  <span className="text-[0.7rem] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
                     {approvalTypesList.length} DB Gating Rules
                   </span>
                 )}
@@ -517,13 +517,13 @@ export default function RequirementsPage() {
                           : "bg-white/[0.01] border-white/5 hover:border-white/10 text-gray-500"
                       }`}
                     >
-                      <div className="flex items-center justify-between w-full text-[10px]">
+                      <div className="flex items-center justify-between w-full text-xs">
                         <span className="font-bold text-gray-300 truncate" title={app.role}>{app.label}</span>
                         {isApproved ? <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" /> : <Clock className="h-3 w-3 text-gray-600 shrink-0" />}
                       </div>
                       <div className="space-y-0.5">
-                        <span className="text-[8px] text-gray-500 block truncate">{app.role}</span>
-                        <span className={`text-[9px] font-bold uppercase tracking-wider block ${isApproved ? "text-emerald-400" : "text-gray-600"}`}>
+                        <span className="text-[0.65rem] text-gray-500 block truncate">{app.role}</span>
+                        <span className={`text-[0.7rem] font-bold uppercase tracking-wider block ${isApproved ? "text-emerald-400" : "text-gray-600"}`}>
                           {isApproved ? "Approved" : "Pending"}
                         </span>
                       </div>
@@ -532,7 +532,7 @@ export default function RequirementsPage() {
                 })}
               </div>
 
-              <div className="pt-2 flex items-center justify-between text-[10px] text-gray-500 border-t border-white/5">
+              <div className="pt-2 flex items-center justify-between text-xs text-gray-500 border-t border-white/5">
                 <span>Sign-offs instantly publish state events to async worker queues.</span>
                 <span className="underline hover:text-white cursor-pointer">SLA Escalation Advisory</span>
               </div>
@@ -541,11 +541,11 @@ export default function RequirementsPage() {
             {/* Incremental Multi-Version Metadata Commit Logs */}
             <div className="space-y-3 pt-2 border-t border-white/5 font-sans">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5 block">
+                <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5 block">
                   <History className="h-3 w-3" />
                   <span>Immutable Versioning Snapshots & Incremental Audit Timeline</span>
                 </span>
-                <span className="text-[10px] text-gray-500 font-mono">
+                <span className="text-xs text-gray-500 font-mono">
                   {(selectedReq.versionHistory || []).length} registered revisions
                 </span>
               </div>
@@ -555,12 +555,12 @@ export default function RequirementsPage() {
                   <div key={vIdx} className="p-3 rounded-xl bg-white/[0.01] border border-white/5 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.2 rounded border border-cyan-500/20">
+                        <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.2 rounded border border-cyan-500/20">
                           {ver.v}
                         </span>
                         <span className="text-xs font-bold text-white">{ver.author}</span>
                       </div>
-                      <span className="text-[10px] text-gray-500 font-mono">{ver.date}</span>
+                      <span className="text-xs text-gray-500 font-mono">{ver.date}</span>
                     </div>
                     <p className="text-xs text-gray-400 pl-1">{ver.changes}</p>
                   </div>

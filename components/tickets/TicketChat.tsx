@@ -13,7 +13,7 @@ interface TicketChatProps {
 export function TicketChat({ ticket }: TicketChatProps) {
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isPrivate, setIsPrivate] = useState(true);
@@ -102,7 +102,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
         ) : (
           messages.map((msg) => (
             <div key={msg.id} className={`flex gap-4 group animate-in fade-in slide-in-from-bottom-1`}>
-              <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 uppercase text-[10px] font-bold border ${
+              <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 uppercase text-xs font-bold border ${
                 isLightMode ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/5 border-white/10 text-gray-500"
               }`}>
                 {msg.author.slice(0, 2)}
@@ -111,19 +111,19 @@ export function TicketChat({ ticket }: TicketChatProps) {
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>{msg.author}</span>
                   {msg.is_private ? (
-                    <span className={`flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                    <span className={`flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
                       isLightMode ? "text-amber-700 bg-amber-50" : "text-amber-500 bg-amber-500/10"
                     }`}>
                       <Lock className="h-2.5 w-2.5" /> Private
                     </span>
                   ) : (
-                    <span className={`flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                    <span className={`flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
                       isLightMode ? "text-emerald-700 bg-emerald-50" : "text-emerald-500 bg-emerald-500/10"
                     }`}>
                       <Globe className="h-2.5 w-2.5" /> Public
                     </span>
                   )}
-                  <span className="text-[9px] text-gray-500 font-medium ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[0.7rem] text-gray-500 font-medium ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -147,7 +147,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
             <button 
               type="button"
               onClick={() => setIsPrivate(true)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
                 isPrivate 
                   ? (isLightMode ? "bg-amber-100 text-amber-700 ring-1 ring-amber-200" : "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/50") 
                   : (isLightMode ? "bg-gray-100 text-gray-500 hover:text-gray-700" : "bg-white/5 text-gray-500 hover:text-gray-400")
@@ -158,7 +158,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
             <button 
               type="button"
               onClick={() => setIsPrivate(false)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
                 !isPrivate 
                   ? (isLightMode ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200" : "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/50") 
                   : (isLightMode ? "bg-gray-100 text-gray-500 hover:text-gray-700" : "bg-white/5 text-gray-500 hover:text-gray-400")

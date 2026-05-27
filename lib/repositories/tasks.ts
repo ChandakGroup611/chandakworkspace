@@ -1,12 +1,10 @@
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { hasPermission } from '@/lib/permissions';
 
-export async function getVisibleTasks(userId: string) {
+export async function getVisibleTasks(userId: string, customSelect?: string) {
   const canViewAll = await hasPermission(userId, 'TASKS_MANAGE');
   
-  let query = supabaseAdmin
-    .from('tasks')
-    .select(`
+  const defaultSelect = `
       *,
       status:status_master(status_name, status_color, status_order, is_closed),
       priority:priority_master(priority_name, priority_color, min_sla_hours, max_sla_hours, warning_sla_hours, sla_start_from),
@@ -14,7 +12,11 @@ export async function getVisibleTasks(userId: string) {
       assignees:task_assignees(user:user_master!user_id(full_name)),
       teams:task_teams(team:teams!team_id(team_name)),
       workspace:workspaces(workspace_name)
-    `)
+  `;
+
+  let query = supabaseAdmin
+    .from('tasks')
+    .select(customSelect || defaultSelect)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 

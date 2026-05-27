@@ -208,7 +208,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               <button
                 key={sc}
                 onClick={() => setScope(sc)}
-                className={`text-[12px] font-semibold px-3 py-1 rounded-lg ${scope === sc ? "bg-indigo-600 text-white" : "text-gray-300 hover:text-white"}`}
+                className={`text-xs font-semibold px-3 py-1 rounded-lg ${scope === sc ? "bg-indigo-600 text-white" : "text-gray-300 hover:text-white"}`}
               >
                 {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
               </button>
@@ -317,7 +317,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <AppTableCell>
                   <AppBadge variant="neutral">{task.status?.name || '—'}</AppBadge>
                 </AppTableCell>
-                <AppTableCell className="text-right text-gray-400 text-[12px]">{formatDate(task.created_at)}</AppTableCell>
+                <AppTableCell className="text-right text-gray-400 text-xs">{formatDate(task.created_at)}</AppTableCell>
                 <AppTableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <AppButton size="sm" variant="outline" onClick={() => setSelectedTask(task)}>View</AppButton>

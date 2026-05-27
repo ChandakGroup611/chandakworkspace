@@ -110,7 +110,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           <Flame className="h-4 w-4 text-rose-400" />
           <AppCardTitle>Operational Heatmap Matrix</AppCardTitle>
         </div>
-        <span className="text-[10px] text-gray-500 font-medium">Ingress vs SLA Resolution</span>
+        <span className="text-xs text-gray-500 font-medium">Ingress vs SLA Resolution</span>
       </AppCardHeader>
 
       <AppCardContent className="flex-1 flex flex-col justify-between space-y-4 pt-2">
@@ -118,7 +118,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         <div className="flex-1 flex flex-col justify-between space-y-2">
           {heatmapData.map((dItem) => (
             <div key={dItem.day} className="flex items-center gap-2">
-              <span className="w-8 text-[11px] font-semibold text-gray-400 select-none">
+              <span className="w-8 text-[0.8rem] font-semibold text-gray-400 select-none">
                 {dItem.day}
               </span>
               <div className="flex-1 grid grid-cols-6 gap-1.5">
@@ -136,21 +136,21 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         </div>
 
         {/* Dynamic Context Tooltip Frame */}
-        <div className="h-8 flex items-center justify-between px-3 rounded-lg bg-black/20 border border-white/5 text-[11px] overflow-x-auto whitespace-nowrap hide-scrollbar">
+        <div className="h-8 flex items-center justify-between px-3 rounded-lg bg-black/20 border border-white/5 text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
           {hoveredCell ? (
             <div className="flex items-center gap-2.5 text-gray-300 font-medium animate-in fade-in duration-150">
               <Activity className="h-3 w-3 text-blue-400 shrink-0" />
               <span><strong className="text-white">{hoveredCell.day} @ {hoveredCell.hour}</strong></span>
               <span className="text-gray-600">|</span>
-              <span className="text-[10px]">
+              <span className="text-xs">
                 Tasks: <strong className="text-white">{hoveredCell.data?.tasksCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.tasksResolved || 0}</strong> res
               </span>
               <span className="text-gray-600">|</span>
-              <span className="text-[10px]">
+              <span className="text-xs">
                 Workspaces: <strong className="text-white">{hoveredCell.data?.workspacesCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.workspacesResolved || 0}</strong> res
               </span>
               <span className="text-gray-600">|</span>
-              <span className="text-[10px]">
+              <span className="text-xs">
                 Tickets: <strong className="text-white">{hoveredCell.data?.ticketsCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.ticketsResolved || 0}</strong> res
               </span>
             </div>
@@ -163,7 +163,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
 
           {/* Legend scale indicators */}
           <div className="flex items-center gap-1">
-            <span className="text-[9px] text-gray-600 mr-1 select-none">Scale:</span>
+            <span className="text-[0.7rem] text-gray-600 mr-1 select-none">Scale:</span>
             <div className="w-2 h-2 rounded bg-white/5" />
             <div className="w-2 h-2 rounded bg-blue-500/80" />
             <div className="w-2 h-2 rounded bg-amber-500" />

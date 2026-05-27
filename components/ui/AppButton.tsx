@@ -31,7 +31,7 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     let isLight = false;
     try {
       const { theme } = useTheme();
-      isLight = theme === "executive-light";
+      isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
     } catch (e) {}
 
     const baseStyles = 
@@ -54,7 +54,7 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     };
 
     const sizes = {
-      sm: "h-9 px-3 text-[11px] gap-1.5 rounded-lg",
+      sm: "h-9 px-3 text-[0.8rem] gap-1.5 rounded-lg",
       md: "h-11 px-4 text-xs gap-2 rounded-xl",
       lg: "h-12 px-6 text-sm gap-2.5 rounded-xl",
     };

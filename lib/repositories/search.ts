@@ -31,7 +31,7 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
   const results: SearchResult[] = [];
 
   // Filter Tickets
-  for (const t of tickets) {
+  for (const t of (tickets as any[])) {
     if (
       t.code?.toLowerCase().includes(searchTerm) || 
       t.subject?.toLowerCase().includes(searchTerm) || 
@@ -50,7 +50,7 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
   }
 
   // Filter Tasks
-  for (const t of tasks) {
+  for (const t of (tasks as any[])) {
     if (
       t.subject?.toLowerCase().includes(searchTerm) || 
       t.description?.toLowerCase().includes(searchTerm)
@@ -67,7 +67,7 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
   }
 
   // Filter Requirements
-  for (const r of requirements) {
+  for (const r of (requirements as any[])) {
     if (
       r.requirement_code?.toLowerCase().includes(searchTerm) || 
       r.title?.toLowerCase().includes(searchTerm) || 

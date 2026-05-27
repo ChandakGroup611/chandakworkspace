@@ -32,7 +32,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
     let isLight = false;
     try {
       const { theme } = useTheme();
-      isLight = theme === "executive-light";
+      isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
     } catch (e) {}
 
     return (
@@ -45,7 +45,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             }`}
           >
             <span>{label}</span>
-            {error && <span className="text-[10px] text-rose-500 font-medium">{error}</span>}
+            {error && <span className="text-xs text-rose-500 font-medium">{error}</span>}
           </label>
         )}
 
@@ -82,7 +82,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
         </div>
 
         {!error && helperText && (
-          <p className="text-[11px] text-gray-500 font-medium select-none pl-1">
+          <p className="text-[0.8rem] text-gray-500 font-medium select-none pl-1">
             {helperText}
           </p>
         )}

@@ -6,9 +6,9 @@ import { getVisibleRequirements } from './requirements';
 export async function fetchDashboardAnalytics(userId: string) {
   // 1. Fetch scoped raw data strictly using Authorization Repository layer
   const [tickets, tasks, requirements] = await Promise.all([
-    getVisibleTickets(userId),
-    getVisibleTasks(userId),
-    getVisibleRequirements(userId)
+    getVisibleTickets(userId, 'id, assignee_id, status:status_master!inner(is_closed)'),
+    getVisibleTasks(userId, 'id, status:status_master!inner(is_closed), assignees:task_assignees(user_id)'),
+    getVisibleRequirements(userId, 'id, assigned_analyst_id, completion_percentage, status:status_master!inner(is_closed, status_name)')
   ]);
 
   // 2. Compute Ticket KPIs

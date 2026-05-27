@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const pathname = usePathname();
-  const isLight = theme === "executive-light";
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const isAuthRoute = pathname === "/login" || pathname === "/register";
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
 
@@ -59,7 +59,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         {!isAuthRoute && <Navbar />}
 
         {/* Dynamic Scrollable Content Workspace */}
-        <main className={`flex-1 w-full relative pb-24 ${isAuthRoute ? 'p-0' : 'p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6'}`}>
+        <main className={`flex-1 w-full relative pb-24 ${isAuthRoute ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
           {children}
         </main>
       </div>

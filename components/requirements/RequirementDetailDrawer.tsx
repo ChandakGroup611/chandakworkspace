@@ -26,7 +26,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
       subtitle={
         <div className="flex items-center gap-3 mt-2">
           <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{requirement.requirement_code || 'REQ-0000'}</span>
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold" style={{ backgroundColor: `${requirement.status?.status_color}20`, color: requirement.status?.status_color }}>
+          <span className="px-2 py-0.5 rounded-md text-xs font-bold" style={{ backgroundColor: `${requirement.status?.status_color}20`, color: requirement.status?.status_color }}>
             {requirement.status?.status_name || 'UNKNOWN'}
           </span>
         </div>
@@ -71,11 +71,11 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   {/* Mock Tasks. In real usage, fetch requirement_tasks via component or pass down */}
                   <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
                     <span className="text-sm text-gray-300">Database Schema Migration</span>
-                    <span className="text-[10px] font-bold text-green-400 uppercase">Completed</span>
+                    <span className="text-xs font-bold text-green-400 uppercase">Completed</span>
                   </div>
                   <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
                     <span className="text-sm text-gray-300">API Layer Implementation</span>
-                    <span className="text-[10px] font-bold text-amber-400 uppercase">In Progress</span>
+                    <span className="text-xs font-bold text-amber-400 uppercase">In Progress</span>
                   </div>
                 </div>
               </section>
@@ -127,7 +127,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               
               <div className="bg-gray-900/40 rounded-2xl p-5 border border-white/5 space-y-5">
                 <div>
-                  <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Business Analyst</label>
+                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Business Analyst</label>
                   <div className="mt-2 flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-200 border border-indigo-700">
                       {requirement.analyst?.full_name?.charAt(0) || '?'}
@@ -139,17 +139,17 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                 <div className="h-px w-full bg-white/5"></div>
 
                 <div>
-                  <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Department</label>
+                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Department</label>
                   <p className="text-sm text-gray-200 mt-1 font-medium">{requirement.department?.name || 'Enterprise Global'}</p>
                 </div>
                 
                 <div>
-                  <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Priority SLA</label>
+                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Priority SLA</label>
                   <p className="text-sm text-gray-200 mt-1 font-medium">{requirement.priority?.priority_name || 'Standard'}</p>
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Estimations</label>
+                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Estimations</label>
                   <div className="mt-2 space-y-2 text-sm text-gray-300">
                     <div className="flex justify-between"><span>Hours:</span> <span className="font-bold">{requirement.estimated_hours || 0}</span></div>
                     <div className="flex justify-between"><span>Cost:</span> <span className="font-bold">${requirement.estimated_cost || 0}</span></div>
@@ -159,7 +159,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
               {/* Attachments Placeholder */}
               <div className="bg-gray-900/40 rounded-2xl p-5 border border-white/5">
-                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex justify-between items-center mb-4">
                   Attachments
                   <button className="text-indigo-400 hover:text-indigo-300 p-1 bg-indigo-500/10 rounded-md">+</button>
                 </h3>

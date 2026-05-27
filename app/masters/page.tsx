@@ -102,7 +102,7 @@ export default function MastersPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme();
-    isLightMode = theme === "executive-light";
+    isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   } catch (e) {}
   const [activeTab, setActiveTab] = useState("infra_issue_types");
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("ALL");
@@ -745,16 +745,16 @@ export default function MastersPage() {
             <div className={`flex items-center justify-between pb-2 border-b ${
               isLightMode ? "border-gray-100" : "border-white/5"
             }`}>
-              <span className={`text-[11px] font-bold tracking-wider uppercase select-none ${
+              <span className={`text-[0.8rem] font-bold tracking-wider uppercase select-none ${
                 isLightMode ? "text-gray-700" : "text-gray-400"
               }`}>
                 Configuration Groups
               </span>
-              <span className="text-[10px] text-gray-500 font-mono font-semibold">{MASTER_TABLES.length} Registered</span>
+              <span className="text-xs text-gray-500 font-mono font-semibold">{MASTER_TABLES.length} Registered</span>
             </div>
 
             {/* Category Tier Selector Tabs */}
-            <div className={`p-1.5 rounded-xl grid grid-cols-2 gap-1 text-[10px] font-bold tracking-tight ${
+            <div className={`p-1.5 rounded-xl grid grid-cols-2 gap-1 text-xs font-bold tracking-tight ${
               isLightMode ? "bg-gray-100/80 text-gray-600" : "bg-white/[0.02] border border-white/5 text-gray-400"
             }`}>
               {[
@@ -800,7 +800,7 @@ export default function MastersPage() {
                 return (
                   <div key={groupCategory} className="space-y-1.5">
                     <div className="flex items-center gap-2 px-1 pt-1">
-                      <span className={`text-[9px] font-bold tracking-widest uppercase font-mono ${
+                      <span className={`text-[0.7rem] font-bold tracking-widest uppercase font-mono ${
                         isLightMode ? "text-blue-700" : "text-blue-400"
                       }`}>
                         ■ {groupCategory} CATEGORY
@@ -841,9 +841,9 @@ export default function MastersPage() {
                               </span>
                               {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />}
                             </div>
-                            <p className="text-[10px] text-gray-500 font-medium line-clamp-1">{tab.desc}</p>
+                            <p className="text-xs text-gray-500 font-medium line-clamp-1">{tab.desc}</p>
                             {tab.parentTable && (
-                              <span className={`text-[8px] font-mono px-1 py-0.2 rounded border inline-block mt-1 ${
+                              <span className={`text-[0.65rem] font-mono px-1 py-0.2 rounded border inline-block mt-1 ${
                                 isLightMode ? "text-purple-700 bg-purple-50 border-purple-200" : "text-purple-400/80 bg-purple-500/10 border-purple-500/20"
                               }`}>
                                 ↳ Dependent on {tab.parentTable}
@@ -863,7 +863,7 @@ export default function MastersPage() {
           <AppCard className={`p-4 space-y-2 ${
             isLightMode ? "bg-gray-50/80 border-gray-200" : "bg-gradient-to-br from-slate-900/40 to-slate-950 border-white/5"
           }`}>
-            <span className={`text-[10px] font-bold uppercase tracking-wider block ${
+            <span className={`text-xs font-bold uppercase tracking-wider block ${
               isLightMode ? "text-gray-700" : "text-gray-400"
             }`}>
               Operational Guidelines
@@ -889,11 +889,11 @@ export default function MastersPage() {
                   <AppCardTitle className={`font-bold text-base ${isLightMode ? "text-gray-900" : "text-white"}`}>
                     {currentConfig.label}
                   </AppCardTitle>
-                  <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider">
+                  <AppBadge variant="info" className="uppercase font-mono text-xs tracking-wider">
                     {activeTab.replace(/_/g, ' ')}
                   </AppBadge>
                 </div>
-                <p className={`text-[11px] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                <p className={`text-[0.8rem] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
                   Active configuration choices currently live for staff use across the platform.
                 </p>
               </div>
@@ -927,7 +927,7 @@ export default function MastersPage() {
                       </div>
                       <div className="space-y-1 max-w-sm mx-auto">
                         <h4 className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>No Master Data Configured</h4>
-                        <p className={`text-[11px] ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                        <p className={`text-[0.8rem] ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
                           No operational items are currently defined in this directory. Add your first record to make it available for workspace selection.
                         </p>
                       </div>
@@ -970,14 +970,14 @@ export default function MastersPage() {
                               <AppTableCell>
                                 <div className="space-y-0.5">
                                   <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-blue-700" : "text-blue-400"}`}>{rec.code}</span>
-                                  <span className="text-[9px] text-gray-500 font-mono block truncate max-w-[120px]">{rec.id}</span>
+                                  <span className="text-[0.7rem] text-gray-500 font-mono block truncate max-w-[120px]">{rec.id}</span>
                                 </div>
                               </AppTableCell>
                               <AppTableCell>
                                 <div className="space-y-0.5">
                                   <div className="flex items-center gap-2">
                                     <span className={`font-bold text-xs block ${isLightMode ? "text-gray-900" : "text-white"}`}>{rec.name}</span>
-                                    <span className={`text-[8px] font-bold px-1 rounded border tracking-tighter ${
+                                    <span className={`text-[0.65rem] font-bold px-1 rounded border tracking-tighter ${
                                       rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
                                         ? "text-purple-400 border-purple-500/30 bg-purple-500/5"
                                         : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
@@ -992,7 +992,7 @@ export default function MastersPage() {
                                     </span>
                                   </div>
                                   {rec.description && (
-                                    <span className={`text-[10px] block line-clamp-1 max-w-[180px] ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>{rec.description}</span>
+                                    <span className={`text-xs block line-clamp-1 max-w-[180px] ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>{rec.description}</span>
                                   )}
                                 </div>
                               </AppTableCell>
@@ -1000,7 +1000,7 @@ export default function MastersPage() {
                               {/* Dynamic Render based on specific column mappings */}
                               {currentConfig.parentTable && (
                                 <AppTableCell>
-                                  <span className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border inline-block truncate max-w-[120px] ${
+                                  <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block truncate max-w-[120px] ${
                                     isLightMode ? "text-purple-700 bg-purple-50 border-purple-200" : "text-purple-400 bg-purple-500/10 border-purple-500/20"
                                   }`}>
                                     {rec[currentConfig.parentKey!] || "Unmapped"}
@@ -1013,11 +1013,11 @@ export default function MastersPage() {
                                   {rec.sla_target_minutes !== undefined || rec.sla_standard_minutes !== undefined ? (
                                     <div className="flex flex-col gap-1">
                                       <div className="flex items-center gap-1.5">
-                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${isLightMode ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-amber-400/10 border-amber-400/20 text-amber-400"}`}>
+                                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded border ${isLightMode ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-amber-400/10 border-amber-400/20 text-amber-400"}`}>
                                           {rec.sla_standard_minutes || rec.sla_target_minutes}m Standard
                                         </span>
                                       </div>
-                                      <div className="flex gap-2 text-[8px] opacity-60 uppercase font-bold tracking-tighter">
+                                      <div className="flex gap-2 text-[0.65rem] opacity-60 uppercase font-bold tracking-tighter">
                                         <span>Min: {rec.sla_min_minutes || 0}m</span>
                                         <span>Max: {rec.sla_max_minutes || 0}m</span>
                                       </div>
@@ -1038,7 +1038,7 @@ export default function MastersPage() {
 
                               {activeTab === "workflow_states" && (
                                 <AppTableCell>
-                                  <span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                                  <span className={`text-xs font-mono font-bold uppercase px-2 py-0.5 rounded border ${
                                     isLightMode ? "text-blue-700 bg-blue-50 border-blue-200" : "text-blue-400 bg-blue-500/10 border-blue-500/20"
                                   }`}>
                                     {(rec.module || "Universal").replace(/_/g, ' ')}
@@ -1051,7 +1051,7 @@ export default function MastersPage() {
                                   type="button"
                                   onClick={() => toggleActive(rec)}
                                   disabled={!hasPermission("MASTERS_UPDATE")}
-                                  className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
                                       ? (isLightMode ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20")
                                       : (isLightMode ? "bg-gray-50 border-gray-200 text-gray-400 line-through hover:bg-gray-100" : "bg-white/[0.01] border-white/5 text-gray-600 line-through hover:bg-white/[0.03]")
@@ -1098,7 +1098,7 @@ export default function MastersPage() {
             </div>
 
             {/* Pagination / Context Footer */}
-            <div className="p-4 bg-white/[0.005] border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] text-gray-500">
+            <div className="p-4 bg-white/[0.005] border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
                 <span>Auditing active: all status updates automatically export JSONB snapshots.</span>
@@ -1127,7 +1127,7 @@ export default function MastersPage() {
                 <h3 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
                   {editRecordId ? "Edit Details:" : "Add New"} {currentConfig.label}
                 </h3>
-                <p className={`text-[10px] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                <p className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
                   {editRecordId ? "Modify specific attributes of this pre-existing record." : "Enter the specific details to create this record in the company directory."}
                 </p>
               </div>
@@ -1144,7 +1144,7 @@ export default function MastersPage() {
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               {/* Code */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                   Short Code <span className="text-rose-400">*</span>
                 </label>
                 <AppInput 
@@ -1154,12 +1154,12 @@ export default function MastersPage() {
                   className="font-mono text-xs uppercase"
                   required
                 />
-                <span className="text-[9px] text-gray-500 block">A unique short abbreviation used to quickly reference this item.</span>
+                <span className="text-[0.7rem] text-gray-500 block">A unique short abbreviation used to quickly reference this item.</span>
               </div>
 
               {/* Full Display Name */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                   Display Name <span className="text-rose-400">*</span>
                 </label>
                 <AppInput 
@@ -1173,7 +1173,7 @@ export default function MastersPage() {
 
               {/* Description Context */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                   Description & Internal Notes
                 </label>
                 <textarea 
@@ -1190,7 +1190,7 @@ export default function MastersPage() {
               {/* Conditional Cascading Mapping dropmenus */}
               {currentConfig.parentTable && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-purple-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-purple-400 uppercase tracking-wider block">
                     Parent Record Link <span className="text-rose-400">*</span>
                   </label>
                   <select
@@ -1212,7 +1212,7 @@ export default function MastersPage() {
                       ))
                     )}
                   </select>
-                  <span className="text-[9px] text-gray-500 block">Select the top-level parent record this item falls under.</span>
+                  <span className="text-[0.7rem] text-gray-500 block">Select the top-level parent record this item falls under.</span>
                 </div>
               )}
 
@@ -1220,7 +1220,7 @@ export default function MastersPage() {
               {currentConfig.table === "master_priorities" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
                       Min Time (Mins)
                     </label>
                     <AppInput 
@@ -1231,7 +1231,7 @@ export default function MastersPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
                       Standard Time (Mins)
                     </label>
                     <AppInput 
@@ -1242,7 +1242,7 @@ export default function MastersPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
                       Max Time (Mins)
                     </label>
                     <AppInput 
@@ -1259,7 +1259,7 @@ export default function MastersPage() {
 
               {/* Operational Scope Flag (1=INFRA, 2=ERP) */}
               <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                   Operational Governance Scope <span className="text-rose-400">*</span>
                 </label>
                 <select
@@ -1275,12 +1275,12 @@ export default function MastersPage() {
                   <option value="e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 3] OTHERS / GENERAL</option>
                   <option value="" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 0] UNIVERSAL / SHARED</option>
                 </select>
-                <span className="text-[9px] text-gray-500 block">Determines which operational flow this master record appears in.</span>
+                <span className="text-[0.7rem] text-gray-500 block">Determines which operational flow this master record appears in.</span>
               </div>
               {/* Custom asset tags */}
               {activeTab === "assets" && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
                     Hardware Tag Reference ID
                   </label>
                   <AppInput 

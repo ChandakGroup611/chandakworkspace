@@ -17,6 +17,7 @@ import {
   updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData
 } from "@/lib/actions/workspaces";
 import { usePermissions } from "@/hooks/usePermissions";
+import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskRealtimeChat from "@/components/tasks/TaskRealtimeChat";
@@ -39,12 +40,33 @@ export default function WorkspacesPage() {
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
   const lastFetchedWorkspaceId = React.useRef<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  
+  useEffect(() => {
+    if (!currentUser) return;
+    const supabase = createClient();
+    const channel = supabase.channel('global_presence', { config: { presence: { key: currentUser.id } } });
+    
+    channel.on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState();
+      setOnlineUsers(new Set(Object.keys(state)));
+    });
+    
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({ online_at: new Date().toISOString() });
+      }
+    });
+    
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser?.id]);
 
   const filteredWorkspaces = workspaces;
 
@@ -419,19 +441,12 @@ export default function WorkspacesPage() {
           <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* Top Stat Row (Glassmorphism Bento) */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <AppCard className={`p-4 flex flex-col justify-center border-l-4 ${isLightMode ? "border-l-indigo-500" : "border-l-indigo-400"}`}>
                 <span className="text-[10px] uppercase font-bold text-gray-500 mb-1 flex items-center gap-1"><Building2 className="h-3 w-3"/> Company</span>
                 <span className={`text-xs font-bold truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{activeWorkspace.company?.name || "Independent"}</span>
               </AppCard>
-              <AppCard className={`p-4 flex flex-col justify-center border-l-4 ${isLightMode ? "border-l-rose-500" : "border-l-rose-400"}`}>
-                <span className="text-[10px] uppercase font-bold text-gray-500 mb-1 flex items-center gap-1"><Sparkles className="h-3 w-3"/> Priority</span>
-                <span className={`text-xs font-bold truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{activeWorkspace.priority?.name || "Standard"}</span>
-              </AppCard>
-              <AppCard className={`p-4 flex flex-col justify-center border-l-4 ${isLightMode ? "border-l-blue-500" : "border-l-blue-400"}`}>
-                <span className="text-[10px] uppercase font-bold text-gray-500 mb-1 flex items-center gap-1"><Target className="h-3 w-3"/> Status</span>
-                <span className={`text-xs font-bold truncate ${isLightMode ? "text-blue-700" : "text-blue-400"}`}>{activeWorkspace.status?.name || "ACTIVE"}</span>
-              </AppCard>
+              
               <AppCard className={`p-4 flex flex-col justify-center border-l-4 ${isLightMode ? "border-l-purple-500" : "border-l-purple-400"}`}>
                 <span className="text-[10px] uppercase font-bold text-gray-500 mb-1 flex items-center gap-1"><Layers className="h-3 w-3"/> Total Tasks</span>
                 <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{tasks.length} Directives</span>
@@ -602,8 +617,11 @@ export default function WorkspacesPage() {
                   <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
                     isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
                   }`}>
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
-                      {s.profile_photo ? <img src={s.profile_photo} alt="" className="h-full w-full object-cover" /> : s.full_name.substring(0, 2).toUpperCase()}
+                    <div className="relative">
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
+                        {s.profile_photo ? <img src={s.profile_photo} alt="" className="h-full w-full object-cover" /> : s.full_name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0f111a]'} ${onlineUsers.has(s.id || s.user_id) ? 'bg-green-500' : 'bg-red-500'}`}></div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">

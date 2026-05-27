@@ -11,7 +11,7 @@ export const AppCard = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = theme === "executive-light";
+    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   } catch (e) {}
 
   return (
@@ -37,7 +37,7 @@ export const AppCardHeader = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = theme === "executive-light";
+    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   } catch (e) {}
 
   return (
@@ -61,7 +61,7 @@ export const AppCardTitle = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = theme === "executive-light";
+    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   } catch (e) {}
 
   return (
@@ -84,7 +84,7 @@ export const AppCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-[11px] font-medium text-gray-400", className)}
+    className={cn("text-[0.8rem] font-medium text-gray-400", className)}
     {...props}
   />
 ));
@@ -105,7 +105,7 @@ export const AppCardFooter = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = theme === "executive-light";
+    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   } catch (e) {}
 
   return (

@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 
 export default function TaskExecutionController({ taskId, onUpdate }: { taskId: string; onUpdate?: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const router = useRouter();
   const [task, setTask] = useState<any>(null);
@@ -271,7 +271,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
       {error && (
         <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-[10px] text-rose-400/60 hover:text-rose-400 font-bold px-2">Dismiss</button>
+          <button onClick={() => setError(null)} className="text-xs text-rose-400/60 hover:text-rose-400 font-bold px-2">Dismiss</button>
         </div>
       )}
 
@@ -280,28 +280,28 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
       {/* Extended Metadata Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 bg-gray-50/50 dark:bg-white/[0.02] p-4 rounded-xl border border-gray-100 dark:border-white/5">
           <div className="space-y-1">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Priority</span>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Priority</span>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
               <span className="text-xs font-medium dark:text-gray-200">{task.priority?.name || "Standard"}</span>
             </div>
           </div>
           <div className="space-y-1">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Start Date</span>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Start Date</span>
             <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-gray-400" />
               {task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"}
             </div>
           </div>
           <div className="space-y-1">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Due Date</span>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Due Date</span>
             <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-gray-400" />
               {task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"}
             </div>
           </div>
           <div className="space-y-1">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Est. Hours</span>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Est. Hours</span>
             <div className="text-xs font-medium dark:text-gray-200">{task.estimated_hours || "0"} hrs</div>
           </div>
         </div>
@@ -309,11 +309,11 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         {/* Editable Custom Fields */}
         {localCustomFields && Object.keys(localCustomFields).length > 0 && (
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/5">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-3">Custom Properties</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Custom Properties</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(localCustomFields).map(([key, val]) => (
                 <div key={key} className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
                     {key.replace(/_/g, ' ')}
                   </label>
                   <AppInput 
@@ -332,7 +332,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
       }`}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Status Field</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
               onChange={(e) => {
@@ -354,7 +354,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
           </div>
           
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1">
               Quick Action Operations
             </label>
             <div className="flex flex-wrap gap-2">
@@ -438,12 +438,12 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         {pendingStatus && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
             <span>Status change to <strong>{statuses.find(s => s.status_code === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Status & Save Remark"</strong> to save both.</span>
-            <button onClick={() => setPendingStatus(null)} className="text-[10px] text-amber-400/60 hover:text-amber-400 font-bold px-2 underline hover:no-underline">Cancel Change</button>
+            <button onClick={() => setPendingStatus(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-2 underline hover:no-underline">Cancel Change</button>
           </div>
         )}
  
         <div className="space-y-3">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Task Remarks</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Task Remarks</label>
           <textarea
             value={remarksDraft}
             onChange={e => setRemarksDraft(e.target.value)}
@@ -453,7 +453,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
             placeholder="Add update notes or handoff remarks..."
           />
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[10px] text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
+            <span className="text-xs text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
             <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
               {saveRemarksLoading ? "Saving..." : pendingStatus ? "Commit Status & Save Remark" : "Save Remarks"}
             </AppButton>
@@ -476,7 +476,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                   Remarks History Queue
                 </span>
                 {remarksHistory.length > 0 && (
-                  <AppBadge className="text-[10px] py-0.5 px-2 font-extrabold rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                  <AppBadge className="text-xs py-0.5 px-2 font-extrabold rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
                     {remarksHistory.length}
                   </AppBadge>
                 )}
@@ -532,7 +532,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                                 className="h-7 w-7 rounded-full border border-purple-500/20 object-cover"
                               />
                             ) : (
-                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-[10px] font-extrabold text-white border border-purple-500/20 shadow-md">
+                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-purple-500/20 shadow-md">
                                 {initials}
                               </div>
                             )}
@@ -545,7 +545,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                                 }`}>
                                   {item.user?.full_name || "System Actor"}
                                 </span>
-                                <div className="flex items-center gap-1 text-[10px] text-gray-500 font-medium">
+                                <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
                                   <Clock className="h-3 w-3" />
                                   <span>{new Date(item.created_at).toLocaleString()}</span>
                                 </div>
@@ -637,7 +637,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         {activeTab === "attachments" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Attachments</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Attachments</span>
               <button
                 type="button"
                 onClick={triggerFileSelect}
@@ -672,7 +672,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                 <div className="space-y-2 flex flex-col items-center justify-center">
                   <Paperclip className="h-6 w-6 text-purple-400" />
                   <span className="text-xs font-bold text-purple-500 hover:text-purple-600 block">Click to select and upload file</span>
-                  <span className="text-[10px] text-gray-500 block">Supports any document or image file</span>
+                  <span className="text-xs text-gray-500 block">Supports any document or image file</span>
                 </div>
               )}
             </div>
@@ -689,7 +689,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                     <Paperclip className="h-4 w-4 text-purple-400 shrink-0" />
                     <div className="truncate space-y-0.5">
                       <span className={`text-xs font-bold block truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{item.file_name}</span>
-                      <span className="text-[9px] text-gray-500 block">{(item.size / 1024 / 1024).toFixed(2)} MB</span>
+                      <span className="text-[0.7rem] text-gray-500 block">{(item.size / 1024 / 1024).toFixed(2)} MB</span>
                     </div>
                   </div>
                   <a 

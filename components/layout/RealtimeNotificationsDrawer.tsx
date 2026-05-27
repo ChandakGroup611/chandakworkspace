@@ -43,7 +43,7 @@ export default function RealtimeNotificationsDrawer() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -198,7 +198,7 @@ export default function RealtimeNotificationsDrawer() {
       >
         <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-blue-400 animate-bounce" : ""}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
             {unreadCount}
           </span>
         )}
@@ -232,7 +232,7 @@ export default function RealtimeNotificationsDrawer() {
               </div>
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-cyan-500">
+                  <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider text-cyan-500">
                     {toast.entity_id}
                   </span>
                   <button 
@@ -247,13 +247,13 @@ export default function RealtimeNotificationsDrawer() {
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <h4 className="text-[11px] font-bold uppercase tracking-wider leading-none">
+                <h4 className="text-[0.8rem] font-bold uppercase tracking-wider leading-none">
                   {toast.action_type.toUpperCase().replace('_', ' ')}
                 </h4>
-                <p className="text-[11px] text-gray-400 leading-snug line-clamp-2">
+                <p className="text-[0.8rem] text-gray-400 leading-snug line-clamp-2">
                   {displayMessage}
                 </p>
-                <div className="flex items-center justify-between text-[8px] pt-1 border-t border-white/5 mt-1 text-gray-500">
+                <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-white/5 mt-1 text-gray-500">
                   <span>Actor: <strong>{toast.actor}</strong></span>
                   <span className="text-cyan-500 font-bold group-hover:underline">View details →</span>
                 </div>
@@ -279,7 +279,7 @@ export default function RealtimeNotificationsDrawer() {
           onClose={() => setIsOpen(false)}
           size="sm"
           footer={
-            <div className={`w-full p-2 text-[10px] text-gray-500 flex items-center justify-between gap-2`}>
+            <div className={`w-full p-2 text-xs text-gray-500 flex items-center justify-between gap-2`}>
               <span>Auto-redirect anchors bound instantly</span>
               <ExternalLink className="h-3 w-3 text-cyan-500" />
             </div>
@@ -364,7 +364,7 @@ export default function RealtimeNotificationsDrawer() {
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-1.5">
-                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider truncate flex items-center gap-1">
+                          <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider truncate flex items-center gap-1">
                             <span className={isLightMode ? "text-gray-900" : "text-white"}>{item.entity_id}</span>
                             <span className="text-gray-400">•</span>
                             <span className="text-cyan-600 dark:text-cyan-400/90">{item.module}</span>
@@ -373,10 +373,10 @@ export default function RealtimeNotificationsDrawer() {
                             <Trash2 className="h-2.5 w-2.5" />
                           </button>
                         </div>
-                        <p className={`text-[11px] leading-snug break-words ${!item.is_read ? (isLightMode ? "text-gray-900 font-medium" : "text-gray-100 font-medium") : "text-gray-500"}`}>
+                        <p className={`text-[0.8rem] leading-snug break-words ${!item.is_read ? (isLightMode ? "text-gray-900 font-medium" : "text-gray-100 font-medium") : "text-gray-500"}`}>
                           {displayMessage}
                         </p>
-                        <div className={`flex items-center justify-between text-[8px] pt-1 border-t mt-1 ${isLightMode ? "border-gray-100 text-gray-400" : "border-white/5 text-gray-500"}`}>
+                        <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 ${isLightMode ? "border-gray-100 text-gray-400" : "border-white/5 text-gray-500"}`}>
                           <span>Actor: <strong className={isLightMode ? "text-gray-600" : "text-gray-400"}>{item.actor}</strong></span>
                           <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>

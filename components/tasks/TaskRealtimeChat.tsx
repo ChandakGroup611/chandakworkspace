@@ -9,7 +9,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   // Create client once with useRef so it's stable across renders
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
@@ -277,17 +277,17 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         {/* Connection Status Indicator */}
         <div className="flex items-center gap-1.5">
           {connected === null && (
-            <span className="flex items-center gap-1 text-[10px] text-amber-400 font-bold animate-pulse">
+            <span className="flex items-center gap-1 text-xs text-amber-400 font-bold animate-pulse">
               <Loader2 className="h-3 w-3 animate-spin" /> Connecting...
             </span>
           )}
           {connected === true && (
-            <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+            <span className="flex items-center gap-1 text-xs text-emerald-400 font-bold">
               <Wifi className="h-3 w-3" /> Live
             </span>
           )}
           {connected === false && (
-            <span className="flex items-center gap-1 text-[10px] text-rose-400 font-bold">
+            <span className="flex items-center gap-1 text-xs text-rose-400 font-bold">
               <WifiOff className="h-3 w-3" /> Disconnected
             </span>
           )}
@@ -296,9 +296,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[11px] font-medium flex items-center justify-between animate-in slide-in-from-top-1">
+        <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[0.8rem] font-medium flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-[10px] text-amber-400/60 hover:text-amber-400 font-bold px-1">
+          <button onClick={() => setError(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-1">
             Dismiss
           </button>
         </div>
@@ -328,7 +328,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             return (
               <div key={m.id || idx} className={`flex gap-3 animate-in fade-in slide-in-from-bottom-2 ${isSender ? "flex-row-reverse" : ""}`}>
                 {!isSender && (
-                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white shadow-sm overflow-hidden">
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
                     {m.user?.profile_photo ? (
                       <img src={m.user.profile_photo} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -340,17 +340,17 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                 <div className={`flex flex-col space-y-1 max-w-[85%] ${isSender ? "items-end" : "items-start"}`}>
                   {!isSender && (
                     <div className="flex items-center gap-2 px-1">
-                      <span className={`text-[10px] font-bold ${isLightMode ? "text-gray-900" : "text-gray-300"}`}>
+                      <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-gray-300"}`}>
                         {m.user?.full_name || "..."}
                       </span>
-                      <span className="text-[9px] text-gray-500">
+                      <span className="text-[0.7rem] text-gray-500">
                         {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                   )}
                   {isSender && (
                     <div className="px-1">
-                      <span className="text-[9px] text-gray-500">
+                      <span className="text-[0.7rem] text-gray-500">
                         {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
@@ -409,7 +409,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                       isLightMode ? "hover:bg-gray-50 text-gray-700" : "hover:bg-white/5 text-gray-300"
                     }`}
                   >
-                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[8px] overflow-hidden">
+                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden">
                       {u.profile_photo ? <img src={u.profile_photo} alt="" className="h-full w-full object-cover" /> : u.full_name.substring(0, 2).toUpperCase()}
                     </div>
                     {u.full_name}

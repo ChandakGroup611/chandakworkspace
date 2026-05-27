@@ -1,12 +1,10 @@
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { hasPermission } from '@/lib/permissions';
 
-export async function getVisibleRequirements(userId: string) {
+export async function getVisibleRequirements(userId: string, customSelect?: string) {
   const canViewAll = await hasPermission(userId, 'REQUIREMENTS_MANAGE');
   
-  let query = supabaseAdmin
-    .from('requirements')
-    .select(`
+  const defaultSelect = `
       *,
       department:departments(name),
       status:status_master(status_name, status_color),
@@ -15,7 +13,11 @@ export async function getVisibleRequirements(userId: string) {
       analyst:user_master!assigned_analyst_id(full_name, profile_photo),
       watchers:requirement_watchers(user_id),
       approvers:requirement_approvals(approver_id, status)
-    `)
+  `;
+
+  let query = supabaseAdmin
+    .from('requirements')
+    .select(customSelect || defaultSelect)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 
@@ -75,7 +77,7 @@ export async function getRequirementById(requirementId: string, userId: string) 
 }
 
 export async function canModifyRequirement(requirementId: string, userId: string): Promise<boolean> {
-  const req = await getRequirementById(requirementId, userId);
+  const req = await getRequirementById(requirementId, userId) as any;
   const canManage = await hasPermission(userId, 'REQUIREMENTS_MANAGE');
   if (canManage) return true;
   

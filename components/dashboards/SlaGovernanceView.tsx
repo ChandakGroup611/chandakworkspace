@@ -29,17 +29,17 @@ export function SlaGovernanceView({ slaStats }: { slaStats: any }) {
         <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center">
           <ShieldCheck className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
           <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{slaStats.healthy}</div>
-          <div className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mt-1">Healthy</div>
+          <div className="text-xs font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mt-1">Healthy</div>
         </div>
         <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-center">
           <AlertTriangle className="w-6 h-6 text-amber-500 mx-auto mb-2" />
           <div className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{slaStats.warning}</div>
-          <div className="text-[10px] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest mt-1">Warning</div>
+          <div className="text-xs font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest mt-1">Warning</div>
         </div>
         <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-center">
           <ShieldAlert className="w-6 h-6 text-red-500 mx-auto mb-2" />
           <div className="text-2xl font-extrabold text-red-600 dark:text-red-400">{slaStats.breached}</div>
-          <div className="text-[10px] font-bold text-red-600/70 dark:text-red-400/70 uppercase tracking-widest mt-1">Breached</div>
+          <div className="text-xs font-bold text-red-600/70 dark:text-red-400/70 uppercase tracking-widest mt-1">Breached</div>
         </div>
       </div>
     </div>

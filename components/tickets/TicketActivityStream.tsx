@@ -12,7 +12,7 @@ interface TicketActivityStreamProps {
 export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -101,7 +101,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
               <div className="flex-1 pb-8">
                 <div className="flex items-center justify-between gap-4 mb-1">
                   <span className={`text-xs font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>{activity.actor}</span>
-                  <span className="text-[10px] text-gray-500 font-medium">
+                  <span className="text-xs text-gray-500 font-medium">
                     {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -110,11 +110,11 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
                 </p>
                 {activity.event_type === "STATE_CHANGE" && (
                   <div className="mt-3 flex items-center gap-3">
-                    <span className="text-[10px] text-gray-500 font-mono line-through">
+                    <span className="text-xs text-gray-500 font-mono line-through">
                       {activity.before_values?.name || "None"}
                     </span>
                     <span className="text-gray-400">→</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${
                       isLightMode ? "bg-emerald-50 text-emerald-700" : "bg-emerald-500/10 text-emerald-400"
                     }`}>
                       {activity.after_values?.name || "Unknown"}

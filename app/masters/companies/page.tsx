@@ -12,7 +12,7 @@ import { Plus, Search, CheckCircle2, X, AlertTriangle, Building2, Trash2, Check,
 export default function CompanyMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -226,7 +226,7 @@ export default function CompanyMasterPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className={`border-b text-[10px] uppercase tracking-wider ${isLightMode ? "border-gray-200 text-gray-500" : "border-white/10 text-gray-400"}`}>
+              <tr className={`border-b text-xs uppercase tracking-wider ${isLightMode ? "border-gray-200 text-gray-500" : "border-white/10 text-gray-400"}`}>
                 <th className="pb-3 px-4 font-semibold">Code</th>
                 <th className="pb-3 px-4 font-semibold">Company Name</th>
                 <th className="pb-3 px-4 font-semibold">Contact</th>
@@ -243,7 +243,7 @@ export default function CompanyMasterPage() {
                   <td className="py-3 px-4">
                     <div className="flex flex-col">
                       <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{c.name}</span>
-                      <span className="text-[10px] text-gray-500">{c.short_name}</span>
+                      <span className="text-xs text-gray-500">{c.short_name}</span>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-xs text-gray-400">
@@ -291,33 +291,33 @@ export default function CompanyMasterPage() {
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Company Code</label>
+                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Company Code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editId ? formCode : "[Auto-Generated]"} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Company Name *</label>
+                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Company Name *</label>
                   <AppInput required placeholder="Acme Corporation" value={formName} onChange={e => setFormName(e.target.value)} />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Short Name</label>
+                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Short Name</label>
                   <AppInput placeholder="Acme" value={formShortName} onChange={e => setFormShortName(e.target.value)} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Email Address</label>
+                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Email Address</label>
                   <AppInput type="email" placeholder="contact@acme.com" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Contact Number</label>
+                <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Contact Number</label>
                 <AppInput placeholder="+1 (555) 000-0000" value={formContact} onChange={e => setFormContact(e.target.value)} />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Physical Address</label>
+                <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Physical Address</label>
                 <textarea 
                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
                   rows={2}
@@ -327,7 +327,7 @@ export default function CompanyMasterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Remarks</label>
+                <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Remarks</label>
                 <textarea 
                   className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
                   rows={2}

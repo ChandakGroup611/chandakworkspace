@@ -13,7 +13,7 @@ import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 
 export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: { workspaceId: string, onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -116,29 +116,29 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
           
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Task Title *</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Title *</label>
               <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
               <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
               <AppInput type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Target Due Date</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Due Date</label>
               <AppInput type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
               <select
                 className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                   isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
@@ -153,7 +153,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
               <select
                 className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                   isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
@@ -170,7 +170,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Parent Task Dependency (Hierarchy)</label>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Dependency (Hierarchy)</label>
             <select
               className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                 isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
@@ -188,7 +188,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Execution Notes</label>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Execution Notes</label>
             <textarea 
               className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
                 isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
@@ -215,11 +215,11 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
             {isAddingField && (
               <div className={`p-4 rounded-xl border flex items-end gap-3 ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/10"}`}>
                 <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500">Field Name</label>
+                  <label className="text-xs font-bold text-gray-500">Field Name</label>
                   <AppInput placeholder="e.g. Jira Ticket URL" value={newFieldName} onChange={e => setNewFieldName(e.target.value)} />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500">Type</label>
+                  <label className="text-xs font-bold text-gray-500">Type</label>
                   <select 
                     className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-white/10 text-white"}`}
                     value={newFieldType}
@@ -237,7 +237,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
             <div className="grid grid-cols-2 gap-4">
               {customFields.map(f => (
                 <div key={f.field_key} className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
                   <AppInput 
                     type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
                     value={fieldValues[f.field_key] || ""} 
@@ -252,16 +252,16 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Checklist</h4>
-                <p className="text-[10px] text-gray-500">Add checklist items to the task.</p>
+                <p className="text-xs text-gray-500">Add checklist items to the task.</p>
               </div>
 
               <div className="grid grid-cols-12 gap-3 items-end">
                 <div className="col-span-7 space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Checklist Item</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Checklist Item</label>
                   <AppInput value={newChecklistItem} onChange={e => setNewChecklistItem(e.target.value)} placeholder="e.g. Review deployment runbook" />
                 </div>
                 <div className="col-span-3 space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Type</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Type</label>
                   <div className="text-sm text-gray-500 p-2.5 rounded-xl bg-white/5 border border-white/10">Manual</div>
                 </div>
                 <div className="col-span-2">
@@ -280,7 +280,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                     <button
                       type="button"
                       onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
-                      className="text-[10px] font-bold uppercase tracking-wider text-red-400 hover:text-red-300"
+                      className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300"
                     >
                       Remove
                     </button>
@@ -295,7 +295,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Attachments</h4>
-                <p className="text-[10px] text-gray-500">Link files or docs for the task.</p>
+                <p className="text-xs text-gray-500">Link files or docs for the task.</p>
               </div>
 
               <div className="flex items-center gap-4">
@@ -336,12 +336,12 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                     <div className="space-y-1 overflow-hidden">
                       <p className="text-sm font-semibold text-gray-100 truncate">{item.file_name}</p>
                       <p className="text-xs text-gray-400 truncate">{item.file_url}</p>
-                      <p className="text-[11px] text-gray-500">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Size not provided"}</p>
+                      <p className="text-[0.8rem] text-gray-500">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Size not provided"}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
-                      className="text-[10px] font-bold uppercase tracking-wider text-red-400 hover:text-red-300"
+                      className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300"
                     >
                       Remove
                     </button>

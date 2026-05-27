@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLight = theme === "executive-light";
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -183,7 +183,7 @@ export default function RegisterPage() {
               <ShieldCheck className="h-4 w-4 text-purple-500" />
               <span>Registration Form</span>
             </AppCardTitle>
-            <span className="text-[10px] text-gray-500 font-mono block">Secure Identity Provisioning</span>
+            <span className="text-xs text-gray-500 font-mono block">Secure Identity Provisioning</span>
           </AppCardHeader>
 
           <AppCardContent className="p-6 space-y-4">
@@ -208,7 +208,7 @@ export default function RegisterPage() {
             {/* Registration Submission Inputs */}
             <form onSubmit={handleRegistrationSubmit} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                   Full Name
                 </label>
                 <AppInput 
@@ -223,7 +223,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                   Email Address
                 </label>
                 <AppInput 
@@ -239,7 +239,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Department
                   </label>
                   <div className="relative">
@@ -267,7 +267,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Designation
                   </label>
                   <div className="relative">
@@ -297,7 +297,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                   Identity Visual (Photo Upload)
                 </label>
                 <div className="flex items-center gap-4 p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
@@ -309,7 +309,7 @@ export default function RegisterPage() {
                     )}
                   </div>
                   <div className="flex-1 space-y-1">
-                    <p className="text-[10px] text-gray-400">Upload a professional portrait or choose a preset below.</p>
+                    <p className="text-xs text-gray-400">Upload a professional portrait or choose a preset below.</p>
                     <input 
                       type="file" 
                       accept="image/*"
@@ -319,7 +319,7 @@ export default function RegisterPage() {
                     />
                     <label 
                       htmlFor="photo-upload"
-                      className="inline-block px-3 py-1 rounded-lg bg-indigo-500 text-white text-[10px] font-bold cursor-pointer hover:bg-indigo-400 transition-colors"
+                      className="inline-block px-3 py-1 rounded-lg bg-indigo-500 text-white text-xs font-bold cursor-pointer hover:bg-indigo-400 transition-colors"
                     >
                       Select Image
                     </label>
@@ -348,7 +348,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Password
                   </label>
                   <AppInput 
@@ -363,7 +363,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Confirm Password
                   </label>
                   <AppInput 
@@ -413,7 +413,7 @@ export default function RegisterPage() {
 
         {/* Footer static banner info */}
         <div className="mt-4 text-center space-y-1">
-          <p className="text-[10px] text-gray-500 font-mono">
+          <p className="text-xs text-gray-500 font-mono">
             Enterprise Access Management
           </p>
         </div>

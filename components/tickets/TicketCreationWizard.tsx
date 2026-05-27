@@ -20,7 +20,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
   const [step, setStep] = useState<"SCOPE" | "FORM">("SCOPE");
   const [scope, setScope] = useState<any | null>(null);
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const handleScopeSelect = (selectedScope: any) => {
     setScope(selectedScope);
@@ -115,7 +115,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
         <div className="flex items-center gap-2 mt-1">
           <div className={`h-1.5 w-1.5 rounded-full ${step === "SCOPE" ? "bg-indigo-500" : "bg-indigo-500/30"}`} />
           <div className={`h-1.5 w-1.5 rounded-full ${step === "FORM" ? "bg-indigo-500" : "bg-indigo-500/30"}`} />
-          <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold ml-2">
+          <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold ml-2">
             {step === "SCOPE" ? "Step 1: Classification" : `Step 2: ${scope?.name || scope?.code || 'Form'} Intake`}
           </span>
         </div>
@@ -123,7 +123,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
       onClose={onClose}
       size="md"
       footer={
-        <div className={`px-8 py-4 w-full border-t flex items-center justify-between text-[10px] text-gray-500 ${
+        <div className={`px-8 py-4 w-full border-t flex items-center justify-between text-xs text-gray-500 ${
           isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-transparent border-white/5"
         }`}>
           <span>Enterprise Governance Engine v4.2</span>

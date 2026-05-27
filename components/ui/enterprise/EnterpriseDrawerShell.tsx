@@ -32,7 +32,7 @@ export function EnterpriseDrawerShell({
   className = "",
 }: EnterpriseDrawerShellProps) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const [mounted, setMounted] = useState(false);
 

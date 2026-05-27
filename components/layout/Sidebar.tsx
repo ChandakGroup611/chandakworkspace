@@ -119,7 +119,7 @@ export default function Sidebar() {
 
   const { theme } = useTheme();
   const { hasPermission, roleCode } = usePermissions();
-  const isLight = theme === "executive-light";
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   // When minimized, simply gliding mouse over sidebar gracefully expands it to reveal full module names and links temporarily
   const isCompact = isCompactState && !isHovered;
@@ -160,7 +160,7 @@ export default function Sidebar() {
               <span className={`text-xs font-bold tracking-tight truncate ${isLight ? "text-gray-900" : "text-white"}`}>
                 ADIOS Platform
               </span>
-              <span className="text-[9px] font-mono font-semibold text-blue-500 tracking-wider truncate uppercase">
+              <span className="text-[0.7rem] font-mono font-semibold text-blue-500 tracking-wider truncate uppercase">
                 {roleCode === "SUPER_ADMIN" ? "Governance Master" : "Enterprise Stack"}
               </span>
             </div>
@@ -200,7 +200,7 @@ export default function Sidebar() {
           return (
             <div key={groupIdx} className="flex flex-col">
               {!isCompact && (
-                <span className={`px-3 mb-2 text-[11px] font-semibold tracking-wider uppercase ${isLight ? "text-gray-500" : "text-gray-400"}`}>
+                <span className={`px-3 mb-2 text-[0.8rem] font-semibold tracking-wider uppercase ${isLight ? "text-gray-500" : "text-gray-400"}`}>
                   {group.label}
                 </span>
               )}
@@ -246,7 +246,7 @@ export default function Sidebar() {
                         )}
                         
                         {!isCompact && dynamicBadge && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all ${item.badgeColor || (isLight ? "bg-gray-100 text-gray-700" : "bg-white/10 text-gray-300")}`}>
+                          <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold transition-all ${item.badgeColor || (isLight ? "bg-gray-100 text-gray-700" : "bg-white/10 text-gray-300")}`}>
                             {dynamicBadge}
                           </span>
                         )}
@@ -276,13 +276,13 @@ export default function Sidebar() {
                         }`}>
                           <span className="font-semibold whitespace-nowrap text-xs">{item.label}</span>
                           {dynamicBadge && (
-                            <span className={`text-[9px] px-1 py-0.2 rounded font-bold uppercase border ${
+                            <span className={`text-[0.7rem] px-1 py-0.2 rounded font-bold uppercase border ${
                               isLight ? "bg-blue-50 text-blue-600 border-blue-200" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                             }`}>
                               {dynamicBadge}
                             </span>
                           )}
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 transition-all flex items-center gap-0.5 ${
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ml-1 transition-all flex items-center gap-0.5 ${
                             isLight ? "bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-600" : "bg-white/5 hover:bg-blue-500 hover:text-white text-gray-300"
                           }`}>
                             <span>Link</span>
@@ -303,13 +303,13 @@ export default function Sidebar() {
                               key={sub.href}
                               href={sub.href}
                               onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
-                              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[0.8rem] font-medium transition-all ${
                                 isSubActive 
                                   ? (isLight ? "bg-blue-50 text-blue-700 font-bold" : "bg-blue-500/10 text-blue-400 font-bold") 
                                   : (isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-50" : "text-gray-400 hover:text-white hover:bg-white/5")
                               }`}
                             >
-                              <span className={`text-[8px] ${isSubActive ? "text-blue-500" : "opacity-40"}`}>▪</span>
+                              <span className={`text-[0.65rem] ${isSubActive ? "text-blue-500" : "opacity-40"}`}>▪</span>
                               <span className="truncate">{sub.label}</span>
                             </Link>
                           );
@@ -329,14 +329,14 @@ export default function Sidebar() {
       <div className={`p-3 border-t mt-auto shrink-0 ${isLight ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.005]"}`}>
         {!isCompact ? (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-[10px] text-gray-500 px-1">
+            <div className="flex items-center justify-between text-xs text-gray-500 px-1">
               <span className="font-bold tracking-wider uppercase">Identity Controls</span>
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               <Link 
                 href="/login" 
-                className={`px-2 py-1.5 rounded-lg text-center text-[11px] font-bold transition-all border ${
+                className={`px-2 py-1.5 rounded-lg text-center text-[0.8rem] font-bold transition-all border ${
                   isLight 
                     ? "bg-white border-gray-200 text-blue-600 hover:bg-blue-50" 
                     : "bg-white/5 border-white/5 text-blue-400 hover:bg-white/10 hover:border-blue-500/30"
@@ -346,7 +346,7 @@ export default function Sidebar() {
               </Link>
               <Link 
                 href="/register" 
-                className={`px-2 py-1.5 rounded-lg text-center text-[11px] font-bold transition-all border ${
+                className={`px-2 py-1.5 rounded-lg text-center text-[0.8rem] font-bold transition-all border ${
                   isLight 
                     ? "bg-purple-50 border-purple-100 text-purple-700 hover:bg-purple-100" 
                     : "bg-purple-500/10 border-purple-500/20 text-purple-300 hover:bg-purple-500/20 hover:border-purple-500/40"

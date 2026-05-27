@@ -2,22 +2,23 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "executive-light" | "midnight-operations" | "glass-intelligence";
+export type ThemeType = "executive-light" | "midnight-operations" | "glass-intelligence" | "material-ocean" | "aurora-breeze";
 export type DensityType = "comfortable" | "compact" | "dense";
 export type FontFamilyType = "inter" | "outfit" | "roboto";
-export type FontSizeScaleType = "sm" | "base" | "lg";
 
 interface ThemeContextType {
   theme: ThemeType;
   density: DensityType;
   tactileFeedback: boolean;
   fontFamily: FontFamilyType;
-  fontSizeScale: FontSizeScaleType;
+  baseFontSize: number;
+  subtextFontSize: number;
   setTheme: (theme: ThemeType) => void;
   setDensity: (density: DensityType) => void;
   setTactileFeedback: (enabled: boolean) => void;
   setFontFamily: (font: FontFamilyType) => void;
-  setFontSizeScale: (scale: FontSizeScaleType) => void;
+  setBaseFontSize: (size: number) => void;
+  setSubtextFontSize: (size: number) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -27,7 +28,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [density, setDensityState] = useState<DensityType>("comfortable");
   const [tactileFeedback, setTactileFeedbackState] = useState<boolean>(true);
   const [fontFamily, setFontFamilyState] = useState<FontFamilyType>("inter");
-  const [fontSizeScale, setFontSizeScaleState] = useState<FontSizeScaleType>("base");
+  const [baseFontSize, setBaseFontSizeState] = useState<number>(16);
+  const [subtextFontSize, setSubtextFontSizeState] = useState<number>(14);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -36,9 +38,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const storedDensity = localStorage.getItem("app_density") as DensityType;
     const storedTactile = localStorage.getItem("app_tactile");
     const storedFont = localStorage.getItem("app_font") as FontFamilyType;
-    const storedScale = localStorage.getItem("app_font_scale") as FontSizeScaleType;
+    const storedBaseSize = localStorage.getItem("app_base_font_size");
+    const storedSubtextSize = localStorage.getItem("app_subtext_font_size");
 
-    if (storedTheme && ["executive-light", "midnight-operations", "glass-intelligence"].includes(storedTheme)) {
+    if (storedTheme && ["executive-light", "midnight-operations", "glass-intelligence", "material-ocean", "aurora-breeze"].includes(storedTheme)) {
       setThemeState(storedTheme);
     } else {
       setThemeState("glass-intelligence");
@@ -56,8 +59,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setFontFamilyState(storedFont);
     }
 
-    if (storedScale && ["sm", "base", "lg"].includes(storedScale)) {
-      setFontSizeScaleState(storedScale);
+    if (storedBaseSize) {
+      setBaseFontSizeState(Number(storedBaseSize));
+    }
+
+    if (storedSubtextSize) {
+      setSubtextFontSizeState(Number(storedSubtextSize));
     }
 
     setMounted(true);
@@ -66,10 +73,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const updateThemeGlobals = (
     activeTheme: ThemeType,
     activeFont?: FontFamilyType,
-    activeScale?: FontSizeScaleType
+    activeBaseSize?: number,
+    activeSubtextSize?: number
   ) => {
     if (typeof document === "undefined") return;
-    const isLight = activeTheme === "executive-light";
+    const isLight = activeTheme === "executive-light" || activeTheme === "material-ocean" || activeTheme === "aurora-breeze";
     
     // Inject dynamic root classes to gracefully steer hardcoded container defaults
     if (isLight) {
@@ -91,15 +99,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.body.style.setProperty("font-family", "'Inter', system-ui, sans-serif", "important");
     }
 
-    const scaleTarget = activeScale || fontSizeScale;
-    document.documentElement.setAttribute("data-font-scale", scaleTarget);
-    if (scaleTarget === "sm") {
-      document.documentElement.style.setProperty("font-size", "15px", "important");
-    } else if (scaleTarget === "lg") {
-      document.documentElement.style.setProperty("font-size", "19px", "important");
-    } else {
-      document.documentElement.style.setProperty("font-size", "17.5px", "important");
-    }
+    const bSize = activeBaseSize || baseFontSize;
+    const sSize = activeSubtextSize || subtextFontSize;
+    
+    document.documentElement.style.setProperty("--base-font-size", `${bSize}px`);
+    document.documentElement.style.setProperty("--subtext-font-size", `${sSize}px`);
+    document.documentElement.style.setProperty("font-size", `${bSize}px`, "important");
   };
 
   const setTheme = (newTheme: ThemeType) => {
@@ -107,7 +112,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       localStorage.setItem("app_theme", newTheme);
       document.documentElement.setAttribute("data-theme", newTheme);
-      updateThemeGlobals(newTheme, fontFamily, fontSizeScale);
+      updateThemeGlobals(newTheme, fontFamily, baseFontSize, subtextFontSize);
     }
   };
 
@@ -130,15 +135,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setFontFamilyState(font);
     if (typeof window !== "undefined") {
       localStorage.setItem("app_font", font);
-      updateThemeGlobals(theme, font, fontSizeScale);
+      updateThemeGlobals(theme, font, baseFontSize, subtextFontSize);
     }
   };
 
-  const setFontSizeScale = (scale: FontSizeScaleType) => {
-    setFontSizeScaleState(scale);
+  const setBaseFontSize = (size: number) => {
+    setBaseFontSizeState(size);
     if (typeof window !== "undefined") {
-      localStorage.setItem("app_font_scale", scale);
-      updateThemeGlobals(theme, fontFamily, scale);
+      localStorage.setItem("app_base_font_size", size.toString());
+      updateThemeGlobals(theme, fontFamily, size, subtextFontSize);
+    }
+  };
+
+  const setSubtextFontSize = (size: number) => {
+    setSubtextFontSizeState(size);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("app_subtext_font_size", size.toString());
+      updateThemeGlobals(theme, fontFamily, baseFontSize, size);
     }
   };
 
@@ -146,9 +159,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (mounted) {
       document.documentElement.setAttribute("data-theme", theme);
       document.documentElement.setAttribute("data-density", density);
-      updateThemeGlobals(theme, fontFamily, fontSizeScale);
+      updateThemeGlobals(theme, fontFamily, baseFontSize, subtextFontSize);
     }
-  }, [mounted, theme, density, fontFamily, fontSizeScale]);
+  }, [mounted, theme, density, fontFamily, baseFontSize, subtextFontSize]);
 
   return (
     <ThemeContext.Provider
@@ -157,12 +170,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         density,
         tactileFeedback,
         fontFamily,
-        fontSizeScale,
+        baseFontSize,
+        subtextFontSize,
         setTheme,
         setDensity,
         setTactileFeedback,
         setFontFamily,
-        setFontSizeScale,
+        setBaseFontSize,
+        setSubtextFontSize,
       }}
     >
       {children}

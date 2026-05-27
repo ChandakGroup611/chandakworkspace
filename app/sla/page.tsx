@@ -39,7 +39,7 @@ interface SLATracker {
 
 export default function SLAPage() {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   
   const [slas, setSlas] = useState<SLATracker[]>([
     {
@@ -137,9 +137,9 @@ export default function SLAPage() {
                   <ShieldAlert className="h-4 w-4" />
                   <span>Monitored Operational Timeouts</span>
                 </AppCardTitle>
-                <p className="text-[11px] text-gray-500">Reactive task timers updating background worker task queue parameters.</p>
+                <p className="text-[0.8rem] text-gray-500">Reactive task timers updating background worker task queue parameters.</p>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold uppercase border ${
+              <span className={`text-xs px-2 py-0.5 rounded font-mono font-bold uppercase border ${
                 isLightMode ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
               }`}>
                 Breach Count: {slas.filter(s => s.status === "Breached").length}
@@ -163,14 +163,14 @@ export default function SLAPage() {
                         <AppTableCell>
                           <div className="space-y-0.5">
                             <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-indigo-600" : "text-white"}`}>{item.id}</span>
-                            <span className="text-[11px] text-gray-500 block truncate max-w-[150px]">{item.targetEntity}</span>
-                            <span className={`text-[10px] font-semibold ${isLightMode ? "text-indigo-500" : "text-indigo-400"}`}>{item.type}</span>
+                            <span className="text-[0.8rem] text-gray-500 block truncate max-w-[150px]">{item.targetEntity}</span>
+                            <span className={`text-xs font-semibold ${isLightMode ? "text-indigo-500" : "text-indigo-400"}`}>{item.type}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell>
                           <div className="space-y-0.5 text-xs">
                             <span className={`${isLightMode ? "text-gray-700" : "text-gray-300"} font-medium block`}>{item.allocatedWindow}</span>
-                            <span className={`text-[11px] font-mono block ${isLightMode ? "text-amber-600" : "text-amber-400"}`}>{item.elapsedTime}</span>
+                            <span className={`text-[0.8rem] font-mono block ${isLightMode ? "text-amber-600" : "text-amber-400"}`}>{item.elapsedTime}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell>
@@ -178,18 +178,18 @@ export default function SLAPage() {
                             <AppBadge variant={item.status === "Healthy" ? "success" : item.status === "Warning" ? "warning" : "danger"}>
                               {item.status}
                             </AppBadge>
-                            <span className="text-[10px] text-gray-500 block font-bold tracking-wider uppercase">{item.escalationTier}</span>
+                            <span className="text-xs text-gray-500 block font-bold tracking-wider uppercase">{item.escalationTier}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell className="text-right">
                           <div className="space-y-1 flex flex-col items-end">
-                            <span className="text-[10px] text-gray-500 italic block truncate max-w-[120px]">{item.actionRecipient}</span>
+                            <span className="text-xs text-gray-500 italic block truncate max-w-[120px]">{item.actionRecipient}</span>
                             {item.status !== "Healthy" && (
                               <AppButton 
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={() => overrideBreach(item.id)}
-                                className={`h-6 text-[10px] px-2 ${isLightMode ? "text-blue-600 hover:bg-blue-50" : "text-blue-400 hover:bg-blue-500/10"}`}
+                                className={`h-6 text-xs px-2 ${isLightMode ? "text-blue-600 hover:bg-blue-50" : "text-blue-400 hover:bg-blue-500/10"}`}
                               >
                                 Override Gate
                               </AppButton>
@@ -203,7 +203,7 @@ export default function SLAPage() {
               </AppTableContainer>
             </div>
 
-            <div className={`p-4 border-t text-[11px] text-gray-500 flex items-center justify-between ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.01] border-white/5"}`}>
+            <div className={`p-4 border-t text-[0.8rem] text-gray-500 flex items-center justify-between ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.01] border-white/5"}`}>
               <span>Async worker loop interval syncs timeout status keys continuously.</span>
               <span className={`cursor-pointer hover:underline ${isLightMode ? "text-rose-600" : "text-rose-400"}`}>Flush breach cache</span>
             </div>
@@ -227,8 +227,8 @@ export default function SLAPage() {
                 }`}>
                   <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-amber-500 to-rose-500 opacity-60" />
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>{lvl.level}</span>
-                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase border ${
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>{lvl.level}</span>
+                    <span className={`text-[0.7rem] px-1.5 py-0.2 rounded font-bold uppercase border ${
                       isLightMode ? "bg-white text-gray-500 border-gray-200" : "bg-white/5 text-gray-400 border-white/10"
                     }`}>
                       {lvl.scope}
@@ -240,7 +240,7 @@ export default function SLAPage() {
             </div>
 
             <div className={`pt-2 border-t text-center ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
-              <span className="text-[10px] text-gray-500 italic">
+              <span className="text-xs text-gray-500 italic">
                 Higher level breaches instantly stack downstream action notifications automatically.
               </span>
             </div>
@@ -250,7 +250,7 @@ export default function SLAPage() {
           <AppCard className={`p-5 space-y-2 border ${
             isLightMode ? "bg-emerald-50 border-emerald-100" : "border-emerald-500/10 bg-emerald-500/[0.01]"
           }`}>
-            <span className={`text-[10px] font-bold uppercase tracking-wider block ${isLightMode ? "text-emerald-700" : "text-emerald-400"}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider block ${isLightMode ? "text-emerald-700" : "text-emerald-400"}`}>
               SLA Trust Assurance
             </span>
             <p className="text-xs text-gray-500 leading-relaxed">

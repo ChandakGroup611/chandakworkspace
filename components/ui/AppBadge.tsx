@@ -13,7 +13,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       const themeCtx = useTheme();
       theme = themeCtx.theme;
     } catch (e) {}
-    const isLight = theme === "executive-light";
+    const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
     const variants = {
       success: isLight 
@@ -37,7 +37,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       <span
         ref={ref}
         className={cn(
-          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold border tracking-wide uppercase select-none transition-colors",
+          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold border tracking-wide uppercase select-none transition-colors",
           variants[variant],
           className
         )}

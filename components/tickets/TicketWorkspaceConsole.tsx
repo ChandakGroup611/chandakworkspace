@@ -41,7 +41,7 @@ export function TicketWorkspaceConsole({
   issueTypes
 }: TicketWorkspaceConsoleProps) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const { hasPermission } = usePermissions();
 
   // Active Assignees
@@ -316,7 +316,7 @@ export function TicketWorkspaceConsole({
           <h2 className="text-base font-semibold tracking-tight">
             {ticket.id}
           </h2>
-          <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full border ${getSlaBadgeStyles()}`}>
+          <span className={`text-xs uppercase font-bold tracking-widest px-2 py-0.5 rounded-full border ${getSlaBadgeStyles()}`}>
             {slaTimeRemaining || "Calculating SLA..."}
           </span>
         </div>
@@ -404,7 +404,7 @@ export function TicketWorkspaceConsole({
                 <User className="h-4 w-4 text-indigo-500" />
               </div>
               <div>
-                <p className={`text-[10px] uppercase font-bold tracking-wider ${isLightMode ? "text-gray-400" : "text-gray-600"}`}>
+                <p className={`text-xs uppercase font-bold tracking-wider ${isLightMode ? "text-gray-400" : "text-gray-600"}`}>
                   Ticket Generator
                 </p>
                 <h4 className="text-sm font-semibold">
@@ -506,7 +506,7 @@ export function TicketWorkspaceConsole({
             {isEditingDetails ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Subject</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Subject</label>
                   <input 
                     type="text"
                     className={`w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
@@ -519,7 +519,7 @@ export function TicketWorkspaceConsole({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Description</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
                   <textarea 
                     rows={4}
                     className={`w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y ${
@@ -550,7 +550,7 @@ export function TicketWorkspaceConsole({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Category selection */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                 Category (Scope Linked)
               </label>
               <select 
@@ -572,7 +572,7 @@ export function TicketWorkspaceConsole({
 
             {/* Subcategory selection (Cascaded) */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                 Subcategory
               </label>
               <select 
@@ -640,7 +640,7 @@ export function TicketWorkspaceConsole({
                         <span className="text-xs font-bold">
                           {comment.author?.full_name || "System Staff"}
                         </span>
-                        <span className="text-[10px] text-gray-500">
+                        <span className="text-xs text-gray-500">
                           {new Date(comment.created_at).toLocaleString()}
                         </span>
                       </div>
@@ -713,7 +713,7 @@ export function TicketWorkspaceConsole({
           
           {/* Status Select Card */}
           <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
               Operational Status
             </label>
             <select 
@@ -734,7 +734,7 @@ export function TicketWorkspaceConsole({
 
           {/* Priority Select Card */}
           <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
               Priority Ranking (Triggers SLA)
             </label>
             <select 
@@ -755,7 +755,7 @@ export function TicketWorkspaceConsole({
 
           {/* Support Team (Department) Select Card */}
           <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
               Support Team (Department)
             </label>
             <select 
@@ -777,7 +777,7 @@ export function TicketWorkspaceConsole({
 
           {/* Assignee Select Card */}
           <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
               Assigned Staff (Assignee)
             </label>
             <select 
@@ -803,7 +803,7 @@ export function TicketWorkspaceConsole({
           <div className={`p-4 rounded-xl border text-xs space-y-2 transition-all ${
             isLightMode ? "bg-white border-gray-200" : "bg-[#0f172a]/30 border-white/5"
           }`}>
-            <h4 className="font-bold text-gray-500 uppercase tracking-wider text-[10px] mb-1">
+            <h4 className="font-bold text-gray-500 uppercase tracking-wider text-xs mb-1">
               Active SLA Metrics
             </h4>
             <div className="flex justify-between items-center">
@@ -882,7 +882,7 @@ export function TicketWorkspaceConsole({
                           {logDesc}
                         </span>
                       </div>
-                      <span className="text-[10px] text-gray-500 block">
+                      <span className="text-xs text-gray-500 block">
                         {new Date(log.created_at).toLocaleString()}
                       </span>
                     </div>
@@ -940,42 +940,42 @@ export function TicketWorkspaceConsole({
               {/* Core Details Grid */}
               <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-xs">
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Subject</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Subject</span>
                   <span className="font-bold text-sm text-gray-800">{ticket.title}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Operational Status</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Operational Status</span>
                   <span className="font-bold text-sm text-indigo-600">{ticket.statusObj?.name || "OPEN"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Priority Tier</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Priority Tier</span>
                   <span className="font-bold text-gray-800">{ticket.priorityObj?.name || "STANDARD"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Support Team</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Support Team</span>
                   <span className="font-semibold text-gray-800">{ticket.departmentObj?.name || "Unassigned Team"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Ticket Generator</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Ticket Generator</span>
                   <span className="font-semibold text-gray-800">{ticket.creator?.full_name || "Self / System User"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Generator Department</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Generator Department</span>
                   <span className="font-semibold text-gray-800">{ticket.creator?.department?.name || "Operations"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Created On</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Created On</span>
                   <span className="font-semibold text-gray-800">{formattedCreatedTime}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Active Assignee</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Active Assignee</span>
                   <span className="font-bold text-gray-800">{ticket.assignee?.full_name || "Unassigned Swarm"}</span>
                 </div>
               </div>
 
               {/* Description Section */}
               <div className="space-y-2 border-t border-gray-100 pt-6">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Incident Description</span>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Incident Description</span>
                 <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-line bg-gray-50 p-4 rounded-xl border border-gray-100">
                   {ticket.description || "No description provided."}
                 </p>
@@ -994,7 +994,7 @@ export function TicketWorkspaceConsole({
                       <div key={c.id} className="text-xs border-b border-gray-100 pb-3">
                         <div className="flex justify-between items-center mb-1">
                           <strong className="text-gray-800">{c.author?.full_name || "Operator"}</strong>
-                          <span className="text-[10px] text-gray-400">{new Date(c.created_at).toLocaleString()}</span>
+                          <span className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString()}</span>
                         </div>
                         <p className="text-gray-600">{c.content}</p>
                       </div>
@@ -1013,7 +1013,7 @@ export function TicketWorkspaceConsole({
                 ) : (
                   <table className="w-full text-xs text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-gray-900 text-[10px] font-bold text-gray-400 uppercase">
+                      <tr className="border-b border-gray-900 text-xs font-bold text-gray-400 uppercase">
                         <th className="py-2">Timestamp</th>
                         <th className="py-2">Authorized Actor</th>
                         <th className="py-2">Action / Transition</th>
@@ -1036,7 +1036,7 @@ export function TicketWorkspaceConsole({
                           <tr key={log.id} className="border-b border-gray-100 text-gray-600">
                             <td className="py-2.5 font-medium">{new Date(log.created_at).toLocaleString()}</td>
                             <td className="py-2.5 font-bold text-gray-800">{log.actor?.full_name || "System"}</td>
-                            <td className="py-2.5 tracking-wider font-semibold text-indigo-600 uppercase text-[10px]">{desc}</td>
+                            <td className="py-2.5 tracking-wider font-semibold text-indigo-600 uppercase text-xs">{desc}</td>
                           </tr>
                         );
                       })}
@@ -1046,7 +1046,7 @@ export function TicketWorkspaceConsole({
               </div>
 
               {/* Report Footer */}
-              <div className="border-t border-gray-200 pt-6 text-center text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+              <div className="border-t border-gray-200 pt-6 text-center text-xs text-gray-400 uppercase tracking-widest font-bold">
                 End of Incident Report • Confidentially Protected by ADIOS Security Shield
               </div>
             </div>

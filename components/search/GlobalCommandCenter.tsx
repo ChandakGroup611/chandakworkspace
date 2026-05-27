@@ -120,7 +120,7 @@ export function GlobalCommandCenter() {
                     {r.code && <span className="text-muted-foreground font-mono mr-2">{r.code}</span>}
                     {r.title}
                   </h4>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                     {r.status}
                   </span>
                 </div>

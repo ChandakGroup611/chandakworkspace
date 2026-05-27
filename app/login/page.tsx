@@ -23,7 +23,7 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLight = theme === "executive-light";
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -114,7 +114,7 @@ export default function LoginPage() {
               <Lock className="h-4 w-4 text-blue-500" />
               <span>Account Sign In</span>
             </AppCardTitle>
-            <span className="text-[10px] text-gray-500 font-mono block">Identity Authentication Portal</span>
+            <span className="text-xs text-gray-500 font-mono block">Identity Authentication Portal</span>
           </AppCardHeader>
 
           <AppCardContent className="p-6 space-y-4">
@@ -139,7 +139,7 @@ export default function LoginPage() {
             {/* Standard Credentials Submission Form */}
             <form onSubmit={handleStandardAuthSubmit} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                   Email Address
                 </label>
                 <AppInput 
@@ -155,7 +155,7 @@ export default function LoginPage() {
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Password
                   </label>
                 </div>
@@ -203,7 +203,7 @@ export default function LoginPage() {
 
         {/* Footer static banner info */}
         <div className="mt-4 text-center space-y-1">
-          <p className="text-[10px] text-gray-500 font-mono">
+          <p className="text-xs text-gray-500 font-mono">
             Enterprise Access Management
           </p>
         </div>

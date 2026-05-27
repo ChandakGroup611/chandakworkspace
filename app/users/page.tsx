@@ -84,7 +84,7 @@ export default function UserMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -842,13 +842,13 @@ export default function UserMasterPage() {
                   <AppCardTitle className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
                     Personnel Registry
                   </AppCardTitle>
-                  <span className="text-[10px] text-gray-500 font-mono block">
+                  <span className="text-xs text-gray-500 font-mono block">
                     {filteredUsers.length} Users retrieved from database
                   </span>
                 </div>
 
                 {/* Status Switcher Tabs */}
-                <div className={`flex items-center p-1 rounded-lg border text-[10px] font-bold ${
+                <div className={`flex items-center p-1 rounded-lg border text-xs font-bold ${
                   isLightMode ? "bg-white border-gray-200" : "bg-white/5 border-white/10"
                 }`}>
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
@@ -888,7 +888,7 @@ export default function UserMasterPage() {
                   <p className={`text-xs font-medium ${isLightMode ? "text-gray-700" : "text-gray-400"}`}>
                     No active staff personnel correspond to selected keyword tags.
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-xs text-gray-500">
                     Click 'Register User Account' above to input authentic credentials.
                   </p>
                 </div>
@@ -934,18 +934,18 @@ export default function UserMasterPage() {
                                   }`}>
                                     {usr.full_name}
                                   </span>
-                                  <span className={`text-[9px] font-mono px-1 py-0.2 rounded border ${
+                                  <span className={`text-[0.7rem] font-mono px-1 py-0.2 rounded border ${
                                     isLightMode ? "text-blue-700 bg-blue-50 border-blue-200" : "text-blue-400 bg-blue-500/10 border-blue-500/20"
                                   }`}>
                                     {usr.user_code}
                                   </span>
-                                  <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded border uppercase tracking-wider ${
+                                  <span className={`text-[0.7rem] font-semibold px-1.5 py-0.2 rounded border uppercase tracking-wider ${
                                     isLightMode ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-purple-500/10 text-purple-400 border-purple-500/20"
                                   }`}>
                                     {usr.designationObj?.name || "General Assignee"}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                                <div className="flex items-center gap-2 flex-wrap text-xs">
                                   <span className={isLightMode ? "text-gray-600" : "text-gray-400"}>
                                     {usr.email}
                                   </span>
@@ -961,20 +961,20 @@ export default function UserMasterPage() {
                               <div className="flex flex-wrap gap-1 max-w-[150px]">
                                 {usr.assigned_assets && usr.assigned_assets.length > 0 ? (
                                   usr.assigned_assets.map((ast, aIdx) => (
-                                    <span key={aIdx} className={`text-[9px] font-mono px-1 py-0.2 rounded border truncate max-w-[90px] inline-block ${
+                                    <span key={aIdx} className={`text-[0.7rem] font-mono px-1 py-0.2 rounded border truncate max-w-[90px] inline-block ${
                                       isLightMode ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                                     }`} title={ast}>
                                       🏷️ {ast}
                                     </span>
                                   ))
                                 ) : (
-                                  <span className="text-[10px] text-gray-500 italic">None</span>
+                                  <span className="text-xs text-gray-500 italic">None</span>
                                 )}
                               </div>
                             </AppTableCell>
 
                             <AppTableCell className="text-center">
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase inline-block border ${
+                              <span className={`px-2 py-0.5 rounded text-[0.7rem] font-bold tracking-wider uppercase inline-block border ${
                                 usr.is_active 
                                   ? (isLightMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30") 
                                   : (isLightMode ? "bg-gray-100 text-gray-500 border-gray-300" : "bg-white/5 text-gray-500 border-white/10")
@@ -1058,7 +1058,7 @@ export default function UserMasterPage() {
                     <AppCardTitle className={`text-base font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
                       {selectedUser.full_name}
                     </AppCardTitle>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                    <span className={`text-xs font-mono font-bold px-1.5 py-0.2 rounded border ${
                       isLightMode ? "text-blue-700 bg-blue-50 border-blue-200" : "text-blue-400 bg-blue-500/10 border-blue-500/20"
                     }`}>
                       {selectedUser.user_code}
@@ -1070,7 +1070,7 @@ export default function UserMasterPage() {
                   </p>
 
                   <div className="pt-2 flex items-center justify-center gap-2">
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    <span className={`text-[0.8rem] font-semibold px-2 py-0.5 rounded-full ${
                       isLightMode ? "bg-purple-50 text-purple-700 border border-purple-200" : "bg-purple-500/10 text-purple-300 border border-purple-500/20"
                     }`}>
                       {selectedUser.roleObj?.name || "Standard Scope Profile"}
@@ -1083,7 +1083,7 @@ export default function UserMasterPage() {
               <div className="p-5 space-y-5 flex-1">
                 {/* Structural Assignments Grid */}
                 <div className="space-y-2">
-                  <span className={`text-[10px] font-bold tracking-wider uppercase block ${
+                  <span className={`text-xs font-bold tracking-wider uppercase block ${
                     isLightMode ? "text-gray-500" : "text-gray-400"
                   }`}>
                     Hierarchical Attachments
@@ -1130,14 +1130,14 @@ export default function UserMasterPage() {
                       <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
                         {selectedUser.assigned_assets && selectedUser.assigned_assets.length > 0 ? (
                           selectedUser.assigned_assets.map((ast, aIdx) => (
-                            <span key={aIdx} className={`text-[9px] font-mono px-1 py-0.2 rounded border ${
+                            <span key={aIdx} className={`text-[0.7rem] font-mono px-1 py-0.2 rounded border ${
                               isLightMode ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                             }`}>
                               🏷️ {ast}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[10px] text-gray-500 italic font-normal">None Assigned</span>
+                          <span className="text-xs text-gray-500 italic font-normal">None Assigned</span>
                         )}
                       </div>
                     </div>
@@ -1147,12 +1147,12 @@ export default function UserMasterPage() {
                 {/* Session Timestamps Simulators Interface */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold tracking-wider uppercase block ${
+                    <span className={`text-xs font-bold tracking-wider uppercase block ${
                       isLightMode ? "text-gray-500" : "text-gray-400"
                     }`}>
                       Live Access Times Tracker
                     </span>
-                    <span className="text-[9px] text-gray-500 italic">Simulate connection vector updates</span>
+                    <span className="text-[0.7rem] text-gray-500 italic">Simulate connection vector updates</span>
                   </div>
 
                   <div className={`p-3 rounded-xl border space-y-3 ${
@@ -1161,7 +1161,7 @@ export default function UserMasterPage() {
                     {/* Last Login element */}
                     <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-white/5">
                       <div className="space-y-0.5">
-                        <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
+                        <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
                           <Clock className="h-3 w-3 text-emerald-500" />
                           <span>Last Log-In Time:</span>
                         </span>
@@ -1177,7 +1177,7 @@ export default function UserMasterPage() {
                         size="sm"
                         onClick={() => handleSimulateLoginTime(selectedUser)}
                         disabled={!(hasPermission("USERS_UPDATE") || isSuperAdmin)}
-                        className="text-[10px] h-7 px-2 disabled:opacity-50"
+                        className="text-xs h-7 px-2 disabled:opacity-50"
                       >
                         Stamp Log-In
                       </AppButton>
@@ -1186,7 +1186,7 @@ export default function UserMasterPage() {
                     {/* Last Logout element */}
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="space-y-0.5">
-                        <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
+                        <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
                           <Clock className="h-3 w-3 text-amber-500" />
                           <span>Last Log-Out Time:</span>
                         </span>
@@ -1202,7 +1202,7 @@ export default function UserMasterPage() {
                         size="sm"
                         onClick={() => handleSimulateLogoutTime(selectedUser)}
                         disabled={!hasPermission("USERS_UPDATE")}
-                        className="text-[10px] h-7 px-2 disabled:opacity-50"
+                        className="text-xs h-7 px-2 disabled:opacity-50"
                       >
                         Stamp Log-Out
                       </AppButton>
@@ -1212,7 +1212,7 @@ export default function UserMasterPage() {
 
                 {/* Event Actions Bar: Mail Trigger Simulation */}
                 <div className="space-y-2 pt-1">
-                  <span className={`text-[10px] font-bold tracking-wider uppercase block ${
+                  <span className={`text-xs font-bold tracking-wider uppercase block ${
                     isLightMode ? "text-gray-500" : "text-gray-400"
                   }`}>
                     Outbound Triggers
@@ -1231,7 +1231,7 @@ export default function UserMasterPage() {
                     <Mail className="h-3.5 w-3.5 shrink-0" />
                     <span>Trigger Password Reset Email</span>
                   </button>
-                  <span className="text-[9px] text-gray-500 block text-center">
+                  <span className="text-[0.7rem] text-gray-500 block text-center">
                     Simulates secure token generation link routing over outbound message handlers.
                   </span>
                 </div>
@@ -1239,13 +1239,13 @@ export default function UserMasterPage() {
                 {/* Audit Timeline Render Container */}
                 <div className="space-y-2 pt-1 border-t border-white/5">
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold tracking-wider uppercase block flex items-center gap-1 ${
+                    <span className={`text-xs font-bold tracking-wider uppercase block flex items-center gap-1 ${
                       isLightMode ? "text-gray-500" : "text-gray-400"
                     }`}>
                       <History className="h-3 w-3" />
                       <span>Personnel Audit Logs</span>
                     </span>
-                    <span className="text-[9px] font-mono text-gray-500">{auditLogs.length} Events</span>
+                    <span className="text-[0.7rem] font-mono text-gray-500">{auditLogs.length} Events</span>
                   </div>
 
                   <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
@@ -1255,11 +1255,11 @@ export default function UserMasterPage() {
                       </div>
                     ) : (
                       auditLogs.map((lg) => (
-                        <div key={lg.id} className={`p-2.5 rounded-lg border text-[11px] space-y-1 ${
+                        <div key={lg.id} className={`p-2.5 rounded-lg border text-[0.8rem] space-y-1 ${
                           isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-black/20 border-white/5"
                         }`}>
                           <div className="flex items-center justify-between gap-2">
-                            <span className={`font-mono text-[9px] font-bold px-1 py-0.2 rounded ${
+                            <span className={`font-mono text-[0.7rem] font-bold px-1 py-0.2 rounded ${
                               lg.operation === "CREATE" ? "bg-emerald-500/10 text-emerald-400" :
                               lg.operation === "UPDATE" ? "bg-blue-500/10 text-blue-400" :
                               lg.operation === "DELETE" ? "bg-rose-500/10 text-rose-400" :
@@ -1267,7 +1267,7 @@ export default function UserMasterPage() {
                             }`}>
                               {lg.operation}
                             </span>
-                            <span className="text-[9px] text-gray-500 font-mono">
+                            <span className="text-[0.7rem] text-gray-500 font-mono">
                               {new Date(lg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
                           </div>
@@ -1275,7 +1275,7 @@ export default function UserMasterPage() {
                           <p className={`text-xs leading-snug ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
                             {lg.payload ? (lg.payload.status || lg.payload.action || lg.payload.event || lg.payload.updateScope || JSON.stringify(lg.payload)) : "Metadata schema payload execution"}
                           </p>
-                          <span className="text-[9px] text-gray-500 block italic">
+                          <span className="text-[0.7rem] text-gray-500 block italic">
                             By {lg.performed_by}
                           </span>
                         </div>
@@ -1318,7 +1318,7 @@ export default function UserMasterPage() {
                   <h3 className={`text-base font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
                     {isEditingMode ? "Update Identity Record" : "Register User Account"}
                   </h3>
-                  <p className={`text-[11px] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                  <p className={`text-[0.8rem] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
                     Provide corporate credential definitions mapped against database authorization structures.
                   </p>
                 </div>
@@ -1335,7 +1335,7 @@ export default function UserMasterPage() {
               <div className="px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 scrollbar-thin min-h-0">
               {/* Profile Photo selector preview section */}
               <div className="space-y-2 pb-2 border-b border-white/5">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                   Profile Photo Target Preview
                 </label>
                 
@@ -1401,7 +1401,7 @@ export default function UserMasterPage() {
 
                     {/* Fun convenient quick interactive avatar presets selection */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                      <span className="text-[10px] text-gray-500 font-medium">Quick Avatars:</span>
+                      <span className="text-xs text-gray-500 font-medium">Quick Avatars:</span>
                       {PRESET_AVATARS.map((avUrl, aIdx) => (
                         <button
                           key={aIdx}
@@ -1422,7 +1422,7 @@ export default function UserMasterPage() {
               {/* Row 1: Full Name & User Code */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                     Full Name <span className="text-rose-400">*</span>
                   </label>
                   <AppInput 
@@ -1436,7 +1436,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                     User Code <span className="text-rose-400">*</span>
                   </label>
                   <AppInput 
@@ -1447,13 +1447,13 @@ export default function UserMasterPage() {
                     required
                     disabled={!isSuperAdmin}
                   />
-                  <span className="text-[9px] text-gray-500 block">Unique code string indexing tuple logic.</span>
+                  <span className="text-[0.7rem] text-gray-500 block">Unique code string indexing tuple logic.</span>
                 </div>
               </div>
 
               {/* Row 2: Registered Email */}
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                   Registered Email Address <span className="text-rose-400">*</span>
                 </label>
                 <AppInput 
@@ -1470,7 +1470,7 @@ export default function UserMasterPage() {
               {/* Row 3: Department & Designation */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                     Department Mapping
                   </label>
                   <select
@@ -1493,7 +1493,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                     Designation Title
                   </label>
                   <select
@@ -1519,7 +1519,7 @@ export default function UserMasterPage() {
               {/* Row 4: Role Mapping & Line Manager */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-purple-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-purple-400 uppercase tracking-wider block">
                     RBAC Role Scope
                   </label>
                   <select
@@ -1542,7 +1542,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-indigo-400 uppercase tracking-wider block">
                     Reporting Line Manager
                   </label>
                   <select
@@ -1567,7 +1567,7 @@ export default function UserMasterPage() {
 
               {/* Row 4.5: Assigned Hardware Assets Multi Selection Dropdown */}
               <div className="space-y-1.5 relative">
-                <label className="text-[11px] font-bold text-amber-500 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-amber-500 uppercase tracking-wider block">
                   Assigned Hardware Assets Scope
                 </label>
                 
@@ -1596,7 +1596,7 @@ export default function UserMasterPage() {
                               const currentArr = formAssignedAssets.split(",").map(x => x.trim()).filter(Boolean);
                               setFormAssignedAssets(currentArr.filter(x => x !== tagStr).join(", "));
                             }}
-                            className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded-md flex items-center gap-1 border transition-all hover:opacity-80 ${
+                            className={`text-xs font-mono font-medium px-2 py-0.5 rounded-md flex items-center gap-1 border transition-all hover:opacity-80 ${
                               isLightMode 
                                 ? "bg-amber-50 text-amber-900 border-amber-200" 
                                 : "bg-amber-500/10 text-amber-300 border-amber-500/30"
@@ -1604,7 +1604,7 @@ export default function UserMasterPage() {
                             title="Click to deselect asset tag"
                           >
                             <span>💻 {matchedAst ? matchedAst.name.split(" ")[0] : tagStr}</span>
-                            <span className="text-[9px] opacity-60">({tagStr})</span>
+                            <span className="text-[0.7rem] opacity-60">({tagStr})</span>
                             <span className="font-bold ml-0.5 hover:text-rose-400">×</span>
                           </span>
                         );
@@ -1616,7 +1616,7 @@ export default function UserMasterPage() {
                     )}
                   </div>
                   <div className={`p-1 rounded shrink-0 ${isLightMode ? "text-gray-400" : "text-gray-500"}`}>
-                    <span className="text-[10px] font-bold">▼</span>
+                    <span className="text-xs font-bold">▼</span>
                   </div>
                 </div>
 
@@ -1627,7 +1627,7 @@ export default function UserMasterPage() {
                       ? "bg-white border-gray-200" 
                       : "bg-[#0A0D14] border-white/10"
                   }`}>
-                    <div className="text-[10px] font-bold text-gray-400 px-2 pt-1 pb-1.5 border-b border-white/5 uppercase tracking-wider flex justify-between">
+                    <div className="text-xs font-bold text-gray-400 px-2 pt-1 pb-1.5 border-b border-white/5 uppercase tracking-wider flex justify-between">
                       <span>Available Hardware Inventory</span>
                       <span className="text-amber-500 lowercase font-mono font-normal">fetched from asset master</span>
                     </div>
@@ -1664,7 +1664,7 @@ export default function UserMasterPage() {
                               />
                               <span className="truncate block font-semibold">{ast.name}</span>
                             </div>
-                            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border shrink-0 ${
+                            <span className={`text-[0.7rem] font-mono px-1.5 py-0.2 rounded border shrink-0 ${
                               isAssigned 
                                 ? (isLightMode ? "bg-white text-amber-800 border-amber-200" : "bg-[#0A0D14] text-amber-400 border-amber-500/20")
                                 : (isLightMode ? "bg-gray-100 text-gray-500 border-gray-200" : "bg-white/5 text-gray-500 border-white/5")
@@ -1676,14 +1676,14 @@ export default function UserMasterPage() {
                   </div>
                 )}
 
-                <span className="text-[9px] text-gray-500 block">
+                <span className="text-[0.7rem] text-gray-500 block">
                   Click picker dropdown to assign individual devices linked from canonical backend asset master mapping.
                 </span>
               </div>
 
               {/* Row 5: Secure Credential Auth Settings */}
               <div className="space-y-3 pt-2 border-t border-white/5">
-                <span className={`text-[10px] font-bold tracking-wider uppercase block ${
+                <span className={`text-xs font-bold tracking-wider uppercase block ${
                   isLightMode ? "text-gray-500" : "text-gray-400"
                 }`}>
                   Authentication Secrets & Locks
@@ -1691,7 +1691,7 @@ export default function UserMasterPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                       Account Password {isEditingMode ? "(Leave empty to keep unchanged)" : <span className="text-rose-400">*</span>}
                     </label>
                     <AppInput 
@@ -1705,7 +1705,7 @@ export default function UserMasterPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                       Confirm Account Password {isEditingMode ? "" : <span className="text-rose-400">*</span>}
                     </label>
                     <AppInput 
@@ -1721,7 +1721,7 @@ export default function UserMasterPage() {
 
                 {/* Account Status radio group */}
                 <div className="space-y-2 pt-1 border-t border-white/5">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                     Account Access Status
                   </label>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -1763,13 +1763,13 @@ export default function UserMasterPage() {
                       <span>Disabled / Restrained</span>
                     </label>
                   </div>
-                  <span className="text-[9px] text-gray-500 block">
+                  <span className="text-[0.7rem] text-gray-500 block">
                     Disabled accounts are blocked from system sign-in and will show in restricted directory status filters.
                   </span>
                 </div>
                 
                 {formPassword && formPassword !== formConfirmPassword && (
-                  <span className="text-[10px] text-rose-400 block font-medium animate-in fade-in-20">
+                  <span className="text-xs text-rose-400 block font-medium animate-in fade-in-20">
                     ⚠ Passwords do not match. Please verify input values.
                   </span>
                 )}
@@ -1843,7 +1843,7 @@ export default function UserMasterPage() {
                 <p className={`text-xs font-semibold ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
                   Performing Security Integrity Checks...
                 </p>
-                <p className="text-[10px] text-gray-500">
+                <p className="text-xs text-gray-500">
                   Scanning Tickets, Workspace Tasks, and Requirements creator and assignee records.
                 </p>
               </div>
@@ -1867,7 +1867,7 @@ export default function UserMasterPage() {
                 <div className={`p-4 rounded-xl border space-y-2.5 text-xs ${
                   isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-white/[0.02] border-white/5"
                 }`}>
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
                     Active Reference Summary
                   </span>
                   
@@ -1913,7 +1913,7 @@ export default function UserMasterPage() {
                   </div>
                 </div>
 
-                <div className={`p-3 rounded-lg border text-[11px] leading-relaxed ${
+                <div className={`p-3 rounded-lg border text-[0.8rem] leading-relaxed ${
                   isLightMode ? "bg-rose-50/50 border-rose-200 text-rose-900" : "bg-rose-500/5 border-rose-500/10 text-rose-300"
                 }`}>
                   <strong>Warning:</strong> Deleting this user will archive their account and remove them from active views. Relational historic logs will be preserved as soft-deleted. Are you sure you want to proceed?

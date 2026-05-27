@@ -42,7 +42,7 @@ export function EnterpriseWizardShell({
   headerAccent = "purple"
 }: EnterpriseWizardShellProps) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -75,7 +75,7 @@ export function EnterpriseWizardShell({
         }`}>
           <div className="flex flex-col justify-center">
             {title && <h2 className={`text-lg md:text-xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{title}</h2>}
-            {subtitle && <div className={`mt-0.5 text-[11px] md:text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>{subtitle}</div>}
+            {subtitle && <div className={`mt-0.5 text-[0.8rem] md:text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>{subtitle}</div>}
           </div>
           <button 
             onClick={onClose}

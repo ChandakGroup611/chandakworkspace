@@ -45,10 +45,10 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="text-[10px] uppercase tracking-[0.28em] text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-2 py-1 rounded font-bold">
+                  <p className="text-xs uppercase tracking-[0.28em] text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-2 py-1 rounded font-bold">
                     Task detail
                   </p>
-                  <p className="text-[10px] uppercase tracking-[0.28em] text-gray-500 px-2 py-1 border border-gray-200 dark:border-white/10 rounded font-bold">
+                  <p className="text-xs uppercase tracking-[0.28em] text-gray-500 px-2 py-1 border border-gray-200 dark:border-white/10 rounded font-bold">
                     Workspace: {task.workspace?.name || task.workspace?.code || "Unknown"}
                   </p>
                 </div>
@@ -63,15 +63,15 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
             
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-gray-100 pt-4 dark:border-white/5">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Creator</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Creator</span>
                 <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{task.creator?.full_name || "Unknown"}</p>
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Created At</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Created At</span>
                 <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{new Date(task.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</p>
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Last Status</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Last Status</span>
                 <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">
                   <span className="inline-flex items-center rounded-md bg-purple-50 px-1.5 py-0.5 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10 dark:bg-purple-400/10 dark:text-purple-400 dark:ring-purple-400/20">
                     {task.status?.name || "Open"}
@@ -79,7 +79,7 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
                 </p>
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Last Updated</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Last Updated</span>
                 <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{task.updated_at ? new Date(task.updated_at).toLocaleDateString(undefined, { dateStyle: 'medium' }) : "Never"}</p>
               </div>
             </div>

@@ -12,7 +12,7 @@ interface TicketScopeSelectorProps {
 
 export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
   const { theme } = useTheme();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const [dbScopes, setDbScopes] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -45,7 +45,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-4 animate-pulse">
         <div className="h-12 w-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-        <p className="text-[10px] text-gray-500 font-bold tracking-[0.2em] uppercase">Syncing Governance Matrix...</p>
+        <p className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Syncing Governance Matrix...</p>
       </div>
     );
   }
@@ -89,12 +89,12 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                     }`}>
                       {scope.name}
                     </h3>
-                    <p className="text-[13px] text-gray-400 leading-tight h-10 overflow-hidden line-clamp-2">
+                    <p className="text-sm text-gray-400 leading-tight h-10 overflow-hidden line-clamp-2">
                       {scope.description}
                     </p>
                   </div>
 
-                  <div className={`flex items-center text-[10px] font-bold uppercase tracking-widest transition-colors pt-2 ${
+                  <div className={`flex items-center text-xs font-bold uppercase tracking-widest transition-colors pt-2 ${
                     isLightMode ? "text-indigo-600" : "text-indigo-400 group-hover:text-indigo-300"
                   }`}>
                     <span>Initialize Flow</span>

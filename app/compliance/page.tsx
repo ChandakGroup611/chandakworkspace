@@ -82,9 +82,9 @@ export default function CompliancePage() {
                   <ShieldCheck className="h-4 w-4" />
                   <span>Accessibility Audit Parameters</span>
                 </AppCardTitle>
-                <p className="text-[11px] text-gray-400">Continuous runtime check monitoring design variables.</p>
+                <p className="text-[0.8rem] text-gray-400">Continuous runtime check monitoring design variables.</p>
               </div>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold uppercase border border-emerald-500/20">
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold uppercase border border-emerald-500/20">
                 Score: 100/100
               </span>
             </AppCardHeader>
@@ -107,7 +107,7 @@ export default function CompliancePage() {
                           <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                           <span>{item.score}</span>
                         </AppTableCell>
-                        <AppTableCell className="text-right font-mono text-gray-400 text-[11px]">{item.target}</AppTableCell>
+                        <AppTableCell className="text-right font-mono text-gray-400 text-[0.8rem]">{item.target}</AppTableCell>
                       </AppTableRow>
                     ))}
                   </AppTableBody>
@@ -115,7 +115,7 @@ export default function CompliancePage() {
               </AppTableContainer>
             </div>
 
-            <div className="p-4 bg-white/[0.01] border-t border-white/5 text-[11px] text-gray-500 flex items-center justify-between">
+            <div className="p-4 bg-white/[0.01] border-t border-white/5 text-[0.8rem] text-gray-500 flex items-center justify-between">
               <span>Automated WCAG parsing engine active</span>
               <span className="text-blue-400 hover:underline cursor-pointer">Export signed audit logs</span>
             </div>
@@ -129,9 +129,9 @@ export default function CompliancePage() {
                   <Sliders className="h-3.5 w-3.5 text-blue-400" />
                   <span>Phase 7 Motion System Skeletons Simulator</span>
                 </h3>
-                <p className="text-[11px] text-gray-500">Trigger test blocks to view controlled zero-bounce shimmer curves.</p>
+                <p className="text-[0.8rem] text-gray-500">Trigger test blocks to view controlled zero-bounce shimmer curves.</p>
               </div>
-              <AppButton variant="outline" size="sm" onClick={triggerSimulatedLoad} className="h-8 text-[11px]">
+              <AppButton variant="outline" size="sm" onClick={triggerSimulatedLoad} className="h-8 text-[0.8rem]">
                 {isSimulatingLoad ? "Simulating..." : "Trigger Shimmer"}
               </AppButton>
             </div>
@@ -152,7 +152,7 @@ export default function CompliancePage() {
                     <Sparkles className="h-5 w-5 animate-pulse" />
                   </div>
                   <p className="text-xs text-white font-medium">Skeletons inactive. Backend pipeline ready.</p>
-                  <p className="text-[11px] text-gray-500 max-w-md">
+                  <p className="text-[0.8rem] text-gray-500 max-w-md">
                     Click "Trigger Shimmer" to observe subtle, smooth-fading loading placeholders adhering strictly to enterprise transition rules.
                   </p>
                 </div>
@@ -173,25 +173,25 @@ export default function CompliancePage() {
 
             <div className="space-y-3 text-xs leading-relaxed text-gray-300 font-sans">
               <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-1">
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Allowed Directives</span>
-                <p className="text-gray-400 text-[11px]">Subtle opacity cross-fades, CSS variables transition bindings, micro-lifts.</p>
+                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">Allowed Directives</span>
+                <p className="text-gray-400 text-[0.8rem]">Subtle opacity cross-fades, CSS variables transition bindings, micro-lifts.</p>
               </div>
 
               <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 space-y-1">
-                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">Forbidden Directives</span>
-                <p className="text-gray-400 text-[11px]">Flashy spring layout bounce jumps, gaming physics effects, jarring saturation flips.</p>
+                <span className="text-xs font-bold text-rose-400 uppercase tracking-wider block">Forbidden Directives</span>
+                <p className="text-gray-400 text-[0.8rem]">Flashy spring layout bounce jumps, gaming physics effects, jarring saturation flips.</p>
               </div>
             </div>
           </AppCard>
 
           <AppCard className="p-5 space-y-3 border-blue-500/10 bg-gradient-to-b from-blue-950/10 to-transparent">
-            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">
               Global Platform Sign-Off
             </span>
             <p className="text-xs text-gray-400 leading-relaxed">
               All routes configured under <code className="text-white">src/styles/themes/</code> satisfy continuous UI evaluation metrics automatically.
             </p>
-            <div className="pt-2 flex items-center justify-between text-[10px] text-gray-500 border-t border-white/5">
+            <div className="pt-2 flex items-center justify-between text-xs text-gray-500 border-t border-white/5">
               <span>Version: <strong className="text-gray-300">v4.0 Final</strong></span>
               <span className="text-emerald-400 font-bold">APPROVED</span>
             </div>

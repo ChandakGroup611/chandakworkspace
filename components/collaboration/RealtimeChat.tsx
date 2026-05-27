@@ -71,7 +71,7 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
                 <span className="font-bold text-xs text-gray-300">
                   {msg.performed_by?.full_name || 'System User'}
                 </span>
-                <span className="text-[10px] text-gray-500">
+                <span className="text-xs text-gray-500">
                   {new Date(msg.performed_at).toLocaleTimeString()}
                 </span>
               </div>

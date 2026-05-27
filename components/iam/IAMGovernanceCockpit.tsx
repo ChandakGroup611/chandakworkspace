@@ -52,7 +52,7 @@ export default function IAMGovernanceCockpit({
 }: IAMGovernanceCockpitProps) {
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLight = theme === "executive-light";
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const resolvedRoles = initialRoles.length > 0 ? initialRoles : roles;
   const resolvedPermissions = initialPermissions.length > 0 ? initialPermissions : permissions;
@@ -422,7 +422,7 @@ export default function IAMGovernanceCockpit({
               : (isLight ? "bg-gray-50 border-gray-200 text-gray-500" : "bg-white/[0.02] border-white/5 text-gray-500")
           )}>
             <Zap className={`h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">
+            <span className="text-xs font-bold uppercase tracking-widest">
               {isSaving ? "Syncing Logic Gates..." : "Snapshot Synced"}
             </span>
           </div>
@@ -442,7 +442,7 @@ export default function IAMGovernanceCockpit({
                   <Layers className="h-4 w-4 text-indigo-400" />
                   <span className={cn("text-xs font-bold uppercase tracking-widest", isLight ? "text-gray-700" : "text-gray-200")}>Role Registry</span>
                 </div>
-                <AppBadge className={cn("font-mono text-[10px]", isLight ? "bg-gray-100 text-gray-600 border-gray-200/50" : "bg-white/5 text-gray-400")}>{rolesList.length} Units</AppBadge>
+                <AppBadge className={cn("font-mono text-xs", isLight ? "bg-gray-100 text-gray-600 border-gray-200/50" : "bg-white/5 text-gray-400")}>{rolesList.length} Units</AppBadge>
               </div>
 
               <div className="relative group">
@@ -481,15 +481,15 @@ export default function IAMGovernanceCockpit({
                           </span>
                           {role.is_system && <ShieldCheck className="h-3.5 w-3.5 text-amber-500/80" />}
                           {!role.is_active && (
-                            <AppBadge variant="danger" className="text-[8px] py-0 px-1 font-mono uppercase bg-rose-500/10 border-rose-500/20 text-rose-400">Disabled</AppBadge>
+                            <AppBadge variant="danger" className="text-[0.65rem] py-0 px-1 font-mono uppercase bg-rose-500/10 border-rose-500/20 text-rose-400">Disabled</AppBadge>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono text-gray-600 uppercase tracking-tighter">{role.code}</span>
+                          <span className="text-xs font-mono text-gray-600 uppercase tracking-tighter">{role.code}</span>
                           {role.department && (
                             <>
                               <div className={cn("w-1 h-1 rounded-full", isLight ? "bg-gray-300" : "bg-gray-700")} />
-                              <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
                                 <Building className="h-2.5 w-2.5" />
                                 {role.department.name}
                               </span>
@@ -509,7 +509,7 @@ export default function IAMGovernanceCockpit({
             <div className={cn("p-6 border-t", isLight ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-black/20")}>
               <form onSubmit={handleCreateRole} className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Add Custom Role</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Add Custom Role</span>
                   <Settings className="h-3 w-3 text-gray-600" />
                 </div>
                 <div className="flex gap-2">
@@ -549,11 +549,11 @@ export default function IAMGovernanceCockpit({
                           Capability Matrix: <span className="text-indigo-500">{activeRole.name}</span>
                         </h3>
                         {activeRole.is_system && (
-                          <AppBadge className="bg-amber-500/10 text-amber-500 border-amber-500/20 py-0.5 px-1.5 text-[8px] font-mono uppercase">System</AppBadge>
+                          <AppBadge className="bg-amber-500/10 text-amber-500 border-amber-500/20 py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500 flex items-center gap-1.5 font-mono text-[10px]">
+                        <span className="text-xs text-gray-500 flex items-center gap-1.5 font-mono text-xs">
                           {activeRole.code}
                         </span>
                         <div className={cn("w-1 h-1 rounded-full", isLight ? "bg-gray-200" : "bg-gray-800")} />
@@ -606,7 +606,7 @@ export default function IAMGovernanceCockpit({
                 <div className={cn("p-6 border-b space-y-4 bg-transparent", isLight ? "border-gray-100" : "border-white/5")}>
                   {/* Module Horizontal Filter Tabs */}
                   <div className="space-y-2">
-                    <span className={cn("text-[9px] font-bold uppercase tracking-widest block", isLight ? "text-gray-400" : "text-gray-500")}>Filter by Module</span>
+                    <span className={cn("text-[0.7rem] font-bold uppercase tracking-widest block", isLight ? "text-gray-400" : "text-gray-500")}>Filter by Module</span>
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none custom-scrollbar">
                       {uniqueModules.map((mod) => {
                         const isTabSelected = selectedModule === mod;
@@ -626,7 +626,7 @@ export default function IAMGovernanceCockpit({
                           >
                             <span>{mod === "ALL" ? "All Capabilities" : mod}</span>
                             <span className={cn(
-                              "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md",
+                              "text-[0.7rem] font-mono font-bold px-1.5 py-0.5 rounded-md",
                               isTabSelected
                                 ? "bg-white/20 text-white"
                                 : isLight
@@ -659,7 +659,7 @@ export default function IAMGovernanceCockpit({
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse">
                         <thead>
-                          <tr className={cn("border-b text-[10px] font-extrabold uppercase tracking-wider text-left", isLight ? "border-gray-200 text-gray-500" : "border-white/5 text-gray-400")}>
+                          <tr className={cn("border-b text-xs font-extrabold uppercase tracking-wider text-left", isLight ? "border-gray-200 text-gray-500" : "border-white/5 text-gray-400")}>
                             <th className="py-3 px-4 font-mono">Module Directory</th>
                             <th className="py-3 px-4 text-center font-mono">View</th>
                             <th className="py-3 px-4 text-center font-mono">Create</th>
@@ -695,7 +695,7 @@ export default function IAMGovernanceCockpit({
                                     <div className={cn("text-xs font-bold transition-colors", isLight ? "text-gray-900 group-hover/row:text-indigo-600" : "text-gray-100 group-hover/row:text-white")}>
                                       {m.name}
                                     </div>
-                                    <div className="text-[9px] font-mono text-gray-500 uppercase tracking-tighter">
+                                    <div className="text-[0.7rem] font-mono text-gray-500 uppercase tracking-tighter">
                                       {m.code}_*
                                     </div>
                                   </div>
@@ -725,7 +725,7 @@ export default function IAMGovernanceCockpit({
                                           </button>
                                         </div>
                                       ) : (
-                                        <span className="text-[10px] text-gray-600 font-mono">-</span>
+                                        <span className="text-xs text-gray-600 font-mono">-</span>
                                       )}
                                     </td>
                                   );
@@ -740,7 +740,7 @@ export default function IAMGovernanceCockpit({
                     <div className="h-60 flex flex-col items-center justify-center space-y-2 border border-dashed rounded-2xl border-white/5">
                       <Filter className={cn("h-6 w-6", isLight ? "text-gray-300" : "text-gray-600")} />
                       <span className={cn("text-xs font-semibold", isLight ? "text-gray-400" : "text-gray-500")}>No matching capabilities found.</span>
-                      <span className="text-[10px] text-gray-500">Try adjusting your filters or search query.</span>
+                      <span className="text-xs text-gray-500">Try adjusting your filters or search query.</span>
                     </div>
                   )}
                 </div>
@@ -749,7 +749,7 @@ export default function IAMGovernanceCockpit({
               <div className={cn("flex-1 flex flex-col items-center justify-center space-y-3", isLight ? "text-gray-400" : "text-gray-500")}>
                 <Layers className="h-8 w-8 opacity-40 animate-pulse text-indigo-500" />
                 <span className="text-xs font-semibold uppercase tracking-wider">No Active Selection</span>
-                <span className="text-[10px] text-gray-500">Select a role from the registry registry list to begin matrix audits.</span>
+                <span className="text-xs text-gray-500">Select a role from the registry registry list to begin matrix audits.</span>
               </div>
             )}
 
@@ -761,7 +761,7 @@ export default function IAMGovernanceCockpit({
                 </div>
                 <div className="space-y-2">
                   <h4 className={cn("text-xs font-bold uppercase tracking-widest", isLight ? "text-gray-700" : "text-gray-200")}>Recursive Governance Enforcement</h4>
-                  <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
+                  <p className="text-[0.8rem] text-gray-500 leading-relaxed font-medium">
                     State transitions committed in this matrix are recursively propagated to the <span className="text-indigo-400 font-bold">Identity Cache</span>.
                     Authorization policies will reflect system-wide without session invalidation. System-critical roles enforce immutable logic gates.
                   </p>
