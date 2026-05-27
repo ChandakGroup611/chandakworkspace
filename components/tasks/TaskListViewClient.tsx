@@ -46,6 +46,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedPriority, setSelectedPriority] = useState<string>("");
+  const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+
+  const uniqueStatuses = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[], [tasks]);
+  const uniquePriorities = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.priority?.name).filter(Boolean))) as string[], [tasks]);
   const router = useRouter();
 
   useEffect(() => {
@@ -79,33 +87,38 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   const filtered = useMemo(() => {
     return tasks.filter(t => {
-      // 1. Pre-filter by workspace selection if any
       if (selectedWorkspaceId && t.workspace_id !== selectedWorkspaceId) return false;
+      if (scope === "CREATOR" && t.created_by !== currentUserId) return false;
+      if (scope === "MANAGER" && t.creator?.manager_id !== currentUserId) return false;
+      
+      if (selectedStatus && t.status?.name !== selectedStatus) return false;
+      if (selectedPriority && t.priority?.name !== selectedPriority) return false;
+      if (showEscalatedOnly && t.status?.name?.toLowerCase() !== "escalated") return false;
 
-      // 2. All tasks shown to user are already visibility-checked by server
-      // This filter is just for scope refinement
-      if (scope === "ALL") return true;
-      if (!currentUserId) return false;
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom).getTime();
+        const taskDate = new Date(t.created_at).getTime();
+        if (taskDate < fromDate) return false;
+      }
+      if (dateTo) {
+        const toDate = new Date(dateTo).getTime() + 86400000; // include full day
+        const taskDate = new Date(t.created_at).getTime();
+        if (taskDate >= toDate) return false;
+      }
 
-      if (scope === "CREATOR") return t.created_by === currentUserId;
-
-      if (scope === "MANAGER") {
-        // Check if current user is the manager of the task creator (matches database RLS)
-        return t.creator?.manager_id === currentUserId;
+      if (query) {
+        const q = query.toLowerCase();
+        if (!(
+          (t.title || "").toLowerCase().includes(q) ||
+          (t.code || "").toLowerCase().includes(q) ||
+          (t.description || "").toLowerCase().includes(q) ||
+          (t.workspace?.name || "").toLowerCase().includes(q)
+        )) return false;
       }
 
       return true;
-    }).filter(t => {
-      if (!query) return true;
-      const q = query.toLowerCase();
-      return (
-        (t.title || "").toLowerCase().includes(q) ||
-        (t.code || "").toLowerCase().includes(q) ||
-        (t.description || "").toLowerCase().includes(q) ||
-        (t.workspace?.name || "").toLowerCase().includes(q)
-      );
     });
-  }, [tasks, scope, query, currentUserId, selectedWorkspaceId]);
+  }, [tasks, scope, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo]);
 
   const refresh = async () => {
     setLoading(true);
@@ -248,6 +261,46 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               Refresh
             </AppButton>
           </div>
+        </div>
+      </div>
+
+            {/* Advanced Filters Row */}
+      <div className="flex items-center flex-wrap gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/5">
+        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-xs px-3 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <option value="">All Statuses</option>
+          {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        
+        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-xs px-3 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <option value="">All Priorities</option>
+          {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        
+        <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+          <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-gray-300 text-rose-500 focus:ring-rose-500" />
+          Escalated Only
+        </label>
+        
+        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 ml-auto">
+          <span>Date Between:</span>
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+          <span>to</span>
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+          
+          {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo) && (
+            <button 
+              onClick={() => {
+                setSelectedStatus("");
+                setSelectedPriority("");
+                setShowEscalatedOnly(false);
+                setDateFrom("");
+                setDateTo("");
+              }}
+              className="ml-2 text-[10px] uppercase text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 underline"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
