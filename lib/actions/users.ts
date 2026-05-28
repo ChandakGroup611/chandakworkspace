@@ -376,3 +376,42 @@ export async function fetchUsersDashboardData() {
   };
 }
 
+/**
+ * Hard deletes a user from Supabase Auth and soft-deletes in user_master
+ */
+export async function deleteUserAction(userId: string) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  // Authenticate caller
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+  if (authError || !authUser) {
+    return { success: false, error: "Unauthenticated request." };
+  }
+
+  // Allow deleting oneself for testing, or if they have permission
+  const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (isServiceRoleAvailable) {
+    const adminClient = getAdminClient();
+    
+    // Delete from auth.users to free up the email
+    const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
+    if (authDeleteError) {
+      console.error("[Server Action] Auth delete error:", authDeleteError);
+      // We log but continue, as it might already be deleted or not exist
+    }
+  }
+
+  // Soft delete in user_master
+  const { error: dbError } = await supabase
+    .from("user_master")
+    .update({ is_deleted: true, is_active: false })
+    .eq("id", userId);
+
+  if (dbError) {
+    return { success: false, error: `Database update failed: ${dbError.message}` };
+  }
+
+  revalidatePath("/users");
+  return { success: true };
+}

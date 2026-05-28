@@ -18,7 +18,7 @@ import {
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
-import { saveUserAction, fetchUsersDashboardData } from "@/lib/actions/users";
+import { saveUserAction, fetchUsersDashboardData, deleteUserAction } from "@/lib/actions/users";
 import { 
   Users, 
   UserPlus, 
@@ -612,8 +612,8 @@ export default function UserMasterPage() {
 
   const handleConfirmSoftDelete = async (usr: AppUserItem) => {
     try {
-      const { error } = await supabase.from("user_master").update({ is_deleted: true, is_active: false }).eq("id", usr.id);
-      if (error) throw error;
+      const result = await deleteUserAction(usr.id);
+      if (result && !result.success) throw new Error(result.error);
       
       setUsers(prev => prev.filter(u => u.id !== usr.id));
       if (selectedUser?.id === usr.id) {
