@@ -1,60 +1,89 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Profiler, useMemo } from "react";
+import dynamic from 'next/dynamic';
 import './dashboard.css'; // The extracted and scoped CSS
 
 import MetricsRow from "./panels/MetricsRow";
 import HealthGrid from "./panels/HealthGrid";
-import ChartsRow from "./panels/ChartsRow";
-import SprintKanbanBoard from "./panels/SprintKanbanBoard";
+
+// Lazy load heavy charts and boards
+const ChartsRow = dynamic(() => import("./panels/ChartsRow"), { 
+  ssr: false, 
+  loading: () => <div className="p-8 text-center text-gray-500 text-xs">Loading Charts...</div> 
+});
+const SprintKanbanBoard = dynamic(() => import("./panels/SprintKanbanBoard"), {
+  ssr: false,
+  loading: () => <div className="p-8 text-center text-gray-500 text-xs">Loading Kanban...</div>
+});
+
 import RecentTicketsTable from "./panels/RecentTicketsTable";
 import ActivityFeed from "./panels/ActivityFeed";
 import UpcomingDeadlines from "./panels/UpcomingDeadlines";
 import TeamPerformance from "./panels/TeamPerformance";
+import { useRenderLog } from "@/hooks/use-render-log";
+import { onRenderCallback } from "@/utils/performance/profiler-utils";
+import { performanceGovernor, DegradationStage } from "@/utils/performance/PerformanceGovernanceEngine";
+import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 
 interface DashboardCommandCenterProps {
   metrics?: any[];
   dbError?: string | null;
+  refreshComponent?: React.ReactNode;
 }
 
-export default function DashboardCommandCenter({ metrics = [], dbError }: DashboardCommandCenterProps) {
+export default function DashboardCommandCenter({ metrics = [], dbError, refreshComponent }: DashboardCommandCenterProps) {
+  useRenderLog("DashboardCommandCenter", { metricsLength: metrics.length, dbError });
   const [mounted, setMounted] = useState(false);
   const [globalScope, setGlobalScope] = useState<string>("All");
   const [globalUser, setGlobalUser] = useState<string>("All");
   const [globalStatus, setGlobalStatus] = useState<string>("All");
+  
+  const [degradationStage, setDegradationStage] = useState<DegradationStage>(DegradationStage.STAGE_0_NORMAL);
 
   useEffect(() => {
     setMounted(true);
+    performanceGovernor.setRoute('Dashboard');
+    const unsubscribe = performanceGovernor.subscribeToStageChanges((stage) => {
+      setDegradationStage(stage);
+    });
+    return () => { unsubscribe(); };
   }, []);
+
+  // Get unique users for the dropdown
+  const uniqueUsers = useMemo(() => {
+    return Array.from(new Set(metrics.filter(m => m.user && m.user !== 'System').map(m => String(m.user))));
+  }, [metrics]);
+
+  // Filter metrics based on global filters memoized
+  const filteredMetrics = useMemo(() => {
+    return metrics.filter(m => {
+      const scopeMatch = globalScope === "All" || m.module === globalScope;
+      const userMatch = globalUser === "All" || String(m.user) === globalUser;
+      
+      let statusMatch = true;
+      if (globalStatus !== "All") {
+        const sLower = String(m.status).toLowerCase();
+        if (globalStatus === "Active" && !sLower.includes('resolv') && !sLower.includes('done')) statusMatch = true;
+        else if (globalStatus === "Resolved" && (sLower.includes('resolv') || sLower.includes('done'))) statusMatch = true;
+        else if (globalStatus === "Escalated" && (sLower.includes('escalat') || sLower.includes('block'))) statusMatch = true;
+        else if (globalStatus === "Review" && sLower.includes('review')) statusMatch = true;
+        else statusMatch = false;
+      }
+
+      return scopeMatch && userMatch && statusMatch;
+    });
+  }, [metrics, globalScope, globalUser, globalStatus]);
 
   if (!mounted) {
     return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading Exact Match Dashboard...</div>;
   }
 
-  // Get unique users for the dropdown
-  const uniqueUsers = Array.from(new Set(metrics.filter(m => m.user && m.user !== 'System').map(m => String(m.user))));
-
-  // Filter metrics based on global filters
-  const filteredMetrics = metrics.filter(m => {
-    const scopeMatch = globalScope === "All" || m.module === globalScope;
-    const userMatch = globalUser === "All" || String(m.user) === globalUser;
-    
-    let statusMatch = true;
-    if (globalStatus !== "All") {
-      const sLower = String(m.status).toLowerCase();
-      if (globalStatus === "Active" && !sLower.includes('resolv') && !sLower.includes('done')) statusMatch = true;
-      else if (globalStatus === "Resolved" && (sLower.includes('resolv') || sLower.includes('done'))) statusMatch = true;
-      else if (globalStatus === "Escalated" && (sLower.includes('escalat') || sLower.includes('block'))) statusMatch = true;
-      else if (globalStatus === "Review" && sLower.includes('review')) statusMatch = true;
-      else statusMatch = false;
-    }
-
-    return scopeMatch && userMatch && statusMatch;
-  });
-
   return (
-    <div className="dash-theme">
-      <main className="main" style={{ width: '100%', minHeight: '100vh' }}>
+    <ExperienceProvider mode="executive">
+      <Profiler id="DashboardCommandCenter" onRender={onRenderCallback}>
+      <div className="dash-theme">
+        <main className="main" style={{ width: '100%', minHeight: '100vh' }}>
         
         {/* TOPBAR */}
         <div className="topbar">
@@ -83,24 +112,34 @@ export default function DashboardCommandCenter({ metrics = [], dbError }: Dashbo
               style={{ paddingRight: '24px', outline: 'none', cursor: 'pointer' }}
             >
               <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Resolved">Resolved</option>
-              <option value="Escalated">Escalated</option>
-              <option value="Review">Review</option>
+              <option value="Active">Active (Open/Progress)</option>
+              <option value="Review">In Review</option>
+              <option value="Escalated">Escalated/Blocked</option>
+              <option value="Resolved">Resolved/Done</option>
             </select>
 
             <select
               value={globalUser}
               onChange={(e) => setGlobalUser(e.target.value)}
               className="tb-btn"
-              style={{ paddingRight: '24px', outline: 'none', cursor: 'pointer', maxWidth: '150px' }}
+              style={{ paddingRight: '24px', outline: 'none', cursor: 'pointer' }}
             >
               <option value="All">All Users</option>
               {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
+
+            <button className="tb-btn tb-export">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Export
+            </button>
+            <button className="tb-btn tb-primary">+ New Metric</button>
+            
+            {refreshComponent && (
+              <div className="ml-2 pl-2 border-l border-[var(--border)]">
+                {refreshComponent}
+              </div>
+            )}
           </div>
-          <button className="tb-btn"><i className="ti ti-share" aria-hidden="true"></i> Export</button>
-          <button className="tb-btn primary"><i className="ti ti-plus" aria-hidden="true"></i> New Ticket</button>
         </div>
 
         <div className="content">
@@ -115,19 +154,29 @@ export default function DashboardCommandCenter({ metrics = [], dbError }: Dashbo
           
           <HealthGrid metrics={filteredMetrics} />
           
-          <ChartsRow metrics={filteredMetrics} />
-          
-          <SprintKanbanBoard metrics={filteredMetrics} />
+          {degradationStage < DegradationStage.STAGE_3_SEVERE && (
+            <>
+              <ChartsRow metrics={filteredMetrics} />
+              
+              <SprintKanbanBoard metrics={filteredMetrics} />
 
-          <div className="grid-3">
-            <RecentTicketsTable metrics={filteredMetrics} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <ActivityFeed metrics={filteredMetrics} />
-              <UpcomingDeadlines metrics={filteredMetrics} />
+              <div className="grid-3">
+                <RecentTicketsTable metrics={filteredMetrics} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <ActivityFeed metrics={filteredMetrics} />
+                  <UpcomingDeadlines metrics={filteredMetrics} />
+                </div>
+              </div>
+
+              <TeamPerformance metrics={filteredMetrics} />
+            </>
+          )}
+
+          {degradationStage >= DegradationStage.STAGE_3_SEVERE && (
+            <div style={{ padding: '20px', background: 'rgba(255,200,0,0.1)', color: 'var(--amber)', borderRadius: '8px', textAlign: 'center', marginTop: '20px', fontSize: '12px', border: '1px solid rgba(255,200,0,0.2)' }}>
+              <strong>Stage 3 Auto-Governance Active:</strong> Non-essential charts and activity feeds have been paused to protect core system stability.
             </div>
-          </div>
-
-          <TeamPerformance metrics={filteredMetrics} />
+          )}
 
           {/* FOOTER */}
           <div style={{ marginTop: '20px', padding: '14px 0', borderTop: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -138,7 +187,9 @@ export default function DashboardCommandCenter({ metrics = [], dbError }: Dashbo
           </div>
 
         </div>
-      </main>
-    </div>
+        </main>
+      </div>
+      </Profiler>
+    </ExperienceProvider>
   );
 }

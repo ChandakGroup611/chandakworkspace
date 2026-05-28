@@ -354,13 +354,16 @@ export async function fetchUsersDashboardData() {
   }
 
   const { getVisibleUsers } = await import('@/lib/repositories/users');
-  const users = await getVisibleUsers(user.id);
-
-  const [deptRes, desigRes, roleRes, astRes] = await Promise.all([
-    supabase.from("departments").select("id, code, name").eq("is_deleted", false),
-    supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
-    supabase.from("roles").select("id, code, name").eq("is_deleted", false),
-    supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false)
+  
+  // Parallelize ALL network requests (Users list + 4 metadata lists) to eliminate waterfall latency
+  const [users, [deptRes, desigRes, roleRes, astRes]] = await Promise.all([
+    getVisibleUsers(user.id),
+    Promise.all([
+      supabase.from("departments").select("id, code, name").eq("is_deleted", false),
+      supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
+      supabase.from("roles").select("id, code, name").eq("is_deleted", false),
+      supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false)
+    ])
   ]);
 
   return {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Profiler } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -19,9 +19,10 @@ import {
   ChevronDown,
   ChevronRight as ChevronRightIcon
 } from "lucide-react";
-import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
-import { fetchSidebarCounts } from "@/lib/actions/workspaces";
+import { useTheme } from "@/components/theme/ThemeProvider";
+import { useRenderLog } from "@/hooks/use-render-log";
+import { onRenderCallback } from "@/utils/performance/profiler-utils";
 
 interface NavItem {
   label: string;
@@ -47,16 +48,16 @@ const navGroups: NavGroup[] = [
     label: "Core Operations",
     items: [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
-      { label: "ITSM Tickets", href: "/tickets", icon: Ticket, badge: "12", badgeColor: "bg-blue-500/10 text-blue-500 border border-blue-500/20", permission: "TICKETS_VIEW" },
-      { label: "Workspaces", href: "/workspaces", icon: FolderKanban, badge: "0", badgeColor: "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20", permission: "WORKSPACES_VIEW" },
+      { label: "ITSM Tickets", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
+      { label: "Workspaces", href: "/workspaces", icon: FolderKanban, permission: "WORKSPACES_VIEW" },
     ]
   },
   {
     label: "Governance & Analysis",
     items: [
-      { label: "Requirements", href: "/requirements", icon: FileCheck2, badge: "Review", badgeColor: "bg-amber-500/10 text-amber-500 border border-amber-500/20" },
-      { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert, badge: "2 Active", badgeColor: "bg-rose-500/10 text-rose-500 border border-rose-500/20" },
-      { label: "User Master", href: "/users", icon: Users, badge: "Directory", badgeColor: "bg-purple-500/10 text-purple-400 border border-purple-500/20" },
+      { label: "Requirements", href: "/requirements", icon: FileCheck2 },
+      { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert },
+      { label: "User Master", href: "/users", icon: Users },
       { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
     ]
   },
@@ -72,13 +73,23 @@ const navGroups: NavGroup[] = [
           { label: "System Master", href: "/masters" }
         ]
       },
-      { label: "Compliance Hub", href: "/compliance", icon: Settings, badge: "AA", badgeColor: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
-      { label: "Settings", href: "/settings", icon: Settings },
+      { label: "Compliance Hub", href: "/compliance", icon: Settings },
+      { 
+        label: "Settings", 
+        href: "/settings", 
+        icon: Settings,
+        subItems: [
+          { label: "Design Gallery", href: "/settings" },
+          { label: "Email Config", href: "/settings/email" },
+          { label: "Notifications", href: "/settings/notifications" }
+        ]
+      },
     ]
   }
 ];
 
 export default function Sidebar() {
+  useRenderLog("Sidebar", {});
   const pathname = usePathname();
   const [isCompactState, setIsCompactState] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -87,34 +98,10 @@ export default function Sidebar() {
     "/masters": true
   });
   const [clientQuery, setClientQuery] = useState("");
-  const [counts, setCounts] = useState<Record<string, string>>({
-    tickets: "",
-    workspaces: "",
-    requirements: "",
-    sla: "",
-    users: ""
-  });
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       setClientQuery(window.location.search);
     }
-
-    async function loadCounts() {
-      try {
-        const data = await fetchSidebarCounts();
-        setCounts({
-          tickets: String(data.tickets),
-          workspaces: String(data.workspaces),
-          requirements: String(data.requirements),
-          sla: data.sla > 0 ? `${data.sla} Active` : "",
-          users: String(data.users)
-        });
-      } catch (e) {
-        console.error("Failed to load sidebar counts", e);
-      }
-    }
-    loadCounts();
   }, []);
 
   const { theme } = useTheme();
@@ -138,7 +125,8 @@ export default function Sidebar() {
   }, [isCompactState, isHovered]);
 
   return (
-    <aside
+    <Profiler id="Sidebar" onRender={onRenderCallback}>
+      <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 border-r select-none ${
@@ -210,14 +198,7 @@ export default function Sidebar() {
                 const isBaseActive = pathname === item.href;
                 const isTreeExpanded = expandedTrees[item.href];
                 
-                const dynamicBadge = (() => {
-                  if (item.href === "/tickets") return counts.tickets;
-                  if (item.href === "/workspaces") return counts.workspaces;
-                  if (item.href === "/requirements") return counts.requirements;
-                  if (item.href === "/sla") return counts.sla;
-                  if (item.href === "/users") return counts.users;
-                  return item.badge;
-                })();
+                const dynamicBadge = item.badge;
 
                 return (
                   <div key={item.href} className="space-y-0.5">
@@ -245,9 +226,9 @@ export default function Sidebar() {
                           <span className="flex-1 truncate transition-colors duration-150">{item.label}</span>
                         )}
                         
-                        {!isCompact && dynamicBadge && (
-                          <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold transition-all ${item.badgeColor || (isLight ? "bg-gray-100 text-gray-700" : "bg-white/10 text-gray-300")}`}>
-                            {dynamicBadge}
+                        {!isCompact && item.badge && (
+                          <span className={`ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full ${item.badgeColor || 'bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]'}`}>
+                            {item.badge}
                           </span>
                         )}
                       </Link>
@@ -367,5 +348,6 @@ export default function Sidebar() {
         )}
       </div>
     </aside>
+    </Profiler>
   );
 }

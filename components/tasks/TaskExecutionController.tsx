@@ -14,10 +14,12 @@ import {
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
   approveResolution, reopenTask, createChecklistItem, 
-  createTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses
+  createTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses,
+  getTaskChecklists, getTaskAttachments
 } from "@/lib/actions/tasks";
 import { toggleChecklistItem } from "@/lib/actions/workspaces";
 import { useRouter } from "next/navigation";
+import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 
 export default function TaskExecutionController({ taskId, onUpdate }: { taskId: string; onUpdate?: () => void }) {
   const { theme } = useTheme();
@@ -27,7 +29,13 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
   const [task, setTask] = useState<any>(null);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"checklist" | "attachments">("checklist");
+  const [activeTab, setActiveTab] = useState<"checklist" | "attachments" | "collaboration">("checklist");
+  
+  // Lazy Load States
+  const [isChecklistsLoaded, setIsChecklistsLoaded] = useState(false);
+  const [isAttachmentsLoaded, setIsAttachmentsLoaded] = useState(false);
+  const [isCommentsLoaded, setIsCommentsLoaded] = useState(false);
+  const [isLoadingTab, setIsLoadingTab] = useState(false);
   
   // Input fields
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -64,17 +72,68 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
       const st = await getTaskStatuses();
       setStatuses(st);
       
-      setRemarksHistoryLoading(true);
-      const comments = await getTaskComments(taskId);
-      setRemarksHistory(comments);
+      // Default to collapsed for progressive load
+      setIsHistoryCollapsed(true);
+      
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to load task details.");
     } finally {
-      setRemarksHistoryLoading(false);
       setLoading(false);
     }
   };
+
+  // Lazy loaders for tabs
+  const loadChecklists = async () => {
+    if (isChecklistsLoaded) return;
+    setIsLoadingTab(true);
+    try {
+      const data = await getTaskChecklists(taskId);
+      setTask((prev: any) => ({ ...prev, checklists: data }));
+      setIsChecklistsLoaded(true);
+    } finally {
+      setIsLoadingTab(false);
+    }
+  };
+
+  const loadAttachments = async () => {
+    if (isAttachmentsLoaded) return;
+    setIsLoadingTab(true);
+    try {
+      const data = await getTaskAttachments(taskId);
+      setTask((prev: any) => ({ ...prev, attachments: data }));
+      setIsAttachmentsLoaded(true);
+    } finally {
+      setIsLoadingTab(false);
+    }
+  };
+
+  const loadComments = async () => {
+    if (isCommentsLoaded) return;
+    setRemarksHistoryLoading(true);
+    try {
+      const comments = await getTaskComments(taskId, 20, 0);
+      setRemarksHistory(comments);
+      setIsCommentsLoaded(true);
+    } finally {
+      setRemarksHistoryLoading(false);
+    }
+  };
+
+  // Trigger loaders on tab change
+  useEffect(() => {
+    if (!task) return;
+    if (activeTab === "checklist") loadChecklists();
+    if (activeTab === "attachments") loadAttachments();
+    if (activeTab === "collaboration") loadComments();
+  }, [activeTab, task?.id]);
+
+  // Handle remarks history expansion
+  useEffect(() => {
+    if (!isHistoryCollapsed) {
+      loadComments();
+    }
+  }, [isHistoryCollapsed]);
 
   useEffect(() => {
     loadTaskDetails();
@@ -265,7 +324,8 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
   const progressPercentage = task.progress_percentage || 0;
 
   return (
-    <AppCard className="p-5 space-y-5 border-t-4 border-t-purple-500">
+    <ExperienceProvider mode="compact">
+    <AppCard className="p-4 space-y-4 border-t-2 border-t-blue-500">
       
       {/* Sleek Error Notification Banner */}
       {error && (
@@ -278,7 +338,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
       {/* Title & Core Meta removed to avoid duplication with parent page layout */}
       
       {/* Extended Metadata Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 bg-gray-50/50 dark:bg-white/[0.02] p-4 rounded-xl border border-gray-100 dark:border-white/5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 bg-gray-50/50 dark:bg-[#111827] p-3 rounded-md border border-gray-100 dark:border-white/5">
           <div className="space-y-1">
             <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Priority</span>
             <div className="flex items-center gap-1.5">
@@ -327,7 +387,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         )}
 
       {/* Interactive Lifecycle State Transition Panel */}
-      <div className={`p-4 rounded-xl border space-y-4 ${
+      <div className={`p-3 rounded-md border space-y-3 ${
         isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.01] border-white/5"
       }`}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -343,8 +403,8 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                   setPendingStatus(newCode);
                 }
               }}
-              className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-                isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"
+              className={`w-full p-1.5 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
               }`}
             >
               {statuses.map(st => (
@@ -389,7 +449,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                   <AppButton 
                     size="sm" 
                     variant="primary" 
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-blue-600 hover:bg-blue-700"
                     leftIcon={<CheckCircle2 className="h-3.5 w-3.5" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("approve")}
@@ -447,8 +507,8 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
           <textarea
             value={remarksDraft}
             onChange={e => setRemarksDraft(e.target.value)}
-            className={`w-full min-h-[96px] p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
-              isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/50 border-white/10 text-white"
+            className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${
+              isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
             }`}
             placeholder="Add update notes or handoff remarks..."
           />
@@ -460,7 +520,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
           </div>
 
           {/* Remarks History Queue */}
-          <div className={`mt-4 rounded-xl border p-4 transition-all duration-300 ${
+          <div className={`mt-3 rounded-md border p-3 transition-all duration-150 ${
             isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/[0.02] border-white/5 text-white"
           }`}>
             {/* Header with toggle */}
@@ -469,9 +529,9 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
               className="flex items-center justify-between cursor-pointer select-none group"
             >
               <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-purple-500" />
-                <span className={`text-xs font-bold uppercase tracking-wider transition-colors ${
-                  isLightMode ? "text-gray-700 group-hover:text-purple-600" : "text-gray-400 group-hover:text-purple-400"
+                <MessageSquare className="h-4 w-4 text-blue-500" />
+                <span className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                  isLightMode ? "text-gray-700 group-hover:text-blue-600" : "text-gray-400 group-hover:text-blue-400"
                 }`}>
                   Remarks History Queue
                 </span>
@@ -571,18 +631,25 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
 
       {/* Tabs Menu */}
       <div className={`flex border-b border-gray-200 dark:border-white/5`}>
-        {(["checklist", "attachments"] as const).map((tab) => (
+        {(["checklist", "attachments", "collaboration"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-xs font-bold capitalize transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
+            onMouseEnter={() => {
+              // Intelligent Prefetching on Hover
+              if (tab === "checklist" && !isChecklistsLoaded) getTaskChecklists(taskId).then(d => { setTask((p:any) => ({...p, checklists: d})); setIsChecklistsLoaded(true); });
+              if (tab === "attachments" && !isAttachmentsLoaded) getTaskAttachments(taskId).then(d => { setTask((p:any) => ({...p, attachments: d})); setIsAttachmentsLoaded(true); });
+              if (tab === "collaboration" && !isCommentsLoaded) getTaskComments(taskId, 20, 0).then(c => { setRemarksHistory(c); setIsCommentsLoaded(true); });
+            }}
+            className={`px-4 py-2 text-[11px] uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
               activeTab === tab
-                ? "border-purple-500 text-purple-400 font-extrabold"
+                ? "border-blue-500 text-blue-500"
                 : "border-transparent text-gray-500 hover:text-gray-400"
             }`}
           >
             {tab === "checklist" && <CheckSquare className="h-3.5 w-3.5" />}
             {tab === "attachments" && <Paperclip className="h-3.5 w-3.5" />}
+            {tab === "collaboration" && <MessageSquare className="h-3.5 w-3.5" />}
             <span>{tab}</span>
           </button>
         ))}
@@ -636,76 +703,92 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         {/* Attachments Tab */}
         {activeTab === "attachments" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Attachments</span>
-              <button
-                type="button"
-                onClick={triggerFileSelect}
-                className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-purple-50 hover:text-purple-600"
-                aria-label="Upload file"
-              >
-                <Pin className="h-4 w-4" />
-              </button>
-            </div>
-
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              onChange={handleFileChange} 
-            />
-
-            <div 
-              onClick={triggerFileSelect}
-              className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                isLightMode 
-                  ? "border-gray-200 bg-gray-50 hover:bg-gray-100/50" 
-                  : "border-white/10 bg-white/[0.01] hover:bg-white/[0.02]"
-              }`}
-            >
-              {uploadingFile ? (
-                <div className="space-y-2 flex flex-col items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
-                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Uploading file...</span>
+            {isLoadingTab && !isAttachmentsLoaded ? (
+              <div className="py-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-purple-500" /></div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Attachments</span>
+                  <button
+                    type="button"
+                    onClick={triggerFileSelect}
+                    className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-purple-50 hover:text-purple-600"
+                    aria-label="Upload file"
+                  >
+                    <Pin className="h-4 w-4" />
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-2 flex flex-col items-center justify-center">
-                  <Paperclip className="h-6 w-6 text-purple-400" />
-                  <span className="text-xs font-bold text-purple-500 hover:text-purple-600 block">Click to select and upload file</span>
-                  <span className="text-xs text-gray-500 block">Supports any document or image file</span>
-                </div>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              {(task.attachments || []).map((item: any) => (
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={handleFileChange} 
+                />
+
                 <div 
-                  key={item.id} 
-                  className={`flex items-center justify-between p-3 rounded-xl border ${
-                    isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5"
+                  onClick={triggerFileSelect}
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                    isLightMode 
+                      ? "border-gray-200 bg-gray-50 hover:bg-gray-100/50" 
+                      : "border-white/10 bg-white/[0.01] hover:bg-white/[0.02]"
                   }`}
                 >
-                  <div className="flex items-center gap-2 truncate">
-                    <Paperclip className="h-4 w-4 text-purple-400 shrink-0" />
-                    <div className="truncate space-y-0.5">
-                      <span className={`text-xs font-bold block truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{item.file_name}</span>
-                      <span className="text-[0.7rem] text-gray-500 block">{(item.size / 1024 / 1024).toFixed(2)} MB</span>
+                  {uploadingFile ? (
+                    <div className="space-y-2 flex flex-col items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+                      <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Uploading file...</span>
                     </div>
-                  </div>
-                  <a 
-                    href={item.file_url} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                  </a>
+                  ) : (
+                    <div className="space-y-2 flex flex-col items-center justify-center">
+                      <Paperclip className="h-6 w-6 text-purple-400" />
+                      <span className="text-xs font-bold text-purple-500 hover:text-purple-600 block">Click to select and upload file</span>
+                      <span className="text-xs text-gray-500 block">Supports any document or image file</span>
+                    </div>
+                  )}
                 </div>
-              ))}
-              {(task.attachments || []).length === 0 && (
-                <div className="text-center py-8 text-xs text-gray-500">No attachments linked to this directive.</div>
-              )}
-            </div>
+
+                <div className="space-y-2">
+                  {(task.attachments || []).map((item: any) => (
+                    <div 
+                      key={item.id} 
+                      className={`flex items-center justify-between p-3 rounded-xl border ${
+                        isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <Paperclip className="h-4 w-4 text-purple-400 shrink-0" />
+                        <div className="truncate space-y-0.5">
+                          <span className={`text-xs font-bold block truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{item.file_name}</span>
+                          <span className="text-[0.7rem] text-gray-500 block">{(item.size / 1024 / 1024).toFixed(2)} MB</span>
+                        </div>
+                      </div>
+                      <a 
+                        href={item.file_url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  ))}
+                  {(task.attachments || []).length === 0 && (
+                    <div className="text-center py-8 text-xs text-gray-500">No attachments linked to this directive.</div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Collaboration Tab */}
+        {activeTab === "collaboration" && (
+          <div className="space-y-4">
+             <div className="text-center py-8 text-xs text-gray-500 border rounded-xl border-dashed">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                Collaboration chat and integrations are progressively hydrated.
+             </div>
           </div>
         )}
 
@@ -713,5 +796,6 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
 
       </div>
     </AppCard>
+    </ExperienceProvider>
   );
 }

@@ -12,14 +12,14 @@
   --border-subtle: #EAEAEA;
   --border-active: #999999;
 
-  --accent-primary: #000000;
-  --accent-secondary: #333333;
-  --success: #0070F3;
-  --warning: #F5A623;
-  --danger: #EE0000;
+  --accent-primary: #3B82F6;
+  --accent-secondary: #2563EB;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
 
-  --shadow-ambient: 0 4px 14px 0 rgba(0, 0, 0, 0.05);
-  --shadow-elevation: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-ambient: 0 2px 10px -2px rgba(0, 0, 0, 0.4);
+  --shadow-elevation: 0 4px 15px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 
   --backdrop-blur: blur(0px);
   --backdrop-saturate: saturate(100%);

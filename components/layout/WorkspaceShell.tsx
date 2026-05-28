@@ -41,25 +41,13 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
       {/* Main Orchestration Column */}
       <div className="flex flex-1 flex-col min-w-0 min-h-screen relative overflow-x-hidden">
-        {/* Background Decorative Ambient Circles */}
-        {!isLight && (
-          <>
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
-          </>
-        )}
-        {isLight && (
-          <>
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/[0.03] rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/[0.03] rounded-full blur-3xl pointer-events-none" />
-          </>
-        )}
+        {/* Removed Background Decorative Ambient Circles for Enterprise Discipline */}
 
         {/* Global Action Top Navbar */}
         {!isAuthRoute && <Navbar />}
 
-        {/* Dynamic Scrollable Content Workspace */}
-        <main className={`flex-1 w-full relative pb-24 ${isAuthRoute ? 'p-0' : 'p-4 sm:p-6 lg:p-8'}`}>
+        {/* Dynamic Scrollable Content Workspace - Zero Global Padding to allow Density Modes */}
+        <main className={`flex-1 w-full relative pb-24 ${isAuthRoute ? 'p-0' : 'p-0'}`}>
           {children}
         </main>
       </div>

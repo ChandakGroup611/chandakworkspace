@@ -18,10 +18,10 @@ export const AppCard = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "rounded-2xl shadow-xl relative overflow-hidden transition-all duration-300",
+        "rounded-[var(--radius-card,8px)] relative overflow-hidden transition-all duration-150",
         isLight 
-          ? "bg-white border border-gray-200/80 shadow-sm" 
-          : "border border-white/5 bg-white/[0.02]",
+          ? "bg-white border border-gray-200 shadow-sm" 
+          : "border border-white/5 bg-[#111827] shadow-[0_2px_10px_-2px_rgba(0,0,0,0.3)]",
         className
       )}
       {...props}
@@ -44,7 +44,7 @@ export const AppCardHeader = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex flex-col space-y-1 p-5 pb-3 border-b",
+        "flex flex-col space-y-1 p-4 pb-3 border-b",
         isLight ? "border-gray-100" : "border-white/5",
         className
       )}
@@ -94,7 +94,7 @@ export const AppCardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-5 pt-4", className)} {...props} />
+  <div ref={ref} className={cn("p-4 pt-3", className)} {...props} />
 ));
 AppCardContent.displayName = "AppCardContent";
 
@@ -112,7 +112,7 @@ export const AppCardFooter = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex items-center p-5 pt-3 border-t",
+        "flex items-center p-4 pt-3 border-t",
         isLight ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.01]",
         className
       )}

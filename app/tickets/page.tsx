@@ -15,7 +15,7 @@ export default function TicketsPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
-  const { hasPermission, loading: permissionsLoading } = usePermissions();
+  const { hasPermission, roleCode, userId, loading: permissionsLoading } = usePermissions();
   
   // Master Data
   const [departments, setDepartments] = useState<any[]>([]);
@@ -115,36 +115,25 @@ export default function TicketsPage() {
   useEffect(() => {
     fetchData();
 
-    // Global realtime listener for new tickets, updates or deletions
-    const channel = supabase
-      .channel("tickets_global")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tickets" },
-        () => fetchData()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Realtime listener removed per P4 Polling Governance.
   }, []);
 
-  // Filter tickets by scope selection (INFRA, ERP, OTHERS) and search queries
+  // Filter tickets by search queries and role-based visibility isolation
   const filteredTickets = tickets.filter(t => {
     const matchesSearch = 
       (t.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
       (t.id || "").toLowerCase().includes(searchQuery.toLowerCase());
       
-    // Matches ticket custom_fields flow_scope ID or code
-    const scopeIdOrCode = t.custom_fields?.flow_scope?.id || t.custom_fields?.flow_scope?.code || "";
-    const matchesScope = 
-      selectedScope === "ALL" || 
-      scopeIdOrCode === selectedScope || 
-      t.custom_fields?.flow_scope?.id === selectedScope ||
-      t.custom_fields?.flow_scope?.code === selectedScope;
+    // End User Role Visibility: Can only see their own created or assigned tickets
+    if (roleCode === "END_USER") {
+      const isCreator = t.creator_id === userId;
+      const isAssignee = t.assignee_id === userId;
+      if (!isCreator && !isAssignee) {
+        return false;
+      }
+    }
       
-    return matchesSearch && matchesScope;
+    return matchesSearch;
   });
 
   if (!mounted || permissionsLoading) {
@@ -229,9 +218,9 @@ export default function TicketsPage() {
           {hasPermission("TICKETS_CREATE") && (
             <AppButton 
               variant="primary" 
-              size="sm" 
+              size="md" 
               onClick={() => setShowWizard(true)}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 px-6"
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_25px_rgba(99,102,241,0.6)] border-none px-6 transition-all hover:scale-105"
             >
               <Plus className="h-4 w-4 mr-2" />
               Initialize Ticket
@@ -275,6 +264,7 @@ export default function TicketsPage() {
                 categories={categories}
                 subcategories={subcategories}
                 issueTypes={issueTypes}
+                currentUserId={userId}
               />
             </div>
           )}

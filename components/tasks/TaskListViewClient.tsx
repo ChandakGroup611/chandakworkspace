@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -19,6 +20,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -55,6 +57,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const uniqueStatuses = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[], [tasks]);
   const uniquePriorities = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.priority?.name).filter(Boolean))) as string[], [tasks]);
   const router = useRouter();
+
+  const parentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function whoami() {
@@ -209,8 +213,16 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     doc.save("Workspace_Tasks_Export.pdf");
   };
 
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64, // Approximate row height in pixels
+    overscan: 10,
+  });
+
   return (
-    <div className="space-y-4">
+    <ExperienceProvider mode="operational">
+      <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <AppButton variant="outline" size="sm" onClick={() => router.push("/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
@@ -221,7 +233,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               <button
                 key={sc}
                 onClick={() => setScope(sc)}
-                className={`text-xs font-semibold px-3 py-1 rounded-lg ${scope === sc ? "bg-indigo-600 text-white" : "text-gray-300 hover:text-white"}`}
+                className={`text-[11px] font-semibold px-2 py-1 rounded-md ${scope === sc ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"}`}
               >
                 {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
               </button>
@@ -266,12 +278,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             {/* Advanced Filters Row */}
       <div className="flex items-center flex-wrap gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/5">
-        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-xs px-3 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-[11px] px-2 py-1.5 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
           <option value="">All Statuses</option>
           {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         
-        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-xs px-3 py-2 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-[11px] px-2 py-1.5 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
           <option value="">All Priorities</option>
           {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
@@ -283,9 +295,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         
         <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 ml-auto">
           <span>Date Between:</span>
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-[11px] px-2 py-1 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500" />
           <span>to</span>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-xs px-2 py-1.5 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-[11px] px-2 py-1 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500" />
           
           {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo) && (
             <button 
@@ -332,92 +344,123 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           color: #1f2937;
           letter-spacing: 0.025em;
           border-bottom: 2px solid #d1d5db;
-          padding: 12px;
+          padding: 8px 12px;
           background-color: #f3f4f6;
+          font-size: 11px;
+          text-transform: uppercase;
         }
         .task-table tbody td {
           color: #374151;
+          padding: 6px 12px;
+          font-size: 13px;
         }
       `}</style>
       
       <AppTableContainer>
-        <AppTable className="task-table">
-          <AppTableHeader>
-            <AppTableRow>
-              <AppTableHead className="w-[120px]">Code</AppTableHead>
-              <AppTableHead>Title & Description</AppTableHead>
-              <AppTableHead>Workspace</AppTableHead>
-              <AppTableHead>Priority</AppTableHead>
-              <AppTableHead>Due</AppTableHead>
-              <AppTableHead>Status</AppTableHead>
-              <AppTableHead className="text-right">Created</AppTableHead>
-              <AppTableHead className="text-right">Actions</AppTableHead>
-            </AppTableRow>
-          </AppTableHeader>
-          <AppTableBody>
-            {filtered.map((task: any, index: number) => (
-              <AppTableRow key={task.id} className="transition-colors duration-150">
-                <AppTableCell className="font-mono text-xs text-purple-400 font-bold">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
-                <AppTableCell>
-                  <div className="font-semibold truncate text-gray-100">{task.title}</div>
-                  <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
-                </AppTableCell>
-                <AppTableCell className="text-gray-300">{task.workspace?.name || task.workspace?.code}</AppTableCell>
-                <AppTableCell>
-                  <AppBadge variant="info">{task.priority?.name || '—'}</AppBadge>
-                </AppTableCell>
-                <AppTableCell className="text-gray-400 text-sm">{task.end_date || '—'}</AppTableCell>
-                <AppTableCell>
-                  <AppBadge variant="neutral">{task.status?.name || '—'}</AppBadge>
-                </AppTableCell>
-                <AppTableCell className="text-right text-gray-400 text-xs">{formatDate(task.created_at)}</AppTableCell>
-                <AppTableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <AppButton size="sm" variant="outline" onClick={() => setSelectedTask(task)}>View</AppButton>
-                    <Link href={`/tasks/${task.id}`} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">Open</Link>
-                  </div>
-                </AppTableCell>
+        <div ref={parentRef} className="max-h-[600px] overflow-auto relative">
+          <AppTable className="task-table w-full">
+            <AppTableHeader className="sticky top-0 z-10 bg-[#06080f]">
+              <AppTableRow>
+                <AppTableHead className="w-[120px]">Code</AppTableHead>
+                <AppTableHead>Title & Description</AppTableHead>
+                <AppTableHead>Workspace</AppTableHead>
+                <AppTableHead>Priority</AppTableHead>
+                <AppTableHead>Due</AppTableHead>
+                <AppTableHead>Status</AppTableHead>
+                <AppTableHead className="text-right">Created</AppTableHead>
+                <AppTableHead className="text-right">Actions</AppTableHead>
               </AppTableRow>
-            ))}
-          </AppTableBody>
-        </AppTable>
+            </AppTableHeader>
+            <AppTableBody style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const task = filtered[virtualRow.index];
+                return (
+                  <AppTableRow 
+                    key={task.id} 
+                    className="transition-colors duration-150 absolute top-0 left-0 w-full hover:bg-gray-800/20"
+                    style={{
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <AppTableCell className="font-mono text-[11px] text-blue-400 font-bold">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                    <AppTableCell>
+                      <div className="font-semibold truncate text-gray-100">{task.title}</div>
+                      <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
+                    </AppTableCell>
+                    <AppTableCell className="text-gray-300">{task.workspace?.name || task.workspace?.code}</AppTableCell>
+                    <AppTableCell>
+                      <AppBadge variant="info">{task.priority?.name || '—'}</AppBadge>
+                    </AppTableCell>
+                    <AppTableCell className="text-gray-400 text-sm">{task.end_date || '—'}</AppTableCell>
+                    <AppTableCell>
+                      <AppBadge variant="neutral">{task.status?.name || '—'}</AppBadge>
+                    </AppTableCell>
+                    <AppTableCell className="text-right text-gray-400 text-xs">{formatDate(task.created_at)}</AppTableCell>
+                    <AppTableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <AppButton size="sm" variant="outline" onClick={() => setSelectedTask(task)}>View</AppButton>
+                        <Link href={`/tasks/${task.id}`} className="text-[11px] font-semibold text-blue-500 hover:text-blue-400 transition-colors">Open</Link>
+                      </div>
+                    </AppTableCell>
+                  </AppTableRow>
+                );
+              })}
+            </AppTableBody>
+          </AppTable>
+        </div>
       </AppTableContainer>
 
       {filtered.length === 0 && (
         <div className="text-center py-10 text-gray-500">No tasks found for this filter.</div>
       )}
 
-      {/* Modal */}
+      {/* Side Drawer Component */}
       {selectedTask && (
-        <div className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 bg-black/50" onClick={() => setSelectedTask(null)}>
-          <div className="w-full max-w-3xl bg-white/5 rounded-xl p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between">
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setSelectedTask(null)} />
+          <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] bg-white dark:bg-[#0B0F19] shadow-2xl border-l border-gray-200 dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="p-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50 dark:bg-white/[0.02]">
               <div>
-                <h2 className="text-lg font-bold">{selectedTask.title}</h2>
-                <p className="text-xs text-gray-400">{selectedTask.code} • {selectedTask.workspace?.name}</p>
+                <h2 className="text-[14px] font-bold text-gray-900 dark:text-white truncate pr-4">{selectedTask.title}</h2>
+                <div className="text-[11px] font-mono text-gray-500 mt-1">{selectedTask.code} • {selectedTask.workspace?.name}</div>
               </div>
-              <div className="flex items-center gap-2">
-                <AppButton variant="outline" size="sm" onClick={() => setSelectedTask(null)}>Close</AppButton>
-                <Link href={`/tasks/${selectedTask.id}`} className="text-xs font-bold text-indigo-500">Open Full</Link>
-              </div>
+              <AppButton variant="ghost" size="sm" onClick={() => setSelectedTask(null)} className="h-8 w-8 p-0 shrink-0">✕</AppButton>
             </div>
-
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-xs font-bold text-gray-400">Description</h4>
-                <p className="text-sm mt-2 text-gray-200">{selectedTask.description || 'No description'}</p>
+            
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              <div className="space-y-2">
+                <h4 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Description</h4>
+                <p className="text-[13px] text-gray-800 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {selectedTask.description || 'No description provided.'}
+                </p>
               </div>
-              <div>
-                <h4 className="text-xs font-bold text-gray-400">Metadata</h4>
-                <div className="mt-2 text-sm text-gray-200 space-y-1">
-                  <div><strong>Priority:</strong> {selectedTask.priority?.name || 'N/A'}</div>
-                  <div><strong>Status:</strong> {selectedTask.status?.name || 'N/A'}</div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Priority</span>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.priority?.name || 'N/A'}</div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Status</span>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.status?.name || 'N/A'}</div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Due Date</span>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.end_date || 'N/A'}</div>
                 </div>
               </div>
             </div>
+
+            <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02] flex items-center gap-2">
+              <Link href={`/tasks/${selectedTask.id}`} className="w-full flex-1">
+                <AppButton variant="primary" className="w-full bg-blue-600 hover:bg-blue-700">Open Execution Workspace</AppButton>
+              </Link>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
+    </ExperienceProvider>
   );
 }

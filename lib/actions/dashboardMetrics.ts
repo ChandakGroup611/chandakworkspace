@@ -9,8 +9,15 @@ export async function fetchLiveDashboardMetrics() {
   const supabase = createClient(cookieStore);
 
   try {
-    // 1. Fetch Tasks
-    const { data: tasksData, error: tasksError } = await supabase
+    // 1. Fetch Users for Mapping (Master Data)
+    const adminSupabase = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+    );
+    const usersPromise = adminSupabase.from("user_master").select("id, full_name");
+
+    // 2. Group Operational Queries
+    const tasksPromise = supabase
       .from("tasks")
       .select(`
         id, created_at, created_by,
@@ -19,9 +26,7 @@ export async function fetchLiveDashboardMetrics() {
       `)
       .order("created_at", { ascending: false });
 
-    // 2. Fetch Tickets 
-    // NOTE: Add \`due_date\` back to this select once the migration 20260526020000_add_due_dates_to_entities.sql is executed in Supabase!
-    const { data: ticketsData, error: ticketsError } = await supabase
+    const ticketsPromise = supabase
       .from("tickets")
       .select(`
         id, created_at, creator_id,
@@ -30,9 +35,7 @@ export async function fetchLiveDashboardMetrics() {
       `)
       .order("created_at", { ascending: false });
 
-    // 3. Fetch Requirements 
-    // NOTE: Add \`due_date\` back to this select once the migration 20260526020000_add_due_dates_to_entities.sql is executed in Supabase!
-    const { data: requirementsData, error: requirementsError } = await supabase
+    const requirementsPromise = supabase
       .from("requirements")
       .select(`
         id, created_at, creator_id,
@@ -41,8 +44,7 @@ export async function fetchLiveDashboardMetrics() {
       `)
       .order("created_at", { ascending: false });
 
-    // 4. Fetch Workspaces
-    const { data: workspacesData, error: workspacesError } = await supabase
+    const workspacesPromise = supabase
       .from("workspaces")
       .select(`
         id, created_at,
@@ -51,15 +53,20 @@ export async function fetchLiveDashboardMetrics() {
       `)
       .order("created_at", { ascending: false });
 
-    // 5. Fetch Users for Mapping (Bypass RLS using Service Role Key so normal users see all names)
-    const adminSupabase = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-    );
-    
-    const { data: usersData } = await adminSupabase
-      .from("user_master")
-      .select("id, full_name");
+    // Execute parallel groups
+    const [
+      { data: usersData },
+      { data: tasksData, error: tasksError },
+      { data: ticketsData, error: ticketsError },
+      { data: requirementsData, error: requirementsError },
+      { data: workspacesData, error: workspacesError }
+    ] = await Promise.all([
+      usersPromise,
+      tasksPromise,
+      ticketsPromise,
+      requirementsPromise,
+      workspacesPromise
+    ]);
 
     const userMap: Record<string, string> = {};
     usersData?.forEach((u: any) => {

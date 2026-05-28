@@ -38,7 +38,8 @@ import {
   Cpu,
   Server,
   Box,
-  Edit
+  Edit,
+  Clock
 } from "lucide-react";
 
 // List of all master tables mapped to labels and icons
@@ -301,40 +302,8 @@ export default function MastersPage() {
     }
   }, [successAlert, errorAlert]);
 
-  // True Enterprise Realtime Database Channel Feed Subscription
-  useEffect(() => {
-    const channel = supabase.channel(`realtime-master-${activeTab}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: currentConfig.table },
-        (payload: any) => {
-          console.log(`[Realtime Live Sync] Intercepted broadcast event ${payload.eventType} on relation ${currentConfig.table}:`, payload);
-          
-          // Only process if it matches the current scopeId (allow nulls to surface for remediation)
-          const isMatch = !currentConfig.scopeId || !payload.new?.scope_id || payload.new.scope_id === currentConfig.scopeId;
-          if (!isMatch) return;
-
-          if (payload.eventType === 'INSERT') {
-            setRecords(prev => {
-              // Ensure we do not duplicate client-cached optimistic rows
-              if (prev.some(r => r.id === payload.new.id || r.code === payload.new.code)) {
-                return prev.map(r => r.code === payload.new.code ? payload.new : r);
-              }
-              return [payload.new, ...prev];
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            setRecords(prev => prev.map(r => r.id === payload.new.id ? payload.new : r));
-          } else if (payload.eventType === 'DELETE') {
-            setRecords(prev => prev.filter(r => r.id !== payload.old?.id));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeTab, supabase, currentConfig.table, currentConfig.scopeId]);
+  // Realtime subscription removed as per Enterprise Polling Governance (P4).
+  // Masters change infrequently, rely on manual refresh.
 
   const openCreateModal = () => {
     setEditRecordId(null);
@@ -366,10 +335,10 @@ export default function MastersPage() {
     } else if (parentOptions.length > 0) {
       setFormParentId(parentOptions[0].id);
     }
-    setFormSlaMinutes(rec.sla_target_minutes || 120);
-    setFormSlaMin(rec.sla_min_minutes || 60);
-    setFormSlaMax(rec.sla_max_minutes || 180);
-    setFormSlaStandard(rec.sla_standard_minutes || 120);
+    setFormSlaMinutes((rec.max_sla_hours * 60) || 120);
+    setFormSlaMin((rec.min_sla_hours * 60) || 60);
+    setFormSlaMax((rec.max_sla_hours * 60) || 180);
+    setFormSlaStandard((rec.max_sla_hours * 60) || 120);
     setFormAssetTag(rec.asset_tag || "");
     setFormModule(rec.module || "tickets");
     setFormScopeId(rec.scope_id || null);
@@ -414,10 +383,9 @@ export default function MastersPage() {
     }
     if (currentConfig.table === "priority_master") {
       const standard = Number(formSlaStandard) || 120;
-      payload.sla_standard_minutes = standard;
-      payload.sla_target_minutes = standard;
-      payload.sla_min_minutes = Number(formSlaMin) || Math.floor(standard * 0.5);
-      payload.sla_max_minutes = Number(formSlaMax) || Math.floor(standard * 1.5);
+      payload.max_sla_hours = Math.ceil(standard / 60);
+      payload.warning_sla_hours = Math.max(1, Math.floor(standard / 60));
+      payload.min_sla_hours = Math.floor((Number(formSlaMin) || Math.floor(standard * 0.5)) / 60);
     }
     if (currentConfig.table === "assets") {
       payload.asset_tag = formAssetTag.trim().toUpperCase() || `TAG-${Date.now().toString().slice(-6)}`;
@@ -1010,16 +978,15 @@ export default function MastersPage() {
 
                               {activeTab === "master_priorities" && (
                                 <AppTableCell>
-                                  {rec.sla_target_minutes !== undefined || rec.sla_standard_minutes !== undefined ? (
-                                    <div className="flex flex-col gap-1">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded border ${isLightMode ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-amber-400/10 border-amber-400/20 text-amber-400"}`}>
-                                          {rec.sla_standard_minutes || rec.sla_target_minutes}m Standard
-                                        </span>
+                                  {rec.max_sla_hours !== undefined ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className={`p-1 rounded-md ${isLightMode ? "bg-amber-100" : "bg-amber-500/10"}`}>
+                                        <Clock className="h-3 w-3 text-amber-500" />
                                       </div>
+                                      <span className="font-semibold">{rec.max_sla_hours * 60}m Target</span>
                                       <div className="flex gap-2 text-[0.65rem] opacity-60 uppercase font-bold tracking-tighter">
-                                        <span>Min: {rec.sla_min_minutes || 0}m</span>
-                                        <span>Max: {rec.sla_max_minutes || 0}m</span>
+                                        <span>Min: {rec.min_sla_hours || 0}h</span>
+                                        <span>Max: {rec.max_sla_hours || 0}h</span>
                                       </div>
                                     </div>
                                   ) : (

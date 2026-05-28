@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Profiler } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { Send, Smile, Paperclip, MessageSquare, Wifi, WifiOff, Loader2, Users } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { useRenderLog } from "@/hooks/use-render-log";
+import { onRenderCallback } from "@/utils/performance/profiler-utils";
 
 export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
+  useRenderLog("TaskRealtimeChat", { taskId });
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   // Create client once with useRef so it's stable across renders
@@ -264,6 +267,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
   };
 
   return (
+    <Profiler id={`TaskRealtimeChat-${taskId}`} onRender={onRenderCallback}>
     <AppCard className={`flex flex-col border ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0c16] border-white/10"}`}>
 
       {/* Header */}
@@ -456,5 +460,6 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         </form>
       </div>
     </AppCard>
+    </Profiler>
   );
 }

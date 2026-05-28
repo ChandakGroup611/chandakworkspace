@@ -17,7 +17,7 @@ async function checkServerPermission(supabase: any, userId: string, requiredPerm
 /**
  * Fetches all remarks/comments for a given ticket
  */
-export async function fetchTicketComments(ticketId: string) {
+export async function fetchTicketComments(ticketId: string, limit = 20, offset = 0) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -42,7 +42,8 @@ export async function fetchTicketComments(ticketId: string) {
     `)
     .eq("ticket_id", ticketId)
     .eq("is_deleted", false)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     console.error("[Server Action] Error fetching remarks:", error);
@@ -90,7 +91,7 @@ export async function addTicketRemark(ticketId: string, content: string) {
 /**
  * Fetches the audit logs history for a given ticket
  */
-export async function fetchTicketAuditLogs(ticketId: string) {
+export async function fetchTicketAuditLogs(ticketId: string, limit = 20, offset = 0) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -116,7 +117,8 @@ export async function fetchTicketAuditLogs(ticketId: string) {
       actor:user_master!actor_id(full_name, email)
     `)
     .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     console.error("[Server Action] Error fetching audit logs:", error);
@@ -333,22 +335,45 @@ export async function createEnterpriseTicket(payload: any) {
 
   const dbScopeType = payload.scope_type === 'ERP/SOFTWARE' ? 'ERP' : payload.scope_type;
 
-  // Fetch 'NEW' status ID from status_master
-  const { data: newState } = await supabaseAdmin
+  // Fetch 'NEW' status ID from status_master (fallback to global if scoped one is missing)
+  const { data: newStates } = await supabaseAdmin
     .from('status_master')
     .select('id')
     .eq('status_code', 'NEW')
-    .eq('scope_type', dbScopeType)
-    .single();
+    .or(`scope_type.eq.${dbScopeType},scope_type.is.null`)
+    .limit(1);
 
-  if (!newState) throw new Error(`System Error: 'NEW' status_master state not found for ${dbScopeType}.`);
+  const newState = newStates && newStates.length > 0 ? newStates[0] : null;
+  if (!newState) throw new Error(`System Error: 'NEW' status_master state not found for ${dbScopeType} or global.`);
+
+  // Fallback for priority_id if strictly scoped priorities are missing (prevents 23502 NOT NULL)
+  let finalPriorityId = payload.priority_id;
+  if (!finalPriorityId) {
+    const { data: fallbackPrio } = await supabaseAdmin
+      .from('priority_master')
+      .select('id')
+      .or(`scope_type.eq.${dbScopeType},scope_type.is.null`)
+      .limit(1)
+      .single();
+    if (fallbackPrio) finalPriorityId = fallbackPrio.id;
+  }
+
+  // Fallback for department_id (prevents 23502 NOT NULL if user has no department)
+  let finalDeptId = payload.department_id || creatorInfo?.department_id;
+  if (!finalDeptId) {
+    const { data: fallbackDept } = await supabaseAdmin.from('departments').select('id').limit(1).single();
+    if (fallbackDept) finalDeptId = fallbackDept.id;
+  }
 
   // Insert Ticket
+  const uniqueCode = `INC-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000)}`;
   const insertPayload = {
     ...payload,
+    code: uniqueCode,
     creator_id: user.id,
-    department_id: payload.department_id || creatorInfo?.department_id,
+    department_id: finalDeptId,
     status_id: newState.id,
+    priority_id: finalPriorityId,
     queue_owner_id: creatorInfo?.manager_id || null,
     custom_fields: payload.custom_fields || {}
   };
@@ -358,47 +383,56 @@ export async function createEnterpriseTicket(payload: any) {
 
   // Requirement Auto-Creation Engine
   if (isRequirement) {
-    const { data: reqState } = await supabaseAdmin
+    const { data: reqStates } = await supabaseAdmin
       .from('status_master')
       .select('id')
       .eq('status_code', 'NEW')
-      .eq('scope_type', 'REQUIREMENT')
-      .single();
+      .or('scope_type.eq.REQUIREMENT,scope_type.is.null')
+      .limit(1);
 
-    const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').insert({
-      title: ticket.title || ticket.subject || 'New Requirement',
-      description: payload.custom_fields.requirement_description,
-      business_justification: payload.custom_fields.business_reason,
-      department_id: insertPayload.department_id,
-      priority_id: payload.priority_id,
-      status_id: reqState?.id || newState.id,
-      created_by: user.id
-    }).select().single();
+    const reqState = reqStates && reqStates.length > 0 ? reqStates[0] : null;
 
-    if (reqErr) throw new Error("Failed to auto-create Requirement: " + reqErr.message);
+    // Run Requirement Creation asynchronously to speed up Ticket CUD
+    Promise.resolve().then(async () => {
+      try {
+        const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').insert({
+          title: ticket.title || ticket.subject || 'New Requirement',
+          description: payload.custom_fields.requirement_description,
+          business_justification: payload.custom_fields.business_reason,
+          department_id: insertPayload.department_id,
+          priority_id: payload.priority_id,
+          status_id: reqState?.id || newState.id,
+          created_by: user.id
+        }).select().single();
 
-    // Link Ticket and Requirement
-    await supabaseAdmin.from('ticket_requirements').insert({
-      ticket_id: ticket.id,
-      requirement_id: req.id,
-      linked_by: user.id
-    });
+        if (!reqErr && req) {
+          // Link Ticket and Requirement
+          await supabaseAdmin.from('ticket_requirements').insert({
+            ticket_id: ticket.id,
+            requirement_id: req.id,
+            linked_by: user.id
+          });
 
-    // Notify Queue / Assignees
-    await supabaseAdmin.from('notification_queue').insert({
-      recipient_id: creatorInfo?.manager_id || user.id, // e.g. Dept Manager
-      payload: {
-        type: 'REQUIREMENT_CREATED',
-        message: `New Requirement auto-generated from Ticket ${ticket.code}`,
-        requirement_id: req.id
-      },
-      status: 'pending'
+          // Notify Queue / Assignees
+          await supabaseAdmin.from('notification_queue').insert({
+            recipient_id: creatorInfo?.manager_id || user.id, // e.g. Dept Manager
+            payload: {
+              type: 'REQUIREMENT_CREATED',
+              message: `New Requirement auto-generated from Ticket ${ticket.code}`,
+              requirement_id: req.id
+            },
+            status: 'pending'
+          });
+        }
+      } catch (e) {
+        console.error("Async requirement creation failed:", e);
+      }
     });
   }
 
-  // Trigger Ticket Notifications
+  // Trigger Ticket Notifications asynchronously
   if (creatorInfo?.manager_id && !isRequirement) {
-    await supabaseAdmin.from('notification_queue').insert({
+    supabaseAdmin.from('notification_queue').insert({
       recipient_id: creatorInfo.manager_id,
       payload: {
         type: 'TICKET_ASSIGNED',
@@ -406,7 +440,7 @@ export async function createEnterpriseTicket(payload: any) {
         ticket_id: ticket.id
       },
       status: 'pending'
-    });
+    }).then(() => {}, (e) => console.error("Async notification failed:", e));
   }
 
   revalidatePath("/tickets");

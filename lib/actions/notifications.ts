@@ -43,81 +43,125 @@ export async function markNotificationAsRead(notificationId: string) {
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import nodemailer from "nodemailer";
 
-export async function dispatchNotification(userId: string, title: string, message: string, link?: string) {
+import { fetchSpecificEventConfig, fetchSystemEmailConfig } from "./email-config";
+
+export async function dispatchNotification(
+  userId: string, 
+  title: string, 
+  message: string, 
+  link?: string,
+  moduleCode?: string,
+  eventCode?: string
+) {
   
-  // 1. Insert into DB (In-App Queue)
-  const { data: notif, error: notifError } = await supabaseAdmin.from("task_notifications").insert([{
-    user_id: userId,
-    title,
-    message,
-    link,
-    is_read: false
-  }]).select().single();
-  if (notifError) console.error("Error inserting task_notification:", notifError);
-
-  // Also insert into global notification queue for realtime stream consumers
-  try {
-    const isWorkspace = link?.includes('workspaces') && !link?.includes('task=');
-    await supabaseAdmin.from('notification_queue').insert([{
-      target_user_id: userId,
-      entity_type: isWorkspace ? 'workspace' : 'task',
-      entity_id: link ? (link.includes('task=') ? link.split('task=')[1] : link.split('/').pop()) || 'SYS' : 'SYS',
-      module: isWorkspace ? 'workspaces' : 'tasks',
-      action_type: 'assignment',
-      actor: 'System',
-      redirect_url: link || null,
-      priority_level: 'LOW',
-      is_read: false,
-      payload: { 
-        id: notif?.id || null,
-        message 
-      }
-    }]);
-  } catch (e) {
-    console.error('Failed to insert into notification_queue', e);
-  }
-
-  // 2. Fetch User Email
-  const { data: user } = await supabaseAdmin.from("user_master").select("email").eq("id", userId).single();
-  if (!user?.email) return;
-
-  // Insert into corporate email_queue table
-  try {
-    await supabaseAdmin.from('email_queue').insert([{
-      recipient_email: user.email,
-      subject: title,
-      body_template: `${message}\n\nLink: ${link || 'N/A'}`,
-      status: 'pending'
-    }]);
-  } catch (e) {
-    console.error('Failed to insert into email_queue', e);
-  }
-
-  // 3. SMTP Trigger
-  if (process.env.SMTP_HOST && process.env.SMTP_USER) {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      await transporter.sendMail({
-        from: `"Enterprise Platform" <${process.env.SMTP_FROM || 'no-reply@enterprise.com'}>`,
-        to: user.email,
-        subject: title,
-        text: `${message}\n\nLink: ${link || 'N/A'}`
-      });
-      console.log(`[Email Dispatch Success] To: ${user.email}`);
-    } catch (e) {
-      console.error(`[Email Dispatch Failed]`, e);
+  // 0. Fail-Fast Trigger Interceptor
+  let isEmailEnabled = true;
+  let isInAppEnabled = true;
+  
+  if (moduleCode && eventCode) {
+    const config = await fetchSpecificEventConfig(moduleCode, eventCode);
+    if (config) {
+      isEmailEnabled = config.is_email_enabled !== false;
+      isInAppEnabled = config.is_inapp_enabled !== false;
     }
-  } else {
-    console.log(`[Email Mock Triggered - No SMTP Config] To User: ${userId} | Subject: ${title} | Body: ${message}`);
+    
+    // If both are disabled, abort immediately to save resources
+    if (!isEmailEnabled && !isInAppEnabled) {
+      console.log(`[Notification Engine] Trigger aborted for ${moduleCode}:${eventCode} - both channels disabled.`);
+      return;
+    }
+  }
+
+  // 1. Insert into DB (In-App Queue)
+  let notif: any = null;
+  if (isInAppEnabled) {
+    const { data: insertedNotif, error: notifError } = await supabaseAdmin.from("task_notifications").insert([{
+      user_id: userId,
+      title,
+      message,
+      link,
+      is_read: false
+    }]).select().single();
+    if (notifError) console.error("Error inserting task_notification:", notifError);
+    notif = insertedNotif;
+
+    // Also insert into global notification queue for realtime stream consumers
+    try {
+      const isWorkspace = link?.includes('workspaces') && !link?.includes('task=');
+      await supabaseAdmin.from('notification_queue').insert([{
+        target_user_id: userId,
+        entity_type: isWorkspace ? 'workspace' : 'task',
+        entity_id: link ? (link.includes('task=') ? link.split('task=')[1] : link.split('/').pop()) || 'SYS' : 'SYS',
+        module: isWorkspace ? 'workspaces' : 'tasks',
+        action_type: 'assignment',
+        actor: 'System',
+        redirect_url: link || null,
+        priority_level: 'LOW',
+        is_read: false,
+        payload: { 
+          id: notif?.id || null,
+          message 
+        }
+      }]);
+    } catch (e) {
+      console.error('Failed to insert into notification_queue', e);
+    }
+  }
+
+  // 2. Email Delivery Phase
+  if (isEmailEnabled) {
+    // Fetch User Email
+    const { data: user } = await supabaseAdmin.from("user_master").select("email").eq("id", userId).single();
+    if (!user?.email) return;
+
+    // Insert into corporate email_queue table
+    try {
+      await supabaseAdmin.from('email_queue').insert([{
+        recipient_email: user.email,
+        subject: title,
+        body_template: `${message}\n\nLink: ${link || 'N/A'}`,
+        status: 'pending'
+      }]);
+    } catch (e) {
+      console.error('Failed to insert into email_queue', e);
+    }
+
+    // 3. SMTP Trigger via DB Config (Fallback to .env.local if DB is empty)
+    const dbEmailConfig = await fetchSystemEmailConfig();
+    
+    const smtpHost = dbEmailConfig?.smtp_host || process.env.SMTP_HOST;
+    const smtpPort = dbEmailConfig?.smtp_port || Number(process.env.SMTP_PORT) || 587;
+    const smtpSecure = dbEmailConfig?.encryption_type === 'SSL/TLS' || process.env.SMTP_SECURE === 'true';
+    const smtpUser = dbEmailConfig?.smtp_username || process.env.SMTP_USER;
+    const smtpPass = dbEmailConfig?.smtp_password_encrypted || process.env.SMTP_PASS;
+    const smtpFrom = dbEmailConfig?.sender_email || process.env.SMTP_FROM || 'no-reply@enterprise.com';
+    const senderName = dbEmailConfig?.sender_name || 'Enterprise Platform';
+
+    if (smtpHost && smtpUser) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: Number(smtpPort),
+          secure: smtpSecure,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"${senderName}" <${smtpFrom}>`,
+          to: user.email,
+          subject: title,
+          text: `${message}\n\nLink: ${link || 'N/A'}`
+        });
+        console.log(`[Email Dispatch Success] To: ${user.email}`);
+      } catch (e) {
+        console.error(`[Email Dispatch Failed]`, e);
+      }
+    } else {
+      console.log(`[Email Mock Triggered - No SMTP Config] To User: ${userId} | Subject: ${title} | Body: ${message}`);
+    }
   }
 }
 

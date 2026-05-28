@@ -3,6 +3,7 @@ import { Inter, Outfit, Roboto } from 'next/font/google'
 import WorkspaceShell from '@/components/layout/WorkspaceShell'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import ClientSessionManager from '@/components/auth/ClientSessionManager'
+import QueryProvider from '@/components/providers/QueryProvider'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
@@ -20,8 +21,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${roboto.variable}`}>
-      <body className="bg-background text-foreground min-h-screen antialiased font-sans" suppressHydrationWarning>
-        <script dangerouslySetInnerHTML={{
+      <head>
+        <script suppressHydrationWarning id="theme-init" dangerouslySetInnerHTML={{
           __html: `
             try {
               const theme = localStorage.getItem("app_theme") || "glass-intelligence";
@@ -45,10 +46,14 @@ export default function RootLayout({
             } catch (e) {}
           `
         }} />
-        <ThemeProvider>
-          <ClientSessionManager />
-          <WorkspaceShell>{children}</WorkspaceShell>
-        </ThemeProvider>
+      </head>
+      <body className="bg-background text-foreground min-h-screen antialiased font-sans" suppressHydrationWarning>
+        <QueryProvider>
+          <ThemeProvider>
+            <ClientSessionManager />
+            <WorkspaceShell>{children}</WorkspaceShell>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   )

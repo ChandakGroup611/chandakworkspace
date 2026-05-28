@@ -765,47 +765,21 @@ export async function fetchSidebarCounts() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  let tickets = 0;
-  let workspaces = 0;
-  let requirements = 0;
-  let sla = 0;
-  let users = 0;
-
   try {
-    const getCount = async (table: string, filterField?: string) => {
-      try {
-        let query = supabase.from(table).select("id", { count: "exact", head: true });
-        if (filterField) {
-          query = query.eq(filterField, false);
-        }
-        const { count, error } = await query;
-        if (error) {
-          console.warn(`[Sidebar Count] Error fetching count for ${table}:`, error);
-          return 0;
-        }
-        return count || 0;
-      } catch (e) {
-        console.error(`[Sidebar Count] Exception fetching count for ${table}:`, e);
-        return 0;
-      }
+    const { data, error } = await supabase.rpc('get_sidebar_counts');
+    if (error) {
+      console.warn(`[fetchSidebarCounts] Error:`, error);
+      return { tickets: 0, workspaces: 0, requirements: 0, sla: 0, users: 0 };
+    }
+    return {
+      tickets: data.tickets || 0,
+      workspaces: data.workspaces || 0,
+      requirements: data.requirements || 0,
+      sla: data.sla || 0,
+      users: data.users || 0
     };
-
-    const [ticketsRes, workspacesData, requirementsRes, slaRes, usersRes] = await Promise.all([
-      getCount("tickets", "is_deleted"),
-      fetchWorkspaces().then(w => w.length, () => 0),
-      getCount("requirements", "is_deleted"),
-      getCount("ticket_sla_trackers"),
-      getCount("user_master", "is_deleted")
-    ]);
-
-    tickets = ticketsRes;
-    workspaces = workspacesData;
-    requirements = requirementsRes;
-    sla = slaRes;
-    users = usersRes;
   } catch (err) {
     console.error("Error fetching sidebar counts:", err);
+    return { tickets: 0, workspaces: 0, requirements: 0, sla: 0, users: 0 };
   }
-
-  return { tickets, workspaces, requirements, sla, users };
 }

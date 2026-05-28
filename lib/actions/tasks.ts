@@ -205,32 +205,41 @@ export async function getTaskDetails(taskId: string) {
     { data: status },
     { data: priority },
     { data: workspace },
-    { data: creator },
-    { data: checklists },
-    { data: attachments }
+    { data: creator }
   ] = await Promise.all([
     task.status_id ? supabaseAdmin.from('status_master').select('id, name:status_name, code:status_code, is_closed').eq('id', task.status_id).single() : Promise.resolve({ data: null }),
     task.priority_id ? supabaseAdmin.from('priority_master').select('id, name:priority_name, color:priority_color').eq('id', task.priority_id).single() : Promise.resolve({ data: null }),
     task.workspace_id ? supabaseAdmin.from('workspaces').select('id, name:workspace_name').eq('id', task.workspace_id).single() : Promise.resolve({ data: null }),
-    task.created_by ? supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single() : Promise.resolve({ data: null }),
-    supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true }),
-    supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false })
+    task.created_by ? supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single() : Promise.resolve({ data: null })
   ]);
 
   task.status = status;
   task.priority = priority;
   task.workspace = workspace;
   task.creator = creator;
-  task.checklists = checklists || [];
-  task.attachments = attachments || [];
+  
+  // Excluded heavy modules from initial core load (Progressive Hydration)
+  task.checklists = [];
+  task.attachments = [];
+  
   task.assignee = null;
-  
   task.task_assignees = [];
-  
   task.task_teams = [];
   task.title = task.subject;
 
   return task;
+}
+
+export async function getTaskChecklists(taskId: string) {
+  const { data, error } = await supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getTaskAttachments(taskId: string) {
+  const { data, error } = await supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function getWorkloadSnapshot(userId: string) {
@@ -362,12 +371,13 @@ export async function createTaskAttachment(taskId: string, fileName: string, bas
 export async function fetchTeams() { return []; }
 export async function assignTeamToTask(taskId: string, teamId: string) { return {}; }
 
-export async function getTaskComments(taskId: string) {
+export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
   const { data: comments, error } = await supabaseAdmin
     .from('task_comments')
     .select('*')
     .eq('task_id', taskId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
     
   if (error) throw error;
   if (!comments || comments.length === 0) return [];

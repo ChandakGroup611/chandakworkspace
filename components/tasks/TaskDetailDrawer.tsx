@@ -1,10 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { RealtimeChat } from '../collaboration/RealtimeChat';
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
+import { CheckSquare, MessageSquare, ListTodo } from 'lucide-react';
 
 export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState<"details" | "collaboration">("details");
+
   if (!task) return null;
 
   return (
@@ -17,29 +20,65 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
       <div className="grid grid-cols-3 gap-6">
             
             {/* Main Content */}
-            <div className="col-span-2 space-y-8">
-              <section>
-                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Description</h3>
-                <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
-                  {task.description || "No description provided."}
-                </div>
-              </section>
-
-              {/* Checklists Placeholder */}
-              <section className="bg-gray-900/20 rounded-xl p-4 border border-white/5">
-                <h3 className="text-sm font-semibold text-white mb-3">Checklist</h3>
-                <div className="text-xs text-gray-500">No checklist items yet.</div>
-              </section>
+            <div className="col-span-2 space-y-6">
               
-              {/* Realtime Chat Engine */}
-              <section className="h-[400px] flex flex-col border border-white/10 rounded-xl overflow-hidden">
-                <div className="bg-gray-900/50 p-3 border-b border-white/5">
-                  <h3 className="text-sm font-semibold text-white">Collaboration & Audit</h3>
+              {/* Tabs */}
+              <div className="flex border-b border-white/10">
+                <button
+                  onClick={() => setActiveTab("details")}
+                  className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
+                    activeTab === "details"
+                      ? "border-indigo-500 text-indigo-400"
+                      : "border-transparent text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  <ListTodo className="w-4 h-4" />
+                  Execution Details
+                </button>
+                <button
+                  onClick={() => setActiveTab("collaboration")}
+                  className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
+                    activeTab === "collaboration"
+                      ? "border-indigo-500 text-indigo-400"
+                      : "border-transparent text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Collaboration Chat
+                </button>
+              </div>
+
+              {activeTab === "details" && (
+                <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                  <section>
+                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Description</h3>
+                    <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
+                      {task.description || "No description provided."}
+                    </div>
+                  </section>
+
+                  {/* Checklists Placeholder */}
+                  <section className="bg-gray-900/20 rounded-xl p-4 border border-white/5">
+                    <h3 className="text-sm font-semibold text-white mb-3">Checklist</h3>
+                    <div className="text-xs text-gray-500">No checklist items yet.</div>
+                  </section>
                 </div>
-                <div className="flex-1 bg-black/20">
-                  <RealtimeChat recordId={task.id} moduleType="TASK" />
+              )}
+
+              {activeTab === "collaboration" && (
+                <div className="animate-in fade-in zoom-in-95 duration-200">
+                  {/* Realtime Chat Engine - Lazy Loaded when tab active */}
+                  <section className="h-[500px] flex flex-col border border-white/10 rounded-xl overflow-hidden">
+                    <div className="bg-gray-900/50 p-3 border-b border-white/5">
+                      <h3 className="text-sm font-semibold text-white">Collaboration & Audit</h3>
+                    </div>
+                    <div className="flex-1 bg-black/20">
+                      <RealtimeChat recordId={task.id} moduleType="TASK" />
+                    </div>
+                  </section>
                 </div>
-              </section>
+              )}
+
             </div>
 
             {/* Sidebar Metadata */}

@@ -140,5 +140,5 @@ export function usePermissions() {
     return permissionCodes.some(code => permissions.includes(code));
   };
 
-  return { permissions, roleCode, loading, hasPermission, hasAnyPermission };
+  return { permissions, roleCode, loading, hasPermission, hasAnyPermission, userId };
 }

@@ -61,11 +61,11 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             id={inputId}
             disabled={disabled}
             className={cn(
-              "h-[44px] w-full rounded-xl border text-xs focus:outline-none transition-all duration-200 shadow-inner",
+              "h-8 w-full rounded-[var(--radius-input,4px)] border text-[13px] focus:outline-none transition-all duration-150",
               isLight 
-                ? "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" 
-                : "border-white/10 bg-black/40 text-white placeholder-gray-500 focus:border-blue-500/50 focus:bg-white/5",
-              leftIcon ? "pl-10" : "pl-3.5",
+                ? "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                : "border-white/10 bg-[#111827] text-white placeholder-gray-500 focus:border-blue-500 focus:bg-[#1A2234]",
+              leftIcon ? "pl-8" : "pl-3",
               rightIcon ? "pr-10" : "pr-3.5",
               error ? "border-rose-500/50 focus:border-rose-500 bg-rose-500/[0.02]" : "",
               disabled ? "opacity-50 cursor-not-allowed" : "",

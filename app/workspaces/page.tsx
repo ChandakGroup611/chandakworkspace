@@ -48,25 +48,8 @@ export default function WorkspacesPage() {
     setMounted(true);
   }, []);
 
-  
-  useEffect(() => {
-    if (!currentUser) return;
-    const supabase = createClient();
-    const channel = supabase.channel('global_presence', { config: { presence: { key: currentUser.id } } });
-    
-    channel.on('presence', { event: 'sync' }, () => {
-      const state = channel.presenceState();
-      setOnlineUsers(new Set(Object.keys(state)));
-    });
-    
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await channel.track({ online_at: new Date().toISOString() });
-      }
-    });
-    
-    return () => { supabase.removeChannel(channel); };
-  }, [currentUser?.id]);
+    // Global presence tracking removed as per Phase P4.
+    // Presence should only be tracked inside active collaboration rooms.
 
   const filteredWorkspaces = workspaces;
 

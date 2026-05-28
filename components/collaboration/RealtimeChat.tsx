@@ -2,13 +2,26 @@
 
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { performanceGovernor, DegradationStage } from '@/utils/performance/PerformanceGovernanceEngine';
 
 export function RealtimeChat({ recordId, moduleType }: { recordId: string, moduleType: string }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const supabase = createClient();
 
+  const [degradationStage, setDegradationStage] = useState<DegradationStage>(DegradationStage.STAGE_0_NORMAL);
+
   useEffect(() => {
+    const unsubscribe = performanceGovernor.subscribeToStageChanges((stage) => {
+      setDegradationStage(stage);
+    });
+    return () => { unsubscribe(); };
+  }, []);
+
+  useEffect(() => {
+    // If Stage 3+, we completely pause realtime listen
+    if (degradationStage >= DegradationStage.STAGE_3_SEVERE) return;
+
     // 1. Fetch initial activity events (Audit logs & chats combined)
     async function loadHistory() {
       const { data } = await supabase
@@ -37,7 +50,7 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [recordId, moduleType, supabase]);
+  }, [recordId, moduleType, supabase, degradationStage]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -61,7 +74,17 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      {degradationStage >= DegradationStage.STAGE_1_MILD && (
+        <div className="bg-amber-900/30 text-amber-500 text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-amber-500/20">
+          Governance: Presence & Typing Indicators Paused
+        </div>
+      )}
+      {degradationStage >= DegradationStage.STAGE_3_SEVERE && (
+        <div className="bg-red-900/30 text-red-500 text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-red-500/20">
+          Governance: Live Chat Stream Paused. Force Refresh to load new.
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col">
         {messages.map((msg, i) => {
           const isChat = msg.event_type === 'CHAT' || msg.event_type === 'COMMENT';

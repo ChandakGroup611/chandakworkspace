@@ -718,9 +718,9 @@ export default function UserMasterPage() {
   // Custom multi-parameter view list filter
   const filteredUsers = users.filter(usr => {
     const matchQuery = 
-      usr.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      usr.user_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      usr.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (usr.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (usr.user_code || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (usr.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (usr.departmentObj?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
     
     if (statusFilter === "ALL") return matchQuery;
@@ -767,11 +767,11 @@ export default function UserMasterPage() {
       }`}>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>Enterprise User Master</h1>
+            <h1 className={`text-xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>Enterprise Personnel Registry</h1>
             <AppBadge variant="info">Identity Directory</AppBadge>
           </div>
           <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
-            Governed system personnel records supporting strict departments routing, role assignment locks, and instant audit trails.
+            Governed system personnel records supporting strict department routing, role assignments, and instant audit trails.
           </p>
         </div>
 
@@ -882,7 +882,14 @@ export default function UserMasterPage() {
 
             {/* Main Output List Table */}
             <div className="p-0 flex-1 overflow-y-auto max-h-[650px] min-h-[400px]">
-              {filteredUsers.length === 0 ? (
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                  <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+                  <p className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+                    Syncing Enterprise Directory...
+                  </p>
+                </div>
+              ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-16 px-4 space-y-2">
                   <Users className="h-8 w-8 text-gray-400 mx-auto stroke-1" />
                   <p className={`text-xs font-medium ${isLightMode ? "text-gray-700" : "text-gray-400"}`}>
@@ -911,46 +918,56 @@ export default function UserMasterPage() {
                           <AppTableRow 
                             key={usr.id}
                             onClick={() => handleInspectUser(usr)}
-                            className={`cursor-pointer transition-colors ${
+                            className={`cursor-pointer group transition-all duration-200 ${
                               isSelected 
-                                ? (isLightMode ? "bg-blue-50/60 font-medium" : "bg-white/[0.04] font-medium") 
-                                : ""
+                                ? (isLightMode ? "bg-blue-50/50 shadow-inner" : "bg-white/[0.04] shadow-inner") 
+                                : (isLightMode ? "hover:bg-gray-50/80" : "hover:bg-white/[0.02]")
                             }`}
                           >
-                            <AppTableCell className="text-center">
-                              <img 
-                                src={usr.profile_photo || PRESET_AVATARS[0]} 
-                                alt={usr.full_name}
-                                className="w-8 h-8 rounded-full object-cover border border-white/10 mx-auto shadow-xs"
-                                onError={(e) => { (e.target as any).src = PRESET_AVATARS[0]; }}
-                              />
+                            <AppTableCell className="w-14">
+                              <div className="relative w-9 h-9 mx-auto">
+                                <div className={`absolute inset-0 flex items-center justify-center rounded-full text-xs font-bold uppercase ${
+                                  isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-300"
+                                }`}>
+                                  {usr.full_name?.substring(0, 2) || "NA"}
+                                </div>
+                                <img 
+                                  src={usr.profile_photo || PRESET_AVATARS[0]} 
+                                  alt={usr.full_name}
+                                  className="absolute inset-0 w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-transparent group-hover:ring-indigo-500/30 transition-all z-10"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
+                                />
+                              </div>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <div className="space-y-1 min-w-0">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className={`text-xs font-bold truncate block ${
-                                    isLightMode ? "text-gray-900" : "text-white"
+                              <div className="flex flex-col justify-center min-w-0 py-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`text-sm font-semibold truncate block ${
+                                    isLightMode ? "text-slate-800" : "text-slate-200"
                                   }`}>
                                     {usr.full_name}
                                   </span>
-                                  <span className={`text-[0.7rem] font-mono px-1 py-0.2 rounded border ${
-                                    isLightMode ? "text-blue-700 bg-blue-50 border-blue-200" : "text-blue-400 bg-blue-500/10 border-blue-500/20"
-                                  }`}>
-                                    {usr.user_code}
-                                  </span>
-                                  <span className={`text-[0.7rem] font-semibold px-1.5 py-0.2 rounded border uppercase tracking-wider ${
-                                    isLightMode ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                                  {usr.user_code && (
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide ${
+                                      isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/5 text-slate-400"
+                                    }`}>
+                                      {usr.user_code}
+                                    </span>
+                                  )}
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wide uppercase ${
+                                    isLightMode ? "bg-indigo-50 text-indigo-600" : "bg-indigo-500/10 text-indigo-400"
                                   }`}>
                                     {usr.designationObj?.name || "General Assignee"}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 flex-wrap text-xs">
-                                  <span className={isLightMode ? "text-gray-600" : "text-gray-400"}>
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className={`truncate ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
                                     {usr.email}
                                   </span>
-                                  <span className="text-gray-500 font-bold">•</span>
-                                  <span className="text-purple-500 font-medium">
+                                  <span className="text-slate-300 dark:text-slate-600">•</span>
+                                  <span className={`flex items-center gap-1 ${isLightMode ? "text-slate-600 font-medium" : "text-slate-300 font-medium"}`}>
+                                    <Layers className="h-3 w-3 opacity-70" />
                                     {usr.departmentObj?.name || "Global Scope"}
                                   </span>
                                 </div>
@@ -958,55 +975,56 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <div className="flex flex-wrap gap-1 max-w-[150px]">
+                              <div className="flex flex-wrap gap-1.5 max-w-[180px]">
                                 {usr.assigned_assets && usr.assigned_assets.length > 0 ? (
                                   usr.assigned_assets.map((ast, aIdx) => (
-                                    <span key={aIdx} className={`text-[0.7rem] font-mono px-1 py-0.2 rounded border truncate max-w-[90px] inline-block ${
-                                      isLightMode ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                    <span key={aIdx} className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                                      isLightMode ? "bg-amber-50 text-amber-700" : "bg-amber-500/10 text-amber-400"
                                     }`} title={ast}>
-                                      🏷️ {ast}
+                                      <span className="opacity-60 text-[8px]">💻</span>
+                                      <span className="truncate max-w-[80px] font-mono">{ast}</span>
                                     </span>
                                   ))
                                 ) : (
-                                  <span className="text-xs text-gray-500 italic">None</span>
+                                  <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">Unassigned</span>
                                 )}
                               </div>
                             </AppTableCell>
 
                             <AppTableCell className="text-center">
-                              <span className={`px-2 py-0.5 rounded text-[0.7rem] font-bold tracking-wider uppercase inline-block border ${
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase inline-block ${
                                 usr.is_active 
-                                  ? (isLightMode ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30") 
-                                  : (isLightMode ? "bg-gray-100 text-gray-500 border-gray-300" : "bg-white/5 text-gray-500 border-white/10")
+                                  ? (isLightMode ? "bg-emerald-50 text-emerald-600" : "bg-emerald-500/10 text-emerald-400") 
+                                  : (isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/5 text-slate-400")
                               }`}>
                                 {usr.is_active ? "Active" : "Disabled"}
                               </span>
                             </AppTableCell>
 
-                            <AppTableCell className="text-right w-20 shrink-0" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                            <AppTableCell className="text-right w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
                                   <button
                                     type="button"
                                     onClick={() => openModifyForm(usr)}
-                                    className={`p-1.5 rounded-md border transition-all ${
-                                      isLightMode ? "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-blue-600" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-white hover:border-white/10"
+                                    className={`p-1.5 rounded transition-all ${
+                                      isLightMode ? "text-slate-400 hover:text-indigo-600 hover:bg-indigo-50" : "text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10"
                                     }`}
-                                    title="Edit Staff Configuration"
+                                    title="Edit User Profile"
                                   >
-                                    <Edit3 className="h-3 w-3" />
+                                    <Edit3 className="h-4 w-4" />
                                   </button>
                                 )}
-                                {hasPermission("USERS_DELETE") && (
+                                {(hasPermission("USERS_DELETE") || isSuperAdmin) && (
                                   <button
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
-                                    className={`p-1.5 rounded-md border transition-all ${
-                                      isLightMode ? "bg-white border-gray-200 text-gray-400 hover:border-rose-300 hover:text-rose-600" : "bg-white/[0.01] border-white/5 text-gray-500 hover:text-rose-400 hover:border-rose-500/30"
+                                    className={`p-1.5 rounded transition-all ${
+                                      isLightMode ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50" : "text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
                                     }`}
-                                    title="Archive / Remove Account"
+                                    title="Remove User"
                                   >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-4 w-4" />
                                   </button>
                                 )}
                               </div>
