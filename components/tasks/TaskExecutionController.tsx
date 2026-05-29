@@ -57,6 +57,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
   const [pendingChecklists, setPendingChecklists] = useState<string[]>([]);
   const [editedChecklists, setEditedChecklists] = useState<Record<string, boolean>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingTaskUpdates, setPendingTaskUpdates] = useState<Record<string, any>>({});
 
   const loadTaskDetails = async () => {
     setLoading(true);
@@ -212,6 +213,22 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
       attachments: [...(prev.attachments || []), { id: `temp-file-${Date.now()}`, file_name: file.name, is_temp: true }]
     }));
   };
+  const handleCustomFieldChange = (key: string, value: string) => {
+    setLocalCustomFields(prev => ({ ...prev, [key]: value }));
+
+    if (key === 'tat_days' && task?.start_date) {
+      const days = parseInt(value, 10);
+      if (!isNaN(days)) {
+        const startDate = new Date(task.start_date);
+        startDate.setDate(startDate.getDate() + days);
+        const newEndDateStr = startDate.toISOString().split('T')[0];
+        
+        setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
+        setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
+      }
+    }
+  };
+
 
 
 
@@ -270,9 +287,13 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
         await createTaskAttachment(taskId, file.name, dataUrl, file.size);
       }
 
-      // 5. Save custom fields if changed
-      if (Object.keys(localCustomFields).length) {
-        await updateTask(taskId, { custom_fields: localCustomFields });
+      // 5. Save custom fields and pending properties if changed
+      const updatePayload: any = {};
+      if (Object.keys(localCustomFields).length) updatePayload.custom_fields = localCustomFields;
+      if (Object.keys(pendingTaskUpdates).length) Object.assign(updatePayload, pendingTaskUpdates);
+      
+      if (Object.keys(updatePayload).length > 0) {
+        await updateTask(taskId, updatePayload);
       }
 
       // 6. Save remark if present
@@ -388,7 +409,7 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
                     ) : (
                       <AppInput 
                         value={String(val)} 
-                        onChange={e => setLocalCustomFields({...localCustomFields, [key]: e.target.value})} 
+                        onChange={e => handleCustomFieldChange(key, e.target.value)} 
                       />
                     )}
                   </div>
