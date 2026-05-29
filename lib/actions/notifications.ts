@@ -149,13 +149,15 @@ export async function dispatchNotification(
           },
         });
 
-        await transporter.sendMail({
+        // Fire and forget SMTP so it doesn't block the HTTP request
+        transporter.sendMail({
           from: `"${senderName}" <${smtpFrom}>`,
           to: user.email,
           subject: title,
           text: `${message}\n\nLink: ${link || 'N/A'}`
-        });
-        console.log(`[Email Dispatch Success] To: ${user.email}`);
+        }).then(() => console.log(`[Email Dispatch Success] To: ${user.email}`))
+          .catch(e => console.error(`[Email Dispatch Failed]`, e));
+
       } catch (e) {
         console.error(`[Email Dispatch Failed]`, e);
       }

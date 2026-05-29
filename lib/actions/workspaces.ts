@@ -626,11 +626,11 @@ export async function createTask(formData: any) {
   try {
      const { data: members } = await supabase.from("workspace_members").select("user_id").eq("workspace_id", formData.workspace_id);
      if (members) {
-       for (const m of members) {
-         if (m.user_id !== userId) {
-            await dispatchNotification(m.user_id, "New Task in Workspace", `A new task was created in your workspace: ${data.subject || data.id}`, `/workspaces?task=${data.id}`);
-         }
-       }
+       const notifications = members
+         .filter(m => m.user_id !== userId)
+         .map(m => dispatchNotification(m.user_id, "New Task in Workspace", `A new task was created in your workspace: ${data.subject || data.id}`, `/workspaces?task=${data.id}`));
+       
+       Promise.all(notifications).catch(e => console.error("Notification dispatch failed:", e));
      }
   } catch (e) {
     console.error("Notification dispatch failed:", e);
