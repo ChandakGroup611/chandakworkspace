@@ -222,7 +222,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const handleCustomFieldChange = (key: string, value: string) => {
     setLocalCustomFields(prev => ({ ...prev, [key]: value }));
 
-    if (key === 'tat_days' && task?.start_date) {
+    const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
+    if (normalizedKey === 'tat_days' && task?.start_date) {
       const days = parseInt(value, 10);
       if (!isNaN(days)) {
         const startDate = new Date(task.start_date);
@@ -399,7 +400,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Custom Properties</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(localCustomFields).map(([key, val]) => {
-                const isTatDays = key === 'tat_days';
+                const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
+                const isTatDays = normalizedKey === 'tat_days';
                 const isReadOnly = isTatDays && !task.currentUserIsSuperAdmin;
                 return (
                   <div key={key} className="space-y-1.5">
