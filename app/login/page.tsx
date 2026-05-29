@@ -116,7 +116,7 @@ export default function LoginPage() {
               <Lock className="h-5 w-5 text-blue-500" />
               <span>Account Sign In</span>
             </AppCardTitle>
-            <span className="text-sm text-gray-500 font-mono block mt-1">Identity Authentication Portal</span>
+            <span className="text-sm text-gray-500 font-medium block mt-1">Identity Authentication Portal</span>
           </AppCardHeader>
 
           <AppCardContent className="p-6 sm:p-8 space-y-6">
@@ -177,7 +177,7 @@ export default function LoginPage() {
                 size="lg" 
                 type="submit" 
                 disabled={loading || !!successMsg}
-                className="w-full h-12 mt-2 rounded-xl font-bold text-base tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-600/20 text-white transition-all transform hover:scale-[1.02] active:scale-95"
+                className="w-full h-12 mt-6 rounded-xl font-bold text-base tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-600/20 text-white transition-all transform hover:scale-[1.02] active:scale-95"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
