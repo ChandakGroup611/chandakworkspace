@@ -454,30 +454,43 @@ export async function deleteWorkspace(id: string) {
 }
 
 export async function fetchWorkspaceStakeholders(workspaceId: string) {
-  // Leverage Supabase foreign keys for a single optimized JOIN
+  // 1. Fetch workspace members
   const { data: members, error } = await supabaseAdmin
     .from("workspace_members")
-    .select(`
-      role,
-      user:user_master!inner(
-        id, full_name, user_code, 
-        designation:designations(name), 
-        department:departments(name)
-      )
-    `)
+    .select("user_id, role")
     .eq("workspace_id", workspaceId)
     .eq("is_deleted", false);
     
-  if (error || !members) {
+  if (error || !members || members.length === 0) {
     if (error) console.error("[Workspaces] Error fetching stakeholders:", error);
     return [];
   }
   
-  // Map them to the expected format
-  return members.map((mem: any) => ({
-    ...mem.user,
-    workspace_role: mem.role || 'MEMBER'
-  }));
+  // 2. Fetch user details for those members
+  const userIds = members.map(m => m.user_id);
+  const { data: users, error: userError } = await supabaseAdmin
+    .from("user_master")
+    .select(`
+      id, full_name, user_code, 
+      designation:designations(name), 
+      department:departments(name)
+    `)
+    .in("id", userIds);
+    
+  if (userError || !users) {
+    console.error("[Workspaces] Error fetching users for stakeholders:", userError);
+    return [];
+  }
+  
+  // 3. Map them together
+  return members.map(mem => {
+    const user = users.find(u => u.id === mem.user_id);
+    if (!user) return null;
+    return {
+      ...user,
+      workspace_role: mem.role || 'MEMBER'
+    };
+  }).filter(Boolean);
 }
 
 export async function createTask(formData: any) {
