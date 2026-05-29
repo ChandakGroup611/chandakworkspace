@@ -36,34 +36,76 @@ export async function fetchCompanies() {
   return data || [];
 }
 
-export async function fetchPriorities() {
+export async function fetchPriorities(workspaceId?: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
-  const { data, error } = await supabase
+  let query = supabase
     .from("priority_master")
-    .select("id, name:priority_name, code:priority_code")
+    .select("id, name:priority_name, code:priority_code, scope_id")
     .eq('is_active', true)
     .eq('is_deleted', false);
     
+  if (workspaceId) {
+    query = query.or(`scope_id.eq.${workspaceId},scope_id.is.null`);
+  } else {
+    query = query.is('scope_id', null);
+  }
+    
+  const { data, error } = await query;
   if (error) console.error(`[fetchPriorities] Error: ${error.message}`);
-  return data || [];
+  
+  let results = data || [];
+  if (workspaceId && results.length > 0) {
+    const uniqueMap = new Map();
+    for (const p of results) {
+       const existing = uniqueMap.get(p.name);
+       if (!existing || p.scope_id) {
+          uniqueMap.set(p.name, p);
+       }
+    }
+    results = Array.from(uniqueMap.values());
+  }
+  
+  return results;
 }
 
-export async function fetchStatusesByScope(scopeType: string) {
+export async function fetchStatusesByScope(scopeType: string, workspaceId?: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
-  const { data, error } = await supabase
+  let query = supabase
     .from("status_master")
-    .select("id, name:status_name, code:status_code")
+    .select("id, name:status_name, code:status_code, scope_id, status_order")
     .eq('is_active', true)
     .eq('is_deleted', false)
-    .eq('scope_type', scopeType)
-    .order("status_order", { ascending: true });
+    .eq('scope_type', scopeType);
     
+  if (workspaceId) {
+    query = query.or(`scope_id.eq.${workspaceId},scope_id.is.null`);
+  } else {
+    query = query.is('scope_id', null);
+  }
+
+  const { data, error } = await query;
   if (error) console.error(`[fetchStatusesByScope] Error: ${error.message}`);
-  return data || [];
+  
+  let results = data || [];
+  if (workspaceId && results.length > 0) {
+    const uniqueMap = new Map();
+    for (const s of results) {
+       const existing = uniqueMap.get(s.name);
+       if (!existing || s.scope_id) {
+          uniqueMap.set(s.name, s);
+       }
+    }
+    results = Array.from(uniqueMap.values());
+  }
+  
+  // Sort by status_order after deduplication
+  results.sort((a, b) => (a.status_order || 0) - (b.status_order || 0));
+  
+  return results;
 }
 
 export async function createWorkspace(formData: any) {

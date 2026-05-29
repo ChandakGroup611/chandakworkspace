@@ -46,9 +46,9 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
     async function initData() {
       const [fields, priorityList, existingTasks, statusList] = await Promise.all([
         fetchCustomFields(workspaceId),
-        fetchPriorities(),
+        fetchPriorities(workspaceId),
         fetchTasksByWorkspace(workspaceId),
-        fetchStatusesByScope('REQUIREMENT')
+        fetchStatusesByScope('REQUIREMENT', workspaceId)
       ]);
       setCustomFields(fields);
       setPriorities(priorityList);
