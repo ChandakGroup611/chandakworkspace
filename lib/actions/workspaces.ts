@@ -198,8 +198,6 @@ export async function createWorkspace(formData: any) {
     // Fire and forget so we don't block the UI response
     Promise.all(notifications).catch(console.error);
 
-    revalidatePath("/workspaces");
-
     // Map to frontend expected shape
     return {
       ...data,

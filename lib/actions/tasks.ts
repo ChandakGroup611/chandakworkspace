@@ -19,6 +19,7 @@ export async function createTask(payload: {
   created_by: string;
   assigned_team_ids?: string[];
   checklist_items?: string[];
+  attachments?: { file_name: string; file_url: string; file_type: string; size: number }[];
 }) {
   // Find default status for tasks
   const { data: statusMaster } = await supabaseAdmin
@@ -65,10 +66,22 @@ export async function createTask(payload: {
     await supabaseAdmin.from('task_checklists').insert(checklistData);
   }
 
+  // Insert Attachments
+  if (payload.attachments && payload.attachments.length > 0) {
+    const attachmentData = payload.attachments.map((att) => ({
+      task_id: task.id,
+      file_name: att.file_name,
+      file_url: att.file_url,
+      file_type: att.file_type,
+      size: att.size,
+      uploaded_by: payload.created_by
+    }));
+    await supabaseAdmin.from('task_attachments').insert(attachmentData);
+  }
+
   // Log Activity is also now handled by the DB trigger, but if manual is preferred it can stay.
   // Wait, DB trigger does it automatically. So we can remove manual logActivityEvent too to prevent duplicate timeline entries.
   
-  revalidatePath(`/workspaces/${payload.workspace_id}`);
   return task;
 }
 
