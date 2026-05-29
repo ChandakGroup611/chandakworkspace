@@ -24,10 +24,10 @@ export default function LiveDashboardWrapper({ initialMetrics, dbError }: LiveDa
       return result.data;
     },
     initialData: initialMetrics,
-    refetchInterval: 60000, // 60 seconds strict polling limit
-    refetchOnWindowFocus: true, // Recovers on tab switch
+    refetchInterval: false, // Phase 2: Disable background polling
+    refetchOnWindowFocus: false, // Phase 4: Disable refetch on window focus
     refetchIntervalInBackground: false, // Absolutely do not poll if tab is hidden
-    staleTime: 50000, // Keeps data fresh-ish without re-fetching immediately on navigation
+    staleTime: 500000, // Phase 4: Keep data fresh longer without re-fetching immediately on navigation
   });
 
   const [mounted, setMounted] = useState(false);

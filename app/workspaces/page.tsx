@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -17,11 +17,10 @@ import {
   updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData
 } from "@/lib/actions/workspaces";
 import { usePermissions } from "@/hooks/usePermissions";
+import { usePresence } from "@/hooks/use-presence";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
-import TaskRealtimeChat from "@/components/tasks/TaskRealtimeChat";
-import TaskActivityTimeline from "@/components/tasks/TaskActivityTimeline";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { getTaskDetails } from "@/lib/actions/tasks";
 
@@ -34,13 +33,11 @@ export default function WorkspacesPage() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [allTeams, setAllTeams] = useState<any[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
   const lastFetchedWorkspaceId = React.useRef<string | null>(null);
 
@@ -48,8 +45,19 @@ export default function WorkspacesPage() {
     setMounted(true);
   }, []);
 
-    // Global presence tracking removed as per Phase P4.
-    // Presence should only be tracked inside active collaboration rooms.
+  // Real-time presence tracking via server-side heartbeat
+  const stakeholderIds = useMemo(
+    () => stakeholders.map((s: any) => s.id || s.user_id).filter(Boolean),
+    [stakeholders]
+  );
+  const presenceMap = usePresence(stakeholderIds);
+  const onlineUsers = useMemo(() => {
+    const set = new Set<string>();
+    for (const [userId, info] of presenceMap) {
+      if (info.isOnline) set.add(userId);
+    }
+    return set;
+  }, [presenceMap]);
 
   const filteredWorkspaces = workspaces;
 
@@ -101,8 +109,6 @@ export default function WorkspacesPage() {
   const [editWSId, setEditWSId] = useState<string | null>(null);
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
-  const [teamSearch, setTeamSearch] = useState("");
-  const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
@@ -111,7 +117,6 @@ export default function WorkspacesPage() {
     company_id: "", 
     parent_workspace_id: "",
     assigneeIds: [] as string[],
-    teamIds: [] as string[],
     start_date: "", 
     end_date: "",
     is_public: false
@@ -125,9 +130,14 @@ export default function WorkspacesPage() {
     ? allUsers.filter(u => parentWorkspace.workspace_members?.some((m: any) => m.user_id === u.id) || u.id === currentUser?.id)
     : allUsers;
 
-  const availableTeams = parentWorkspace 
-    ? allTeams.filter(t => parentWorkspace.workspace_teams?.some((wt: any) => wt.team_id === t.id))
-    : allTeams;
+  // Lazy load users when modal opens
+  useEffect(() => {
+    if (wsModalMode !== null && allUsers.length === 0) {
+      import("@/lib/actions/workspaces").then(m => {
+        m.fetchAssignableUsers().then(users => setAllUsers(users));
+      });
+    }
+  }, [wsModalMode]);
 
   useEffect(() => {
     async function init() {
@@ -156,8 +166,6 @@ export default function WorkspacesPage() {
         setWorkspaces(dashboard.workspaces || []);
         setCompanies(dashboard.companies || []);
         setPriorities(dashboard.priorities || []);
-        setAllUsers(dashboard.users || []);
-        setAllTeams(dashboard.teams || []);
 
         // 3. Populate pre-fetched tasks and stakeholders for the active workspace
         if (dashboard.prefetchWorkspaceId) {
@@ -232,7 +240,6 @@ export default function WorkspacesPage() {
         start_date: newWS.start_date || null,
         end_date: newWS.end_date || null,
         assigneeIds: newWS.assigneeIds,
-        teamIds: newWS.teamIds,
         visibility_settings: { public: newWS.is_public }
       };
       
@@ -265,15 +272,12 @@ export default function WorkspacesPage() {
         company_id: "", 
         parent_workspace_id: "",
         assigneeIds: [],
-        teamIds: [],
         start_date: "", 
         end_date: "",
         is_public: false
       });
       setAssigneeSearch("");
-      setTeamSearch("");
       setAssigneeDropdownOpen(false);
-      setTeamDropdownOpen(false);
     } catch (err: any) {
       console.error("[Workspace Creation] Intercepted:", err.message || err);
       alert("Database Error on Workspace Save: " + (err.message || err.details || JSON.stringify(err)));
@@ -289,15 +293,12 @@ export default function WorkspacesPage() {
       company_id: ws.company_id || "",
       parent_workspace_id: ws.parent_workspace_id || "",
       assigneeIds: ws.members?.map((m: any) => m.user_id) || [],
-      teamIds: ws.teams?.map((t: any) => t.team_id) || [],
       start_date: ws.start_date ? new Date(ws.start_date).toISOString().split('T')[0] : "",
       end_date: ws.end_date ? new Date(ws.end_date).toISOString().split('T')[0] : "",
       is_public: !!ws.visibility_settings?.public
     });
     setAssigneeSearch("");
-    setTeamSearch("");
     setAssigneeDropdownOpen(false);
-    setTeamDropdownOpen(false);
     setWsModalMode('EDIT');
   };
 
@@ -604,7 +605,7 @@ export default function WorkspacesPage() {
                       <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
                         {s.profile_photo ? <img src={s.profile_photo} alt="" className="h-full w-full object-cover" /> : s.full_name.substring(0, 2).toUpperCase()}
                       </div>
-                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0f111a]'} ${onlineUsers.has(s.id || s.user_id) ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0f111a]'} ${onlineUsers.has(s.id || s.user_id) ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]' : 'bg-gray-400'}`} title={onlineUsers.has(s.id || s.user_id) ? 'Online now' : `Last seen: ${presenceMap.get(s.id || s.user_id)?.lastSeen?.toLocaleString() || 'Unknown'}`}></div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
@@ -715,44 +716,6 @@ export default function WorkspacesPage() {
                         </label>
                       ))}
                       {availableUsers.length === 0 && <p className="text-xs text-gray-500 p-2">No users available.</p>}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-1 relative">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Assign Teams</label>
-                  <div 
-                    onClick={() => setTeamDropdownOpen(!teamDropdownOpen)}
-                    className={`w-full p-2.5 rounded-xl text-sm border flex justify-between items-center cursor-pointer ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-white/10 text-white"}`}
-                  >
-                    <span className="truncate">{newWS.teamIds.length} Selected</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${teamDropdownOpen ? "rotate-180" : ""}`} />
-                  </div>
-                  {teamDropdownOpen && (
-                    <div className={`absolute z-10 w-full mt-1 p-2 rounded-xl border shadow-xl max-h-[200px] overflow-y-auto scrollbar-thin ${isLightMode ? "bg-white border-gray-300" : "bg-[#0B0D17] border-white/10"}`}>
-                      <input 
-                        type="text" 
-                        placeholder="Search teams..." 
-                        value={teamSearch} 
-                        onChange={e => setTeamSearch(e.target.value)} 
-                        onClick={e => e.stopPropagation()}
-                        className={`w-full mb-2 p-1.5 text-xs rounded border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"}`}
-                      />
-                      {availableTeams.filter(t => t.team_name?.toLowerCase().includes(teamSearch.toLowerCase())).map(t => (
-                        <label key={t.id} className="flex items-center gap-2 text-sm p-1.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded cursor-pointer transition-colors">
-                          <input 
-                            type="checkbox" 
-                            checked={newWS.teamIds.includes(t.id)} 
-                            onChange={e => {
-                              if (e.target.checked) setNewWS({...newWS, teamIds: [...newWS.teamIds, t.id]});
-                              else setNewWS({...newWS, teamIds: newWS.teamIds.filter((id: string) => id !== t.id)});
-                            }} 
-                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4" 
-                          />
-                          <span className={isLightMode ? "text-gray-700" : "text-gray-300"}>{t.team_name}</span>
-                        </label>
-                      ))}
-                      {availableTeams.length === 0 && <p className="text-xs text-gray-500 p-2">No teams available.</p>}
                     </div>
                   )}
                 </div>

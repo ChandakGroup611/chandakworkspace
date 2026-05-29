@@ -17,7 +17,6 @@ export async function getVisibleUsers(userId: string) {
         user_code,
         full_name,
         email,
-        profile_photo,
         is_active,
         manager_id,
         department_id,

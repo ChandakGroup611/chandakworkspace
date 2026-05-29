@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -48,7 +48,9 @@ export default function Navbar() {
   } | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // Time-out countdown counter state
+  // Time-out countdown counter state — uses timestamp-based calculation
+  // so it works correctly even when the tab is minimized/hidden
+  const lastActivityTimestampRef = useRef<number>(Date.now());
   const [secondsRemaining, setSecondsRemaining] = useState(SESSION_TIMEOUT_SECONDS);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
 
@@ -65,15 +67,15 @@ export default function Navbar() {
       }
       
       if (user) {
-        // Fetch full profile from user_master
+        // Fetch full profile from user_master (excluding heavy profile_photo payload)
         const { data: profile } = await supabase
           .from("user_master")
-          .select("id, full_name, email, profile_photo")
+          .select("id, full_name, email")
           .eq("id", user.id)
           .single();
 
         if (profile) {
-          setUserData(profile);
+          setUserData({ ...profile, profile_photo: null });
         } else {
           // Fallback if user_master sync is pending
           setUserData({
@@ -93,12 +95,23 @@ export default function Navbar() {
   // Activity listeners to reset Idle Clock
   const handleUserActivity = useCallback(() => {
     if (!loggingOut) {
+      lastActivityTimestampRef.current = Date.now();
       setSecondsRemaining(SESSION_TIMEOUT_SECONDS);
       if (showTimeoutWarning) {
         setShowTimeoutWarning(false);
       }
     }
   }, [loggingOut, showTimeoutWarning]);
+
+  // Recalculate remaining time from the stored timestamp
+  // This works correctly even when the tab is hidden/minimized because
+  // it computes elapsed time from a timestamp rather than relying on
+  // setInterval ticks (which browsers throttle in hidden tabs).
+  const recalculateRemaining = useCallback(() => {
+    const elapsed = Math.floor((Date.now() - lastActivityTimestampRef.current) / 1000);
+    const remaining = Math.max(0, SESSION_TIMEOUT_SECONDS - elapsed);
+    return remaining;
+  }, []);
 
   useEffect(() => {
     const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
@@ -108,27 +121,47 @@ export default function Navbar() {
       window.addEventListener(evt, onActivity, { passive: true });
     });
 
+    // Use timestamp-based countdown instead of simple decrement
     const timerInterval = setInterval(() => {
-      setSecondsRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(timerInterval);
+      const remaining = recalculateRemaining();
+      setSecondsRemaining(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        executeAutomatedTimeout();
+        return;
+      }
+
+      if (remaining <= WARNING_THRESHOLD_SECONDS && remaining > 0) {
+        setShowTimeoutWarning(true);
+      }
+    }, 1000);
+
+    // When the tab becomes visible again, immediately recalculate
+    // This catches up on all the time that passed while the tab was hidden
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const remaining = recalculateRemaining();
+        setSecondsRemaining(remaining);
+
+        if (remaining <= 0) {
           executeAutomatedTimeout();
-          return 0;
-        }
-        if (prev === WARNING_THRESHOLD_SECONDS + 1) {
+        } else if (remaining <= WARNING_THRESHOLD_SECONDS) {
           setShowTimeoutWarning(true);
         }
-        return prev - 1;
-      });
-    }, 1000);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       activityEvents.forEach(evt => {
         window.removeEventListener(evt, onActivity);
       });
       clearInterval(timerInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [handleUserActivity]);
+  }, [handleUserActivity, recalculateRemaining]);
 
   const handleExecuteSignOut = async () => {
     setLoggingOut(true);

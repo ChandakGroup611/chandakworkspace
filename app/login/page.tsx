@@ -81,43 +81,45 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans p-4 transition-colors duration-300 ${
+    <div className={`min-h-screen w-full flex flex-col items-center justify-center relative overflow-y-auto font-sans p-6 sm:p-12 transition-colors duration-300 ${
       isLight ? "bg-gray-50 text-gray-900" : "bg-[#05070D] text-white"
     }`}>
       {/* Dynamic Glow Accents */}
-      <div className={`absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none animate-pulse duration-1000 ${
-        isLight ? "bg-blue-500/10" : "bg-blue-600/10"
-      }`} />
-      <div className={`absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none animate-pulse duration-1000 ${
-        isLight ? "bg-indigo-500/10" : "bg-purple-600/10"
-      }`} />
+      <div className={`absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none`}>
+        <div className={`absolute -top-[10%] -left-[10%] w-[60vw] h-[60vw] rounded-full blur-[120px] opacity-60 animate-pulse duration-[3000ms] ${
+          isLight ? "bg-blue-300/30" : "bg-blue-600/20"
+        }`} />
+        <div className={`absolute -bottom-[10%] -right-[10%] w-[60vw] h-[60vw] rounded-full blur-[120px] opacity-60 animate-pulse duration-[4000ms] ${
+          isLight ? "bg-indigo-300/30" : "bg-purple-600/20"
+        }`} />
+      </div>
 
       {/* Central Login Authentication Form Container */}
-      <div className="w-full max-w-md relative z-10 animate-in fade-in-50 zoom-in-95 duration-400">
-        <div className="text-center mb-6 space-y-2">
+      <div className="w-full max-w-lg relative z-10 animate-in fade-in-50 zoom-in-95 duration-500 my-auto">
+        <div className="text-center mb-8 space-y-3">
           <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>
             <div className="p-2 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg text-white">
               <Cpu className="h-5 w-5" />
             </div>
             <span>Enterprise Service Platform</span>
           </div>
-          <p className={`text-xs max-w-xs mx-auto ${isLight ? "text-gray-500" : "text-gray-400"}`}>
+          <p className={`text-sm sm:text-base max-w-sm mx-auto ${isLight ? "text-gray-500" : "text-gray-400"}`}>
             Secure Organizational Access Gateway
           </p>
         </div>
 
-        <AppCard className={`shadow-2xl backdrop-blur-xl transition-all ${
-          isLight ? "bg-white/95 border-gray-200 shadow-gray-200/50" : "bg-[#0A0D14]/90 border-white/10"
+        <AppCard className={`shadow-2xl backdrop-blur-2xl transition-all border ${
+          isLight ? "bg-white/80 border-white shadow-blue-900/5" : "bg-[#0A0D14]/70 border-white/10 shadow-black/50"
         }`}>
-          <AppCardHeader className={`pb-3 border-b text-center ${isLight ? "border-gray-100" : "border-white/5"}`}>
-            <AppCardTitle className={`text-base font-bold flex items-center justify-center gap-2 ${isLight ? "text-gray-900" : "text-white"}`}>
-              <Lock className="h-4 w-4 text-blue-500" />
+          <AppCardHeader className={`pb-4 border-b text-center ${isLight ? "border-gray-100/50" : "border-white/5"}`}>
+            <AppCardTitle className={`text-xl font-bold flex items-center justify-center gap-2 ${isLight ? "text-gray-900" : "text-white"}`}>
+              <Lock className="h-5 w-5 text-blue-500" />
               <span>Account Sign In</span>
             </AppCardTitle>
-            <span className="text-xs text-gray-500 font-mono block">Identity Authentication Portal</span>
+            <span className="text-sm text-gray-500 font-mono block mt-1">Identity Authentication Portal</span>
           </AppCardHeader>
 
-          <AppCardContent className="p-6 space-y-4">
+          <AppCardContent className="p-6 sm:p-8 space-y-6">
             {/* Realtime Alert Displays */}
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300 text-xs flex items-start gap-2 animate-in fade-in duration-200">
@@ -137,9 +139,9 @@ export default function LoginPage() {
             )}
 
             {/* Standard Credentials Submission Form */}
-            <form onSubmit={handleStandardAuthSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+            <form onSubmit={handleStandardAuthSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-500 block uppercase tracking-wider">
                   Email Address
                 </label>
                 <AppInput 
@@ -147,15 +149,15 @@ export default function LoginPage() {
                   placeholder="e.g. user@enterprise.internal"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  leftIcon={<Mail className="h-4 w-4" />}
-                  className="h-10 text-xs"
+                  leftIcon={<Mail className="h-5 w-5" />}
+                  className="h-12 text-base sm:text-lg rounded-xl"
                   required
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-gray-500 block uppercase tracking-wider">
                     Password
                   </label>
                 </div>
@@ -164,18 +166,18 @@ export default function LoginPage() {
                   placeholder="••••••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  leftIcon={<Lock className="h-4 w-4" />}
-                  className="h-10 text-xs"
+                  leftIcon={<Lock className="h-5 w-5" />}
+                  className="h-12 text-base sm:text-lg rounded-xl"
                   required
                 />
               </div>
 
               <AppButton 
                 variant="primary" 
-                size="md" 
+                size="lg" 
                 type="submit" 
                 disabled={loading || !!successMsg}
-                className="w-full h-10 font-bold text-xs tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-500/10 text-white"
+                className="w-full h-12 mt-2 rounded-xl font-bold text-base tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-600/20 text-white transition-all transform hover:scale-[1.02] active:scale-95"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -192,9 +194,9 @@ export default function LoginPage() {
             </form>
 
             {/* Navigation link to Registration screen */}
-            <div className={`pt-2 text-center border-t text-xs text-gray-500 ${isLight ? "border-gray-100" : "border-white/5"}`}>
+            <div className={`pt-4 text-center border-t text-sm text-gray-500 ${isLight ? "border-gray-100" : "border-white/5"}`}>
               <span>Don't have an account? </span>
-              <Link href="/register" className="text-blue-500 font-bold hover:underline">
+              <Link href="/register" className="text-blue-500 font-bold hover:underline transition-colors">
                 Create an Account
               </Link>
             </div>

@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft, MessageCircle, ClipboardList } from "lucide-react";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
-import TaskRealtimeChat from "@/components/tasks/TaskRealtimeChat";
-import TaskActivityTimeline from "@/components/tasks/TaskActivityTimeline";
+import dynamic from "next/dynamic";
+
+const TaskRightPanel = dynamic(() => import("@/components/tasks/TaskRightPanel"), {
+  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-32 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Panel...</div>
+});
 import { getTaskDetails } from "@/lib/actions/tasks";
 import { notFound } from "next/navigation";
 
@@ -89,8 +92,7 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
         </div>
 
         <div className="space-y-6">
-          <TaskRealtimeChat taskId={taskId} />
-          <TaskActivityTimeline taskId={taskId} />
+          <TaskRightPanel taskId={taskId} />
         </div>
       </div>
     </div>

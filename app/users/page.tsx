@@ -1,7 +1,7 @@
 "use client";
 
 // Live Production deployment check
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -18,6 +18,7 @@ import {
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
+import { usePresence } from "@/hooks/use-presence";
 import { saveUserAction, fetchUsersDashboardData, deleteUserAction } from "@/lib/actions/users";
 import { 
   Users, 
@@ -97,6 +98,10 @@ export default function UserMasterPage() {
   const [currentUserProfile, setCurrentUserProfile] = useState<AppUserItem | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Real-time presence tracking via server-side heartbeat
+  const allUserIds = useMemo(() => users.map(u => u.id), [users]);
+  const presenceMap = usePresence(allUserIds);
 
   // Helper to determine if current logged in user has administrative privileges
   const isSuperAdmin = currentUserProfile?.roleObj?.code === "SUPER_ADMIN" || 
@@ -621,21 +626,9 @@ export default function UserMasterPage() {
       }
       appendLocalAudit(usr.id, "DELETE", { status: "Soft archived from active views" });
       triggerToast(`Account '${usr.full_name}' successfully removed.`);
-    } catch (err) {
-      let localDeleted: string[] = [];
-      try {
-        const stored = localStorage.getItem("local_deleted_users");
-        if (stored) localDeleted = JSON.parse(stored);
-      } catch (e) {}
-      localDeleted.push(usr.id);
-      localStorage.setItem("local_deleted_users", JSON.stringify(localDeleted));
-
-      setUsers(prev => prev.filter(u => u.id !== usr.id));
-      if (selectedUser?.id === usr.id) {
-        setSelectedUser(null);
-      }
-      appendLocalAudit(usr.id, "DELETE", { status: "Archived locally from user cache (Sandbox sync)" });
-      triggerToast(`Account archived locally from user cache (Sandbox sync).`);
+    } catch (err: any) {
+      console.error("Backend deletion failed:", err);
+      triggerToast(err.message || "Deletion failed. Please check server logs.", true);
     } finally {
       setDeleteInspectUser(null);
       setDeleteWarningData(null);

@@ -169,6 +169,50 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
   } else {
     // ── CREATE NEW USER ──
     const targetPassword = password || "DefaultWelcomePass123!";
+
+    // RESURRECTION MECHANISM for trapped soft-deleted users
+    // If a user was deleted before the backend fix, they might still exist in Auth but be soft-deleted in user_master.
+    // Trying to recreate them throws "User already registered". 
+    const { data: existingSoftDeleted } = await targetClient
+      .from("user_master")
+      .select("id, is_deleted")
+      .eq("email", payload.email)
+      .maybeSingle();
+
+    if (existingSoftDeleted && existingSoftDeleted.is_deleted) {
+      console.log(`[Server Action] Resurrecting soft-deleted user: ${existingSoftDeleted.id}`);
+      
+      // Update Auth Password if possible
+      if (isServiceRoleAvailable) {
+        await adminClient.auth.admin.updateUserById(existingSoftDeleted.id, { password: targetPassword });
+      }
+
+      // Reactivate in user_master
+      const { error: resurrectDbError } = await targetClient
+        .from("user_master")
+        .update({
+          full_name: payload.full_name,
+          user_code: payload.user_code,
+          profile_photo: payload.profile_photo,
+          is_active: payload.is_active,
+          is_deleted: false,
+          role_id: payload.role_id || null,
+          department_id: payload.department_id || null,
+          designation_id: payload.designation_id || null,
+          manager_id: payload.manager_id || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", existingSoftDeleted.id);
+
+      if (resurrectDbError) {
+        return { success: false, error: `Resurrection Failed: ${resurrectDbError.message}` };
+      }
+
+      await updateAssetAssignments(targetClient, existingSoftDeleted.id, payload.assigned_assets || []);
+      
+      revalidatePath("/users");
+      return { success: true };
+    }
     
     if (!isServiceRoleAvailable) {
       // Local/development fallback using standard signup when service role key is absent
@@ -389,17 +433,20 @@ export async function deleteUserAction(userId: string) {
     return { success: false, error: "Unauthenticated request." };
   }
 
-  // Allow deleting oneself for testing, or if they have permission
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (isServiceRoleAvailable) {
-    const adminClient = getAdminClient();
-    
-    // Delete from auth.users to free up the email
-    const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
-    if (authDeleteError) {
-      console.error("[Server Action] Auth delete error:", authDeleteError);
-      // We log but continue, as it might already be deleted or not exist
-    }
+  if (!isServiceRoleAvailable) {
+    return { success: false, error: "CRITICAL: Cannot delete user from authentication backend. SUPABASE_SERVICE_ROLE_KEY is missing in your environment variables. Please add it to your deployment." };
+  }
+
+  const adminClient = getAdminClient();
+  
+  // Delete from auth.users to free up the email
+  const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
+  
+  // If the error is not 'User not found' (404), then we must abort to prevent a sync clash.
+  if (authDeleteError && !authDeleteError.message.includes("User not found")) {
+    console.error("[Server Action] Auth delete error:", authDeleteError);
+    return { success: false, error: `Failed to remove user from authentication system: ${authDeleteError.message}. Database deletion aborted to prevent clash.` };
   }
 
   // Soft delete in user_master

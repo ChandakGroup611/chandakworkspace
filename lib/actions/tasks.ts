@@ -135,7 +135,6 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   if (error) throw error;
 
   await logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system");
-  revalidatePath(`/tasks/${taskId}`);
 }
 
 export async function logActivityEvent(moduleType: string, recordId: string, eventType: string, oldValue: any, newValue: any, performedBy: string) {
@@ -282,7 +281,6 @@ export async function getWorkloadSnapshot(userId: string) {
 export async function updateTask(taskId: string, payload: any) {
   const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
   if (error) throw error;
-  revalidatePath(`/tasks/${taskId}`);
 }
 
 export async function deleteTask(taskId: string) {
@@ -313,7 +311,6 @@ export async function deleteTask(taskId: string) {
 
   const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
   if (error) throw error;
-  revalidatePath(`/workspaces/${task.workspace_id}`);
 }
 
 export async function resolveTask(taskId: string) {

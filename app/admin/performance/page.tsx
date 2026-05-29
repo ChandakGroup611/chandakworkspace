@@ -34,7 +34,8 @@ export default function PerformanceCommandCenter() {
   };
 
   useEffect(() => {
-    // Polling is fine for a diagnostic admin page
+    // Production Safe Mode: Reduced polling interval to 10s to minimize server action overhead.
+    // (Was 2s = 30 calls/min per admin user. Now 6 calls/min.)
     const interval = setInterval(async () => {
       setMetrics([...queryStore.getMetrics()]);
       setViolations([...budgetManager.getViolations()]);
@@ -49,7 +50,7 @@ export default function PerformanceCommandCenter() {
       
       // Pull passive governance metrics
       setGovMetrics(performanceGovernor.getMetrics());
-    }, 2000);
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 

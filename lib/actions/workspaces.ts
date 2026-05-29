@@ -240,14 +240,12 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     }
 
     // 2. Run all initial database queries in parallel on the server
-    const [profileRes, managedDeptsRes, workspaces, companies, priorities, usersRes, teamsRes] = await Promise.all([
-      supabase.from("user_master").select("id, full_name, email, profile_photo, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at, department:departments(id, name)").eq("id", user.id).single(),
+    const [profileRes, managedDeptsRes, workspaces, companies, priorities] = await Promise.all([
+      supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single(),
       supabase.from("departments").select("id").eq("manager_id", user.id),
       fetchWorkspaces(),
       fetchCompanies(),
-      fetchPriorities(),
-      supabaseAdmin.from("user_master").select("id, full_name, user_code, profile_photo").eq("is_deleted", false).order("full_name", { ascending: true }),
-      supabaseAdmin.from("team_master").select("id, team_name").eq("is_deleted", false).order("team_name", { ascending: true })
+      fetchPriorities()
     ]);
 
     if (profileRes.error) {
@@ -283,9 +281,7 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       priorities,
       prefetchWorkspaceId: activeWSId,
       prefetchTasks,
-      prefetchStakeholders,
-      users: usersRes.data || [],
-      teams: teamsRes.data || []
+      prefetchStakeholders
     };
   } catch (err: any) {
     console.error("[fetchWorkspaceDashboardData] Error:", err?.message || String(err));
@@ -428,7 +424,7 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
   const userIds = members.map(m => m.user_id);
   const { data: users, error: userError } = await supabaseAdmin
     .from("user_master")
-    .select("id, full_name, user_code, profile_photo, designation:designations(name), department:departments(name)")
+    .select("id, full_name, user_code, designation:designations(name), department:departments(name)")
     .in("id", userIds);
     
   if (userError || !users) {
@@ -620,7 +616,7 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       { data: users }
     ] = await Promise.all([
       supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
-      supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", creatorIds)
+      supabaseAdmin.from("user_master").select("id, full_name, manager_id").in("id", creatorIds)
     ]);
       
     data.forEach((t: any) => {
@@ -692,7 +688,7 @@ export async function fetchAllTasks() {
         { data: users }
       ] = await Promise.all([
         supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
-        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", creatorIds)
+        supabaseAdmin.from("user_master").select("id, full_name, manager_id").in("id", creatorIds)
       ]);
         
       allTasks.forEach((t: any) => {
@@ -782,4 +778,18 @@ export async function fetchSidebarCounts() {
     console.error("Error fetching sidebar counts:", err);
     return { tickets: 0, workspaces: 0, requirements: 0, sla: 0, users: 0 };
   }
+}
+
+export async function fetchAssignableUsers() {
+  const { data, error } = await supabaseAdmin
+    .from("user_master")
+    .select("id, full_name, user_code")
+    .eq("is_deleted", false)
+    .order("full_name", { ascending: true });
+    
+  if (error) {
+    console.error("[fetchAssignableUsers] Error:", error);
+    return [];
+  }
+  return data || [];
 }

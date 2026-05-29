@@ -105,27 +105,21 @@ export default function RealtimeNotificationsDrawer() {
         .channel("global_notification_buffer")
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "notification_queue" },
+          { event: "INSERT", schema: "public", table: "notification_queue" },
           (payload: any) => {
-            if (payload.eventType === "INSERT") {
-              const newItem = payload.new as NotificationItem;
+            const newItem = payload.new as NotificationItem;
+            
+            // Verify target user is this logged in user
+            if (newItem.target_user_id === currentUserId || newItem.target_user_id === 'GLOBAL_OPS') {
+              setNotifications(prev => [newItem, ...prev]);
               
-              // Verify target user is this logged in user
-              if (newItem.target_user_id === currentUserId || newItem.target_user_id === 'GLOBAL_OPS') {
-                setNotifications(prev => [newItem, ...prev]);
-                
-                // Mobile-style Toast alert: display for 2 seconds
-                if (!newItem.is_read) {
-                  setToasts(prev => [...prev, newItem]);
-                  setTimeout(() => {
-                    setToasts(prev => prev.filter(t => t.id !== newItem.id));
-                  }, 2000);
-                }
+              // Mobile-style Toast alert: display for 2 seconds
+              if (!newItem.is_read) {
+                setToasts(prev => [...prev, newItem]);
+                setTimeout(() => {
+                  setToasts(prev => prev.filter(t => t.id !== newItem.id));
+                }, 2000);
               }
-            } else if (payload.eventType === "UPDATE") {
-              setNotifications(prev => prev.map(n => n.id === payload.new.id ? (payload.new as NotificationItem) : n));
-            } else if (payload.eventType === "DELETE") {
-              setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
             }
           }
         )

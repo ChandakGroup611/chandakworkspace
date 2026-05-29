@@ -40,6 +40,15 @@ export function useRealtime({
   };
 
   const connect = useCallback(() => {
+    // TEMPORARY PHASE 2 LOAD REDUCTION: Allow only chat and notification realtime
+    const lowerChannel = channelName.toLowerCase();
+    const isCritical = lowerChannel.includes("chat") || lowerChannel.includes("notification");
+    
+    if (!isCritical) {
+      console.warn(`[Phase 2 Stabilization] Suppressed realtime connection to ${channelName}`);
+      return;
+    }
+
     // Feature Flag Kill Switch Check
     if (typeof window !== "undefined" && window.localStorage.getItem("REALTIME_KILL_SWITCH") === "true") {
       console.warn(`[Realtime Kill Switch] Connection to ${channelName} aborted.`);
