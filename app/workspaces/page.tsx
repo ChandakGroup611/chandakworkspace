@@ -463,59 +463,70 @@ export default function WorkspacesPage() {
 
                 <div className={`max-h-[400px] overflow-y-auto scrollbar-thin border rounded-xl overflow-hidden ${isLightMode ? 'border-gray-200' : 'border-white/10'}`}>
                   <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className={`sticky top-0 z-10 text-xs uppercase ${isLightMode ? 'bg-gray-50 text-gray-500 shadow-sm' : 'bg-[#151722] text-gray-400 border-b border-white/5'}`}>
+                    <thead className={`sticky top-0 z-10 text-[10px] uppercase tracking-wider ${isLightMode ? 'bg-gray-50 text-gray-500 shadow-sm' : 'bg-[#151722] text-gray-400 border-b border-white/5'}`}>
                       <tr>
                         <th className="px-4 py-3 font-semibold">Task ID</th>
-                        <th className="px-4 py-3 font-semibold w-full">Details</th>
-                        <th className="px-4 py-3 font-semibold">Priority</th>
-                        <th className="px-4 py-3 font-semibold text-right">Progress</th>
+                        <th className="px-4 py-3 font-semibold w-full min-w-[200px]">Details</th>
+                        <th className="px-4 py-3 font-semibold">Status</th>
+                        <th className="px-4 py-3 font-semibold">Timeline</th>
+                        <th className="px-4 py-3 font-semibold">Created Date</th>
+                        <th className="px-4 py-3 font-semibold">Last Update</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${isLightMode ? 'divide-gray-200 bg-white' : 'divide-white/5 bg-transparent'}`}>
                       {filteredTasks.map(task => (
                         <tr key={task.id} onClick={() => window.location.href = `/tasks/${task.id}`} className={`cursor-pointer transition-colors ${isLightMode ? 'hover:bg-indigo-50/50' : 'hover:bg-white/[0.02]'}`}>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 align-top">
                             <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
                               isLightMode ? "bg-purple-100 text-purple-700 border border-purple-200" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
                             }`}>{task.code}</span>
                           </td>
-                          <td className="px-4 py-3 max-w-[250px] truncate">
-                            <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{task.title}</div>
+                          <td className="px-4 py-3 min-w-[200px] whitespace-normal align-top">
+                            <div className="flex flex-col items-start gap-1">
+                              {task.priority && (
+                                <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase leading-none ${
+                                  task.priority.code === "P1" || task.priority.code === "CRITICAL"
+                                    ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                    : task.priority.code === "P2" || task.priority.code === "HIGH"
+                                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                    : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                }`}>
+                                  {task.priority.name}
+                                </span>
+                              )}
+                              <div className={`font-bold text-xs leading-snug ${isLightMode ? "text-gray-900" : "text-white"}`}>{task.title}</div>
+                            </div>
                             {task.parent_task && (
-                              <div className="flex items-center gap-1 mt-0.5 text-[9px] font-bold text-indigo-400/80 truncate">
+                              <div className="flex items-center gap-1 mt-1 text-[9px] font-bold text-indigo-400/80 truncate">
                                 <GitMerge className="h-3 w-3 shrink-0" />
                                 <span>Parent: {task.parent_task.code}</span>
                               </div>
                             )}
                           </td>
-                          <td className="px-4 py-3">
-                            {task.priority && (
-                              <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase ${
-                                task.priority.code === "P1" || task.priority.code === "CRITICAL"
-                                  ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                                  : task.priority.code === "P2" || task.priority.code === "HIGH"
-                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                                  : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                              }`}>
-                                {task.priority.name}
+                          <td className="px-4 py-3 align-top">
+                            {task.status && (
+                              <span className="flex items-center gap-1.5 text-[10px] font-semibold" style={{ color: task.status.status_color || '#888' }}>
+                                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: task.status.status_color || '#888' }} />
+                                {task.status.name}
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <span className={`text-[10px] font-bold ${isLightMode ? "text-purple-600" : "text-purple-400"}`}>{task.progress_percentage}%</span>
-                              <div className={`w-16 h-1.5 rounded-full overflow-hidden ${isLightMode ? "bg-gray-100" : "bg-white/5"}`}>
-                                <div className={`h-full rounded-full transition-all duration-500 ${
-                                  isLightMode ? "bg-gradient-to-r from-purple-500 to-indigo-500" : "bg-gradient-to-r from-purple-500 to-indigo-500"
-                                }`} style={{ width: `${task.progress_percentage}%` }} />
-                              </div>
-                            </div>
+                          <td className="px-4 py-3 align-top text-[10px] text-gray-500 font-medium">
+                            {task.start_date ? new Date(task.start_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: '2-digit' }) : '---'}
+                            {' → '}
+                            {task.end_date ? new Date(task.end_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: '2-digit' }) : '---'}
+                          </td>
+                          <td className="px-4 py-3 align-top text-[10px] text-gray-500 font-medium">
+                            {task.created_at ? new Date(task.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                          </td>
+                          <td className="px-4 py-3 align-top text-[10px] text-gray-500 font-medium">
+                            {task.updated_at ? new Date(task.updated_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
                           </td>
                         </tr>
                       ))}
                       {filteredTasks.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-4 py-12 text-center">
+                          <td colSpan={6} className="px-4 py-12 text-center">
                             <p className="text-gray-500 text-xs font-semibold">No tasks orchestrated in this responsibility filter.</p>
                           </td>
                         </tr>
