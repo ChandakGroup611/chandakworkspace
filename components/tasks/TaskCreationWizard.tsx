@@ -275,19 +275,22 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
 
               <div className="space-y-2">
                 {checklistItems.map((item, index) => (
-                  <div key={`${item}-${index}`} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-white/10 bg-white/5">
-                    <span className="text-sm text-gray-200 truncate">{item}</span>
+                  <div key={`${item}-${index}`} className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${isLightMode ? "border-indigo-100 bg-indigo-50/50 shadow-sm" : "border-indigo-500/20 bg-indigo-500/10"}`}>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className={`shrink-0 h-2 w-2 rounded-full ${isLightMode ? "bg-indigo-500" : "bg-indigo-400"}`} />
+                      <span className={`text-sm font-semibold truncate ${isLightMode ? "text-indigo-900" : "text-indigo-100"}`}>{item}</span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
-                      className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300"
+                      className="shrink-0 text-xs font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                     >
                       Remove
                     </button>
                   </div>
                 ))}
                 {checklistItems.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-white/10 p-4 text-xs text-gray-500">No checklist items added yet.</div>
+                  <div className={`rounded-xl border border-dashed p-4 text-xs font-medium text-center ${isLightMode ? "border-gray-300 text-gray-500 bg-gray-50" : "border-white/10 text-gray-500"}`}>No checklist items added yet.</div>
                 )}
               </div>
             </div>
@@ -332,23 +335,23 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
 
               <div className="space-y-2">
                 {attachments.map((item, index) => (
-                  <div key={`${item.file_url}-${index}`} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-xl border border-white/10 bg-white/5">
+                  <div key={`${item.file_url}-${index}`} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-xl border ${isLightMode ? "border-indigo-100 bg-indigo-50/50 shadow-sm" : "border-indigo-500/20 bg-indigo-500/10"}`}>
                     <div className="space-y-1 overflow-hidden">
-                      <p className="text-sm font-semibold text-gray-100 truncate">{item.file_name}</p>
-                      <p className="text-xs text-gray-400 truncate">{item.file_url}</p>
-                      <p className="text-[0.8rem] text-gray-500">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Size not provided"}</p>
+                      <p className={`text-sm font-semibold truncate ${isLightMode ? "text-indigo-900" : "text-indigo-100"}`}>{item.file_name}</p>
+                      <p className={`text-xs truncate ${isLightMode ? "text-indigo-600/70" : "text-indigo-300/70"}`}>{item.file_url}</p>
+                      <p className={`text-[0.8rem] ${isLightMode ? "text-indigo-800/60" : "text-indigo-400/60"}`}>{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Size not provided"}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
-                      className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300"
+                      className="shrink-0 text-xs font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
                     >
                       Remove
                     </button>
                   </div>
                 ))}
                 {attachments.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-white/10 p-4 text-xs text-gray-500">No attachments added yet.</div>
+                  <div className={`rounded-xl border border-dashed p-4 text-xs font-medium text-center ${isLightMode ? "border-gray-300 text-gray-500 bg-gray-50" : "border-white/10 text-gray-500"}`}>No attachments added yet.</div>
                 )}
               </div>
             </div>
