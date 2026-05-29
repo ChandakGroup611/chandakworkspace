@@ -325,7 +325,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       if (isCommentsLoaded || !isHistoryCollapsed) await loadComments(true);
 
       onUpdate?.();
-      router.refresh();
+      // Note: router.refresh() removed — it caused Server Component re-render errors.
+      // State is refreshed via loadTaskDetails() above.
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to save changes.");
