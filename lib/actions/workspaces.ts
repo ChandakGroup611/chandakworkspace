@@ -175,22 +175,28 @@ export async function createWorkspace(formData: any) {
       );
     }
 
-    // 4. Dispatch Notifications
-    // Do not notify the creator for their own creation unless specifically desired, but here we notify all assignees except maybe the creator.
-    for (const assigneeId of assigneesArray) {
-      if (assigneeId === userId) continue; // Skip notifying the user who just created it
+    // 4. Dispatch Notifications concurrently in the background
+    const notifications = assigneesArray.map(async (assigneeId) => {
+      if (assigneeId === userId) return; // Skip notifying the user who just created it
 
       const isSub = !!formData.parent_workspace_id;
       const title = isSub ? "Assigned to New Sub-Workspace" : "Assigned to New Workspace";
       const message = `You have been assigned to the ${isSub ? 'Sub-Workspace' : 'Workspace'}: "${data.workspace_name}" (${data.workspace_code}).`;
       
-      await dispatchNotification(
-        assigneeId,
-        title,
-        message,
-        `/workspaces` // The frontend handles active workspace via query or memory
-      );
-    }
+      try {
+        await dispatchNotification(
+          assigneeId,
+          title,
+          message,
+          `/workspaces`
+        );
+      } catch (e) {
+        console.error("Failed to dispatch notification to", assigneeId, e);
+      }
+    });
+
+    // Fire and forget so we don't block the UI response
+    Promise.all(notifications).catch(console.error);
 
     revalidatePath("/workspaces");
 

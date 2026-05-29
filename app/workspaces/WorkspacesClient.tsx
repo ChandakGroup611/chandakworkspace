@@ -207,6 +207,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       if (editWSId) {
         data = await updateWorkspace(editWSId, payload);
         
+        // Close modal immediately for snappy UI
+        setWsModalMode(null);
+        setEditWSId(null);
+        
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
         
@@ -216,6 +220,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       } else {
         data = await createWorkspace(payload);
         
+        // Close modal immediately for snappy UI
+        setWsModalMode(null);
+        setEditWSId(null);
+        
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
         
@@ -223,8 +231,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setActiveWorkspace(data);
       }
       
-      setWsModalMode(null);
-      setEditWSId(null);
       setNewWS({ 
         name: "", 
         code: "", 
@@ -282,11 +288,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const handleTaskWizardSuccess = async (taskData: any) => {
     try {
       const data = await createTask({ ...taskData, workspace_id: activeWorkspace.id });
-      const tData = await fetchTasksByWorkspace(activeWorkspace.id);
-      setTasks(tData);
-      const createdTask = tData.find((t: any) => t.id === data.id) || data;
-
+      
+      // Close modal immediately for instant UI feedback
       setIsCreatingTask(false);
+      
+      // Optimistically insert to list for instant update
+      setTasks(prev => [data, ...prev]);
+
+      // Refetch full data with relations in background silently
+      fetchTasksByWorkspace(activeWorkspace.id).then(tData => setTasks(tData)).catch(console.error);
     } catch (err: any) {
       console.error("[Task Creation] Intercepted:", err.message || err);
       alert("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
