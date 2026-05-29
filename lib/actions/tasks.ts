@@ -192,19 +192,23 @@ export async function fetchUsers() {
 
 export async function getTaskDetails(taskId: string) {
   // Use a single query leveraging foreign keys for massive performance boost
-  const { data: task, error } = await supabaseAdmin
-    .from('tasks')
-    .select(`
-      *,
-      status:status_master(id, name:status_name, code:status_code, is_closed),
-      priority:priority_master(id, name:priority_name, color:priority_color),
-      workspace:workspaces(id, name:workspace_name),
-      creator:user_master!tasks_created_by_fkey(id, full_name, user_code)
-    `)
-    .eq('id', taskId)
-    .single();
+    const { data: task, error } = await supabaseAdmin
+      .from('tasks')
+      .select(`
+        *,
+        status:status_master(id, name:status_name, code:status_code, is_closed),
+        priority:priority_master(id, name:priority_name, color:priority_color),
+        workspace:workspaces(id, name:workspace_name)
+      `)
+      .eq('id', taskId)
+      .single();
 
-  if (error || !task) throw error || new Error("Task not found");
+    if (error || !task) throw error || new Error("Task not found");
+
+    if (task.created_by) {
+      const { data: creator } = await supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single();
+      task.creator = creator;
+    }
   
   // Extract user session and super admin check without querying DB unnecessarily
   const cookieStore = await cookies();
