@@ -21,14 +21,14 @@ import { toggleChecklistItem } from "@/lib/actions/workspaces";
 import { useRouter } from "next/navigation";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 
-export default function TaskExecutionController({ taskId, onUpdate }: { taskId: string; onUpdate?: () => void }) {
+export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[] }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const router = useRouter();
-  const [task, setTask] = useState<any>(null);
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [task, setTask] = useState<any>(initialTask || null);
+  const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
+  const [loading, setLoading] = useState(!initialTask);
   const [activeTab, setActiveTab] = useState<"checklist" | "attachments" | "collaboration">("checklist");
   
   // Lazy Load States
@@ -59,7 +59,8 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingTaskUpdates, setPendingTaskUpdates] = useState<Record<string, any>>({});
 
-  const loadTaskDetails = async () => {
+  const loadTaskDetails = async (forceUpdate = false) => {
+    if (!forceUpdate && initialTask && task) return;
     setLoading(true);
     setError(null);
     setPendingStatus(null);
@@ -137,7 +138,12 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
   }, [isHistoryCollapsed]);
 
   useEffect(() => {
-    loadTaskDetails();
+    if (initialTask) {
+      setLocalCustomFields(initialTask.custom_fields || {});
+      setIsHistoryCollapsed(true);
+    } else {
+      loadTaskDetails(true);
+    }
   }, [taskId]);
 
   // Mark mentions as read when task opens
