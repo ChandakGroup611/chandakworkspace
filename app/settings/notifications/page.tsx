@@ -3,6 +3,8 @@ import { Metadata } from "next";
 import { fetchEventTriggerConfig } from "@/lib/actions/email-config";
 import EventTriggerMatrix from "@/components/settings/EventTriggerMatrix";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Notification Triggers | Enterprise Operations",
   description: "Configure granular event triggers for system notifications.",
