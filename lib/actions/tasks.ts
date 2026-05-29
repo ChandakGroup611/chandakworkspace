@@ -191,52 +191,31 @@ export async function fetchUsers() {
 }
 
 export async function getTaskDetails(taskId: string) {
+  // Use a single query leveraging foreign keys for massive performance boost
   const { data: task, error } = await supabaseAdmin
     .from('tasks')
-    .select('*')
+    .select(`
+      *,
+      status:status_master(id, name:status_name, code:status_code, is_closed),
+      priority:priority_master(id, name:priority_name, color:priority_color),
+      workspace:workspaces(id, name:workspace_name),
+      creator:user_master!tasks_created_by_fkey(id, full_name, user_code)
+    `)
     .eq('id', taskId)
     .single();
 
   if (error || !task) throw error || new Error("Task not found");
-
-  // Fetch related data manually due to missing FKs in schema
-  const [
-    { data: status },
-    { data: priority },
-    { data: workspace },
-    { data: creator }
-  ] = await Promise.all([
-    task.status_id ? supabaseAdmin.from('status_master').select('id, name:status_name, code:status_code, is_closed').eq('id', task.status_id).single() : Promise.resolve({ data: null }),
-    task.priority_id ? supabaseAdmin.from('priority_master').select('id, name:priority_name, color:priority_color').eq('id', task.priority_id).single() : Promise.resolve({ data: null }),
-    task.workspace_id ? supabaseAdmin.from('workspaces').select('id, name:workspace_name').eq('id', task.workspace_id).single() : Promise.resolve({ data: null }),
-    task.created_by ? supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single() : Promise.resolve({ data: null })
-  ]);
-
-  task.status = status;
-  task.priority = priority;
-  task.workspace = workspace;
-  task.creator = creator;
   
-  // Determine if current user is super admin
+  // Extract user session and super admin check without querying DB unnecessarily
   const cookieStore = await cookies();
   const { data: { session } } = await createClient(cookieStore).auth.getSession();
   const userId = session?.user?.id;
   
   let isSuperAdmin = false;
   if (userId) {
-     const { data: roleData } = await supabaseAdmin
-       .from('user_master')
-       .select('role:roles(code)')
-       .eq('id', userId)
-       .single();
-       
-     const roleCode = Array.isArray(roleData?.role) 
-        ? (roleData.role[0] as any)?.code 
-        : (roleData?.role as any)?.code;
-        
-     if (roleCode === 'SUPER_ADMIN') {
-        isSuperAdmin = true;
-     }
+     // Checking through permissions layer which caches the check for 1 min
+     const { hasPermission } = await import('@/lib/permissions');
+     isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
   }
   task.currentUserIsSuperAdmin = isSuperAdmin;
   

@@ -228,11 +228,11 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       };
     }
 
-    // 2. Run all initial database queries in parallel on the server
+    // 2. Fetch everything in a massive parallel burst
     const [profileRes, managedDeptsRes, workspaces, companies, priorities] = await Promise.all([
       supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single(),
       supabase.from("departments").select("id").eq("manager_id", user.id),
-      fetchWorkspaces(),
+      getVisibleWorkspaces(user.id), // Direct fast repository call
       fetchCompanies(),
       fetchPriorities()
     ]);
@@ -412,37 +412,30 @@ export async function deleteWorkspace(id: string) {
 }
 
 export async function fetchWorkspaceStakeholders(workspaceId: string) {
-  // 1. Fetch the raw members
-  const { data: members, error: memError } = await supabaseAdmin
+  // Leverage Supabase foreign keys for a single optimized JOIN
+  const { data: members, error } = await supabaseAdmin
     .from("workspace_members")
-    .select("user_id, role")
-    .eq("workspace_id", workspaceId);
+    .select(`
+      role,
+      user:user_master!inner(
+        id, full_name, user_code, 
+        designation:designations(name), 
+        department:departments(name)
+      )
+    `)
+    .eq("workspace_id", workspaceId)
+    .eq("is_deleted", false);
     
-  if (memError || !members || members.length === 0) {
-    if (memError) console.error("[Workspaces] Error fetching stakeholders:", memError);
+  if (error || !members) {
+    if (error) console.error("[Workspaces] Error fetching stakeholders:", error);
     return [];
   }
   
-  // 2. Fetch the rich user details
-  const userIds = members.map(m => m.user_id);
-  const { data: users, error: userError } = await supabaseAdmin
-    .from("user_master")
-    .select("id, full_name, user_code, designation:designations(name), department:departments(name)")
-    .in("id", userIds);
-    
-  if (userError || !users) {
-    console.error("[Workspaces] Error fetching users for stakeholders:", userError);
-    return [];
-  }
-
-  // 3. Map them together
-  return users.map(user => {
-    const mem = members.find(m => m.user_id === user.id);
-    return {
-      ...user,
-      workspace_role: mem?.role || 'MEMBER'
-    };
-  });
+  // Map them to the expected format
+  return members.map((mem: any) => ({
+    ...mem.user,
+    workspace_role: mem.role || 'MEMBER'
+  }));
 }
 
 export async function createTask(formData: any) {

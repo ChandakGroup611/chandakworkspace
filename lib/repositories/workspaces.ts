@@ -2,8 +2,9 @@ import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { hasPermission } from '@/lib/permissions';
 
 export async function getVisibleWorkspaces(userId: string) {
-  // 1. Super Admin bypass
+  // 1. Super Admin bypass (cache leveraged in hasPermission)
   const canManageAll = await hasPermission(userId, "WORKSPACES_MANAGE");
+  
   if (canManageAll) {
     const { data: visibleWorkspaces, error } = await supabaseAdmin
       .from('workspaces')
@@ -31,34 +32,26 @@ export async function getVisibleWorkspaces(userId: string) {
     return visibleWorkspaces || [];
   }
 
-  // 2. Fetch user's direct memberships
-  const { data: memberWorkspaces } = await supabaseAdmin
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', userId)
-    .eq('is_deleted', false);
+  // 2. Optimized single query for standard users using PostgREST OR syntax
+  // We fetch workspaces where the user is EITHER the owner OR a member
+  // Note: PostgREST embedded filters handle this efficiently when properly structured,
+  // but to guarantee performance across complex ORs on relations, we use a subquery/RPC or two parallel light queries.
+  // We'll use two parallel light queries to get IDs, then one fetch. It's faster than 3 sequential.
+  const [memberRes, ownerRes] = await Promise.all([
+    supabaseAdmin.from('workspace_members').select('workspace_id').eq('user_id', userId).eq('is_deleted', false),
+    supabaseAdmin.from('workspaces').select('id').eq('workspace_owner_id', userId).eq('is_deleted', false)
+  ]);
     
-  const workspaceIds = new Set<string>(memberWorkspaces?.map((w: any) => w.workspace_id) || []);
+  const workspaceIds = new Set<string>();
+  memberRes.data?.forEach((w: any) => workspaceIds.add(w.workspace_id));
+  ownerRes.data?.forEach((w: any) => workspaceIds.add(w.id));
 
-  // 3. Fetch workspaces where user is the owner
-  const { data: ownerWorkspaces } = await supabaseAdmin
-    .from('workspaces')
-    .select('id')
-    .eq('workspace_owner_id', userId)
-    .eq('is_deleted', false);
-    
-  if (ownerWorkspaces) {
-    ownerWorkspaces.forEach((w: any) => workspaceIds.add(w.id));
-  }
-
-  // If user has no workspace access, return empty array immediately
   if (workspaceIds.size === 0) {
     return [];
   }
 
   const authorizedWorkspaceIds = Array.from(workspaceIds);
 
-  // 4. Fetch ONLY the authorized workspaces from the database
   let { data: visibleWorkspaces, error } = await supabaseAdmin
     .from('workspaces')
     .select(`
