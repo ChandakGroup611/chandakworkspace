@@ -608,20 +608,9 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
   }
   
   if (data && data.length > 0) {
-    const wsIds = Array.from(new Set(data.map((t: any) => t.workspace_id).filter(Boolean)));
-    const creatorIds = Array.from(new Set(data.map((t: any) => t.created_by).filter(Boolean)));
-    
-    const [
-      { data: workspaces },
-      { data: users }
-    ] = await Promise.all([
-      supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
-      supabaseAdmin.from("user_master").select("id, full_name, manager_id").in("id", creatorIds)
-    ]);
-      
     data.forEach((t: any) => {
-      t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
-      t.creator = users?.find((u: any) => u.id === t.created_by) || null;
+      t.workspace = null;
+      t.creator = null;
       t.assignees = []; // Assignees are implicitly workspace members now
       
       // Calculate progress percentage
@@ -639,6 +628,14 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
         } else {
           t.progress_percentage = 0;
         }
+      }
+    });
+
+    // Structure parent/child tasks
+    const taskMap = new Map(data.map((t: any) => [t.id, t]));
+    data.forEach((t: any) => {
+      if (t.parent_task_id && taskMap.has(t.parent_task_id)) {
+        t.parent_task = taskMap.get(t.parent_task_id);
       }
     });
   }

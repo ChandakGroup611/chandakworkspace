@@ -208,6 +208,10 @@ export default function WorkspacesPage() {
 
     async function loadWorkspaceData() {
       lastFetchedWorkspaceId.current = activeWorkspace.id;
+      // Clear out the stale data immediately so the UI reflects the new workspace
+      setTasks([]);
+      setStakeholders([]);
+
       const [tData, sData] = await Promise.all([
         fetchTasksByWorkspace(activeWorkspace.id),
         fetchWorkspaceStakeholders(activeWorkspace.id)
