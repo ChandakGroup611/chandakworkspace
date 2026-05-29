@@ -23,8 +23,10 @@ import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { getTaskDetails } from "@/lib/actions/tasks";
+import { useRouter } from "next/navigation";
 
 export default function WorkspacesPage() {
+  const router = useRouter();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
   const isLightMode = theme === "executive-light";
@@ -475,7 +477,7 @@ export default function WorkspacesPage() {
                     </thead>
                     <tbody className={`divide-y ${isLightMode ? 'divide-gray-200 bg-white' : 'divide-white/5 bg-transparent'}`}>
                       {filteredTasks.map(task => (
-                        <tr key={task.id} onClick={() => window.location.href = `/tasks/${task.id}`} className={`cursor-pointer transition-colors ${isLightMode ? 'hover:bg-indigo-50/50' : 'hover:bg-white/[0.02]'}`}>
+                        <tr key={task.id} onClick={() => router.push(`/tasks/${task.id}`)} className={`cursor-pointer transition-colors ${isLightMode ? 'hover:bg-indigo-50/50' : 'hover:bg-white/[0.02]'}`}>
                           <td className="px-4 py-4 align-top">
                             <span className={`text-xs font-mono px-2 py-1 rounded font-bold ${
                               isLightMode ? "bg-purple-100 text-purple-700 border border-purple-200" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
