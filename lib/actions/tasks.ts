@@ -205,41 +205,60 @@ export async function fetchUsers() {
 
 export async function getTaskDetails(taskId: string) {
   // Use a single query leveraging foreign keys for massive performance boost
-    const { data: task, error } = await supabaseAdmin
-      .from('tasks')
-      .select(`
-        *,
-        status:status_master(id, name:status_name, code:status_code, is_closed),
-        priority:priority_master(id, name:priority_name, color:priority_color),
-        workspace:workspaces(id, name:workspace_name)
-      `)
-      .eq('id', taskId)
-      .single();
+  const { data: task, error } = await supabaseAdmin
+    .from('tasks')
+    .select(`
+      *,
+      status:status_master(id, name:status_name, code:status_code, is_closed),
+      priority:priority_master(id, name:priority_name, color:priority_color),
+      workspace:workspaces(id, name:workspace_name)
+    `)
+    .eq('id', taskId)
+    .single();
 
-    if (error || !task) throw error || new Error("Task not found");
+  if (error || !task) throw error || new Error("Task not found");
 
-    if (task.created_by) {
-      const { data: creator } = await supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single();
-      task.creator = creator;
-    }
-  
-  // Extract user session and super admin check without querying DB unnecessarily
-  const cookieStore = await cookies();
-  const { data: { session } } = await createClient(cookieStore).auth.getSession();
-  const userId = session?.user?.id;
-  
-  let isSuperAdmin = false;
-  if (userId) {
-     // Checking through permissions layer which caches the check for 1 min
-     const { hasPermission } = await import('@/lib/permissions');
-     isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+  if (task.created_by) {
+    const { data: creator } = await supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single();
+    task.creator = creator;
   }
+
+  // Use getUser() (secure, not getSession which can be stale/missing)
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
+
+  let isSuperAdmin = false;
+  let isWorkspaceMember = false;
+
+  if (userId) {
+    const { hasPermission } = await import('@/lib/permissions');
+    isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+
+    if (!isSuperAdmin && task.workspace_id) {
+      // Check if the user is a member of the task's workspace
+      const { data: membership } = await supabaseAdmin
+        .from('workspace_members')
+        .select('user_id')
+        .eq('workspace_id', task.workspace_id)
+        .eq('user_id', userId)
+        .maybeSingle();
+      isWorkspaceMember = !!membership;
+    } else {
+      // Super admins are always considered members
+      isWorkspaceMember = isSuperAdmin;
+    }
+  }
+
   task.currentUserIsSuperAdmin = isSuperAdmin;
-  
+  // Any workspace member (or super admin) can perform all task activities
+  task.currentUserCanAct = isSuperAdmin || isWorkspaceMember || task.created_by === userId;
+  task.currentUserId = userId || null;
+
   // Excluded heavy modules from initial core load (Progressive Hydration)
   task.checklists = [];
   task.attachments = [];
-  
+
   task.assignee = null;
   task.task_assignees = [];
   task.task_teams = [];
@@ -308,8 +327,8 @@ export async function deleteTask(taskId: string) {
   if (!task) throw new Error("Task not found");
 
   const cookieStore = await cookies();
-  const { data: { session } } = await createClient(cookieStore).auth.getSession();
-  const userId = session?.user?.id;
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
   
   if (!userId) throw new Error("Unauthenticated");
 
@@ -346,8 +365,8 @@ export async function reopenTask(taskId: string) {
 
 export async function createChecklistItem(taskId: string, label: string) {
   const cookieStore = await cookies();
-  const { data: { session } } = await createClient(cookieStore).auth.getSession();
-  const userId = session?.user?.id;
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthenticated");
 
   const { data, error } = await supabaseAdmin
@@ -371,8 +390,8 @@ export async function createChecklistItem(taskId: string, label: string) {
 
 export async function createTaskAttachment(taskId: string, fileName: string, base64Url: string, size: number) {
   const cookieStore = await cookies();
-  const { data: { session } } = await createClient(cookieStore).auth.getSession();
-  const userId = session?.user?.id;
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthenticated");
 
   const { data, error } = await supabaseAdmin
@@ -414,8 +433,8 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
 
 export async function addTaskRemark(taskId: string, content: string) {
   const cookieStore = await cookies();
-  const { data: { session } } = await createClient(cookieStore).auth.getSession();
-  const userId = session?.user?.id;
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
   if (!userId) throw new Error("Unauthenticated");
 
   const { data, error } = await supabaseAdmin
