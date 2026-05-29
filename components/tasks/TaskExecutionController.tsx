@@ -28,8 +28,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const router = useRouter();
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
-  const [loading, setLoading] = useState(!initialTask);
-  const [activeTab, setActiveTab] = useState<"checklist" | "attachments" | "collaboration">("checklist");
+  const [activeTab, setActiveTab] = useState<"checklist" | "attachments">("checklist");
   
   // Lazy Load States
   const [isChecklistsLoaded, setIsChecklistsLoaded] = useState(false);
@@ -127,7 +126,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     if (!task) return;
     if (activeTab === "checklist") loadChecklists();
     if (activeTab === "attachments") loadAttachments();
-    if (activeTab === "collaboration") loadComments();
   }, [activeTab, task?.id]);
 
   // Handle remarks history expansion
@@ -672,7 +670,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* Tabs Menu */}
       <div className={`flex border-b border-gray-200 dark:border-white/5`}>
-        {(["checklist", "attachments", "collaboration"] as const).map((tab) => (
+        {(["checklist", "attachments"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -680,7 +678,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               // Intelligent Prefetching on Hover
               if (tab === "checklist" && !isChecklistsLoaded) getTaskChecklists(taskId).then(d => { setTask((p:any) => ({...p, checklists: d})); setIsChecklistsLoaded(true); });
               if (tab === "attachments" && !isAttachmentsLoaded) getTaskAttachments(taskId).then(d => { setTask((p:any) => ({...p, attachments: d})); setIsAttachmentsLoaded(true); });
-              if (tab === "collaboration" && !isCommentsLoaded) getTaskComments(taskId, 20, 0).then(c => { setRemarksHistory(c); setIsCommentsLoaded(true); });
             }}
             className={`px-4 py-2 text-[11px] uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
               activeTab === tab
@@ -690,7 +687,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           >
             {tab === "checklist" && <CheckSquare className="h-3.5 w-3.5" />}
             {tab === "attachments" && <Paperclip className="h-3.5 w-3.5" />}
-            {tab === "collaboration" && <MessageSquare className="h-3.5 w-3.5" />}
             <span>{tab}</span>
           </button>
         ))}
@@ -822,18 +818,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             )}
           </div>
         )}
-
-        {/* Collaboration Tab */}
-        {activeTab === "collaboration" && (
-          <div className="space-y-4">
-             <div className="text-center py-8 text-xs text-gray-500 border rounded-xl border-dashed">
-                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                Collaboration chat and integrations are progressively hydrated.
-             </div>
-          </div>
-        )}
-
-
 
       </div>
     </AppCard>
