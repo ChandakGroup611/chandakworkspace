@@ -66,7 +66,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setPendingStatus(null);
     try {
       const details = await getTaskDetails(taskId);
-      setTask(details);
+      setTask((prev: any) => ({
+        ...details,
+        checklists: prev?.checklists || [],
+        attachments: prev?.attachments || []
+      }));
       setRemarksDraft("");
       // Initialize editable custom fields
       setLocalCustomFields(details.custom_fields || {});
@@ -86,8 +90,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   };
 
   // Lazy loaders for tabs
-  const loadChecklists = async () => {
-    if (isChecklistsLoaded) return;
+  const loadChecklists = async (force = false) => {
+    if (isChecklistsLoaded && !force) return;
     setIsLoadingTab(true);
     try {
       const data = await getTaskChecklists(taskId);
@@ -98,8 +102,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     }
   };
 
-  const loadAttachments = async () => {
-    if (isAttachmentsLoaded) return;
+  const loadAttachments = async (force = false) => {
+    if (isAttachmentsLoaded && !force) return;
     setIsLoadingTab(true);
     try {
       const data = await getTaskAttachments(taskId);
@@ -110,8 +114,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     }
   };
 
-  const loadComments = async () => {
-    if (isCommentsLoaded) return;
+  const loadComments = async (force = false) => {
+    if (isCommentsLoaded && !force) return;
     setRemarksHistoryLoading(true);
     try {
       const comments = await getTaskComments(taskId, 20, 0);
@@ -315,7 +319,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       setPendingFiles([]);
       setRemarksDraft("");
 
-      await loadTaskDetails();
+      await loadTaskDetails(true);
+      if (isChecklistsLoaded) await loadChecklists(true);
+      if (isAttachmentsLoaded) await loadAttachments(true);
+      if (isCommentsLoaded || !isHistoryCollapsed) await loadComments(true);
+
       onUpdate?.();
       router.refresh();
     } catch (e: any) {
