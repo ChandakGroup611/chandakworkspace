@@ -60,25 +60,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   const parentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    async function whoami() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUserId(user?.id || null);
-      } catch (e) {
-        setCurrentUserId(null);
-      }
-    }
-    whoami();
-
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const wsId = params.get("workspaceId");
-      setSelectedWorkspaceId(wsId || null);
-    }
-  }, []);
-
   const uniqueWorkspaces = useMemo(() => {
     const map = new Map();
     tasks.forEach(t => {
@@ -148,6 +129,28 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    async function whoami() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUserId(user?.id || null);
+      } catch (e) {
+        setCurrentUserId(null);
+      }
+    }
+    whoami();
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const wsId = params.get("workspaceId");
+      setSelectedWorkspaceId(wsId || null);
+    }
+    
+    // Always refresh on mount since we removed server-side fetching for speed
+    refresh();
+  }, []);
 
   const exportToExcel = async () => {
     const workbook = new ExcelJS.Workbook();
@@ -361,14 +364,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <AppTable className="task-table w-full">
             <AppTableHeader className="sticky top-0 z-10 bg-[#06080f]">
               <AppTableRow>
-                <AppTableHead className="w-[120px]">Code</AppTableHead>
-                <AppTableHead>Title & Description</AppTableHead>
-                <AppTableHead>Workspace</AppTableHead>
-                <AppTableHead>Priority</AppTableHead>
-                <AppTableHead>Due</AppTableHead>
-                <AppTableHead>Status</AppTableHead>
-                <AppTableHead className="text-right">Created</AppTableHead>
-                <AppTableHead className="text-right">Actions</AppTableHead>
+                <AppTableHead className="w-[100px]">Code</AppTableHead>
+                <AppTableHead className="w-[300px]">Title & Description</AppTableHead>
+                <AppTableHead className="w-[180px]">Workspace</AppTableHead>
+                <AppTableHead className="w-[120px]">Priority</AppTableHead>
+                <AppTableHead className="w-[120px]">Due</AppTableHead>
+                <AppTableHead className="w-[120px]">Status</AppTableHead>
+                <AppTableHead className="text-right w-[100px]">Created</AppTableHead>
+                <AppTableHead className="text-right w-[120px]">Actions</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
@@ -383,20 +386,20 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    <AppTableCell className="font-mono text-[11px] text-blue-400 font-bold">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                    <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                     <AppTableCell>
-                      <div className="font-semibold truncate text-gray-100">{task.title}</div>
+                      <div className="font-semibold truncate text-gray-900">{task.title}</div>
                       <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
                     </AppTableCell>
-                    <AppTableCell className="text-gray-300">{task.workspace?.name || task.workspace?.code}</AppTableCell>
+                    <AppTableCell className="text-gray-700">{task.workspace?.name || task.workspace?.code}</AppTableCell>
                     <AppTableCell>
                       <AppBadge variant="info">{task.priority?.name || '—'}</AppBadge>
                     </AppTableCell>
-                    <AppTableCell className="text-gray-400 text-sm">{task.end_date || '—'}</AppTableCell>
+                    <AppTableCell className="text-gray-600 text-sm">{task.end_date || '—'}</AppTableCell>
                     <AppTableCell>
                       <AppBadge variant="neutral">{task.status?.name || '—'}</AppBadge>
                     </AppTableCell>
-                    <AppTableCell className="text-right text-gray-400 text-xs">{formatDate(task.created_at)}</AppTableCell>
+                    <AppTableCell className="text-right text-gray-500 text-xs">{formatDate(task.created_at)}</AppTableCell>
                     <AppTableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <AppButton size="sm" variant="outline" onClick={() => setSelectedTask(task)}>View</AppButton>

@@ -1,16 +1,13 @@
 import React from "react";
 import { Metadata } from "next";
 import TaskListViewClient from "@/components/tasks/TaskListViewClient";
-import { fetchAllTasks } from "@/lib/actions/workspaces";
 
 export const metadata: Metadata = {
   title: "All Workspace Tasks | ADIOS",
   description: "Detailed and filterable list of all workspace tasks.",
 };
 
-export default async function TasksPage() {
-  const tasks = await fetchAllTasks();
-
+export default function TasksPage() {
   return (
     <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
       <header className="border-b border-white/5 pb-4">
@@ -19,7 +16,7 @@ export default async function TasksPage() {
       </header>
 
       <main>
-        <TaskListViewClient initialTasks={tasks} />
+        <TaskListViewClient initialTasks={[]} />
       </main>
     </div>
   );
