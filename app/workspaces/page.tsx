@@ -2,6 +2,8 @@ import { fetchWorkspaceDashboardData } from "@/lib/actions/workspaces";
 import WorkspacesClient from "./WorkspacesClient";
 import { getTaskDetails } from "@/lib/actions/tasks";
 
+export const dynamic = 'force-dynamic';
+
 export default async function WorkspacesPage({ searchParams }: { searchParams: { task?: string } }) {
   let taskWorkspaceId: string | null = null;
   
