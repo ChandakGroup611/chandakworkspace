@@ -371,17 +371,29 @@ export default function TaskExecutionController({ taskId, onUpdate }: { taskId: 
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Custom Properties</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {Object.entries(localCustomFields).map(([key, val]) => (
-                <div key={key} className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                    {key.replace(/_/g, ' ')}
-                  </label>
-                  <AppInput 
-                    value={String(val)} 
-                    onChange={e => setLocalCustomFields({...localCustomFields, [key]: e.target.value})} 
-                  />
-                </div>
-              ))}
+              {Object.entries(localCustomFields).map(([key, val]) => {
+                const isTatDays = key === 'tat_days';
+                const isReadOnly = isTatDays && !task.currentUserIsSuperAdmin;
+                return (
+                  <div key={key} className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                      {key.replace(/_/g, ' ')}
+                    </label>
+                    {isReadOnly ? (
+                      <div className={`w-full p-2 rounded-md text-[13px] border cursor-not-allowed ${
+                        isLightMode ? "bg-gray-100 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
+                      }`}>
+                        {String(val)}
+                      </div>
+                    ) : (
+                      <AppInput 
+                        value={String(val)} 
+                        onChange={e => setLocalCustomFields({...localCustomFields, [key]: e.target.value})} 
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

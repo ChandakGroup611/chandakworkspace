@@ -217,6 +217,29 @@ export async function getTaskDetails(taskId: string) {
   task.workspace = workspace;
   task.creator = creator;
   
+  // Determine if current user is super admin
+  const cookieStore = await cookies();
+  const { data: { session } } = await createClient(cookieStore).auth.getSession();
+  const userId = session?.user?.id;
+  
+  let isSuperAdmin = false;
+  if (userId) {
+     const { data: roleData } = await supabaseAdmin
+       .from('user_master')
+       .select('role:roles(code)')
+       .eq('id', userId)
+       .single();
+       
+     const roleCode = Array.isArray(roleData?.role) 
+        ? (roleData.role[0] as any)?.code 
+        : (roleData?.role as any)?.code;
+        
+     if (roleCode === 'SUPER_ADMIN') {
+        isSuperAdmin = true;
+     }
+  }
+  task.currentUserIsSuperAdmin = isSuperAdmin;
+  
   // Excluded heavy modules from initial core load (Progressive Hydration)
   task.checklists = [];
   task.attachments = [];

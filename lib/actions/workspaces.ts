@@ -120,9 +120,8 @@ export async function createWorkspace(formData: any) {
       throw new Error(error.message);
     }
 
-    // Insert assignees and teams
+    // Insert assignees
     const assigneesArray = Array.from(new Set([userId, ...(formData.assigneeIds || [])])).filter(Boolean) as string[];
-    const teamsArray = Array.from(new Set(formData.teamIds || [])).filter(Boolean) as string[];
 
     if (assigneesArray.length > 0) {
       await supabaseAdmin.from("workspace_members").insert(
@@ -130,15 +129,6 @@ export async function createWorkspace(formData: any) {
           workspace_id: data.id,
           user_id: id,
           role: id === userId ? 'manager' : 'member'
-        }))
-      );
-    }
-
-    if (teamsArray.length > 0) {
-      await supabaseAdmin.from("workspace_teams").insert(
-        teamsArray.map((id: string) => ({
-          workspace_id: data.id,
-          team_id: id
         }))
       );
     }
@@ -167,8 +157,7 @@ export async function createWorkspace(formData: any) {
       ...data,
       name: data.workspace_name,
       code: data.workspace_code,
-      members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || [],
-      teams: formData.teamIds?.map((tid: any) => ({ team_id: tid })) || []
+      members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || []
     };
   } catch (err: any) {
     console.error("[createWorkspace] Error:", err?.message || String(err));
@@ -325,29 +314,44 @@ export async function updateWorkspace(id: string, formData: any) {
 
   // Update assignees and teams if provided
   if (formData.assigneeIds !== undefined) {
-    const assigneesArray = Array.from(new Set(formData.assigneeIds)).filter(Boolean);
-    await supabaseAdmin.from("workspace_members").delete().eq("workspace_id", id);
-    if (assigneesArray.length > 0) {
-      await supabaseAdmin.from("workspace_members").insert(
-        assigneesArray.map((uid: any) => ({
-          workspace_id: id,
-          user_id: uid,
-          role: 'member'
-        }))
-      );
-    }
-  }
+    // 1. Get existing members to preserve roles and manage soft-deletes
+    const { data: existingMembers } = await supabaseAdmin
+      .from("workspace_members")
+      .select("id, user_id, role, is_deleted")
+      .eq("workspace_id", id);
+    
+    const roleMap = new Map();
+    const idMap = new Map();
+    existingMembers?.forEach(m => {
+      roleMap.set(m.user_id, m.role);
+      idMap.set(m.user_id, m.id);
+    });
 
-  if (formData.teamIds !== undefined) {
-    const teamsArray = Array.from(new Set(formData.teamIds)).filter(Boolean);
-    await supabaseAdmin.from("workspace_teams").delete().eq("workspace_id", id);
-    if (teamsArray.length > 0) {
-      await supabaseAdmin.from("workspace_teams").insert(
-        teamsArray.map((tid: any) => ({
-          workspace_id: id,
-          team_id: tid
-        }))
-      );
+    // 2. Ensure owner is not locked out
+    const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
+    const ownerId = ws?.workspace_owner_id;
+
+    let assigneesArray = Array.from(new Set(formData.assigneeIds)).filter(Boolean) as string[];
+    if (ownerId && !assigneesArray.includes(ownerId)) {
+        assigneesArray.push(ownerId);
+    }
+
+    // 3. Perform soft-deletes and upserts
+    const usersToSoftDelete = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id) && !m.is_deleted).map(m => m.id);
+    if (usersToSoftDelete.length > 0) {
+      await supabaseAdmin.from("workspace_members").update({ is_deleted: true }).in("id", usersToSoftDelete);
+    }
+
+    for (const uid of assigneesArray) {
+      const existingRole = roleMap.get(uid);
+      const role = existingRole ? existingRole : (uid === ownerId ? 'manager' : 'member');
+      const recordId = idMap.get(uid);
+
+      if (recordId) {
+        await supabaseAdmin.from("workspace_members").update({ is_deleted: false, role }).eq("id", recordId);
+      } else {
+        await supabaseAdmin.from("workspace_members").insert({ workspace_id: id, user_id: uid, role, is_deleted: false });
+      }
     }
   }
 
@@ -377,8 +381,7 @@ export async function updateWorkspace(id: string, formData: any) {
     ...data,
     name: data.workspace_name,
     code: data.workspace_code,
-    members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || [],
-    teams: formData.teamIds?.map((tid: any) => ({ team_id: tid })) || []
+    members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || []
   };
 }
 

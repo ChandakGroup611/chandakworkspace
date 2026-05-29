@@ -674,6 +674,17 @@ export default function WorkspacesPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Name</label>
+                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Migration" value={newWS.name} onChange={e => setNewWS({...newWS, name: e.target.value})} required />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Code / ID</label>
+                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? newWS.code : "[Auto-Generated]"} />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-4">
                 {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
                   <div className="space-y-1">
@@ -733,16 +744,7 @@ export default function WorkspacesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Name</label>
-                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Migration" value={newWS.name} onChange={e => setNewWS({...newWS, name: e.target.value})} required />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
-                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? newWS.code : "[Auto-Generated]"} />
-                </div>
-              </div>
+              {/* Workspace Name block moved up */}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">

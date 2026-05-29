@@ -22,14 +22,8 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function run() {
-  const t2 = await supabase.from('tickets').select('*').limit(1);
-  console.log('Tickets:', t2.data ? Object.keys(t2.data[0]||{}) : t2.error);
-  
-  const t3 = await supabase.from('requirements').select('*').limit(1);
-  console.log('Requirements:', t3.data ? Object.keys(t3.data[0]||{}) : t3.error);
-  
-  const t4 = await supabase.from('workspaces').select('*').limit(1);
-  console.log('Workspaces:', t4.data ? Object.keys(t4.data[0]||{}) : t4.error);
+  const t = await supabase.from('user_master').select('*').limit(1);
+  console.log('user_master keys:', t.data && t.data.length > 0 ? Object.keys(t.data[0]) : (t.data ? 'empty' : t.error));
 }
 
 run();
