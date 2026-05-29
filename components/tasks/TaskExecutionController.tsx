@@ -28,6 +28,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const router = useRouter();
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
+  const [loading, setLoading] = useState(!initialTask);
   const [activeTab, setActiveTab] = useState<"checklist" | "attachments">("checklist");
   
   // Lazy Load States
