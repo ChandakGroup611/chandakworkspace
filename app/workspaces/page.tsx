@@ -457,25 +457,34 @@ export default function WorkspacesPage() {
                 </div>
               </div>
 
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin">
-                {filteredTasks.map(task => (
-                  <a 
-                    key={task.id}
-                    href={`/tasks/${task.id}`}
-                    className={`block p-4 rounded-xl transition-all duration-300 border backdrop-blur-sm group hover:-translate-y-0.5 shadow-sm hover:shadow-md ${
-                      isLightMode 
-                        ? "bg-white border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30" 
-                        : "bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.04]"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1 w-full">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center flex-wrap gap-2">
+                <div className={`max-h-[400px] overflow-y-auto scrollbar-thin border rounded-xl overflow-hidden ${isLightMode ? 'border-gray-200' : 'border-white/10'}`}>
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className={`sticky top-0 z-10 text-xs uppercase ${isLightMode ? 'bg-gray-50 text-gray-500 shadow-sm' : 'bg-[#151722] text-gray-400 border-b border-white/5'}`}>
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Task ID</th>
+                        <th className="px-4 py-3 font-semibold w-full">Details</th>
+                        <th className="px-4 py-3 font-semibold">Priority</th>
+                        <th className="px-4 py-3 font-semibold text-right">Progress</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isLightMode ? 'divide-gray-200 bg-white' : 'divide-white/5 bg-transparent'}`}>
+                      {filteredTasks.map(task => (
+                        <tr key={task.id} onClick={() => window.location.href = `/tasks/${task.id}`} className={`cursor-pointer transition-colors ${isLightMode ? 'hover:bg-indigo-50/50' : 'hover:bg-white/[0.02]'}`}>
+                          <td className="px-4 py-3">
                             <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
                               isLightMode ? "bg-purple-100 text-purple-700 border border-purple-200" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
                             }`}>{task.code}</span>
-
+                          </td>
+                          <td className="px-4 py-3 max-w-[250px] truncate">
+                            <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{task.title}</div>
+                            {task.parent_task && (
+                              <div className="flex items-center gap-1 mt-0.5 text-[9px] font-bold text-indigo-400/80 truncate">
+                                <GitMerge className="h-3 w-3 shrink-0" />
+                                <span>Parent: {task.parent_task.code}</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
                             {task.priority && (
                               <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase ${
                                 task.priority.code === "P1" || task.priority.code === "CRITICAL"
@@ -487,41 +496,29 @@ export default function WorkspacesPage() {
                                 {task.priority.name}
                               </span>
                             )}
-
-                            <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{task.title}</span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500 line-clamp-1">{task.description}</p>
-                        
-                        {task.parent_task && (
-                          <div className="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-indigo-400/80">
-                            <GitMerge className="h-3 w-3 shrink-0" />
-                            <span>Parent Dependency: {task.parent_task.code} - {task.parent_task.title}</span>
-                          </div>
-                        )}
-                        
-                        {/* Progress Tracker */}
-                        <div className="pt-2">
-                          <div className="flex justify-between text-[10px] font-bold text-gray-500 mb-1">
-                            <span>Lifecycle Progress</span>
-                            <span className={isLightMode ? "text-purple-600" : "text-purple-400"}>{task.progress_percentage}%</span>
-                          </div>
-                          <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLightMode ? "bg-gray-100" : "bg-white/5"}`}>
-                            <div className={`h-full rounded-full transition-all duration-500 ${
-                              isLightMode ? "bg-gradient-to-r from-purple-500 to-indigo-500" : "bg-gradient-to-r from-purple-500 to-indigo-500"
-                            }`} style={{ width: `${task.progress_percentage}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </a>
-                ))}
-                {filteredTasks.length === 0 && (
-                  <div className={`text-center py-12 rounded-xl border border-dashed ${isLightMode ? "border-gray-300" : "border-white/10"}`}>
-                    <p className="text-gray-500 text-xs font-semibold">No tasks orchestrated in this responsibility filter.</p>
-                  </div>
-                )}
-              </div>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className={`text-[10px] font-bold ${isLightMode ? "text-purple-600" : "text-purple-400"}`}>{task.progress_percentage}%</span>
+                              <div className={`w-16 h-1.5 rounded-full overflow-hidden ${isLightMode ? "bg-gray-100" : "bg-white/5"}`}>
+                                <div className={`h-full rounded-full transition-all duration-500 ${
+                                  isLightMode ? "bg-gradient-to-r from-purple-500 to-indigo-500" : "bg-gradient-to-r from-purple-500 to-indigo-500"
+                                }`} style={{ width: `${task.progress_percentage}%` }} />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredTasks.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-12 text-center">
+                            <p className="text-gray-500 text-xs font-semibold">No tasks orchestrated in this responsibility filter.</p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
             </AppCard>
 
             
