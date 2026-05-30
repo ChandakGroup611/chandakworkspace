@@ -109,16 +109,27 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     setLoading(true);
     try {
       const supabase = createClient();
-      const { data } = await supabase.from("tasks").select(`
-        *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code), creator:user_master!created_by(id,manager_id)`)
+      const { data, error } = await supabase.from("tasks").select(`
+        *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code)`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
         
+      if (error) {
+        console.error("Supabase Error fetching tasks:", error);
+      }
+        
       if (data && data.length > 0) {
+        // Fetch Workspaces
         const wsIds = Array.from(new Set(data.map((t: any) => t.workspace_id).filter(Boolean)));
         const { data: workspaces } = await supabase.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
+        
+        // Fetch Creators
+        const creatorIds = Array.from(new Set(data.map((t: any) => t.created_by).filter(Boolean)));
+        const { data: users } = await supabase.from("user_master").select("id, manager_id").in("id", creatorIds);
+
         data.forEach((t: any) => {
           t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
+          t.creator = users?.find((u: any) => u.id === t.created_by) || null;
         });
       }
       
