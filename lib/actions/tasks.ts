@@ -93,7 +93,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     .eq('id', taskId)
     .single();
 
-  if (!task) throw new Error("Task not found");
+  if (!task) return { error: "Task not found" };
 
   let targetStatusId = newStatusIdOrCode;
 
@@ -108,7 +108,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     if (stMaster) {
       targetStatusId = stMaster.id;
     } else {
-      throw new Error(`Invalid status code or ID: ${newStatusIdOrCode}`);
+      return { error: `Invalid status code or ID: ${newStatusIdOrCode}` };
     }
   }
 
@@ -126,19 +126,18 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     console.warn(`[Workflow Engine] No explicit transition mapped from ${task.status_id} to ${targetStatusId}. Permitting default free-form transition.`);
   }
 
-  // NOTE: Role-based authorization is intentionally NOT enforced at the action level.
-  // All workspace members can perform status transitions. Role checks are UI-only hints.
-
   // Update status
   const { error } = await supabaseAdmin
     .from('tasks')
     .update({ status_id: targetStatusId, updated_at: new Date().toISOString() })
     .eq('id', taskId);
 
-  if (error) throw error;
+  if (error) return { error: error.message || JSON.stringify(error) };
 
   // Fire-and-forget activity log — must not block or throw to the caller
   logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
+  
+  return { success: true };
 }
 
 export async function logActivityEvent(moduleType: string, recordId: string, eventType: string, oldValue: any, newValue: any, performedBy: string) {
@@ -176,7 +175,7 @@ export async function createCustomField(workspaceId: string, fieldName: string, 
       field_name: fieldName,
       field_key: fieldKey,
       field_type: fieldType,
-      created_by: null // Or omit if not required
+      created_by: null
     }])
     .select()
     .single();
@@ -199,7 +198,6 @@ export async function fetchUsers() {
 }
 
 export async function getTaskDetails(taskId: string) {
-  // Use a single query leveraging foreign keys for massive performance boost
   const { data: task, error } = await supabaseAdmin
     .from('tasks')
     .select(`
@@ -218,7 +216,6 @@ export async function getTaskDetails(taskId: string) {
     task.creator = creator;
   }
 
-  // Use getUser() (secure, not getSession which can be stale/missing)
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   const userId = user?.id;
@@ -231,7 +228,6 @@ export async function getTaskDetails(taskId: string) {
     isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
 
     if (!isSuperAdmin && task.workspace_id) {
-      // 1. Check direct workspace membership
       const { data: directMembership } = await supabaseAdmin
         .from('workspace_members')
         .select('user_id')
@@ -242,7 +238,6 @@ export async function getTaskDetails(taskId: string) {
       if (directMembership) {
         isWorkspaceMember = true;
       } else {
-        // 2. Check team-based workspace membership
         const { data: userTeams } = await supabaseAdmin
           .from('team_members')
           .select('team_id')
@@ -263,25 +258,21 @@ export async function getTaskDetails(taskId: string) {
         }
       }
     } else {
-      // Super admins are always considered members
       isWorkspaceMember = isSuperAdmin;
     }
   }
 
   task.currentUserIsSuperAdmin = isSuperAdmin;
   
-  // Load assignees to check if current user is an assignee
   const { data: assignees } = await supabaseAdmin
     .from('task_assignees')
     .select('user_id')
     .eq('task_id', taskId);
   const isAssignee = assignees?.some((a: any) => a.user_id === userId) || false;
 
-  // Only Workspace Members, Task Assignees, Creators, or Super Admins can act
   task.currentUserCanAct = isSuperAdmin || isWorkspaceMember || isAssignee || task.created_by === userId;
   task.currentUserId = userId || null;
 
-  // Excluded heavy modules from initial core load (Progressive Hydration)
   task.checklists = [];
   task.attachments = [];
 
@@ -306,7 +297,6 @@ export async function getTaskAttachments(taskId: string) {
 }
 
 export async function getWorkloadSnapshot(userId: string) {
-  // Get all visible workspaces for the user
   const { getVisibleWorkspaces } = await import('@/lib/repositories/workspaces');
   const visibleWorkspaces = await getVisibleWorkspaces(userId);
   const workspaceIds = visibleWorkspaces.map((w: any) => w.id);
@@ -329,7 +319,6 @@ export async function getWorkloadSnapshot(userId: string) {
   const overdueTasks = activeTasks.filter(t => t.end_date && new Date(t.end_date) < now).length;
   const estimatedHours = activeTasks.reduce((acc, t) => acc + (t.estimated_hours || 0), 0);
 
-  // Mock standard capacity as 40 hours per week
   const standardCapacity = 40;
   const capacityPercentage = Math.min(100, Math.round((estimatedHours / standardCapacity) * 100));
 
@@ -344,11 +333,11 @@ export async function getWorkloadSnapshot(userId: string) {
 
 export async function updateTask(taskId: string, payload: any) {
   const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
-  if (error) throw error;
+  if (error) return { error: error.message || JSON.stringify(error) };
+  return { success: true };
 }
 
 export async function deleteTask(taskId: string) {
-  // Get the task and check auth
   const { data: task } = await supabaseAdmin.from('tasks').select('workspace_id, created_by').eq('id', taskId).single();
   if (!task) throw new Error("Task not found");
 
@@ -366,7 +355,6 @@ export async function deleteTask(taskId: string) {
       .eq('user_id', userId)
       .single();
     
-    // Allow deletion if the user is owner/admin
     const roleCode = member?.role?.toUpperCase();
     if (roleCode !== 'OWNER' && roleCode !== 'ADMIN') {
       throw new Error("You do not have permission to delete this task.");
@@ -443,7 +431,6 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
   if (error) throw error;
   if (!comments || comments.length === 0) return [];
 
-  // Fetch users manually
   const userIds = Array.from(new Set(comments.map((c: any) => c.author_id).filter(Boolean)));
   let users: any[] = [];
   if (userIds.length > 0) {
@@ -461,14 +448,15 @@ export async function addTaskRemark(taskId: string, content: string) {
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   const userId = user?.id;
-  if (!userId) throw new Error("Unauthenticated");
+  if (!userId) return { error: "Unauthenticated" };
 
   const { data, error } = await supabaseAdmin
     .from('task_comments')
     .insert([{ task_id: taskId, author_id: userId, content }])
     .select('*')
     .single();
-  if (error) throw error;
+  
+  if (error) return { error: error.message || JSON.stringify(error) };
   
   if (data) {
     await supabaseAdmin.from('task_activity_logs').insert([{
@@ -482,7 +470,7 @@ export async function addTaskRemark(taskId: string, content: string) {
     data.user = user || null;
   }
   
-  return data;
+  return { success: true, data };
 }
 
 export async function getTaskStatuses() {

@@ -258,17 +258,19 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     try {
       // 1. Process pending status change
       if (pendingStatus) {
+        let res: any;
         if (pendingStatus === "ST_IN_PROGRESS") {
-          await transitionTaskStatus(taskId, "ST_IN_PROGRESS");
+          res = await transitionTaskStatus(taskId, "ST_IN_PROGRESS");
         } else if (pendingStatus === "ST_RESOLVED") {
-          await resolveTask(taskId);
+          res = await resolveTask(taskId);
         } else if (pendingStatus === "ST_CLOSED") {
-          await approveResolution(taskId);
+          res = await approveResolution(taskId);
         } else if (pendingStatus === "ST_REOPEN") {
-          await reopenTask(taskId);
+          res = await reopenTask(taskId);
         } else {
-          await transitionTaskStatus(taskId, pendingStatus);
+          res = await transitionTaskStatus(taskId, pendingStatus);
         }
+        if (res?.error) throw new Error("Status Error: " + res.error);
       }
 
       // 2. Create new checklists
@@ -303,13 +305,17 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       if (Object.keys(pendingTaskUpdates).length) Object.assign(updatePayload, pendingTaskUpdates);
       
       if (Object.keys(updatePayload).length > 0) {
-        await updateTask(taskId, updatePayload);
+        const res = await updateTask(taskId, updatePayload);
+        if (res?.error) throw new Error("Update Error: " + res.error);
       }
 
       // 6. Save remark if present
       if (remarksDraft.trim()) {
-        const newComment = await addTaskRemark(taskId, remarksDraft);
-        setRemarksHistory(prev => [...prev, newComment]);
+        const res = await addTaskRemark(taskId, remarksDraft);
+        if (res?.error) throw new Error("Remark Error: " + res.error);
+        if (res?.data) {
+          setRemarksHistory(prev => [...prev, res.data]);
+        }
       }
 
       // Reset pending states
