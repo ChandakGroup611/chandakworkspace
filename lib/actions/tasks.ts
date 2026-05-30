@@ -104,6 +104,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
       .from('status_master')
       .select('id')
       .eq('status_code', newStatusIdOrCode)
+      .eq('scope_type', 'TASK')
       .single();
     if (stMaster) {
       targetStatusId = stMaster.id;
