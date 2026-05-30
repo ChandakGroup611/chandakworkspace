@@ -121,8 +121,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setRemarksHistoryLoading(true);
     try {
       const comments = await getTaskComments(taskId, 20, 0);
-      if (comments?.error) throw new Error("Comments Error: " + comments.error);
-      setRemarksHistory(comments);
+      if (comments && !Array.isArray(comments) && 'error' in comments) {
+        throw new Error("Comments Error: " + comments.error);
+      }
+      setRemarksHistory(Array.isArray(comments) ? comments : []);
       setIsCommentsLoaded(true);
     } catch (e: any) {
       console.error(e);
