@@ -231,14 +231,37 @@ export async function getTaskDetails(taskId: string) {
     isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
 
     if (!isSuperAdmin && task.workspace_id) {
-      // Check if the user is a member of the task's workspace
-      const { data: membership } = await supabaseAdmin
+      // 1. Check direct workspace membership
+      const { data: directMembership } = await supabaseAdmin
         .from('workspace_members')
         .select('user_id')
         .eq('workspace_id', task.workspace_id)
         .eq('user_id', userId)
         .maybeSingle();
-      isWorkspaceMember = !!membership;
+      
+      if (directMembership) {
+        isWorkspaceMember = true;
+      } else {
+        // 2. Check team-based workspace membership
+        const { data: userTeams } = await supabaseAdmin
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', userId);
+          
+        if (userTeams && userTeams.length > 0) {
+          const teamIds = userTeams.map((t: any) => t.team_id);
+          const { data: wsTeams } = await supabaseAdmin
+            .from('workspace_teams')
+            .select('id')
+            .eq('workspace_id', task.workspace_id)
+            .in('team_id', teamIds)
+            .limit(1);
+            
+          if (wsTeams && wsTeams.length > 0) {
+            isWorkspaceMember = true;
+          }
+        }
+      }
     } else {
       // Super admins are always considered members
       isWorkspaceMember = isSuperAdmin;
@@ -246,8 +269,16 @@ export async function getTaskDetails(taskId: string) {
   }
 
   task.currentUserIsSuperAdmin = isSuperAdmin;
-  // Any workspace member (or super admin) can perform all task activities
-  task.currentUserCanAct = isSuperAdmin || isWorkspaceMember || task.created_by === userId;
+  
+  // Load assignees to check if current user is an assignee
+  const { data: assignees } = await supabaseAdmin
+    .from('task_assignees')
+    .select('user_id')
+    .eq('task_id', taskId);
+  const isAssignee = assignees?.some((a: any) => a.user_id === userId) || false;
+
+  // Only Workspace Members, Task Assignees, Creators, or Super Admins can act
+  task.currentUserCanAct = isSuperAdmin || isWorkspaceMember || isAssignee || task.created_by === userId;
   task.currentUserId = userId || null;
 
   // Excluded heavy modules from initial core load (Progressive Hydration)

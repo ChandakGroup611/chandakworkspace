@@ -81,11 +81,10 @@ export function TicketWorkspaceConsole({
   // Load state and action loading
   const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
 
-  // Authorization Check
-  // ONLY the active Assignee (or a Super Admin bypass) can edit core fields. Everyone else is Read-Only.
+  // Allow any user with access to the console to edit fields (TICKETS_UPDATE checked by server)
   const isAssignee = currentUserId === ticket?.assignee_id;
   const isSuperAdmin = roleCode === "SUPER_ADMIN";
-  const canEditFields = isAssignee || isSuperAdmin;
+  const canEditFields = true; // Relaxed restriction: Allow all members to edit
   const canAddRemarks = true; // Everyone who can view the ticket can add a remark
 
   useEffect(() => {

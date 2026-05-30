@@ -41,7 +41,7 @@ export async function markNotificationAsRead(notificationId: string) {
 }
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
-import nodemailer from "nodemailer";
+// Nodemailer will be dynamically imported in dispatchNotification
 
 import { fetchSpecificEventConfig, fetchSystemEmailConfig } from "./email-config";
 
@@ -139,15 +139,16 @@ export async function dispatchNotification(
 
     if (smtpHost && smtpUser) {
       try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: Number(smtpPort),
-          secure: smtpSecure,
-          auth: {
-            user: smtpUser,
-            pass: smtpPass,
-          },
-        });
+    const nodemailer = (await import('nodemailer')).default;
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: Number(smtpPort),
+      secure: smtpSecure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
 
         // Fire and forget SMTP so it doesn't block the HTTP request
         transporter.sendMail({

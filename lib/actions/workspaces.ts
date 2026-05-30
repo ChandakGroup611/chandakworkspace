@@ -333,8 +333,17 @@ export async function updateWorkspace(id: string, formData: any) {
   if (!userId) throw new Error("Unauthenticated");
 
   const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE");
-  if (!hasAccess) {
-    throw new Error("Unauthorized: Missing WORKSPACES_UPDATE capability.");
+  
+  // Check if user is a member of the workspace
+  const { data: member } = await supabaseAdmin
+    .from("workspace_members")
+    .select("id")
+    .eq("workspace_id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!hasAccess && !member) {
+    throw new Error("Unauthorized: Missing WORKSPACES_UPDATE capability or workspace membership.");
   }
 
   const updatePayload = {

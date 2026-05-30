@@ -65,9 +65,9 @@ export async function addTicketRemark(ticketId: string, content: string) {
   }
 
   const hasAccess = await checkServerPermission(supabase, user.id, "TICKETS_UPDATE");
-  if (!hasAccess) {
-    throw new Error("Unauthorized: Missing TICKETS_UPDATE capability.");
-  }
+  
+  // Relaxed: Allow all authenticated members to add remarks
+  // Removed strict capability/creator check as per new requirement.
 
   const { data, error } = await supabase
     .from("ticket_comments")
@@ -148,9 +148,9 @@ export async function updateTicketDetails(ticketId: string, payload: {
   }
 
   const hasAccess = await checkServerPermission(supabase, user.id, "TICKETS_UPDATE");
-  if (!hasAccess) {
-    throw new Error("Unauthorized: Missing TICKETS_UPDATE capability.");
-  }
+  
+  // Relaxed: Allow all authenticated members to update the ticket
+  // Removed strict capability/creator check as per new requirement.
 
   const updateData: any = {};
   if (payload.title !== undefined) updateData.title = payload.title;

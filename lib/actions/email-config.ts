@@ -1,7 +1,6 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
-import nodemailer from "nodemailer";
 
 export async function fetchSystemEmailConfig() {
   const { data, error } = await supabaseAdmin
@@ -36,22 +35,22 @@ export async function saveSystemEmailConfig(payload: any) {
       .insert([payload]);
     if (error) throw new Error("Failed to insert configuration.");
   }
-  
+
   return { success: true };
 }
 
 export async function testEmailConnection(config: any) {
   try {
+    const nodemailer = (await import('nodemailer')).default;
     const transporter = nodemailer.createTransport({
       host: config.smtp_host,
       port: config.smtp_port,
       secure: config.encryption_type === 'SSL/TLS',
       auth: {
         user: config.smtp_username,
-        pass: config.smtp_password_encrypted, // Note: For a real app, this should be decrypted securely if stored encrypted, or use App Password.
+        pass: config.smtp_password_encrypted,
       },
     });
-
     await transporter.verify();
     return { success: true, message: "Connection verified successfully!" };
   } catch (error: any) {
@@ -60,13 +59,11 @@ export async function testEmailConnection(config: any) {
   }
 }
 
-// Fetch notification matrix (the granular triggers)
 export async function fetchEventTriggerConfig() {
   const { data, error } = await supabaseAdmin
     .from("notification_event_config")
     .select("*")
     .order("module_code", { ascending: true });
-    
   if (error) {
     console.error("Error fetching event config:", error);
     return [];
@@ -79,7 +76,6 @@ export async function updateEventTriggerConfig(id: string, updates: any) {
     .from("notification_event_config")
     .update(updates)
     .eq("id", id);
-
   if (error) throw new Error("Failed to update trigger config.");
   return { success: true };
 }
@@ -91,7 +87,6 @@ export async function fetchSpecificEventConfig(moduleCode: string, eventCode: st
     .eq("module_code", moduleCode)
     .eq("event_code", eventCode)
     .single();
-    
   if (error && error.code !== 'PGRST116') {
     console.error("Error fetching specific event config:", error);
   }

@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { fetchSystemEmailConfig } from "@/lib/actions/email-config";
 import NotificationProviderForm from "@/components/settings/NotificationProviderForm";
 
-export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export const metadata: Metadata = {
   title: "Email Configuration | Enterprise Operations",
