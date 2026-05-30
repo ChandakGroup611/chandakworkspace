@@ -209,7 +209,9 @@ export async function getTaskDetails(taskId: string) {
     .eq('id', taskId)
     .single();
 
-  if (error || !task) throw error || new Error("Task not found");
+  if (error || !task) {
+    return { error: error?.message || "Task not found" };
+  }
 
   if (task.created_by) {
     const { data: creator } = await supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single();
@@ -428,7 +430,7 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
     
-  if (error) throw error;
+  if (error) return { error: error.message };
   if (!comments || comments.length === 0) return [];
 
   const userIds = Array.from(new Set(comments.map((c: any) => c.author_id).filter(Boolean)));

@@ -66,6 +66,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setPendingStatus(null);
     try {
       const details = await getTaskDetails(taskId);
+      if (details?.error) throw new Error("Load Error: " + details.error);
+      
       setTask((prev: any) => ({
         ...details,
         checklists: prev?.checklists || [],
@@ -119,8 +121,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setRemarksHistoryLoading(true);
     try {
       const comments = await getTaskComments(taskId, 20, 0);
+      if (comments?.error) throw new Error("Comments Error: " + comments.error);
       setRemarksHistory(comments);
       setIsCommentsLoaded(true);
+    } catch (e: any) {
+      console.error(e);
+      setError(e.message || "Failed to load comments.");
     } finally {
       setRemarksHistoryLoading(false);
     }
