@@ -61,6 +61,7 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
 
     return (
       <button
+        type={props.type || "button"}
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(baseStyles, variants[variant], sizes[size], className)}

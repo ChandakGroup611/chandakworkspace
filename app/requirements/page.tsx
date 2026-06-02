@@ -23,8 +23,10 @@ import {
   History,
   Tag,
   FileCode,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface RequirementItem {
   id: string;
@@ -52,6 +54,7 @@ interface RequirementItem {
 }
 
 export default function RequirementsPage() {
+  const router = useRouter();
   const supabase = createClient();
   const { hasPermission, loading: permsLoading } = usePermissions();
   
@@ -250,7 +253,11 @@ export default function RequirementsPage() {
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
       {/* Module Title Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
-        <div className="space-y-1">
+        <div className="flex items-center gap-3">
+          <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+            Back
+          </AppButton>
+          <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-white">Requirement Engineering Lifecycle</h1>
             <AppBadge variant="warning">Approval Engine</AppBadge>
@@ -258,6 +265,7 @@ export default function RequirementsPage() {
           <p className="text-xs text-gray-400">
             Structured functional analysis and sequential operational sign-off architecture mapped directly from the master blueprint.
           </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

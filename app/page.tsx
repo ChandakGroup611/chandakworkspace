@@ -10,6 +10,7 @@ export default async function Page() {
     <div className="w-full animate-in fade-in-50 duration-500">
       <LiveDashboardWrapper 
         initialMetrics={metricsResult.data || []} 
+        initialKpis={metricsResult.kpis || null}
         dbError={metricsResult.error || null} 
       />
     </div>

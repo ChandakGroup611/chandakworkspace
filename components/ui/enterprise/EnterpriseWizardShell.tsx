@@ -18,17 +18,25 @@ interface EnterpriseWizardShellProps {
 const SIZE_MAP = {
   sm: "max-w-2xl",
   md: "max-w-4xl",
-  lg: "max-w-6xl",
-  xl: "max-w-[1400px]",
+  lg: "max-w-5xl",
+  xl: "max-w-6xl",
   full: "max-w-7xl",
 };
 
 const ACCENT_MAP = {
-  purple: "border-t-purple-500",
-  indigo: "border-t-indigo-500",
-  emerald: "border-t-emerald-500",
-  amber: "border-t-amber-500",
-  rose: "border-t-rose-500",
+  purple: "from-purple-600/20 to-transparent",
+  indigo: "from-indigo-600/20 to-transparent",
+  emerald: "from-emerald-600/20 to-transparent",
+  amber: "from-amber-600/20 to-transparent",
+  rose: "from-rose-600/20 to-transparent",
+};
+
+const ACCENT_BORDER_MAP = {
+  purple: "border-purple-500/50",
+  indigo: "border-indigo-500/50",
+  emerald: "border-emerald-500/50",
+  amber: "border-amber-500/50",
+  rose: "border-rose-500/50",
 };
 
 export function EnterpriseWizardShell({
@@ -52,36 +60,44 @@ export function EnterpriseWizardShell({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+      {/* Dynamic Backdrop */}
       <div 
-        className={`absolute inset-0 backdrop-blur-md animate-in fade-in duration-300 ${
-          isLightMode ? "bg-gray-900/60" : "bg-[#070913]/90"
+        className={`absolute inset-0 backdrop-blur-xl animate-in fade-in duration-500 ${
+          isLightMode ? "bg-gray-900/30" : "bg-[#02040a]/80"
         }`} 
+        onClick={onClose}
       />
 
-      {/* Wizard Container */}
+      {/* Main Wizard Container */}
       <div 
-        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-3xl shadow-2xl overflow-hidden border-t-4 ${ACCENT_MAP[headerAccent]} ${
+        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 ${
           isLightMode 
-            ? "bg-white border-x-0 border-b-0 shadow-2xl" 
-            : "bg-[#0B0F19] border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.6)]"
+            ? "bg-white/90 backdrop-blur-3xl border border-gray-200/50" 
+            : "bg-[#0b0f19]/90 backdrop-blur-3xl border border-white/10"
         } ${className}`}
         style={{ maxHeight: "90vh" }}
+        onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className={`shrink-0 p-3 md:px-5 md:py-3 flex items-center justify-between gap-4 border-b ${
-          isLightMode ? "border-gray-100 bg-white" : "border-white/5 bg-[#0B0F19]"
+        {/* Accent Top Border */}
+        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${ACCENT_BORDER_MAP[headerAccent]} via-transparent`} />
+
+        {/* Header with Glassmorphic Gradient */}
+        <div className={`shrink-0 px-6 py-5 flex items-start justify-between gap-4 border-b relative overflow-hidden ${
+          isLightMode ? "border-gray-200/50" : "border-white/5"
         }`}>
-          <div className="flex flex-col justify-center">
-            {title && <h2 className={`text-lg md:text-xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{title}</h2>}
-            {subtitle && <div className={`mt-0.5 text-[0.8rem] md:text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>{subtitle}</div>}
+          {/* Subtle Background Gradient for Header */}
+          <div className={`absolute inset-0 bg-gradient-to-b ${ACCENT_MAP[headerAccent]} pointer-events-none opacity-50`} />
+          
+          <div className="relative z-10 flex flex-col justify-center">
+            {title && <h2 className={`text-2xl font-black tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{title}</h2>}
+            {subtitle && <div className={`mt-1 text-sm font-medium ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>{subtitle}</div>}
           </div>
           <button 
             onClick={onClose}
             type="button"
-            className={`p-1.5 rounded-xl transition-colors shrink-0 ${
-              isLightMode ? "bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900" : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
+            className={`relative z-10 p-2 rounded-full transition-all shrink-0 active:scale-95 ${
+              isLightMode ? "bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900 shadow-sm" : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
             }`}
           >
             <X className="h-5 w-5" />
@@ -89,14 +105,16 @@ export function EnterpriseWizardShell({
         </div>
 
         {/* Body (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-4 md:px-6 md:py-6 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
-          {children}
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
+          <div className="mx-auto w-full max-w-full">
+            {children}
+          </div>
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className={`shrink-0 p-4 md:px-6 md:py-4 border-t flex items-center justify-between gap-4 ${
-            isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-[#070913]/50"
+          <div className={`shrink-0 px-6 py-4 border-t flex items-center justify-between gap-4 backdrop-blur-xl ${
+            isLightMode ? "border-gray-200/50 bg-gray-50/80" : "border-white/5 bg-black/40"
           }`}>
             {footer}
           </div>

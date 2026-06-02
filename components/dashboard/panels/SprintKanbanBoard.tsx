@@ -48,9 +48,9 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
 
     return (
       <div key={m.id} className="sprint-card" style={isProgress ? { borderColor: 'rgba(110,123,255,0.25)' } : {}}>
-        <div className="sprint-card-title">{m.module} Assignment ({m.priority})</div>
+        <div className="sprint-card-title" title={m.title}>{m.title || `${m.module} Assignment`}</div>
         <div className="sprint-card-meta">
-          <span className="sprint-card-id">TF-{shortId}</span>
+          <span className="sprint-card-id">{m.code || `TF-${shortId}`}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span className={tagClass}>{m.module.substring(0,4).toLowerCase()}</span>
             <div className={avatarClass} title={m.user}>{initials}</div>
@@ -110,7 +110,7 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
               <span className="sprint-col-name" style={{ color: 'var(--green)' }}>Done</span>
               <span className="sprint-count">{board.done.length}</span>
             </div>
-            <div style={{ opacity: 0.6 }}>
+            <div>
               {board.done.map(m => renderCard(m, false))}
             </div>
           </div>

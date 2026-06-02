@@ -97,7 +97,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     const authUpdates: any = {};
     
     // Fetch existing email and role_id to verify difference
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await targetClient
       .from("user_master")
       .select("email, role_id")
       .eq("id", editUserId)
@@ -389,6 +389,7 @@ export async function fetchAssignees() {
  * Uses optimized repositories and explicit queries
  */
 export async function fetchUsersDashboardData() {
+  noStore();
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 

@@ -2,11 +2,14 @@
 
 import React, { useMemo } from "react";
 
+import { useRouter } from "next/navigation";
+
 interface RecentTicketsTableProps {
   metrics?: any[];
 }
 
 export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableProps) {
+  const router = useRouter();
   
   const recentItems = useMemo(() => {
     return metrics.filter(m => m.id && m.module !== 'Workspaces').slice(0, 10);
@@ -58,13 +61,18 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
                   const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
                   const avatarClass = `mini-avatar a${(i % 5) + 1}`;
 
+                  const handleRowClick = () => {
+                    if (m.module === 'Tickets') router.push(`/tickets?ticket=${m.id}`);
+                    else if (m.module === 'Tasks' || m.module === 'Sub Tasks') router.push(`/workspaces?task=${m.id}`);
+                    else if (m.module === 'Sub Workspaces') router.push(`/workspaces?subWorkspace=${m.id}`);
+                    else router.push(`/${m.module.toLowerCase()}`);
+                  };
+
                   return (
-                    <tr key={i}>
+                    <tr key={i} onClick={handleRowClick} style={{ cursor: 'pointer' }} className="hover:bg-white/[0.05] transition-colors">
                       <td style={{ paddingLeft: '16px' }}>
-                        <div className="ticket-id">TF-{shortId}</div>
-                        <div className="ticket-title">{m.module} Assignment ({m.priority})
-                          <small>Platform v3</small>
-                        </div>
+                        <div className="ticket-id">{m.code || `TF-${shortId}`}</div>
+                        <div className="ticket-title" title={m.title}>{m.title || `${m.module} Assignment`}</div>
                       </td>
                       <td><span className={tagClass}>{m.module.substring(0,4).toLowerCase()}</span></td>
                       <td>{renderPriority(m.priority || "")}</td>

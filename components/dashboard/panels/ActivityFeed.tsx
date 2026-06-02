@@ -26,7 +26,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
           type: 'closed',
           user: m.user || 'System',
           action: `closed ${m.module.substring(0,4)}`,
-          target: `TF-${m.id.substring(0,6).toUpperCase()}`,
+          target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
           time: new Date(m.createdAt).toLocaleDateString()
         };
       }
@@ -36,7 +36,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
           type: 'blocked',
           user: m.user || 'System',
           action: `marked Blocked`,
-          target: `TF-${m.id.substring(0,6).toUpperCase()}`,
+          target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
           time: new Date(m.createdAt).toLocaleDateString()
         };
       }
@@ -46,7 +46,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
           type: 'comment',
           user: m.user || 'System',
           action: `requested review on`,
-          target: `TF-${m.id.substring(0,6).toUpperCase()}`,
+          target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
           time: new Date(m.createdAt).toLocaleDateString()
         };
       }
@@ -56,7 +56,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
         type: 'created',
         user: m.user || 'System',
         action: `opened new ${m.module.substring(0,4)}`,
-        target: `TF-${m.id.substring(0,6).toUpperCase()}`,
+        target: m.code || `TF-${m.id.substring(0,6).toUpperCase()}`,
         time: new Date(m.createdAt).toLocaleDateString()
       };
     });

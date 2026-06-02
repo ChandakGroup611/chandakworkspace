@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/server';
 
 export async function createTask(payload: {
   workspace_id: string;
+  sub_workspace_id?: string;
   subject?: string;
   title?: string;
   description?: string;
@@ -17,9 +18,10 @@ export async function createTask(payload: {
   estimated_hours?: number;
   custom_fields?: any;
   created_by: string;
-  assigned_team_ids?: string[];
+  assigned_to?: string;
   checklist_items?: string[];
   attachments?: { file_name: string; file_url: string; file_type: string; size: number }[];
+  participants?: { user_id: string; participation_role: string }[];
 }) {
   // Find default status for tasks
   const { data: statusMaster } = await supabaseAdmin
@@ -39,6 +41,7 @@ export async function createTask(payload: {
     .from('tasks')
     .insert([{
       workspace_id: payload.workspace_id,
+      sub_workspace_id: payload.sub_workspace_id,
       subject: payload.subject || payload.title || 'Untitled Task',
       description: payload.description,
       priority_id: payload.priority_id,
@@ -47,14 +50,40 @@ export async function createTask(payload: {
       end_date: payload.end_date,
       estimated_hours: payload.estimated_hours,
       custom_fields: payload.custom_fields,
-      created_by: payload.created_by
+      created_by: payload.created_by,
+      assigned_to: payload.assigned_to
     }])
     .select()
     .single();
 
   if (error) throw error;
 
-  // Removed: Insert Assignees and Teams (No longer supported per workspace refactor)
+  // Insert Assignees and Watchers
+  const explicitParticipantIds = new Set<string>();
+
+  if (payload.participants && payload.participants.length > 0) {
+    const assignees = payload.participants
+      .filter((p) => p.participation_role === 'EXECUTOR' || p.participation_role === 'REVIEWER')
+      .map((p) => {
+        explicitParticipantIds.add(p.user_id);
+        return { task_id: task.id, user_id: p.user_id, created_by: payload.created_by };
+      });
+      
+    if (assignees.length > 0) {
+      await supabaseAdmin.from('task_assignees').insert(assignees);
+    }
+
+    const watchers = payload.participants
+      .filter((p) => p.participation_role === 'WATCHER')
+      .map((p) => {
+        explicitParticipantIds.add(p.user_id);
+        return { task_id: task.id, user_id: p.user_id };
+      });
+      
+    if (watchers.length > 0) {
+      await supabaseAdmin.from('task_watchers').insert(watchers);
+    }
+  }
 
   // Insert Checklist Items
   if (payload.checklist_items && payload.checklist_items.length > 0) {
@@ -86,14 +115,27 @@ export async function createTask(payload: {
 }
 
 export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: string, performedBy?: string) {
-  // Get current status
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id || performedBy;
+  if (!userId) return { error: "Unauthenticated" };
+
+  // Get current status and owner
   const { data: task } = await supabaseAdmin
     .from('tasks')
-    .select('status_id')
+    .select('status_id, assigned_to')
     .eq('id', taskId)
     .single();
 
   if (!task) return { error: "Task not found" };
+
+  if (task.assigned_to !== userId) {
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+    if (!isSuperAdmin) {
+       return { error: "You do not have permission to transition this task status. Only the Task Owner or Super Admin can edit." };
+    }
+  }
 
   let targetStatusId = newStatusIdOrCode;
 
@@ -138,6 +180,38 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   // Fire-and-forget activity log — must not block or throw to the caller
   logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
   
+  return { success: true };
+}
+
+export async function updateNodeStatus(nodeId: string, nodeType: string, newStatusId: string) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
+  if (!userId) return { error: "Unauthenticated" };
+
+  const table = nodeType === 'SUB_TASK' ? 'sub_tasks' : nodeType === 'TASK' ? 'tasks' : null;
+  if (!table) return { error: "Invalid node type for status update" };
+
+  // Get current status
+  const { data: node } = await supabaseAdmin
+    .from(table)
+    .select('status_id')
+    .eq('id', nodeId)
+    .single();
+
+  if (!node) return { error: "Node not found" };
+
+  // Update status
+  const { error } = await supabaseAdmin
+    .from(table)
+    .update({ status_id: newStatusId, updated_at: new Date().toISOString() })
+    .eq('id', nodeId);
+
+  if (error) return { error: error.message };
+
+  // Log activity
+  logActivityEvent(nodeType, nodeId, 'STATUS_CHANGE', { status_id: node.status_id }, { status_id: newStatusId }, userId).catch(e => console.error('[logActivityEvent]', e));
+
   return { success: true };
 }
 
@@ -267,21 +341,43 @@ export async function getTaskDetails(taskId: string) {
 
   task.currentUserIsSuperAdmin = isSuperAdmin;
   
-  const { data: assignees } = await supabaseAdmin
-    .from('task_assignees')
-    .select('user_id')
-    .eq('task_id', taskId);
-  const isAssignee = assignees?.some((a: any) => a.user_id === userId) || false;
+  const isAssignee = task.assigned_to === userId;
 
-  task.currentUserCanAct = isSuperAdmin || isWorkspaceMember || isAssignee || task.created_by === userId;
+  task.currentUserCanAct = isSuperAdmin || isAssignee;
   task.currentUserId = userId || null;
 
   task.checklists = [];
   task.attachments = [];
 
   task.assignee = null;
+  if (task.assigned_to) {
+    const { data: assigneeData } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').eq('id', task.assigned_to).single();
+    if (assigneeData) task.assignee = assigneeData;
+  }
+  
+  const { data: taskAssignees } = await supabaseAdmin.from('task_assignees').select('user_id').eq('task_id', taskId).eq('is_deleted', false);
+  const { data: taskWatchers } = await supabaseAdmin.from('task_watchers').select('user_id').eq('task_id', taskId).eq('is_deleted', false);
+  
+  let participantIds = new Set<string>();
+  if (taskAssignees) taskAssignees.forEach(a => participantIds.add(a.user_id));
+  if (taskWatchers) taskWatchers.forEach(w => participantIds.add(w.user_id));
+
   task.task_assignees = [];
+  task.task_watchers = [];
   task.task_teams = [];
+
+  if (participantIds.size > 0) {
+    const { data: usersData } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').in('id', Array.from(participantIds));
+    if (usersData) {
+      if (taskAssignees) {
+         task.task_assignees = taskAssignees.map(a => usersData.find(u => u.id === a.user_id)).filter(Boolean);
+      }
+      if (taskWatchers) {
+         task.task_watchers = taskWatchers.map(w => usersData.find(u => u.id === w.user_id)).filter(Boolean);
+      }
+    }
+  }
+  
   task.title = task.subject;
 
   return task;
@@ -335,13 +431,29 @@ export async function getWorkloadSnapshot(userId: string) {
 }
 
 export async function updateTask(taskId: string, payload: any) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
+  if (!userId) return { error: "Unauthenticated" };
+
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
+  if (!task) return { error: "Task not found" };
+
+  if (task.assigned_to !== userId) {
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+    if (!isSuperAdmin) {
+       return { error: "You do not have permission to edit this task. Only the Task Owner or Super Admin can edit." };
+    }
+  }
+
   const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
   if (error) return { error: error.message || JSON.stringify(error) };
   return { success: true };
 }
 
 export async function deleteTask(taskId: string) {
-  const { data: task } = await supabaseAdmin.from('tasks').select('workspace_id, created_by').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
   if (!task) throw new Error("Task not found");
 
   const cookieStore = await cookies();
@@ -350,21 +462,24 @@ export async function deleteTask(taskId: string) {
   
   if (!userId) throw new Error("Unauthenticated");
 
-  if (task.created_by !== userId) {
-    const { data: member } = await supabaseAdmin
-      .from('workspace_members')
-      .select('role')
-      .eq('workspace_id', task.workspace_id)
-      .eq('user_id', userId)
-      .single();
-    
-    const roleCode = member?.role?.toUpperCase();
-    if (roleCode !== 'OWNER' && roleCode !== 'ADMIN') {
-      throw new Error("You do not have permission to delete this task.");
+  if (task.assigned_to !== userId) {
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+    if (!isSuperAdmin) {
+      throw new Error("You do not have permission to delete this task. Only the Task Owner or Super Admin can delete.");
     }
   }
 
-  const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
+  // Hard delete related records first to avoid foreign key constraint violations
+  await supabaseAdmin.from('task_activities').delete().eq('task_id', taskId);
+  await supabaseAdmin.from('task_checklists').delete().eq('task_id', taskId);
+  await supabaseAdmin.from('task_comments').delete().eq('task_id', taskId);
+  await supabaseAdmin.from('task_assignees').delete().eq('task_id', taskId);
+  await supabaseAdmin.from('task_watchers').delete().eq('task_id', taskId);
+  await supabaseAdmin.from('task_dependencies').delete().or(`task_id.eq.${taskId},depends_on.eq.${taskId}`);
+
+  // Hard delete the task
+  const { error } = await supabaseAdmin.from('tasks').delete().eq('id', taskId);
   if (error) throw error;
 }
 
@@ -484,4 +599,56 @@ export async function getTaskStatuses() {
     .order('status_order', { ascending: true });
   if (error) throw error;
   return data || [];
+}
+
+export async function updateTaskStatusInline(taskId: string, newStatusId: string, remark: string) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
+  if (!userId) return { error: "Unauthenticated" };
+
+  // Fetch current task to check assignee
+  const { data: currentTask, error: fetchError } = await supabaseAdmin
+    .from('tasks')
+    .select('assigned_to, status_id')
+    .eq('id', taskId)
+    .single();
+
+  if (fetchError) return { error: "Failed to fetch task" };
+
+  // If changing status, must be assigned user
+  if (newStatusId && newStatusId !== currentTask.status_id) {
+    if (currentTask.assigned_to !== userId) {
+      return { error: "Only the assigned user can change the task status." };
+    }
+
+    // Update status
+    const { error: updateError } = await supabaseAdmin
+      .from('tasks')
+      .update({ status_id: newStatusId })
+      .eq('id', taskId);
+      
+    if (updateError) return { error: "Failed to update status" };
+  }
+
+  // Insert remark/comment
+  if (remark && remark.trim().length > 0) {
+    await supabaseAdmin
+      .from('task_comments')
+      .insert([{ task_id: taskId, author_id: userId, content: remark }]);
+  }
+
+  // Insert audit trail
+  const actionType = newStatusId && newStatusId !== currentTask.status_id ? 'STATUS_CHANGE' : 'COMMENT';
+  await supabaseAdmin.from('task_activity_logs').insert([{
+    task_id: taskId,
+    actor_id: userId,
+    action: actionType,
+    new_state: { 
+      status_id: newStatusId,
+      message: remark 
+    }
+  }]);
+
+  return { success: true };
 }

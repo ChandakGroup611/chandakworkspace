@@ -9,26 +9,28 @@ import { AppButton } from "@/components/ui/AppButton";
 
 interface LiveDashboardWrapperProps {
   initialMetrics: any[];
+  initialKpis?: any;
   dbError: string | null;
 }
 
-export default function LiveDashboardWrapper({ initialMetrics, dbError }: LiveDashboardWrapperProps) {
+export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbError }: LiveDashboardWrapperProps) {
   // Use React Query for enterprise-grade polling.
-  // It handles deduplication, overlapping prevention, and natively respects Page Visibility API
-  // (it pauses polling when the tab is inactive).
-  const { data: metrics, isFetching, refetch, dataUpdatedAt } = useQuery({
+  const { data, isFetching, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["dashboard", "metrics"],
     queryFn: async () => {
       const result = await fetchLiveDashboardMetrics();
       if (result.error) throw new Error(result.error);
-      return result.data;
+      return result;
     },
-    initialData: initialMetrics,
-    refetchInterval: false, // Phase 2: Disable background polling
-    refetchOnWindowFocus: false, // Phase 4: Disable refetch on window focus
-    refetchIntervalInBackground: false, // Absolutely do not poll if tab is hidden
-    staleTime: 500000, // Phase 4: Keep data fresh longer without re-fetching immediately on navigation
+    initialData: { data: initialMetrics, kpis: initialKpis },
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: false,
+    staleTime: 5000,
   });
+
+  const metrics = data?.data || [];
+  const kpis = data?.kpis || initialKpis;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -58,7 +60,7 @@ export default function LiveDashboardWrapper({ initialMetrics, dbError }: LiveDa
   return (
     <div className="relative">
       <div className={isFetching ? "opacity-90 transition-opacity" : "opacity-100 transition-opacity"}>
-        <DashboardCommandCenter metrics={metrics || []} dbError={dbError} refreshComponent={refreshComponent} />
+        <DashboardCommandCenter metrics={metrics || []} kpis={kpis} dbError={dbError} refreshComponent={refreshComponent} />
       </div>
     </div>
   );

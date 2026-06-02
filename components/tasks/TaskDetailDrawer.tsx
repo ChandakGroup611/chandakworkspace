@@ -96,16 +96,16 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   <p className="text-sm text-gray-200 mt-1">{task.priority?.priority_name || 'None'}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Assignees</label>
+                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Task Owner</label>
                   <div className="mt-2 space-y-2">
-                    {task.assignees?.map((a: any) => (
-                      <div key={a.user.id} className="flex items-center gap-2 text-sm text-gray-300">
+                    {task.assignee ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-300">
                         <div className="w-6 h-6 rounded-full bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-200">
-                          {a.user.full_name?.charAt(0)}
+                          {task.assignee.full_name?.charAt(0)}
                         </div>
-                        {a.user.full_name}
+                        {task.assignee.full_name}
                       </div>
-                    )) || <span className="text-xs text-gray-500">Unassigned</span>}
+                    ) : <span className="text-xs text-gray-500">Unassigned</span>}
                   </div>
                 </div>
                 <div>

@@ -38,8 +38,6 @@ export default function Navbar() {
 
   // Session Security States
   const [profileOpen, setProfileOpen] = useState(false);
-  const [opsShellOpen, setOpsShellOpen] = useState(false);
-  const [activeOpsShell, setActiveOpsShell] = useState("Primary Ops Shell");
   const [userData, setUserData] = useState<{
     id: string;
     full_name: string;
@@ -166,7 +164,6 @@ export default function Navbar() {
   const handleExecuteSignOut = async () => {
     setLoggingOut(true);
     setProfileOpen(false);
-    setOpsShellOpen(false);
     try {
       await supabase.auth.signOut();
     } catch (_) {}
@@ -257,78 +254,6 @@ export default function Navbar() {
             <Clock className={`h-3 w-3 ${secondsRemaining <= WARNING_THRESHOLD_SECONDS ? "text-rose-400 animate-spin" : "text-gray-500"}`} />
             <span>Idle:</span>
             <strong className="font-bold">{formatTime(secondsRemaining)}</strong>
-          </div>
-
-          <div className="relative">
-            <div 
-              onClick={() => setOpsShellOpen(!opsShellOpen)}
-              className={`hidden sm:flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs cursor-pointer transition-colors ${
-                isLight 
-                  ? "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100" 
-                  : "bg-white/5 border-white/5 text-gray-300 hover:bg-white/10"
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5 text-indigo-400" />
-              <span className="font-medium">{activeOpsShell}</span>
-              <ChevronDown className="h-3 w-3 text-gray-500" />
-            </div>
-
-            {opsShellOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setOpsShellOpen(false)} />
-                <div className={`absolute left-0 top-10 mt-2 w-56 rounded-xl border p-1 shadow-xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${
-                  isLight ? "bg-white border-gray-200 text-gray-800" : "bg-[#0A0D14] border-white/10 text-gray-200"
-                }`}>
-                  <div className="px-2 py-1.5 border-b border-white/5 mb-1">
-                    <span className="text-xs font-bold text-gray-500 uppercase">Available Workspaces</span>
-                  </div>
-                  
-                  <div 
-                    onClick={() => { setActiveOpsShell("Primary Ops Shell"); setOpsShellOpen(false); }}
-                    className={`px-2 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer transition-all ${
-                      activeOpsShell === "Primary Ops Shell" 
-                        ? (isLight ? "bg-blue-50 text-blue-700" : "bg-blue-500/10 text-blue-400") 
-                        : (isLight ? "hover:bg-gray-100" : "hover:bg-white/5 opacity-70 hover:opacity-100")
-                    }`}
-                  >
-                    <Layers className="h-3.5 w-3.5" />
-                    <span className={activeOpsShell === "Primary Ops Shell" ? "font-semibold" : "font-medium"}>Primary Ops Shell</span>
-                    {activeOpsShell === "Primary Ops Shell" && <span className="ml-auto text-[0.7rem] font-bold">ACTIVE</span>}
-                  </div>
-
-                  <div 
-                    onClick={() => { setActiveOpsShell("Development Sandbox"); setOpsShellOpen(false); }}
-                    className={`px-2 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer transition-all ${
-                      activeOpsShell === "Development Sandbox" 
-                        ? (isLight ? "bg-blue-50 text-blue-700" : "bg-blue-500/10 text-blue-400") 
-                        : (isLight ? "hover:bg-gray-100" : "hover:bg-white/5 opacity-70 hover:opacity-100")
-                    }`}
-                  >
-                    <Layers className="h-3.5 w-3.5" />
-                    <span className={activeOpsShell === "Development Sandbox" ? "font-semibold" : "font-medium"}>Development Sandbox</span>
-                    {activeOpsShell === "Development Sandbox" && <span className="ml-auto text-[0.7rem] font-bold">ACTIVE</span>}
-                  </div>
-
-                  <div 
-                    onClick={() => { setActiveOpsShell("Analytics & Archival"); setOpsShellOpen(false); }}
-                    className={`px-2 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer transition-all ${
-                      activeOpsShell === "Analytics & Archival" 
-                        ? (isLight ? "bg-blue-50 text-blue-700" : "bg-blue-500/10 text-blue-400") 
-                        : (isLight ? "hover:bg-gray-100" : "hover:bg-white/5 opacity-70 hover:opacity-100")
-                    }`}
-                  >
-                    <Layers className="h-3.5 w-3.5" />
-                    <span className={activeOpsShell === "Analytics & Archival" ? "font-semibold" : "font-medium"}>Analytics & Archival</span>
-                    {activeOpsShell === "Analytics & Archival" && <span className="ml-auto text-[0.7rem] font-bold">ACTIVE</span>}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 text-xs font-semibold text-emerald-500" title="All backend services passing SLA">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span className="hidden md:inline text-[0.8rem]">SLA Stable</span>
           </div>
 
           <div className={`h-4 w-[1px] ${isLight ? "bg-gray-200" : "bg-white/10"}`} />

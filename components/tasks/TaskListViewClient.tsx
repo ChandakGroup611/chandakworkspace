@@ -14,9 +14,11 @@ import {
   AppTableHead,
   AppTableCell
 } from "@/components/ui/AppTable";
-import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { deleteTask, getTaskStatuses, updateTaskStatusInline } from "@/lib/actions/tasks";
 import { createClient } from "@/utils/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -45,6 +47,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [scope, setScope] = useState<"ALL" | "CREATOR" | "MANAGER">("ALL");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const triggerToast = (msg: string) => {
+    setSuccessToast(msg);
+    setTimeout(() => setSuccessToast(null), 3000);
+  };
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
@@ -53,6 +61,18 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+
+  // Inline Status Update State
+  const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [inlineTask, setInlineTask] = useState<Task | null>(null);
+  const [inlineNewStatus, setInlineNewStatus] = useState<string>("");
+  const [inlineRemark, setInlineRemark] = useState<string>("");
+  const [inlineLoading, setInlineLoading] = useState(false);
+
+  useEffect(() => {
+    getTaskStatuses().then(setMasterStatuses).catch(console.error);
+  }, []);
 
   const uniqueStatuses = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[], [tasks]);
   const uniquePriorities = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.priority?.name).filter(Boolean))) as string[], [tasks]);
@@ -127,9 +147,18 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         const creatorIds = Array.from(new Set(data.map((t: any) => t.created_by).filter(Boolean)));
         const { data: users } = await supabase.from("user_master").select("id, manager_id").in("id", creatorIds);
 
+        // Fetch Assignees
+        const assigneeIds = Array.from(new Set(data.map((t: any) => t.assigned_to).filter(Boolean)));
+        let assignees: any[] = [];
+        if (assigneeIds.length > 0) {
+          const { data: usersData } = await supabase.from("user_master").select("id, full_name, profile_photo, user_code").in("id", assigneeIds);
+          if (usersData) assignees = usersData;
+        }
+
         data.forEach((t: any) => {
           t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
           t.creator = users?.find((u: any) => u.id === t.created_by) || null;
+          t.assignee = assignees.find((a: any) => a.id === t.assigned_to) || null;
         });
       }
       
@@ -139,6 +168,51 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteTask = async (e: React.MouseEvent, taskId: string) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) return;
+    
+    try {
+      setDeleteLoadingId(taskId);
+      await deleteTask(taskId);
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (err: any) {
+      alert("Error deleting task: " + err.message);
+    } finally {
+      setDeleteLoadingId(null);
+    }
+  };
+
+  const handleStatusClick = (e: React.MouseEvent, task: any) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setInlineTask(task);
+    setInlineNewStatus(task.status_id || "");
+    setInlineRemark("");
+    setStatusModalOpen(true);
+  };
+
+  const handleStatusSave = async () => {
+    if (!inlineTask) return;
+    if (!inlineRemark || inlineRemark.trim().length === 0) {
+      alert("A remark is required.");
+      return;
+    }
+
+    setInlineLoading(true);
+    const { error } = await updateTaskStatusInline(inlineTask.id, inlineNewStatus, inlineRemark);
+    if (error) {
+      alert("Failed to update: " + error);
+      setInlineLoading(false);
+      return;
+    }
+
+    triggerToast("Task updated successfully!");
+    setInlineLoading(false);
+    setStatusModalOpen(false);
+    refresh();
   };
 
   useEffect(() => {
@@ -239,7 +313,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <AppButton variant="outline" size="sm" onClick={() => router.push("/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+          <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
             Back
           </AppButton>
           <div className="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/5">
@@ -254,6 +328,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             ))}
           </div>
         </div>
+
+        {/* Toast Notification */}
+        {successToast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+            <span className="text-xs font-semibold">{successToast}</span>
+          </div>
+        )}
 
         <div className="flex items-center flex-wrap gap-3">
           <div className="flex items-center gap-2 border-r border-white/10 pr-3 mr-1">
@@ -381,45 +462,100 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <AppTableHead className="w-[120px]">Priority</AppTableHead>
                 <AppTableHead className="w-[120px]">Due</AppTableHead>
                 <AppTableHead className="w-[120px]">Status</AppTableHead>
+                <AppTableHead className="w-[160px]">Assignee</AppTableHead>
                 <AppTableHead className="text-right w-[100px]">Created</AppTableHead>
                 <AppTableHead className="text-right w-[120px]">Actions</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
-            <AppTableBody style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
+            <AppTableBody>
+              {virtualizer.getVirtualItems().length > 0 && virtualizer.getVirtualItems()[0].start > 0 && (
+                <tr>
+                  <td colSpan={8} style={{ height: `${virtualizer.getVirtualItems()[0].start}px` }} />
+                </tr>
+              )}
               {virtualizer.getVirtualItems().map((virtualRow) => {
                 const task = filtered[virtualRow.index];
                 return (
                   <AppTableRow 
                     key={task.id} 
-                    className="transition-colors duration-150 absolute top-0 left-0 w-full hover:bg-gray-800/20"
-                    style={{
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
+                    className="transition-colors duration-150 hover:bg-gray-800/20"
                   >
-                    <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
-                    <AppTableCell>
+                    <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold w-[100px]">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                    <AppTableCell className="w-[300px]">
                       <div className="font-semibold truncate text-gray-900">{task.title}</div>
                       <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
                     </AppTableCell>
-                    <AppTableCell className="text-gray-700">{task.workspace?.name || task.workspace?.code}</AppTableCell>
-                    <AppTableCell>
+                    <AppTableCell className="text-gray-700 w-[180px]">{task.workspace?.name || task.workspace?.code}</AppTableCell>
+                    <AppTableCell className="w-[120px]">
                       <AppBadge variant="info">{task.priority?.name || '—'}</AppBadge>
                     </AppTableCell>
-                    <AppTableCell className="text-gray-600 text-sm">{task.end_date || '—'}</AppTableCell>
-                    <AppTableCell>
-                      <AppBadge variant="neutral">{task.status?.name || '—'}</AppBadge>
+                    <AppTableCell className="text-gray-600 text-sm w-[120px]">{task.end_date || '—'}</AppTableCell>
+                    <AppTableCell className="w-[120px]">
+                      <button 
+                        onClick={(e) => handleStatusClick(e, task)} 
+                        className="hover:opacity-80 transition-opacity focus:outline-none" 
+                        title="Update Status"
+                      >
+                        <AppBadge variant="neutral" className="cursor-pointer border-dashed border-gray-300">{task.status?.name || '—'}</AppBadge>
+                      </button>
                     </AppTableCell>
-                    <AppTableCell className="text-right text-gray-500 text-xs">{formatDate(task.created_at)}</AppTableCell>
-                    <AppTableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <AppButton size="sm" variant="outline" onClick={() => setSelectedTask(task)}>View</AppButton>
-                        <Link href={`/tasks/${task.id}`} className="text-[11px] font-semibold text-blue-500 hover:text-blue-400 transition-colors">Open</Link>
+                    <AppTableCell className="w-[160px]">
+                      {task.assignee ? (
+                        <div className="flex items-center gap-2">
+                          {task.assignee.profile_photo ? (
+                            <img src={task.assignee.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
+                              {task.assignee.full_name?.substring(0, 2).toUpperCase() || "U"}
+                            </div>
+                          )}
+                          <div className="flex flex-col">
+                            <span className="text-xs font-semibold text-gray-800 truncate max-w-[100px]">{task.assignee.full_name}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Unassigned</span>
+                      )}
+                    </AppTableCell>
+                    <AppTableCell className="text-right text-gray-500 text-xs w-[100px]">{formatDate(task.created_at)}</AppTableCell>
+                    <AppTableCell className="text-right w-[120px]">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link 
+                          href={`/tasks/${task.id}`}
+                          className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                          title="View Task"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                        <Link 
+                          href={`/tasks/${task.id}`}
+                          className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                          title="Edit Task"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Link>
+                        <button 
+                          onClick={(e) => handleDeleteTask(e, task.id)}
+                          disabled={deleteLoadingId === task.id}
+                          className="p-1.5 rounded-md text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-50"
+                          title="Delete Task"
+                        >
+                          {deleteLoadingId === task.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </AppTableCell>
                   </AppTableRow>
                 );
               })}
+              {virtualizer.getVirtualItems().length > 0 && virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end > 0 && (
+                <tr>
+                  <td colSpan={8} style={{ height: `${virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end}px` }} />
+                </tr>
+              )}
             </AppTableBody>
           </AppTable>
         </div>
@@ -475,6 +611,59 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         </>
       )}
     </div>
+
+      {/* Inline Status Update Modal */}
+      <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900 dark:text-gray-100">Update Status</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
+            
+            {inlineTask?.assigned_to === currentUserId ? (
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Status</label>
+                <select
+                  value={inlineNewStatus}
+                  onChange={(e) => setInlineNewStatus(e.target.value)}
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="" disabled>Select Status</option>
+                  {masterStatuses.map((st) => (
+                    <option key={st.id} value={st.id}>{st.name}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                You are not the assignee for this task. You can only leave a remark/comment.
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
+              <textarea
+                value={inlineRemark}
+                onChange={(e) => setInlineRemark(e.target.value)}
+                placeholder="Why are you updating this task?"
+                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <AppButton variant="ghost" onClick={() => setStatusModalOpen(false)}>Cancel</AppButton>
+            <AppButton 
+              variant="primary" 
+              onClick={handleStatusSave}
+              disabled={inlineLoading || !inlineRemark.trim()}
+            >
+              {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {inlineTask?.assigned_to === currentUserId && inlineNewStatus !== inlineTask?.status_id ? "Change Status" : "Add Remark"}
+            </AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ExperienceProvider>
   );
 }

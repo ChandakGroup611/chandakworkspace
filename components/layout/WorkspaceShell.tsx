@@ -40,7 +40,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
       {!isAuthRoute && <Sidebar />}
 
       {/* Main Orchestration Column */}
-      <div className="flex flex-1 flex-col min-w-0 min-h-screen relative overflow-x-hidden">
+      <div className="flex flex-1 flex-col min-w-0 min-h-screen relative overflow-x-auto">
         {/* Removed Background Decorative Ambient Circles for Enterprise Discipline */}
 
         {/* Global Action Top Navbar */}

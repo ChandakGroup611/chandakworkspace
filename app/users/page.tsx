@@ -897,11 +897,11 @@ export default function UserMasterPage() {
                   <AppTable>
                     <AppTableHeader>
                       <tr>
-                        <AppTableHead className="w-10 text-center">Avatar</AppTableHead>
+                        <AppTableHead className="w-14 text-center px-2">Avatar</AppTableHead>
                         <AppTableHead>Staff Identity &amp; Scope</AppTableHead>
                         <AppTableHead>Assigned Assets</AppTableHead>
-                        <AppTableHead className="text-center">Status</AppTableHead>
-                        <AppTableHead className="text-right w-20 shrink-0">Actions</AppTableHead>
+                        <AppTableHead className="w-24 text-center">Status</AppTableHead>
+                        <AppTableHead className="text-right w-24 shrink-0 pr-4">Actions</AppTableHead>
                       </tr>
                     </AppTableHeader>
                     <AppTableBody>
@@ -917,7 +917,7 @@ export default function UserMasterPage() {
                                 : (isLightMode ? "hover:bg-gray-50/80" : "hover:bg-white/[0.02]")
                             }`}
                           >
-                            <AppTableCell className="w-14">
+                            <AppTableCell className="w-14 px-2">
                               <div className="relative w-9 h-9 mx-auto">
                                 <div className={`absolute inset-0 flex items-center justify-center rounded-full text-xs font-bold uppercase ${
                                   isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-300"
@@ -933,35 +933,35 @@ export default function UserMasterPage() {
                               </div>
                             </AppTableCell>
 
-                            <AppTableCell>
+                            <AppTableCell className="min-w-[250px]">
                               <div className="flex flex-col justify-center min-w-0 py-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className={`text-sm font-semibold truncate block ${
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <span className={`text-sm font-semibold truncate block max-w-[180px] sm:max-w-xs ${
                                     isLightMode ? "text-slate-800" : "text-slate-200"
                                   }`}>
                                     {usr.full_name}
                                   </span>
                                   {usr.user_code && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide ${
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap shrink-0 ${
                                       isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/5 text-slate-400"
                                     }`}>
                                       {usr.user_code}
                                     </span>
                                   )}
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wide uppercase ${
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wide uppercase whitespace-nowrap shrink-0 ${
                                     isLightMode ? "bg-indigo-50 text-indigo-600" : "bg-indigo-500/10 text-indigo-400"
                                   }`}>
                                     {usr.designationObj?.name || "General Assignee"}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className={`truncate ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
+                                <div className="flex flex-wrap items-center gap-2 text-xs mt-0.5">
+                                  <span className={`truncate max-w-[200px] ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
                                     {usr.email}
                                   </span>
-                                  <span className="text-slate-300 dark:text-slate-600">•</span>
-                                  <span className={`flex items-center gap-1 ${isLightMode ? "text-slate-600 font-medium" : "text-slate-300 font-medium"}`}>
+                                  <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">•</span>
+                                  <span className={`flex items-center gap-1 shrink-0 ${isLightMode ? "text-slate-600 font-medium" : "text-slate-300 font-medium"}`}>
                                     <Layers className="h-3 w-3 opacity-70" />
-                                    {usr.departmentObj?.name || "Global Scope"}
+                                    <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
                                   </span>
                                 </div>
                               </div>
@@ -984,7 +984,7 @@ export default function UserMasterPage() {
                               </div>
                             </AppTableCell>
 
-                            <AppTableCell className="text-center">
+                            <AppTableCell className="w-24 text-center">
                               <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase inline-block ${
                                 usr.is_active 
                                   ? (isLightMode ? "bg-emerald-50 text-emerald-600" : "bg-emerald-500/10 text-emerald-400") 
@@ -994,7 +994,7 @@ export default function UserMasterPage() {
                               </span>
                             </AppTableCell>
 
-                            <AppTableCell className="text-right w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <AppTableCell className="text-right w-24 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
                                   <button
@@ -1486,7 +1486,10 @@ export default function UserMasterPage() {
                   </label>
                   <select
                     value={formDeptId}
-                    onChange={(e) => setFormDeptId(e.target.value)}
+                    onChange={(e) => {
+                      setFormDeptId(e.target.value);
+                      setFormDesigId("");
+                    }}
                     disabled={!isSuperAdmin}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 ${
                       !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
@@ -1518,7 +1521,9 @@ export default function UserMasterPage() {
                     }`}
                   >
                     <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- Select Designation --</option>
-                    {designations.map(dg => (
+                    {designations
+                      .filter(dg => !formDeptId || dg.department_id === formDeptId)
+                      .map(dg => (
                       <option key={dg.id} value={dg.id} className={isLightMode ? "text-gray-900 bg-white" : "text-gray-200 bg-[#0F131D]"}>
                         {dg.name}
                       </option>

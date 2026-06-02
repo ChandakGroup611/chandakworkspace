@@ -22,7 +22,10 @@ import {
   Zap, 
   Users, 
   RefreshCw,
-  BellRing
+  BellRing,
+  Eye,
+  Edit2,
+  Trash2
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -184,16 +187,17 @@ export default function SLAPage() {
                         <AppTableCell className="text-right">
                           <div className="space-y-1 flex flex-col items-end">
                             <span className="text-xs text-gray-500 italic block truncate max-w-[120px]">{item.actionRecipient}</span>
-                            {item.status !== "Healthy" && (
-                              <AppButton 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => overrideBreach(item.id)}
-                                className={`h-6 text-xs px-2 ${isLightMode ? "text-blue-600 hover:bg-blue-50" : "text-blue-400 hover:bg-blue-500/10"}`}
-                              >
-                                Override Gate
+                            <div className="flex items-center gap-1 mt-1 justify-end">
+                              <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-500 hover:bg-blue-500/10" title="View SLA Tracker">
+                                <Eye className="h-3.5 w-3.5" />
                               </AppButton>
-                            )}
+                              <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-500 hover:bg-amber-500/10" title="Update Thresholds">
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </AppButton>
+                              <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-red-500 hover:bg-red-500/10" title="Delete / Override Alert">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </AppButton>
+                            </div>
                           </div>
                         </AppTableCell>
                       </AppTableRow>

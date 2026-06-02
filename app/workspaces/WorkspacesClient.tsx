@@ -9,7 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { 
   FolderKanban, Users, Activity, Plus, Send, 
   Layers, GitMerge, ChevronDown, Building2, Calendar, Target,
-  Loader2, ShieldAlert, Sparkles, ShieldCheck
+  Loader2, ShieldAlert, Sparkles, ShieldCheck, Search, Filter
 } from "lucide-react";
 import { 
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
@@ -22,8 +22,11 @@ import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
-import { getTaskDetails } from "@/lib/actions/tasks";
+import { TaskDetailDrawer } from "@/components/tasks/TaskDetailDrawer";
+import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
+import { getTaskDetails, updateNodeStatus } from "@/lib/actions/tasks";
 import { useRouter } from "next/navigation";
+import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
 
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
@@ -38,7 +41,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [activeWorkspace, setActiveWorkspace] = useState<any>(initialData?.workspaces?.find((w: any) => w.id === initialData?.prefetchWorkspaceId) || null);
   const [tasks, setTasks] = useState<any[]>(initialData?.prefetchTasks || []);
   const [stakeholders, setStakeholders] = useState<any[]>(initialData?.prefetchStakeholders || []);
+  const [masterHierarchy, setMasterHierarchy] = useState<any[]>(initialData?.masterHierarchy || []);
   const [loading, setLoading] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const triggerToast = (msg: string) => {
+    setSuccessToast(msg);
+    setTimeout(() => setSuccessToast(null), 3000);
+  };
   const [currentUser, setCurrentUser] = useState<any>(initialData?.userProfile || null);
   const [mounted, setMounted] = useState(false);
   const lastFetchedWorkspaceId = React.useRef<string | null>(initialData?.prefetchWorkspaceId || null);
@@ -56,11 +65,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   }, [initialTaskId]);
 
   // Real-time presence tracking via server-side heartbeat
-  const stakeholderIds = useMemo(
-    () => stakeholders.map((s: any) => s.id || s.user_id).filter(Boolean),
-    [stakeholders]
+  const allUserIds = useMemo(
+    () => allUsers.map((u: any) => u.id).filter(Boolean),
+    [allUsers]
   );
-  const presenceMap = usePresence(stakeholderIds);
+  const presenceMap = usePresence(allUserIds);
   const onlineUsers = useMemo(() => {
     const set = new Set<string>();
     for (const [userId, info] of presenceMap) {
@@ -116,6 +125,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   // Modals
   const [wsModalMode, setWsModalMode] = useState<'ROOT' | 'SUB' | 'EDIT' | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [drawerTask, setDrawerTask] = useState<any>(null);
   const [editWSId, setEditWSId] = useState<string | null>(null);
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
@@ -131,23 +141,24 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     end_date: "",
     is_public: false
   });
+  const [creatingTaskWorkspaceId, setCreatingTaskWorkspaceId] = useState<string | null>(null);
 
   const parentWorkspace = newWS.parent_workspace_id 
     ? workspaces.find(w => w.id === newWS.parent_workspace_id) 
     : null;
 
   const availableUsers = parentWorkspace 
-    ? allUsers.filter(u => parentWorkspace.workspace_members?.some((m: any) => m.user_id === u.id) || u.id === currentUser?.id)
+    ? allUsers.filter(u => parentWorkspace.members?.some((m: any) => m.user_id === u.id) || u.id === currentUser?.id)
     : allUsers;
 
-  // Lazy load users when modal opens
+  // Fetch users immediately if missing (e.g. on hot reload or missing initialData)
   useEffect(() => {
-    if (wsModalMode !== null && allUsers.length === 0) {
+    if (allUsers.length === 0) {
       import("@/lib/actions/workspaces").then(m => {
         m.fetchAssignableUsers().then(users => setAllUsers(users));
       });
     }
-  }, [wsModalMode]);
+  }, [allUsers.length]);
 
   // Removed client-side mount data fetching useEffect as data is now provided securely by Server Component
 
@@ -178,8 +189,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     loadWorkspaceData();
   }, [activeWorkspace?.id]);
 
-  const handleCreateWorkspace = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateWorkspace = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
     if (newWS.start_date && newWS.end_date && new Date(newWS.end_date) < new Date(newWS.start_date)) {
       alert("Target End Date cannot be earlier than the Start Date.");
       return;
@@ -200,16 +211,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         start_date: newWS.start_date || null,
         end_date: newWS.end_date || null,
         assigneeIds: newWS.assigneeIds,
+        parent_workspace_id: newWS.parent_workspace_id || null,
         visibility_settings: { public: newWS.is_public }
       };
       
       let data: any;
       if (editWSId) {
         data = await updateWorkspace(editWSId, payload);
-        
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
+        triggerToast("Workspace updated successfully");
         
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
@@ -218,11 +230,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setWorkspaces(updatedList);
         setActiveWorkspace(data);
       } else {
-        data = await createWorkspace(payload);
-        
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
+        triggerToast("Workspace created successfully");
         
         const selectedCompany = companies.find(c => c.id === newWS.company_id);
         if (selectedCompany) data.company = selectedCompany;
@@ -230,6 +241,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setWorkspaces([data, ...workspaces]);
         setActiveWorkspace(data);
       }
+      
+      // Refresh the execution hierarchy tree to show the newly created workspace
+      import("@/lib/actions/workspaces").then(m => {
+        m.fetchMasterHierarchy().then(hier => setMasterHierarchy(hier));
+      });
       
       setNewWS({ 
         name: "", 
@@ -274,11 +290,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       await deleteWorkspace(id);
       const updatedList = workspaces.filter(w => w.id !== id);
       setWorkspaces(updatedList);
+      triggerToast("Workspace deleted successfully");
       if (updatedList.length > 0) {
         setActiveWorkspace(updatedList[0]);
       } else {
         setActiveWorkspace(null);
       }
+      
+      // Refresh the execution hierarchy tree to show the deleted workspace
+      import("@/lib/actions/workspaces").then(m => {
+        m.fetchMasterHierarchy().then(hier => setMasterHierarchy(hier));
+      });
     } catch (e: any) {
       console.error("[Workspace Deletion] Intercepted:", e.message || e);
       alert("Database Error on Workspace Deletion: " + (e.message || e.details || JSON.stringify(e)));
@@ -287,16 +309,24 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   const handleTaskWizardSuccess = async (taskData: any) => {
     try {
-      const data = await createTask({ ...taskData, workspace_id: activeWorkspace.id });
+      const data = await createTask({ ...taskData, workspace_id: taskData.workspace_id || activeWorkspace?.id });
       
       // Close modal immediately for instant UI feedback
       setIsCreatingTask(false);
+      triggerToast("Task created successfully");
       
       // Optimistically insert to list for instant update
       setTasks(prev => [data, ...prev]);
 
       // Refetch full data with relations in background silently
-      fetchTasksByWorkspace(activeWorkspace.id).then(tData => setTasks(tData)).catch(console.error);
+      if (activeWorkspace?.id) {
+        fetchTasksByWorkspace(activeWorkspace.id).then(tData => setTasks(tData)).catch(console.error);
+      }
+
+      // Refresh the execution hierarchy tree to show the newly created task
+      import("@/lib/actions/workspaces").then(m => {
+        m.fetchMasterHierarchy().then(hier => setMasterHierarchy(hier));
+      });
     } catch (err: any) {
       console.error("[Task Creation] Intercepted:", err.message || err);
       alert("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
@@ -329,7 +359,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans p-6 space-y-6 ${isLightMode ? "bg-gray-50" : "bg-[#070913]"}`}>
+    <div className={`flex flex-col font-sans p-2 md:px-4 space-y-2 ${isLightMode ? "bg-gray-50" : "bg-[#070913]"}`}>
       
       {/* Dynamic Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/5">
@@ -345,6 +375,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
 
         <div className="flex items-center gap-3">
+          {/* Search & Filter Header Inputs */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search workspaces..." 
+              className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-indigo-500 w-48 transition-all ${
+                isLightMode ? 'bg-white border-gray-300 text-gray-900 focus:w-64' : 'bg-black/30 border-white/10 text-white focus:w-64'
+              }`}
+            />
+          </div>
+          <AppButton variant="outline" size="sm" leftIcon={<Filter className="h-4 w-4" />}>
+            Filters
+          </AppButton>
+          
           <AppButton 
             variant="primary" 
             size="sm" 
@@ -357,255 +402,51 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           >
             New Workspace
           </AppButton>
-
-          <AppButton 
-            variant="outline" 
-            size="sm" 
-            leftIcon={<Plus className="h-4 w-4" />} 
-            onClick={() => setWsModalMode('SUB')}
-            disabled={!hasPermission("WORKSPACES_CREATE")}
-          >
-            Add Sub Workspace
-          </AppButton>
-          
-          <div className="relative group z-50">
-            <button className={`flex items-center gap-2 text-xs px-4 py-2 rounded-xl font-bold transition-all ${
-              isLightMode ? "bg-white border border-gray-200 text-gray-700 hover:border-gray-300 shadow-sm" : "bg-white/5 border border-white/10 text-gray-300 hover:border-white/20"
-            }`}>
-              Project: <span className={isLightMode ? "text-indigo-600" : "text-indigo-400"}>{activeWorkspace?.code || "None"}</span>
-              <ChevronDown className="h-3.5 w-3.5" />
-            </button>
-            <div className={`absolute right-0 top-full mt-2 w-72 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all overflow-hidden ${
-              isLightMode ? "bg-white border border-gray-200" : "bg-[#0f111a] border border-white/10"
-            }`}>
-              <div className="max-h-80 overflow-y-auto divide-y divide-white/5">
-                {renderWorkspaceTree(workspaceHierarchy)}
-                {workspaces.length === 0 && <div className="p-4 text-xs text-gray-500 text-center">No workspaces found.</div>}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Bento Grid Architecture */}
-      {activeWorkspace ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Main Content Area (Tasks & Checklists) */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
+      {/* Full Width Master Table Layout */}
+      {workspaces.length > 0 ? (
+        <div className="flex-1 flex flex-col">
             
-            {/* Top Stat Row (Glassmorphism Bento) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <AppCard className={`p-4 flex flex-col justify-center border-l-4 ${isLightMode ? "border-l-indigo-500" : "border-l-indigo-400"}`}>
-                <span className="text-[10px] uppercase font-bold text-gray-500 mb-1 flex items-center gap-1"><Building2 className="h-3 w-3"/> Company</span>
-                <span className={`text-xs font-bold truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{activeWorkspace.company?.name || "Independent"}</span>
-              </AppCard>
-              
-              <AppCard className={`p-4 flex flex-col justify-center border-l-4 ${isLightMode ? "border-l-purple-500" : "border-l-purple-400"}`}>
-                <span className="text-[10px] uppercase font-bold text-gray-500 mb-1 flex items-center gap-1"><Layers className="h-3 w-3"/> Total Tasks</span>
-                <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{tasks.length} Directives</span>
-              </AppCard>
-            </div>
-
             {/* Hierarchical Task Matrix */}
-            <AppCard className="flex-1 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
+            <AppCard className="flex-1 p-5 overflow-visible">
+              <div className="flex items-center justify-between border-b pb-3 mb-0 border-gray-200 dark:border-white/5">
                 <div className="space-y-0.5">
                   <h3 className={`text-sm font-bold flex items-center gap-2 ${isLightMode ? "text-gray-900" : "text-white"}`}>
                     <GitMerge className={`h-4 w-4 ${isLightMode ? "text-purple-600" : "text-purple-400"}`} />
-                    <span>Hierarchical Tasks & Execution Pipeline</span>
+                    <span>Execution Hierarchy</span>
                   </h3>
-                  <p className="text-[11px] text-gray-500">Live operational tasks under active sprint context.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link href={`/workspaces/tasks?workspaceId=${activeWorkspace.id}`} className="rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">
-                    View All Tasks
-                  </Link>
-                  <AppButton variant="outline" size="sm" leftIcon={<Plus className="h-3 w-3" />} onClick={() => setIsCreatingTask(true)}>
-                    New Task
-                  </AppButton>
                 </div>
               </div>
 
-                <div className={`max-h-[400px] overflow-y-auto scrollbar-thin border rounded-xl overflow-hidden ${isLightMode ? 'border-gray-200' : 'border-white/10'}`}>
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className={`sticky top-0 z-10 text-xs uppercase tracking-wider ${isLightMode ? 'bg-gray-50 text-gray-500 shadow-sm' : 'bg-[#151722] text-gray-400 border-b border-white/5'}`}>
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Task ID</th>
-                        <th className="px-4 py-3 font-semibold w-full min-w-[200px]">Details</th>
-                        <th className="px-4 py-3 font-semibold">Status</th>
-                        <th className="px-4 py-3 font-semibold">Timeline</th>
-                        <th className="px-4 py-3 font-semibold">Created Date</th>
-                        <th className="px-4 py-3 font-semibold">Last Update</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y ${isLightMode ? 'divide-gray-200 bg-white' : 'divide-white/5 bg-transparent'}`}>
-                      {filteredTasks.map(task => (
-                        <tr key={task.id} onClick={() => router.push(`/tasks/${task.id}`)} className={`cursor-pointer transition-colors ${isLightMode ? 'hover:bg-indigo-50/50' : 'hover:bg-white/[0.02]'}`}>
-                          <td className="px-4 py-4 align-top">
-                            <span className={`text-xs font-mono px-2 py-1 rounded font-bold ${
-                              isLightMode ? "bg-purple-100 text-purple-700 border border-purple-200" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-                            }`}>{task.code}</span>
-                          </td>
-                          <td className="px-4 py-4 min-w-[200px] whitespace-normal align-top">
-                            <div className="flex flex-col items-start gap-1.5">
-                              {task.priority && (
-                                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded uppercase leading-none ${
-                                  task.priority.code === "P1" || task.priority.code === "CRITICAL"
-                                    ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                                    : task.priority.code === "P2" || task.priority.code === "HIGH"
-                                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                                    : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                }`}>
-                                  {task.priority.name}
-                                </span>
-                              )}
-                              <div className={`font-bold text-sm leading-snug ${isLightMode ? "text-gray-900" : "text-white"}`}>{task.title}</div>
-                            </div>
-                            {task.parent_task && (
-                              <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-indigo-500 truncate">
-                                <GitMerge className="h-3.5 w-3.5 shrink-0" />
-                                <span>Parent: {task.parent_task.code}</span>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-4 align-top">
-                            {task.status && (
-                              <span className="flex items-center gap-2 text-xs font-semibold" style={{ color: task.status.status_color || '#888' }}>
-                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: task.status.status_color || '#888' }} />
-                                {task.status.name}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-4 align-top text-xs text-gray-500 font-medium">
-                            {task.start_date ? new Date(task.start_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
-                            {' → '}
-                            {task.end_date ? new Date(task.end_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
-                          </td>
-                          <td className="px-4 py-4 align-top text-xs text-gray-500 font-medium">
-                            {task.created_at ? new Date(task.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
-                          </td>
-                          <td className="px-4 py-4 align-top text-xs text-gray-500 font-medium">
-                            {task.updated_at ? new Date(task.updated_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
-                          </td>
-                        </tr>
-                      ))}
-                      {filteredTasks.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="px-4 py-12 text-center">
-                            <p className="text-gray-500 text-sm font-semibold">No tasks orchestrated in this responsibility filter.</p>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+              <WorkspaceMasterTable 
+                hierarchy={masterHierarchy} 
+                isLightMode={isLightMode}
+                taskStatuses={initialData?.taskStatuses || []}
+                allUsers={allUsers}
+                onlineUsers={onlineUsers}
+                presenceMap={presenceMap}
+                onOpenTask={(taskNode) => setDrawerTask(taskNode)}
+                onOpenWorkspace={(node) => openEditWorkspace(node)}
+                onShareNode={(node) => openEditWorkspace(node)}
+                onCreateSubWorkspace={(node) => {
+                  setNewWS({ ...newWS, parent_workspace_id: node.id });
+                  setWsModalMode('SUB');
+                }}
+                onCreateTask={(node) => {
+                  setCreatingTaskWorkspaceId(node.id);
+                  setIsCreatingTask(true);
+                }}
+                onDeleteNode={(node) => {
+                  if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
+                    handleDeleteWorkspace(node.id);
+                  } else {
+                    alert("Deleting tasks directly from this table is coming soon.");
+                  }
+                }}
+              />
             </AppCard>
-
-            
-          </div>
-
-          {/* Right Sidebar (Context & Stakeholders) */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-            
-            {/* Workspace Context Meta */}
-            <AppCard className={`p-5 space-y-4 ${
-              isLightMode ? "bg-gradient-to-b from-indigo-50 to-white border-indigo-100" : "bg-gradient-to-b from-indigo-950/20 to-transparent border-indigo-500/20"
-            }`}>
-              <div className="border-b pb-2 mb-3 border-gray-200 dark:border-white/5 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`}>
-                    Project Manifest
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {activeWorkspace.visibility_settings?.public ? (
-                      <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-500"><ShieldCheck className="h-3 w-3"/> Public</span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[9px] font-bold text-amber-500"><ShieldAlert className="h-3 w-3"/> Private</span>
-                    )}
-                    <span className="text-[9px] font-mono font-bold text-gray-400">| {activeWorkspace.code}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-end gap-2 text-[10px] pt-1">
-                  <button 
-                    type="button"
-                    onClick={() => openEditWorkspace(activeWorkspace)}
-                    disabled={!(hasPermission("WORKSPACES_UPDATE") || hasPermission("WORKSPACES_MANAGE") || activeWorkspace.owner_id === currentUser?.id || stakeholders.some(s => s.user_id === currentUser?.id || s.id === currentUser?.id))}
-                    className="px-2 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Edit Workspace
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => handleDeleteWorkspace(activeWorkspace.id)}
-                    disabled={!(hasPermission("WORKSPACES_DELETE") || hasPermission("WORKSPACES_MANAGE") || activeWorkspace.owner_id === currentUser?.id)}
-                    className="px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500">Objective Summary</label>
-                  <p className={`text-xs leading-relaxed ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
-                    {activeWorkspace.description || "No specific objectives defined."}
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className={`p-3 rounded-xl border ${isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/5"}`}>
-                    <span className="block text-[10px] text-gray-500 font-bold mb-1 flex items-center gap-1"><Calendar className="h-3 w-3"/> Start Date</span>
-                    <span className={`text-xs font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>{activeWorkspace.start_date || "TBD"}</span>
-                  </div>
-                  <div className={`p-3 rounded-xl border ${isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/5"}`}>
-                    <span className="block text-[10px] text-gray-500 font-bold mb-1 flex items-center gap-1"><Calendar className="h-3 w-3"/> Target End</span>
-                    <span className={`text-xs font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>{activeWorkspace.end_date || "TBD"}</span>
-                  </div>
-                </div>
-              </div>
-            </AppCard>
-
-            {/* Stakeholder Directory */}
-            <AppCard className="p-5 flex-1 flex flex-col">
-              <div className="border-b pb-3 mb-4 border-gray-200 dark:border-white/5 flex items-center gap-2">
-                <Users className={`h-4 w-4 ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`} />
-                <h3 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Stakeholder Matrix</h3>
-              </div>
-
-              <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-                {stakeholders.map((s, idx) => (
-                  <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                    isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
-                  }`}>
-                    <div className="relative">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
-                        {s.profile_photo ? <img src={s.profile_photo} alt="" className="h-full w-full object-cover" /> : s.full_name.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0f111a]'} ${onlineUsers.has(s.id || s.user_id) ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]' : 'bg-gray-400'}`} title={onlineUsers.has(s.id || s.user_id) ? 'Online now' : `Last seen: ${presenceMap.get(s.id || s.user_id)?.lastSeen?.toLocaleString() || 'Unknown'}`}></div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center">
-                        <span className={`text-xs font-bold truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{s.full_name}</span>
-                        <AppBadge variant={s.workspace_role === 'manager' ? 'info' : 'neutral'} className="text-[8px] py-0">{s.workspace_role}</AppBadge>
-                      </div>
-                      <div className="flex items-center text-[10px] text-gray-500 gap-2 mt-0.5">
-                        <span className="truncate">{s.designation?.name || 'Staff'}</span>
-                        <span className="truncate">• {s.department?.name}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {stakeholders.length === 0 && (
-                  <div className="text-center py-6 text-[11px] text-gray-500">
-                    No stakeholders enrolled.
-                  </div>
-                )}
-              </div>
-            </AppCard>
-
-          </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
@@ -618,21 +459,39 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Creation Overlays */}
       {wsModalMode !== null && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in-50">
-          <AppCard className={`w-full max-w-2xl p-6 shadow-2xl border-t-4 max-h-[85vh] overflow-y-auto ${isLightMode ? "border-t-indigo-600 border-x-0 border-b-0" : "border-t-indigo-500 border-white/10"}`}>
-            <h3 className={`text-lg font-bold mb-4 ${isLightMode ? "text-gray-900" : "text-white"}`}>{wsModalMode === 'EDIT' ? "Edit Workspace" : (wsModalMode === 'SUB' ? "New Sub Workspace" : "New Workspace")}</h3>
-            <form onSubmit={handleCreateWorkspace} className="space-y-4">
+        <EnterpriseWizardShell
+          title={wsModalMode === 'EDIT' ? "Edit Workspace" : (wsModalMode === 'SUB' ? "New Sub-Workspace" : "Provision Workspace")}
+          subtitle="Configure workspace scope, timeline, and stakeholder access."
+          onClose={() => { setWsModalMode(null); setEditWSId(null); }}
+          size="md"
+          headerAccent="indigo"
+          footer={
+            <div className="flex justify-end gap-3 w-full">
+              <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }}>Cancel</AppButton>
+              <AppButton variant="primary" onClick={handleCreateWorkspace} className="bg-indigo-600 hover:bg-indigo-700">{editWSId ? "Save Changes" : "Provision Workspace"}</AppButton>
+            </div>
+          }
+        >
+          <div className="space-y-6">
+            
+            {/* Section 1: Workspace Identity */}
+            <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
+                  <Building2 className="h-4 w-4" />
+                </div>
+                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Workspace Identity</h3>
+              </div>
               
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Company Link</label>
+              <div className="grid grid-cols-1 gap-5 mb-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Company / Entity Link *</label>
                   <select 
-                    className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
+                    className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-colors ${
+                      isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                     }`}
                     value={newWS.company_id}
                     onChange={e => setNewWS({...newWS, company_id: e.target.value})}
-                    required
                   >
                     <option value="" disabled>-- Select Company --</option>
                     {companies.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
@@ -640,58 +499,119 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Name</label>
-                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Migration" value={newWS.name} onChange={e => setNewWS({...newWS, name: e.target.value})} required />
+              <div className="grid grid-cols-2 gap-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Name *</label>
+                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name} onChange={e => setNewWS({...newWS, name: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Workspace Code / ID</label>
-                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? newWS.code : "[Auto-Generated]"} />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
+                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? newWS.code : "[Auto-Generated]"} className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Name</label>
+              {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
+                <div className="grid grid-cols-1 mt-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Link</label>
                     <select 
-                      className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                        isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
+                      className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-colors ${
+                        isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                       }`}
                       value={newWS.parent_workspace_id}
                       onChange={e => setNewWS({...newWS, parent_workspace_id: e.target.value})}
-                      required={wsModalMode === 'SUB'}
                     >
                       <option value="" disabled>-- Select Parent Workspace --</option>
                       {workspaces.filter(w => w.id !== editWSId).map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
                     </select>
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+
+            {/* Section 2: Timeline & Objectives */}
+            <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
+                  <Target className="h-4 w-4" />
+                </div>
+                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Timeline & Objectives</h3>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1 relative">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Assignee To (Users)</label>
-                  <div 
-                    onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
-                    className={`w-full p-2.5 rounded-xl text-sm border flex justify-between items-center cursor-pointer ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-white/10 text-white"}`}
-                  >
-                    <span className="truncate">{newWS.assigneeIds.length} Selected</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${assigneeDropdownOpen ? "rotate-180" : ""}`} />
-                  </div>
-                  {assigneeDropdownOpen && (
-                    <div className={`absolute z-10 w-full mt-1 p-2 rounded-xl border shadow-xl max-h-[200px] overflow-y-auto scrollbar-thin ${isLightMode ? "bg-white border-gray-300" : "bg-[#0B0D17] border-white/10"}`}>
+              <div className="grid grid-cols-2 gap-5 mb-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+                  <AppInput type="date" value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target End Date</label>
+                  <AppInput type="date" value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
+                <textarea 
+                  className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                  }`}
+                  placeholder="Detailed project requirements, goals, and constraints..."
+                  value={newWS.description}
+                  onChange={e => setNewWS({...newWS, description: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* Section 3: Access & Security */}
+            <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Access & Stakeholders</h3>
+              </div>
+
+              <div className="space-y-1.5 relative mb-6">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Assignees (Users)</label>
+                <div 
+                  onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
+                  className={`w-full p-3 rounded-xl text-sm border flex justify-between items-center cursor-pointer transition-colors ${
+                    isLightMode ? "bg-white border-gray-200 hover:border-indigo-300" : "bg-black/30 border-white/10 text-white hover:border-indigo-500/50"
+                  }`}
+                >
+                  <span className={`font-semibold ${newWS.assigneeIds.length > 0 ? (isLightMode ? "text-indigo-600" : "text-indigo-400") : "text-gray-500"}`}>
+                    {newWS.assigneeIds.length > 0 ? `${newWS.assigneeIds.length} Personnel Assigned` : "-- Select Stakeholders --"}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${assigneeDropdownOpen ? "rotate-180" : "text-gray-400"}`} />
+                </div>
+                
+                {assigneeDropdownOpen && (
+                  <div className={`absolute z-20 w-full mt-2 p-2 rounded-xl border shadow-2xl max-h-[250px] overflow-hidden flex flex-col ${
+                    isLightMode ? "bg-white border-gray-200" : "bg-[#0B0D17] border-white/10"
+                  }`}>
+                    <div className="relative mb-2 shrink-0">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                       <input 
                         type="text" 
-                        placeholder="Search users..." 
+                        placeholder="Search personnel..." 
                         value={assigneeSearch} 
                         onChange={e => setAssigneeSearch(e.target.value)} 
                         onClick={e => e.stopPropagation()}
-                        className={`w-full mb-2 p-1.5 text-xs rounded border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"}`}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                          }
+                        }}
+                        className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                          isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+                        }`}
                       />
+                    </div>
+                    <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent">
                       {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
-                        <label key={u.id} className="flex items-center gap-2 text-sm p-1.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded cursor-pointer transition-colors">
+                        <label key={u.id} className={`flex items-center gap-3 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
+                          isLightMode ? "hover:bg-indigo-50" : "hover:bg-white/5"
+                        }`}>
                           <input 
                             type="checkbox" 
                             checked={newWS.assigneeIds.includes(u.id)} 
@@ -701,67 +621,67 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                             }} 
                             className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4" 
                           />
-                          <span className={isLightMode ? "text-gray-700" : "text-gray-300"}>{u.full_name} <span className="opacity-50 text-[10px]">({u.user_code})</span></span>
+                          <div className="flex flex-col">
+                            <span className={isLightMode ? "text-gray-900 font-medium" : "text-gray-200 font-medium"}>{u.full_name}</span>
+                            <span className="opacity-50 text-[10px]">{u.user_code}</span>
+                          </div>
                         </label>
                       ))}
-                      {availableUsers.length === 0 && <p className="text-xs text-gray-500 p-2">No users available.</p>}
+                      {availableUsers.length === 0 && <p className="text-xs text-gray-500 p-3 text-center">No users available.</p>}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
-              {/* Workspace Name block moved up */}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
-                  <AppInput type="date" value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Target End Date</label>
-                  <AppInput type="date" value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
-                <textarea 
-                  className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-                  }`}
-                  placeholder="Detailed project requirements..."
-                  value={newWS.description}
-                  onChange={e => setNewWS({...newWS, description: e.target.value})}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
+              <div className={`p-4 rounded-xl border flex items-center gap-3 transition-colors ${
+                newWS.is_public 
+                  ? (isLightMode ? "bg-indigo-50/50 border-indigo-200" : "bg-indigo-500/10 border-indigo-500/30") 
+                  : (isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10")
+              }`}>
                 <input 
                   type="checkbox" 
                   id="is_public" 
                   checked={newWS.is_public} 
                   onChange={e => setNewWS({...newWS, is_public: e.target.checked})} 
-                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5 cursor-pointer"
                 />
-                <label htmlFor="is_public" className="text-xs font-semibold text-gray-500 dark:text-gray-300 cursor-pointer">
-                  Public Workspace (Visible to all authenticated personnel)
+                <label htmlFor="is_public" className="cursor-pointer flex flex-col">
+                  <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Public Visibility</span>
+                  <span className="text-xs text-gray-500">Allow any authenticated personnel to view and join this workspace.</span>
                 </label>
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
-                <AppButton variant="ghost" type="button" onClick={() => { setWsModalMode(null); setEditWSId(null); }}>Cancel</AppButton>
-                <AppButton variant="primary" type="submit">{editWSId ? "Save Changes" : "Provision Workspace"}</AppButton>
-              </div>
-            </form>
-          </AppCard>
+          </div>
+        </EnterpriseWizardShell>
+      )}
+
+      {isCreatingTask && (activeWorkspace || workspaces.length > 0) && (
+        <TaskCreationWizard 
+          workspaceId={creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id} 
+          onClose={() => {
+            setIsCreatingTask(false);
+            setCreatingTaskWorkspaceId(null);
+          }}
+          onSuccess={async (newTask: any) => {
+            const wsId = creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id;
+            await handleTaskWizardSuccess({ ...newTask, workspace_id: wsId });
+            setCreatingTaskWorkspaceId(null);
+          }}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {successToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <span className="text-xs font-semibold">{successToast}</span>
         </div>
       )}
 
-      {isCreatingTask && (
-        <TaskCreationWizard 
-          workspaceId={activeWorkspace.id} 
-          onClose={() => setIsCreatingTask(false)}
-          onSuccess={handleTaskWizardSuccess}
+      {drawerTask && (
+        <TaskDetailDrawer 
+          task={drawerTask} 
+          onClose={() => setDrawerTask(null)} 
         />
       )}
 

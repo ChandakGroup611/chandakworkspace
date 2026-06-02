@@ -5,7 +5,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { Plus, X, Activity, Paperclip } from "lucide-react";
+import { Plus, X, Activity, Paperclip, LayoutTemplate, CalendarDays, Users, LayoutList, AlignLeft } from "lucide-react";
 import { fetchCustomFields, createCustomField } from "@/lib/actions/tasks";
 import { fetchPriorities, fetchTasksByWorkspace, fetchStatusesByScope } from "@/lib/actions/workspaces";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
@@ -34,6 +34,12 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   const [statuses, setStatuses] = useState<any[]>([]);
   const [parentTaskId, setParentTaskId] = useState("");
   const [workspaceTasks, setWorkspaceTasks] = useState<any[]>([]);
+  const [assignedTo, setAssignedTo] = useState(""); // This is the Single Owner
+  const [executors, setExecutors] = useState<string[]>([]);
+  const [reviewers, setReviewers] = useState<string[]>([]);
+  const [watchers, setWatchers] = useState<string[]>([]);
+  const [stakeholders, setStakeholders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [checklistItems, setChecklistItems] = useState<string[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState("");
@@ -44,19 +50,41 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
 
   useEffect(() => {
     async function initData() {
-      const [fields, priorityList, existingTasks, statusList] = await Promise.all([
+      // Use dynamic import for fetchWorkspaceStakeholders to avoid circular dependency in UI
+      const m = await import("@/lib/actions/workspaces");
+      const [fields, priorityList, existingTasks, statusList, workspaceStakeholders] = await Promise.all([
         fetchCustomFields(workspaceId),
         fetchPriorities(workspaceId),
         fetchTasksByWorkspace(workspaceId),
-        fetchStatusesByScope('REQUIREMENT', workspaceId)
+        fetchStatusesByScope('REQUIREMENT', workspaceId),
+        m.fetchWorkspaceStakeholders(workspaceId)
       ]);
       setCustomFields(fields);
       setPriorities(priorityList);
       setWorkspaceTasks(existingTasks);
       setStatuses(statusList);
+      setStakeholders(workspaceStakeholders);
     }
     initData();
   }, [workspaceId]);
+
+  // Auto-assign all other stakeholders as watchers when Assignee is selected
+  useEffect(() => {
+    if (assignedTo && stakeholders.length > 0) {
+      const allOtherIds = stakeholders
+        .filter(s => s.id !== assignedTo)
+        .map(s => s.id);
+      
+      setWatchers(allOtherIds);
+      
+      // Also remove the new assignee from executors/reviewers if they were there
+      setExecutors(prev => prev.filter(id => id !== assignedTo));
+      setReviewers(prev => prev.filter(id => id !== assignedTo));
+    } else if (!assignedTo && stakeholders.length > 0) {
+       // If assignee is cleared, we could optionally clear watchers, or just leave them.
+       // Let's leave them for now to avoid wiping manual selections unnecessarily.
+    }
+  }, [assignedTo, stakeholders]);
 
   const handleAddField = async () => {
     if (!newFieldName) return;
@@ -71,7 +99,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
@@ -79,23 +107,44 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
       return;
     }
 
-    onSuccess({
-      title,
-      description,
-      start_date: startDate || null,
-      end_date: endDate || null,
-      priority_id: priorityId || null,
-      status_id: statusId || null,
-      parent_task_id: parentTaskId || null,
-      custom_fields: fieldValues,
-      checklist_items: checklistItems,
-      attachments: attachments.map(att => ({
-        file_name: att.file_name,
-        file_url: att.file_url,
-        file_type: att.file_type,
-        size: att.size
-      }))
-    });
+    if (!assignedTo) {
+      alert("You must explicitly select an Owner for this task.");
+      return;
+    }
+    
+    // Prepare multi-assignee execution team
+    const participants = [];
+    if (assignedTo) participants.push({ user_id: assignedTo, participation_role: 'OWNER' });
+    executors.forEach(id => { if (id !== assignedTo) participants.push({ user_id: id, participation_role: 'EXECUTOR' }); });
+    reviewers.forEach(id => { if (id !== assignedTo) participants.push({ user_id: id, participation_role: 'REVIEWER' }); });
+    watchers.forEach(id => { if (id !== assignedTo) participants.push({ user_id: id, participation_role: 'WATCHER' }); });
+
+    try {
+      setIsLoading(true);
+      await onSuccess({
+        title,
+        description,
+        status_id: statusId,
+        priority_id: priorityId,
+        start_date: startDate,
+        end_date: endDate,
+        parent_task_id: parentTaskId || null,
+        assigned_to: assignedTo,
+        participants,
+        custom_fields: fieldValues,
+        checklist_items: checklistItems,
+        attachments: attachments.map(att => ({
+          file_name: att.file_name,
+          file_url: att.file_url,
+          file_type: att.file_type,
+          size: att.size
+        }))
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -112,196 +161,267 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
         </div>
       }
     >
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-6">
           
-          <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Title *</label>
-              <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
-              <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
-              <AppInput type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Due Date</label>
-              <AppInput type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
-              <select
-                className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
-                  isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-                }`}
-                value={priorityId}
-                onChange={e => setPriorityId(e.target.value)}
-              >
-                <option value="">-- Select Priority --</option>
-                {priorities.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
-              <select
-                className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
-                  isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-                }`}
-                value={statusId}
-                onChange={e => setStatusId(e.target.value)}
-              >
-                <option value="">-- Default Status --</option>
-                {statuses.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Dependency (Hierarchy)</label>
-            <select
-              className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
-                isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-              }`}
-              value={parentTaskId}
-              onChange={e => setParentTaskId(e.target.value)}
-            >
-              <option value="">-- None (Independent Task) --</option>
-              {workspaceTasks.map(t => (
-                <option key={t.id} value={t.id}>
-                  {t.code} - {t.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Execution Notes</label>
-            <textarea 
-              className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
-                isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/50 border-white/10 text-white"
-              }`}
-              placeholder="Detailed execution instructions..."
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-            />
-          </div>
-
-          {/* Dynamic Custom Fields Section */}
-          <div className="pt-4 border-t border-gray-200 dark:border-white/5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Custom Properties</h4>
-              <button 
-                type="button" 
-                onClick={() => setIsAddingField(!isAddingField)}
-                className="p-1 rounded bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
-
-            {isAddingField && (
-              <div className={`p-4 rounded-xl border flex items-end gap-3 ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/10"}`}>
-                <div className="flex-1 space-y-1">
-                  <label className="text-xs font-bold text-gray-500">Field Name</label>
-                  <AppInput placeholder="e.g. Jira Ticket URL" value={newFieldName} onChange={e => setNewFieldName(e.target.value)} />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-xs font-bold text-gray-500">Type</label>
-                  <select 
-                    className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-white/10 text-white"}`}
-                    value={newFieldType}
-                    onChange={e => setNewFieldType(e.target.value)}
-                  >
-                    <option value="text">Text Input</option>
-                    <option value="number">Numeric</option>
-                    <option value="date">Date</option>
-                  </select>
-                </div>
-                <AppButton type="button" variant="primary" onClick={handleAddField}>Save Field</AppButton>
+          {/* Section 1: Core Details */}
+          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
+                <LayoutTemplate className="h-4 w-4" />
               </div>
-            )}
+              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Core Details</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Title *</label>
+                <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required className={isLightMode ? "bg-white" : "bg-black/30"} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
+                <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
+              </div>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {customFields.map(f => (
-                <div key={f.field_key} className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
+          {/* Section 2: Timeline & Priority */}
+          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
+                <CalendarDays className="h-4 w-4" />
+              </div>
+              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Timeline & Classification</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-5 mb-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+                <AppInput type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={isLightMode ? "bg-white" : "bg-black/30"} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Due Date</label>
+                <AppInput type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={isLightMode ? "bg-white" : "bg-black/30"} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
+                <select
+                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                  }`}
+                  value={priorityId}
+                  onChange={e => setPriorityId(e.target.value)}
+                >
+                  <option value="">-- Select Priority --</option>
+                  {priorities.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
+                <select
+                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                  }`}
+                  value={statusId}
+                  onChange={e => setStatusId(e.target.value)}
+                >
+                  <option value="">-- Default Status --</option>
+                  {statuses.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 mt-5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Dependency</label>
+                <select
+                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                  }`}
+                  value={parentTaskId}
+                  onChange={e => setParentTaskId(e.target.value)}
+                >
+                  <option value="">-- None (Independent Task) --</option>
+                  {workspaceTasks.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.code} - {t.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Assignment & Execution */}
+          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+                <Users className="h-4 w-4" />
+              </div>
+              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Assignment & Execution</h3>
+            </div>
+            
+            <div className="space-y-1.5 mb-5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assignee (Task Owner) *</label>
+              <select
+                className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors cursor-pointer ${
+                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                }`}
+                value={assignedTo}
+                onChange={e => setAssignedTo(e.target.value)}
+              >
+                <option value="">-- Unassigned --</option>
+                {stakeholders.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name} ({s.workspace_role})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={`p-4 rounded-xl border mb-5 ${isLightMode ? "bg-gray-50/80 border-gray-200" : "bg-white/[0.01] border-white/10"}`}>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">Supporting Stakeholders (Optional)</h4>
+              <div className="grid grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block border-b border-gray-200 dark:border-white/10 pb-1.5">Executors</label>
+                  <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent">
+                    {stakeholders.filter(s => s.id !== assignedTo).map(s => (
+                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
+                        <input type="checkbox" className="accent-emerald-500" checked={executors.includes(s.id)} onChange={e => {
+                          if (e.target.checked) setExecutors([...executors, s.id]);
+                          else setExecutors(executors.filter(id => id !== s.id));
+                        }} />
+                        <span className="truncate">{s.full_name}</span>
+                      </label>
+                    ))}
+                    {stakeholders.filter(s => s.id !== assignedTo).length === 0 && <span className="text-[10px] text-gray-500">No other users.</span>}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block border-b border-gray-200 dark:border-white/10 pb-1.5">Reviewers</label>
+                  <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-blue-500/20 scrollbar-track-transparent">
+                    {stakeholders.filter(s => s.id !== assignedTo).map(s => (
+                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
+                        <input type="checkbox" className="accent-blue-500" checked={reviewers.includes(s.id)} onChange={e => {
+                          if (e.target.checked) setReviewers([...reviewers, s.id]);
+                          else setReviewers(reviewers.filter(id => id !== s.id));
+                        }} />
+                        <span className="truncate">{s.full_name}</span>
+                      </label>
+                    ))}
+                    {stakeholders.filter(s => s.id !== assignedTo).length === 0 && <span className="text-[10px] text-gray-500">No other users.</span>}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block border-b border-gray-200 dark:border-white/10 pb-1.5">Watchers</label>
+                  <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent">
+                    {stakeholders.filter(s => s.id !== assignedTo).map(s => (
+                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
+                        <input type="checkbox" className="accent-amber-500" checked={watchers.includes(s.id)} onChange={e => {
+                          if (e.target.checked) setWatchers([...watchers, s.id]);
+                          else setWatchers(watchers.filter(id => id !== s.id));
+                        }} />
+                        <span className="truncate">{s.full_name}</span>
+                      </label>
+                    ))}
+                    {stakeholders.filter(s => s.id !== assignedTo).length === 0 && <span className="text-[10px] text-gray-500">No other users.</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                <AlignLeft className="h-3 w-3" /> Execution Notes
+              </label>
+              <textarea 
+                className={`w-full h-28 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors resize-none ${
+                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                }`}
+                placeholder="Detailed execution instructions, context, or constraints..."
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Section 4: Tasks & Assets */}
+          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className="flex items-center gap-2 mb-6">
+              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
+                <LayoutList className="h-4 w-4" />
+              </div>
+              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Tasks & Assets</h3>
+            </div>
+
+            {/* Checklist */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Action Items</h4>
+                <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{checklistItems.length} items</span>
+              </div>
+              
+              <div className="flex gap-2 items-start mb-3">
+                <div className="flex-1">
                   <AppInput 
-                    type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
-                    value={fieldValues[f.field_key] || ""} 
-                    onChange={e => setFieldValues({...fieldValues, [f.field_key]: e.target.value})} 
+                    value={newChecklistItem} 
+                    onChange={e => setNewChecklistItem(e.target.value)} 
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!newChecklistItem.trim()) return;
+                        setChecklistItems([...checklistItems, newChecklistItem.trim()]);
+                        setNewChecklistItem("");
+                      }
+                    }}
+                    placeholder="Type an actionable step and press Enter..." 
+                    className={`h-10 ${isLightMode ? "bg-white" : "bg-black/30"}`}
                   />
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200 dark:border-white/5 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Checklist</h4>
-                <p className="text-xs text-gray-500">Add checklist items to the task.</p>
-              </div>
-
-              <div className="grid grid-cols-12 gap-3 items-end">
-                <div className="col-span-7 space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Checklist Item</label>
-                  <AppInput value={newChecklistItem} onChange={e => setNewChecklistItem(e.target.value)} placeholder="e.g. Review deployment runbook" />
-                </div>
-                <div className="col-span-3 space-y-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Type</label>
-                  <div className="text-sm text-gray-500 p-2.5 rounded-xl bg-white/5 border border-white/10">Manual</div>
-                </div>
-                <div className="col-span-2">
-                  <AppButton type="button" variant="primary" onClick={() => {
-                    if (!newChecklistItem.trim()) return;
-                    setChecklistItems([...checklistItems, newChecklistItem.trim()]);
-                    setNewChecklistItem("");
-                  }}>Add</AppButton>
-                </div>
+                <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-blue-600 hover:bg-blue-700 text-white border-0" onClick={() => {
+                  if (!newChecklistItem.trim()) return;
+                  setChecklistItems([...checklistItems, newChecklistItem.trim()]);
+                  setNewChecklistItem("");
+                }}>Add</AppButton>
               </div>
 
               <div className="space-y-2">
                 {checklistItems.map((item, index) => (
-                  <div key={`${item}-${index}`} className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${isLightMode ? "border-indigo-100 bg-indigo-50/50 shadow-sm" : "border-indigo-500/20 bg-indigo-500/10"}`}>
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <div className={`shrink-0 h-2 w-2 rounded-full ${isLightMode ? "bg-indigo-500" : "bg-indigo-400"}`} />
-                      <span className={`text-sm font-semibold truncate ${isLightMode ? "text-indigo-900" : "text-indigo-100"}`}>{item}</span>
+                  <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${isLightMode ? "border-gray-200 bg-white hover:border-blue-300 shadow-sm" : "border-white/10 bg-black/20 hover:border-blue-500/50"}`}>
+                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+                      <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center ${isLightMode ? "border-gray-300 bg-gray-50" : "border-gray-600 bg-black/40"}`} />
+                      <span className={`text-sm truncate ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>{item}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
-                      className="shrink-0 text-xs font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
+                      className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
                     >
-                      Remove
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
                 {checklistItems.length === 0 && (
-                  <div className={`rounded-xl border border-dashed p-4 text-xs font-medium text-center ${isLightMode ? "border-gray-300 text-gray-500 bg-gray-50" : "border-white/10 text-gray-500"}`}>No checklist items added yet.</div>
+                  <div className={`rounded-xl border border-dashed p-6 text-[11px] font-medium text-center flex flex-col items-center justify-center gap-2 ${isLightMode ? "border-gray-300 text-gray-500 bg-gray-50" : "border-white/10 text-gray-500"}`}>
+                    <LayoutList className="h-6 w-6 text-gray-400 opacity-50" />
+                    <span>No action items defined. Break down the work into smaller steps.</span>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Attachments</h4>
-                <p className="text-xs text-gray-500">Link files or docs for the task.</p>
+            {/* Attachments */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Attachments</h4>
+                <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{attachments.length} files</span>
               </div>
-
-              <div className="flex items-center gap-4">
+              
+              <div className="mb-3">
                 <input 
                   type="file" 
                   id="task-attachment" 
@@ -322,41 +442,114 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                 />
                 <label 
                   htmlFor="task-attachment"
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border cursor-pointer transition-colors shadow-sm ${
+                  className={`flex items-center justify-center gap-2 w-full py-4 rounded-xl text-sm font-bold border border-dashed cursor-pointer transition-all ${
                     isLightMode 
-                      ? "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-indigo-600" 
-                      : "bg-[#1e293b]/70 border-white/10 text-gray-300 hover:bg-[#1e293b] hover:text-indigo-400"
+                      ? "bg-gray-50/50 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600" 
+                      : "bg-black/20 border-white/10 text-gray-400 hover:bg-black/40 hover:border-blue-500/50 hover:text-blue-400"
                   }`}
                 >
                   <Paperclip className="h-4 w-4" />
-                  <span>Attach File</span>
+                  <span>Click to Browse & Attach Files</span>
                 </label>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {attachments.map((item, index) => (
-                  <div key={`${item.file_url}-${index}`} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-xl border ${isLightMode ? "border-indigo-100 bg-indigo-50/50 shadow-sm" : "border-indigo-500/20 bg-indigo-500/10"}`}>
-                    <div className="space-y-1 overflow-hidden">
-                      <p className={`text-sm font-semibold truncate ${isLightMode ? "text-indigo-900" : "text-indigo-100"}`}>{item.file_name}</p>
-                      <p className={`text-xs truncate ${isLightMode ? "text-indigo-600/70" : "text-indigo-300/70"}`}>{item.file_url}</p>
-                      <p className={`text-[0.8rem] ${isLightMode ? "text-indigo-800/60" : "text-indigo-400/60"}`}>{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Size not provided"}</p>
+                  <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${isLightMode ? "border-gray-200 bg-white hover:border-blue-300 shadow-sm" : "border-white/10 bg-black/20 hover:border-blue-500/50"}`}>
+                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+                      <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold ${isLightMode ? "bg-blue-100 text-blue-700" : "bg-blue-500/20 text-blue-400"}`}>
+                        {item.file_type.substring(0,3).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className={`text-xs font-semibold truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{item.file_name}</span>
+                        <span className="text-[10px] text-gray-500">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Unknown size"}</span>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
-                      className="shrink-0 text-xs font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
+                      className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
                     >
-                      Remove
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ))}
-                {attachments.length === 0 && (
-                  <div className={`rounded-xl border border-dashed p-4 text-xs font-medium text-center ${isLightMode ? "border-gray-300 text-gray-500 bg-gray-50" : "border-white/10 text-gray-500"}`}>No attachments added yet.</div>
-                )}
               </div>
             </div>
           </div>
-        </form>
+
+          {/* Section 5: Extended Properties */}
+          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
+                  <Activity className="h-4 w-4" />
+                </div>
+                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Extended Properties</h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsAddingField(!isAddingField)}
+                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${isLightMode ? "bg-amber-100 text-amber-700 hover:bg-amber-200" : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"}`}
+              >
+                <Plus className="h-3 w-3" /> New Field
+              </button>
+            </div>
+
+            {isAddingField && (
+              <div className={`p-4 rounded-xl border mb-5 flex flex-col sm:flex-row items-end gap-3 ${isLightMode ? "bg-amber-50/50 border-amber-200" : "bg-amber-500/[0.05] border-amber-500/20"}`}>
+                <div className="w-full sm:flex-1 space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Field Name</label>
+                  <AppInput 
+                    placeholder="e.g. Jira Ticket URL" 
+                    value={newFieldName} 
+                    onChange={e => setNewFieldName(e.target.value)} 
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddField();
+                      }
+                    }}
+                    className={`h-10 ${isLightMode ? "bg-white" : "bg-black/30"}`}
+                  />
+                </div>
+                <div className="w-full sm:flex-1 space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Data Type</label>
+                  <select 
+                    className={`w-full h-10 px-3 rounded-xl text-sm border focus:outline-none cursor-pointer ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10 text-white"}`}
+                    value={newFieldType}
+                    onChange={e => setNewFieldType(e.target.value)}
+                  >
+                    <option value="text">Text Input</option>
+                    <option value="number">Numeric</option>
+                    <option value="date">Date</option>
+                  </select>
+                </div>
+                <AppButton type="button" variant="primary" onClick={handleAddField} className="w-full sm:w-auto h-10 bg-amber-600 hover:bg-amber-700 text-white border-0">Save Field</AppButton>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {customFields.map(f => (
+                <div key={f.field_key} className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
+                  <AppInput 
+                    type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
+                    value={fieldValues[f.field_key] || ""} 
+                    onChange={e => setFieldValues({...fieldValues, [f.field_key]: e.target.value})} 
+                    className={isLightMode ? "bg-white" : "bg-black/30"}
+                  />
+                </div>
+              ))}
+              {customFields.length === 0 && !isAddingField && (
+                <div className="col-span-1 sm:col-span-2 py-4 text-center text-[11px] font-medium text-gray-500">
+                  No extended properties configured for this task.
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
 
 
     </EnterpriseWizardShell>

@@ -21,6 +21,43 @@ async function checkServerPermission(supabase: any, userId: string, requiredPerm
  * Enterprise Workspace & Task Server Actions
  */
 
+export async function fetchEnrolledWorkspaces() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthenticated");
+
+  // Fetch workspaces the user is explicitly a member of
+  const { data: wsMembers } = await supabaseAdmin.from("workspace_members").select("workspace_id").eq("user_id", user.id);
+  const wsIds = wsMembers?.map(m => m.workspace_id) || [];
+  
+  let workspaces: any[] = [];
+  if (wsIds.length > 0) {
+    const { data: ws } = await supabaseAdmin
+      .from('workspaces')
+      .select('*, status:status_master!workspaces_status_id_fkey(status_name, status_color), company:company_master(company_name)')
+      .in('id', wsIds)
+      .eq('is_deleted', false);
+    workspaces = ws || [];
+  }
+
+  // Fetch sub-workspaces the user is explicitly a member of
+  const { data: swMembers } = await supabaseAdmin.from("sub_workspace_members").select("sub_workspace_id").eq("user_id", user.id);
+  const swIds = swMembers?.map(m => m.sub_workspace_id) || [];
+  
+  let subWorkspaces: any[] = [];
+  if (swIds.length > 0) {
+    const { data: sw } = await supabaseAdmin
+      .from('sub_workspaces')
+      .select('*, status:status_master!sub_workspaces_status_id_fkey(status_name, status_color)')
+      .in('id', swIds)
+      .eq('is_deleted', false);
+    subWorkspaces = sw || [];
+  }
+
+  return { workspaces, subWorkspaces };
+}
+
 export async function fetchCompanies() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
@@ -309,6 +346,16 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       prefetchStakeholders = sData;
     }
 
+    // Fetch the new master hierarchy for the Tabular List
+    const masterHierarchy = await fetchMasterHierarchy();
+
+    // Fetch Task Statuses for inline editing
+    const { getTaskStatuses } = await import('@/lib/actions/tasks');
+    const taskStatuses = await getTaskStatuses();
+
+    // Fetch all assignable users for mapping names and avatars
+    const allUsers = await fetchAssignableUsers();
+
     return {
       userProfile,
       workspaces,
@@ -316,12 +363,89 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       priorities,
       prefetchWorkspaceId: activeWSId,
       prefetchTasks,
-      prefetchStakeholders
+      prefetchStakeholders,
+      masterHierarchy,
+      taskStatuses,
+      allUsers
     };
   } catch (err: any) {
     console.error("[fetchWorkspaceDashboardData] Error:", err?.message || String(err));
     throw new Error(err?.message || "Failed to load workspace dashboard");
   }
+}
+
+export async function fetchMasterHierarchy() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) return [];
+
+  // 1. Fetch ALL Visible Workspaces (roots and children)
+  const visibleWorkspaces = await getVisibleWorkspaces(userId);
+  const wsIds = visibleWorkspaces.map((w: any) => w.id);
+  
+  if (wsIds.length === 0) return [];
+
+  // 2. Fetch lightweight task references just for counting (No heavy payload/recursive fetching)
+  const { data: tasks } = await supabase
+    .from('tasks')
+    .select('id, workspace_id')
+    .in('workspace_id', wsIds)
+    .eq('is_deleted', false);
+
+  const directTaskCounts: Record<string, number> = {};
+  (tasks || []).forEach((t: any) => {
+    directTaskCounts[t.workspace_id] = (directTaskCounts[t.workspace_id] || 0) + 1;
+  });
+
+  // 3. Assemble Infinite Workspace Tree via Adjacency List
+  const workspaceMap = new Map();
+  visibleWorkspaces.forEach((ws: any) => {
+    workspaceMap.set(ws.id, { 
+      ...ws, 
+      type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE', 
+      direct_task_count: directTaskCounts[ws.id] || 0,
+      total_hierarchy_task_count: directTaskCounts[ws.id] || 0, // Will be updated during traversal
+      children: [] 
+    });
+  });
+
+  const rootNodes: any[] = [];
+
+  // 4. Build the recursive tree (Workspace -> Child Workspace)
+  workspaceMap.forEach(wsNode => {
+    if (wsNode.parent_workspace_id && workspaceMap.has(wsNode.parent_workspace_id)) {
+      const parent = workspaceMap.get(wsNode.parent_workspace_id);
+      parent.children.push(wsNode);
+    } else {
+      rootNodes.push(wsNode);
+    }
+  });
+
+  // 5. Post-order traversal to calculate total_hierarchy_task_count recursively
+  const calculateTotalTasks = (node: any): number => {
+    let total = node.direct_task_count;
+    let childTaskCount = 0;
+    
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        if (child.type === 'SUB_WORKSPACE' || child.type === 'WORKSPACE') {
+           const cTotal = calculateTotalTasks(child);
+           childTaskCount += cTotal;
+        }
+      }
+    }
+    
+    node.child_task_count = childTaskCount;
+    node.total_hierarchy_task_count = total + childTaskCount;
+    return node.total_hierarchy_task_count;
+  };
+
+  rootNodes.forEach(root => calculateTotalTasks(root));
+
+  return rootNodes;
 }
 
 export async function updateWorkspace(id: string, formData: any) {
@@ -536,6 +660,7 @@ export async function createTask(formData: any) {
     checklist_items,
     attachments,
     parent_task_id,
+    participants,
     ...taskFields
   } = formData;
 
@@ -581,6 +706,8 @@ export async function createTask(formData: any) {
       end_date: taskFields.end_date || null,
       status_id: status_id,
       created_by: userId,
+      assigned_to: taskFields.assigned_to || null,
+      owner_id: taskFields.assigned_to || null,
       custom_fields: { ...taskFields.custom_fields, tat_days: tatDays }
     }])
     .select()
@@ -599,6 +726,17 @@ export async function createTask(formData: any) {
         dependency_type: 'BLOCKS'
      }]);
      if (depErr) console.error("Error linking parent task:", depErr);
+  }
+
+  // Insert Task Participants
+  if (participants && Array.isArray(participants) && participants.length > 0) {
+    const participantPayload = participants.map((p: any) => ({
+      task_id: data.id,
+      user_id: p.user_id,
+      participation_role: p.participation_role
+    }));
+    const { error: partErr } = await supabaseAdmin.from("task_participants").upsert(participantPayload, { onConflict: 'task_id, user_id' });
+    if (partErr) console.error("[Workspaces] Error inserting task participants:", partErr);
   }
 
   // Insert checklist entries
@@ -672,10 +810,25 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
   }
   
   if (data && data.length > 0) {
+    const taskIds = data.map((t: any) => t.id);
+    
+    // Fetch task participants
+    const { data: participantsData } = await supabase
+      .from('task_participants')
+      .select('*, user:user_master(id, full_name, profile_photo)')
+      .in('task_id', taskIds);
+      
+    const participantsMap = new Map();
+    (participantsData || []).forEach(p => {
+      if (!participantsMap.has(p.task_id)) participantsMap.set(p.task_id, []);
+      participantsMap.get(p.task_id).push(p);
+    });
+
     data.forEach((t: any) => {
       t.workspace = null;
       t.creator = null;
-      t.assignees = []; // Assignees are implicitly workspace members now
+      t.participants = participantsMap.get(t.id) || [];
+      t.assignees = t.participants.map((p: any) => ({ ...p.user, role: p.participation_role }));
       
       // Calculate progress percentage
       if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {

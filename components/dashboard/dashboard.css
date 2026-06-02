@@ -2,8 +2,7 @@
 
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap');
 
-  .dash-theme * { box-sizing: border-box; margin: 0; padding: 0; }
-
+  .dash-theme * { box-sizing: border-box; }
   .dash-theme {
     --syne: 'Syne', sans-serif;
     --inst: 'Instrument Sans', sans-serif;
@@ -16,8 +15,8 @@
     --border: rgba(0,0,0,0.08);
     --border2: rgba(0,0,0,0.15);
     --text1: #0f172a;
-    --text2: #475569;
-    --text3: #64748b;
+    --text2: #334155;
+    --text3: #475569;
     --accent: #4f46e5;
     --accent2: #4338ca;
     --green: #10b981;
@@ -262,7 +261,6 @@
 
   /* SPRINT BOARD */
   .sprint-cols { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-  .sprint-col { }
   .sprint-col-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 8px;
@@ -296,7 +294,6 @@
   .tm-name { font-size: 12.5px; color: var(--text1); font-weight: 500; margin-bottom: 4px; }
   .tm-role { font-size: 10px; color: var(--text3); font-family: var(--mono); }
   .tm-stats { display: flex; align-items: center; gap: 10px; text-align: right; flex-shrink: 0; }
-  .tm-stat { }
   .tm-stat-val { font-size: 14px; font-family: var(--syne); font-weight: 600; }
   .tm-stat-label { font-size: 9px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
   .tm-bar { flex: 1; }
@@ -424,6 +421,7 @@
 .dash-theme .topbar-title {
     background: var(--text1);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 800;
 }

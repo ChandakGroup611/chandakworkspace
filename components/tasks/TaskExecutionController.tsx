@@ -50,6 +50,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [remarksHistoryLoading, setRemarksHistoryLoading] = useState(false);
   const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const triggerToast = (msg: string) => {
+    setSuccessToast(msg);
+    setTimeout(() => setSuccessToast(null), 3000);
+  };
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
@@ -338,6 +343,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       if (isAttachmentsLoaded) await loadAttachments(true);
       if (isCommentsLoaded || !isHistoryCollapsed) await loadComments(true);
 
+      triggerToast("Task updated successfully");
       onUpdate?.();
       // Note: router.refresh() removed — it caused Server Component re-render errors.
       // State is refreshed via loadTaskDetails() above.
@@ -357,8 +363,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     try {
       await deleteTask(taskId);
       onUpdate?.();
-      router.refresh();
-      router.push("/workspaces");
+      triggerToast("Task deleted successfully");
+      // Need a slight delay to allow the toast to render before redirecting
+      setTimeout(() => {
+        router.push("/workspaces");
+      }, 1500);
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to delete task.");
@@ -411,8 +420,42 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
           </div>
           <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Est. Hours</span>
-            <div className="text-xs font-medium dark:text-gray-200">{task.estimated_hours || "0"} hrs</div>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Primary Assignee</span>
+            <div className="flex items-center gap-1.5">
+              {task.assignee ? (
+                <>
+                  {task.assignee.profile_photo ? (
+                    <img src={task.assignee.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
+                      {task.assignee.full_name?.substring(0, 2).toUpperCase() || "U"}
+                    </div>
+                  )}
+                  <span className="text-xs font-medium dark:text-gray-200 truncate">{task.assignee.full_name}</span>
+                </>
+              ) : (
+                <span className="text-xs font-medium text-gray-400 italic">Unassigned</span>
+              )}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Team / Viewers</span>
+            <div className="flex -space-x-1.5">
+              {[...(task.task_assignees || []), ...(task.task_watchers || [])].map((p: any, i) => (
+                <div key={p.id || i} title={p.full_name} className="relative group/avatar">
+                  {p.profile_photo ? (
+                    <img src={p.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover ring-2 ring-white dark:ring-[#111827] bg-gray-200" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full ring-2 ring-white dark:ring-[#111827] bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">
+                      {p.full_name?.substring(0, 2).toUpperCase() || "U"}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {(!(task.task_assignees?.length) && !(task.task_watchers?.length)) && (
+                <span className="text-xs font-medium text-gray-400 italic">None</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -844,6 +887,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         )}
 
       </div>
+      
+      {/* Toast Notification */}
+      {successToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <span className="text-xs font-semibold">{successToast}</span>
+        </div>
+      )}
     </AppCard>
     </ExperienceProvider>
   );

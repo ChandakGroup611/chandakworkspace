@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, Filter, Clock, User, AlertCircle, Hash } from "lucide-react";
+import { Search, Filter, Clock, User, AlertCircle, Hash, Eye, Edit2, Trash2 } from "lucide-react";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -94,10 +94,10 @@ export function TicketListSidebar({
             const priority = ticket.priorityObj;
             
             return (
-              <button
+              <div
                 key={ticket.dbId || ticket.id}
                 onClick={() => onSelect(ticket)}
-                className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border ${
+                className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border cursor-pointer ${
                   isSelected 
                     ? (isLightMode ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-indigo-600/20 border-indigo-500/30")
                     : (isLightMode ? "hover:bg-gray-50 border-transparent" : "hover:bg-white/[0.03] border-transparent")
@@ -138,16 +138,29 @@ export function TicketListSidebar({
                 </div>
 
                 {isSelected && (
-                  <div className="mt-3 flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
-                    <AppBadge variant={ticket.statusObj?.code === "ST_OPEN" ? "info" : "success"} className="text-[0.65rem] py-0 px-1.5">
-                      {ticket.statusObj?.name || "Active"}
-                    </AppBadge>
-                    <span className="text-[0.65rem] text-indigo-300 font-medium bg-indigo-400/10 px-1.5 rounded">
-                      SLA: STABLE
-                    </span>
+                  <div className="mt-3 flex flex-col gap-3 animate-in fade-in slide-in-from-left-2">
+                    <div className="flex items-center gap-2">
+                      <AppBadge variant={ticket.statusObj?.code === "ST_OPEN" ? "info" : "success"} className="text-[0.65rem] py-0 px-1.5">
+                        {ticket.statusObj?.name || "Active"}
+                      </AppBadge>
+                      <span className="text-[0.65rem] text-indigo-300 font-medium bg-indigo-400/10 px-1.5 rounded">
+                        SLA: STABLE
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button className="flex items-center justify-center p-1.5 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors" title="View" onClick={(e) => e.stopPropagation()}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+                      <button className="flex items-center justify-center p-1.5 rounded bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors" title="Update" onClick={(e) => e.stopPropagation()}>
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button className="flex items-center justify-center p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors" title="Delete" onClick={(e) => e.stopPropagation()}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 )}
-              </button>
+              </div>
             );
           })
         )}

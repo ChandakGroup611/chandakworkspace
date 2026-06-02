@@ -6,12 +6,14 @@ import { TicketListSidebar } from "@/components/tickets/TicketListSidebar";
 import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Plus, RefreshCw, CheckCircle2, Database, Loader2 } from "lucide-react";
+import { Plus, RefreshCw, CheckCircle2, Database, Loader2, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchTicketDashboardData } from "@/lib/actions/tickets";
 
 export default function TicketsPage() {
+  const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
@@ -172,6 +174,9 @@ export default function TicketsPage() {
         isLightMode ? "border-gray-200 bg-white/80" : "border-white/5 bg-[#070913]/80"
       }`}>
         <div className="flex items-center gap-6">
+          <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+            Back
+          </AppButton>
           <div className="flex flex-col">
             <h1 className={`text-xl font-bold tracking-tight ${
               isLightMode ? "text-gray-900" : "bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent"

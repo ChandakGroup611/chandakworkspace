@@ -2,11 +2,14 @@
 
 import React, { useMemo } from "react";
 
+import { useRouter } from "next/navigation";
+
 interface UpcomingDeadlinesProps {
   metrics?: any[];
 }
 
 export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesProps) {
+  const router = useRouter();
   
   const upcoming = useMemo(() => {
     return metrics
@@ -46,8 +49,16 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
           {upcoming.map(m => {
             const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
             const { color, icon } = getIconColor(m.dueDate);
+            
+            const handleItemClick = () => {
+              if (m.module === 'Tickets') router.push(`/tickets?ticket=${m.id}`);
+              else if (m.module === 'Tasks' || m.module === 'Sub Tasks') router.push(`/workspaces?task=${m.id}`);
+              else if (m.module === 'Sub Workspaces') router.push(`/workspaces?subWorkspace=${m.id}`);
+              else router.push(`/${m.module.toLowerCase()}`);
+            };
+
             return (
-              <div key={m.id} className="deadline-item">
+              <div key={m.id} className="deadline-item hover:bg-white/[0.05] transition-colors cursor-pointer" onClick={handleItemClick}>
                 <div className="deadline-icon" style={{ color }}><i className={`ti ${icon}`} aria-hidden="true"></i></div>
                 <div className="deadline-info">
                   <div className="deadline-name">{m.module} Assignment ({m.priority})</div>

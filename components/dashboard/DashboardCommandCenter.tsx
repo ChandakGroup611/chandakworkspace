@@ -6,6 +6,7 @@ import './dashboard.css'; // The extracted and scoped CSS
 
 import MetricsRow from "./panels/MetricsRow";
 import HealthGrid from "./panels/HealthGrid";
+import { CentralOperationsDashboard } from "@/components/dashboards/CentralOperationsDashboard";
 
 // Lazy load heavy charts and boards
 const ChartsRow = dynamic(() => import("./panels/ChartsRow"), { 
@@ -28,11 +29,12 @@ import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 
 interface DashboardCommandCenterProps {
   metrics?: any[];
+  kpis?: any;
   dbError?: string | null;
   refreshComponent?: React.ReactNode;
 }
 
-export default function DashboardCommandCenter({ metrics = [], dbError, refreshComponent }: DashboardCommandCenterProps) {
+export default function DashboardCommandCenter({ metrics = [], kpis, dbError, refreshComponent }: DashboardCommandCenterProps) {
   useRenderLog("DashboardCommandCenter", { metricsLength: metrics.length, dbError });
   const [mounted, setMounted] = useState(false);
   const [globalScope, setGlobalScope] = useState<string>("All");
@@ -101,8 +103,10 @@ export default function DashboardCommandCenter({ metrics = [], dbError, refreshC
               <option value="All">All Scopes</option>
               <option value="Tickets">Tickets</option>
               <option value="Tasks">Tasks</option>
+              <option value="Sub Tasks">Sub Tasks</option>
               <option value="Requirements">Requirements</option>
               <option value="Workspaces">Workspaces</option>
+              <option value="Sub Workspaces">Sub Workspaces</option>
             </select>
 
             <select
@@ -150,9 +154,11 @@ export default function DashboardCommandCenter({ metrics = [], dbError, refreshC
             </div>
           )}
 
-          <MetricsRow metrics={filteredMetrics} />
-          
-          <HealthGrid metrics={filteredMetrics} />
+          {kpis && (
+            <div className="mb-6">
+              <CentralOperationsDashboard analytics={kpis} preferences={{ widget_layout: { sla: 'top', workload: 'bottom' } }} />
+            </div>
+          )}
           
           {degradationStage < DegradationStage.STAGE_3_SEVERE && (
             <>

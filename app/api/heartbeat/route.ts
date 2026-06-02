@@ -63,11 +63,12 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
 
     if (event === "tab_close") {
-      // User is closing their last tab — update both last_active_at and last_logout_at
+      // User is closing their last tab — force offline immediately by backdating last_active_at
+      const forcedOfflineTime = new Date(Date.now() - 120000 - 1000).toISOString();
       const { error } = await supabaseAdmin
         .from("user_master")
         .update({ 
-          last_active_at: now, 
+          last_active_at: forcedOfflineTime, 
           last_logout_at: now 
         })
         .eq("id", user.id);
