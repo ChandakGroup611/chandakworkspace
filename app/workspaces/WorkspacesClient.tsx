@@ -27,7 +27,7 @@ import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWiza
 import { getTaskDetails, updateNodeStatus } from "@/lib/actions/tasks";
 import { useRouter } from "next/navigation";
 import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
-
+import { SprintBoard } from "@/components/workspaces/sprints/SprintBoard";
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
   const { theme } = useTheme();
@@ -129,6 +129,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [editWSId, setEditWSId] = useState<string | null>(null);
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
@@ -410,15 +411,30 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         <div className="flex-1 flex flex-col">
             
             {/* Hierarchical Task Matrix */}
-            <AppCard className="flex-1 p-5 overflow-visible">
-              <div className="flex items-center justify-between border-b pb-3 mb-0 border-gray-200 dark:border-white/5">
-                <div className="space-y-0.5">
-                  <h3 className={`text-sm font-bold flex items-center gap-2 ${isLightMode ? "text-gray-900" : "text-white"}`}>
-                    <GitMerge className={`h-4 w-4 ${isLightMode ? "text-purple-600" : "text-purple-400"}`} />
+            <AppCard className="flex-1 p-5 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setActiveView('HIERARCHY')}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? (isLightMode ? "border-purple-600 text-purple-600" : "border-purple-400 text-purple-400") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    style={{ marginBottom: "-14px" }}
+                  >
+                    <GitMerge className="h-4 w-4" />
                     <span>Execution Hierarchy</span>
-                  </h3>
+                  </button>
+                  <button 
+                    onClick={() => setActiveView('SPRINTS')}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? (isLightMode ? "border-indigo-600 text-indigo-600" : "border-indigo-400 text-indigo-400") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    style={{ marginBottom: "-14px" }}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    <span>Sprint Planning</span>
+                  </button>
                 </div>
               </div>
+
+              {activeView === 'HIERARCHY' ? (
+                <div className="flex-1 overflow-visible">
 
               <WorkspaceMasterTable 
                 hierarchy={masterHierarchy} 
@@ -446,6 +462,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   }
                 }}
               />
+              </div>
+              ) : (
+                <div className="flex-1 overflow-hidden">
+                  <SprintBoard workspaceId={workspaces[0]?.id} />
+                </div>
+              )}
             </AppCard>
         </div>
       ) : (

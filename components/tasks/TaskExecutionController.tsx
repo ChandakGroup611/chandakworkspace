@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
-  approveResolution, reopenTask, createChecklistItem, 
+  approveTask, reopenTask, createChecklistItem, 
   createTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses,
   getTaskChecklists, getTaskAttachments
 } from "@/lib/actions/tasks";
@@ -180,15 +180,33 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
 
 
-  const handleStatusTransition = (action: "start" | "resolve" | "approve" | "reopen") => {
+  const handleStatusTransition = async (action: "start" | "resolve" | "approve" | "reopen") => {
     if (action === "start") {
       setPendingStatus("ST_IN_PROGRESS");
     } else if (action === "resolve") {
       setPendingStatus("ST_RESOLVED");
     } else if (action === "approve") {
-      setPendingStatus("ST_CLOSED");
+      setActionLoading(true);
+      try {
+        const { approveTask } = await import("@/lib/actions/tasks");
+        await approveTask(taskId);
+        await loadTaskDetails(true);
+      } catch (e: any) {
+        setError(e.message || "Failed to approve task.");
+      } finally {
+        setActionLoading(false);
+      }
     } else if (action === "reopen") {
-      setPendingStatus("ST_REOPEN");
+      setActionLoading(true);
+      try {
+        const { reopenTask } = await import("@/lib/actions/tasks");
+        await reopenTask(taskId);
+        await loadTaskDetails(true);
+      } catch (e: any) {
+        setError(e.message || "Failed to reopen task.");
+      } finally {
+        setActionLoading(false);
+      }
     }
   };
 
@@ -277,7 +295,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         } else if (pendingStatus === "ST_RESOLVED") {
           res = await resolveTask(taskId);
         } else if (pendingStatus === "ST_CLOSED") {
-          res = await approveResolution(taskId);
+          res = await approveTask(taskId);
         } else if (pendingStatus === "ST_REOPEN") {
           res = await reopenTask(taskId);
         } else {
@@ -382,6 +400,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const currentStatusCode = task.status?.code || "ST_OPEN";
   const progressPercentage = task.progress_percentage || 0;
 
+  const isFrozen = task.status?.is_closed;
+  const canEdit = task.currentUserCanAct && !isFrozen;
+
   return (
     <ExperienceProvider mode="compact">
     <AppCard className="p-4 space-y-4 border-t-2 border-t-blue-500">
@@ -473,7 +494,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
                       {key.replace(/_/g, ' ')}
                     </label>
-                    {isReadOnly ? (
+                    {isReadOnly || !canEdit ? (
                       <div className={`w-full p-2 rounded-md text-[13px] border cursor-not-allowed ${
                         isLightMode ? "bg-gray-100 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
                       }`}>
@@ -501,6 +522,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
+              disabled={!canEdit}
               onChange={(e) => {
                 const newCode = e.target.value;
                 if (newCode === currentStatusCode) {
@@ -511,7 +533,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               }}
               className={`w-full p-1.5 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                 isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
-              }`}
+              } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
@@ -524,7 +546,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               Quick Action Operations
             </label>
             <div className="flex flex-wrap gap-2">
-              {currentStatusCode === "ST_OPEN" && (
+              {currentStatusCode === "ST_OPEN" && canEdit && (
                 <AppButton 
                   size="sm" 
                   variant="primary" 
@@ -537,7 +559,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              {currentStatusCode === "ST_IN_PROGRESS" && (
+              {currentStatusCode === "ST_IN_PROGRESS" && canEdit && (
                 <AppButton 
                   size="sm" 
                   variant="primary" 
@@ -550,7 +572,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              {currentStatusCode === "ST_RESOLVED" && (
+              {currentStatusCode === "ST_RESOLVED" && task.currentUserIsSuperAdmin && (
                 <>
                   <AppButton 
                     size="sm" 
@@ -575,7 +597,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </>
               )}
 
-              {currentStatusCode === "ST_CLOSED" && (
+              {task.status?.is_closed && task.currentUserIsSuperAdmin && (
                 <AppButton 
                   size="sm" 
                   variant="outline" 
@@ -613,16 +635,19 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <textarea
             value={remarksDraft}
             onChange={e => setRemarksDraft(e.target.value)}
+            disabled={!canEdit}
             className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${
               isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
-            }`}
-            placeholder="Add update notes or handoff remarks..."
+            } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
+            placeholder={!canEdit ? "Task is frozen/read-only." : "Add update notes or handoff remarks..."}
           />
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
-            <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
-              {saveRemarksLoading ? "Saving..." : pendingStatus ? "Commit Status & Save Remark" : "Save Remarks"}
-            </AppButton>
+            {canEdit && (
+              <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
+                {saveRemarksLoading ? "Saving..." : pendingStatus ? "Commit Status & Save Remark" : "Save Remarks"}
+              </AppButton>
+            )}
           </div>
 
           {/* Remarks History Queue */}
@@ -765,22 +790,24 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         {/* Checklist Tab */}
         {activeTab === "checklist" && (
           <div className="space-y-4">
-            <form onSubmit={handleAddChecklist} className="flex gap-2">
-              <AppInput 
-                placeholder="New operational checkoff point..." 
-                value={newChecklistLabel}
-                onChange={e => setNewChecklistLabel(e.target.value)}
-                className="h-9 text-xs"
-              />
-              <AppButton type="submit" variant="primary" size="sm" className="h-9 shrink-0"><Plus className="h-4 w-4"/></AppButton>
-            </form>
+            {canEdit && (
+              <form onSubmit={handleAddChecklist} className="flex gap-2">
+                <AppInput 
+                  placeholder="New operational checkoff point..." 
+                  value={newChecklistLabel}
+                  onChange={e => setNewChecklistLabel(e.target.value)}
+                  className="h-9 text-xs"
+                />
+                <AppButton type="submit" variant="primary" size="sm" className="h-9 shrink-0"><Plus className="h-4 w-4"/></AppButton>
+              </form>
+            )}
 
             <div className="space-y-2">
               {(task.checklists || []).map((item: any) => (
                 <div 
                   key={item.id} 
-                  onClick={() => handleToggleChecklist(item.id, item.is_completed)}
-                  className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                  onClick={() => canEdit && handleToggleChecklist(item.id, item.is_completed)}
+                  className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${canEdit ? 'cursor-pointer' : 'cursor-default opacity-80'} ${
                     item.is_completed
                       ? (isLightMode ? "bg-emerald-50/40 border-emerald-100 opacity-60" : "bg-emerald-500/5 border-emerald-500/10 opacity-70")
                       : (isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5")
@@ -813,14 +840,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Attachments</span>
-                  <button
-                    type="button"
-                    onClick={triggerFileSelect}
-                    className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-purple-50 hover:text-purple-600"
-                    aria-label="Upload file"
-                  >
-                    <Pin className="h-4 w-4" />
-                  </button>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={triggerFileSelect}
+                      className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-purple-50 hover:text-purple-600"
+                      aria-label="Upload file"
+                    >
+                      <Pin className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
 
                 <input 
@@ -830,27 +859,29 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   onChange={handleFileChange} 
                 />
 
-                <div 
-                  onClick={triggerFileSelect}
-                  className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                    isLightMode 
-                      ? "border-gray-200 bg-gray-50 hover:bg-gray-100/50" 
-                      : "border-white/10 bg-white/[0.01] hover:bg-white/[0.02]"
-                  }`}
-                >
-                  {uploadingFile ? (
-                    <div className="space-y-2 flex flex-col items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
-                      <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Uploading file...</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 flex flex-col items-center justify-center">
-                      <Paperclip className="h-6 w-6 text-purple-400" />
-                      <span className="text-xs font-bold text-purple-500 hover:text-purple-600 block">Click to select and upload file</span>
-                      <span className="text-xs text-gray-500 block">Supports any document or image file</span>
-                    </div>
-                  )}
-                </div>
+                {canEdit && (
+                  <div 
+                    onClick={triggerFileSelect}
+                    className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                      isLightMode 
+                        ? "border-gray-200 bg-gray-50 hover:bg-gray-100/50" 
+                        : "border-white/10 bg-white/[0.01] hover:bg-white/[0.02]"
+                    }`}
+                  >
+                    {uploadingFile ? (
+                      <div className="space-y-2 flex flex-col items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-purple-500" />
+                        <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Uploading file...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 flex flex-col items-center justify-center">
+                        <Paperclip className="h-6 w-6 text-purple-400" />
+                        <span className="text-xs font-bold text-purple-500 hover:text-purple-600 block">Click to select and upload file</span>
+                        <span className="text-xs text-gray-500 block">Supports any document or image file</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   {(task.attachments || []).map((item: any) => (

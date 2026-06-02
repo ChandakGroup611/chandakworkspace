@@ -37,7 +37,18 @@ export function usePresence(userIds: string[]): Map<string, PresenceInfo> {
   const isUserOnline = useCallback((lastActiveAt: string | null): boolean => {
     if (!lastActiveAt) return false;
     const lastActive = new Date(lastActiveAt).getTime();
-    return Date.now() - lastActive < PRESENCE_TIMEOUT_MS;
+    
+    // Read the server time offset calculated by ClientSessionManager
+    let offset = 0;
+    try {
+      const storedOffset = localStorage.getItem("adios_time_offset");
+      if (storedOffset) offset = parseInt(storedOffset, 10);
+    } catch {}
+    
+    const adjustedNow = Date.now() - offset;
+    
+    // We use Math.abs to handle edge cases where time drift causes negative differences
+    return Math.abs(adjustedNow - lastActive) < PRESENCE_TIMEOUT_MS;
   }, []);
 
   // Build the presence map from raw data

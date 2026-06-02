@@ -310,7 +310,18 @@ export default function Navbar() {
                   </div>
 
                   <div className="py-1 space-y-0.5">
-                    <div className="px-2 py-1 flex items-center justify-between text-xs text-gray-400 font-mono">
+                    <Link
+                      href="/profile"
+                      onClick={() => setProfileOpen(false)}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-2 ${
+                        isLight ? "hover:bg-gray-100 text-gray-700" : "hover:bg-white/5 text-gray-300"
+                      }`}
+                    >
+                      <User className="h-3 w-3 text-purple-400" />
+                      <span>My Profile & Settings</span>
+                    </Link>
+
+                    <div className="px-2 py-1 flex items-center justify-between text-xs text-gray-400 font-mono mt-1 pt-1 border-t border-white/5">
                       <span>Lease Countdown:</span>
                       <strong className="text-white">{formatTime(secondsRemaining)}</strong>
                     </div>

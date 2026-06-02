@@ -4,7 +4,7 @@ import { fetchSystemEmailConfig } from "@/lib/actions/email-config";
 import NotificationProviderForm from "@/components/settings/NotificationProviderForm";
 
 export const runtime = 'nodejs';
-
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: "Email Configuration | Enterprise Operations",
   description: "Configure system-wide email providers like Gmail, Office 365, or Resend API.",

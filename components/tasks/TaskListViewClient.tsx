@@ -25,6 +25,7 @@ import { saveAs } from "file-saver";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type Task = any;
 
@@ -69,6 +70,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [inlineNewStatus, setInlineNewStatus] = useState<string>("");
   const [inlineRemark, setInlineRemark] = useState<string>("");
   const [inlineLoading, setInlineLoading] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false);
+  const [bulkNewStatus, setBulkNewStatus] = useState<string>("");
+  const [bulkRemark, setBulkRemark] = useState<string>("");
+  const { hasPermission } = usePermissions();
+  const canDelete = hasPermission("TASKS_DELETE");
 
   useEffect(() => {
     getTaskStatuses().then(setMasterStatuses).catch(console.error);
@@ -178,10 +185,59 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setDeleteLoadingId(taskId);
       await deleteTask(taskId);
       setTasks(prev => prev.filter(t => t.id !== taskId));
-    } catch (err: any) {
-      alert("Error deleting task: " + err.message);
+    } catch (e: any) {
+      alert("Status update failed: " + e.message);
     } finally {
-      setDeleteLoadingId(null);
+      setInlineLoading(false);
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedTaskIds(new Set(filtered.map(t => t.id)));
+    } else {
+      setSelectedTaskIds(new Set());
+    }
+  };
+
+  const handleSelectTask = (taskId: string, checked: boolean) => {
+    const next = new Set(selectedTaskIds);
+    if (checked) next.add(taskId);
+    else next.delete(taskId);
+    setSelectedTaskIds(next);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedTaskIds.size} tasks?`)) return;
+    try {
+      setLoading(true);
+      await Promise.all(Array.from(selectedTaskIds).map(id => deleteTask(id)));
+      setTasks(prev => prev.filter(t => !selectedTaskIds.has(t.id)));
+      setSelectedTaskIds(new Set());
+      triggerToast(`Successfully deleted tasks.`);
+    } catch (e: any) {
+      alert("Bulk delete failed: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkStatusSave = async () => {
+    if (!bulkNewStatus) return;
+    try {
+      setInlineLoading(true);
+      // NOTE: updateTaskStatusInline requires the user to be the assignee, some might fail if they are not.
+      await Promise.all(Array.from(selectedTaskIds).map(id => updateTaskStatusInline(id, bulkNewStatus, bulkRemark || "Bulk Status Update")));
+      
+      const stMaster = masterStatuses.find(s => s.id === bulkNewStatus);
+      setTasks(prev => prev.map(t => selectedTaskIds.has(t.id) ? { ...t, status_id: bulkNewStatus, status: stMaster } : t));
+      setSelectedTaskIds(new Set());
+      setBulkStatusModalOpen(false);
+      triggerToast(`Successfully updated tasks.`);
+    } catch (e: any) {
+      alert("Bulk status update failed: " + e.message);
+    } finally {
+      setInlineLoading(false);
     }
   };
 
@@ -456,6 +512,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <AppTable className="task-table w-full">
             <AppTableHeader className="sticky top-0 z-10 bg-[#06080f]">
               <AppTableRow>
+                <AppTableHead className="w-[40px] px-2 text-center">
+                  <input 
+                    type="checkbox" 
+                    checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = selectedTaskIds.size > 0 && selectedTaskIds.size < filtered.length;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </AppTableHead>
                 <AppTableHead className="w-[100px]">Code</AppTableHead>
                 <AppTableHead className="w-[300px]">Title & Description</AppTableHead>
                 <AppTableHead className="w-[180px]">Workspace</AppTableHead>
@@ -478,12 +547,28 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 return (
                   <AppTableRow 
                     key={task.id} 
-                    className="transition-colors duration-150 hover:bg-gray-800/20"
+                    className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-gray-800/20"}`}
                   >
+                    <AppTableCell className="w-[40px] px-2 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedTaskIds.has(task.id)}
+                        onChange={(e) => handleSelectTask(task.id, e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </AppTableCell>
                     <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold w-[100px]">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                     <AppTableCell className="w-[300px]">
                       <div className="font-semibold truncate text-gray-900">{task.title}</div>
                       <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
+                      {typeof task.custom_fields?.progress_percentage === 'number' && (
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-500">{task.custom_fields.progress_percentage}%</span>
+                        </div>
+                      )}
                     </AppTableCell>
                     <AppTableCell className="text-gray-700 w-[180px]">{task.workspace?.name || task.workspace?.code}</AppTableCell>
                     <AppTableCell className="w-[120px]">
@@ -534,18 +619,20 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         >
                           <Edit2 className="h-4 w-4" />
                         </Link>
-                        <button 
-                          onClick={(e) => handleDeleteTask(e, task.id)}
-                          disabled={deleteLoadingId === task.id}
-                          className="p-1.5 rounded-md text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-50"
-                          title="Delete Task"
-                        >
-                          {deleteLoadingId === task.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
+                        {canDelete && (
+                          <button 
+                            onClick={(e) => handleDeleteTask(e, task.id)}
+                            disabled={deleteLoadingId === task.id}
+                            className="p-1.5 rounded-md text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-50"
+                            title="Delete Task"
+                          >
+                            {deleteLoadingId === task.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </AppTableCell>
                   </AppTableRow>
@@ -611,6 +698,74 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         </>
       )}
     </div>
+
+      {/* Floating Action Bar for Bulk Actions */}
+      {selectedTaskIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
+              {selectedTaskIds.size}
+            </div>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tasks Selected</span>
+          </div>
+          <div className="h-6 w-px bg-gray-300 dark:bg-white/20"></div>
+          <div className="flex items-center gap-2">
+            <AppButton variant="outline" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update Status</AppButton>
+            {canDelete && (
+              <AppButton variant="outline" size="sm" onClick={handleBulkDelete} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10">Delete Tasks</AppButton>
+            )}
+            <AppButton variant="ghost" size="sm" onClick={() => setSelectedTaskIds(new Set())}>Cancel</AppButton>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Status Update Modal */}
+      <Dialog open={bulkStatusModalOpen} onOpenChange={setBulkStatusModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900 dark:text-gray-100">Bulk Update Status</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="text-sm font-medium mb-1">Updating {selectedTaskIds.size} Tasks</div>
+            
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Status</label>
+              <select
+                value={bulkNewStatus}
+                onChange={(e) => setBulkNewStatus(e.target.value)}
+                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="" disabled>Select Status</option>
+                {masterStatuses.map((st) => (
+                  <option key={st.id} value={st.id}>{st.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Remark (Optional)</label>
+              <textarea
+                value={bulkRemark}
+                onChange={(e) => setBulkRemark(e.target.value)}
+                placeholder="Why are you updating these tasks?"
+                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-none"
+              />
+            </div>
+            <div className="text-[10px] text-amber-600">Note: Tasks you don't own will fail to update unless you are a super admin.</div>
+          </div>
+          <DialogFooter>
+            <AppButton variant="ghost" onClick={() => setBulkStatusModalOpen(false)}>Cancel</AppButton>
+            <AppButton 
+              variant="primary" 
+              onClick={handleBulkStatusSave}
+              disabled={inlineLoading || !bulkNewStatus}
+            >
+              {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Update Tasks
+            </AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Inline Status Update Modal */}
       <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>

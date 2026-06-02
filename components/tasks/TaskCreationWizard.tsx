@@ -10,6 +10,7 @@ import { fetchCustomFields, createCustomField } from "@/lib/actions/tasks";
 import { fetchPriorities, fetchTasksByWorkspace, fetchStatusesByScope } from "@/lib/actions/workspaces";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
+import TemplateManager from "@/components/tasks/TemplateManager";
 
 export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: { workspaceId: string, onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
@@ -22,6 +23,8 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   
   const [customFields, setCustomFields] = useState<any[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
   const [isAddingField, setIsAddingField] = useState(false);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
@@ -41,6 +44,13 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [sprintId, setSprintId] = useState("");
+  const [sprints, setSprints] = useState<any[]>([]);
+  
+  const [templateId, setTemplateId] = useState("");
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
+
   const [checklistItems, setChecklistItems] = useState<string[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState("");
   const [attachments, setAttachments] = useState<any[]>([]);
@@ -52,21 +62,38 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
     async function initData() {
       // Use dynamic import for fetchWorkspaceStakeholders to avoid circular dependency in UI
       const m = await import("@/lib/actions/workspaces");
-      const [fields, priorityList, existingTasks, statusList, workspaceStakeholders] = await Promise.all([
+      const [fields, priorityList, existingTasks, statusList, workspaceStakeholders, sprintList, templateList] = await Promise.all([
         fetchCustomFields(workspaceId),
         fetchPriorities(workspaceId),
         fetchTasksByWorkspace(workspaceId),
         fetchStatusesByScope('REQUIREMENT', workspaceId),
-        m.fetchWorkspaceStakeholders(workspaceId)
+        m.fetchWorkspaceStakeholders(workspaceId),
+        m.fetchSprints(workspaceId),
+        m.fetchTaskTemplates(workspaceId)
       ]);
       setCustomFields(fields);
       setPriorities(priorityList);
       setWorkspaceTasks(existingTasks);
       setStatuses(statusList);
       setStakeholders(workspaceStakeholders);
+      setSprints(sprintList.filter((s: any) => s.status !== 'CLOSED'));
+      setTemplates(templateList);
     }
     initData();
   }, [workspaceId]);
+
+  // Handle Template Selection
+  useEffect(() => {
+    if (templateId && templates.length > 0) {
+      const tmpl = templates.find(t => t.id === templateId);
+      if (tmpl) {
+        setTitle(tmpl.subject || "");
+        setDescription(tmpl.description || "");
+        if (tmpl.default_priority_id) setPriorityId(tmpl.default_priority_id);
+        if (tmpl.default_tags && Array.isArray(tmpl.default_tags)) setTags(tmpl.default_tags);
+      }
+    }
+  }, [templateId, templates]);
 
   // Auto-assign all other stakeholders as watchers when Assignee is selected
   useEffect(() => {
@@ -129,9 +156,11 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
         start_date: startDate,
         end_date: endDate,
         parent_task_id: parentTaskId || null,
+        sprint_id: sprintId || null,
+        template_id: templateId || null,
         assigned_to: assignedTo,
         participants,
-        custom_fields: fieldValues,
+        custom_fields: { ...fieldValues, tags },
         checklist_items: checklistItems,
         attachments: attachments.map(att => ({
           file_name: att.file_name,
@@ -161,15 +190,47 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
         </div>
       }
     >
+        {isTemplateManagerOpen && (
+          <TemplateManager 
+            workspaceId={workspaceId} 
+            onClose={() => {
+              setIsTemplateManagerOpen(false);
+              // Refresh templates
+              import("@/lib/actions/workspaces").then(m => {
+                m.fetchTaskTemplates(workspaceId).then(setTemplates);
+              });
+            }} 
+          />
+        )}
         <div className="space-y-6">
           
           {/* Section 1: Core Details */}
           <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
-            <div className="flex items-center gap-2 mb-4">
-              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
-                <LayoutTemplate className="h-4 w-4" />
+            <div className="flex items-center gap-2 mb-4 justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
+                  <LayoutTemplate className="h-4 w-4" />
+                </div>
+                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Core Details</h3>
               </div>
-              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Core Details</h3>
+              
+              <div className="flex items-center gap-2">
+                <select
+                  className={`p-1.5 rounded-lg text-xs border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                  }`}
+                  value={templateId}
+                  onChange={e => setTemplateId(e.target.value)}
+                >
+                  <option value="">-- Apply a Task Template --</option>
+                  {templates.map(t => (
+                    <option key={t.id} value={t.id}>{t.template_name}</option>
+                  ))}
+                </select>
+                <AppButton variant="ghost" className="p-1.5 h-auto text-xs" onClick={() => setIsTemplateManagerOpen(true)}>
+                  Manage Templates
+                </AppButton>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
@@ -235,7 +296,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 mt-5">
+            <div className="grid grid-cols-2 gap-5 mt-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Dependency</label>
                 <select
@@ -245,11 +306,24 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                   value={parentTaskId}
                   onChange={e => setParentTaskId(e.target.value)}
                 >
-                  <option value="">-- None (Independent Task) --</option>
+                  <option value="">-- No Parent (Independent) --</option>
                   {workspaceTasks.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.code} - {t.title}
-                    </option>
+                    <option key={t.id} value={t.id}>{t.title || t.subject}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assign to Sprint</label>
+                <select
+                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                  }`}
+                  value={sprintId}
+                  onChange={e => setSprintId(e.target.value)}
+                >
+                  <option value="">-- Backlog (No Sprint) --</option>
+                  {sprints.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
               </div>
@@ -336,16 +410,55 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                <AlignLeft className="h-3 w-3" /> Execution Notes
+                <AlignLeft className="h-3 w-3" /> Execution Notes (Rich Text)
               </label>
-              <textarea 
-                className={`w-full h-28 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors resize-none ${
-                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
-                }`}
-                placeholder="Detailed execution instructions, context, or constraints..."
+              <textarea
                 value={description}
-                onChange={e => setDescription(e.target.value)}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Detailed execution instructions, context, or constraints..."
+                className={`w-full min-h-[120px] p-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-y ${
+                  isLightMode 
+                    ? "bg-[#f8fafc] border-[#e2e8f0] text-gray-900" 
+                    : "bg-white/[0.05] border-white/10 text-white placeholder-gray-500"
+                }`}
               />
+            </div>
+            
+            <div className="space-y-1.5 mt-5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                Tags & Labels
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {tags.map((tag, idx) => (
+                  <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400"}`}>
+                    {tag}
+                    <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-rose-500"><X className="h-3 w-3" /></button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2 items-center">
+                <AppInput 
+                  value={newTag} 
+                  onChange={e => setNewTag(e.target.value)} 
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newTag.trim() && !tags.includes(newTag.trim())) {
+                        setTags([...tags, newTag.trim()]);
+                        setNewTag("");
+                      }
+                    }
+                  }}
+                  placeholder="Type a tag (e.g. Bug, Frontend) and press Enter..." 
+                  className={`h-9 flex-1 ${isLightMode ? "bg-white" : "bg-black/30"}`}
+                />
+                <AppButton type="button" variant="primary" className="h-9 px-3 shrink-0 bg-purple-600 hover:bg-purple-700 text-white border-0" onClick={() => {
+                  if (newTag.trim() && !tags.includes(newTag.trim())) {
+                    setTags([...tags, newTag.trim()]);
+                    setNewTag("");
+                  }
+                }}>Add Tag</AppButton>
+              </div>
             </div>
           </div>
 

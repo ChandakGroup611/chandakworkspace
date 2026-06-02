@@ -58,7 +58,19 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
                   </p>
                 </div>
                 <h1 className="text-lg font-bold text-slate-900 dark:text-white">{task.title}</h1>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">{task.description}</p>
+                <div 
+                  className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed prose prose-sm dark:prose-invert"
+                  dangerouslySetInnerHTML={{ __html: task.description || "" }} 
+                />
+                {typeof task.custom_fields?.progress_percentage === 'number' && (
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtask Progress</span>
+                    <div className="w-64 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{task.custom_fields.progress_percentage}%</span>
+                  </div>
+                )}
               </div>
               <div className="inline-flex items-center gap-2 rounded-2xl bg-purple-50 px-4 py-2 text-xs font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-200">
                 <ClipboardList className="h-4 w-4" />

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { MessageCircle, ActivitySquare } from "lucide-react";
+import { MessageCircle, ActivitySquare, Clock } from "lucide-react";
 
 // Dynamically import heavy modules so they don't block initial SSR or JS bundle
 const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), { 
@@ -15,6 +15,10 @@ const TaskActivityTimeline = dynamic(() => import("@/components/tasks/TaskActivi
   loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Relational Timeline...</div> 
 });
 
+const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), { 
+  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Time Logs...</div> 
+});
+
 export default function TaskRightPanel({ taskId }: { taskId: string }) {
   const [activeTab, setActiveTab] = useState("none"); // Default to no heavy module loaded
 
@@ -22,14 +26,18 @@ export default function TaskRightPanel({ taskId }: { taskId: string }) {
     <div className="space-y-4">
       <div className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-950/80">
         <Tabs defaultValue="none" onValueChange={setActiveTab} value={activeTab}>
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="chat" className="text-xs font-bold gap-2">
-              <MessageCircle className="h-4 w-4" />
-              Realtime Chat
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="chat" className="text-xs font-bold gap-1.5 px-1">
+              <MessageCircle className="h-3.5 w-3.5" />
+              Chat
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="text-xs font-bold gap-2">
-              <ActivitySquare className="h-4 w-4" />
-              Audit Timeline
+            <TabsTrigger value="timeline" className="text-xs font-bold gap-1.5 px-1">
+              <ActivitySquare className="h-3.5 w-3.5" />
+              Audit
+            </TabsTrigger>
+            <TabsTrigger value="time" className="text-xs font-bold gap-1.5 px-1">
+              <Clock className="h-3.5 w-3.5" />
+              Time
             </TabsTrigger>
           </TabsList>
           
@@ -43,6 +51,9 @@ export default function TaskRightPanel({ taskId }: { taskId: string }) {
           </TabsContent>
           <TabsContent value="timeline" className="mt-4">
             {activeTab === "timeline" && <TaskActivityTimeline taskId={taskId} />}
+          </TabsContent>
+          <TabsContent value="time" className="mt-4">
+            {activeTab === "time" && <TaskTimeLogs taskId={taskId} />}
           </TabsContent>
         </Tabs>
       </div>

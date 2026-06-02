@@ -43,6 +43,7 @@ export default function ClientSessionManager() {
       }
 
       // Regular heartbeat via fetch
+      const clientSent = Date.now();
       const res = await fetch("/api/heartbeat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,7 +56,21 @@ export default function ClientSessionManager() {
         if (isMountedRef.current) {
           router.push("/login?reason=timeout");
         }
+        return;
       }
+      
+      const clientReceived = Date.now();
+      try {
+        const data = await res.json();
+        if (data.serverTime) {
+          // Calculate clock skew offset
+          const serverMs = new Date(data.serverTime).getTime();
+          const clientMs = (clientSent + clientReceived) / 2;
+          const offset = clientMs - serverMs;
+          localStorage.setItem("adios_time_offset", offset.toString());
+        }
+      } catch (e) {}
+
     } catch (err) {
       // Network error — silently ignore; the server will mark user offline
       // after 2 minutes of no heartbeats anyway

@@ -12,22 +12,25 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const supabase = createClient();
   
   const [logs, setLogs] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLogs() {
-      const { data, error } = await supabase
-        .from("task_activity_logs")
-        .select("*, actor:user_master!actor_id(full_name)")
-        .eq("task_id", taskId)
-        .order("created_at", { ascending: false });
+      const [logsRes, statusRes] = await Promise.all([
+        supabase
+          .from("task_activity_logs")
+          .select("*, actor:user_master!actor_id(full_name)")
+          .eq("task_id", taskId)
+          .order("created_at", { ascending: false }),
+        supabase.from("status_master").select("id, status_name")
+      ]);
         
-      if (error) {
-        console.error("Error fetching task activity logs:", error);
-      } else {
-        console.log("Fetched logs:", data);
+      if (logsRes.error) {
+        console.error("Error fetching task activity logs:", logsRes.error);
       }
-      if (data) setLogs(data);
+      if (logsRes.data) setLogs(logsRes.data);
+      if (statusRes.data) setStatuses(statusRes.data);
       setLoading(false);
     }
     fetchLogs();
@@ -49,8 +52,9 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const getActionText = (log: any) => {
     switch (log.action) {
       case 'STATUS_CHANGE': {
-        const statusName = log.new_state?.status_name || log.new_state?.status || 'Unknown';
-        const oldStatusName = log.new_state?.old_status_name || log.new_state?.old_status || '';
+        const getStatusName = (id: string) => statuses.find((s) => s.id === id)?.status_name;
+        const statusName = log.new_state?.status_name || log.new_state?.status || getStatusName(log.new_state?.status_id) || 'Unknown';
+        const oldStatusName = log.new_state?.old_status_name || log.new_state?.old_status || getStatusName(log.old_state?.status_id) || '';
         if (oldStatusName) {
           return `transitioned status from "${oldStatusName}" to "${statusName}"`;
         }

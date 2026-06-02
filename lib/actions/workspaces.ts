@@ -388,33 +388,37 @@ export async function fetchMasterHierarchy() {
   
   if (wsIds.length === 0) return [];
 
-  // 2. Fetch lightweight task references just for counting (No heavy payload/recursive fetching)
-  const { data: tasks } = await supabase
+  // 1.5 Efficiently fetch task counts for these workspaces
+  const { data: taskCountsData } = await supabaseAdmin
     .from('tasks')
     .select('id, workspace_id')
     .in('workspace_id', wsIds)
     .eq('is_deleted', false);
+    
+  const taskCountMap = new Map<string, number>();
+  if (taskCountsData) {
+    taskCountsData.forEach((t: any) => {
+      if (t.workspace_id) {
+        taskCountMap.set(t.workspace_id, (taskCountMap.get(t.workspace_id) || 0) + 1);
+      }
+    });
+  }
 
-  const directTaskCounts: Record<string, number> = {};
-  (tasks || []).forEach((t: any) => {
-    directTaskCounts[t.workspace_id] = (directTaskCounts[t.workspace_id] || 0) + 1;
-  });
-
-  // 3. Assemble Infinite Workspace Tree via Adjacency List
+  // 2. Assemble Infinite Workspace Tree via Adjacency List
   const workspaceMap = new Map();
   visibleWorkspaces.forEach((ws: any) => {
     workspaceMap.set(ws.id, { 
       ...ws, 
       type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE', 
-      direct_task_count: directTaskCounts[ws.id] || 0,
-      total_hierarchy_task_count: directTaskCounts[ws.id] || 0, // Will be updated during traversal
+      direct_task_count: taskCountMap.get(ws.id) || 0, // Re-enabled fast counting
+      total_hierarchy_task_count: 0,
       children: [] 
     });
   });
 
   const rootNodes: any[] = [];
 
-  // 4. Build the recursive tree (Workspace -> Child Workspace)
+  // 3. Build the recursive tree (Workspace -> Child Workspace)
   workspaceMap.forEach(wsNode => {
     if (wsNode.parent_workspace_id && workspaceMap.has(wsNode.parent_workspace_id)) {
       const parent = workspaceMap.get(wsNode.parent_workspace_id);
@@ -424,8 +428,15 @@ export async function fetchMasterHierarchy() {
     }
   });
 
-  // 5. Post-order traversal to calculate total_hierarchy_task_count recursively
+  // 4. Post-order traversal to calculate total counts with loop detection
+  const visited = new Set<string>();
   const calculateTotalTasks = (node: any): number => {
+    if (visited.has(node.id)) {
+      console.warn(`[Workspaces] Cyclical loop detected at workspace ${node.id}`);
+      return 0; // Break the infinite loop
+    }
+    visited.add(node.id);
+
     let total = node.direct_task_count;
     let childTaskCount = 0;
     
@@ -443,7 +454,10 @@ export async function fetchMasterHierarchy() {
     return node.total_hierarchy_task_count;
   };
 
-  rootNodes.forEach(root => calculateTotalTasks(root));
+  rootNodes.forEach(root => {
+    visited.clear();
+    calculateTotalTasks(root);
+  });
 
   return rootNodes;
 }
@@ -478,6 +492,11 @@ export async function updateWorkspace(id: string, formData: any) {
     end_date: formData.end_date,
     parent_workspace_id: formData.parent_workspace_id !== undefined ? formData.parent_workspace_id : undefined,
   };
+
+  // Prevent cyclical assignments: Workspace cannot be its own parent
+  if (updatePayload.parent_workspace_id === id) {
+    throw new Error("Validation Error: A workspace cannot be assigned as its own parent.");
+  }
 
   const { data, error } = await supabase
     .from("workspaces")
@@ -579,7 +598,7 @@ export async function deleteWorkspace(id: string) {
 
   const { error } = await supabase
     .from("workspaces")
-    .delete()
+    .update({ is_deleted: true })
     .eq("id", id);
     
   if (error) {
@@ -708,6 +727,8 @@ export async function createTask(formData: any) {
       created_by: userId,
       assigned_to: taskFields.assigned_to || null,
       owner_id: taskFields.assigned_to || null,
+      sprint_id: taskFields.sprint_id || null,
+      template_id: taskFields.template_id || null,
       custom_fields: { ...taskFields.custom_fields, tat_days: tatDays }
     }])
     .select()
@@ -1006,4 +1027,82 @@ export async function fetchAssignableUsers() {
     return [];
   }
   return data || [];
+}
+
+export async function createSprint(workspaceId: string, formData: any) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthenticated");
+
+  const { data, error } = await supabaseAdmin.from("sprints").insert([{
+    workspace_id: workspaceId,
+    name: formData.name,
+    goal: formData.goal,
+    start_date: formData.start_date,
+    end_date: formData.end_date,
+    status: formData.status || 'PLANNING',
+    created_by: user.id
+  }]).select().single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchSprints(workspaceId: string) {
+  const { data, error } = await supabaseAdmin.from("sprints")
+    .select("*")
+    .eq("workspace_id", workspaceId)
+    .order("start_date", { ascending: true });
+  if (error) return [];
+  return data || [];
+}
+
+export async function updateSprint(id: string, formData: any) {
+  const { data, error } = await supabaseAdmin.from("sprints")
+    .update({
+      name: formData.name,
+      goal: formData.goal,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      status: formData.status,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createTaskTemplate(workspaceId: string, formData: any) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthenticated");
+
+  const { data, error } = await supabaseAdmin.from("task_templates").insert([{
+    workspace_id: workspaceId,
+    template_name: formData.template_name,
+    subject: formData.subject,
+    description: formData.description,
+    default_priority_id: formData.default_priority_id,
+    default_tags: formData.default_tags || [],
+    created_by: user.id
+  }]).select().single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchTaskTemplates(workspaceId: string) {
+  const { data, error } = await supabaseAdmin.from("task_templates")
+    .select("*")
+    .or(`workspace_id.eq.${workspaceId},workspace_id.is.null`)
+    .order("template_name", { ascending: true });
+  if (error) return [];
+  return data || [];
+}
+
+export async function deleteTaskTemplate(id: string) {
+  const { error } = await supabaseAdmin.from("task_templates").delete().eq("id", id);
+  if (error) throw error;
 }

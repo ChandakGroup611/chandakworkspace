@@ -123,7 +123,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   // Get current status and owner
   const { data: task } = await supabaseAdmin
     .from('tasks')
-    .select('status_id, assigned_to')
+    .select('status_id, assigned_to, parent_task_id')
     .eq('id', taskId)
     .single();
 
@@ -179,6 +179,10 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
 
   // Fire-and-forget activity log — must not block or throw to the caller
   logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
+  
+  if (task.parent_task_id) {
+    recalculateParentProgress(task.parent_task_id).catch(e => console.error('[recalculateParentProgress]', e));
+  }
   
   return { success: true };
 }
@@ -355,12 +359,10 @@ export async function getTaskDetails(taskId: string) {
     if (assigneeData) task.assignee = assigneeData;
   }
   
-  const { data: taskAssignees } = await supabaseAdmin.from('task_assignees').select('user_id').eq('task_id', taskId).eq('is_deleted', false);
-  const { data: taskWatchers } = await supabaseAdmin.from('task_watchers').select('user_id').eq('task_id', taskId).eq('is_deleted', false);
+  const { data: participants } = await supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId);
   
   let participantIds = new Set<string>();
-  if (taskAssignees) taskAssignees.forEach(a => participantIds.add(a.user_id));
-  if (taskWatchers) taskWatchers.forEach(w => participantIds.add(w.user_id));
+  if (participants) participants.forEach(p => participantIds.add(p.user_id));
 
   task.task_assignees = [];
   task.task_watchers = [];
@@ -368,13 +370,16 @@ export async function getTaskDetails(taskId: string) {
 
   if (participantIds.size > 0) {
     const { data: usersData } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').in('id', Array.from(participantIds));
-    if (usersData) {
-      if (taskAssignees) {
-         task.task_assignees = taskAssignees.map(a => usersData.find(u => u.id === a.user_id)).filter(Boolean);
-      }
-      if (taskWatchers) {
-         task.task_watchers = taskWatchers.map(w => usersData.find(u => u.id === w.user_id)).filter(Boolean);
-      }
+    if (usersData && participants) {
+      task.task_assignees = participants
+        .filter(p => p.participation_role === 'EXECUTOR')
+        .map(p => usersData.find(u => u.id === p.user_id))
+        .filter(Boolean);
+      
+      task.task_watchers = participants
+        .filter(p => p.participation_role === 'WATCHER' || p.participation_role === 'REVIEWER')
+        .map(p => usersData.find(u => u.id === p.user_id))
+        .filter(Boolean);
     }
   }
   
@@ -462,24 +467,16 @@ export async function deleteTask(taskId: string) {
   
   if (!userId) throw new Error("Unauthenticated");
 
-  if (task.assigned_to !== userId) {
-    const { hasPermission } = await import('@/lib/permissions');
-    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-    if (!isSuperAdmin) {
-      throw new Error("You do not have permission to delete this task. Only the Task Owner or Super Admin can delete.");
-    }
+  const { hasPermission } = await import('@/lib/permissions');
+  const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+  const canDelete = await hasPermission(userId, "TASKS_DELETE");
+
+  if (!isSuperAdmin && !canDelete) {
+    throw new Error("You do not have permission to delete this task. Only users with specific IAM permissions can delete.");
   }
 
-  // Hard delete related records first to avoid foreign key constraint violations
-  await supabaseAdmin.from('task_activities').delete().eq('task_id', taskId);
-  await supabaseAdmin.from('task_checklists').delete().eq('task_id', taskId);
-  await supabaseAdmin.from('task_comments').delete().eq('task_id', taskId);
-  await supabaseAdmin.from('task_assignees').delete().eq('task_id', taskId);
-  await supabaseAdmin.from('task_watchers').delete().eq('task_id', taskId);
-  await supabaseAdmin.from('task_dependencies').delete().or(`task_id.eq.${taskId},depends_on.eq.${taskId}`);
-
-  // Hard delete the task
-  const { error } = await supabaseAdmin.from('tasks').delete().eq('id', taskId);
+  // Soft delete the task instead of hard deleting it and its related records
+  const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
   if (error) throw error;
 }
 
@@ -487,12 +484,24 @@ export async function resolveTask(taskId: string) {
   return transitionTaskStatus(taskId, "ST_RESOLVED");
 }
 
-export async function approveResolution(taskId: string) {
+export async function approveTask(taskId: string) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  const { hasPermission } = await import("@/lib/permissions");
+  const isSuperAdmin = await hasPermission(user.id, "WORKSPACES_MANAGE");
+  if (!isSuperAdmin) throw new Error("Only Super Admins can approve tasks");
   return transitionTaskStatus(taskId, "ST_CLOSED");
 }
 
 export async function reopenTask(taskId: string) {
-  return transitionTaskStatus(taskId, "ST_REOPEN");
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  const { hasPermission } = await import("@/lib/permissions");
+  const isSuperAdmin = await hasPermission(user.id, "WORKSPACES_MANAGE");
+  if (!isSuperAdmin) throw new Error("Only Super Admins can reopen tasks");
+  return transitionTaskStatus(taskId, "ST_OPEN");
 }
 
 export async function createChecklistItem(taskId: string, label: string) {
@@ -610,7 +619,7 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
   // Fetch current task to check assignee
   const { data: currentTask, error: fetchError } = await supabaseAdmin
     .from('tasks')
-    .select('assigned_to, status_id')
+    .select('assigned_to, status_id, parent_task_id')
     .eq('id', taskId)
     .single();
 
@@ -650,5 +659,109 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
     }
   }]);
 
+  if (newStatusId && newStatusId !== currentTask.status_id && currentTask.parent_task_id) {
+    recalculateParentProgress(currentTask.parent_task_id).catch(e => console.error('[recalculateParentProgress]', e));
+  }
+
   return { success: true };
 }
+
+// -----------------------------------------------------------------------------
+// ENHANCEMENTS: TIME TRACKING VIA JSONB
+// -----------------------------------------------------------------------------
+
+export async function logTaskTime(taskId: string, hours: number, description: string) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) throw new Error("Unauthenticated");
+
+  const { data: task, error: fetchError } = await supabaseAdmin
+    .from('tasks')
+    .select('custom_fields')
+    .eq('id', taskId)
+    .single();
+
+  if (fetchError || !task) throw new Error("Task not found");
+
+  const customFields = task.custom_fields || {};
+  const timeLogs = customFields.time_logs || [];
+  
+  const newLog = {
+    id: `log-${Date.now()}`,
+    user_id: user.id,
+    hours: Number(hours),
+    description,
+    logged_at: new Date().toISOString()
+  };
+
+  const updatedFields = {
+    ...customFields,
+    time_logs: [...timeLogs, newLog]
+  };
+
+  const { error: updateError } = await supabaseAdmin
+    .from('tasks')
+    .update({ custom_fields: updatedFields })
+    .eq('id', taskId);
+
+  if (updateError) throw updateError;
+  
+  // Also log to activity
+  await supabaseAdmin.from('task_activity_logs').insert([{
+    task_id: taskId,
+    actor_id: user.id,
+    action: 'TIME_LOGGED',
+    new_state: { hours, message: description }
+  }]);
+
+  return newLog;
+}
+
+// -----------------------------------------------------------------------------
+// ENHANCEMENTS: SUBTASK PROGRESS ROLLUPS
+// -----------------------------------------------------------------------------
+
+export async function recalculateParentProgress(parentTaskId: string) {
+  // Fetch all child tasks
+  const { data: subtasks } = await supabaseAdmin
+    .from('tasks')
+    .select('id, status_id')
+    .eq('parent_task_id', parentTaskId)
+    .eq('is_deleted', false);
+
+  if (!subtasks || subtasks.length === 0) return;
+
+  // Fetch status details
+  const statusIds = Array.from(new Set(subtasks.map(t => t.status_id)));
+  const { data: statuses } = await supabaseAdmin
+    .from('status_master')
+    .select('id, is_closed, is_terminal')
+    .in('id', statusIds);
+
+  const closedStatusIds = new Set(
+    statuses?.filter(s => s.is_closed || s.is_terminal).map(s => s.id) || []
+  );
+
+  const completedCount = subtasks.filter(t => closedStatusIds.has(t.status_id)).length;
+  const progress = Math.round((completedCount / subtasks.length) * 100);
+
+  // Update parent task
+  const { data: parentTask } = await supabaseAdmin
+    .from('tasks')
+    .select('custom_fields')
+    .eq('id', parentTaskId)
+    .single();
+
+  if (parentTask) {
+    const updatedFields = {
+      ...(parentTask.custom_fields || {}),
+      progress_percentage: progress
+    };
+
+    await supabaseAdmin
+      .from('tasks')
+      .update({ custom_fields: updatedFields })
+      .eq('id', parentTaskId);
+  }
+}
+
