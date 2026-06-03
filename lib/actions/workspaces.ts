@@ -311,13 +311,15 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       };
     }
 
-    // 2. Fetch everything in a massive parallel burst
-    const [profileRes, managedDeptsRes, workspaces, companies, priorities] = await Promise.all([
+    // 2. Fetch everything in a massive parallel burst (Eliminating waterfalls)
+    const [profileRes, managedDeptsRes, workspaces, companies, priorities, taskStatuses, allUsers] = await Promise.all([
       supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single(),
       supabase.from("departments").select("id").eq("manager_id", user.id),
       getVisibleWorkspaces(user.id), // Direct fast repository call
       fetchCompanies(),
-      fetchPriorities()
+      fetchPriorities(),
+      import('@/lib/actions/tasks').then(m => m.getTaskStatuses()),
+      fetchAssignableUsers()
     ]);
 
     if (profileRes.error) {
@@ -333,28 +335,25 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     // Determine active workspace ID to prefetch
     const activeWSId = preferredWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
 
-    // 3. Prefetch tasks & stakeholders for active workspace in parallel on server
+    // 3. Dependent Queries: Hierarchy Roots & Active Workspace Data (Parallel)
     let prefetchTasks: any[] = [];
     let prefetchStakeholders: any[] = [];
+    let masterHierarchy: any[] = [];
+
+    const secondBatch: Promise<any>[] = [
+      // Pass the already fetched workspaces into fetchHierarchyRoots to avoid hitting the DB twice!
+      fetchHierarchyRoots(user.id, workspaces).then(res => { masterHierarchy = res; })
+    ];
 
     if (activeWSId) {
-      const [tData, sData] = await Promise.all([
-        fetchTasksByWorkspace(activeWSId),
-        fetchWorkspaceStakeholders(activeWSId)
-      ]);
-      prefetchTasks = tData;
-      prefetchStakeholders = sData;
+      secondBatch.push(
+        fetchTasksByWorkspace(activeWSId).then(res => { prefetchTasks = res; }),
+        fetchWorkspaceStakeholders(activeWSId).then(res => { prefetchStakeholders = res; })
+      );
     }
 
-    // Fetch the new root hierarchy for the Tabular List (Lazy Loading)
-    const masterHierarchy = await fetchHierarchyRoots(user.id);
-
-    // Fetch Task Statuses for inline editing
-    const { getTaskStatuses } = await import('@/lib/actions/tasks');
-    const taskStatuses = await getTaskStatuses();
-
-    // Fetch all assignable users for mapping names and avatars
-    const allUsers = await fetchAssignableUsers();
+    // Await the second batch concurrently
+    await Promise.all(secondBatch);
 
     return {
       userProfile,
@@ -374,9 +373,9 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
   }
 }
 
-export async function fetchHierarchyRoots(userId: string) {
-  // 1. Fetch ALL Visible Workspaces
-  const visibleWorkspaces = await getVisibleWorkspaces(userId);
+export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspaces?: any[]) {
+  // 1. Fetch ALL Visible Workspaces (use cached if provided to save DB queries)
+  const visibleWorkspaces = cachedVisibleWorkspaces || await getVisibleWorkspaces(userId);
   const wsIds = visibleWorkspaces.map((w: any) => w.id);
   
   if (wsIds.length === 0) return [];
@@ -389,8 +388,9 @@ export async function fetchHierarchyRoots(userId: string) {
   return rootWorkspaces.map((ws: any) => ({
     ...ws,
     type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
-    direct_task_count: ws.stats?.[0]?.task_count || 0,
-    total_hierarchy_task_count: (ws.stats?.[0]?.task_count || 0) + (ws.stats?.[0]?.subtask_count || 0),
+    subworkspace_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subworkspace_count || 0,
+    direct_task_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0,
+    total_hierarchy_task_count: ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0) + ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subtask_count || 0),
     children: [] // Children will be fetched on demand
   }));
 }
@@ -427,8 +427,9 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       nodes.push(...subWs.map((ws: any) => ({
         ...ws,
         type: 'SUB_WORKSPACE',
-        direct_task_count: ws.stats?.[0]?.task_count || 0,
-        total_hierarchy_task_count: (ws.stats?.[0]?.task_count || 0) + (ws.stats?.[0]?.subtask_count || 0),
+        subworkspace_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subworkspace_count || 0,
+        direct_task_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0,
+        total_hierarchy_task_count: ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0) + ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subtask_count || 0),
         children: []
       })));
     }

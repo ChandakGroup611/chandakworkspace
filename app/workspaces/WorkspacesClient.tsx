@@ -65,7 +65,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       }).catch(() => {});
     }
   }, [initialTaskId]);
-
   // Sync active workspace from server data on soft navigation
   useEffect(() => {
     if (initialData?.prefetchWorkspaceId) {
@@ -335,6 +334,44 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
   };
 
+  // Intent-Driven Hover Prefetching
+  const prefetchCache = useRef<Set<string>>(new Set());
+  
+  const handlePrefetchNode = async (node: any) => {
+    // Only prefetch if it hasn't been fetched, isn't currently loading, and hasn't been prefetched already
+    if (node.childrenFetched || loading || prefetchCache.current.has(node.id)) return;
+    
+    // Only prefetch if we know it actually has children
+    const hasItems = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE' 
+      ? ((node.subworkspace_count || 0) > 0 || (node.total_hierarchy_task_count || 0) > 0)
+      : (node.children && node.children.length > 0);
+      
+    if (!hasItems) return;
+
+    prefetchCache.current.add(node.id);
+    
+    try {
+      const children = await fetchHierarchyChildren(node.id, node.type);
+      
+      // Inject children silently without expanding
+      const insertChildren = (tree: any[]): any[] => {
+        return tree.map(item => {
+          if (item.id === node.id) {
+            return { ...item, children, childrenFetched: true };
+          }
+          if (item.children && item.children.length > 0) {
+            return { ...item, children: insertChildren(item.children) };
+          }
+          return item;
+        });
+      };
+      setMasterHierarchy(prev => insertChildren(prev));
+    } catch (e) {
+      prefetchCache.current.delete(node.id); // allow retry on failure
+      console.error("Hover prefetch failed", e);
+    }
+  };
+
   const handleTaskWizardSuccess = async (taskData: any) => {
     try {
       const data = await createTask({ ...taskData, workspace_id: taskData.workspace_id || activeWorkspace?.id });
@@ -494,6 +531,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     alert("Deleting tasks directly from this table is coming soon.");
                   }
                 }}
+                onPrefetchNode={handlePrefetchNode}
                 onExpandNode={async (node) => {
                   try {
                     const children = await fetchHierarchyChildren(node.id, node.type);

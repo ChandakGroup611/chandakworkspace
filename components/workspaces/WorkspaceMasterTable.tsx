@@ -18,7 +18,8 @@ export function WorkspaceMasterTable({
   onDeleteNode,
   onCreateSubWorkspace,
   onCreateTask,
-  onExpandNode
+  onExpandNode,
+  onPrefetchNode
 }: { 
   hierarchy: any[]; 
   isLightMode: boolean;
@@ -33,6 +34,7 @@ export function WorkspaceMasterTable({
   onCreateSubWorkspace?: (node: any) => void;
   onCreateTask?: (node: any) => void;
   onExpandNode?: (node: any) => Promise<void>;
+  onPrefetchNode?: (node: any) => void;
 }) {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -148,12 +150,13 @@ export function WorkspaceMasterTable({
 
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
     
-    let subWsCount = 0;
+    let subWsCount = node.subworkspace_count || 0;
     let directTaskCount = node.direct_task_count || 0;
     let childTaskCount = node.child_task_count || 0;
     let totalTaskCount = node.total_hierarchy_task_count || 0;
 
-    if (isWorkspaceType && hasChildren) {
+    if (isWorkspaceType && hasChildren && node.childrenFetched) {
+      // Re-calculate live if we fetched children, to keep it accurate if user creates something locally
       subWsCount = node.children.filter((c: any) => c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE').length;
     }
     
@@ -173,6 +176,9 @@ export function WorkspaceMasterTable({
             onOpenTask(node);
           }
         }}
+        onMouseEnter={() => {
+          if (onPrefetchNode) onPrefetchNode(node);
+        }}
         className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
         isLightMode 
           ? 'border-gray-200 hover:bg-gray-50' 
@@ -182,8 +188,8 @@ export function WorkspaceMasterTable({
           {/* Entity Name */}
           <div className="py-1 px-2 flex items-center min-w-0" style={{ paddingLeft: `${depth * 2 + 0.5}rem` }}>
             <div className="flex items-center gap-2 min-w-0 w-full">
-              {/* Always show chevron unless we've fetched and confirmed no children exist */}
-              {(!node.childrenFetched || hasChildren) ? (
+              {/* Only show chevron if there are items to expand (using our new accurate stats) */}
+              {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : hasChildren) ? (
                 <button 
                   onClick={(e) => toggleNode(node, e)}
                   disabled={loadingNodes[node.id]}
