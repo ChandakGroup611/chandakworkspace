@@ -62,6 +62,20 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
                   className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed prose prose-sm dark:prose-invert"
                   dangerouslySetInnerHTML={{ __html: task.description || "" }} 
                 />
+                
+                {task.custom_fields?.link_url && (
+                  <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 max-w-full overflow-hidden">
+                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 shrink-0 uppercase tracking-wider">External Link:</span>
+                    <a 
+                      href={task.custom_fields.link_url.startsWith('http') ? task.custom_fields.link_url : `https://${task.custom_fields.link_url}`}
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline truncate"
+                    >
+                      {task.custom_fields.link_url}
+                    </a>
+                  </div>
+                )}
                 {typeof task.custom_fields?.progress_percentage === 'number' && (
                   <div className="mt-4 flex items-center gap-3">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtask Progress</span>

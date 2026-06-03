@@ -178,8 +178,12 @@ export function WorkspaceMasterTable({
           e.stopPropagation();
           if (isWorkspaceType) {
             router.push(`/workspaces/tasks?workspaceId=${node.id}`);
-          } else if (node.type === 'TASK' || node.type === 'SUB_TASK') {
-            onOpenTask(node);
+          }
+        }}
+        onClick={(e) => {
+          // Open full task page on single click for tasks
+          if (node.type === 'TASK' || node.type === 'SUB_TASK') {
+            router.push(`/tasks/${node.id}`);
           }
         }}
         onMouseEnter={() => {
@@ -202,9 +206,8 @@ export function WorkspaceMasterTable({
           {/* Entity Name */}
           <div className="py-2 px-2 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 2 + 0.5}rem` }}>
             <div className="flex items-start gap-2 min-w-0 w-full">
-              {/* Only show chevron if there are items to expand (using our new accurate stats) */}
               <div className="mt-0.5 flex-shrink-0">
-                {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : hasChildren) ? (
+                {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : (childTaskCount > 0 || hasChildren)) ? (
                   <button 
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
@@ -244,10 +247,23 @@ export function WorkspaceMasterTable({
                 
                 <div className="flex flex-wrap items-center gap-2 mt-1 ml-6">
                   <span className="text-[10px] text-gray-400 font-mono truncate shrink-0">{node.workspace_code || node.code || "N/A"}</span>
+                  {node.parent && (
+                    <>
+                      <span className="text-[10px] text-gray-300 dark:text-gray-600">•</span>
+                      <span className="text-[10px] text-gray-400 truncate max-w-[150px]" title={`Parent: ${node.parent.name}`}>Parent: {node.parent.name || node.parent.code}</span>
+                    </>
+                  )}
                   {isWorkspaceType && (
                     <div className="flex flex-wrap items-center gap-1.5 border-l border-gray-200 dark:border-gray-800 pl-2">
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${isLightMode ? 'text-indigo-600 bg-indigo-50' : 'text-indigo-300 bg-indigo-500/10'}`}>{subWsCount} Sub-WS</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${isLightMode ? 'text-emerald-600 bg-emerald-50' : 'text-emerald-300 bg-emerald-500/10'}`} title={`${directTaskCount} Direct, ${childTaskCount} Child`}>
+                      <span 
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/workspaces/tasks?workspaceId=${node.id}`);
+                        }}
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-colors ${isLightMode ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20'}`} 
+                        title={`${directTaskCount} Direct, ${childTaskCount} Child (Double-click to open)`}
+                      >
                         {totalTaskCount} Tasks ({directTaskCount} Direct)
                       </span>
                     </div>

@@ -18,6 +18,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   
@@ -73,6 +74,11 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
       ]);
       setCustomFields(fields);
       setPriorities(priorityList);
+      if (priorityList.length > 0) {
+        // Find default priority from master (if configured) or fallback to the first available
+        const defaultPrio = priorityList.find((p: any) => p.is_default === true) || priorityList[0];
+        setPriorityId(defaultPrio.id);
+      }
       setWorkspaceTasks(existingTasks);
       setStatuses(statusList);
       setStakeholders(workspaceStakeholders);
@@ -138,6 +144,11 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
       alert("You must explicitly select an Owner for this task.");
       return;
     }
+
+    if (!priorityId) {
+      alert("You must select a Priority for this task.");
+      return;
+    }
     
     // Prepare multi-assignee execution team
     const participants = [];
@@ -160,7 +171,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
         template_id: templateId || null,
         assigned_to: assignedTo,
         participants,
-        custom_fields: { ...fieldValues, tags },
+        custom_fields: { ...fieldValues, tags, link_url: linkUrl || null },
         checklist_items: checklistItems,
         attachments: attachments.map(att => ({
           file_name: att.file_name,
@@ -243,6 +254,11 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
                 <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
               </div>
+            </div>
+            
+            <div className="mt-5 space-y-1.5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">External Link (Optional)</label>
+              <AppInput placeholder="https://..." value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className={isLightMode ? "bg-white" : "bg-black/30"} />
             </div>
           </div>
 

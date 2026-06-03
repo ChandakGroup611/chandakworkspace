@@ -9,7 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { 
   CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2, 
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
-  ChevronDown, ChevronUp, MessageSquare, Clock
+  ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink
 } from "lucide-react";
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
@@ -158,7 +158,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   useEffect(() => {
     if (initialTask) {
-      setLocalCustomFields(initialTask.custom_fields || {});
+      const defaultFields = initialTask.custom_fields || {};
+      if (!('link_url' in defaultFields)) defaultFields.link_url = "";
+      setLocalCustomFields(defaultFields);
       setIsHistoryCollapsed(true);
     } else {
       loadTaskDetails(true);
@@ -515,16 +517,34 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {key.replace(/_/g, ' ')}
                     </label>
                     {isReadOnly || !canEdit ? (
-                      <div className={`w-full p-2 rounded-md text-[13px] border cursor-not-allowed ${
+                      <div className={`w-full p-2 rounded-md text-[13px] border ${normalizedKey !== 'link_url' && 'cursor-not-allowed'} ${
                         isLightMode ? "bg-gray-100 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
                       }`}>
-                        {String(val)}
+                        {normalizedKey === 'link_url' && val ? (
+                          <a href={String(val).startsWith('http') ? String(val) : `https://${val}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{String(val)}</a>
+                        ) : (
+                          String(val)
+                        )}
                       </div>
                     ) : (
-                      <AppInput 
-                        value={String(val)} 
-                        onChange={e => handleCustomFieldChange(key, e.target.value)} 
-                      />
+                      <div className="relative flex items-center">
+                        <AppInput 
+                          value={String(val)} 
+                          onChange={e => handleCustomFieldChange(key, e.target.value)} 
+                          className={normalizedKey === 'link_url' && val ? "pr-8" : ""}
+                        />
+                        {normalizedKey === 'link_url' && val && (
+                          <a 
+                            href={String(val).startsWith('http') ? String(val) : `https://${val}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            title="Open Link"
+                            className="absolute right-2 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
                     )}
                   </div>
                 );

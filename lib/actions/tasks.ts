@@ -445,7 +445,7 @@ export async function updateTask(taskId: string, payload: any) {
   const userId = user?.id;
   if (!userId) return { error: "Unauthenticated" };
 
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, title, subject').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
   if (task.assigned_to !== userId) {
@@ -468,8 +468,8 @@ export async function updateTask(taskId: string, payload: any) {
   const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
   if (error) return { error: error.message || JSON.stringify(error) };
 
-  const newTitle = payload.title || payload.subject;
-  const oldTitle = task.title || task.subject;
+  const newTitle = payload.subject;
+  const oldTitle = task.subject;
   
   if (newTitle && oldTitle && oldTitle !== newTitle) {
     await supabaseAdmin.from('activity_events').insert({

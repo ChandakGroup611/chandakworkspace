@@ -426,9 +426,9 @@ export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspace
   return rootWorkspaces.map((ws: any) => ({
     ...ws,
     type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
-    subworkspace_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subworkspace_count || 0,
+    subworkspace_count: ws.hierarchy_subws_count || 0,
     direct_task_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0,
-    total_hierarchy_task_count: ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0) + ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subtask_count || 0),
+    total_hierarchy_task_count: ws.hierarchy_task_count || 0,
     children: [] // Children will be fetched on demand
   }));
 }
@@ -447,13 +447,13 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
     const [subWsRes, tasksRes] = await Promise.all([
       supabaseAdmin
         .from('workspaces')
-        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), members:workspace_members(user_id, role), stats:workspace_statistics(subworkspace_count, task_count, subtask_count)')
+        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), members:workspace_members(user_id, role), stats:workspace_statistics(subworkspace_count, task_count, subtask_count), hierarchy_task_count, hierarchy_subws_count, parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code)')
         .eq('parent_workspace_id', parentId)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false }),
       supabaseAdmin
         .from('tasks')
-        .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role)')
+        .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:id)')
         .eq('workspace_id', parentId)
         .is('parent_task_id', null)
         .eq('is_deleted', false)
@@ -468,9 +468,9 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       nodes.push(...subWs.map((ws: any) => ({
         ...ws,
         type: 'SUB_WORKSPACE',
-        subworkspace_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subworkspace_count || 0,
+        subworkspace_count: ws.hierarchy_subws_count || 0,
         direct_task_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0,
-        total_hierarchy_task_count: ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0) + ((Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.subtask_count || 0),
+        total_hierarchy_task_count: ws.hierarchy_task_count || 0,
         children: []
       })));
     }
@@ -478,7 +478,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       nodes.push(...tasks.map((t: any) => ({
         ...t,
         type: 'TASK',
-        direct_task_count: 0,
+        child_task_count: (Array.isArray(t.subtasks) ? t.subtasks[0]?.count : t.subtasks?.count) || 0,
         children: []
       })));
     }
@@ -489,7 +489,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   if (parentType === 'TASK' || parentType === 'SUB_TASK') {
     const { data: subTasks } = await supabaseAdmin
       .from('tasks')
-      .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role)')
+      .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:id)')
       .eq('parent_task_id', parentId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false });
@@ -498,7 +498,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       return subTasks.map((t: any) => ({
         ...t,
         type: 'SUB_TASK',
-        direct_task_count: 0,
+        child_task_count: (Array.isArray(t.subtasks) ? t.subtasks[0]?.count : t.subtasks?.count) || 0,
         children: []
       }));
     }
@@ -784,6 +784,7 @@ export async function createTask(formData: any) {
       start_date: taskFields.start_date || null,
       end_date: taskFields.end_date || null,
       status_id: status_id,
+      parent_task_id: parent_task_id || null,
       created_by: userId,
       assigned_to: taskFields.assigned_to || null,
       owner_id: taskFields.assigned_to || null,

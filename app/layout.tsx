@@ -4,6 +4,7 @@ import WorkspaceShell from '@/components/layout/WorkspaceShell'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import ClientSessionManager from '@/components/auth/ClientSessionManager'
 import QueryProvider from '@/components/providers/QueryProvider'
+import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
@@ -22,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${roboto.variable}`}>
       <head>
-        <script suppressHydrationWarning id="theme-init" dangerouslySetInnerHTML={{
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             try {
               const theme = localStorage.getItem("app_theme") || "glass-intelligence";
