@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 export async function fetchComplianceWorkspaces(isDeleted: boolean = false) {
   const { data, error } = await supabaseAdmin
     .from('workspaces')
-    .select('id, name, code, is_deleted, created_at, updated_at')
+    .select('id, workspace_name, workspace_code, is_deleted, created_at, updated_at')
     .eq('is_deleted', isDeleted)
     .order('updated_at', { ascending: false });
 
@@ -26,7 +26,7 @@ export async function fetchComplianceWorkspaces(isDeleted: boolean = false) {
 export async function fetchComplianceTasks(isDeleted: boolean = false) {
   const { data, error } = await supabaseAdmin
     .from('tasks')
-    .select('id, subject, title, task_number, is_deleted, created_at, updated_at, workspace_id')
+    .select('id, subject, description, is_deleted, created_at, updated_at, workspace_id')
     .eq('is_deleted', isDeleted)
     .order('updated_at', { ascending: false });
 

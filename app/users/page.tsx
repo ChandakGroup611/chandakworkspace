@@ -738,7 +738,7 @@ export default function UserMasterPage() {
     );
   }
 
-  if (!isSuperAdmin) {
+  if (!isSuperAdmin && !hasPermission("USERS_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
@@ -747,7 +747,7 @@ export default function UserMasterPage() {
           <ShieldAlert className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-gray-500">Only Super Admins can manage the Personnel Registry.</p>
+        <p className="text-xs text-gray-500">Only Super Admins or personnel with USERS_VIEW permission can access the registry.</p>
       </div>
     );
   }

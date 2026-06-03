@@ -21,8 +21,8 @@ type TabType = "workspaces" | "tasks";
 type ViewType = "active" | "deleted";
 
 export default function DataRetentionClient() {
-  const { roleCode } = usePermissions();
-  const isSuperAdmin = roleCode === "SUPER_ADMIN";
+  const { roleCode, hasPermission } = usePermissions();
+  const isSuperAdmin = roleCode === "SUPER_ADMIN" || hasPermission("SUPER_ADMIN");
 
   const [activeTab, setActiveTab] = useState<TabType>("workspaces");
   const [activeView, setActiveView] = useState<ViewType>("active");
@@ -92,8 +92,8 @@ export default function DataRetentionClient() {
         <AppTableBody>
           {workspaces.map((ws) => (
             <AppTableRow key={ws.id}>
-              <AppTableCell className="font-mono text-xs">{ws.code}</AppTableCell>
-              <AppTableCell className="font-semibold">{ws.name}</AppTableCell>
+              <AppTableCell className="font-mono text-xs">{ws.workspace_code}</AppTableCell>
+              <AppTableCell className="font-semibold">{ws.workspace_name}</AppTableCell>
               <AppTableCell className="text-xs text-gray-500">{new Date(ws.updated_at).toLocaleString()}</AppTableCell>
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
@@ -140,7 +140,7 @@ export default function DataRetentionClient() {
           {tasks.map((task) => (
             <AppTableRow key={task.id}>
               <AppTableCell className="font-mono text-xs">{task.task_number || task.id.split('-')[0]}</AppTableCell>
-              <AppTableCell className="font-semibold">{task.subject || task.title}</AppTableCell>
+              <AppTableCell className="font-semibold">{task.subject || task.description}</AppTableCell>
               <AppTableCell className="text-xs text-gray-500">{new Date(task.updated_at).toLocaleString()}</AppTableCell>
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
