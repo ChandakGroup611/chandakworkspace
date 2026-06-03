@@ -35,7 +35,7 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
     <div className="space-y-6 py-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Link
-          href="/workspaces"
+          href={task.workspace_id ? `/workspaces?workspace=${task.workspace_id}` : "/workspaces"}
           className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-800"
         >
           <ArrowLeft className="h-4 w-4" />

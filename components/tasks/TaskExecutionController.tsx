@@ -377,7 +377,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       } else {
         // If no onUpdate callback is provided, we are on the standalone page, so route back to list
         setTimeout(() => {
-          router.push("/workspaces");
+          router.push(task.workspace_id ? `/workspaces?workspace=${task.workspace_id}` : "/workspaces");
         }, 1000);
       }
       // Note: router.refresh() removed — it caused Server Component re-render errors.
