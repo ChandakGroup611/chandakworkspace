@@ -62,7 +62,6 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         parent_workspace_id,
         company:company_master(name:company_name),
         status:status_master(name:status_name),
-        creator:user_master!workspace_owner_id(id, full_name, manager_id),
         members:workspace_members(user_id, role, user:user_master!user_id(full_name))
       `)
       .eq("is_deleted", false)
@@ -81,8 +80,31 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
     throw new Error(error.message);
   }
 
+  // Workaround: Since workspaces doesn't have an FK to user_master for workspace_owner_id, we fetch creators manually.
+  let creatorsMap: Record<string, any> = {};
+  if (!isTask && data && data.length > 0) {
+    const creatorIds = Array.from(new Set(data.map((d: any) => d.created_by).filter(Boolean)));
+    if (creatorIds.length > 0) {
+      const { data: users } = await supabaseAdmin
+        .from("user_master")
+        .select("id, full_name, manager_id")
+        .in("id", creatorIds);
+      if (users) {
+        users.forEach((u: any) => creatorsMap[u.id] = u);
+      }
+    }
+  }
+
+  // Inject creator data for workspaces
+  const enrichedData = data ? data.map((item: any) => {
+    if (!isTask) {
+      item.creator = creatorsMap[item.created_by] || null;
+    }
+    return item;
+  }) : [];
+
   // Post-process filtering based on scope
-  let filteredData = data || [];
+  let filteredData = enrichedData;
 
   if (scope === "CREATED_BY_ME") {
     filteredData = filteredData.filter((item: any) => item.created_by === userId);
