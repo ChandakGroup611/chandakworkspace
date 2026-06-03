@@ -388,20 +388,19 @@ export async function fetchMasterHierarchy() {
   
   if (wsIds.length === 0) return [];
 
-  // 1.5 Efficiently fetch task counts for these workspaces
-  const { data: taskCountsData } = await supabaseAdmin
-    .from('tasks')
-    .select('id, workspace_id')
-    .in('workspace_id', wsIds)
-    .eq('is_deleted', false);
-    
+  // 1.5 Efficiently fetch task counts for these workspaces using HEAD counts
   const taskCountMap = new Map<string, number>();
-  if (taskCountsData) {
-    taskCountsData.forEach((t: any) => {
-      if (t.workspace_id) {
-        taskCountMap.set(t.workspace_id, (taskCountMap.get(t.workspace_id) || 0) + 1);
-      }
-    });
+  const chunkSize = 15;
+  for (let i = 0; i < wsIds.length; i += chunkSize) {
+    const chunk = wsIds.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(async (wsId) => {
+      const { count } = await supabaseAdmin
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('workspace_id', wsId)
+        .eq('is_deleted', false);
+      taskCountMap.set(wsId, count || 0);
+    }));
   }
 
   // 2. Assemble Infinite Workspace Tree via Adjacency List
