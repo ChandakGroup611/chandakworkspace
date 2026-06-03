@@ -18,7 +18,7 @@ export const AppCard = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "rounded-[var(--radius-card,8px)] relative overflow-hidden transition-all duration-150",
+        "rounded-[var(--radius-card,8px)] relative transition-all duration-150",
         isLight 
           ? "bg-white border border-gray-200 shadow-sm" 
           : "border border-white/5 bg-[#111827] shadow-[0_2px_10px_-2px_rgba(0,0,0,0.3)]",
