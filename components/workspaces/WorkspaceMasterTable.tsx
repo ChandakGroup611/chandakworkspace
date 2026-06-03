@@ -189,10 +189,10 @@ export function WorkspaceMasterTable({
                 }`}>
                   {node.workspace_name || node.name || node.subject || node.title}
                 </span>
-                <div className="flex items-center gap-2 mt-0.5 whitespace-nowrap flex-shrink-0">
-                  <span className="text-[10px] text-gray-500 font-mono truncate max-w-[80px]">{node.workspace_code || node.code || "N/A"}</span>
+                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-gray-500 font-mono truncate max-w-[80px] shrink-0">{node.workspace_code || node.code || "N/A"}</span>
                   {isWorkspaceType && (
-                    <div className="flex items-center gap-1.5 border-l border-gray-300 dark:border-gray-700 pl-2">
+                    <div className="flex flex-wrap items-center gap-1.5 border-l border-gray-300 dark:border-gray-700 pl-2">
                       <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded whitespace-nowrap">{subWsCount} Sub-WS</span>
                       <span className="text-[10px] font-bold text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-1.5 py-0.5 rounded whitespace-nowrap" title={`${directTaskCount} Direct, ${childTaskCount} Child`}>
                         {totalTaskCount} Tasks ({directTaskCount} Direct)

@@ -183,7 +183,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     
     try {
       setDeleteLoadingId(taskId);
-      await deleteTask(taskId);
+      const res = await deleteTask(taskId);
+      if (res?.error) {
+        throw new Error(res.error);
+      }
       setTasks(prev => prev.filter(t => t.id !== taskId));
     } catch (e: any) {
       alert("Status update failed: " + e.message);
@@ -211,7 +214,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     if (!confirm(`Are you sure you want to delete ${selectedTaskIds.size} tasks?`)) return;
     try {
       setLoading(true);
-      await Promise.all(Array.from(selectedTaskIds).map(id => deleteTask(id)));
+      const results = await Promise.all(Array.from(selectedTaskIds).map(id => deleteTask(id)));
+      const failed = results.find(r => r?.error);
+      if (failed) {
+        throw new Error(failed.error);
+      }
       setTasks(prev => prev.filter(t => !selectedTaskIds.has(t.id)));
       setSelectedTaskIds(new Set());
       triggerToast(`Successfully deleted tasks.`);
@@ -372,12 +379,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
             Back
           </AppButton>
-          <div className="flex items-center gap-2 p-1 rounded-xl bg-white/5 border border-white/5">
+          <div className="flex items-center gap-2 p-1 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5">
             {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
               <button
                 key={sc}
                 onClick={() => setScope(sc)}
-                className={`text-[11px] font-semibold px-2 py-1 rounded-md ${scope === sc ? "bg-blue-600 text-white" : "text-gray-300 hover:text-white"}`}
+                className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors ${scope === sc ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10"}`}
               >
                 {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
               </button>
@@ -407,11 +414,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <select
               value={selectedWorkspaceId || ""}
               onChange={(e) => setSelectedWorkspaceId(e.target.value || null)}
-              className="text-xs font-bold px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:border-white/20 focus:outline-none"
+              className="text-xs font-bold px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             >
-              <option value="" className="bg-[#0f111a] text-gray-300">All Workspaces</option>
+              <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
               {uniqueWorkspaces.map((ws: any) => (
-                <option key={ws.id} value={ws.id} className="bg-[#0f111a] text-gray-300">
+                <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
                   {ws.code} - {ws.name}
                 </option>
               ))}

@@ -455,30 +455,35 @@ export async function updateTask(taskId: string, payload: any) {
   const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
   if (error) return { error: error.message || JSON.stringify(error) };
   return { success: true };
-}
+}export async function deleteTask(taskId: string) {
+  try {
+    const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
+    if (!task) return { error: "Task not found" };
 
-export async function deleteTask(taskId: string) {
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
-  if (!task) throw new Error("Task not found");
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    const userId = user?.id;
+    
+    if (!userId) return { error: "Unauthenticated" };
 
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id;
-  
-  if (!userId) throw new Error("Unauthenticated");
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+    const canDelete = await hasPermission(userId, "TASKS_DELETE");
 
-  const { hasPermission } = await import('@/lib/permissions');
-  const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-  const canDelete = await hasPermission(userId, "TASKS_DELETE");
+    if (!isSuperAdmin && !canDelete) {
+      return { error: "You do not have permission to delete this task. Only users with specific IAM permissions can delete." };
+    }
 
-  if (!isSuperAdmin && !canDelete) {
-    throw new Error("You do not have permission to delete this task. Only users with specific IAM permissions can delete.");
+    // Soft delete the task instead of hard deleting it and its related records
+    const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
+    if (error) return { error: error.message };
+    
+    revalidatePath("/workspaces");
+    return { success: true };
+  } catch (e: any) {
+    return { error: e.message };
   }
-
-  // Soft delete the task instead of hard deleting it and its related records
-  const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
-  if (error) throw error;
-}
+};
 
 export async function resolveTask(taskId: string) {
   return transitionTaskStatus(taskId, "ST_RESOLVED");
