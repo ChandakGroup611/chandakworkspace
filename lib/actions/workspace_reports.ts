@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { supabaseAdmin } from "@/utils/supabase/admin";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 export type ReportEntityType = "WORKSPACE" | "SUB_WORKSPACE" | "TASK" | "SUB_TASK";
 export type ReportScope = "ALL" | "CREATED_BY_ME" | "ASSIGNED_TO_ME" | "MANAGED_BY_ME";
