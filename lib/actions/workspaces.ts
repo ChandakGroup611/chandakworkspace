@@ -73,7 +73,7 @@ export async function fetchCompanies() {
   return data || [];
 }
 
-export async function fetchPriorities(workspaceId?: string) {
+export async function fetchPriorities(scopeId?: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -83,8 +83,8 @@ export async function fetchPriorities(workspaceId?: string) {
     .eq('is_active', true)
     .eq('is_deleted', false);
     
-  if (workspaceId) {
-    query = query.or(`scope_id.eq.${workspaceId},scope_id.is.null`);
+  if (scopeId) {
+    query = query.or(`scope_id.eq.${scopeId},scope_id.is.null`);
   } else {
     query = query.is('scope_id', null);
   }
@@ -93,7 +93,7 @@ export async function fetchPriorities(workspaceId?: string) {
   if (error) console.error(`[fetchPriorities] Error: ${error.message}`);
   
   let results = data || [];
-  if (workspaceId && results.length > 0) {
+  if (scopeId && results.length > 0) {
     const uniqueMap = new Map();
     for (const p of results) {
        const existing = uniqueMap.get(p.name);
@@ -107,7 +107,7 @@ export async function fetchPriorities(workspaceId?: string) {
   return results;
 }
 
-export async function fetchStatusesByScope(scopeType: string, workspaceId?: string) {
+export async function fetchStatusesByScope(scopeType: string, scopeId?: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -118,8 +118,8 @@ export async function fetchStatusesByScope(scopeType: string, workspaceId?: stri
     .eq('is_deleted', false)
     .eq('scope_type', scopeType);
     
-  if (workspaceId) {
-    query = query.or(`scope_id.eq.${workspaceId},scope_id.is.null`);
+  if (scopeId) {
+    query = query.or(`scope_id.eq.${scopeId},scope_id.is.null`);
   } else {
     query = query.is('scope_id', null);
   }
@@ -128,7 +128,7 @@ export async function fetchStatusesByScope(scopeType: string, workspaceId?: stri
   if (error) console.error(`[fetchStatusesByScope] Error: ${error.message}`);
   
   let results = data || [];
-  if (workspaceId && results.length > 0) {
+  if (scopeId && results.length > 0) {
     const uniqueMap = new Map();
     for (const s of results) {
        const existing = uniqueMap.get(s.name);
@@ -346,8 +346,8 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       prefetchStakeholders = sData;
     }
 
-    // Fetch the new master hierarchy for the Tabular List
-    const masterHierarchy = await fetchMasterHierarchy();
+    // Fetch the new root hierarchy for the Tabular List (Lazy Loading)
+    const masterHierarchy = await fetchHierarchyRoots(user.id);
 
     // Fetch Task Statuses for inline editing
     const { getTaskStatuses } = await import('@/lib/actions/tasks');
@@ -374,7 +374,28 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
   }
 }
 
-export async function fetchMasterHierarchy() {
+export async function fetchHierarchyRoots(userId: string) {
+  // 1. Fetch ALL Visible Workspaces
+  const visibleWorkspaces = await getVisibleWorkspaces(userId);
+  const wsIds = visibleWorkspaces.map((w: any) => w.id);
+  
+  if (wsIds.length === 0) return [];
+
+  // Filter to roots: Nodes where parent_workspace_id is null OR parent is not in the visible set
+  const rootWorkspaces = visibleWorkspaces.filter((ws: any) => !ws.parent_workspace_id || !wsIds.includes(ws.parent_workspace_id));
+
+  // Note: Statistics (direct_task_count, etc.) will be handled by Phase 10 Statistics Table in the future.
+  // For now, we return 0 or rely on a lightweight cache to prevent N+1 COUNT queries.
+  return rootWorkspaces.map((ws: any) => ({
+    ...ws,
+    type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
+    direct_task_count: ws.stats?.[0]?.task_count || 0,
+    total_hierarchy_task_count: (ws.stats?.[0]?.task_count || 0) + (ws.stats?.[0]?.subtask_count || 0),
+    children: [] // Children will be fetched on demand
+  }));
+}
+
+export async function fetchHierarchyChildren(parentId: string, parentType: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
@@ -382,85 +403,66 @@ export async function fetchMasterHierarchy() {
   const userId = userData.user?.id;
   if (!userId) return [];
 
-  // 1. Fetch ALL Visible Workspaces (roots and children)
-  const visibleWorkspaces = await getVisibleWorkspaces(userId);
-  const wsIds = visibleWorkspaces.map((w: any) => w.id);
-  
-  if (wsIds.length === 0) return [];
+  // If expanding a Workspace/Sub-Workspace, fetch its Sub-Workspaces and Direct Tasks
+  if (parentType === 'WORKSPACE' || parentType === 'SUB_WORKSPACE') {
+    // 1. Fetch Sub-Workspaces
+    const { data: subWs } = await supabaseAdmin
+      .from('workspaces')
+      .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), members:workspace_members(user_id, role), stats:workspace_statistics(subworkspace_count, task_count, subtask_count)')
+      .eq('parent_workspace_id', parentId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false });
 
-  // 1.5 Efficiently fetch task counts using a single query
-  const taskCountMap = new Map<string, number>();
-  
-  const { data: taskData } = await supabaseAdmin
-    .from('tasks')
-    .select('workspace_id')
-    .in('workspace_id', wsIds)
-    .eq('is_deleted', false);
-    
-  if (taskData) {
-    taskData.forEach((t: any) => {
-      if (t.workspace_id) {
-        taskCountMap.set(t.workspace_id, (taskCountMap.get(t.workspace_id) || 0) + 1);
-      }
-    });
+    // 2. Fetch Direct Tasks
+    const { data: tasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role)')
+      .eq('workspace_id', parentId)
+      .is('parent_task_id', null)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false });
+
+    const nodes = [];
+    if (subWs) {
+      nodes.push(...subWs.map((ws: any) => ({
+        ...ws,
+        type: 'SUB_WORKSPACE',
+        direct_task_count: ws.stats?.[0]?.task_count || 0,
+        total_hierarchy_task_count: (ws.stats?.[0]?.task_count || 0) + (ws.stats?.[0]?.subtask_count || 0),
+        children: []
+      })));
+    }
+    if (tasks) {
+      nodes.push(...tasks.map((t: any) => ({
+        ...t,
+        type: 'TASK',
+        direct_task_count: 0,
+        children: []
+      })));
+    }
+    return nodes;
   }
 
-  // 2. Assemble Infinite Workspace Tree via Adjacency List
-  const workspaceMap = new Map();
-  visibleWorkspaces.forEach((ws: any) => {
-    workspaceMap.set(ws.id, { 
-      ...ws, 
-      type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE', 
-      direct_task_count: taskCountMap.get(ws.id) || 0, // Re-enabled fast counting
-      total_hierarchy_task_count: 0,
-      children: [] 
-    });
-  });
+  // If expanding a Task/Sub-Task, fetch its Sub-Tasks
+  if (parentType === 'TASK' || parentType === 'SUB_TASK') {
+    const { data: subTasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role)')
+      .eq('parent_task_id', parentId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false });
 
-  const rootNodes: any[] = [];
-
-  // 3. Build the recursive tree (Workspace -> Child Workspace)
-  workspaceMap.forEach(wsNode => {
-    if (wsNode.parent_workspace_id && workspaceMap.has(wsNode.parent_workspace_id)) {
-      const parent = workspaceMap.get(wsNode.parent_workspace_id);
-      parent.children.push(wsNode);
-    } else {
-      rootNodes.push(wsNode);
+    if (subTasks) {
+      return subTasks.map((t: any) => ({
+        ...t,
+        type: 'SUB_TASK',
+        direct_task_count: 0,
+        children: []
+      }));
     }
-  });
+  }
 
-  // 4. Post-order traversal to calculate total counts with loop detection
-  const visited = new Set<string>();
-  const calculateTotalTasks = (node: any): number => {
-    if (visited.has(node.id)) {
-      console.warn(`[Workspaces] Cyclical loop detected at workspace ${node.id}`);
-      return 0; // Break the infinite loop
-    }
-    visited.add(node.id);
-
-    let total = node.direct_task_count;
-    let childTaskCount = 0;
-    
-    if (node.children && node.children.length > 0) {
-      for (const child of node.children) {
-        if (child.type === 'SUB_WORKSPACE' || child.type === 'WORKSPACE') {
-           const cTotal = calculateTotalTasks(child);
-           childTaskCount += cTotal;
-        }
-      }
-    }
-    
-    node.child_task_count = childTaskCount;
-    node.total_hierarchy_task_count = total + childTaskCount;
-    return node.total_hierarchy_task_count;
-  };
-
-  rootNodes.forEach(root => {
-    visited.clear();
-    calculateTotalTasks(root);
-  });
-
-  return rootNodes;
+  return [];
 }
 
 export async function updateWorkspace(id: string, formData: any) {
@@ -674,18 +676,19 @@ export async function createTask(formData: any) {
   let status_id = formData.status_id;
   if (!status_id) {
     try {
-    const { data: status } = await supabase
-      .from("status_master")
-      .select("id")
-      .eq("status_code", "ST_OPEN")
-      .single();
-    status_id = status?.id;
-    if (!status_id) {
-      const { data: fallback } = await supabaseAdmin.from("status_master").select("id").limit(1);
-      status_id = fallback?.[0]?.id || null;
-    }
+      const { data: status } = await supabase
+        .from("status_master")
+        .select("id")
+        .eq("status_code", "ST_OPEN")
+        .eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3")
+        .maybeSingle();
+      status_id = status?.id;
+      if (!status_id) {
+        const { data: fallback } = await supabaseAdmin.from("status_master").select("id").eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").limit(1);
+        status_id = fallback?.[0]?.id || null;
+      }
     } catch (e) {
-      const { data: fallback } = await supabaseAdmin.from("status_master").select("id").limit(1);
+      const { data: fallback } = await supabaseAdmin.from("status_master").select("id").eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").limit(1);
       status_id = fallback?.[0]?.id || null;
     }
   }
@@ -712,11 +715,11 @@ export async function createTask(formData: any) {
 
   let priority_id = taskFields.priority_id;
   if (!priority_id) {
-    const { data: defaultPriority } = await supabase.from('priority_master').select('id').eq('priority_code', 'PR_MEDIUM').single();
+    const { data: defaultPriority } = await supabase.from('priority_master').select('id').eq('priority_code', 'PR_MEDIUM').eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").maybeSingle();
     if (defaultPriority) priority_id = defaultPriority.id;
     else {
-      const { data: anyPriority } = await supabase.from('priority_master').select('id').limit(1).single();
-      priority_id = anyPriority?.id || null;
+      const { data: anyPriority } = await supabase.from('priority_master').select('id').eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").limit(1);
+      priority_id = anyPriority?.[0]?.id || null;
     }
   }
 

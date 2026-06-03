@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import useSWR from 'swr';
 import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -14,7 +15,7 @@ import {
 import { 
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
   fetchWorkspaceStakeholders, createWorkspace, createTask, fetchCompanies, fetchPriorities,
-  updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData
+  updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData, fetchHierarchyChildren
 } from "@/lib/actions/workspaces";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresence } from "@/hooks/use-presence";
@@ -44,6 +45,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [masterHierarchy, setMasterHierarchy] = useState<any[]>(initialData?.masterHierarchy || []);
   const [loading, setLoading] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+
   const triggerToast = (msg: string) => {
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 3000);
@@ -140,6 +142,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
@@ -153,9 +156,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     is_public: false
   });
   const [creatingTaskWorkspaceId, setCreatingTaskWorkspaceId] = useState<string | null>(null);
+  const [creatingTaskParentId, setCreatingTaskParentId] = useState<string | null>(null);
+
+  const findNodeInHierarchy = (nodes: any[], targetId: string): any => {
+    for (const n of nodes) {
+      if (n.id === targetId) return n;
+      if (n.children && n.children.length > 0) {
+        const found = findNodeInHierarchy(n.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
 
   const parentWorkspace = newWS.parent_workspace_id 
-    ? workspaces.find(w => w.id === newWS.parent_workspace_id) 
+    ? (workspaces.find(w => w.id === newWS.parent_workspace_id) || findNodeInHierarchy(masterHierarchy, newWS.parent_workspace_id))
     : null;
 
   const availableUsers = parentWorkspace 
@@ -173,40 +188,39 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   // Removed client-side mount data fetching useEffect as data is now provided securely by Server Component
 
+  const fetcher = async ([wsId]: [string]) => {
+    const [tData, sData] = await Promise.all([
+      fetchTasksByWorkspace(wsId),
+      fetchWorkspaceStakeholders(wsId)
+    ]);
+    return { tasks: tData, stakeholders: sData };
+  };
+
+  const { data: workspaceData, mutate: mutateWorkspaceData } = useSWR(
+    activeWorkspace?.id ? [activeWorkspace.id, 'workspace_data'] : null,
+    fetcher,
+    { 
+      fallbackData: { tasks: initialData?.prefetchTasks || [], stakeholders: initialData?.prefetchStakeholders || [] },
+      revalidateOnFocus: false,
+    }
+  );
+
+  // Sync SWR data to state to maintain compatibility with existing functionality
   useEffect(() => {
-    if (!activeWorkspace) {
-      setTasks([]);
-      setStakeholders([]);
-      lastFetchedWorkspaceId.current = null;
-      return;
+    if (workspaceData) {
+      setTasks(workspaceData.tasks);
+      setStakeholders(workspaceData.stakeholders);
     }
-
-    // Prevent double-fetching on initial mount/load
-    if (lastFetchedWorkspaceId.current === activeWorkspace.id) return;
-
-    async function loadWorkspaceData() {
-      lastFetchedWorkspaceId.current = activeWorkspace.id;
-      // Clear out the stale data immediately so the UI reflects the new workspace
-      setTasks([]);
-      setStakeholders([]);
-
-      const [tData, sData] = await Promise.all([
-        fetchTasksByWorkspace(activeWorkspace.id),
-        fetchWorkspaceStakeholders(activeWorkspace.id)
-      ]);
-      setTasks(tData);
-      setStakeholders(sData);
-    }
-    loadWorkspaceData();
-  }, [activeWorkspace?.id]);
-
+  }, [workspaceData]);
   const handleCreateWorkspace = async (e?: React.FormEvent | React.MouseEvent) => {
     e?.preventDefault();
+    if (isSubmitting) return;
     if (newWS.start_date && newWS.end_date && new Date(newWS.end_date) < new Date(newWS.start_date)) {
       alert("Target End Date cannot be earlier than the Start Date.");
       return;
     }
     try {
+      setIsSubmitting(true);
       let finalName = newWS.name;
       if (wsModalMode === 'SUB' && newWS.parent_workspace_id) {
         const pName = workspaces.find(w => w.id === newWS.parent_workspace_id)?.name;
@@ -256,7 +270,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       // Refresh the execution hierarchy tree to show the newly created workspace
       import("@/lib/actions/workspaces").then(m => {
-        m.fetchMasterHierarchy().then(hier => setMasterHierarchy(hier));
+        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => setMasterHierarchy(hier));
       });
       
       setNewWS({ 
@@ -275,6 +289,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     } catch (err: any) {
       console.error("[Workspace Creation] Intercepted:", err.message || err);
       alert("Database Error on Workspace Save: " + (err.message || err.details || JSON.stringify(err)));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -311,7 +327,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       // Refresh the execution hierarchy tree to show the deleted workspace
       import("@/lib/actions/workspaces").then(m => {
-        m.fetchMasterHierarchy().then(hier => setMasterHierarchy(hier));
+        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => setMasterHierarchy(hier));
       });
     } catch (e: any) {
       console.error("[Workspace Deletion] Intercepted:", e.message || e);
@@ -337,7 +353,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       // Refresh the execution hierarchy tree to show the newly created task
       import("@/lib/actions/workspaces").then(m => {
-        m.fetchMasterHierarchy().then(hier => setMasterHierarchy(hier));
+        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => setMasterHierarchy(hier));
       });
     } catch (err: any) {
       console.error("[Task Creation] Intercepted:", err.message || err);
@@ -462,7 +478,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   setWsModalMode('SUB');
                 }}
                 onCreateTask={(node) => {
-                  setCreatingTaskWorkspaceId(node.id);
+                  if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
+                    setCreatingTaskWorkspaceId(node.id);
+                    setCreatingTaskParentId(null);
+                  } else {
+                    setCreatingTaskWorkspaceId(node.workspace_id);
+                    setCreatingTaskParentId(node.id);
+                  }
                   setIsCreatingTask(true);
                 }}
                 onDeleteNode={(node) => {
@@ -472,11 +494,31 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     alert("Deleting tasks directly from this table is coming soon.");
                   }
                 }}
+                onExpandNode={async (node) => {
+                  try {
+                    const children = await fetchHierarchyChildren(node.id, node.type);
+                    // Add the children to the correct node in masterHierarchy
+                    const insertChildren = (tree: any[]): any[] => {
+                      return tree.map(item => {
+                        if (item.id === node.id) {
+                          return { ...item, children, childrenFetched: true };
+                        }
+                        if (item.children && item.children.length > 0) {
+                          return { ...item, children: insertChildren(item.children) };
+                        }
+                        return item;
+                      });
+                    };
+                    setMasterHierarchy(prev => insertChildren(prev));
+                  } catch (e) {
+                    console.error("Failed to fetch children", e);
+                  }
+                }}
               />
               </div>
               ) : (
                 <div className="flex-1 overflow-hidden">
-                  <SprintBoard workspaceId={workspaces[0]?.id} />
+                  <SprintBoard workspaceId={activeWorkspace?.id || workspaces[0]?.id} currentUser={currentUser} />
                 </div>
               )}
             </AppCard>
@@ -500,8 +542,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           headerAccent="indigo"
           footer={
             <div className="flex justify-end gap-3 w-full">
-              <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }}>Cancel</AppButton>
-              <AppButton variant="primary" onClick={handleCreateWorkspace} className="bg-indigo-600 hover:bg-indigo-700">{editWSId ? "Save Changes" : "Provision Workspace"}</AppButton>
+              <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting}>Cancel</AppButton>
+              <AppButton variant="primary" onClick={handleCreateWorkspace} className="bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : (editWSId ? "Save Changes" : "Provision Workspace")}
+              </AppButton>
             </div>
           }
         >
@@ -709,14 +753,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       {isCreatingTask && (activeWorkspace || workspaces.length > 0) && (
         <TaskCreationWizard 
           workspaceId={creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id} 
+          initialParentTaskId={creatingTaskParentId || undefined}
           onClose={() => {
             setIsCreatingTask(false);
             setCreatingTaskWorkspaceId(null);
+            setCreatingTaskParentId(null);
           }}
           onSuccess={async (newTask: any) => {
             const wsId = creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id;
             await handleTaskWizardSuccess({ ...newTask, workspace_id: wsId });
             setCreatingTaskWorkspaceId(null);
+            setCreatingTaskParentId(null);
           }}
         />
       )}

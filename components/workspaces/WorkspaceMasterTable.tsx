@@ -17,7 +17,8 @@ export function WorkspaceMasterTable({
   onShareNode,
   onDeleteNode,
   onCreateSubWorkspace,
-  onCreateTask
+  onCreateTask,
+  onExpandNode
 }: { 
   hierarchy: any[]; 
   isLightMode: boolean;
@@ -31,6 +32,7 @@ export function WorkspaceMasterTable({
   onDeleteNode?: (node: any) => void;
   onCreateSubWorkspace?: (node: any) => void;
   onCreateTask?: (node: any) => void;
+  onExpandNode?: (node: any) => Promise<void>;
 }) {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -42,8 +44,22 @@ export function WorkspaceMasterTable({
     return () => document.removeEventListener("click", closeMenu);
   }, []);
 
-  const toggleNode = (id: string, e: React.MouseEvent) => {
+  const [loadingNodes, setLoadingNodes] = useState<Record<string, boolean>>({});
+
+  const toggleNode = async (node: any, e: React.MouseEvent) => {
     e.stopPropagation();
+    const id = node.id;
+    const isExpanded = !!expandedNodes[id];
+    
+    if (!isExpanded && onExpandNode && !node.childrenFetched) {
+      setLoadingNodes(prev => ({ ...prev, [id]: true }));
+      try {
+        await onExpandNode(node);
+      } finally {
+        setLoadingNodes(prev => ({ ...prev, [id]: false }));
+      }
+    }
+    
     setExpandedNodes(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -121,8 +137,8 @@ export function WorkspaceMasterTable({
   // completely eliminating both the left-side gaps and the right-side congestion.
   const gridCols = 'minmax(150px, 2.5fr) minmax(100px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(130px, 1fr)';
 
-  const renderRow = (node: any, depth: number) => {
-    const isExpanded = !!expandedNodes[node.id];
+
+  const HierarchyRow = React.memo(({ node, depth, isExpanded }: { node: any, depth: number, isExpanded: boolean }) => {
     const hasChildren = node.children && node.children.length > 0;
     
     let TypeIcon = FolderKanban;
@@ -141,7 +157,6 @@ export function WorkspaceMasterTable({
       subWsCount = node.children.filter((c: any) => c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE').length;
     }
     
-    // Fallback company inheritance for visual completeness if needed
     const companyName = node.company?.name || (isWorkspaceType ? "Independent" : "---");
     const creatorId = node.created_by || node.owner_id || node.workspace_owner_id;
 
@@ -149,33 +164,40 @@ export function WorkspaceMasterTable({
     const shortDate = node.created_at ? new Date(node.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '---';
 
     return (
-      <React.Fragment key={node.id}>
-        {/* Universal Grid View */}
-        <div 
-          onDoubleClick={(e) => {
-            e.stopPropagation();
-            if (isWorkspaceType) {
-              router.push(`/workspaces/tasks?workspaceId=${node.id}`);
-            } else if (node.type === 'TASK' || node.type === 'SUB_TASK') {
-              onOpenTask(node);
-            }
-          }}
-          className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
-          isLightMode 
-            ? 'border-gray-200 hover:bg-gray-50' 
-            : 'border-white/5 hover:bg-white/[0.02]'
-        }`} style={{ gridTemplateColumns: gridCols }}>
+      <div 
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          if (isWorkspaceType) {
+            router.push(`/workspaces/tasks?workspaceId=${node.id}`);
+          } else if (node.type === 'TASK' || node.type === 'SUB_TASK') {
+            onOpenTask(node);
+          }
+        }}
+        className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
+        isLightMode 
+          ? 'border-gray-200 hover:bg-gray-50' 
+          : 'border-white/5 hover:bg-white/[0.02]'
+      }`} style={{ gridTemplateColumns: gridCols }}>
+
           {/* Entity Name */}
           <div className="py-1 px-2 flex items-center min-w-0" style={{ paddingLeft: `${depth * 2 + 0.5}rem` }}>
             <div className="flex items-center gap-2 min-w-0 w-full">
-              {hasChildren ? (
+              {/* Always show chevron unless we've fetched and confirmed no children exist */}
+              {(!node.childrenFetched || hasChildren) ? (
                 <button 
-                  onClick={(e) => toggleNode(node.id, e)}
+                  onClick={(e) => toggleNode(node, e)}
+                  disabled={loadingNodes[node.id]}
                   className={`p-1 rounded-md transition-colors flex-shrink-0 ${
                     isLightMode ? 'hover:bg-gray-200 text-gray-500' : 'hover:bg-white/10 text-gray-400'
-                  }`}
+                  } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                 >
-                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {loadingNodes[node.id] ? (
+                    <div className="h-4 w-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                  ) : isExpanded ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
                 </button>
               ) : (
                 <div className="w-6 flex-shrink-0" /> // spacer
@@ -307,11 +329,20 @@ export function WorkspaceMasterTable({
             )}
           </div>
         </div>
+      );
+    }, (prevProps, nextProps) => {
+      // Memoize the row, only re-render if node identity or expanded state changes
+      return prevProps.node === nextProps.node && prevProps.isExpanded === nextProps.isExpanded;
+    });
 
-        {isExpanded && hasChildren && node.children.map((child: any) => renderRow(child, depth + 1))}
-      </React.Fragment>
-    );
-  };
+    const renderTree = (nodes: any[], depth = 0) => {
+      return nodes.map(node => (
+        <React.Fragment key={node.id}>
+          <HierarchyRow node={node} depth={depth} isExpanded={!!expandedNodes[node.id]} />
+          {expandedNodes[node.id] && node.children && renderTree(node.children, depth + 1)}
+        </React.Fragment>
+      ));
+    };
 
   return (
     <div className="w-full">
@@ -332,7 +363,7 @@ export function WorkspaceMasterTable({
         {/* Body */}
         <div className="flex flex-col">
           {hierarchy.length > 0 ? (
-            hierarchy.map(node => renderRow(node, 0))
+            renderTree(hierarchy)
           ) : (
             <div className="py-12 text-center text-sm text-gray-500">
               No Execution Hierarchy Available.

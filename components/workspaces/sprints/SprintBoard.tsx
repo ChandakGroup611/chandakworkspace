@@ -8,7 +8,9 @@ import { Plus, GripVertical, Calendar } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 
-export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string, onNewSprint?: () => void }) {
+import { Filter } from "lucide-react";
+
+export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
@@ -21,6 +23,7 @@ export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string,
   const [newSprintStart, setNewSprintStart] = useState("");
   const [newSprintEnd, setNewSprintEnd] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [taskFilter, setTaskFilter] = useState<'ALL' | 'ASSIGNED' | 'TEAM' | 'CREATED' | 'OVERDUE'>('ALL');
 
   useEffect(() => {
     async function load() {
@@ -80,6 +83,15 @@ export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string,
   if (loading) return <div className="p-10 text-center animate-pulse">Loading Sprint Board...</div>;
 
   const activeSprints = sprints.filter(s => s.status !== 'CLOSED');
+
+  const filteredTasks = tasks.filter(t => {
+    if (taskFilter === 'ALL') return true;
+    if (taskFilter === 'ASSIGNED') return t.owner_id === currentUser?.id;
+    if (taskFilter === 'TEAM') return t.assignees?.some((a: any) => a.user_id === currentUser?.id);
+    if (taskFilter === 'CREATED') return t.created_by === currentUser?.id;
+    if (taskFilter === 'OVERDUE') return t.end_date && new Date(t.end_date) < new Date();
+    return true;
+  });
   
   return (
     <div className="flex flex-col h-full space-y-4">
@@ -88,9 +100,22 @@ export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string,
           <Calendar className="h-4 w-4 text-indigo-500" />
           Agile Sprint Planning
         </h3>
-        <AppButton variant="primary" size="sm" onClick={() => setIsCreatingSprint(true)}>
-          <Plus className="h-3 w-3 mr-1" /> New Sprint
-        </AppButton>
+        <div className="flex items-center gap-3">
+          <select 
+            value={taskFilter} 
+            onChange={(e) => setTaskFilter(e.target.value as any)}
+            className={`text-xs p-1.5 rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}
+          >
+            <option value="ALL">All Tasks</option>
+            <option value="ASSIGNED">Assigned To Me</option>
+            <option value="TEAM">Execution Team</option>
+            <option value="CREATED">Created By Me</option>
+            <option value="OVERDUE">Overdue Tasks</option>
+          </select>
+          <AppButton variant="primary" size="sm" onClick={() => setIsCreatingSprint(true)}>
+            <Plus className="h-3 w-3 mr-1" /> New Sprint
+          </AppButton>
+        </div>
       </div>
 
       {isCreatingSprint && (
@@ -124,7 +149,7 @@ export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string,
         >
           <div className="p-3 border-b font-bold text-sm">Product Backlog</div>
           <div className="p-2 space-y-2 overflow-y-auto flex-1">
-            {tasks.filter(t => !t.sprint_id).map(t => (
+            {filteredTasks.filter(t => !t.sprint_id).map(t => (
               <div 
                 key={t.id} 
                 draggable 
@@ -138,7 +163,7 @@ export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string,
                 </div>
               </div>
             ))}
-            {tasks.filter(t => !t.sprint_id).length === 0 && (
+            {filteredTasks.filter(t => !t.sprint_id).length === 0 && (
               <div className="p-4 text-center text-xs text-gray-500 border border-dashed rounded-lg">Backlog is empty</div>
             )}
           </div>
@@ -159,7 +184,7 @@ export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string,
               </div>
             </div>
             <div className="p-2 space-y-2 overflow-y-auto flex-1">
-              {tasks.filter(t => t.sprint_id === sprint.id).map(t => (
+              {filteredTasks.filter(t => t.sprint_id === sprint.id).map(t => (
                 <div 
                   key={t.id} 
                   draggable 
@@ -173,7 +198,7 @@ export function SprintBoard({ workspaceId, onNewSprint }: { workspaceId: string,
                   </div>
                 </div>
               ))}
-              {tasks.filter(t => t.sprint_id === sprint.id).length === 0 && (
+              {filteredTasks.filter(t => t.sprint_id === sprint.id).length === 0 && (
                 <div className="p-4 text-center text-xs text-gray-500 border border-dashed rounded-lg">Drag tasks here</div>
               )}
             </div>

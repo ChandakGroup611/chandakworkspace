@@ -12,7 +12,7 @@ import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWiza
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
 
-export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: { workspaceId: string, onClose: () => void, onSuccess: (data: any) => void }) {
+export default function TaskCreationWizard({ workspaceId, initialParentTaskId, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
@@ -35,7 +35,7 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
   const [priorities, setPriorities] = useState<any[]>([]);
   const [statusId, setStatusId] = useState("");
   const [statuses, setStatuses] = useState<any[]>([]);
-  const [parentTaskId, setParentTaskId] = useState("");
+  const [parentTaskId, setParentTaskId] = useState(initialParentTaskId || "");
   const [workspaceTasks, setWorkspaceTasks] = useState<any[]>([]);
   const [assignedTo, setAssignedTo] = useState(""); // This is the Single Owner
   const [executors, setExecutors] = useState<string[]>([]);
@@ -64,9 +64,9 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
       const m = await import("@/lib/actions/workspaces");
       const [fields, priorityList, existingTasks, statusList, workspaceStakeholders, sprintList, templateList] = await Promise.all([
         fetchCustomFields(workspaceId),
-        fetchPriorities(workspaceId),
+        fetchPriorities('e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'),
         fetchTasksByWorkspace(workspaceId),
-        fetchStatusesByScope('REQUIREMENT', workspaceId),
+        fetchStatusesByScope('TASK', 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'),
         m.fetchWorkspaceStakeholders(workspaceId),
         m.fetchSprints(workspaceId),
         m.fetchTaskTemplates(workspaceId)
@@ -185,8 +185,10 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
       headerAccent="purple"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <AppButton variant="ghost" type="button" onClick={onClose}>Cancel</AppButton>
-          <AppButton variant="primary" onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700">Deploy Directive</AppButton>
+          <AppButton variant="ghost" type="button" onClick={onClose} disabled={isLoading}>Cancel</AppButton>
+          <AppButton variant="primary" onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700" disabled={isLoading}>
+            {isLoading ? "Deploying..." : "Deploy Directive"}
+          </AppButton>
         </div>
       }
     >
