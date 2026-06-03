@@ -182,7 +182,7 @@ export async function createWorkspace(formData: any) {
       .from("workspaces")
       .insert([{
         workspace_name: formData.name,
-        workspace_code: formData.code || `WS-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        workspace_code: formData.code || null,
         description: formData.description,
         company_id: formData.company_id,
         start_date: formData.start_date,
@@ -454,7 +454,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
         .order('created_at', { ascending: false }),
       supabaseAdmin
         .from('tasks')
-        .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:id)')
+        .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
         .eq('workspace_id', parentId)
         .is('parent_task_id', null)
         .eq('is_deleted', false)
@@ -490,7 +490,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   if (parentType === 'TASK' || parentType === 'SUB_TASK') {
     const { data: subTasks } = await supabaseAdmin
       .from('tasks')
-      .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:id)')
+      .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
       .eq('parent_task_id', parentId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false });
