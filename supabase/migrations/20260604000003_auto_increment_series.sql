@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.series_tracker (
 
 -- 2. Function to generate the next code (Indian Financial Year: Apr-Mar)
 CREATE OR REPLACE FUNCTION public.generate_series_code(p_prefix VARCHAR)
-RETURNS TEXT AS $$
+RETURNS TEXT LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
     v_fy VARCHAR(10);
     v_month VARCHAR(2);
