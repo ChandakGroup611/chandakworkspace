@@ -142,6 +142,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
@@ -269,7 +270,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       // Refresh the execution hierarchy tree to show the newly created workspace
       import("@/lib/actions/workspaces").then(m => {
-        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => setMasterHierarchy(hier));
+        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => {
+          setMasterHierarchy(hier);
+          if (newWS.parent_workspace_id) {
+            setExpandedNodes(prev => ({ ...prev, [newWS.parent_workspace_id]: true }));
+            m.fetchHierarchyChildren(newWS.parent_workspace_id, 'WORKSPACE').then(children => {
+              setMasterHierarchy(curr => {
+                const insertChildren = (tree: any[]): any[] => tree.map(node => {
+                  if (node.id === newWS.parent_workspace_id) return { ...node, children, childrenFetched: true };
+                  if (node.children) return { ...node, children: insertChildren(node.children) };
+                  return node;
+                });
+                return insertChildren(curr);
+              });
+            });
+          }
+        });
       });
       
       setNewWS({ 
@@ -390,7 +406,24 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       // Refresh the execution hierarchy tree to show the newly created task
       import("@/lib/actions/workspaces").then(m => {
-        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => setMasterHierarchy(hier));
+        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => {
+          setMasterHierarchy(hier);
+          const parentId = creatingTaskParentId || creatingTaskWorkspaceId;
+          const parentType = creatingTaskParentId ? 'TASK' : 'WORKSPACE';
+          if (parentId) {
+            setExpandedNodes(prev => ({ ...prev, [parentId]: true }));
+            m.fetchHierarchyChildren(parentId, parentType).then(children => {
+              setMasterHierarchy(curr => {
+                const insertChildren = (tree: any[]): any[] => tree.map(node => {
+                  if (node.id === parentId) return { ...node, children, childrenFetched: true };
+                  if (node.children) return { ...node, children: insertChildren(node.children) };
+                  return node;
+                });
+                return insertChildren(curr);
+              });
+            });
+          }
+        });
       });
     } catch (err: any) {
       console.error("[Task Creation] Intercepted:", err.message || err);
@@ -502,6 +535,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <WorkspaceMasterTable 
                 hierarchy={masterHierarchy} 
+                expandedNodes={expandedNodes}
+                setExpandedNodes={setExpandedNodes}
                 isLightMode={isLightMode}
                 taskStatuses={initialData?.taskStatuses || []}
                 allUsers={allUsers}

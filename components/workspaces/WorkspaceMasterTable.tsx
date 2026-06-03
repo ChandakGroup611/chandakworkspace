@@ -19,7 +19,9 @@ export function WorkspaceMasterTable({
   onCreateSubWorkspace,
   onCreateTask,
   onExpandNode,
-  onPrefetchNode
+  onPrefetchNode,
+  expandedNodes,
+  setExpandedNodes
 }: { 
   hierarchy: any[]; 
   isLightMode: boolean;
@@ -35,8 +37,9 @@ export function WorkspaceMasterTable({
   onCreateTask?: (node: any) => void;
   onExpandNode?: (node: any) => Promise<void>;
   onPrefetchNode?: (node: any) => void;
+  expandedNodes: Record<string, boolean>;
+  setExpandedNodes: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }) {
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const router = useRouter();
 
