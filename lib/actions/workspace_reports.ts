@@ -35,8 +35,7 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         status:status_master!tasks_status_id_fkey(name:status_name),
         priority:priority_master(name:priority_name),
         workspace:workspaces!workspace_id(name:workspace_name, code:workspace_code),
-        creator:user_master!created_by(id, full_name, manager_id),
-        assignees:task_participants(user_id, role:participation_role, user:user_master!user_id(full_name))
+        assignees:task_participants(user_id, role:participation_role)
       `)
       .eq("is_deleted", false)
       .order('created_at', { ascending: false });
@@ -62,7 +61,7 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         parent_workspace_id,
         company:company_master(name:company_name),
         status:status_master(name:status_name),
-        members:workspace_members(user_id, role, user:user_master!user_id(full_name))
+        members:workspace_members(user_id, role)
       `)
       .eq("is_deleted", false)
       .order('created_at', { ascending: false });
@@ -80,25 +79,49 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
     throw new Error(error.message);
   }
 
-  // Workaround: Since workspaces doesn't have an FK to user_master for workspace_owner_id, we fetch creators manually.
-  let creatorsMap: Record<string, any> = {};
-  if (!isTask && data && data.length > 0) {
-    const creatorIds = Array.from(new Set(data.map((d: any) => d.created_by).filter(Boolean)));
-    if (creatorIds.length > 0) {
-      const { data: users } = await supabaseAdmin
-        .from("user_master")
-        .select("id, full_name, manager_id")
-        .in("id", creatorIds);
-      if (users) {
-        users.forEach((u: any) => creatorsMap[u.id] = u);
+  // Extract all unique user IDs needed (creators + assignees/members)
+  const userIdsToFetch = new Set<string>();
+  
+  if (data) {
+    data.forEach((item: any) => {
+      if (item.created_by) userIdsToFetch.add(item.created_by);
+      if (isTask && item.assignees) {
+        item.assignees.forEach((a: any) => { if (a.user_id) userIdsToFetch.add(a.user_id); });
+      } else if (!isTask && item.members) {
+        item.members.forEach((m: any) => { if (m.user_id) userIdsToFetch.add(m.user_id); });
       }
+    });
+  }
+
+  // Fetch all user details
+  const usersMap: Record<string, any> = {};
+  const userIdsArray = Array.from(userIdsToFetch);
+  
+  if (userIdsArray.length > 0) {
+    const { data: users } = await supabaseAdmin
+      .from("user_master")
+      .select("id, full_name, manager_id")
+      .in("id", userIdsArray);
+      
+    if (users) {
+      users.forEach((u: any) => usersMap[u.id] = u);
     }
   }
 
-  // Inject creator data for workspaces
+  // Inject user data back into items
   const enrichedData = data ? data.map((item: any) => {
-    if (!isTask) {
-      item.creator = creatorsMap[item.created_by] || null;
+    item.creator = usersMap[item.created_by] || null;
+    
+    if (isTask && item.assignees) {
+      item.assignees = item.assignees.map((a: any) => ({
+        ...a,
+        user: usersMap[a.user_id] || null
+      }));
+    } else if (!isTask && item.members) {
+      item.members = item.members.map((m: any) => ({
+        ...m,
+        user: usersMap[m.user_id] || null
+      }));
     }
     return item;
   }) : [];
