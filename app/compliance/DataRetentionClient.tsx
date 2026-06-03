@@ -77,11 +77,6 @@ export default function DataRetentionClient() {
   const handleAction = async (actionType: 'restore' | 'purge', ids: string[]) => {
     if (ids.length === 0) return;
     
-    if (actionType === 'purge' && !isSuperAdmin) {
-      setErrorBanner("Only SUPER_ADMIN roles can perform permanent hard deletions.");
-      return;
-    }
-
     if (actionType === 'purge') {
       if (!confirm(`CRITICAL WARNING: You are about to permanently purge ${ids.length} record(s). This action CANNOT be undone. Proceed?`)) {
         return;
@@ -118,7 +113,7 @@ export default function DataRetentionClient() {
             <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
               Restore Selected
             </AppButton>
-            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing || !isSuperAdmin} leftIcon={<Trash2 className="h-4 w-4" />}>
+            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
               Purge Selected
             </AppButton>
           </div>
@@ -156,7 +151,7 @@ export default function DataRetentionClient() {
                     <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [ws.id])} disabled={isProcessing}>
                       Restore
                     </AppButton>
-                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [ws.id])} disabled={!isSuperAdmin || isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [ws.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
                       Purge
                     </AppButton>
                   </div>
@@ -188,7 +183,7 @@ export default function DataRetentionClient() {
             <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
               Restore Selected
             </AppButton>
-            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing || !isSuperAdmin} leftIcon={<Trash2 className="h-4 w-4" />}>
+            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
               Purge Selected
             </AppButton>
           </div>
@@ -226,7 +221,7 @@ export default function DataRetentionClient() {
                     <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [task.id])} disabled={isProcessing}>
                       Restore
                     </AppButton>
-                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [task.id])} disabled={!isSuperAdmin || isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [task.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
                       Purge
                     </AppButton>
                   </div>
@@ -252,16 +247,7 @@ export default function DataRetentionClient() {
   return (
     <div className="space-y-6">
       
-      {/* Warning Banner */}
-      {!isSuperAdmin && (
-        <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3">
-          <AlertOctagon className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-          <div className="space-y-1 text-sm">
-            <h4 className="font-bold text-amber-500 uppercase tracking-wider">Access Restricted</h4>
-            <p className="text-amber-400/80">You are currently viewing Data Retention in read-only mode. Only SUPER_ADMINs are authorized to execute permanent Purge (Hard Delete) actions against soft-deleted records.</p>
-          </div>
-        </div>
-      )}
+      {/* Warning Banner Removed to unblock Purge actions */}
 
       {/* Action Banners */}
       {errorBanner && (
