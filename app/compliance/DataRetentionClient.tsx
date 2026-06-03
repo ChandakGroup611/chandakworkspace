@@ -13,8 +13,8 @@ import {
   AppTableHead, 
   AppTableCell 
 } from "@/components/ui/AppTable";
-import { Trash2, AlertOctagon, Archive, ShieldAlert, FolderKanban, Ticket } from "lucide-react";
-import { fetchComplianceWorkspaces, fetchComplianceTasks, hardDeleteEntity } from "@/lib/actions/compliance";
+import { Trash2, AlertOctagon, Archive, ShieldAlert, FolderKanban, Ticket, RefreshCcw, CheckSquare } from "lucide-react";
+import { fetchComplianceWorkspaces, fetchComplianceTasks, hardDeleteEntity, restoreEntity } from "@/lib/actions/compliance";
 import { usePermissions } from "@/hooks/usePermissions";
 
 type TabType = "workspaces" | "tasks";
@@ -30,9 +30,12 @@ export default function DataRetentionClient() {
   
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Deletion State
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  // Deletion/Restore State
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -54,59 +57,109 @@ export default function DataRetentionClient() {
 
   useEffect(() => {
     loadData();
+    setSelectedIds(new Set());
+    setErrorBanner(null);
+    setSuccessBanner(null);
   }, [activeTab, activeView]);
 
-  const handleHardDelete = async (id: string) => {
-    if (!isSuperAdmin) {
-      alert("Only SUPER_ADMIN roles can perform permanent hard deletions.");
+  const toggleSelection = (id: string) => {
+    const newSelection = new Set(selectedIds);
+    if (newSelection.has(id)) newSelection.delete(id);
+    else newSelection.add(id);
+    setSelectedIds(newSelection);
+  };
+
+  const toggleAll = (ids: string[]) => {
+    if (selectedIds.size === ids.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(ids));
+  };
+
+  const handleAction = async (actionType: 'restore' | 'purge', ids: string[]) => {
+    if (ids.length === 0) return;
+    
+    if (actionType === 'purge' && !isSuperAdmin) {
+      setErrorBanner("Only SUPER_ADMIN roles can perform permanent hard deletions.");
       return;
     }
 
-    if (!confirm("CRITICAL WARNING: This action is permanent and cannot be undone. Are you absolutely sure you want to hard delete this record?")) {
-      return;
+    if (actionType === 'purge') {
+      if (!confirm(`CRITICAL WARNING: You are about to permanently purge ${ids.length} record(s). This action CANNOT be undone. Proceed?`)) {
+        return;
+      }
     }
 
-    setIsDeleting(id);
+    setIsProcessing(true);
+    setErrorBanner(null);
+    setSuccessBanner(null);
+    
     try {
-      await hardDeleteEntity(activeTab, id);
-      // Reload lists
+      if (actionType === 'restore') {
+        await restoreEntity(activeTab, ids);
+        setSuccessBanner(`Successfully restored ${ids.length} record(s).`);
+      } else {
+        await hardDeleteEntity(activeTab, ids);
+        setSuccessBanner(`Successfully purged ${ids.length} record(s).`);
+      }
+      setSelectedIds(new Set());
       await loadData();
     } catch (e: any) {
-      alert("Failed to hard delete: " + e.message);
+      setErrorBanner(e.message);
     } finally {
-      setIsDeleting(null);
+      setIsProcessing(false);
     }
   };
 
   const renderWorkspaces = () => (
-    <AppTableContainer>
-      <AppTable>
-        <AppTableHeader>
-          <tr>
-            <AppTableHead>Workspace Code</AppTableHead>
-            <AppTableHead>Name</AppTableHead>
-            <AppTableHead>Last Updated</AppTableHead>
-            <AppTableHead className="text-right">Actions</AppTableHead>
-          </tr>
-        </AppTableHeader>
+    <div className="space-y-4">
+      {selectedIds.size > 0 && activeView === "deleted" && (
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
+          <span className="text-sm font-bold text-gray-300">{selectedIds.size} workspace(s) selected</span>
+          <div className="flex gap-2">
+            <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
+              Restore Selected
+            </AppButton>
+            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing || !isSuperAdmin} leftIcon={<Trash2 className="h-4 w-4" />}>
+              Purge Selected
+            </AppButton>
+          </div>
+        </div>
+      )}
+      <AppTableContainer>
+        <AppTable>
+          <AppTableHeader>
+            <tr>
+              {activeView === "deleted" && (
+                <AppTableHead className="w-[40px]">
+                  <input type="checkbox" checked={selectedIds.size === workspaces.length && workspaces.length > 0} onChange={() => toggleAll(workspaces.map(w => w.id))} className="rounded border-gray-600 bg-black/20" />
+                </AppTableHead>
+              )}
+              <AppTableHead>Workspace Code</AppTableHead>
+              <AppTableHead>Name</AppTableHead>
+              <AppTableHead>Last Updated</AppTableHead>
+              <AppTableHead className="text-right">Actions</AppTableHead>
+            </tr>
+          </AppTableHeader>
         <AppTableBody>
           {workspaces.map((ws) => (
             <AppTableRow key={ws.id}>
+              {activeView === "deleted" && (
+                <AppTableCell>
+                  <input type="checkbox" checked={selectedIds.has(ws.id)} onChange={() => toggleSelection(ws.id)} className="rounded border-gray-600 bg-black/20" />
+                </AppTableCell>
+              )}
               <AppTableCell className="font-mono text-xs">{ws.workspace_code}</AppTableCell>
               <AppTableCell className="font-semibold">{ws.workspace_name}</AppTableCell>
               <AppTableCell className="text-xs text-gray-500">{new Date(ws.updated_at).toLocaleString()}</AppTableCell>
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
-                  <AppButton 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={() => handleHardDelete(ws.id)}
-                    isLoading={isDeleting === ws.id}
-                    disabled={!isSuperAdmin || isDeleting !== null}
-                    leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                  >
-                    Purge
-                  </AppButton>
+                  <div className="flex justify-end gap-2">
+                    <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [ws.id])} disabled={isProcessing}>
+                      Restore
+                    </AppButton>
+                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [ws.id])} disabled={!isSuperAdmin || isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                      Purge
+                    </AppButton>
+                  </div>
                 ) : (
                   <AppBadge variant="success">Active Record</AppBadge>
                 )}
@@ -115,7 +168,7 @@ export default function DataRetentionClient() {
           ))}
           {workspaces.length === 0 && (
             <AppTableRow>
-              <AppTableCell colSpan={4} className="text-center py-8 text-gray-500">
+              <AppTableCell colSpan={activeView === "deleted" ? 5 : 4} className="text-center py-8 text-gray-500">
                 {isLoading ? "Loading records..." : "No records found in this view."}
               </AppTableCell>
             </AppTableRow>
@@ -123,37 +176,60 @@ export default function DataRetentionClient() {
         </AppTableBody>
       </AppTable>
     </AppTableContainer>
+    </div>
   );
 
   const renderTasks = () => (
-    <AppTableContainer>
-      <AppTable>
-        <AppTableHeader>
-          <tr>
-            <AppTableHead>Task ID</AppTableHead>
-            <AppTableHead>Title/Subject</AppTableHead>
-            <AppTableHead>Last Updated</AppTableHead>
-            <AppTableHead className="text-right">Actions</AppTableHead>
-          </tr>
-        </AppTableHeader>
+    <div className="space-y-4">
+      {selectedIds.size > 0 && activeView === "deleted" && (
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
+          <span className="text-sm font-bold text-gray-300">{selectedIds.size} task(s) selected</span>
+          <div className="flex gap-2">
+            <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
+              Restore Selected
+            </AppButton>
+            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing || !isSuperAdmin} leftIcon={<Trash2 className="h-4 w-4" />}>
+              Purge Selected
+            </AppButton>
+          </div>
+        </div>
+      )}
+      <AppTableContainer>
+        <AppTable>
+          <AppTableHeader>
+            <tr>
+              {activeView === "deleted" && (
+                <AppTableHead className="w-[40px]">
+                  <input type="checkbox" checked={selectedIds.size === tasks.length && tasks.length > 0} onChange={() => toggleAll(tasks.map(t => t.id))} className="rounded border-gray-600 bg-black/20" />
+                </AppTableHead>
+              )}
+              <AppTableHead>Task ID</AppTableHead>
+              <AppTableHead>Title/Subject</AppTableHead>
+              <AppTableHead>Last Updated</AppTableHead>
+              <AppTableHead className="text-right">Actions</AppTableHead>
+            </tr>
+          </AppTableHeader>
         <AppTableBody>
           {tasks.map((task) => (
             <AppTableRow key={task.id}>
+              {activeView === "deleted" && (
+                <AppTableCell>
+                  <input type="checkbox" checked={selectedIds.has(task.id)} onChange={() => toggleSelection(task.id)} className="rounded border-gray-600 bg-black/20" />
+                </AppTableCell>
+              )}
               <AppTableCell className="font-mono text-xs">{task.task_number || task.id.split('-')[0]}</AppTableCell>
               <AppTableCell className="font-semibold">{task.subject || task.description}</AppTableCell>
               <AppTableCell className="text-xs text-gray-500">{new Date(task.updated_at).toLocaleString()}</AppTableCell>
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
-                  <AppButton 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={() => handleHardDelete(task.id)}
-                    isLoading={isDeleting === task.id}
-                    disabled={!isSuperAdmin || isDeleting !== null}
-                    leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                  >
-                    Purge
-                  </AppButton>
+                  <div className="flex justify-end gap-2">
+                    <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [task.id])} disabled={isProcessing}>
+                      Restore
+                    </AppButton>
+                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [task.id])} disabled={!isSuperAdmin || isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                      Purge
+                    </AppButton>
+                  </div>
                 ) : (
                   <AppBadge variant="success">Active Record</AppBadge>
                 )}
@@ -162,7 +238,7 @@ export default function DataRetentionClient() {
           ))}
           {tasks.length === 0 && (
             <AppTableRow>
-              <AppTableCell colSpan={4} className="text-center py-8 text-gray-500">
+              <AppTableCell colSpan={activeView === "deleted" ? 5 : 4} className="text-center py-8 text-gray-500">
                 {isLoading ? "Loading records..." : "No records found in this view."}
               </AppTableCell>
             </AppTableRow>
@@ -170,6 +246,7 @@ export default function DataRetentionClient() {
         </AppTableBody>
       </AppTable>
     </AppTableContainer>
+    </div>
   );
 
   return (
@@ -182,6 +259,27 @@ export default function DataRetentionClient() {
           <div className="space-y-1 text-sm">
             <h4 className="font-bold text-amber-500 uppercase tracking-wider">Access Restricted</h4>
             <p className="text-amber-400/80">You are currently viewing Data Retention in read-only mode. Only SUPER_ADMINs are authorized to execute permanent Purge (Hard Delete) actions against soft-deleted records.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Action Banners */}
+      {errorBanner && (
+        <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 flex items-start gap-3">
+          <AlertOctagon className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-sm">
+            <h4 className="font-bold text-rose-500 uppercase tracking-wider">Action Failed</h4>
+            <p className="text-rose-400/80">{errorBanner}</p>
+          </div>
+        </div>
+      )}
+      
+      {successBanner && (
+        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-start gap-3">
+          <CheckSquare className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-sm">
+            <h4 className="font-bold text-emerald-500 uppercase tracking-wider">Success</h4>
+            <p className="text-emerald-400/80">{successBanner}</p>
           </div>
         </div>
       )}

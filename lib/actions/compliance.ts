@@ -38,26 +38,47 @@ export async function fetchComplianceTasks(isDeleted: boolean = false) {
 }
 
 /**
- * HARD DELETES a record permanently from the database.
- * This completely destroys the row. Use with extreme caution.
+ * HARD DELETES records permanently from the database.
+ * This completely destroys the rows.
  */
-export async function hardDeleteEntity(entityType: 'workspaces' | 'tasks', id: string) {
-  // Execute actual DELETE query. 
-  // Because of foreign key constraints (like task_activity_logs or workspace_members),
-  // this assumes ON DELETE CASCADE is set up in the DB, OR we must delete children first.
-  // Assuming the DB has cascading deletes for the hard delete path.
-  
+export async function hardDeleteEntity(entityType: 'workspaces' | 'tasks', ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true };
+
   const { error } = await supabaseAdmin
     .from(entityType)
     .delete()
-    .eq('id', id);
+    .in('id', ids);
 
   if (error) {
-    console.error(`Failed to hard delete ${entityType} ${id}:`, error);
+    console.error(`Failed to hard delete ${entityType} ${ids}:`, error);
+    // Code 23503 is postgres foreign_key_violation
+    if (error.code === '23503') {
+      throw new Error(`Cannot delete ${entityType}. They contain attached child records (like tasks or members) which must be deleted first.`);
+    }
     throw new Error(`Hard delete failed: ${error.message}`);
   }
 
-  // Revalidate the compliance page so the UI updates
   revalidatePath('/compliance');
+  return { success: true };
+}
+
+/**
+ * RESTORES soft-deleted records back to active status.
+ */
+export async function restoreEntity(entityType: 'workspaces' | 'tasks', ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true };
+
+  const { error } = await supabaseAdmin
+    .from(entityType)
+    .update({ is_deleted: false, updated_at: new Date().toISOString() })
+    .in('id', ids);
+
+  if (error) {
+    console.error(`Failed to restore ${entityType} ${ids}:`, error);
+    throw new Error(`Restore failed: ${error.message}`);
+  }
+
+  revalidatePath('/compliance');
+  revalidatePath(`/${entityType}`);
   return { success: true };
 }
