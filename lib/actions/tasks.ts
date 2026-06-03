@@ -123,7 +123,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   // Get current status and owner
   const { data: task } = await supabaseAdmin
     .from('tasks')
-    .select('status_id, assigned_to, parent_task_id')
+    .select('status_id, assigned_to')
     .eq('id', taskId)
     .single();
 
@@ -132,8 +132,16 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   if (task.assigned_to !== userId) {
     const { hasPermission } = await import('@/lib/permissions');
     const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-    if (!isSuperAdmin) {
-       return { error: "You do not have permission to transition this task status. Only the Task Owner or Super Admin can edit." };
+    
+    const { data: participant } = await supabaseAdmin
+      .from('task_participants')
+      .select('id')
+      .eq('task_id', taskId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!isSuperAdmin && !participant) {
+       return { error: "You do not have permission to transition this task status. Only the Task Owner, Participants, or Super Admin can edit." };
     }
   }
 
@@ -179,10 +187,6 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
 
   // Fire-and-forget activity log — must not block or throw to the caller
   logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
-  
-  if (task.parent_task_id) {
-    recalculateParentProgress(task.parent_task_id).catch(e => console.error('[recalculateParentProgress]', e));
-  }
   
   return { success: true };
 }
