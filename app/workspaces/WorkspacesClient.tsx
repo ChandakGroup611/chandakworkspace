@@ -412,7 +412,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         <div className="flex-1 flex flex-col">
             
             {/* Hierarchical Task Matrix */}
-            <AppCard className="flex-1 p-5 flex flex-col overflow-hidden">
+            <AppCard className="flex-1 p-5 flex flex-col">
               <div className="flex items-center justify-between border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
                   <button 

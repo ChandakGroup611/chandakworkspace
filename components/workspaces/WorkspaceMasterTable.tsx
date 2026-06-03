@@ -95,7 +95,7 @@ export function WorkspaceMasterTable({
         </div>
 
         {/* Hover Tooltip */}
-        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-50 ${isLightMode ? 'bg-white border border-gray-200' : 'bg-gray-900 border border-white/10'}`}>
+        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] ${isLightMode ? 'bg-white border border-gray-200' : 'bg-gray-900 border border-white/10'}`}>
           <div className="text-[10px] font-bold uppercase text-gray-500 mb-2 px-1 border-b pb-1 border-gray-200 dark:border-white/10">Assigned Users ({members.length})</div>
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {
@@ -160,7 +160,7 @@ export function WorkspaceMasterTable({
               onOpenTask(node);
             }
           }}
-          className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none ${
+          className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
           isLightMode 
             ? 'border-gray-200 hover:bg-gray-50' 
             : 'border-white/5 hover:bg-white/[0.02]'
