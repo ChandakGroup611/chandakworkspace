@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS public.series_tracker (
     PRIMARY KEY (prefix, financial_year, month)
 );
 
+ALTER TABLE public.series_tracker DISABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE ON public.series_tracker TO authenticated, anon, service_role;
+
 -- 2. Function to generate the next code (Indian Financial Year: Apr-Mar)
 CREATE OR REPLACE FUNCTION public.generate_series_code(p_prefix VARCHAR)
 RETURNS TEXT LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
