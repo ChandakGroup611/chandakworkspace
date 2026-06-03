@@ -592,7 +592,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              {currentStatusCode === "ST_RESOLVED" && task.currentUserIsSuperAdmin && (
+              {currentStatusCode === "ST_RESOLVED" && task.currentUserCanAct && (
                 <>
                   <AppButton 
                     size="sm" 
@@ -617,7 +617,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </>
               )}
 
-              {task.status?.is_closed && task.currentUserIsSuperAdmin && (
+              {task.status?.is_closed && task.currentUserCanAct && (
                 <AppButton 
                   size="sm" 
                   variant="outline" 

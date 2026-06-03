@@ -518,22 +518,10 @@ export async function resolveTask(taskId: string) {
 }
 
 export async function approveTask(taskId: string) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-  const { hasPermission } = await import("@/lib/permissions");
-  const isSuperAdmin = await hasPermission(user.id, "WORKSPACES_MANAGE");
-  if (!isSuperAdmin) throw new Error("Only Super Admins can approve tasks");
   return transitionTaskStatus(taskId, "ST_CLOSED");
 }
 
 export async function reopenTask(taskId: string) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-  const { hasPermission } = await import("@/lib/permissions");
-  const isSuperAdmin = await hasPermission(user.id, "WORKSPACES_MANAGE");
-  if (!isSuperAdmin) throw new Error("Only Super Admins can reopen tasks");
   return transitionTaskStatus(taskId, "ST_OPEN");
 }
 
