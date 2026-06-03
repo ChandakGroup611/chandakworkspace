@@ -511,7 +511,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 onOpenWorkspace={(node) => openEditWorkspace(node)}
                 onShareNode={(node) => openEditWorkspace(node)}
                 onCreateSubWorkspace={(node) => {
-                  setNewWS({ ...newWS, parent_workspace_id: node.id });
+                  setNewWS({ 
+                    ...newWS, 
+                    parent_workspace_id: node.id,
+                    company_id: node.company_id || workspaces.find(w => w.id === node.id)?.company_id || ""
+                  });
                   setWsModalMode('SUB');
                 }}
                 onCreateTask={(node) => {
@@ -634,7 +638,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                       }`}
                       value={newWS.parent_workspace_id}
-                      onChange={e => setNewWS({...newWS, parent_workspace_id: e.target.value})}
+                      onChange={e => {
+                        const parentId = e.target.value;
+                        const parent = workspaces.find(w => w.id === parentId);
+                        setNewWS({
+                          ...newWS, 
+                          parent_workspace_id: parentId,
+                          ...(parent?.company_id ? { company_id: parent.company_id } : {})
+                        });
+                      }}
                     >
                       <option value="" disabled>-- Select Parent Workspace --</option>
                       {workspaces.filter(w => w.id !== editWSId).map(w => <option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}
