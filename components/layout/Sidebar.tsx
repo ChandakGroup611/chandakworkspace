@@ -51,8 +51,16 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
       { label: "ITSM Tickets", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
-      { label: "Workspaces", href: "/workspaces", icon: FolderKanban, permission: "WORKSPACES_VIEW" },
-      { label: "Reports & Analytics", href: "/reports", icon: LineChart },
+      { 
+        label: "Workspaces", 
+        href: "/workspaces", 
+        icon: FolderKanban, 
+        permission: "WORKSPACES_VIEW",
+        subItems: [
+          { label: "Workspace Master", href: "/workspaces" },
+          { label: "Reports & Analytics", href: "/workspaces/reports" }
+        ]
+      },
     ]
   },
   {
