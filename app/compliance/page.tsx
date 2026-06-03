@@ -24,10 +24,13 @@ import {
   Sliders, 
   Layers, 
   RefreshCw,
-  Compass
+  Compass,
+  Archive
 } from "lucide-react";
+import DataRetentionClient from "./DataRetentionClient";
 
 export default function CompliancePage() {
+  const [activeMainTab, setActiveMainTab] = useState<"accessibility" | "retention">("accessibility");
   const [isSimulatingLoad, setIsSimulatingLoad] = useState(false);
 
   const triggerSimulatedLoad = () => {
@@ -59,20 +62,49 @@ export default function CompliancePage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <AppButton 
-            variant="secondary" 
-            size="sm" 
-            onClick={triggerSimulatedLoad}
-            isLoading={isSimulatingLoad}
-            leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-          >
-            Audit Skeletons
-          </AppButton>
+          {activeMainTab === "accessibility" && (
+            <AppButton 
+              variant="secondary" 
+              size="sm" 
+              onClick={triggerSimulatedLoad}
+              isLoading={isSimulatingLoad}
+              leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+            >
+              Audit Skeletons
+            </AppButton>
+          )}
         </div>
       </div>
 
+      {/* Main Tab Navigation */}
+      <div className="flex items-center gap-4 border-b border-white/10 pb-4">
+        <button
+          onClick={() => setActiveMainTab("accessibility")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeMainTab === "accessibility" 
+              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+              : "text-gray-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <ShieldCheck className="h-4 w-4" />
+          Accessibility & WCAG
+        </button>
+        <button
+          onClick={() => setActiveMainTab("retention")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeMainTab === "retention" 
+              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+              : "text-gray-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Archive className="h-4 w-4" />
+          Data Retention & Trash
+        </button>
+      </div>
+
       {/* Main Orchestration Rows */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {activeMainTab === "accessibility" ? (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Left Span 2: WCAG Accessibility Compliance Metrics Matrix */}
         <div className="lg:col-span-2 space-y-6 flex flex-col">
           <AppCard className="flex-1 flex flex-col justify-between">
@@ -198,6 +230,11 @@ export default function CompliancePage() {
           </AppCard>
         </div>
       </div>
+      ) : (
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <DataRetentionClient />
+        </div>
+      )}
     </div>
   );
 }

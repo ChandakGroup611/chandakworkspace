@@ -17,7 +17,8 @@ import {
   UserCheck,
   Users,
   ChevronDown,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  BookOpen
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -59,6 +60,7 @@ const navGroups: NavGroup[] = [
       { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert },
       { label: "User Master", href: "/users", icon: Users },
       { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
+      { label: "Learning Hub", href: "/learning", icon: BookOpen },
     ]
   },
   {
