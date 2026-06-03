@@ -485,6 +485,8 @@ export async function updateWorkspace(id: string, formData: any) {
     throw new Error("Unauthorized: Missing WORKSPACES_UPDATE capability or workspace membership.");
   }
 
+  const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name").eq("id", id).single();
+
   const updatePayload = {
     workspace_name: formData.name,
     description: formData.description,
@@ -509,6 +511,18 @@ export async function updateWorkspace(id: string, formData: any) {
   if (error) {
     console.error("[Workspaces] Error updating workspace:", error);
     throw new Error(error.message);
+  }
+
+  // Audit Log for title change
+  if (oldWs && formData.name && oldWs.workspace_name !== formData.name) {
+    await supabaseAdmin.from('activity_events').insert({
+      module_type: 'WORKSPACE',
+      record_id: id,
+      event_type: 'TITLE',
+      old_value: { title: oldWs.workspace_name },
+      new_value: { title: formData.name },
+      performed_by: userId
+    });
   }
 
   // Update assignees and teams if provided
