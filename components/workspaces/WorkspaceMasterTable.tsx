@@ -21,7 +21,8 @@ export function WorkspaceMasterTable({
   onExpandNode,
   onPrefetchNode,
   expandedNodes,
-  setExpandedNodes
+  setExpandedNodes,
+  autoCollapse = true
 }: { 
   hierarchy: any[]; 
   isLightMode: boolean;
@@ -39,6 +40,7 @@ export function WorkspaceMasterTable({
   onPrefetchNode?: (node: any) => void;
   expandedNodes: Record<string, boolean>;
   setExpandedNodes: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  autoCollapse?: boolean;
 }) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const router = useRouter();
@@ -62,6 +64,33 @@ export function WorkspaceMasterTable({
         await onExpandNode(node);
       } finally {
         setLoadingNodes(prev => ({ ...prev, [id]: false }));
+      }
+    }
+
+    if (!isExpanded && autoCollapse) {
+      // Find siblings to collapse
+      const findSiblings = (nodes: any[], targetId: string): any[] | null => {
+        for (const n of nodes) {
+          if (n.id === targetId) return nodes;
+          if (n.children && n.children.length > 0) {
+            const found = findSiblings(n.children, targetId);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const siblings = findSiblings(hierarchy, id);
+      if (siblings) {
+        setExpandedNodes(prev => {
+          const next = { ...prev };
+          siblings.forEach(s => {
+            if (s.id !== id) next[s.id] = false;
+          });
+          next[id] = true;
+          return next;
+        });
+        return;
       }
     }
     

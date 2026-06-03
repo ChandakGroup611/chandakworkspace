@@ -143,6 +143,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+  const [autoCollapse, setAutoCollapse] = useState(true);
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
@@ -532,11 +533,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               {activeView === 'HIERARCHY' ? (
                 <div className="flex-1 overflow-visible">
-
+                  <div className="flex justify-end mb-3 mr-2">
+                    <label className={`flex items-center gap-2 text-xs font-medium cursor-pointer ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                      <input 
+                        type="checkbox" 
+                        checked={autoCollapse} 
+                        onChange={e => setAutoCollapse(e.target.checked)} 
+                        className={`rounded ${isLightMode ? 'border-gray-300 text-indigo-600 focus:ring-indigo-500' : 'border-white/10 bg-black/50 text-indigo-500 focus:ring-indigo-500/50'}`}
+                      />
+                      Auto-Minimize Others
+                    </label>
+                  </div>
               <WorkspaceMasterTable 
                 hierarchy={masterHierarchy} 
                 expandedNodes={expandedNodes}
                 setExpandedNodes={setExpandedNodes}
+                autoCollapse={autoCollapse}
                 isLightMode={isLightMode}
                 taskStatuses={initialData?.taskStatuses || []}
                 allUsers={allUsers}
