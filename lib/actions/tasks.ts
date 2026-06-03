@@ -447,8 +447,17 @@ export async function updateTask(taskId: string, payload: any) {
   if (task.assigned_to !== userId) {
     const { hasPermission } = await import('@/lib/permissions');
     const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-    if (!isSuperAdmin) {
-       return { error: "You do not have permission to edit this task. Only the Task Owner or Super Admin can edit." };
+    
+    // Check if user is a participant (Executor, Watcher, Reviewer)
+    const { data: participant } = await supabaseAdmin
+      .from('task_participants')
+      .select('id')
+      .eq('task_id', taskId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!isSuperAdmin && !participant) {
+       return { error: "You do not have permission to edit this task. Only the Task Owner, Participants, or Super Admin can edit." };
     }
   }
 

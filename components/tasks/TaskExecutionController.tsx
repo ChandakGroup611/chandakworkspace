@@ -335,7 +335,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       // 5. Save custom fields and pending properties if changed
       const updatePayload: any = {};
-      if (Object.keys(localCustomFields).length) updatePayload.custom_fields = localCustomFields;
+      
+      // Only include custom fields if they actually changed
+      if (Object.keys(localCustomFields).length) {
+        if (JSON.stringify(localCustomFields) !== JSON.stringify(task.custom_fields || {})) {
+          updatePayload.custom_fields = localCustomFields;
+        }
+      }
+
       if (Object.keys(pendingTaskUpdates).length) Object.assign(updatePayload, pendingTaskUpdates);
       
       if (Object.keys(updatePayload).length > 0) {
@@ -365,7 +372,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       if (isCommentsLoaded || !isHistoryCollapsed) await loadComments(true);
 
       triggerToast("Task updated successfully");
-      onUpdate?.();
+      if (onUpdate) {
+        onUpdate();
+      } else {
+        // If no onUpdate callback is provided, we are on the standalone page, so route back to list
+        setTimeout(() => {
+          router.push("/workspaces");
+        }, 1000);
+      }
       // Note: router.refresh() removed — it caused Server Component re-render errors.
       // State is refreshed via loadTaskDetails() above.
     } catch (e: any) {
