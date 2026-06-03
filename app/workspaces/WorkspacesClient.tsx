@@ -630,6 +630,23 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         }`}
                       />
                     </div>
+                    <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-gray-100 dark:border-white/5 shrink-0">
+                      <button 
+                        type="button" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const allIds = availableUsers.map(u => u.id);
+                          if (newWS.assigneeIds.length === allIds.length && allIds.length > 0) {
+                            setNewWS({...newWS, assigneeIds: []});
+                          } else {
+                            setNewWS({...newWS, assigneeIds: allIds});
+                          }
+                        }}
+                        className={`text-[11px] font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600 hover:text-indigo-700" : "text-indigo-400 hover:text-indigo-300"}`}
+                      >
+                        {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
+                      </button>
+                    </div>
                     <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent">
                       {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
                         <label key={u.id} className={`flex items-center gap-3 text-sm p-2 rounded-lg cursor-pointer transition-colors ${

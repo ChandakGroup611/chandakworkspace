@@ -361,7 +361,16 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
               <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">Supporting Stakeholders (Optional)</h4>
               <div className="grid grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block border-b border-gray-200 dark:border-white/10 pb-1.5">Executors</label>
+                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5">
+                    <label className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Executors</label>
+                    <button type="button" onClick={() => {
+                      const available = stakeholders.filter(s => s.id !== assignedTo).map(s => s.id);
+                      if (executors.length === available.length && available.length > 0) setExecutors([]);
+                      else setExecutors(available);
+                    }} className="text-[9px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
+                      {executors.length === stakeholders.filter(s => s.id !== assignedTo).length && stakeholders.filter(s => s.id !== assignedTo).length > 0 ? "Clear" : "Select All"}
+                    </button>
+                  </div>
                   <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent">
                     {stakeholders.filter(s => s.id !== assignedTo).map(s => (
                       <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
@@ -376,7 +385,16 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block border-b border-gray-200 dark:border-white/10 pb-1.5">Reviewers</label>
+                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5">
+                    <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Reviewers</label>
+                    <button type="button" onClick={() => {
+                      const available = stakeholders.filter(s => s.id !== assignedTo).map(s => s.id);
+                      if (reviewers.length === available.length && available.length > 0) setReviewers([]);
+                      else setReviewers(available);
+                    }} className="text-[9px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-wider">
+                      {reviewers.length === stakeholders.filter(s => s.id !== assignedTo).length && stakeholders.filter(s => s.id !== assignedTo).length > 0 ? "Clear" : "Select All"}
+                    </button>
+                  </div>
                   <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-blue-500/20 scrollbar-track-transparent">
                     {stakeholders.filter(s => s.id !== assignedTo).map(s => (
                       <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
@@ -391,7 +409,16 @@ export default function TaskCreationWizard({ workspaceId, onClose, onSuccess }: 
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block border-b border-gray-200 dark:border-white/10 pb-1.5">Watchers</label>
+                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5">
+                    <label className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Watchers</label>
+                    <button type="button" onClick={() => {
+                      const available = stakeholders.filter(s => s.id !== assignedTo).map(s => s.id);
+                      if (watchers.length === available.length && available.length > 0) setWatchers([]);
+                      else setWatchers(available);
+                    }} className="text-[9px] font-bold text-amber-600 hover:text-amber-700 uppercase tracking-wider">
+                      {watchers.length === stakeholders.filter(s => s.id !== assignedTo).length && stakeholders.filter(s => s.id !== assignedTo).length > 0 ? "Clear" : "Select All"}
+                    </button>
+                  </div>
                   <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent">
                     {stakeholders.filter(s => s.id !== assignedTo).map(s => (
                       <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
