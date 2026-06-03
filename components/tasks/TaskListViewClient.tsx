@@ -376,7 +376,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+          <AppButton variant="outline" size="sm" onClick={() => router.push(selectedWorkspaceId ? `/workspaces?workspace=${selectedWorkspaceId}` : "/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
             Back
           </AppButton>
           <div className="flex items-center gap-2 p-1 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5">
