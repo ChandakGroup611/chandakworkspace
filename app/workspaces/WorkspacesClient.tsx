@@ -855,7 +855,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   type="checkbox" 
                   id="is_public" 
                   checked={newWS.is_public} 
-                  onChange={e => setNewWS({...newWS, is_public: e.target.checked})} 
+                  onChange={e => {
+                    const checked = e.target.checked;
+                    if (checked) {
+                      const allUserIds = availableUsers.map(u => u.id);
+                      setNewWS({...newWS, is_public: true, assigneeIds: allUserIds});
+                    } else {
+                      setNewWS({...newWS, is_public: false});
+                    }
+                  }} 
                   className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5 cursor-pointer"
                 />
                 <label htmlFor="is_public" className="cursor-pointer flex flex-col">
