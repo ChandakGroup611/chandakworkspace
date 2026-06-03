@@ -189,7 +189,8 @@ export async function createWorkspace(formData: any) {
         end_date: formData.end_date,
         status_id: statusId,
         workspace_owner_id: userId,
-        parent_workspace_id: formData.parent_workspace_id || null
+        parent_workspace_id: formData.parent_workspace_id || null,
+        visibility_settings: formData.visibility_settings || { public: false }
       }])
       .select()
       .single();
@@ -538,6 +539,7 @@ export async function updateWorkspace(id: string, formData: any) {
     start_date: formData.start_date,
     end_date: formData.end_date,
     parent_workspace_id: formData.parent_workspace_id !== undefined ? formData.parent_workspace_id : undefined,
+    ...(formData.visibility_settings !== undefined && { visibility_settings: formData.visibility_settings }),
   };
 
   // Prevent cyclical assignments: Workspace cannot be its own parent
