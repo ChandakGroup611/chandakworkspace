@@ -311,15 +311,14 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       };
     }
 
-    // 2. Fetch everything in a massive parallel burst (Eliminating waterfalls)
-    const [profileRes, managedDeptsRes, workspaces, companies, priorities, taskStatuses, allUsers] = await Promise.all([
+    // 2. Fetch independent data first
+    const [profileRes, managedDeptsRes, workspaces, companies, priorities, taskStatuses] = await Promise.all([
       supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single(),
       supabase.from("departments").select("id").eq("manager_id", user.id),
       getVisibleWorkspaces(user.id), // Direct fast repository call
       fetchCompanies(),
       fetchPriorities(),
-      import('@/lib/actions/tasks').then(m => m.getTaskStatuses()),
-      fetchAssignableUsers()
+      import('@/lib/actions/tasks').then(m => m.getTaskStatuses())
     ]);
 
     if (profileRes.error) {
@@ -354,6 +353,45 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
 
     // Await the second batch concurrently
     await Promise.all(secondBatch);
+
+    // 4. Extract all unique User IDs needed for UI mapping to prevent sending the entire company directory
+    const uniqueUserIds = new Set<string>();
+    uniqueUserIds.add(user.id);
+    
+    // Scan workspaces
+    workspaces.forEach((w: any) => {
+      if (w.owner_id) uniqueUserIds.add(w.owner_id);
+      if (w.created_by) uniqueUserIds.add(w.created_by);
+      w.members?.forEach((m: any) => uniqueUserIds.add(m.user_id));
+    });
+
+    // Scan hierarchy
+    masterHierarchy.forEach((w: any) => {
+      if (w.owner_id) uniqueUserIds.add(w.owner_id);
+      if (w.created_by) uniqueUserIds.add(w.created_by);
+      w.members?.forEach((m: any) => uniqueUserIds.add(m.user_id));
+    });
+
+    // Scan tasks
+    prefetchTasks.forEach((t: any) => {
+      if (t.owner_id) uniqueUserIds.add(t.owner_id);
+      if (t.created_by) uniqueUserIds.add(t.created_by);
+      t.assignees?.forEach((m: any) => uniqueUserIds.add(m.user_id));
+    });
+
+    // Scan stakeholders
+    prefetchStakeholders.forEach((s: any) => {
+      if (s.user_id) uniqueUserIds.add(s.user_id);
+    });
+
+    // Fetch ONLY the required users (drastically reduces Server-to-Client JSON payload)
+    const allUsersResult = await supabaseAdmin
+      .from("user_master")
+      .select("id, full_name, user_code")
+      .in("id", Array.from(uniqueUserIds))
+      .eq("is_deleted", false);
+
+    const allUsers = allUsersResult.data || [];
 
     return {
       userProfile,
@@ -405,22 +443,25 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
   // If expanding a Workspace/Sub-Workspace, fetch its Sub-Workspaces and Direct Tasks
   if (parentType === 'WORKSPACE' || parentType === 'SUB_WORKSPACE') {
-    // 1. Fetch Sub-Workspaces
-    const { data: subWs } = await supabaseAdmin
-      .from('workspaces')
-      .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), members:workspace_members(user_id, role), stats:workspace_statistics(subworkspace_count, task_count, subtask_count)')
-      .eq('parent_workspace_id', parentId)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false });
+    // 1 & 2. Fetch Sub-Workspaces & Tasks Concurrently
+    const [subWsRes, tasksRes] = await Promise.all([
+      supabaseAdmin
+        .from('workspaces')
+        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), members:workspace_members(user_id, role), stats:workspace_statistics(subworkspace_count, task_count, subtask_count)')
+        .eq('parent_workspace_id', parentId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('tasks')
+        .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role)')
+        .eq('workspace_id', parentId)
+        .is('parent_task_id', null)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false })
+    ]);
 
-    // 2. Fetch Direct Tasks
-    const { data: tasks } = await supabaseAdmin
-      .from('tasks')
-      .select('id, name:subject, code:id, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role)')
-      .eq('workspace_id', parentId)
-      .is('parent_task_id', null)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false });
+    const subWs = subWsRes.data;
+    const tasks = tasksRes.data;
 
     const nodes = [];
     if (subWs) {

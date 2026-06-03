@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronRight, ChevronDown, FolderKanban, Layers, CheckCircle2, CircleDashed, ExternalLink, Edit2, Share2, Trash2, MoreVertical } from "lucide-react";
+import { ChevronRight, ChevronDown, ExternalLink, Edit2, Share2, Trash2, MoreVertical, Folder, FolderTree, CheckSquare, CornerDownRight, CheckCircle2, CircleDashed } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { useRouter } from "next/navigation";
 
@@ -136,19 +136,25 @@ export function WorkspaceMasterTable({
   // Perfectly balanced layout matrix:
   // Using minmax(minPixels, fr) for ALL columns allows the previously locked right-side columns (Assign/Create/Actions)
   // to expand proportionally on wide screens, aggressively stealing and absorbing the massive blank space from the left side,
-  // completely eliminating both the left-side gaps and the right-side congestion.
   const gridCols = 'minmax(150px, 2.5fr) minmax(100px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(130px, 1fr)';
 
 
   const HierarchyRow = React.memo(({ node, depth, isExpanded }: { node: any, depth: number, isExpanded: boolean }) => {
     const hasChildren = node.children && node.children.length > 0;
-    
-    let TypeIcon = FolderKanban;
-    if (node.type === 'SUB_WORKSPACE') TypeIcon = Layers;
-    if (node.type === 'TASK') TypeIcon = CircleDashed;
-    if (node.type === 'SUB_TASK') TypeIcon = CheckCircle2;
-
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
+    const isRoot = depth === 0;
+    
+    // Distinct icons based on depth and type
+    let TypeIcon = Folder;
+    if (node.type === 'WORKSPACE') TypeIcon = Folder;
+    else if (node.type === 'SUB_WORKSPACE') TypeIcon = FolderTree;
+    else if (node.type === 'TASK') TypeIcon = CheckSquare;
+    else if (node.type === 'SUB_TASK') TypeIcon = CheckCircle2;
+
+    // Background tinting based on depth for visual hierarchy
+    const depthColorsLight = ['bg-white', 'bg-gray-50/50', 'bg-gray-100/50', 'bg-gray-200/50'];
+    const depthColorsDark = ['bg-[#1C1C28]', 'bg-[#252535]', 'bg-[#2A2A3C]', 'bg-[#323246]'];
+    const rowBg = isLightMode ? depthColorsLight[Math.min(depth, 3)] : depthColorsDark[Math.min(depth, 3)];
     
     let subWsCount = node.subworkspace_count || 0;
     let directTaskCount = node.direct_task_count || 0;
@@ -179,50 +185,69 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
-        className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
+        className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${rowBg} ${
         isLightMode 
-          ? 'border-gray-200 hover:bg-gray-50' 
-          : 'border-white/5 hover:bg-white/[0.02]'
+          ? 'border-gray-200 hover:bg-indigo-50/30' 
+          : 'border-white/5 hover:bg-white/5'
       }`} style={{ gridTemplateColumns: gridCols }}>
 
+          {/* Guide Line for Nested Items */}
+          {depth > 0 && (
+            <div 
+              className={`absolute left-0 top-0 bottom-0 border-l-2 ${isLightMode ? 'border-indigo-200' : 'border-indigo-500/30'}`}
+              style={{ marginLeft: `${depth * 2 + 0.2}rem` }}
+            />
+          )}
+
           {/* Entity Name */}
-          <div className="py-1 px-2 flex items-center min-w-0" style={{ paddingLeft: `${depth * 2 + 0.5}rem` }}>
-            <div className="flex items-center gap-2 min-w-0 w-full">
+          <div className="py-2 px-2 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 2 + 0.5}rem` }}>
+            <div className="flex items-start gap-2 min-w-0 w-full">
               {/* Only show chevron if there are items to expand (using our new accurate stats) */}
-              {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : hasChildren) ? (
-                <button 
-                  onClick={(e) => toggleNode(node, e)}
-                  disabled={loadingNodes[node.id]}
-                  className={`p-1 rounded-md transition-colors flex-shrink-0 ${
-                    isLightMode ? 'hover:bg-gray-200 text-gray-500' : 'hover:bg-white/10 text-gray-400'
-                  } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
-                >
-                  {loadingNodes[node.id] ? (
-                    <div className="h-4 w-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-                  ) : isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </button>
-              ) : (
-                <div className="w-6 flex-shrink-0" /> // spacer
-              )}
-              <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
-                isWorkspaceType ? 'text-indigo-500' : 'text-purple-500'
-              }`} />
+              <div className="mt-0.5 flex-shrink-0">
+                {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : hasChildren) ? (
+                  <button 
+                    onClick={(e) => toggleNode(node, e)}
+                    disabled={loadingNodes[node.id]}
+                    className={`p-1 rounded-md transition-colors ${
+                      isLightMode ? 'hover:bg-gray-200 text-gray-500' : 'hover:bg-white/10 text-gray-400'
+                    } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
+                  >
+                    {loadingNodes[node.id] ? (
+                      <div className="h-4 w-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                    ) : isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                ) : (
+                  <div className="w-6" /> // spacer
+                )}
+              </div>
+              
               <div className="flex flex-col min-w-0 flex-1">
-                <span className={`font-semibold text-sm truncate ${
-                  isLightMode ? 'text-gray-900' : 'text-white'
-                }`}>
-                  {node.workspace_name || node.name || node.subject || node.title}
-                </span>
-                <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                  <span className="text-[10px] text-gray-500 font-mono truncate max-w-[80px] shrink-0">{node.workspace_code || node.code || "N/A"}</span>
+                <div className="flex items-center gap-2">
+                  {depth > 0 && !isWorkspaceType && <CornerDownRight className={`h-3 w-3 flex-shrink-0 ${isLightMode ? 'text-gray-400' : 'text-gray-600'}`} />}
+                  <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
+                    isWorkspaceType ? (depth === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500/80') : 'text-emerald-500'
+                  }`} />
+                  <span className={`truncate ${
+                    depth === 0 ? 'font-bold text-[15px]' : 
+                    isWorkspaceType ? 'font-semibold text-[14px]' : 
+                    'font-medium text-[13px]'
+                  } ${
+                    isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
+                  }`}>
+                    {node.workspace_name || node.name || node.subject || node.title}
+                  </span>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-2 mt-1 ml-6">
+                  <span className="text-[10px] text-gray-400 font-mono truncate shrink-0">{node.workspace_code || node.code || "N/A"}</span>
                   {isWorkspaceType && (
-                    <div className="flex flex-wrap items-center gap-1.5 border-l border-gray-300 dark:border-gray-700 pl-2">
-                      <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded whitespace-nowrap">{subWsCount} Sub-WS</span>
-                      <span className="text-[10px] font-bold text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-1.5 py-0.5 rounded whitespace-nowrap" title={`${directTaskCount} Direct, ${childTaskCount} Child`}>
+                    <div className="flex flex-wrap items-center gap-1.5 border-l border-gray-200 dark:border-gray-800 pl-2">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${isLightMode ? 'text-indigo-600 bg-indigo-50' : 'text-indigo-300 bg-indigo-500/10'}`}>{subWsCount} Sub-WS</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${isLightMode ? 'text-emerald-600 bg-emerald-50' : 'text-emerald-300 bg-emerald-500/10'}`} title={`${directTaskCount} Direct, ${childTaskCount} Child`}>
                         {totalTaskCount} Tasks ({directTaskCount} Direct)
                       </span>
                     </div>
