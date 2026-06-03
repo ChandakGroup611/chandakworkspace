@@ -18,7 +18,8 @@ import {
   Users,
   ChevronDown,
   ChevronRight as ChevronRightIcon,
-  BookOpen
+  BookOpen,
+  LineChart
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -51,6 +52,7 @@ const navGroups: NavGroup[] = [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
       { label: "ITSM Tickets", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
       { label: "Workspaces", href: "/workspaces", icon: FolderKanban, permission: "WORKSPACES_VIEW" },
+      { label: "Reports & Analytics", href: "/reports", icon: LineChart },
     ]
   },
   {
