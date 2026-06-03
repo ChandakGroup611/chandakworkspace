@@ -90,11 +90,6 @@ CREATE TRIGGER trg_update_member_count
 AFTER INSERT OR DELETE ON public.workspace_members
 FOR EACH ROW EXECUTE FUNCTION public.update_member_count();
 
--- Enable RLS and add policies
-ALTER TABLE public.workspace_statistics ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow authenticated users to read statistics"
-ON public.workspace_statistics
-FOR SELECT
-TO authenticated
-USING (true);
+-- Disable RLS and add full permissions
+ALTER TABLE public.workspace_statistics DISABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.workspace_statistics TO authenticated, anon, service_role;
