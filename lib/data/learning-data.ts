@@ -1,4 +1,4 @@
-import { BookOpen, FolderKanban, ShieldCheck, Ticket } from "lucide-react";
+import { BookOpen, FolderKanban, ShieldCheck, Ticket, CalendarDays, Timer, Tags } from "lucide-react";
 
 export type LearningModuleField = {
   name: string;
@@ -84,11 +84,12 @@ export const learningModules: LearningModule[] = [
       { name: "Priority", type: "Dropdown", description: "Urgency level (e.g., High, Medium, Low) which affects SLA calculations.", isRequired: true },
       { name: "Participants", type: "Multi-Select", description: "Executors (doers), Reviewers (approvers), and Watchers (observers).", isRequired: false },
       { name: "Checklist", type: "Dynamic List", description: "Sub-items that must be checked off before the task is considered done.", isRequired: false },
+      { name: "Tags & Labels", type: "Multi-Select", description: "Custom tags used for cross-workspace categorization, searching, and filtering (e.g., 'Bug', 'Frontend', 'Urgent').", isRequired: false },
     ],
     steps: [
       { title: "Open a Workspace", instruction: "Navigate to a specific Workspace to see its Task Board or List." },
       { title: "Create Task", instruction: "Click the '+ Task' button to open the task creation drawer." },
-      { title: "Define Scope", instruction: "Enter the Subject and comprehensive Description." },
+      { title: "Define Scope", instruction: "Enter the Subject and comprehensive Description, and apply relevant Tags for categorization." },
       { title: "Assign Roles", instruction: "Add an Executor so someone is responsible for the work." },
       { title: "Transition Status", instruction: "Once created, open the task and use the top-right Status Dropdown to move it from 'NEW' to 'IN PROGRESS', and eventually 'CLOSED'." }
     ],
@@ -96,6 +97,60 @@ export const learningModules: LearningModule[] = [
       { action: "Task Record Creation", outcome: "The task appears on the board.", technicalDetail: "A row is inserted into the `tasks` table with a default status mapping to 'NEW'." },
       { action: "Role Distribution", outcome: "Participants are assigned.", technicalDetail: "Rows are added to `task_participants` mapped to specific roles (EXECUTOR, WATCHER)." },
       { action: "Activity Audit Log", outcome: "A history trail is started.", technicalDetail: "Status changes and creations trigger entries in the `task_activity_logs` table for compliance tracking." }
+    ]
+  },
+  {
+    id: "sprints",
+    title: "Sprint Planning",
+    description: "Learn how to timebox your work using Agile Sprints for focused execution.",
+    icon: CalendarDays,
+    startInfo: {
+      overview: "Sprints help teams execute a focused subset of tasks over a specific time period (usually 1-4 weeks). This prevents the team from being overwhelmed by the master backlog.",
+      prerequisites: [
+        "A Workspace with active tasks.",
+        "WORKSPACES_MANAGE or equivalent permissions to create a Sprint."
+      ]
+    },
+    fields: [
+      { name: "Sprint Name", type: "Text Input", description: "The identifier for the sprint (e.g., 'Sprint 12', 'Q3 Launch').", isRequired: true },
+      { name: "Start/End Date", type: "Date Picker", description: "The exact timeframe during which the tasks must be completed.", isRequired: true },
+      { name: "Goal", type: "Text Input", description: "The overarching objective of this sprint iteration.", isRequired: false },
+    ],
+    steps: [
+      { title: "Navigate to Sprint Planning", instruction: "Open your workspace and click the 'Sprint Planning' tab next to 'Execution Hierarchy'." },
+      { title: "Create a Sprint", instruction: "Click 'New Sprint', give it a name, and set the duration." },
+      { title: "Assign Tasks", instruction: "Drag tasks from your backlog into the active Sprint to commit them to this timebox." },
+      { title: "Monitor Progress", instruction: "Use the Sprint Board to transition tasks across columns until the sprint concludes." }
+    ],
+    results: [
+      { action: "Sprint Record", outcome: "A Sprint container is generated.", technicalDetail: "Inserted into the `sprints` table linked to the parent workspace." },
+      { action: "Task Association", outcome: "Tasks are bound to the sprint.", technicalDetail: "The `sprint_id` foreign key is updated on the respective `tasks` rows." },
+    ]
+  },
+  {
+    id: "time-tracking",
+    title: "Time Logging & Capacity",
+    description: "Track actual hours spent on tasks versus estimates to measure team velocity.",
+    icon: Timer,
+    startInfo: {
+      overview: "Time logging provides critical analytics for managers to understand where effort is being spent. By logging time, the system can calculate capacity, burn rates, and identify bottlenecks.",
+      prerequisites: [
+        "An assigned task."
+      ]
+    },
+    fields: [
+      { name: "Hours", type: "Number Input", description: "The amount of time spent working during this specific session.", isRequired: true },
+      { name: "Remarks", type: "Text Input", description: "A brief explanation of what was accomplished during these hours.", isRequired: false },
+    ],
+    steps: [
+      { title: "Open a Task", instruction: "Click on any task to open its detail drawer." },
+      { title: "Navigate to Time Tab", instruction: "Look for the 'Time' tab in the top navigation of the drawer." },
+      { title: "Log Effort", instruction: "Enter your hours, provide a short note about the work done, and click 'Save Log'." },
+      { title: "Review History", instruction: "The system aggregates your total hours and displays a historical log of every session." }
+    ],
+    results: [
+      { action: "Time Entry", outcome: "The hours are added to the task total.", technicalDetail: "A row is inserted into `task_time_logs` containing the duration and the actor ID." },
+      { action: "Capacity Calculation", outcome: "Dashboard metrics update automatically.", technicalDetail: "Aggregations run on the fly to compare logged time against `estimated_hours`." },
     ]
   },
   {
