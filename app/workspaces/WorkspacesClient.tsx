@@ -231,6 +231,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setWorkspaces(updatedList);
         setActiveWorkspace(data);
       } else {
+        data = await createWorkspace(payload);
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
