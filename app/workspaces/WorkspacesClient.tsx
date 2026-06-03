@@ -144,6 +144,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const [autoCollapse, setAutoCollapse] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
@@ -479,7 +480,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Search workspaces..." 
+              placeholder="Search workspaces & tasks..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-indigo-500 w-48 transition-all ${
                 isLightMode ? 'bg-white border-gray-300 text-gray-900 focus:w-64' : 'bg-black/30 border-white/10 text-white focus:w-64'
               }`}
@@ -545,10 +548,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     </label>
                   </div>
               <WorkspaceMasterTable 
-                hierarchy={masterHierarchy} 
+                hierarchy={
+                  searchQuery.trim() 
+                    ? (function filterTree(nodes: any[], query: string): any[] {
+                        const lower = query.toLowerCase();
+                        return nodes.map(node => {
+                          const children = node.children ? filterTree(node.children, query) : [];
+                          const matches = 
+                            node.name?.toLowerCase().includes(lower) || 
+                            node.code?.toLowerCase().includes(lower) ||
+                            node.subject?.toLowerCase().includes(lower) ||
+                            node.task_code?.toLowerCase().includes(lower);
+                          if (matches || children.length > 0) {
+                            return { ...node, children: matches && children.length === 0 ? node.children : children };
+                          }
+                          return null;
+                        }).filter(Boolean);
+                      })(masterHierarchy, searchQuery.trim())
+                    : masterHierarchy
+                } 
                 expandedNodes={expandedNodes}
                 setExpandedNodes={setExpandedNodes}
                 autoCollapse={autoCollapse}
+                forceExpandAll={!!searchQuery.trim()}
                 isLightMode={isLightMode}
                 taskStatuses={initialData?.taskStatuses || []}
                 allUsers={allUsers}

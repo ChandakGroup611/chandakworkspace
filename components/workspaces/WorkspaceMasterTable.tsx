@@ -22,7 +22,8 @@ export function WorkspaceMasterTable({
   onPrefetchNode,
   expandedNodes,
   setExpandedNodes,
-  autoCollapse = true
+  autoCollapse = true,
+  forceExpandAll = false
 }: { 
   hierarchy: any[]; 
   isLightMode: boolean;
@@ -41,6 +42,7 @@ export function WorkspaceMasterTable({
   expandedNodes: Record<string, boolean>;
   setExpandedNodes: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   autoCollapse?: boolean;
+  forceExpandAll?: boolean;
 }) {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const router = useRouter();
@@ -415,12 +417,15 @@ export function WorkspaceMasterTable({
     });
 
     const renderTree = (nodes: any[], depth = 0) => {
-      return nodes.map(node => (
-        <React.Fragment key={node.id}>
-          <HierarchyRow node={node} depth={depth} isExpanded={!!expandedNodes[node.id]} />
-          {expandedNodes[node.id] && node.children && renderTree(node.children, depth + 1)}
-        </React.Fragment>
-      ));
+      return nodes.map((node) => {
+        const isActuallyExpanded = forceExpandAll || !!expandedNodes[node.id];
+        return (
+          <React.Fragment key={node.id}>
+            <HierarchyRow node={node} depth={depth} isExpanded={isActuallyExpanded} />
+            {isActuallyExpanded && node.children && renderTree(node.children, depth + 1)}
+          </React.Fragment>
+        );
+      });
     };
 
   return (
