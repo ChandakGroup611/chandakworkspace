@@ -64,6 +64,16 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
   }, [initialTaskId]);
 
+  // Sync active workspace from server data on soft navigation
+  useEffect(() => {
+    if (initialData?.prefetchWorkspaceId) {
+      const targetWorkspace = initialData.workspaces?.find((w: any) => w.id === initialData.prefetchWorkspaceId);
+      if (targetWorkspace) {
+        setActiveWorkspace(targetWorkspace);
+      }
+    }
+  }, [initialData?.prefetchWorkspaceId, initialData?.workspaces]);
+
   // Real-time presence tracking via server-side heartbeat
   const allUserIds = useMemo(
     () => allUsers.map((u: any) => u.id).filter(Boolean),
