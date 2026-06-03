@@ -20,12 +20,15 @@ import {
 import { toggleChecklistItem } from "@/lib/actions/workspaces";
 import { useRouter } from "next/navigation";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[] }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
   const router = useRouter();
+  const { hasPermission } = usePermissions();
+  const canDelete = hasPermission("TASKS_DELETE");
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
   const [loading, setLoading] = useState(!initialTask);
@@ -379,7 +382,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setDeleteLoading(true);
     setError(null);
     try {
-      await deleteTask(taskId);
+      const res = await deleteTask(taskId);
+      if (res?.error) {
+        throw new Error(res.error);
+      }
       onUpdate?.();
       triggerToast("Task deleted successfully");
       // Need a slight delay to allow the toast to render before redirecting
@@ -610,15 +616,17 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               )}
 
               <div className="flex-1" />
-              <AppButton 
-                variant="outline" 
-                size="sm" 
-                className="text-rose-400 hover:bg-rose-500/10 border-rose-500/20 hover:border-rose-500/50" 
-                onClick={handleDeleteTask} 
-                disabled={deleteLoading}
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Task
-              </AppButton>
+              {canDelete && (
+                <AppButton 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-rose-400 hover:bg-rose-500/10 border-rose-500/20 hover:border-rose-500/50" 
+                  onClick={handleDeleteTask} 
+                  disabled={deleteLoading}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Task
+                </AppButton>
+              )}
             </div>
           </div>
         </div>
