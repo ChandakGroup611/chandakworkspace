@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 export type ReportEntityType = "WORKSPACE" | "SUB_WORKSPACE" | "TASK" | "SUB_TASK";
-export type ReportScope = "ALL" | "CREATED_BY_ME" | "ASSIGNED_TO_ME" | "MANAGED_BY_ME";
+export type ReportScope = "ALL" | "CREATED_BY_ME" | "ASSIGNED_TO_ME";
 
 export async function generateWorkspaceReportData(entityType: ReportEntityType, scope: ReportScope) {
   const cookieStore = await cookies();
@@ -139,8 +139,6 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         return item.members?.some((m: any) => m.user_id === userId);
       }
     });
-  } else if (scope === "MANAGED_BY_ME") {
-    filteredData = filteredData.filter((item: any) => item.creator?.manager_id === userId);
   } else if (scope === "ALL") {
     // Standard visibility
     filteredData = filteredData.filter((item: any) => {
@@ -148,8 +146,7 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
       const isAssigned = isTask 
         ? item.assignees?.some((a: any) => a.user_id === userId)
         : item.members?.some((m: any) => m.user_id === userId);
-      const isManager = item.creator?.manager_id === userId;
-      return isCreator || isAssigned || isManager;
+      return isCreator || isAssigned;
     });
   }
 

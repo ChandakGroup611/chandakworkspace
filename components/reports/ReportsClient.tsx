@@ -201,7 +201,7 @@ export default function ReportsClient() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Scope Toggle */}
         <div className="flex items-center gap-2 p-1.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 overflow-x-auto">
-          {(["ALL", "CREATED_BY_ME", "ASSIGNED_TO_ME", "MANAGED_BY_ME"] as ReportScope[]).map(sc => (
+          {(["ALL", "CREATED_BY_ME", "ASSIGNED_TO_ME"] as ReportScope[]).map(sc => (
             <button
               key={sc}
               onClick={() => setScope(sc)}
