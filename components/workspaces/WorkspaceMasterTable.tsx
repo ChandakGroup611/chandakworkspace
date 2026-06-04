@@ -185,10 +185,27 @@ export function WorkspaceMasterTable({
     else if (node.type === 'TASK') TypeIcon = CheckSquare;
     else if (node.type === 'SUB_TASK') TypeIcon = CheckCircle2;
 
-    // Background tinting based on depth for visual hierarchy
-    const depthColorsLight = ['bg-white', 'bg-gray-50/50', 'bg-gray-100/50', 'bg-gray-200/50'];
-    const depthColorsDark = ['bg-[#1C1C28]', 'bg-[#252535]', 'bg-[#2A2A3C]', 'bg-[#323246]'];
-    const rowBg = isLightMode ? depthColorsLight[Math.min(depth, 3)] : depthColorsDark[Math.min(depth, 3)];
+    // Background tinting based on entity type to visually segregate the hierarchy
+    let rowBg = '';
+    let hoverBg = '';
+    
+    // Ultra-premium minimalist shading (Notion / Linear style)
+    if (node.type === 'WORKSPACE') {
+      rowBg = isLightMode ? 'bg-indigo-50/80' : 'bg-indigo-900/15';
+      hoverBg = isLightMode ? 'hover:bg-indigo-100/70' : 'hover:bg-indigo-900/30';
+    } else if (node.type === 'SUB_WORKSPACE') {
+      rowBg = isLightMode ? 'bg-indigo-50/40' : 'bg-indigo-900/10';
+      hoverBg = isLightMode ? 'hover:bg-indigo-100/50' : 'hover:bg-indigo-900/20';
+    } else if (node.type === 'TASK') {
+      rowBg = isLightMode ? 'bg-emerald-50/40' : 'bg-emerald-900/10';
+      hoverBg = isLightMode ? 'hover:bg-emerald-100/50' : 'hover:bg-emerald-900/20';
+    } else if (node.type === 'SUB_TASK') {
+      rowBg = isLightMode ? 'bg-amber-50/40' : 'bg-amber-900/10';
+      hoverBg = isLightMode ? 'hover:bg-amber-100/50' : 'hover:bg-amber-900/20';
+    } else {
+      rowBg = isLightMode ? 'bg-white' : 'bg-[#1C1C28]';
+      hoverBg = isLightMode ? 'hover:bg-gray-50' : 'hover:bg-[#252535]';
+    }
     
     let subWsCount = node.subworkspace_count || 0;
     let directTaskCount = node.direct_task_count || 0;
@@ -223,22 +240,30 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
-        className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${rowBg} ${
-        isLightMode 
-          ? 'border-gray-200 hover:bg-indigo-50/30' 
-          : 'border-white/5 hover:bg-white/5'
+        className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${rowBg} ${hoverBg} ${
+        isLightMode ? 'border-gray-200' : 'border-white/5'
       }`} style={{ gridTemplateColumns: gridCols }}>
 
           {/* Guide Line for Nested Items */}
-          {depth > 0 && (
-            <div 
-              className={`absolute left-0 top-0 bottom-0 border-l-2 ${isLightMode ? 'border-indigo-200' : 'border-indigo-500/30'}`}
-              style={{ marginLeft: `${depth * 2 + 0.2}rem` }}
-            />
-          )}
+          {depth > 0 && (() => {
+            let guideLineColor = isLightMode ? 'border-gray-200' : 'border-white/10';
+            if (node.type === 'SUB_WORKSPACE') {
+              guideLineColor = isLightMode ? 'border-indigo-400' : 'border-indigo-500/80';
+            } else if (node.type === 'TASK') {
+              guideLineColor = isLightMode ? 'border-emerald-400' : 'border-emerald-500/80';
+            } else if (node.type === 'SUB_TASK') {
+              guideLineColor = isLightMode ? 'border-amber-400' : 'border-amber-500/80';
+            }
+            return (
+              <div 
+                className={`absolute left-0 top-0 bottom-0 border-l-[3px] ${guideLineColor}`}
+                style={{ marginLeft: `${depth * 1.5 + 0.9}rem` }}
+              />
+            );
+          })()}
 
           {/* Entity Name */}
-          <div className="py-2 px-2 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 2 + 0.5}rem` }}>
+          <div className="py-2 px-2 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 1.5 + 1.2}rem` }}>
             <div className="flex items-start gap-2 min-w-0 w-full">
               <div className="mt-0.5 flex-shrink-0">
                 {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : (childTaskCount > 0 || hasChildren)) ? (
@@ -262,63 +287,55 @@ export function WorkspaceMasterTable({
                 )}
               </div>
               
-              <div className="flex flex-col min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  {depth > 0 && !isWorkspaceType && <CornerDownRight className={`h-3 w-3 flex-shrink-0 ${isLightMode ? 'text-gray-400' : 'text-gray-600'}`} />}
-                  <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
-                    isWorkspaceType ? (depth === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500/80') : 'text-emerald-500'
-                  }`} />
-                  <span className={`truncate ${
-                    depth === 0 ? 'font-bold text-[15px]' : 
-                    isWorkspaceType ? 'font-semibold text-[14px]' : 
-                    'font-medium text-[13px]'
-                  } ${
-                    isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
-                  }`}>
-                    {node.workspace_name || node.name || node.subject || node.title}
-                  </span>
+              <div className="flex flex-col min-w-0 flex-1 justify-center py-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0 max-w-full">
+                    {depth > 0 && !isWorkspaceType && <CornerDownRight className={`h-3.5 w-3.5 flex-shrink-0 ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`} />}
+                    <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
+                      isWorkspaceType ? (depth === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500/80') : 'text-emerald-500'
+                    }`} />
+                    <span className={`break-words tracking-tight ${
+                      depth === 0 ? 'font-bold text-[15px]' : 
+                      isWorkspaceType ? 'font-semibold text-[14px]' : 
+                      'font-medium text-[13px]'
+                    } ${
+                      isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
+                    }`}>
+                      {node.workspace_name || node.name || node.subject || node.title}
+                    </span>
+                  </div>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-2 mt-1 ml-6">
-                  <span className="text-[10px] text-gray-400 font-mono truncate shrink-0">{node.workspace_code || node.code || "N/A"}</span>
-                  {node.parent && (
-                    <>
-                      <span className="text-[10px] text-gray-300 dark:text-gray-600">•</span>
-                      <span className="text-[10px] text-gray-400 truncate max-w-[150px]" title={`Parent: ${node.parent.name}`}>Parent: {node.parent.name || node.parent.code}</span>
-                    </>
-                  )}
-                  {isWorkspaceType && (
-                    <div className="flex flex-wrap items-center gap-1.5 border-l border-gray-200 dark:border-gray-800 pl-2">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap ${isLightMode ? 'text-indigo-600 bg-indigo-50' : 'text-indigo-300 bg-indigo-500/10'}`}>{subWsCount} Sub-WS</span>
-                      <span 
-                        onDoubleClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/workspaces/tasks?workspaceId=${node.id}`);
-                        }}
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-colors ${isLightMode ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' : 'text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20'}`} 
-                        title={`${directTaskCount} Direct, ${childTaskCount} Child (Double-click to open)`}
-                      >
-                        {totalTaskCount} Tasks ({directTaskCount} Direct)
-                      </span>
-                    </div>
-                  )}
-                </div>
+                {isWorkspaceType && (
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1 ml-[22px]">
+                    <span 
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/workspaces/tasks?workspaceId=${node.id}`);
+                      }}
+                      className={`text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-orange-500 bg-white hover:bg-orange-50 border border-orange-400' : 'text-orange-500 bg-[#1C1C28] hover:bg-orange-900/20 border border-orange-500/50'}`} 
+                      title={`${directTaskCount} Direct, ${childTaskCount} Child (Double-click to open)`}
+                    >
+                      {totalTaskCount} Tasks <span className="opacity-75 font-semibold">({directTaskCount} Direct)</span>
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
           
           {/* Company */}
-          <div className="py-1 px-2 text-xs text-gray-500 truncate">
+          <div className="py-1 px-2 text-xs text-gray-500 break-words">
             {companyName}
           </div>
 
           {/* Created Date */}
-          <div className="py-1 px-2 text-xs text-gray-500 whitespace-nowrap truncate" title={fullDate}>
+          <div className="py-1 px-2 text-xs text-gray-500 whitespace-nowrap" title={fullDate}>
             {shortDate}
           </div>
 
           {/* Created By */}
-          <div className="py-1 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 truncate">
+          <div className="py-1 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 break-words">
             {creatorId ? getUserName(creatorId) : "System"}
           </div>
 
@@ -359,20 +376,18 @@ export function WorkspaceMasterTable({
 
           {/* Actions */}
           <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isWorkspaceType) {
+            {isWorkspaceType && directTaskCount > 0 && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
                   router.push(`/workspaces/tasks?workspaceId=${node.id}`);
-                } else {
-                  onOpenTask(node);
-                }
-              }}
-              className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-gray-500 hover:bg-gray-200' : 'text-gray-400 hover:bg-white/10'}`}
-              title={isWorkspaceType ? "Open Task List" : "View Task"}
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-            </button>
+                }}
+                className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-gray-500 hover:bg-gray-200' : 'text-gray-400 hover:bg-white/10'}`}
+                title="Open Task List"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </button>
+            )}
             
             <button 
               onClick={(e) => {
@@ -380,7 +395,7 @@ export function WorkspaceMasterTable({
                 if (isWorkspaceType) {
                   onOpenWorkspace(node);
                 } else {
-                  onOpenTask(node);
+                  router.push(`/tasks/${node.id}`);
                 }
               }}
               className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-indigo-600 hover:bg-indigo-50' : 'text-indigo-400 hover:bg-indigo-500/20'}`}
@@ -389,11 +404,11 @@ export function WorkspaceMasterTable({
               <Edit2 className="h-3.5 w-3.5" />
             </button>
 
-            {onShareNode && (
+            {onShareNode && isWorkspaceType && (
               <button 
                 onClick={() => onShareNode(node)}
                 className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-emerald-600 hover:bg-emerald-50' : 'text-emerald-400 hover:bg-emerald-500/20'}`}
-                title="Share"
+                title="Share Workspace"
               >
                 <Share2 className="h-3.5 w-3.5" />
               </button>
@@ -435,12 +450,12 @@ export function WorkspaceMasterTable({
         <div className={`grid items-center text-xs uppercase tracking-wider font-semibold border-b ${
           isLightMode ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-white/[0.02] text-gray-400 border-white/10'
         }`} style={{ gridTemplateColumns: gridCols }}>
-          <div className="py-2 px-2 pl-[64px] truncate">Entity Name</div>
-          <div className="py-2 px-2 truncate">Company</div>
-          <div className="py-2 px-2 truncate">Created Date</div>
-          <div className="py-2 px-2 truncate">Created By</div>
-          <div className="py-2 px-2 truncate text-center">Assign</div>
-          <div className="py-2 px-2 truncate text-center">Create</div>
+          <div className="py-2 px-2 pl-[64px]">Entity Name</div>
+          <div className="py-2 px-2">Company</div>
+          <div className="py-2 px-2">Created Date</div>
+          <div className="py-2 px-2">Created By</div>
+          <div className="py-2 px-2 text-center">Assign</div>
+          <div className="py-2 px-2 text-center">Create</div>
           <div className="py-2 px-1 text-center">Actions</div>
         </div>
 

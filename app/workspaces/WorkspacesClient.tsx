@@ -25,7 +25,7 @@ import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { TaskDetailDrawer } from "@/components/tasks/TaskDetailDrawer";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
-import { getTaskDetails, updateNodeStatus } from "@/lib/actions/tasks";
+import { getTaskDetails, updateNodeStatus, deleteTask } from "@/lib/actions/tasks";
 import { useRouter } from "next/navigation";
 import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
 import { SprintBoard } from "@/components/workspaces/sprints/SprintBoard";
@@ -272,22 +272,23 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       // Refresh the execution hierarchy tree to show the newly created workspace
       import("@/lib/actions/workspaces").then(m => {
-        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => {
-          setMasterHierarchy(hier);
-          if (newWS.parent_workspace_id) {
-            setExpandedNodes(prev => ({ ...prev, [newWS.parent_workspace_id]: true }));
-            m.fetchHierarchyChildren(newWS.parent_workspace_id, 'WORKSPACE').then(children => {
-              setMasterHierarchy(curr => {
-                const insertChildren = (tree: any[]): any[] => tree.map(node => {
-                  if (node.id === newWS.parent_workspace_id) return { ...node, children, childrenFetched: true };
-                  if (node.children) return { ...node, children: insertChildren(node.children) };
-                  return node;
-                });
-                return insertChildren(curr);
+        if (newWS.parent_workspace_id) {
+          setExpandedNodes(prev => ({ ...prev, [newWS.parent_workspace_id]: true }));
+          m.fetchHierarchyChildren(newWS.parent_workspace_id, 'WORKSPACE').then(children => {
+            setMasterHierarchy(curr => {
+              const insertChildren = (tree: any[]): any[] => tree.map(node => {
+                if (node.id === newWS.parent_workspace_id) return { ...node, children, childrenFetched: true };
+                if (node.children) return { ...node, children: insertChildren(node.children) };
+                return node;
               });
+              return insertChildren(curr);
             });
-          }
-        });
+          });
+        } else {
+          m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => {
+            setMasterHierarchy(hier);
+          });
+        }
       });
       
       setNewWS({ 
@@ -352,6 +353,33 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
   };
 
+  const handleDeleteWorkspaceTask = async (nodeId: string) => {
+    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) return;
+    try {
+      const res = await deleteTask(nodeId);
+      if (res?.error) throw new Error(res.error);
+      
+      triggerToast("Task deleted successfully");
+      
+      // Remove from master hierarchy locally
+      const removeNode = (tree: any[]): any[] => {
+        return tree.filter(n => n.id !== nodeId).map(n => {
+          if (n.children) {
+            return { ...n, children: removeNode(n.children) };
+          }
+          return n;
+        });
+      };
+      setMasterHierarchy(prev => removeNode(prev));
+
+      // Remove from active tasks list if currently active
+      setTasks(prev => prev.filter(t => t.id !== nodeId));
+    } catch (e: any) {
+      console.error("[Task Deletion] Intercepted:", e.message || e);
+      alert("Database Error on Task Deletion: " + (e.message || e.details || JSON.stringify(e)));
+    }
+  };
+
   // Intent-Driven Hover Prefetching
   const prefetchCache = useRef<Set<string>>(new Set());
   
@@ -408,24 +436,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       // Refresh the execution hierarchy tree to show the newly created task
       import("@/lib/actions/workspaces").then(m => {
-        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => {
-          setMasterHierarchy(hier);
-          const parentId = creatingTaskParentId || creatingTaskWorkspaceId;
-          const parentType = creatingTaskParentId ? 'TASK' : 'WORKSPACE';
-          if (parentId) {
-            setExpandedNodes(prev => ({ ...prev, [parentId]: true }));
-            m.fetchHierarchyChildren(parentId, parentType).then(children => {
-              setMasterHierarchy(curr => {
-                const insertChildren = (tree: any[]): any[] => tree.map(node => {
-                  if (node.id === parentId) return { ...node, children, childrenFetched: true };
-                  if (node.children) return { ...node, children: insertChildren(node.children) };
-                  return node;
-                });
-                return insertChildren(curr);
+        const parentId = creatingTaskParentId || creatingTaskWorkspaceId;
+        const parentType = creatingTaskParentId ? 'TASK' : 'WORKSPACE';
+        if (parentId) {
+          setExpandedNodes(prev => ({ ...prev, [parentId]: true }));
+          m.fetchHierarchyChildren(parentId, parentType).then(children => {
+            setMasterHierarchy(curr => {
+              const insertChildren = (tree: any[]): any[] => tree.map(node => {
+                if (node.id === parentId) return { ...node, children, childrenFetched: true };
+                if (node.children) return { ...node, children: insertChildren(node.children) };
+                return node;
               });
+              return insertChildren(curr);
             });
-          }
-        });
+          });
+        }
       });
     } catch (err: any) {
       console.error("[Task Creation] Intercepted:", err.message || err);
@@ -601,7 +626,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
                     handleDeleteWorkspace(node.id);
                   } else {
-                    alert("Deleting tasks directly from this table is coming soon.");
+                    handleDeleteWorkspaceTask(node.id);
                   }
                 }}
                 onPrefetchNode={handlePrefetchNode}
@@ -690,11 +715,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Name *</label>
-                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name} onChange={e => setNewWS({...newWS, name: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
-                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? newWS.code : "[Auto-Generated]"} className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
+                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? (newWS.code || "") : "[Auto-Generated]"} className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
                 </div>
               </div>
 
@@ -737,11 +762,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="grid grid-cols-2 gap-5 mb-5">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
-                  <AppInput type="date" value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                  <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target End Date</label>
-                  <AppInput type="date" value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                  <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
                 </div>
               </div>
 

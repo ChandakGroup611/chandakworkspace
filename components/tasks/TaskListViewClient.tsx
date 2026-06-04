@@ -74,7 +74,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false);
   const [bulkNewStatus, setBulkNewStatus] = useState<string>("");
   const [bulkRemark, setBulkRemark] = useState<string>("");
-  const { hasPermission } = usePermissions();
+  const { hasPermission, roleCode } = usePermissions();
   const canDelete = hasPermission("TASKS_DELETE");
 
   useEffect(() => {
@@ -532,15 +532,15 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </AppTableHead>
-                <AppTableHead className="w-[100px]">Code</AppTableHead>
-                <AppTableHead className="w-[300px]">Title & Description</AppTableHead>
-                <AppTableHead className="w-[180px]">Workspace</AppTableHead>
-                <AppTableHead className="w-[120px]">Priority</AppTableHead>
-                <AppTableHead className="w-[120px]">Due</AppTableHead>
-                <AppTableHead className="w-[120px]">Status</AppTableHead>
-                <AppTableHead className="w-[160px]">Assignee</AppTableHead>
-                <AppTableHead className="text-right w-[100px]">Created</AppTableHead>
-                <AppTableHead className="text-right w-[120px]">Actions</AppTableHead>
+                <AppTableHead className="min-w-[100px] whitespace-nowrap">Code</AppTableHead>
+                <AppTableHead className="min-w-[300px]">Title & Description</AppTableHead>
+                <AppTableHead className="min-w-[180px]">Workspace</AppTableHead>
+                <AppTableHead className="min-w-[120px]">Priority</AppTableHead>
+                <AppTableHead className="min-w-[120px] whitespace-nowrap">Due</AppTableHead>
+                <AppTableHead className="min-w-[120px] whitespace-nowrap">Status</AppTableHead>
+                <AppTableHead className="min-w-[160px]">Assignee</AppTableHead>
+                <AppTableHead className="text-right min-w-[100px] whitespace-nowrap">Created</AppTableHead>
+                <AppTableHead className="text-right min-w-[120px]">Actions</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody>
@@ -564,9 +564,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </AppTableCell>
-                    <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold w-[100px]">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
-                    <AppTableCell className="w-[300px]">
-                      <div className="font-semibold truncate text-gray-900">{task.title}</div>
+                    <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold min-w-[100px] whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                    <AppTableCell className="min-w-[300px]">
+                      <div className="font-semibold break-words text-gray-900">{task.title}</div>
                       <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
                       {typeof task.custom_fields?.progress_percentage === 'number' && (
                         <div className="mt-1.5 flex items-center gap-2">
@@ -577,21 +577,25 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </div>
                       )}
                     </AppTableCell>
-                    <AppTableCell className="text-gray-700 w-[180px]">{task.workspace?.name || task.workspace?.code}</AppTableCell>
-                    <AppTableCell className="w-[120px]">
-                      <AppBadge variant="info">{task.priority?.name || '—'}</AppBadge>
+                    <AppTableCell className="text-gray-700 min-w-[180px] break-words">{task.workspace?.name || task.workspace?.code}</AppTableCell>
+                    <AppTableCell className="min-w-[120px]">
+                      <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null}>
+                        {task.priority?.name || '—'}
+                      </AppBadge>
                     </AppTableCell>
-                    <AppTableCell className="text-gray-600 text-sm w-[120px]">{task.end_date || '—'}</AppTableCell>
-                    <AppTableCell className="w-[120px]">
+                    <AppTableCell className="text-gray-600 text-sm min-w-[120px] whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
+                    <AppTableCell className="min-w-[120px] whitespace-nowrap">
                       <button 
                         onClick={(e) => handleStatusClick(e, task)} 
                         className="hover:opacity-80 transition-opacity focus:outline-none" 
                         title="Update Status"
                       >
-                        <AppBadge variant="neutral" className="cursor-pointer border-dashed border-gray-300">{task.status?.name || '—'}</AppBadge>
+                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className="cursor-pointer border-dashed">
+                          {task.status?.name || '—'}
+                        </AppBadge>
                       </button>
                     </AppTableCell>
-                    <AppTableCell className="w-[160px]">
+                    <AppTableCell className="min-w-[160px]">
                       {task.assignee ? (
                         <div className="flex items-center gap-2">
                           {task.assignee.profile_photo ? (
@@ -602,15 +606,15 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                             </div>
                           )}
                           <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-gray-800 truncate max-w-[100px]">{task.assignee.full_name}</span>
+                            <span className="text-xs font-semibold text-gray-800 break-words">{task.assignee.full_name}</span>
                           </div>
                         </div>
                       ) : (
                         <span className="text-xs text-gray-400 italic">Unassigned</span>
                       )}
                     </AppTableCell>
-                    <AppTableCell className="text-right text-gray-500 text-xs w-[100px]">{formatDate(task.created_at)}</AppTableCell>
-                    <AppTableCell className="text-right w-[120px]">
+                    <AppTableCell className="text-right text-gray-500 text-xs min-w-[100px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                    <AppTableCell className="text-right min-w-[120px]">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link 
                           href={`/tasks/${task.id}`}
@@ -783,7 +787,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
             
-            {inlineTask?.assigned_to === currentUserId ? (
+            {(inlineTask?.assigned_to === currentUserId || hasPermission("WORKSPACES_MANAGE")) ? (
               <div className="grid gap-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Status</label>
                 <select
@@ -821,7 +825,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               disabled={inlineLoading || !inlineRemark.trim()}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {inlineTask?.assigned_to === currentUserId && inlineNewStatus !== inlineTask?.status_id ? "Change Status" : "Add Remark"}
+              {(inlineTask?.assigned_to === currentUserId || hasPermission("WORKSPACES_MANAGE")) && inlineNewStatus !== inlineTask?.status_id ? "Change Status" : "Add Remark"}
             </AppButton>
           </DialogFooter>
         </DialogContent>

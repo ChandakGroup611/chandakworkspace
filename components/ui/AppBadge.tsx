@@ -3,11 +3,12 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 export interface AppBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "success" | "warning" | "danger" | "info" | "neutral";
+  variant?: "success" | "warning" | "danger" | "info" | "neutral" | "custom";
+  customColor?: string | null;
 }
 
 export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
-  ({ className, variant = "neutral", children, ...props }, ref) => {
+  ({ className, variant = "neutral", customColor, children, style, ...props }, ref) => {
     let theme = "glass-intelligence";
     try {
       const themeCtx = useTheme();
@@ -31,16 +32,24 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       neutral: isLight 
         ? "bg-gray-50 text-gray-700 border-gray-200" 
         : "bg-white/5 text-gray-300 border-white/10",
+      custom: "" // Handled dynamically via style prop
     };
+
+    const dynamicStyle = customColor ? {
+      color: customColor,
+      borderColor: customColor,
+      backgroundColor: `${customColor}1A` // ~10% opacity
+    } : {};
 
     return (
       <span
         ref={ref}
         className={cn(
           "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold border tracking-wide uppercase select-none transition-colors",
-          variants[variant],
+          customColor ? "bg-transparent" : variants[variant],
           className
         )}
+        style={{ ...dynamicStyle, ...style }}
         {...props}
       >
         {children}

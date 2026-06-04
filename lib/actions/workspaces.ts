@@ -876,6 +876,16 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
+  // 1. Fetch all workspaces to build the descendant tree
+  const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
+  
+  const getDescendants = (id: string, all: any[]): string[] => {
+    const children = all.filter((w: any) => w.parent_workspace_id === id);
+    return [id, ...children.flatMap((c: any) => getDescendants(c.id, all))];
+  };
+  
+  const hierarchyIds = getDescendants(workspaceId, allWs || []);
+  
   const { data, error } = await supabase
     .from("tasks")
     .select(`
@@ -884,7 +894,7 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       status:status_master(name:status_name, code:status_code, status_color),
       priority:priority_master(name:priority_name, code:priority_code)
     `)
-    .eq("workspace_id", workspaceId)
+    .in("workspace_id", hierarchyIds)
     .eq("is_deleted", false)
     .order("created_at", { ascending: true });
     
@@ -1113,9 +1123,28 @@ export async function createSprint(workspaceId: string, formData: any) {
 }
 
 export async function fetchSprints(workspaceId: string) {
+  const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
+  if (!allWs) return [];
+  
+  // Find the root workspace
+  let rootId = workspaceId;
+  let current = allWs.find(w => w.id === rootId);
+  while (current && current.parent_workspace_id) {
+    rootId = current.parent_workspace_id;
+    current = allWs.find(w => w.id === rootId);
+  }
+  
+  // Now get all descendants of the root
+  const getDescendants = (id: string, all: any[]): string[] => {
+    const children = all.filter((w: any) => w.parent_workspace_id === id);
+    return [id, ...children.flatMap((c: any) => getDescendants(c.id, all))];
+  };
+  
+  const hierarchyIds = getDescendants(rootId, allWs);
+
   const { data, error } = await supabaseAdmin.from("sprints")
     .select("*")
-    .eq("workspace_id", workspaceId)
+    .in("workspace_id", hierarchyIds)
     .order("start_date", { ascending: true });
   if (error) return [];
   return data || [];

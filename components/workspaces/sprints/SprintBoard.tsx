@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { fetchSprints, fetchTasksByWorkspace, updateTaskProgress } from "@/lib/actions/workspaces";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Plus, GripVertical, Calendar } from "lucide-react";
+import { Plus, GripVertical, Calendar, Edit2, Check, X } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 
@@ -24,6 +24,12 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
   const [newSprintEnd, setNewSprintEnd] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [taskFilter, setTaskFilter] = useState<'ALL' | 'ASSIGNED' | 'TEAM' | 'CREATED' | 'OVERDUE'>('ALL');
+
+  const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
+  const [editSprintName, setEditSprintName] = useState("");
+  const [editSprintStart, setEditSprintStart] = useState("");
+  const [editSprintEnd, setEditSprintEnd] = useState("");
+  const [isUpdatingSprint, setIsUpdatingSprint] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -77,6 +83,27 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       alert("Failed to create sprint");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateSprint = async (id: string) => {
+    if (!editSprintName) return;
+    try {
+      setIsUpdatingSprint(true);
+      const { updateSprint } = await import("@/lib/actions/workspaces");
+      const updated = await updateSprint(id, {
+        name: editSprintName,
+        start_date: editSprintStart || null,
+        end_date: editSprintEnd || null,
+        status: sprints.find(s => s.id === id)?.status
+      });
+      setSprints(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+      setEditingSprintId(null);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update sprint");
+    } finally {
+      setIsUpdatingSprint(false);
     }
   };
 
@@ -159,7 +186,16 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                 <div>
                   <div className="text-xs font-bold">{t.title || t.subject}</div>
-                  <div className="text-[10px] text-gray-500 mt-1">{t.priority?.priority_name || 'Standard'}</div>
+                  <div 
+                    className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
+                    style={t.priority?.priority_color ? { 
+                      color: t.priority.priority_color, 
+                      backgroundColor: `${t.priority.priority_color}1A`, 
+                      border: `1px solid ${t.priority.priority_color}33` 
+                    } : {}}
+                  >
+                    {t.priority?.priority_name || 'Standard'}
+                  </div>
                 </div>
               </div>
             ))}
@@ -177,11 +213,57 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, sprint.id)}
           >
-            <div className="p-3 border-b border-indigo-500/20">
-              <div className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{sprint.name}</div>
-              <div className="text-[10px] text-gray-500 mt-0.5">
-                {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : '?'} - {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : '?'}
-              </div>
+            <div className="p-3 border-b border-indigo-500/20 group relative">
+              {editingSprintId === sprint.id ? (
+                <div className="space-y-2">
+                  <input 
+                    type="text" 
+                    value={editSprintName} 
+                    onChange={e => setEditSprintName(e.target.value)} 
+                    className={`w-full text-sm font-bold p-1 rounded border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
+                    placeholder="Sprint Name"
+                  />
+                  <div className="flex gap-2">
+                    <input 
+                      type="date" 
+                      value={editSprintStart} 
+                      onChange={e => setEditSprintStart(e.target.value)} 
+                      className={`w-full text-[10px] p-1 rounded border focus:outline-none ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
+                    />
+                    <input 
+                      type="date" 
+                      value={editSprintEnd} 
+                      onChange={e => setEditSprintEnd(e.target.value)} 
+                      className={`w-full text-[10px] p-1 rounded border focus:outline-none ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-1">
+                    <button onClick={() => setEditingSprintId(null)} className="p-1 text-gray-500 hover:bg-gray-200 rounded transition-colors"><X className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} className="p-1 text-emerald-600 hover:bg-emerald-100 rounded transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between items-start">
+                    <div className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{sprint.name}</div>
+                    <button 
+                      onClick={() => {
+                        setEditingSprintId(sprint.id);
+                        setEditSprintName(sprint.name);
+                        setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
+                        setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
+                      }} 
+                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${isLightMode ? 'text-gray-400 hover:bg-white hover:text-indigo-600' : 'text-gray-500 hover:bg-black/30 hover:text-indigo-400'}`}
+                      title="Edit Sprint"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">
+                    {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : '?'} - {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : '?'}
+                  </div>
+                </>
+              )}
             </div>
             <div className="p-2 space-y-2 overflow-y-auto flex-1">
               {filteredTasks.filter(t => t.sprint_id === sprint.id).map(t => (
@@ -194,7 +276,16 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                   <div>
                     <div className="text-xs font-bold">{t.title || t.subject}</div>
-                    <div className="text-[10px] text-gray-500 mt-1">{t.priority?.priority_name || 'Standard'}</div>
+                    <div 
+                      className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
+                      style={t.priority?.priority_color ? { 
+                        color: t.priority.priority_color, 
+                        backgroundColor: `${t.priority.priority_color}1A`, 
+                        border: `1px solid ${t.priority.priority_color}33` 
+                      } : {}}
+                    >
+                      {t.priority?.priority_name || 'Standard'}
+                    </div>
                   </div>
                 </div>
               ))}

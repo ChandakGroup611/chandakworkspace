@@ -133,6 +133,7 @@ export default function MastersPage() {
   const [formAssetTag, setFormAssetTag] = useState("");
   const [formModule, setFormModule] = useState("tickets");
   const [formScopeId, setFormScopeId] = useState<string | number | null>("e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1");
+  const [formColor, setFormColor] = useState<string>("#808080");
 
   const currentConfig = MASTER_TABLES.find(t => t.id === activeTab)!;
 
@@ -265,6 +266,7 @@ export default function MastersPage() {
     setFormDesc("");
     setFormAssetTag("");
     setFormSlaMinutes(120);
+    setFormColor("#808080");
   }, [activeTab]);
 
   useEffect(() => {
@@ -322,6 +324,7 @@ export default function MastersPage() {
     setFormAssetTag("");
     setFormModule("tickets");
     setFormScopeId(currentConfig.scopeId || null);
+    setFormColor("#808080");
     setShowModal(true);
   };
 
@@ -342,6 +345,7 @@ export default function MastersPage() {
     setFormAssetTag(rec.asset_tag || "");
     setFormModule(rec.module || "tickets");
     setFormScopeId(rec.scope_id || null);
+    setFormColor(rec.status_color || rec.priority_color || "#808080");
     setShowModal(true);
   };
 
@@ -367,6 +371,7 @@ export default function MastersPage() {
     if (currentConfig.table === "status_master") {
       payload.status_code = payload.code;
       payload.status_name = payload.name;
+      payload.status_color = formColor;
       delete payload.code;
       delete payload.name;
     }
@@ -374,6 +379,7 @@ export default function MastersPage() {
     if (currentConfig.table === "priority_master") {
       payload.priority_code = payload.code;
       payload.priority_name = payload.name;
+      payload.priority_color = formColor;
       delete payload.code;
       delete payload.name;
     }
@@ -1153,6 +1159,29 @@ export default function MastersPage() {
                   }`}
                 />
               </div>
+
+              {/* Color Assignment */}
+              {(currentConfig.table === "status_master" || currentConfig.table === "priority_master") && (
+                <div className="space-y-1.5">
+                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
+                    Display Color <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="color" 
+                      value={formColor} 
+                      onChange={(e) => setFormColor(e.target.value)} 
+                      className="h-9 w-12 cursor-pointer rounded bg-transparent border-0 p-0"
+                    />
+                    <AppInput 
+                      value={formColor.toUpperCase()}
+                      onChange={(e) => setFormColor(e.target.value)}
+                      className="font-mono text-xs w-32 uppercase"
+                    />
+                  </div>
+                  <span className="text-[0.7rem] text-gray-500 block">Globally used to style this tag across all dashboards and boards.</span>
+                </div>
+              )}
 
               {/* Conditional Cascading Mapping dropmenus */}
               {currentConfig.parentTable && (

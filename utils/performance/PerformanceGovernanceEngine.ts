@@ -94,12 +94,28 @@ class PerformanceGovernanceEngine {
   }
 
   private evaluateEnterpriseScore() {
-    // 1. Gather raw data from other passive trackers (hydration, query, memory, ws)
+    // 1. Gather raw data from passive trackers (hydration, query, memory, ws)
     const budget = getBudgetForRoute(this.activeRoute);
     
-    // In a real implementation, we read from hydrationStore, queryStore, etc. here passively.
-    // For now, we mock reading the scores for demonstration.
-    // This function runs on idle, so it doesn't block the UI thread.
+    if (typeof window !== 'undefined' && window.performance) {
+      // Calculate Hydration/DOM Interactive latency
+      const navEntries = window.performance.getEntriesByType('navigation');
+      if (navEntries && navEntries.length > 0) {
+        const nav = navEntries[0] as PerformanceNavigationTiming;
+        if (nav.domInteractive > 0) {
+          // If > 3 seconds, score goes down significantly
+          this.metrics.hydrationScore = Math.max(0, Math.min(100, 100 - ((nav.domInteractive - 500) / 30)));
+        }
+      }
+
+      // Calculate Memory Pressure
+      const mem = (window.performance as any).memory;
+      if (mem && mem.jsHeapSizeLimit > 0) {
+        const usedRatio = mem.usedJSHeapSize / mem.jsHeapSizeLimit;
+        // If JS heap is over 80% full, pressure score drops
+        this.metrics.memoryPressureScore = Math.max(0, 100 - (usedRatio * 100));
+      }
+    }
 
     // 2. Weight logic
     // Hydration: 25%
@@ -109,7 +125,7 @@ class PerformanceGovernanceEngine {
     // Payload Size: 15%
     // Rerender Storms: 10%
 
-    // Calculate total score... (mocked logic for safety)
+    // Calculate total score using actual metrics telemetry instead of static mock
     const totalScore = (
       (this.metrics.hydrationScore * 0.25) +
       (this.metrics.queryLatencyScore * 0.25) +

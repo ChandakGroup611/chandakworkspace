@@ -289,6 +289,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   const handleBatchSave = async () => {
     if (!task) return;
+
+    if (!remarksDraft.trim()) {
+      alert("Task remarks are mandatory to save any updates or status changes. Please scroll down to the 'Task Remarks' section to enter your remarks.");
+      return;
+    }
+
     setSaveRemarksLoading(true);
     setError(null);
     try {
@@ -423,7 +429,17 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const progressPercentage = task.progress_percentage || 0;
 
   const isFrozen = task.status?.is_closed;
-  const canEdit = task.currentUserCanAct && !isFrozen;
+  
+  // Assignee and Super Admin
+  const canEditCore = task.currentUserCanAct && !isFrozen;
+  
+  // Executors
+  const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
+  const canEditAux = (canEditCore || isExecutor) && !isFrozen;
+  
+  // Reviewers & Watchers
+  const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
+  const canAddRemark = (canEditAux || isWatcherOrReviewer) && !isFrozen;
 
   return (
     <ExperienceProvider mode="compact">
@@ -516,7 +532,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
                       {key.replace(/_/g, ' ')}
                     </label>
-                    {isReadOnly || !canEdit ? (
+                    {isReadOnly || !canEditCore ? (
                       <div className={`w-full p-2 rounded-md text-[13px] border ${normalizedKey !== 'link_url' && 'cursor-not-allowed'} ${
                         isLightMode ? "bg-gray-100 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
                       }`}>
@@ -562,7 +578,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
-              disabled={!canEdit}
+              disabled={!canEditCore}
               onChange={(e) => {
                 const newCode = e.target.value;
                 if (newCode === currentStatusCode) {
@@ -573,7 +589,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               }}
               className={`w-full p-1.5 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                 isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
-              } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${!canEditCore ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
@@ -586,7 +602,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               Quick Action Operations
             </label>
             <div className="flex flex-wrap gap-2">
-              {currentStatusCode === "ST_OPEN" && canEdit && (
+              {currentStatusCode === "ST_OPEN" && canEditCore && (
                 <AppButton 
                   size="sm" 
                   variant="primary" 
@@ -599,7 +615,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              {currentStatusCode === "ST_IN_PROGRESS" && canEdit && (
+              {currentStatusCode === "ST_IN_PROGRESS" && canEditCore && (
                 <AppButton 
                   size="sm" 
                   variant="primary" 
@@ -677,15 +693,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <textarea
             value={remarksDraft}
             onChange={e => setRemarksDraft(e.target.value)}
-            disabled={!canEdit}
+            disabled={!canAddRemark}
             className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors ${
               isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
-            } ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
-            placeholder={!canEdit ? "Task is frozen/read-only." : "Add update notes or handoff remarks..."}
+            } ${!canAddRemark ? 'opacity-50 cursor-not-allowed' : ''}`}
+            placeholder={!canAddRemark ? "Task is frozen/read-only." : "Add update notes or handoff remarks..."}
           />
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
-            {canEdit && (
+            {canAddRemark && (
               <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
                 {saveRemarksLoading ? "Saving..." : pendingStatus ? "Commit Status & Save Remark" : "Save Remarks"}
               </AppButton>
@@ -832,7 +848,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         {/* Checklist Tab */}
         {activeTab === "checklist" && (
           <div className="space-y-4">
-            {canEdit && (
+            {canEditAux && (
               <form onSubmit={handleAddChecklist} className="flex gap-2">
                 <AppInput 
                   placeholder="New operational checkoff point..." 
@@ -848,8 +864,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {(task.checklists || []).map((item: any) => (
                 <div 
                   key={item.id} 
-                  onClick={() => canEdit && handleToggleChecklist(item.id, item.is_completed)}
-                  className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${canEdit ? 'cursor-pointer' : 'cursor-default opacity-80'} ${
+                  onClick={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
+                  className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${canEditAux ? 'cursor-pointer' : 'cursor-default opacity-80'} ${
                     item.is_completed
                       ? (isLightMode ? "bg-emerald-50/40 border-emerald-100 opacity-60" : "bg-emerald-500/5 border-emerald-500/10 opacity-70")
                       : (isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5")
@@ -882,7 +898,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Attachments</span>
-                  {canEdit && (
+                  {canEditAux && (
                     <button
                       type="button"
                       onClick={triggerFileSelect}
@@ -901,7 +917,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   onChange={handleFileChange} 
                 />
 
-                {canEdit && (
+                {canEditAux && (
                   <div 
                     onClick={triggerFileSelect}
                     className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${

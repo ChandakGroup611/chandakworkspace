@@ -133,15 +133,8 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     const { hasPermission } = await import('@/lib/permissions');
     const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
     
-    const { data: participant } = await supabaseAdmin
-      .from('task_participants')
-      .select('id')
-      .eq('task_id', taskId)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (!isSuperAdmin && !participant) {
-       return { error: "You do not have permission to transition this task status. Only the Task Owner, Participants, or Super Admin can edit." };
+    if (!isSuperAdmin) {
+       return { error: "You do not have permission to transition this task status. Only the Task Owner or Super Admin can edit the status." };
     }
   }
 
@@ -185,6 +178,13 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
 
   if (error) return { error: error.message || JSON.stringify(error) };
 
+  // Fix audit log trigger fallback (since auth.uid() is null for admin updates)
+  await supabaseAdmin
+    .from('task_activity_logs')
+    .update({ actor_id: userId })
+    .eq('task_id', taskId)
+    .is('actor_id', null);
+
   // Fire-and-forget activity log — must not block or throw to the caller
   logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
   
@@ -216,6 +216,15 @@ export async function updateNodeStatus(nodeId: string, nodeType: string, newStat
     .eq('id', nodeId);
 
   if (error) return { error: error.message };
+
+  if (table === 'tasks') {
+    // Fix audit log trigger fallback
+    await supabaseAdmin
+      .from('task_activity_logs')
+      .update({ actor_id: userId })
+      .eq('task_id', nodeId)
+      .is('actor_id', null);
+  }
 
   // Log activity
   logActivityEvent(nodeType, nodeId, 'STATUS_CHANGE', { status_id: node.status_id }, { status_id: newStatusId }, userId).catch(e => console.error('[logActivityEvent]', e));
@@ -465,8 +474,48 @@ export async function updateTask(taskId: string, payload: any) {
     }
   }
 
+  if (payload.status_id) {
+    const { data: targetStatus } = await supabaseAdmin.from('status_master').select('status_code').eq('id', payload.status_id).single();
+    if (targetStatus) {
+      const completedCodes = ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'];
+      if (completedCodes.includes(targetStatus.status_code.toUpperCase())) {
+        const { data: blockers } = await supabaseAdmin.from('task_dependencies')
+          .select('task_id')
+          .eq('depends_on_task_id', taskId)
+          .eq('dependency_type', 'BLOCKS');
+          
+        if (blockers && blockers.length > 0) {
+          const blockerIds = blockers.map((b: any) => b.task_id);
+          const { data: blockingTasks } = await supabaseAdmin.from('tasks').select('subject, status_id').in('id', blockerIds);
+          
+          if (blockingTasks && blockingTasks.length > 0) {
+            const statusIds = [...new Set(blockingTasks.map((t: any) => t.status_id))];
+            const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
+            const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
+            
+            const incompleteBlocker = blockingTasks.find((t: any) => {
+              const code = statusMap.get(t.status_id);
+              return !code || !completedCodes.includes(code);
+            });
+            
+            if (incompleteBlocker) {
+              return { error: `Cannot complete task. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
+            }
+          }
+        }
+      }
+    }
+  }
+
   const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
   if (error) return { error: error.message || JSON.stringify(error) };
+
+  // Fix audit log trigger fallback
+  await supabaseAdmin
+    .from('task_activity_logs')
+    .update({ actor_id: userId })
+    .eq('task_id', taskId)
+    .is('actor_id', null);
 
   const newTitle = payload.subject;
   const oldTitle = task.subject;
@@ -505,6 +554,13 @@ export async function updateTask(taskId: string, payload: any) {
     // Soft delete the task instead of hard deleting it and its related records
     const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
     if (error) return { error: error.message };
+
+    // Fix audit log trigger fallback
+    await supabaseAdmin
+      .from('task_activity_logs')
+      .update({ actor_id: userId })
+      .eq('task_id', taskId)
+      .is('actor_id', null);
     
     revalidatePath("/workspaces");
     return { success: true };
@@ -650,6 +706,38 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
   if (newStatusId && newStatusId !== currentTask.status_id) {
     if (currentTask.assigned_to !== userId) {
       return { error: "Only the assigned user can change the task status." };
+    }
+
+    // Blocker validation
+    const { data: targetStatus } = await supabaseAdmin.from('status_master').select('status_code').eq('id', newStatusId).single();
+    if (targetStatus) {
+      const completedCodes = ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'];
+      if (completedCodes.includes(targetStatus.status_code.toUpperCase())) {
+        const { data: blockers } = await supabaseAdmin.from('task_dependencies')
+          .select('task_id')
+          .eq('depends_on_task_id', taskId)
+          .eq('dependency_type', 'BLOCKS');
+          
+        if (blockers && blockers.length > 0) {
+          const blockerIds = blockers.map((b: any) => b.task_id);
+          const { data: blockingTasks } = await supabaseAdmin.from('tasks').select('subject, status_id').in('id', blockerIds);
+          
+          if (blockingTasks && blockingTasks.length > 0) {
+            const statusIds = [...new Set(blockingTasks.map((t: any) => t.status_id))];
+            const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
+            const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
+            
+            const incompleteBlocker = blockingTasks.find((t: any) => {
+              const code = statusMap.get(t.status_id);
+              return !code || !completedCodes.includes(code);
+            });
+            
+            if (incompleteBlocker) {
+              return { error: `Cannot complete. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
+            }
+          }
+        }
+      }
     }
 
     // Update status

@@ -112,21 +112,30 @@ export default function ReportsClient() {
   };
 
   const exportToExcel = async () => {
+    const isTaskEntity = entityType === "TASK" || entityType === "SUB_TASK";
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`${getEntityDisplayName()} Report`);
 
-    worksheet.columns = [
+    const cols: any[] = [
       { header: "Code", key: "code", width: 15 },
       { header: "Title", key: "title", width: 40 },
       { header: "Context (Workspace/Company)", key: "workspace", width: 25 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Priority", key: "priority", width: 15 },
+    ];
+    
+    if (isTaskEntity) {
+      cols.push({ header: "Status", key: "status", width: 15 });
+      cols.push({ header: "Priority", key: "priority", width: 15 });
+    }
+    
+    cols.push(
       { header: "Created By", key: "creator_name", width: 20 },
       { header: "Assigned To", key: "assigned_to", width: 30 },
       { header: "Start Date", key: "start_date", width: 15 },
       { header: "End Date", key: "end_date", width: 15 },
-      { header: "Created At", key: "created_at", width: 20 },
-    ];
+      { header: "Created At", key: "created_at", width: 20 }
+    );
+    
+    worksheet.columns = cols;
 
     worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
     worksheet.getRow(1).fill = {
@@ -155,21 +164,23 @@ export default function ReportsClient() {
   };
 
   const exportToPDF = () => {
+    const isTaskEntity = entityType === "TASK" || entityType === "SUB_TASK";
     const doc = new jsPDF("landscape");
     doc.text(`${getEntityDisplayName()} Report - ${scope.replace(/_/g, " ")}`, 14, 15);
     
-    const tableData = filtered.map(t => [
-      t.code,
-      t.title,
-      t.workspace,
-      t.status,
-      t.creator_name,
-      t.assigned_to,
-      formatDate(t.created_at)
-    ]);
+    const tableData = filtered.map(t => {
+      const row = [t.code, t.title, t.workspace];
+      if (isTaskEntity) row.push(t.status);
+      row.push(t.creator_name, t.assigned_to, formatDate(t.created_at));
+      return row;
+    });
+
+    const head = isTaskEntity 
+      ? [["Code", "Title", "Context", "Status", "Created By", "Assigned To", "Created At"]]
+      : [["Code", "Title", "Context", "Created By", "Assigned To", "Created At"]];
 
     autoTable(doc, {
-      head: [["Code", "Title", "Context", "Status", "Created By", "Assigned To", "Created At"]],
+      head: head,
       body: tableData,
       startY: 20,
       styles: { fontSize: 8 },
@@ -238,10 +249,12 @@ export default function ReportsClient() {
 
       {/* Advanced Filters */}
       <div className="flex items-center flex-wrap gap-4 bg-gray-50 dark:bg-white/[0.02] p-4 rounded-xl border border-gray-200 dark:border-white/5">
-        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2 rounded-lg border ${isLightMode ? "border-gray-300 bg-white text-gray-700" : "border-white/10 bg-[#0f111a] text-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
-          <option value="">All Statuses</option>
-          {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        {(entityType === "TASK" || entityType === "SUB_TASK") && (
+          <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2 rounded-lg border ${isLightMode ? "border-gray-300 bg-white text-gray-700" : "border-white/10 bg-[#0f111a] text-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
+            <option value="">All Statuses</option>
+            {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        )}
         
         <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
           <span>Date Range:</span>
@@ -276,13 +289,15 @@ export default function ReportsClient() {
           <AppTable className="w-full text-sm">
             <AppTableHeader className={`sticky top-0 z-10 ${isLightMode ? "bg-gray-100 border-b border-gray-200" : "bg-[#0A0D14] border-b border-white/10"}`}>
               <AppTableRow>
-                <AppTableHead className="w-[100px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Code</AppTableHead>
-                <AppTableHead className="w-[250px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Title</AppTableHead>
-                <AppTableHead className="w-[150px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Context</AppTableHead>
-                <AppTableHead className="w-[120px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Status</AppTableHead>
-                <AppTableHead className="w-[150px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Created By</AppTableHead>
-                <AppTableHead className="w-[180px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Assigned To</AppTableHead>
-                <AppTableHead className="text-right w-[120px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Created At</AppTableHead>
+                <AppTableHead className="min-w-[100px] whitespace-nowrap font-bold text-xs uppercase text-gray-500 px-4 py-3">Code</AppTableHead>
+                <AppTableHead className="min-w-[250px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Title</AppTableHead>
+                <AppTableHead className="min-w-[150px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Context</AppTableHead>
+                {(entityType === "TASK" || entityType === "SUB_TASK") && (
+                  <AppTableHead className="min-w-[120px] whitespace-nowrap font-bold text-xs uppercase text-gray-500 px-4 py-3">Status</AppTableHead>
+                )}
+                <AppTableHead className="min-w-[150px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Created By</AppTableHead>
+                <AppTableHead className="min-w-[180px] font-bold text-xs uppercase text-gray-500 px-4 py-3">Assigned To</AppTableHead>
+                <AppTableHead className="text-right min-w-[120px] whitespace-nowrap font-bold text-xs uppercase text-gray-500 px-4 py-3">Created At</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody>
@@ -295,27 +310,32 @@ export default function ReportsClient() {
               ) : (
                 filtered.map((item) => (
                   <AppTableRow key={item.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-white/5 border-b border-gray-100 dark:border-white/5 last:border-0">
-                    <AppTableCell className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 px-4 py-3">
+                    <AppTableCell className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 px-4 py-3 whitespace-nowrap">
                       {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
                     </AppTableCell>
                     <AppTableCell className="px-4 py-3">
-                      <div className="font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[220px]" title={item.title}>{item.title}</div>
+                      <div className="font-semibold text-gray-900 dark:text-gray-100 break-words" title={item.title}>{item.title}</div>
                     </AppTableCell>
-                    <AppTableCell className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 truncate max-w-[140px]" title={item.workspace}>
+                    <AppTableCell className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 break-words" title={item.workspace}>
                       {item.workspace}
                     </AppTableCell>
-                    <AppTableCell className="px-4 py-3">
-                      <AppBadge variant={item.status === "Closed" || item.status === "Completed" ? "success" : "neutral"}>
-                        {item.status}
-                      </AppBadge>
-                    </AppTableCell>
-                    <AppTableCell className="px-4 py-3 text-xs font-medium text-gray-700 dark:text-gray-300">
+                    {(entityType === "TASK" || entityType === "SUB_TASK") && (
+                      <AppTableCell className="px-4 py-3 whitespace-nowrap">
+                        <AppBadge 
+                          variant={item.status_color ? "custom" : (item.status === "Closed" || item.status === "Completed" ? "success" : "neutral")}
+                          customColor={item.status_color}
+                        >
+                          {item.status}
+                        </AppBadge>
+                      </AppTableCell>
+                    )}
+                    <AppTableCell className="px-4 py-3 text-xs font-medium text-gray-700 dark:text-gray-300 break-words">
                       {item.creator_name}
                     </AppTableCell>
-                    <AppTableCell className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 truncate max-w-[170px]" title={item.assigned_to}>
+                    <AppTableCell className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 break-words" title={item.assigned_to}>
                       {item.assigned_to}
                     </AppTableCell>
-                    <AppTableCell className="text-right text-xs text-gray-500 px-4 py-3">
+                    <AppTableCell className="text-right text-xs text-gray-500 px-4 py-3 whitespace-nowrap">
                       {formatDate(item.created_at)}
                     </AppTableCell>
                   </AppTableRow>
