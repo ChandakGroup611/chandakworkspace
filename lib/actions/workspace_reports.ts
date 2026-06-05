@@ -64,6 +64,7 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         members:workspace_members(user_id, role)
       `)
       .eq("is_deleted", false)
+      .eq("workspace_members.is_deleted", false)
       .order('created_at', { ascending: false });
 
     if (entityType === "WORKSPACE") {

@@ -18,7 +18,8 @@ export async function fetchLiveDashboardMetrics() {
     const { data: wsMembers } = await supabase
       .from("workspace_members")
       .select("workspace_id")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("is_deleted", false);
     
     const workspaceIds = wsMembers?.map(m => m.workspace_id) || [];
     
@@ -29,7 +30,19 @@ export async function fetchLiveDashboardMetrics() {
       
     const subWorkspaceIds = subWsMembers?.map(m => m.sub_workspace_id) || [];
 
+    // Get tasks where user is a participant
+    const { data: taskParticipants } = await supabase
+      .from("task_participants")
+      .select("task_id")
+      .eq("user_id", userId);
+    
+    const participantTaskIds = taskParticipants?.map(p => p.task_id) || [];
+
     // 2. Fetch scoped data
+    const taskOrConditions = [`created_by.eq.${userId}`];
+    if (workspaceIds.length > 0) taskOrConditions.push(`workspace_id.in.(${workspaceIds.join(',')})`);
+    if (participantTaskIds.length > 0) taskOrConditions.push(`id.in.(${participantTaskIds.join(',')})`);
+    
     const tasksPromise = supabase
       .from("tasks")
       .select(`
@@ -39,21 +52,21 @@ export async function fetchLiveDashboardMetrics() {
         end_date
       `)
       .eq("is_deleted", false)
-      .or(`created_by.eq.${userId},assigned_to.eq.${userId}`)
+      .or(taskOrConditions.join(','))
       .order("created_at", { ascending: false });
 
-    // Assuming tickets has creator_id and assigned_to
     const ticketsPromise = supabase
       .from("tickets")
       .select(`
         id, created_at, creator_id, title,
         status_id, status_master(status_name),
         priority_id, priority:priority_master(priority_name),
-        due_date
+        due_date, assignee_id
       `)
-      .eq('creator_id', userId)
+      .or(`creator_id.eq.${userId},assignee_id.eq.${userId}`)
       .order("created_at", { ascending: false });
 
+    // Ensure backwards compatibility if requirements doesn't have assignee_id yet
     const requirementsPromise = supabase
       .from("requirements")
       .select(`
@@ -72,6 +85,7 @@ export async function fetchLiveDashboardMetrics() {
         end_date
       `)
       .in('id', workspaceIds)
+      .eq('is_deleted', false)
       .order("created_at", { ascending: false }) : Promise.resolve({ data: [], error: null });
 
     // Execute parallel groups
@@ -92,7 +106,7 @@ export async function fetchLiveDashboardMetrics() {
     // Fetch user details manually to avoid foreign key ambiguity errors
     const userIdsToFetch = new Set<string>();
     tasksData?.forEach((t: any) => { if (t.assigned_to) userIdsToFetch.add(t.assigned_to); if (t.created_by) userIdsToFetch.add(t.created_by); });
-    ticketsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); });
+    ticketsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); if (t.assignee_id) userIdsToFetch.add(t.assignee_id); });
     requirementsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); });
 
     let userMap: Record<string, string> = {};
@@ -169,7 +183,7 @@ export async function fetchLiveDashboardMetrics() {
         title: t.title || "Untitled Ticket",
         status: status,
         rawStatus: t.status_master?.status_name || "Unknown",
-        user: userMap[t.creator_id] || "Unassigned",
+        user: userMap[t.assignee_id] || userMap[t.creator_id] || "Unassigned",
         priority: t.priority?.priority_name || "Standard",
         createdAt: t.created_at,
         dueDate: t.due_date,

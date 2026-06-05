@@ -139,18 +139,28 @@ export default function LoginPage() {
             )}
 
             {/* Standard Credentials Submission Form */}
-            <form onSubmit={handleStandardAuthSubmit} className="space-y-4">
+            <form onSubmit={handleStandardAuthSubmit} className="space-y-4" autoComplete="off">
+              
+              {/* Honeypot fields to catch aggressive browser autofill/suggestions */}
+              <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
+                <input type="email" name="email" tabIndex={-1} autoComplete="username" />
+                <input type="password" name="password" tabIndex={-1} autoComplete="current-password" />
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                   Email Address
                 </label>
                 <AppInput 
+                  name="user_identifier_secure"
                   type="email"
                   placeholder="e.g. user@enterprise.internal"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="h-4 w-4" />}
                   className="h-10 text-sm rounded-lg"
+                  autoComplete="off"
+                  data-lpignore="true"
                   required
                 />
               </div>
@@ -162,12 +172,15 @@ export default function LoginPage() {
                   </label>
                 </div>
                 <AppInput 
+                  name="secure_secret_token"
                   type="password"
                   placeholder="••••••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4" />}
                   className="h-10 text-sm rounded-lg"
+                  autoComplete="new-password"
+                  data-lpignore="true"
                   required
                 />
               </div>

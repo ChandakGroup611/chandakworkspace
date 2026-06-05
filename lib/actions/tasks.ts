@@ -73,7 +73,7 @@ export async function createTask(payload: {
       custom_fields: payload.custom_fields,
       created_by: creatorId,
       assigned_to: payload.assigned_to,
-      task_code: `TSK-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`
+      owner_id: payload.assigned_to || creatorId
     }])
     .select()
     .single();
@@ -81,29 +81,30 @@ export async function createTask(payload: {
   if (error) throw error;
 
   // Insert Assignees and Watchers
-  const explicitParticipantIds = new Set<string>();
-
   if (payload.participants && payload.participants.length > 0) {
-    const assignees = payload.participants
-      .filter((p) => p.participation_role === 'EXECUTOR' || p.participation_role === 'REVIEWER')
-      .map((p) => {
-        explicitParticipantIds.add(p.user_id);
-        return { task_id: task.id, user_id: p.user_id, created_by: creatorId };
-      });
+    const rolePriority = { 'OWNER': 4, 'EXECUTOR': 3, 'REVIEWER': 2, 'WATCHER': 1 };
+    
+    // Group by user_id and keep highest priority role
+    const uniqueParticipantsMap = new Map<string, string>();
+    
+    for (const p of payload.participants) {
+      const existingRole = uniqueParticipantsMap.get(p.user_id);
+      const newPriority = rolePriority[p.participation_role as keyof typeof rolePriority] || 0;
+      const existingPriority = existingRole ? (rolePriority[existingRole as keyof typeof rolePriority] || 0) : -1;
       
-    if (assignees.length > 0) {
-      await supabaseAdmin.from('task_assignees').insert(assignees);
+      if (newPriority > existingPriority) {
+        uniqueParticipantsMap.set(p.user_id, p.participation_role);
+      }
     }
 
-    const watchers = payload.participants
-      .filter((p) => p.participation_role === 'WATCHER')
-      .map((p) => {
-        explicitParticipantIds.add(p.user_id);
-        return { task_id: task.id, user_id: p.user_id };
-      });
-      
-    if (watchers.length > 0) {
-      await supabaseAdmin.from('task_watchers').insert(watchers);
+    const participantData = Array.from(uniqueParticipantsMap.entries()).map(([user_id, participation_role]) => ({
+      task_id: task.id,
+      user_id,
+      participation_role
+    }));
+
+    if (participantData.length > 0) {
+      await supabaseAdmin.from('task_participants').insert(participantData);
     }
   }
 
@@ -155,8 +156,15 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     const { hasPermission } = await import('@/lib/permissions');
     const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
     
-    if (!isSuperAdmin) {
-       return { error: "You do not have permission to transition this task status. Only the Task Owner or Super Admin can edit the status." };
+    const { data: participant } = await supabaseAdmin
+      .from('task_participants')
+      .select('id')
+      .eq('task_id', taskId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!isSuperAdmin && !participant) {
+       return { error: "You do not have permission to transition this task status. Only the Task Assignee, Participants, or Super Admin can edit the status." };
     }
   }
 
@@ -411,10 +419,41 @@ export async function getTaskDetails(taskId: string) {
         .map(p => usersData.find(u => u.id === p.user_id))
         .filter(Boolean);
       
-      task.task_watchers = participants
-        .filter(p => p.participation_role === 'WATCHER' || p.participation_role === 'REVIEWER')
+      task.task_reviewers = participants
+        .filter(p => p.participation_role === 'REVIEWER')
         .map(p => usersData.find(u => u.id === p.user_id))
         .filter(Boolean);
+
+      task.task_watchers = participants
+        .filter(p => p.participation_role === 'WATCHER')
+        .map(p => usersData.find(u => u.id === p.user_id))
+        .filter(Boolean);
+    }
+  }
+
+  // Fetch Inherited Workspace Access (Assignees/Viewers)
+  task.inherited_users = [];
+  if (task.workspace_id) {
+    const { data: wsMembers } = await supabaseAdmin
+      .from('workspace_members')
+      .select('user_id, role')
+      .eq('workspace_id', task.workspace_id)
+      .eq('is_deleted', false);
+      
+    if (wsMembers && wsMembers.length > 0) {
+      const wsUserIds = Array.from(new Set(wsMembers.map(m => m.user_id)));
+      const { data: wsUsersData } = await supabaseAdmin
+        .from('user_master')
+        .select('id, full_name, profile_photo')
+        .in('id', wsUserIds);
+        
+      if (wsUsersData) {
+        task.inherited_users = wsMembers.map(m => {
+          const u = wsUsersData.find(user => user.id === m.user_id);
+          if (!u) return null;
+          return { ...u, workspace_role: m.role };
+        }).filter(Boolean);
+      }
     }
   }
   
@@ -722,7 +761,19 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
   // If changing status, must be assigned user
   if (newStatusId && newStatusId !== currentTask.status_id) {
     if (currentTask.assigned_to !== userId) {
-      return { error: "Only the assigned user can change the task status." };
+      const { hasPermission } = await import('@/lib/permissions');
+      const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+      
+      const { data: participant } = await supabaseAdmin
+        .from('task_participants')
+        .select('id')
+        .eq('task_id', taskId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!isSuperAdmin && !participant) {
+        return { error: "Only the assigned user, execution team, or Super Admin can change the task status." };
+      }
     }
 
     // Blocker validation

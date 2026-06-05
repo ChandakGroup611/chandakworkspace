@@ -738,19 +738,6 @@ export default function UserMasterPage() {
     );
   }
 
-  if (!isSuperAdmin && !hasPermission("USERS_VIEW")) {
-    return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
-      }`}>
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
-          <ShieldAlert className="h-10 w-10" />
-        </div>
-        <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-gray-500">Only Super Admins or personnel with USERS_VIEW permission can access the registry.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">

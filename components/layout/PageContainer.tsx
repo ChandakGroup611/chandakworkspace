@@ -13,9 +13,8 @@ export function PageContainer({ children, className, strict = false, ...props }:
   return (
     <div
       className={cn(
-        "w-full mx-auto px-4 sm:px-6 lg:px-8 py-6",
+        "w-full mx-auto px-2 py-2",
         strict ? "h-full max-h-full flex flex-col min-h-0 min-w-0 overflow-hidden" : "min-h-full flex flex-col",
-        "max-w-[1600px]", // Constrain ultra-wide screens to prevent UI from spreading too thin
         className
       )}
       {...props}

@@ -69,7 +69,7 @@ export async function getVisibleUsers(userId: string) {
   if (usersRes.error) throw usersRes.error;
 
   // In-memory governance routing is 100x faster than secondary database roundtrips
-  if (isSuperAdmin || hasUsersViewPerm) {
+  if (isSuperAdmin) {
     return usersRes.data || [];
   }
 

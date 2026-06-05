@@ -29,6 +29,7 @@ export async function getVisibleWorkspaces(userId: string) {
         hierarchy_subws_count
       `)
       .eq('is_deleted', false)
+      .eq('workspace_members.is_deleted', false)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -79,6 +80,7 @@ export async function getVisibleWorkspaces(userId: string) {
     `)
     .in('id', authorizedWorkspaceIds)
     .eq('is_deleted', false)
+    .eq('workspace_members.is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (error) throw error;

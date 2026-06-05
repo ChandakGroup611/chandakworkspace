@@ -176,6 +176,7 @@ export function WorkspaceMasterTable({
   const HierarchyRow = React.memo(({ node, depth, isExpanded }: { node: any, depth: number, isExpanded: boolean }) => {
     const hasChildren = node.children && node.children.length > 0;
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
+    const isSubWorkspace = node.type === 'SUB_WORKSPACE';
     const isRoot = depth === 0;
     
     // Distinct icons based on depth and type
@@ -294,15 +295,20 @@ export function WorkspaceMasterTable({
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
                       isWorkspaceType ? (depth === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500/80') : 'text-emerald-500'
                     }`} />
-                    <span className={`break-words tracking-tight ${
-                      depth === 0 ? 'font-bold text-[15px]' : 
-                      isWorkspaceType ? 'font-semibold text-[14px]' : 
-                      'font-medium text-[13px]'
-                    } ${
-                      isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
-                    }`}>
-                      {node.workspace_name || node.name || node.subject || node.title}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold">
+                        {node.workspace_code || node.task_code || ""}
+                      </span>
+                      <span className={`truncate max-w-[200px] ${
+                        isWorkspaceType ? 'font-bold tracking-tight text-[14px]' : 
+                        isSubWorkspace ? 'font-semibold tracking-tight text-[13px]' : 
+                        'font-medium text-[13px]'
+                      } ${
+                        isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
+                      }`}>
+                        {node.workspace_name || node.name || node.subject || node.title}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 

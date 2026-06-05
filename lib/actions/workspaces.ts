@@ -245,7 +245,7 @@ export async function createWorkspace(formData: any) {
     };
   } catch (err: any) {
     console.error("[createWorkspace] Error:", err?.message || String(err));
-    throw new Error(err?.message || "Failed to create workspace");
+    return { error: err?.message || "Failed to create workspace" };
   }
 }
 
@@ -424,14 +424,41 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
   // If expanding a Workspace/Sub-Workspace, fetch its Sub-Workspaces and Direct Tasks
   if (parentType === 'WORKSPACE' || parentType === 'SUB_WORKSPACE') {
-    // 1 & 2. Fetch Sub-Workspaces & Tasks Concurrently
-    const [subWsRes, tasksRes] = await Promise.all([
-      supabaseAdmin
+    // Check if user is super admin
+    const canManageAll = await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
+    
+    let allowedWorkspaceIds: string[] = [];
+    if (!canManageAll) {
+      const [memberRes, ownerRes] = await Promise.all([
+        supabaseAdmin.from('workspace_members').select('workspace_id').eq('user_id', userId).eq('is_deleted', false),
+        supabaseAdmin.from('workspaces').select('id').eq('workspace_owner_id', userId).eq('is_deleted', false)
+      ]);
+      const wsIds = new Set<string>();
+      memberRes.data?.forEach((w: any) => wsIds.add(w.workspace_id));
+      ownerRes.data?.forEach((w: any) => wsIds.add(w.id));
+      allowedWorkspaceIds = Array.from(wsIds);
+    }
+
+    let subWsQuery = supabaseAdmin
         .from('workspaces')
         .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), members:workspace_members(user_id, role), stats:workspace_statistics(subworkspace_count, task_count, subtask_count), hierarchy_task_count, hierarchy_subws_count, parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code)')
         .eq('parent_workspace_id', parentId)
         .eq('is_deleted', false)
-        .order('created_at', { ascending: false }),
+        .eq('workspace_members.is_deleted', false)
+        .order('created_at', { ascending: false });
+
+    if (!canManageAll) {
+      if (allowedWorkspaceIds.length === 0) {
+        // If they have no workspace memberships, they can't see any subworkspaces
+        subWsQuery = subWsQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+      } else {
+        subWsQuery = subWsQuery.in('id', allowedWorkspaceIds);
+      }
+    }
+
+    // 1 & 2. Fetch Sub-Workspaces & Tasks Concurrently
+    const [subWsRes, tasksRes] = await Promise.all([
+      subWsQuery,
       supabaseAdmin
         .from('tasks')
         .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
@@ -489,12 +516,13 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 }
 
 export async function updateWorkspace(id: string, formData: any) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) throw new Error("Unauthenticated");
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return { error: "Unauthenticated" };
 
   const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE");
   
@@ -507,7 +535,7 @@ export async function updateWorkspace(id: string, formData: any) {
     .maybeSingle();
 
   if (!hasAccess && !member) {
-    throw new Error("Unauthorized: Missing WORKSPACES_UPDATE capability or workspace membership.");
+    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or workspace membership." };
   }
 
   const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name").eq("id", id).single();
@@ -524,7 +552,7 @@ export async function updateWorkspace(id: string, formData: any) {
 
   // Prevent cyclical assignments: Workspace cannot be its own parent
   if (updatePayload.parent_workspace_id === id) {
-    throw new Error("Validation Error: A workspace cannot be assigned as its own parent.");
+    return { error: "Validation Error: A workspace cannot be assigned as its own parent." };
   }
 
   const { data, error } = await supabase
@@ -536,7 +564,10 @@ export async function updateWorkspace(id: string, formData: any) {
     
   if (error) {
     console.error("[Workspaces] Error updating workspace:", error);
-    throw new Error(error.message);
+    if (error.code === 'PGRST116' || error.message.includes('JSON object')) {
+      return { error: "Unauthorized: You do not have permission to modify this workspace." };
+    }
+    return { error: error.message };
   }
 
   // Audit Log for title change
@@ -622,19 +653,27 @@ export async function updateWorkspace(id: string, formData: any) {
     code: data.workspace_code,
     members: formData.assigneeIds?.map((uid: any) => ({ user_id: uid, role: 'member' })) || []
   };
+  } catch (err: any) {
+    console.error("[updateWorkspace] Error:", err?.message || String(err));
+    return { error: err?.message || "Failed to update workspace" };
+  }
 }
 
 export async function deleteWorkspace(id: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  if (!userId) throw new Error("Unauthenticated");
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return { error: "Unauthenticated" };
 
   const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_DELETE");
   if (!hasAccess) {
-    throw new Error("Unauthorized: Missing WORKSPACES_DELETE capability.");
+    const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
+    if (!ws || ws.workspace_owner_id !== userId) {
+      return { error: "Unauthorized: Missing WORKSPACES_DELETE capability." };
+    }
   }
 
   const { error } = await supabase
@@ -644,10 +683,15 @@ export async function deleteWorkspace(id: string) {
     
   if (error) {
     console.error("[Workspaces] Error deleting workspace:", error);
-    throw new Error(error.message);
+    return { error: error.message };
   }
 
   revalidatePath("/workspaces");
+  return { success: true };
+  } catch (err: any) {
+    console.error("[deleteWorkspace] Error:", err?.message || String(err));
+    return { error: err?.message || "Failed to delete workspace" };
+  }
 }
 
 export async function fetchWorkspaceStakeholders(workspaceId: string) {

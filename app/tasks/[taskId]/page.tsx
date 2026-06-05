@@ -51,13 +51,15 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <p className="text-xs uppercase tracking-[0.28em] text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-2 py-1 rounded font-bold">
-                    Task detail
+                    {task.task_code || "TASK"}
                   </p>
                   <p className="text-xs uppercase tracking-[0.28em] text-gray-500 px-2 py-1 border border-gray-200 dark:border-white/10 rounded font-bold">
-                    Workspace: {task.workspace?.name || task.workspace?.code || "Unknown"}
+                    Workspace: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
                   </p>
                 </div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white">{task.title}</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-white">{task.title}</h1>
+                </div>
                 <div 
                   className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed prose prose-sm dark:prose-invert"
                   dangerouslySetInnerHTML={{ __html: task.description || "" }} 

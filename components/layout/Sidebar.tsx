@@ -318,47 +318,6 @@ export default function Sidebar() {
       })}
       </div>
 
-      {/* Footer System Gateway Links */}
-      <div className={`p-3 border-t mt-auto shrink-0 ${isLight ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.005]"}`}>
-        {!isCompact ? (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-gray-500 px-1">
-              <span className="font-bold tracking-wider uppercase">Identity Controls</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <Link 
-                href="/login" 
-                className={`px-2 py-1.5 rounded-lg text-center text-[0.8rem] font-bold transition-all border ${
-                  isLight 
-                    ? "bg-white border-gray-200 text-blue-600 hover:bg-blue-50" 
-                    : "bg-white/5 border-white/5 text-blue-400 hover:bg-white/10 hover:border-blue-500/30"
-                }`}
-              >
-                Login
-              </Link>
-              <Link 
-                href="/register" 
-                className={`px-2 py-1.5 rounded-lg text-center text-[0.8rem] font-bold transition-all border ${
-                  isLight 
-                    ? "bg-purple-50 border-purple-100 text-purple-700 hover:bg-purple-100" 
-                    : "bg-purple-500/10 border-purple-500/20 text-purple-300 hover:bg-purple-500/20 hover:border-purple-500/40"
-                }`}
-              >
-                Register
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <Link 
-            href="/login" 
-            title="Access Gateway Portal"
-            className="flex h-8 w-8 mx-auto items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow hover:scale-105 transition-all"
-          >
-            <UserCheck className="h-3.5 w-3.5" />
-          </Link>
-        )}
-      </div>
     </aside>
     </Profiler>
   );

@@ -373,8 +373,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   return (
     <ExperienceProvider mode="operational">
-      <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="space-y-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <AppButton variant="outline" size="sm" onClick={() => router.push(selectedWorkspaceId ? `/workspaces?workspace=${selectedWorkspaceId}` : "/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
             Back
@@ -435,7 +435,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       </div>
 
             {/* Advanced Filters Row */}
-      <div className="flex items-center flex-wrap gap-4 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-200 dark:border-white/5">
+      <div className="flex items-center flex-wrap gap-2 bg-gray-50 dark:bg-white/5 p-2 rounded-xl border border-gray-200 dark:border-white/5">
         <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-[11px] px-2 py-1.5 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
           <option value="">All Statuses</option>
           {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
@@ -514,150 +514,141 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         }
       `}</style>
       
-      <AppTableContainer>
-        <div ref={parentRef} className="max-h-[600px] overflow-auto relative">
-          <AppTable className="task-table w-full">
-            <AppTableHeader className="sticky top-0 z-10 bg-[#06080f]">
-              <AppTableRow>
-                <AppTableHead className="w-[40px] px-2 text-center">
-                  <input 
-                    type="checkbox" 
-                    checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
-                    ref={input => {
-                      if (input) {
-                        input.indeterminate = selectedTaskIds.size > 0 && selectedTaskIds.size < filtered.length;
-                      }
-                    }}
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </AppTableHead>
-                <AppTableHead className="min-w-[100px] whitespace-nowrap">Code</AppTableHead>
-                <AppTableHead className="min-w-[300px]">Title & Description</AppTableHead>
-                <AppTableHead className="min-w-[180px]">Workspace</AppTableHead>
-                <AppTableHead className="min-w-[120px]">Priority</AppTableHead>
-                <AppTableHead className="min-w-[120px] whitespace-nowrap">Due</AppTableHead>
-                <AppTableHead className="min-w-[120px] whitespace-nowrap">Status</AppTableHead>
-                <AppTableHead className="min-w-[160px]">Assignee</AppTableHead>
-                <AppTableHead className="text-right min-w-[100px] whitespace-nowrap">Created</AppTableHead>
-                <AppTableHead className="text-right min-w-[120px]">Actions</AppTableHead>
-              </AppTableRow>
-            </AppTableHeader>
-            <AppTableBody>
-              {virtualizer.getVirtualItems().length > 0 && virtualizer.getVirtualItems()[0].start > 0 && (
-                <tr>
-                  <td colSpan={8} style={{ height: `${virtualizer.getVirtualItems()[0].start}px` }} />
-                </tr>
-              )}
-              {virtualizer.getVirtualItems().map((virtualRow) => {
-                const task = filtered[virtualRow.index];
-                return (
-                  <AppTableRow 
-                    key={task.id} 
-                    className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-gray-800/20"}`}
-                  >
-                    <AppTableCell className="w-[40px] px-2 text-center" onClick={(e) => e.stopPropagation()}>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedTaskIds.has(task.id)}
-                        onChange={(e) => handleSelectTask(task.id, e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </AppTableCell>
-                    <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold min-w-[100px] whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
-                    <AppTableCell className="min-w-[300px]">
-                      <div className="font-semibold break-words text-gray-900">{task.title}</div>
-                      <div className="text-xs text-gray-500 line-clamp-2">{task.description}</div>
-                      {typeof task.custom_fields?.progress_percentage === 'number' && (
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
-                          </div>
-                          <span className="text-[10px] font-bold text-gray-500">{task.custom_fields.progress_percentage}%</span>
+      <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
+        <AppTable className="table-auto w-full">
+          <AppTableHeader className="sticky top-0 z-10 bg-white dark:bg-[#06080f]">
+            <AppTableRow>
+              <AppTableCell className="text-center p-0">
+                <input 
+                  type="checkbox" 
+                  checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
+                  ref={input => {
+                    if (input) {
+                      input.indeterminate = selectedTaskIds.size > 0 && selectedTaskIds.size < filtered.length;
+                    }
+                  }}
+                  onChange={handleSelectAll}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+              </AppTableCell>
+              <AppTableHead className="whitespace-nowrap">Code</AppTableHead>
+              <AppTableHead>Title & Description</AppTableHead>
+              <AppTableHead>Workspace</AppTableHead>
+              <AppTableHead>Priority</AppTableHead>
+              <AppTableHead className="whitespace-nowrap">Due</AppTableHead>
+              <AppTableHead className="whitespace-nowrap">Status</AppTableHead>
+              <AppTableHead>Assignee</AppTableHead>
+              <AppTableHead className="text-right whitespace-nowrap">Created</AppTableHead>
+              <AppTableHead className="w-[50px]">Actions</AppTableHead>
+            </AppTableRow>
+          </AppTableHeader>
+          <AppTableBody>
+            {virtualizer.getVirtualItems().length > 0 && virtualizer.getVirtualItems()[0].start > 0 && (
+              <tr>
+                <td colSpan={10} style={{ height: `${virtualizer.getVirtualItems()[0].start}px` }} />
+              </tr>
+            )}
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const task = filtered[virtualRow.index];
+              return (
+                <AppTableRow 
+                  key={task.id} 
+                  className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-gray-800/20"}`}
+                >
+                  <AppTableCell className="px-2 text-center" onClick={(e) => e.stopPropagation()}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedTaskIds.has(task.id)}
+                      onChange={(e) => handleSelectTask(task.id, e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </AppTableCell>
+                  <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                  <AppTableCell>
+                    <div className="font-semibold text-gray-900 dark:text-gray-100">{task.title || '—'}</div>
+                    <div className="text-[10px] text-gray-500 line-clamp-1">{task.description}</div>
+                    {task.custom_fields?.progress_percentage !== undefined && (
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                         </div>
-                      )}
-                    </AppTableCell>
-                    <AppTableCell className="text-gray-700 min-w-[180px] break-words">{task.workspace?.name || task.workspace?.code}</AppTableCell>
-                    <AppTableCell className="min-w-[120px]">
-                      <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null}>
-                        {task.priority?.name || '—'}
+                        <span className="text-[10px] font-bold text-gray-500">{task.custom_fields.progress_percentage}%</span>
+                      </div>
+                    )}
+                  </AppTableCell>
+                  <AppTableCell className="text-xs text-gray-600 dark:text-gray-400">{task.workspace?.name || task.workspace?.code || '—'}</AppTableCell>
+                  <AppTableCell>
+                    <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null}>
+                      {task.priority?.name || '—'}
+                    </AppBadge>
+                  </AppTableCell>
+                  <AppTableCell className="text-gray-600 text-xs whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
+                  <AppTableCell className="whitespace-nowrap">
+                    <button 
+                      onClick={(e) => handleStatusClick(e, task)} 
+                      className="hover:opacity-80 transition-opacity focus:outline-none" 
+                      title="Update Status"
+                    >
+                      <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className="cursor-pointer border-dashed">
+                        {task.status?.name || '—'}
                       </AppBadge>
-                    </AppTableCell>
-                    <AppTableCell className="text-gray-600 text-sm min-w-[120px] whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
-                    <AppTableCell className="min-w-[120px] whitespace-nowrap">
-                      <button 
-                        onClick={(e) => handleStatusClick(e, task)} 
-                        className="hover:opacity-80 transition-opacity focus:outline-none" 
-                        title="Update Status"
-                      >
-                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className="cursor-pointer border-dashed">
-                          {task.status?.name || '—'}
-                        </AppBadge>
-                      </button>
-                    </AppTableCell>
-                    <AppTableCell className="min-w-[160px]">
-                      {task.assignee ? (
-                        <div className="flex items-center gap-2">
-                          {task.assignee.profile_photo ? (
-                            <img src={task.assignee.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
-                              {task.assignee.full_name?.substring(0, 2).toUpperCase() || "U"}
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-gray-800 break-words">{task.assignee.full_name}</span>
+                    </button>
+                  </AppTableCell>
+                  <AppTableCell>
+                    {task.assignee ? (
+                      <div className="flex items-center gap-2">
+                        {task.assignee.profile_photo ? (
+                          <img src={task.assignee.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
+                            {task.assignee.full_name?.substring(0, 2).toUpperCase() || "U"}
                           </div>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">Unassigned</span>
-                      )}
-                    </AppTableCell>
-                    <AppTableCell className="text-right text-gray-500 text-xs min-w-[100px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
-                    <AppTableCell className="text-right min-w-[120px]">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link 
-                          href={`/tasks/${task.id}`}
-                          className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                          title="View Task"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                        <Link 
-                          href={`/tasks/${task.id}`}
-                          className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                          title="Edit Task"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Link>
-                        {canDelete && (
-                          <button 
-                            onClick={(e) => handleDeleteTask(e, task.id)}
-                            disabled={deleteLoadingId === task.id}
-                            className="p-1.5 rounded-md text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-50"
-                            title="Delete Task"
-                          >
-                            {deleteLoadingId === task.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
                         )}
+                        <span className="text-xs font-semibold text-gray-800 break-words">{task.assignee.full_name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Unassigned</span>
+                    )}
+                  </AppTableCell>
+                  <AppTableCell className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                  <AppTableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link 
+                        href={`/tasks/${task.id}`}
+                        className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        title="View Task"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                      <Link 
+                        href={`/tasks/${task.id}`}
+                        className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                        title="Edit Task"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Link>
+                      {canDelete && (
+                        <button 
+                          onClick={(e) => handleDeleteTask(e, task.id)}
+                          disabled={deleteLoadingId === task.id}
+                          className="p-1.5 rounded-md text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-50"
+                          title="Delete Task"
+                        >
+                          {deleteLoadingId === task.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
                       </div>
                     </AppTableCell>
                   </AppTableRow>
                 );
               })}
-              {virtualizer.getVirtualItems().length > 0 && virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end > 0 && (
-                <tr>
-                  <td colSpan={8} style={{ height: `${virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end}px` }} />
-                </tr>
-              )}
             </AppTableBody>
           </AppTable>
         </div>
-      </AppTableContainer>
 
       {filtered.length === 0 && (
         <div className="text-center py-10 text-gray-500">No tasks found for this filter.</div>
@@ -787,7 +778,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
             
-            {(inlineTask?.assigned_to === currentUserId || hasPermission("WORKSPACES_MANAGE")) ? (
+            {true ? (
               <div className="grid gap-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Status</label>
                 <select

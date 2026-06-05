@@ -422,7 +422,8 @@ export async function fetchUsersDashboardData() {
 }
 
 /**
- * Hard deletes a user from Supabase Auth and soft-deletes in user_master
+ * Soft deletes a user in user_master and scrambles their email in Auth to free it up.
+ * We cannot hard delete from auth.users due to foreign key constraints from other tables.
  */
 export async function deleteUserAction(userId: string) {
   const cookieStore = await cookies();
@@ -434,26 +435,90 @@ export async function deleteUserAction(userId: string) {
     return { success: false, error: "Unauthenticated request." };
   }
 
+  // Authorize the caller (Must be SUPER_ADMIN or have USERS_DELETE permission)
+  const { data: myProfileData } = await supabase
+    .from("user_master")
+    .select("role_id")
+    .eq("id", authUser.id)
+    .single();
+
+  let isCallerAdmin = false;
+
+  if (myProfileData?.role_id) {
+    const { data: roleData } = await supabase
+      .from("roles")
+      .select("code")
+      .eq("id", myProfileData.role_id)
+      .single();
+
+    if (roleData?.code === "SUPER_ADMIN" || roleData?.code === "ROLE_ADMIN") {
+      isCallerAdmin = true;
+    }
+  }
+
+  if (!isCallerAdmin) {
+    const { data: userRoles } = await supabase
+      .from("user_roles")
+      .select("role:roles(code)")
+      .eq("user_id", authUser.id);
+
+    if (userRoles && userRoles.length > 0) {
+      for (const ur of userRoles) {
+        const role = ur.role as any;
+        const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
+        if (roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN") {
+          isCallerAdmin = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!isCallerAdmin) {
+    // Check permissions in snapshot
+    const { data: userPerms } = await supabase
+      .from("user_permissions_snapshot")
+      .select("permission_code")
+      .eq("user_id", authUser.id);
+      
+    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
+    const canManage = perms.includes("USERS_DELETE") || perms.includes("USERS_MANAGE");
+
+    if (!canManage) {
+      return { success: false, error: "Unauthorized: You do not have permissions to delete user records." };
+    }
+  }
+
   const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!isServiceRoleAvailable) {
-    return { success: false, error: "CRITICAL: Cannot delete user from authentication backend. SUPABASE_SERVICE_ROLE_KEY is missing in your environment variables. Please add it to your deployment." };
+    return { success: false, error: "CRITICAL: Cannot modify user in authentication backend. SUPABASE_SERVICE_ROLE_KEY is missing in your environment variables. Please add it to your deployment." };
   }
 
   const adminClient = getAdminClient();
   
-  // Delete from auth.users to free up the email
-  const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
+  // Scramble email to free it up for future registrations
+  const scrambledEmail = `deleted_${Date.now()}_${userId.substring(0, 8)}@adios.local`;
   
-  // If the error is not 'User not found' (404), then we must abort to prevent a sync clash.
-  if (authDeleteError && !authDeleteError.message.includes("User not found")) {
-    console.error("[Server Action] Auth delete error:", authDeleteError);
-    return { success: false, error: `Failed to remove user from authentication system: ${authDeleteError.message}. Database deletion aborted to prevent clash.` };
+  const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(userId, {
+    email: scrambledEmail,
+    password: `Deleted!${Math.random()}`,
+    user_metadata: { deleted: true },
+    email_confirm: true
+  });
+  
+  if (authUpdateError && !authUpdateError.message.includes("User not found")) {
+    console.error("[Server Action] Auth update error:", authUpdateError);
+    return { success: false, error: `Failed to remove user from authentication system: ${authUpdateError.message}. Database deletion aborted to prevent clash.` };
   }
 
-  // Soft delete in user_master
+  // Soft delete in user_master and update the email to match the scrambled one
   const { error: dbError } = await supabase
     .from("user_master")
-    .update({ is_deleted: true, is_active: false })
+    .update({ 
+      is_deleted: true, 
+      is_active: false,
+      email: scrambledEmail
+    })
     .eq("id", userId);
 
   if (dbError) {

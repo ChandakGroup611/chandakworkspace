@@ -261,18 +261,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const handleCustomFieldChange = (key: string, value: string) => {
     setLocalCustomFields(prev => ({ ...prev, [key]: value }));
 
-    const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
-    if (normalizedKey === 'tat_days' && task?.start_date) {
-      const days = parseInt(value, 10);
-      if (!isNaN(days)) {
-        const startDate = new Date(task.start_date);
-        startDate.setDate(startDate.getDate() + days);
-        const newEndDateStr = startDate.toISOString().split('T')[0];
-        
-        setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
-        setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
-      }
-    }
+    setLocalCustomFields(prev => ({ ...prev, [key]: value }));
   };
 
 
@@ -430,16 +419,40 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   const isFrozen = task.status?.is_closed;
   
-  // Assignee and Super Admin
-  const canEditCore = task.currentUserCanAct && !isFrozen;
-  
-  // Executors
+  // Roles
+  const isOwner = task.currentUserCanAct; // Owner/Assignee or SuperAdmin
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
-  const canEditAux = (canEditCore || isExecutor) && !isFrozen;
+  const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
+  
+  // Owners and Executors can edit core properties
+  const canEditCore = (isOwner || isExecutor) && !isFrozen;
+  const canEditAux = canEditCore;
+  const canDeleteTask = isOwner && canDelete;
   
   // Reviewers & Watchers
-  const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   const canAddRemark = (canEditAux || isWatcherOrReviewer) && !isFrozen;
+  // Filter inherited workspace members to remove anyone explicitly assigned
+  const explicitExecutors = [...(task.task_assignees || [])];
+  
+  // Implicitly treat the Primary Assignee as an Executor
+  if (task.assignee && !explicitExecutors.some((e: any) => e.id === task.assignee.id)) {
+    explicitExecutors.unshift(task.assignee);
+  }
+
+  const explicitReviewers = task.task_reviewers || [];
+  const explicitWatchers = [...(task.task_watchers || [])];
+
+  if (task.inherited_users && task.inherited_users.length > 0) {
+    task.inherited_users.forEach((u: any) => {
+      if (task.assignee?.id === u.id) return;
+      if (explicitExecutors.some((e: any) => e.id === u.id)) return;
+      if (explicitReviewers.some((e: any) => e.id === u.id)) return;
+      if (explicitWatchers.some((e: any) => e.id === u.id)) return;
+      
+      // All inherited workspace access defaults to being a Watcher
+      explicitWatchers.push(u);
+    });
+  }
 
   return (
     <ExperienceProvider mode="compact">
@@ -456,7 +469,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Title & Core Meta removed to avoid duplication with parent page layout */}
       
       {/* Extended Metadata Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 bg-gray-50/50 dark:bg-[#111827] p-3 rounded-md border border-gray-100 dark:border-white/5">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3 bg-gray-50/50 dark:bg-[#111827] p-3 rounded-md border border-gray-100 dark:border-white/5">
           <div className="space-y-1">
             <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Priority</span>
             <div className="flex items-center gap-1.5">
@@ -479,6 +492,33 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
           </div>
           <div className="space-y-1">
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Duration (Days)</span>
+            <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
+              {task.currentUserIsSuperAdmin ? (
+                <input
+                  type="number"
+                  className="w-16 px-1.5 py-0.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0B0F19] text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
+                  onChange={(e) => {
+                    if (!task.start_date) return;
+                    const days = parseInt(e.target.value, 10);
+                    if (!isNaN(days) && days > 0) {
+                      const startDate = new Date(task.start_date);
+                      startDate.setDate(startDate.getDate() + (days - 1));
+                      const newEndDateStr = startDate.toISOString().split('T')[0];
+                      setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
+                      setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
+                    }
+                  }}
+                />
+              ) : (
+                <span>
+                  {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="space-y-1">
             <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Primary Assignee</span>
             <div className="flex items-center gap-1.5">
               {task.assignee ? (
@@ -497,23 +537,27 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               )}
             </div>
           </div>
+          {/* Executors */}
           <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Team / Viewers</span>
-            <div className="flex -space-x-1.5">
-              {[...(task.task_assignees || []), ...(task.task_watchers || [])].map((p: any, i) => (
-                <div key={p.id || i} title={p.full_name} className="relative group/avatar">
-                  {p.profile_photo ? (
-                    <img src={p.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover ring-2 ring-white dark:ring-[#111827] bg-gray-200" />
-                  ) : (
-                    <div className="w-5 h-5 rounded-full ring-2 ring-white dark:ring-[#111827] bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">
-                      {p.full_name?.substring(0, 2).toUpperCase() || "U"}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {(!(task.task_assignees?.length) && !(task.task_watchers?.length)) && (
-                <span className="text-xs font-medium text-gray-400 italic">None</span>
-              )}
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-emerald-500">Executors</span>
+            <div className="text-xs font-medium dark:text-gray-200">
+              {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
+            </div>
+          </div>
+          
+          {/* Reviewers */}
+          <div className="space-y-1">
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-blue-500">Reviewers</span>
+            <div className="text-xs font-medium dark:text-gray-200">
+              {explicitReviewers.length > 0 ? explicitReviewers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
+            </div>
+          </div>
+
+          {/* Watchers */}
+          <div className="space-y-1">
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-amber-500">Watchers</span>
+            <div className="text-xs font-medium dark:text-gray-200">
+              {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
             </div>
           </div>
         </div>
@@ -525,8 +569,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(localCustomFields).map(([key, val]) => {
                 const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
-                const isTatDays = normalizedKey === 'tat_days';
-                const isReadOnly = isTatDays && !task.currentUserIsSuperAdmin;
+                const isReadOnly = false;
                 return (
                   <div key={key} className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -666,7 +709,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               )}
 
               <div className="flex-1" />
-              {canDelete && (
+              {canDeleteTask && (
                 <AppButton 
                   variant="outline" 
                   size="sm" 

@@ -30,6 +30,8 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
 
+  const localTodayString = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
 
 
   const [priorityId, setPriorityId] = useState("");
@@ -140,27 +142,14 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
       return;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      if (start < today) {
-        alert("Start Date cannot be less than the creation date (today).");
-        return;
-      }
+    if (startDate && startDate < localTodayString) {
+      alert("Start Date cannot be less than the creation date (today).");
+      return;
     }
 
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(0, 0, 0, 0);
-      if (end < start) {
-        alert("Target Due Date cannot be earlier than the start date.");
-        return;
-      }
+    if (startDate && endDate && endDate < startDate) {
+      alert("Target Due Date cannot be earlier than the start date.");
+      return;
     }
 
     if (!assignedTo) {
@@ -297,11 +286,23 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
             <div className="grid grid-cols-2 gap-5 mb-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
-                <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={startDate} onChange={e => setStartDate(e.target.value)} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                <AppInput 
+                  type="date" 
+                  min={localTodayString} 
+                  value={startDate} 
+                  onChange={e => setStartDate(e.target.value)} 
+                  className={isLightMode ? "bg-white" : "bg-black/30"} 
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Due Date</label>
-                <AppInput type="date" min={startDate || new Date().toISOString().split('T')[0]} value={endDate} onChange={e => setEndDate(e.target.value)} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                <AppInput 
+                  type="date" 
+                  min={startDate || localTodayString} 
+                  value={endDate} 
+                  onChange={e => setEndDate(e.target.value)} 
+                  className={isLightMode ? "bg-white" : "bg-black/30"} 
+                />
               </div>
             </div>
 

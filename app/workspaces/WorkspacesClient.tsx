@@ -47,10 +47,16 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [masterHierarchy, setMasterHierarchy] = useState<any[]>(initialData?.masterHierarchy || []);
   const [loading, setLoading] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   const triggerToast = (msg: string) => {
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 3000);
+  };
+
+  const triggerErrorToast = (msg: string) => {
+    setErrorToast(msg);
+    setTimeout(() => setErrorToast(null), 4000);
   };
   const [currentUser, setCurrentUser] = useState<any>(initialData?.userProfile || null);
   const [mounted, setMounted] = useState(false);
@@ -247,6 +253,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       let data: any;
       if (editWSId) {
         data = await updateWorkspace(editWSId, payload);
+        if (data?.error) throw new Error(data.error);
+        
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
@@ -260,6 +268,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setActiveWorkspace(data);
       } else {
         data = await createWorkspace(payload);
+        if (data?.error) throw new Error(data.error);
+        
         // Close modal immediately for snappy UI
         setWsModalMode(null);
         setEditWSId(null);
@@ -307,8 +317,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       setAssigneeSearch("");
       setAssigneeDropdownOpen(false);
     } catch (err: any) {
-      console.error("[Workspace Creation] Intercepted:", err.message || err);
-      alert("Database Error on Workspace Save: " + (err.message || err.details || JSON.stringify(err)));
+      console.warn("[Workspace Creation] Intercepted:", err.message || err);
+      triggerErrorToast("Database Error on Workspace Save: " + (err.message || err.details || JSON.stringify(err)));
     } finally {
       setIsSubmitting(false);
     }
@@ -335,7 +345,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const handleDeleteWorkspace = async (id: string) => {
     if (!confirm("Are you sure you want to delete this workspace? This will permanently delete all tasks, chat messages, and timeline audits inside it.")) return;
     try {
-      await deleteWorkspace(id);
+      const res = await deleteWorkspace(id) as any;
+      if (res?.error) throw new Error(res.error);
+      
       const updatedList = workspaces.filter(w => w.id !== id);
       setWorkspaces(updatedList);
       triggerToast("Workspace deleted successfully");
@@ -350,8 +362,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => setMasterHierarchy(hier));
       });
     } catch (e: any) {
-      console.error("[Workspace Deletion] Intercepted:", e.message || e);
-      alert("Database Error on Workspace Deletion: " + (e.message || e.details || JSON.stringify(e)));
+      console.warn("[Workspace Deletion] Intercepted:", e.message || e);
+      triggerErrorToast("Database Error on Workspace Deletion: " + (e.message || e.details || JSON.stringify(e)));
     }
   };
 
@@ -377,8 +389,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       // Remove from active tasks list if currently active
       setTasks(prev => prev.filter(t => t.id !== nodeId));
     } catch (e: any) {
-      console.error("[Task Deletion] Intercepted:", e.message || e);
-      alert("Database Error on Task Deletion: " + (e.message || e.details || JSON.stringify(e)));
+      console.warn("[Task Deletion] Intercepted:", e.message || e);
+      triggerErrorToast("Database Error on Task Deletion: " + (e.message || e.details || JSON.stringify(e)));
     }
   };
 
@@ -455,8 +467,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         }
       });
     } catch (err: any) {
-      console.error("[Task Creation] Intercepted:", err.message || err);
-      alert("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
+      console.warn("[Task Creation] Intercepted:", err.message || err);
+      triggerErrorToast("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 
@@ -514,7 +526,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               size="sm" 
               leftIcon={<Plus className="h-4 w-4" />} 
               onClick={() => {
-                setNewWS({...newWS, parent_workspace_id: ""});
+                setNewWS({
+                  name: "", 
+                  code: "", 
+                  description: "",
+                  assigneeIds: [],
+                  start_date: "",
+                  end_date: "",
+                  is_public: false,
+                  parent_workspace_id: "",
+                  company_id: ""
+                });
                 setWsModalMode('ROOT');
               }}
               disabled={!hasPermission("WORKSPACES_CREATE")}
@@ -527,10 +549,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Full Width Master Table Layout */}
       {workspaces.length > 0 ? (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
             
             {/* Hierarchical Task Matrix */}
-            <AppCard className="flex-1 p-5 flex flex-col">
+            <AppCard className="flex-1 p-2 flex flex-col min-h-0 overflow-visible">
               <div className="flex items-center justify-between border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
                   <button 
@@ -553,7 +575,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               {activeView === 'HIERARCHY' ? (
-                <div className="flex-1 overflow-visible">
+                <div className="flex-1 overflow-visible min-h-0">
                   <div className="flex justify-end mb-3 mr-2">
                     <label className={`flex items-center gap-2 text-xs font-medium cursor-pointer ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
                       <input 
@@ -598,8 +620,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 onOpenWorkspace={(node) => openEditWorkspace(node)}
                 onShareNode={(node) => openEditWorkspace(node)}
                 onCreateSubWorkspace={(node) => {
-                  setNewWS({ 
-                    ...newWS, 
+                  setNewWS({
+                    name: "", 
+                    code: "", 
+                    description: "",
+                    assigneeIds: [],
+                    start_date: "",
+                    end_date: "",
+                    is_public: false,
                     parent_workspace_id: node.id,
                     company_id: node.company_id || workspaces.find(w => w.id === node.id)?.company_id || ""
                   });
@@ -786,82 +814,66 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               <div className="space-y-1.5 relative mb-6">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Assignees (Users)</label>
-                <div 
-                  onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
-                  className={`w-full p-3 rounded-xl text-sm border flex justify-between items-center cursor-pointer transition-colors ${
-                    isLightMode ? "bg-white border-gray-200 hover:border-indigo-300" : "bg-black/30 border-white/10 text-white hover:border-indigo-500/50"
-                  }`}
-                >
-                  <span className={`font-semibold ${newWS.assigneeIds.length > 0 ? (isLightMode ? "text-indigo-600" : "text-indigo-400") : "text-gray-500"}`}>
-                    {newWS.assigneeIds.length > 0 ? `${newWS.assigneeIds.length} Personnel Assigned` : "-- Select Stakeholders --"}
-                  </span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${assigneeDropdownOpen ? "rotate-180" : "text-gray-400"}`} />
+                <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5 mb-2">
+                  <label className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider block">Workspace Assignees (Users)</label>
+                  <button 
+                    type="button" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const allIds = availableUsers.map(u => u.id);
+                      if (newWS.assigneeIds.length === allIds.length && allIds.length > 0) {
+                        setNewWS({...newWS, assigneeIds: []});
+                      } else {
+                        setNewWS({...newWS, assigneeIds: allIds});
+                      }
+                    }}
+                    className={`text-[9px] font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600 hover:text-indigo-700" : "text-indigo-400 hover:text-indigo-300"}`}
+                  >
+                    {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
+                  </button>
                 </div>
-                
-                {assigneeDropdownOpen && (
-                  <div className={`absolute z-20 w-full mt-2 p-2 rounded-xl border shadow-2xl max-h-[250px] overflow-hidden flex flex-col ${
-                    isLightMode ? "bg-white border-gray-200" : "bg-[#0B0D17] border-white/10"
-                  }`}>
-                    <div className="relative mb-2 shrink-0">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+
+                <div className="relative mb-2 shrink-0">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Search personnel..." 
+                    value={assigneeSearch} 
+                    onChange={e => setAssigneeSearch(e.target.value)} 
+                    onClick={e => e.stopPropagation()}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      }
+                    }}
+                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                      isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    }`}
+                  />
+                </div>
+
+                <div className={`max-h-[160px] overflow-y-auto space-y-1 pr-1 rounded-xl p-2 border ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10"} scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent`}>
+                  {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
+                    <label key={u.id} className={`flex items-center gap-3 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
+                      isLightMode ? "hover:bg-indigo-100/50" : "hover:bg-white/10"
+                    }`}>
                       <input 
-                        type="text" 
-                        placeholder="Search personnel..." 
-                        value={assigneeSearch} 
-                        onChange={e => setAssigneeSearch(e.target.value)} 
-                        onClick={e => e.stopPropagation()}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                          }
-                        }}
-                        className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
-                          isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
-                        }`}
+                        type="checkbox" 
+                        checked={newWS.assigneeIds.includes(u.id)} 
+                        onChange={e => {
+                          if (e.target.checked) setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
+                          else setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
+                        }} 
+                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4" 
                       />
-                    </div>
-                    <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-gray-100 dark:border-white/5 shrink-0">
-                      <button 
-                        type="button" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const allIds = availableUsers.map(u => u.id);
-                          if (newWS.assigneeIds.length === allIds.length && allIds.length > 0) {
-                            setNewWS({...newWS, assigneeIds: []});
-                          } else {
-                            setNewWS({...newWS, assigneeIds: allIds});
-                          }
-                        }}
-                        className={`text-[11px] font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600 hover:text-indigo-700" : "text-indigo-400 hover:text-indigo-300"}`}
-                      >
-                        {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
-                      </button>
-                    </div>
-                    <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent">
-                      {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
-                        <label key={u.id} className={`flex items-center gap-3 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
-                          isLightMode ? "hover:bg-indigo-50" : "hover:bg-white/5"
-                        }`}>
-                          <input 
-                            type="checkbox" 
-                            checked={newWS.assigneeIds.includes(u.id)} 
-                            onChange={e => {
-                              if (e.target.checked) setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
-                              else setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
-                            }} 
-                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4" 
-                          />
-                          <div className="flex flex-col">
-                            <span className={isLightMode ? "text-gray-900 font-medium" : "text-gray-200 font-medium"}>{u.full_name}</span>
-                            <span className="opacity-50 text-[10px]">{u.user_code}</span>
-                          </div>
-                        </label>
-                      ))}
-                      {availableUsers.length === 0 && <p className="text-xs text-gray-500 p-3 text-center">No users available.</p>}
-                    </div>
-                  </div>
-                )}
+                      <div className="flex flex-col">
+                        <span className={isLightMode ? "text-gray-900 font-medium" : "text-gray-200 font-medium"}>{u.full_name}</span>
+                        <span className="opacity-50 text-[10px]">{u.user_code}</span>
+                      </div>
+                    </label>
+                  ))}
+                  {availableUsers.length === 0 && <p className="text-xs text-gray-500 p-3 text-center">No users available.</p>}
+                </div>
               </div>
 
               <div className={`p-4 rounded-xl border flex items-center gap-3 transition-colors ${
@@ -915,8 +927,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <span className="text-xs font-semibold">{successToast}</span>
+        </div>
+      )}
+      {errorToast && (
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-rose-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <span className="text-xs font-semibold">{errorToast}</span>
         </div>
       )}
 
