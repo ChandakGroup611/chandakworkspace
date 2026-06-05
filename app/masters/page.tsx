@@ -14,6 +14,8 @@ import {
   AppTableHead, 
   AppTableCell 
 } from "@/components/ui/AppTable";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { createClient } from "@/utils/supabase/client";
@@ -649,41 +651,34 @@ export default function MastersPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
-      {/* Primary Module Header */}
-      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${
-        isLightMode ? "border-gray-200" : "border-white/5"
-      }`}>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>Master Data Configuration Directory</h1>
-            <AppBadge variant="success">Active Directory</AppBadge>
-          </div>
-          <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
-            Manage core business definitions, categories, and dropdown options utilized across the operational platform.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <AppButton 
-            variant="outline" 
-            size="sm" 
-            leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />}
-            onClick={fetchRecords}
-          >
-            Refresh Data
-          </AppButton>
-          <AppButton 
-            variant="primary" 
-            size="sm" 
-            leftIcon={<Plus className="h-3.5 w-3.5" />}
-            onClick={openCreateModal}
-            disabled={!hasPermission("MASTERS_CREATE")}
-          >
-            Add New Record
-          </AppButton>
-        </div>
-      </div>
+    <PageContainer strict={true}>
+      <PageHeader
+        title="Master Data Configuration Directory"
+        description="Manage core business definitions, categories, and dropdown options utilized across the operational platform."
+        icon={<Database className="h-6 w-6" />}
+        badge={<AppBadge variant="success">Active Directory</AppBadge>}
+        actions={
+          <>
+            <AppButton 
+              variant="outline" 
+              size="sm" 
+              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />}
+              onClick={fetchRecords}
+            >
+              Refresh Data
+            </AppButton>
+            <AppButton 
+              variant="primary" 
+              size="sm" 
+              leftIcon={<Plus className="h-3.5 w-3.5" />}
+              onClick={openCreateModal}
+              disabled={!hasPermission("MASTERS_CREATE")}
+            >
+              Add New Record
+            </AppButton>
+          </>
+        }
+      />
 
       {/* Global Event Trigger Banners */}
       {errorAlert && (
@@ -712,9 +707,9 @@ export default function MastersPage() {
       )}
 
       {/* Central Columns Workspace Framework */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
         {/* Left Column Span 4: Navigational Tab Controller */}
-        <div className="lg:col-span-4 space-y-4 flex flex-col">
+        <div className="lg:col-span-4 space-y-4 flex flex-col min-h-0">
           <AppCard className="p-4 space-y-3">
             <div className={`flex items-center justify-between pb-2 border-b ${
               isLightMode ? "border-gray-100" : "border-white/5"
@@ -763,7 +758,7 @@ export default function MastersPage() {
               })}
             </div>
 
-            <div className="space-y-4 max-h-[calc(100vh-22rem)] overflow-y-auto pr-1 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
               {(["IT INFRA", "ERP", "USERS", "OTHERS"] as const).map((groupCategory) => {
                 // If activeCategoryFilter is not "ALL", only show the requested tier
                 if (activeCategoryFilter !== "ALL" && groupCategory !== activeCategoryFilter) return null;
@@ -1313,6 +1308,6 @@ export default function MastersPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

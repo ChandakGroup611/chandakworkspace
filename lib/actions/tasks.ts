@@ -23,17 +23,38 @@ export async function createTask(payload: {
   attachments?: { file_name: string; file_url: string; file_type: string; size: number }[];
   participants?: { user_id: string; participation_role: string }[];
 }) {
+  let creatorId = payload.created_by;
+  if (!creatorId) {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthenticated user creating task");
+    creatorId = user.id;
+  }
+
   // Find default status for tasks
-  const { data: statusMaster } = await supabaseAdmin
+  let { data: statusMaster } = await supabaseAdmin
     .from('status_master')
     .select('id')
     .eq('is_default', true)
     .eq('scope_type', 'TASK')
     .eq('is_deleted', false)
-    .single();
+    .maybeSingle();
 
   if (!statusMaster) {
-    throw new Error('No default task status found in status_master');
+    // Fallback to the first active task status
+    const { data: fallbackStatus } = await supabaseAdmin
+      .from('status_master')
+      .select('id')
+      .eq('scope_type', 'TASK')
+      .eq('is_deleted', false)
+      .limit(1);
+
+    if (fallbackStatus && fallbackStatus.length > 0) {
+      statusMaster = fallbackStatus[0];
+    } else {
+      throw new Error('No active task status found in status_master to assign.');
+    }
   }
 
   // Create Task
@@ -50,8 +71,9 @@ export async function createTask(payload: {
       end_date: payload.end_date,
       estimated_hours: payload.estimated_hours,
       custom_fields: payload.custom_fields,
-      created_by: payload.created_by,
-      assigned_to: payload.assigned_to
+      created_by: creatorId,
+      assigned_to: payload.assigned_to,
+      task_code: `TSK-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`
     }])
     .select()
     .single();
@@ -66,7 +88,7 @@ export async function createTask(payload: {
       .filter((p) => p.participation_role === 'EXECUTOR' || p.participation_role === 'REVIEWER')
       .map((p) => {
         explicitParticipantIds.add(p.user_id);
-        return { task_id: task.id, user_id: p.user_id, created_by: payload.created_by };
+        return { task_id: task.id, user_id: p.user_id, created_by: creatorId };
       });
       
     if (assignees.length > 0) {
@@ -479,28 +501,23 @@ export async function updateTask(taskId: string, payload: any) {
     if (targetStatus) {
       const completedCodes = ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'];
       if (completedCodes.includes(targetStatus.status_code.toUpperCase())) {
-        const { data: blockers } = await supabaseAdmin.from('task_dependencies')
-          .select('task_id')
-          .eq('depends_on_task_id', taskId)
-          .eq('dependency_type', 'BLOCKS');
+        const { data: subTasks } = await supabaseAdmin.from('tasks')
+          .select('id, subject, status_id')
+          .eq('parent_task_id', taskId)
+          .eq('is_deleted', false);
           
-        if (blockers && blockers.length > 0) {
-          const blockerIds = blockers.map((b: any) => b.task_id);
-          const { data: blockingTasks } = await supabaseAdmin.from('tasks').select('subject, status_id').in('id', blockerIds);
+        if (subTasks && subTasks.length > 0) {
+          const statusIds = [...new Set(subTasks.map((t: any) => t.status_id))];
+          const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
+          const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
           
-          if (blockingTasks && blockingTasks.length > 0) {
-            const statusIds = [...new Set(blockingTasks.map((t: any) => t.status_id))];
-            const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
-            const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
-            
-            const incompleteBlocker = blockingTasks.find((t: any) => {
-              const code = statusMap.get(t.status_id);
-              return !code || !completedCodes.includes(code);
-            });
-            
-            if (incompleteBlocker) {
-              return { error: `Cannot complete task. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
-            }
+          const incompleteBlocker = subTasks.find((t: any) => {
+            const code = statusMap.get(t.status_id);
+            return !code || !completedCodes.includes(code);
+          });
+          
+          if (incompleteBlocker) {
+            return { error: `Cannot complete task. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
           }
         }
       }
@@ -713,28 +730,23 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
     if (targetStatus) {
       const completedCodes = ['TASK COMPLETED', 'CLOSED', 'RESOLVED', 'DONE'];
       if (completedCodes.includes(targetStatus.status_code.toUpperCase())) {
-        const { data: blockers } = await supabaseAdmin.from('task_dependencies')
-          .select('task_id')
-          .eq('depends_on_task_id', taskId)
-          .eq('dependency_type', 'BLOCKS');
+        const { data: subTasks } = await supabaseAdmin.from('tasks')
+          .select('id, subject, status_id')
+          .eq('parent_task_id', taskId)
+          .eq('is_deleted', false);
           
-        if (blockers && blockers.length > 0) {
-          const blockerIds = blockers.map((b: any) => b.task_id);
-          const { data: blockingTasks } = await supabaseAdmin.from('tasks').select('subject, status_id').in('id', blockerIds);
+        if (subTasks && subTasks.length > 0) {
+          const statusIds = [...new Set(subTasks.map((t: any) => t.status_id))];
+          const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
+          const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
           
-          if (blockingTasks && blockingTasks.length > 0) {
-            const statusIds = [...new Set(blockingTasks.map((t: any) => t.status_id))];
-            const { data: statuses } = await supabaseAdmin.from('status_master').select('id, status_code').in('id', statusIds);
-            const statusMap = new Map(statuses?.map((s: any) => [s.id, s.status_code.toUpperCase()]) || []);
-            
-            const incompleteBlocker = blockingTasks.find((t: any) => {
-              const code = statusMap.get(t.status_id);
-              return !code || !completedCodes.includes(code);
-            });
-            
-            if (incompleteBlocker) {
-              return { error: `Cannot complete. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
-            }
+          const incompleteBlocker = subTasks.find((t: any) => {
+            const code = statusMap.get(t.status_id);
+            return !code || !completedCodes.includes(code);
+          });
+          
+          if (incompleteBlocker) {
+            return { error: `Cannot complete. Blocked by incomplete sub-task: "${incompleteBlocker.subject}"` };
           }
         }
       }

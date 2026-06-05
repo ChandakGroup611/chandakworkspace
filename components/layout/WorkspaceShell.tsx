@@ -30,7 +30,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
   return (
     <div 
-      className="min-h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-cyan-500/20"
+      className="h-screen max-h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-cyan-500/20 overflow-hidden"
       style={{
         backgroundColor: "var(--bg-primary, #0A0D14)",
         color: "var(--text-primary, #FFFFFF)"
@@ -40,14 +40,14 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
       {!isAuthRoute && <Sidebar />}
 
       {/* Main Orchestration Column */}
-      <div className="flex flex-1 flex-col min-w-0 min-h-screen relative overflow-x-auto">
+      <div className="flex flex-1 flex-col min-w-0 min-h-0 relative">
         {/* Removed Background Decorative Ambient Circles for Enterprise Discipline */}
 
         {/* Global Action Top Navbar */}
         {!isAuthRoute && <Navbar />}
 
         {/* Dynamic Scrollable Content Workspace - Zero Global Padding to allow Density Modes */}
-        <main className={`flex-1 w-full relative pb-24 ${isAuthRoute ? 'p-0' : 'p-0'}`}>
+        <main className={`flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto overflow-x-hidden relative pb-12 ${isAuthRoute ? 'p-0' : 'bg-transparent'}`}>
           {children}
         </main>
       </div>

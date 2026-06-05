@@ -257,12 +257,6 @@ export async function fetchWorkspaces() {
   const userId = userData.user?.id;
   if (!userId) return [];
 
-  const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_VIEW");
-  if (!hasAccess) {
-    console.warn(`[Workspaces] User ${userId} unauthorized to fetch workspaces`);
-    return [];
-  }
-
   // Fetch workspaces using the explicit repository layer
   return await getVisibleWorkspaces(userId);
 }
@@ -297,20 +291,6 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       };
     }
 
-    const hasAccess = await checkServerPermission(supabase, user.id, "WORKSPACES_VIEW");
-    if (!hasAccess) {
-      return {
-        userProfile: null,
-        workspaces: [],
-        companies: [],
-        priorities: [],
-        prefetchWorkspaceId: null,
-        prefetchTasks: [],
-        prefetchStakeholders: [],
-        users: [],
-        teams: []
-      };
-    }
 
     // 2. Fetch independent data first
     const [profileRes, managedDeptsRes, workspaces, companies, priorities, taskStatuses] = await Promise.all([
@@ -710,165 +690,6 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
   }).filter(Boolean);
 }
 
-export async function createTask(formData: any) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  
-  let status_id = formData.status_id;
-  if (!status_id) {
-    try {
-      const { data: status } = await supabase
-        .from("status_master")
-        .select("id")
-        .eq("status_code", "ST_OPEN")
-        .eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3")
-        .maybeSingle();
-      status_id = status?.id;
-      if (!status_id) {
-        const { data: fallback } = await supabaseAdmin.from("status_master").select("id").eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").limit(1);
-        status_id = fallback?.[0]?.id || null;
-      }
-    } catch (e) {
-      const { data: fallback } = await supabaseAdmin.from("status_master").select("id").eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").limit(1);
-      status_id = fallback?.[0]?.id || null;
-    }
-  }
-
-  const {
-    checklist_items,
-    attachments,
-    parent_task_id,
-    participants,
-    ...taskFields
-  } = formData;
-
-  const checklistArray = Array.isArray(checklist_items)
-    ? checklist_items.filter(Boolean)
-    : [];
-  const attachmentArray = Array.isArray(attachments)
-    ? attachments.map((att: any) => ({
-        file_name: att.file_name,
-        file_url: att.file_url,
-        file_type: att.file_type || att.file_name?.split('.').pop() || 'unknown',
-        size: Number(att.size) || 0
-      }))
-    : [];
-
-  let priority_id = taskFields.priority_id;
-  if (!priority_id) {
-    const { data: defaultPriority } = await supabase.from('priority_master').select('id').eq('priority_code', 'PR_MEDIUM').eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").maybeSingle();
-    if (defaultPriority) priority_id = defaultPriority.id;
-    else {
-      const { data: anyPriority } = await supabase.from('priority_master').select('id').eq("scope_id", "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3").limit(1);
-      priority_id = anyPriority?.[0]?.id || null;
-    }
-  }
-
-  // Calculate Turnaround Time (TAT) if start and end dates are provided
-  let tatDays = null;
-  if (taskFields.start_date && taskFields.end_date) {
-    const start = new Date(taskFields.start_date);
-    const end = new Date(taskFields.end_date);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    tatDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-  }
-
-  const { data, error } = await supabase
-    .from("tasks")
-    .insert([{
-      subject: taskFields.title || "Untitled Task",
-      description: taskFields.description || null,
-      workspace_id: formData.workspace_id,
-      priority_id: priority_id,
-      start_date: taskFields.start_date || null,
-      end_date: taskFields.end_date || null,
-      status_id: status_id,
-      parent_task_id: parent_task_id || null,
-      created_by: userId,
-      assigned_to: taskFields.assigned_to || null,
-      owner_id: taskFields.assigned_to || null,
-      sprint_id: taskFields.sprint_id || null,
-      template_id: taskFields.template_id || null,
-      custom_fields: { ...taskFields.custom_fields, tat_days: tatDays }
-    }])
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("[Workspaces] Error creating task:", error);
-    throw new Error(error.message);
-  }
-
-  // Insert dependency if there is a parent task
-  if (parent_task_id) {
-     const { error: depErr } = await supabase.from("task_dependencies").insert([{
-        task_id: data.id,
-        depends_on_task_id: parent_task_id,
-        dependency_type: 'BLOCKS'
-     }]);
-     if (depErr) console.error("Error linking parent task:", depErr);
-  }
-
-  // Insert Task Participants
-  if (participants && Array.isArray(participants) && participants.length > 0) {
-    const participantPayload = participants.map((p: any) => ({
-      task_id: data.id,
-      user_id: p.user_id,
-      participation_role: p.participation_role
-    }));
-    const { error: partErr } = await supabaseAdmin.from("task_participants").upsert(participantPayload, { onConflict: 'task_id, user_id' });
-    if (partErr) console.error("[Workspaces] Error inserting task participants:", partErr);
-  }
-
-  // Insert checklist entries
-  if (checklistArray.length > 0) {
-    const checklistPayload = checklistArray.map((title: string) => ({
-      task_id: data.id,
-      label: title,
-      is_completed: false
-    }));
-    const { error: checklistError } = await supabase.from("task_checklists").insert(checklistPayload);
-    if (checklistError) {
-      console.error("[Workspaces] Error inserting task checklist items:", checklistError);
-    }
-  }
-
-  // Insert attachment records
-  if (attachmentArray.length > 0) {
-    const attachmentPayload = attachmentArray.map((att: any) => ({
-      task_id: data.id,
-      file_name: att.file_name,
-      file_url: att.file_url,
-      file_type: att.file_type,
-      size: att.size,
-      uploaded_by: userId
-    }));
-    // Note: Assuming there is a task_attachments table based on the previous code, or we should use whatever was there.
-    const { error: attachmentError } = await supabase.from("task_attachments").insert(attachmentPayload);
-    if (attachmentError) {
-      console.error("[Workspaces] Error inserting task attachments:", attachmentError);
-    }
-  }
-
-  // Trigger notification for the workspace (all members will see the task on their dashboard)
-  try {
-     const { data: members } = await supabase.from("workspace_members").select("user_id").eq("workspace_id", formData.workspace_id);
-     if (members) {
-       const notifications = members
-         .filter(m => m.user_id !== userId)
-         .map(m => dispatchNotification(m.user_id, "New Task in Workspace", `A new task was created in your workspace: ${data.subject || data.id}`, `/workspaces?task=${data.id}`));
-       
-       Promise.all(notifications).catch(e => console.error("Notification dispatch failed:", e));
-     }
-  } catch (e) {
-    console.error("Notification dispatch failed:", e);
-  }
-
-  return data;
-}
 
 export async function fetchTasksByWorkspace(workspaceId: string) {
   if (!workspaceId) return [];

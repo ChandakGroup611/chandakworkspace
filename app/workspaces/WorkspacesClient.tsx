@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { 
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
-  fetchWorkspaceStakeholders, createWorkspace, createTask, fetchCompanies, fetchPriorities,
+  fetchWorkspaceStakeholders, createWorkspace, fetchCompanies, fetchPriorities,
   updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData, fetchHierarchyChildren
 } from "@/lib/actions/workspaces";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -25,10 +25,12 @@ import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { TaskDetailDrawer } from "@/components/tasks/TaskDetailDrawer";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
-import { getTaskDetails, updateNodeStatus, deleteTask } from "@/lib/actions/tasks";
+import { getTaskDetails, updateNodeStatus, deleteTask, createTask } from "@/lib/actions/tasks";
 import { useRouter } from "next/navigation";
 import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
 import { SprintBoard } from "@/components/workspaces/sprints/SprintBoard";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
   const { theme } = useTheme();
@@ -484,53 +486,44 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   }
 
   return (
-    <div className={`flex flex-col font-sans p-2 md:px-4 space-y-2 ${isLightMode ? "bg-gray-50" : "bg-[#070913]"}`}>
-      
-      {/* Dynamic Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/5">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <FolderKanban className={`h-6 w-6 ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`} />
-            <h1 className={`text-2xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>Workspace & Task Engine</h1>
-            <AppBadge variant="info">Enterprise Tier</AppBadge>
-          </div>
-          <p className="text-xs text-gray-500">Real-time collaborative project workspaces linked to corporate masters.</p>
-        </div>
-
-
-
-        <div className="flex items-center gap-3">
-          {/* Search & Filter Header Inputs */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search workspaces & tasks..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-indigo-500 w-48 transition-all ${
-                isLightMode ? 'bg-white border-gray-300 text-gray-900 focus:w-64' : 'bg-black/30 border-white/10 text-white focus:w-64'
-              }`}
-            />
-          </div>
-          <AppButton variant="outline" size="sm" leftIcon={<Filter className="h-4 w-4" />}>
-            Filters
-          </AppButton>
-          
-          <AppButton 
-            variant="primary" 
-            size="sm" 
-            leftIcon={<Plus className="h-4 w-4" />} 
-            onClick={() => {
-              setNewWS({...newWS, parent_workspace_id: ""});
-              setWsModalMode('ROOT');
-            }}
-            disabled={!hasPermission("WORKSPACES_CREATE")}
-          >
-            New Workspace
-          </AppButton>
-        </div>
-      </div>
+    <PageContainer strict={true}>
+      <PageHeader
+        title="Workspace & Task Engine"
+        description="Real-time collaborative project workspaces linked to corporate masters."
+        icon={<FolderKanban className="h-6 w-6" />}
+        badge={<AppBadge variant="info">Enterprise Tier</AppBadge>}
+        actions={
+          <>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Search workspaces..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-indigo-500 w-48 transition-all ${
+                  isLightMode ? 'bg-white border-gray-300 text-gray-900 focus:w-64' : 'bg-black/30 border-white/10 text-white focus:w-64'
+                }`}
+              />
+            </div>
+            <AppButton variant="outline" size="sm" leftIcon={<Filter className="h-4 w-4" />}>
+              Filters
+            </AppButton>
+            <AppButton 
+              variant="primary" 
+              size="sm" 
+              leftIcon={<Plus className="h-4 w-4" />} 
+              onClick={() => {
+                setNewWS({...newWS, parent_workspace_id: ""});
+                setWsModalMode('ROOT');
+              }}
+              disabled={!hasPermission("WORKSPACES_CREATE")}
+            >
+              New Workspace
+            </AppButton>
+          </>
+        }
+      />
 
       {/* Full Width Master Table Layout */}
       {workspaces.length > 0 ? (
@@ -934,6 +927,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         />
       )}
 
-    </div>
+    </PageContainer>
   );
 }

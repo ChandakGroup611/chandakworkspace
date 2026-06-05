@@ -27,9 +27,14 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
+import RequirementDraftModal from "@/components/requirements/RequirementDraftModal";
+import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 
 interface RequirementItem {
   id: string;
+  dbId?: string;
   title: string;
   objective: string;
   functionalScope: string;
@@ -69,55 +74,53 @@ export default function RequirementsPage() {
     setMounted(true);
   }, []);
 
-  const [reqs, setReqs] = useState<RequirementItem[]>([
-    {
-      id: "REQ-901",
-      title: "Universal queue-based async event dispatcher service",
-      objective: "Decouple synchronous WebSocket notifications and SMTP email logging from primary PostgreSQL storage inserts to guarantee sub-300ms ticket opening speeds.",
-      functionalScope: "CRUD triggers publish normalized JSON events directly into Redis worker queues for secondary downstream processing.",
-      technicalScope: "Implement @supabase/ssr middleware intercepts integrated with background server listeners supporting granular retry fallback loops.",
-      risk: "Medium",
-      stage: "Approval",
-      approvals: { business: true, technical: true, compliance: false, final: false },
-      criteria: [
-        { label: "Verify Zod payload validation parameters pass client constraints", done: true },
-        { label: "Confirm zero active connections leak during concurrent bulk inserts", done: true },
-        { label: "Enforce strict snapshot permission metadata mappings", done: false },
-      ],
-      customFields: {
-        regulatory_scope: "SOC2 Certified",
-        budget_allocation_usd: 12500
-      },
-      versionTag: "v2.4-STABLE",
-      versionHistory: [
-        { v: "v2.4-STABLE", author: "Alex Vance", date: "May 14, 2026", changes: "Added multi-region Redis retry loops and circuit breakers." },
-        { v: "v2.1-DRAFT", author: "Elena Rostova", date: "May 10, 2026", changes: "Initial scope outline mapping baseline pgBouncer triggers." }
-      ]
-    },
-    {
-      id: "REQ-902",
-      title: "Dynamic RBAC flattened permission snapshot engine",
-      objective: "Pre-compute complex role joins into cached string lists injected directly into active JWT user metadata headers.",
-      functionalScope: "Eliminate repetitive nested SQL lookups during multi-department dashboard renderings.",
-      technicalScope: "Postgres materialized view caching bindings powered by pg_cron incremental triggers.",
-      risk: "High",
-      stage: "Analysis",
-      approvals: { business: true, technical: false, compliance: false, final: false },
-      criteria: [
-        { label: "Validate custom hook context hydration timing", done: true },
-      ],
-      customFields: {
-        regulatory_scope: "ISO-27001 System",
-        budget_allocation_usd: 8400
-      },
-      versionTag: "v1.0-ALPHA",
-      versionHistory: [
-        { v: "v1.0-ALPHA", author: "Security Compliance Daemon", date: "May 12, 2026", changes: "Enforced RLS execution constraints on snapshot read channels." }
-      ]
-    }
-  ]);
+  const [reqs, setReqs] = useState<RequirementItem[]>([]);
+  const [selectedReq, setSelectedReq] = useState<RequirementItem | null>(null);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isGeneratingTask, setIsGeneratingTask] = useState(false);
 
-  const [selectedReq, setSelectedReq] = useState<RequirementItem>(reqs[0]);
+  // Fetch real requirements
+  const loadRequirements = async (wsId: string) => {
+    try {
+      const m = await import("@/lib/actions/requirements");
+      const data = await m.fetchRequirements(wsId);
+      const mapped = data.map((d: any) => ({
+        id: d.requirement_code,
+        dbId: d.id,
+        title: d.title,
+        objective: d.objective,
+        functionalScope: d.functional_scope,
+        technicalScope: d.technical_scope || "Pending definition...",
+        risk: d.risk_assessment || "Low",
+        stage: d.status?.name || "Draft",
+        approvals: { business: false, technical: false, compliance: false, final: false },
+        criteria: d.custom_fields?.criteria || [],
+        customFields: d.custom_fields || {},
+        versionTag: d.custom_fields?.versionTag || "v1.0-DRAFT",
+        versionHistory: d.custom_fields?.versionHistory || []
+      }));
+      setReqs(mapped);
+      if (mapped.length > 0 && !selectedReq) {
+        setSelectedReq(mapped[0]);
+      } else if (mapped.length === 0) {
+        setSelectedReq(null);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const wsId = params.get("workspaceId");
+      if (wsId) {
+        setActiveWorkspaceId(wsId);
+        loadRequirements(wsId);
+      }
+    }
+  }, []);
 
   // Extract exclusive selector records from Postgres
   const fetchDatabaseGovernanceConfigs = async () => {
@@ -163,34 +166,46 @@ export default function RequirementsPage() {
     fetchDatabaseGovernanceConfigs();
   }, []);
 
-  const toggleApproval = (tier: keyof RequirementItem["approvals"]) => {
+  const toggleApproval = async (tier: keyof RequirementItem["approvals"]) => {
+    if (!selectedReq) return;
+    const updatedApprovals = {
+      ...selectedReq.approvals,
+      [tier]: !selectedReq.approvals[tier]
+    };
+
     const updated = {
       ...selectedReq,
-      approvals: {
-        ...selectedReq.approvals,
-        [tier]: !selectedReq.approvals[tier]
-      }
+      approvals: updatedApprovals
     };
     
     // Automatically advance stage if all tiers pass
     const allApproved = updated.approvals.business && updated.approvals.technical && updated.approvals.compliance && updated.approvals.final;
     if (allApproved && updated.stage === "Approval") {
       updated.stage = "Development";
+      // We would ideally call transitionRequirementStatus here if we had the status IDs
     }
 
     setSelectedReq(updated);
     setReqs(reqs.map(r => r.id === updated.id ? updated : r));
+
+    // Persist to DB
+    const newCustomFields = { ...updated.customFields, approvals: updatedApprovals };
+    await supabase.from('requirements').update({ custom_fields: newCustomFields }).eq('requirement_code', updated.id);
   };
 
-  const toggleCriterion = (idx: number) => {
+  const toggleCriterion = async (idx: number) => {
+    if (!selectedReq) return;
     const newCriteria = [...selectedReq.criteria];
     newCriteria[idx].done = !newCriteria[idx].done;
-    const updated = { ...selectedReq, criteria: newCriteria };
+    const newCustomFields = { ...selectedReq.customFields, criteria: newCriteria };
+    const updated = { ...selectedReq, criteria: newCriteria, customFields: newCustomFields };
     setSelectedReq(updated);
     setReqs(reqs.map(r => r.id === updated.id ? updated : r));
+    await supabase.from('requirements').update({ custom_fields: newCustomFields }).eq('requirement_code', updated.id);
   };
 
-  const handleCustomFieldChange = (key: string, val: any) => {
+  const handleCustomFieldChange = async (key: string, val: any) => {
+    if (!selectedReq) return;
     const updatedFields = {
       ...selectedReq.customFields,
       [key]: val
@@ -201,27 +216,32 @@ export default function RequirementsPage() {
     };
     setSelectedReq(updated);
     setReqs(reqs.map(r => r.id === updated.id ? updated : r));
+    await supabase.from('requirements').update({ custom_fields: updatedFields }).eq('requirement_code', updated.id);
   };
 
   const [newCommitMessage, setNewCommitMessage] = useState("");
-  const commitVersionSnapshot = (e: React.FormEvent) => {
+  const commitVersionSnapshot = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCommitMessage.trim()) return;
+    if (!newCommitMessage.trim() || !selectedReq) return;
     const nextVer = `v2.${(selectedReq.versionHistory || []).length + 5}-SNAPSHOT`;
     const newEntry = {
       v: nextVer,
       author: "Engineering Lifecycle Daemon",
-      date: "Just now",
+      date: new Date().toLocaleDateString(),
       changes: newCommitMessage.trim()
     };
+    const newVersionHistory = [newEntry, ...(selectedReq.versionHistory || [])];
+    const newCustomFields = { ...selectedReq.customFields, versionHistory: newVersionHistory, versionTag: nextVer };
     const updated = {
       ...selectedReq,
       versionTag: nextVer,
-      versionHistory: [newEntry, ...(selectedReq.versionHistory || [])]
+      versionHistory: newVersionHistory,
+      customFields: newCustomFields
     };
     setSelectedReq(updated);
     setReqs(reqs.map(r => r.id === updated.id ? updated : r));
     setNewCommitMessage("");
+    await supabase.from('requirements').update({ custom_fields: newCustomFields }).eq('requirement_code', updated.id);
   };
 
   const stages = ["Draft", "Analysis", "Approval", "Development", "QA", "Released"];
@@ -250,43 +270,72 @@ export default function RequirementsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
-      {/* Module Title Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
-            Back
-          </AppButton>
-          <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-white">Requirement Engineering Lifecycle</h1>
-            <AppBadge variant="warning">Approval Engine</AppBadge>
-          </div>
-          <p className="text-xs text-gray-400">
-            Structured functional analysis and sequential operational sign-off architecture mapped directly from the master blueprint.
-          </p>
-          </div>
-        </div>
+    <PageContainer strict={true}>
+      <PageHeader
+        title="Requirement Engineering Lifecycle"
+        description="Structured functional analysis and sequential operational sign-off architecture mapped directly from the master blueprint."
+        badge={<AppBadge variant="warning">Approval Engine</AppBadge>}
+        actions={
+          <>
+            <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+              Back
+            </AppButton>
+            <AppButton 
+              variant="outline" 
+              size="sm" 
+              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loadingConfig ? 'animate-spin text-amber-400' : ''}`} />}
+              onClick={fetchDatabaseGovernanceConfigs}
+            >
+              Sync Config Registry
+            </AppButton>
+            <AppButton 
+              variant="primary" 
+              size="sm" 
+              leftIcon={<Plus className="h-3.5 w-3.5" />}
+              disabled={!hasPermission("REQUIREMENTS_CREATE") || !activeWorkspaceId}
+              onClick={() => setIsCreating(true)}
+            >
+              Draft Scope
+            </AppButton>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2 shrink-0">
-          <AppButton 
-            variant="outline" 
-            size="sm" 
-            leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loadingConfig ? 'animate-spin text-amber-400' : ''}`} />}
-            onClick={fetchDatabaseGovernanceConfigs}
-          >
-            Sync Config Registry
-          </AppButton>
-          <AppButton 
-            variant="primary" 
-            size="sm" 
-            leftIcon={<Plus className="h-3.5 w-3.5" />}
-            disabled={!hasPermission("REQUIREMENTS_CREATE")}
-          >
-            Draft Scope
-          </AppButton>
-        </div>
-      </div>
+      {isCreating && activeWorkspaceId && (
+        <RequirementDraftModal 
+          workspaceId={activeWorkspaceId}
+          regulatoryOptions={regulatoryOptions}
+          onClose={() => setIsCreating(false)}
+          onSuccess={async (payload: any) => {
+            const m = await import("@/lib/actions/requirements");
+            // inject currently authenticated user if possible, but actually createTask and createRequirement do it natively!
+            // Wait, we need to pass created_by to payload, or modify createRequirement to auto-fetch just like createTask
+            // But we already updated createRequirement in tasks... oh wait, requirements.ts doesn't auto-fetch created_by yet.
+            // Let's pass a placeholder or let backend handle it
+            const { data: { user } } = await supabase.auth.getUser();
+            const fullPayload = { ...payload, created_by: user?.id };
+            await m.createRequirement(fullPayload);
+            setIsCreating(false);
+            loadRequirements(activeWorkspaceId); // reload list
+          }}
+        />
+      )}
+
+      {isGeneratingTask && activeWorkspaceId && selectedReq && (
+        <TaskCreationWizard
+          workspaceId={activeWorkspaceId}
+          onClose={() => setIsGeneratingTask(false)}
+          onSuccess={async (taskPayload) => {
+            const m = await import("@/lib/actions/requirements");
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Not authenticated");
+            const fullTaskPayload = { ...taskPayload, workspace_id: activeWorkspaceId };
+            await m.generateRequirementTask(selectedReq.dbId || selectedReq.id, fullTaskPayload, user.id);
+            setIsGeneratingTask(false);
+            // Optional: trigger toast
+          }}
+        />
+      )}
 
       {/* Dynamic Master Config Status Bar */}
       {configWarnings.length > 0 && (
@@ -305,16 +354,16 @@ export default function RequirementsPage() {
       )}
 
       {/* Orchestrated Split Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden mt-4">
         {/* Left Column Span 4: Indexed Registry Catalog */}
-        <div className="lg:col-span-4 space-y-3">
-          <span className="text-[0.8rem] font-bold text-gray-400 tracking-wider uppercase select-none block">
+        <div className="lg:col-span-4 space-y-3 flex flex-col min-h-0">
+          <span className="text-[0.8rem] font-bold text-gray-400 tracking-wider uppercase select-none block shrink-0">
             Indexed Requirement Directory
           </span>
 
-          <div className="space-y-2.5 max-h-[calc(100vh-16rem)] overflow-y-auto pr-1 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
             {reqs.map((r) => {
-              const isSelected = selectedReq.id === r.id;
+              const isSelected = selectedReq?.id === r.id;
               return (
                 <div
                   key={r.id}
@@ -353,8 +402,21 @@ export default function RequirementsPage() {
         </div>
 
         {/* Right Column Span 8: Full Functional Detail Inspector */}
-        <div className="lg:col-span-8 flex flex-col space-y-6">
-          <AppCard className="p-6 space-y-6 shadow-2xl border-white/10">
+        <div className="lg:col-span-8 flex flex-col min-h-0">
+          {!selectedReq ? (
+            <AppCard className="p-10 flex flex-col items-center justify-center text-center space-y-4 border-white/10 shadow-2xl bg-black/20 flex-1">
+              <div className="p-4 rounded-full bg-white/5 border border-white/10">
+                <FileCheck2 className="h-10 w-10 text-gray-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-300">No Requirement Selected</h3>
+                <p className="text-xs text-gray-500 max-w-md mx-auto mt-2">
+                  Select a requirement from the left directory or draft a new scope to begin analysis.
+                </p>
+              </div>
+            </AppCard>
+          ) : (
+          <AppCard className="p-6 space-y-6 shadow-2xl border-white/10 flex-1 flex flex-col min-h-0 overflow-y-auto scrollbar-thin">
             {/* Context Header */}
             <div className="space-y-2 border-b border-white/5 pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-sans">
@@ -368,7 +430,12 @@ export default function RequirementsPage() {
                   <span className="text-gray-600">•</span>
                   <span className="text-xs text-gray-400 font-medium">Department Head Analysis Scope</span>
                 </div>
-                <span className="text-xs text-gray-500 font-mono">Immutable audit entry</span>
+                <div className="flex items-center gap-3">
+                  {selectedReq.stage !== "Draft" && selectedReq.stage !== "Analysis" && selectedReq.stage !== "Approval" && (
+                    <AppButton variant="primary" size="sm" onClick={() => setIsGeneratingTask(true)}>Generate Execution Task</AppButton>
+                  )}
+                  <span className="text-xs text-gray-500 font-mono">Immutable audit entry</span>
+                </div>
               </div>
               <h2 className="text-base text-white font-bold leading-relaxed pt-1">
                 {selectedReq.title}
@@ -415,79 +482,76 @@ export default function RequirementsPage() {
                 </div>
               </div>
             </div>
+            <div className="h-px bg-white/5 w-full my-6" />
 
-            {/* Custom Implementation Attributes Map */}
-            <div className="space-y-3 pt-2 border-t border-white/5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 select-none">
-                  <Layers className="h-3 w-3" />
-                  <span>Dynamic Custom Implementation Attributes</span>
-                </span>
-                <span className="text-[0.7rem] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  Database Selectors
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/[0.005] p-3 rounded-xl border border-white/5">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-400 block">Data Sovereignty Act Scope</label>
-                  <select
-                    value={selectedReq.customFields?.regulatory_scope || ""}
-                    onChange={(e) => handleCustomFieldChange("regulatory_scope", e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-200 focus:outline-none focus:border-amber-500/50 cursor-pointer disabled:opacity-50"
-                    disabled={regulatoryOptions.length === 0 || !hasPermission("REQUIREMENTS_UPDATE")}
-                  >
-                    {regulatoryOptions.length === 0 ? (
-                      <option value="" className="bg-[#0A0D14] text-amber-500">-- Unconfigured in Registry --</option>
-                    ) : (
-                      <>
-                        <option value="" className="bg-[#0A0D14] text-gray-500">-- Select Governed Option --</option>
-                        {regulatoryOptions.map((optString, idx) => (
-                          <option key={idx} value={optString} className="bg-[#0A0D14]">
-                            {optString}
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-400 block">CAPEX Budget Allowance (USD)</label>
-                  <AppInput 
-                    type="number"
-                    placeholder="e.g. 15000"
-                    value={selectedReq.customFields?.budget_allocation_usd || ""}
-                    onChange={(e) => handleCustomFieldChange("budget_allocation_usd", Number(e.target.value))}
-                    disabled={!hasPermission("REQUIREMENTS_UPDATE")}
-                    className="h-8 text-xs font-mono disabled:opacity-50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Acceptance Criteria Engine */}
-            <div className="space-y-2 pt-2 border-t border-white/5">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
-                Acceptance Criteria Verification Matrix
-              </span>
-              <div className="space-y-1.5">
-                {selectedReq.criteria.map((c, cIdx) => (
-                  <div
-                    key={cIdx}
-                    onClick={() => hasPermission("REQUIREMENTS_UPDATE") && toggleCriterion(cIdx)}
-                    className={`flex items-center gap-2.5 p-2 rounded-lg text-xs select-none transition-colors ${
-                      hasPermission("REQUIREMENTS_UPDATE") 
-                        ? "hover:bg-white/[0.02] cursor-pointer text-gray-300" 
-                        : "opacity-55 cursor-not-allowed text-gray-400"
-                    }`}
-                  >
-                    <div className={c.done ? "text-emerald-400" : "text-gray-600"}>
-                      {c.done ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                    </div>
-                    <span className={c.done ? "line-through text-gray-500" : "font-medium"}>{c.label}</span>
+            {/* Custom Fields & Acceptance Criteria */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-emerald-500/10 text-emerald-400">
+                    <CheckSquare className="h-4 w-4" />
                   </div>
-                ))}
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">Acceptance Criteria</h3>
+                </div>
+                <div className="space-y-2">
+                  {selectedReq.criteria && selectedReq.criteria.length > 0 ? selectedReq.criteria.map((c, idx) => (
+                    <div 
+                      key={idx} 
+                      onClick={() => toggleCriterion(idx)}
+                      className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                        c.done 
+                          ? "bg-emerald-500/5 border-emerald-500/20" 
+                          : "bg-white/[0.02] border-white/5 hover:border-white/10"
+                      }`}
+                    >
+                      {c.done ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      ) : (
+                        <Square className="h-4 w-4 text-gray-600 shrink-0 mt-0.5" />
+                      )}
+                      <span className={`text-[13px] leading-snug ${c.done ? "text-emerald-200 line-through opacity-70" : "text-gray-300"}`}>
+                        {c.label}
+                      </span>
+                    </div>
+                  )) : (
+                    <div className="text-xs text-gray-500 italic p-3 border border-dashed border-white/10 rounded-xl text-center">
+                      No criteria defined for this requirement.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-indigo-500/10 text-indigo-400">
+                    <Layers className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-300">Governed Attributes</h3>
+                </div>
+                <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Regulatory Mapping</label>
+                    <select
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-gray-300 outline-none focus:border-indigo-500"
+                      value={selectedReq.customFields?.regulatory_scope || ""}
+                      onChange={(e) => handleCustomFieldChange("regulatory_scope", e.target.value)}
+                    >
+                      <option value="" disabled className="bg-[#070913]">Select Framework...</option>
+                      {regulatoryOptions.map(opt => (
+                        <option key={opt} value={opt} className="bg-[#070913]">{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Approved Budget (USD)</label>
+                    <AppInput 
+                      type="number" 
+                      className="h-8 text-xs bg-white/5 border-white/10"
+                      value={selectedReq.customFields?.budget_allocation_usd || ""}
+                      onChange={(e) => handleCustomFieldChange("budget_allocation_usd", Number(e.target.value))}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -554,12 +618,12 @@ export default function RequirementsPage() {
                   <span>Immutable Versioning Snapshots & Incremental Audit Timeline</span>
                 </span>
                 <span className="text-xs text-gray-500 font-mono">
-                  {(selectedReq.versionHistory || []).length} registered revisions
+                  {(selectedReq?.versionHistory || []).length} registered revisions
                 </span>
               </div>
 
               <div className="space-y-2">
-                {(selectedReq.versionHistory || []).map((ver, vIdx) => (
+                {(selectedReq?.versionHistory || []).map((ver, vIdx) => (
                   <div key={vIdx} className="p-3 rounded-xl bg-white/[0.01] border border-white/5 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -598,8 +662,9 @@ export default function RequirementsPage() {
               </form>
             </div>
           </AppCard>
+          )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

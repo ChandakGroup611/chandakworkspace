@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchTicketDashboardData } from "@/lib/actions/tickets";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function TicketsPage() {
   const router = useRouter();
@@ -166,76 +168,61 @@ export default function TicketsPage() {
   }
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden font-sans transition-colors duration-300 ${
-      isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
-    }`}>
-      {/* Premium Command Header */}
-      <header className={`h-20 shrink-0 px-8 flex items-center justify-between border-b backdrop-blur-md z-50 transition-all duration-300 ${
-        isLightMode ? "border-gray-200 bg-white/80" : "border-white/5 bg-[#070913]/80"
-      }`}>
-        <div className="flex items-center gap-6">
-          <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
-            Back
-          </AppButton>
-          <div className="flex flex-col">
-            <h1 className={`text-xl font-bold tracking-tight ${
-              isLightMode ? "text-gray-900" : "bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent"
-            }`}>
-              Operations Control Center
-            </h1>
+    <PageContainer strict={true}>
+      <PageHeader
+        title="Operations Control Center"
+        icon={<Database className="h-6 w-6" />}
+        children={
+          <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
-              <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-              <span className={`text-xs font-bold uppercase tracking-widest ${isLightMode ? "text-gray-500" : "text-gray-500"}`}>Live Node: ADIOS-ENTERPRISE-01</span>
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className={`text-[0.65rem] font-bold uppercase tracking-widest ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>Live Node: ADIOS-ENTERPRISE-01</span>
+            </div>
+            <div className={`h-4 w-px ${isLightMode ? "bg-gray-300" : "bg-white/10"}`} />
+            <div className="flex items-center gap-4 text-xs">
+              <span className="font-semibold text-gray-500 uppercase tracking-wide">Active: <span className="text-gray-900 dark:text-white">{tickets.length}</span></span>
+              <span className="font-semibold text-emerald-500 uppercase tracking-wide">SLA Stability: 98.4%</span>
             </div>
           </div>
-          <div className={`h-8 w-px ${isLightMode ? "bg-gray-200" : "bg-white/10"}`} />
-          <div className="hidden md:flex items-center gap-4">
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-600 font-bold uppercase">Active Tickets</span>
-              <span className="text-sm font-semibold">{tickets.length}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-600 font-bold uppercase">SLA Stability</span>
-              <span className="text-sm font-semibold text-emerald-400">98.4%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <AppButton 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => window.open("/masters?scope=ERP_SOFTWARE", "_blank")}
-            className={`hidden md:flex ${isLightMode ? "text-gray-600 hover:bg-gray-100" : "text-gray-500 hover:text-white hover:bg-white/5"}`}
-          >
-            <Database className="h-4 w-4 mr-2" />
-            Registry
-          </AppButton>
-          <AppButton 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => fetchData()}
-            className={isLightMode ? "text-gray-600 hover:bg-gray-100" : "text-gray-500 hover:text-white hover:bg-white/5"}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Sync
-          </AppButton>
-          {hasPermission("TICKETS_CREATE") && (
-            <AppButton 
-              variant="primary" 
-              size="md" 
-              onClick={() => setShowWizard(true)}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_25px_rgba(99,102,241,0.6)] border-none px-6 transition-all hover:scale-105"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Initialize Ticket
+        }
+        actions={
+          <>
+            <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+              Back
             </AppButton>
-          )}
-        </div>
-      </header>
+            <AppButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.open("/masters?scope=ERP_SOFTWARE", "_blank")}
+              leftIcon={<Database className="h-4 w-4" />}
+            >
+              Registry
+            </AppButton>
+            <AppButton 
+              variant="outline" 
+              size="sm" 
+              onClick={() => fetchData()}
+              leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />}
+            >
+              Sync
+            </AppButton>
+            {hasPermission("TICKETS_CREATE") && (
+              <AppButton 
+                variant="primary" 
+                size="sm" 
+                onClick={() => setShowWizard(true)}
+                leftIcon={<Plus className="h-4 w-4" />}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold tracking-wide shadow-[0_0_15px_rgba(99,102,241,0.3)] border-none transition-all hover:scale-105"
+              >
+                Initialize Ticket
+              </AppButton>
+            )}
+          </>
+        }
+      />
 
       {/* Main Two-Column Layout */}
-      <main className="flex-1 flex overflow-hidden mt-2 px-6 pb-4 gap-4">
+      <div className="flex-1 flex min-h-0 overflow-hidden gap-6">
         {/* Left Column: Scope filtering sidebar */}
         <div className={`w-[380px] shrink-0 border-r ${isLightMode ? "border-gray-200" : "border-white/5"}`}>
           <TicketListSidebar 
@@ -274,7 +261,7 @@ export default function TicketsPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       {/* Creation Wizard */}
       {showWizard && (
@@ -297,6 +284,6 @@ export default function TicketsPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

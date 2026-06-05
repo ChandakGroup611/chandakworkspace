@@ -130,3 +130,103 @@ export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL
 
   revalidatePath(`/requirements/${reqId}`);
 }
+
+export async function fetchRequirements(workspaceId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('requirements')
+    .select(`
+      *,
+      status:status_master(name:status_name, status_color, code:status_code)
+    `)
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error("Error fetching requirements:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function createRequirement(payload: {
+  workspace_id: string;
+  sub_workspace_id?: string;
+  requirement_code?: string;
+  title: string;
+  objective: string;
+  functional_scope: string;
+  technical_scope?: string;
+  business_value?: string;
+  risk_assessment?: string;
+  custom_fields?: any;
+  created_by: string;
+  status_id?: string;
+}) {
+  let statusId = payload.status_id;
+  if (!statusId) {
+    const { data: defaultStatus } = await supabaseAdmin
+      .from('status_master')
+      .select('id')
+      .eq('scope_type', 'REQUIREMENT')
+      .eq('is_deleted', false)
+      .eq('is_default', true)
+      .maybeSingle();
+
+    if (defaultStatus) {
+      statusId = defaultStatus.id;
+    } else {
+      const { data: firstActive } = await supabaseAdmin
+        .from('status_master')
+        .select('id')
+        .eq('scope_type', 'REQUIREMENT')
+        .eq('is_deleted', false)
+        .limit(1);
+      
+      if (firstActive && firstActive.length > 0) {
+        statusId = firstActive[0].id;
+      }
+    }
+  }
+
+  const code = payload.requirement_code || `REQ-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+
+  const { data, error } = await supabaseAdmin
+    .from('requirements')
+    .insert([{
+      workspace_id: payload.workspace_id,
+      sub_workspace_id: payload.sub_workspace_id,
+      requirement_code: code,
+      title: payload.title,
+      objective: payload.objective,
+      functional_scope: payload.functional_scope,
+      technical_scope: payload.technical_scope,
+      business_value: payload.business_value,
+      risk_assessment: payload.risk_assessment,
+      custom_fields: payload.custom_fields,
+      created_by: payload.created_by,
+      status_id: statusId
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  await logActivityEvent('REQUIREMENT', data.id, 'CREATED', null, { title: data.title }, payload.created_by);
+  revalidatePath('/requirements');
+  return data;
+}
+
+export async function fetchRequirementStatuses() {
+  const { data, error } = await supabaseAdmin
+    .from('status_master')
+    .select('*')
+    .eq('scope_type', 'REQUIREMENT')
+    .eq('is_deleted', false)
+    .order('status_order', { ascending: true });
+
+  if (error) {
+    console.error("Error fetching requirement statuses:", error);
+    return [];
+  }
+  return data || [];
+}
