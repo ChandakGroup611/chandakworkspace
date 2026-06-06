@@ -205,13 +205,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [creatingTaskParentId, setCreatingTaskParentId] = useState<string | null>(null);
   const [creatingTaskInitialName, setCreatingTaskInitialName] = useState("");
 
-  const getReferencePrefix = (parentName: string | undefined | null) => {
-    if (!parentName) return "";
-    const parts = parentName.split("-").map(p => p.trim());
-    const lastPart = parts[parts.length - 1];
-    return `${lastPart} - `;
-  };
-
   const findNodeInHierarchy = (nodes: any[], targetId: string): any => {
     for (const n of nodes) {
       if (n.id === targetId) return n;
@@ -682,9 +675,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 onOpenWorkspace={(node) => openEditWorkspace(node)}
                 onShareNode={(node) => openEditWorkspace(node)}
                 onCreateSubWorkspace={(node) => {
-                  const prefix = getReferencePrefix(node.workspace_name || node.name);
                   setNewWS({
-                    name: prefix, 
+                    name: "", 
                     code: "", 
                     description: "",
                     assigneeIds: [],
@@ -697,7 +689,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   setWsModalMode('SUB');
                 }}
                 onCreateTask={(node) => {
-                  const prefix = getReferencePrefix(node.workspace_name || node.name || node.subject || node.title);
                   if (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE') {
                     setCreatingTaskWorkspaceId(node.id);
                     setCreatingTaskParentId(null);
@@ -705,7 +696,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     setCreatingTaskWorkspaceId(node.workspace_id);
                     setCreatingTaskParentId(node.id);
                   }
-                  setCreatingTaskInitialName(prefix);
+                  setCreatingTaskInitialName("");
                   setIsCreatingTask(true);
                 }}
                 onDeleteNode={(node) => {
@@ -821,10 +812,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       onChange={e => {
                         const parentId = e.target.value;
                         const parent = workspaces.find(w => w.id === parentId);
-                        const prefix = getReferencePrefix(parent?.name);
                         setNewWS({
                           ...newWS, 
-                          name: prefix,
+
                           parent_workspace_id: parentId,
                           ...(parent?.company_id ? { company_id: parent.company_id } : {})
                         });
