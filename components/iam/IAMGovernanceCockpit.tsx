@@ -62,6 +62,7 @@ export default function IAMGovernanceCockpit({
   const [permissionsList, setPermissionsList] = useState<any[]>(resolvedPermissions);
   const [activeRoleID, setActiveRoleID] = useState<string | null>(null);
   const [activeRolePerms, setActiveRolePerms] = useState<string[]>([]);
+  const [rolePermsCache, setRolePermsCache] = useState<Record<string, string[]>>({});
   
   // UI & Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,14 +106,20 @@ export default function IAMGovernanceCockpit({
     }
   }, [resolvedRoles, resolvedPermissions]);
 
-  // Fetch active role permissions when selection changes
+  // Fetch active role permissions when selection changes (with caching support)
   useEffect(() => {
     if (activeRoleID) {
+      if (rolePermsCache[activeRoleID]) {
+        setActiveRolePerms(rolePermsCache[activeRoleID]);
+        return;
+      }
+
       async function loadRolePerms() {
         setIsRoleLoading(true);
         try {
           const perms = await fetchRolePermissions(activeRoleID!);
           setActiveRolePerms(perms);
+          setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: perms }));
         } catch (err) {
           console.error("Failed to load role permissions:", err);
         } finally {
@@ -123,7 +130,7 @@ export default function IAMGovernanceCockpit({
     } else {
       setActiveRolePerms([]);
     }
-  }, [activeRoleID]);
+  }, [activeRoleID, rolePermsCache]);
 
   // Role Filtering logic
   const filteredRoles = useMemo(() => {
@@ -254,6 +261,7 @@ export default function IAMGovernanceCockpit({
     newPermIds = Array.from(new Set(newPermIds));
     const previousPerms = activeRolePerms;
     setActiveRolePerms(newPermIds);
+    setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: newPermIds }));
 
     setIsSaving(true);
     try {
@@ -261,6 +269,7 @@ export default function IAMGovernanceCockpit({
     } catch (err) {
       console.error("Failed to sync permissions:", err);
       setActiveRolePerms(previousPerms);
+      setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: previousPerms }));
     } finally {
       setIsSaving(false);
     }
@@ -281,6 +290,7 @@ export default function IAMGovernanceCockpit({
     // Optimistic update
     const previousPerms = activeRolePerms;
     setActiveRolePerms(newPerms);
+    setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: newPerms }));
     
     setIsSaving(true);
     try {
@@ -288,6 +298,7 @@ export default function IAMGovernanceCockpit({
     } catch (err) {
       console.error("Failed to sync permissions:", err);
       setActiveRolePerms(previousPerms);
+      setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: previousPerms }));
     } finally {
       setIsSaving(false);
     }

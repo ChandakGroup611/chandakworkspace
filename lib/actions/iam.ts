@@ -20,50 +20,49 @@ async function checkIAMAuthorization(requiredPermission?: string) {
       throw new Error("Unauthenticated request. Please log in.");
     }
     
-    // 1. Fetch user's profile and check if they are SUPER_ADMIN via role_id
-    const { data: profileData } = await supabase
-      .from("user_master")
-      .select("role_id")
-      .eq("id", user.id)
-      .single();
+    // Fast-path: Check SUPER_ADMIN via auth metadata
+    if (user.app_metadata?.role === "SUPER_ADMIN") {
+      console.log("[checkIAMAuthorization] User is SUPER_ADMIN via app_metadata");
+      return;
+    }
+    
+    // Run authentication/authorization checks in parallel to eliminate waterfall latency
+    const [profileRes, userRolesRes, userPermsRes] = await Promise.all([
+      supabase.from("user_master").select("role:roles(code)").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role:roles(code)").eq("user_id", user.id),
+      supabase.from("user_permissions_snapshot").select("permission_code").eq("user_id", user.id)
+    ]);
 
-    if (profileData?.role_id) {
-      const { data: roleData } = await supabase
-        .from("roles")
-        .select("code")
-        .eq("id", profileData.role_id)
-        .single();
-
-      if (roleData?.code === "SUPER_ADMIN") {
-        console.log("[checkIAMAuthorization] User is SUPER_ADMIN");
-        return; // SUPER_ADMIN has full access
-      }
+    if (profileRes.error) {
+      console.error("[checkIAMAuthorization] Profile error:", profileRes.error);
+    }
+    if (userRolesRes.error) {
+      console.error("[checkIAMAuthorization] UserRoles error:", userRolesRes.error);
+    }
+    if (userPermsRes.error) {
+      console.error("[checkIAMAuthorization] Snapshot error:", userPermsRes.error);
     }
 
-    // Also check user_roles table
-    const { data: userRoles } = await supabase
-      .from("user_roles")
-      .select("role:roles(code)")
-      .eq("user_id", user.id);
+    // 1. Check primary role on user_master
+    const primaryRole = profileRes.data?.role;
+    const dbRoleCode = Array.isArray(primaryRole) ? (primaryRole[0] as any)?.code : (primaryRole as any)?.code;
+    if (dbRoleCode === "SUPER_ADMIN") {
+      return;
+    }
 
-    if (userRoles && userRoles.length > 0) {
-      for (const ur of userRoles) {
+    // 2. Check secondary roles on user_roles
+    if (userRolesRes.data && userRolesRes.data.length > 0) {
+      for (const ur of userRolesRes.data) {
         const role = ur.role as any;
         const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
         if (roleCode === "SUPER_ADMIN") {
-          console.log("[checkIAMAuthorization] User is SUPER_ADMIN via user_roles");
           return;
         }
       }
     }
     
-    // 2. Check for IAM_MANAGE or the specific requested permission in user snapshot
-    const { data: userPerms } = await supabase
-      .from("user_permissions_snapshot")
-      .select("permission_code")
-      .eq("user_id", user.id);
-      
-    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
+    // 3. Check for IAM_MANAGE or the specific requested permission in user snapshot
+    const perms = userPermsRes.data ? userPermsRes.data.map((r: any) => r.permission_code) : [];
     
     if (perms.includes("IAM_MANAGE")) {
       return; // IAM_MANAGE allows all IAM actions
