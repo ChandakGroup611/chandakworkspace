@@ -460,8 +460,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           m.fetchHierarchyChildren(parentId, parentType).then(children => {
             setMasterHierarchy(curr => {
               const insertChildren = (tree: any[]): any[] => tree.map(node => {
-                if (node.id === parentId) return { ...node, children, childrenFetched: true };
-                if (node.children) return { ...node, children: insertChildren(node.children) };
+                if (node.id === parentId) {
+                  const isWorkspace = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
+                  return { 
+                    ...node, 
+                    children, 
+                    childrenFetched: true,
+                    total_hierarchy_task_count: isWorkspace ? (node.total_hierarchy_task_count || 0) + 1 : node.total_hierarchy_task_count,
+                    direct_task_count: isWorkspace ? (node.direct_task_count || 0) + 1 : node.direct_task_count,
+                    child_task_count: (node.type === 'TASK' || node.type === 'SUB_TASK') ? (node.child_task_count || 0) + 1 : node.child_task_count
+                  };
+                }
+                if (node.children) {
+                  const updatedChildren = insertChildren(node.children);
+                  // If one of the children was updated, increment our total count too
+                  if (updatedChildren !== node.children && (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE')) {
+                    return {
+                      ...node,
+                      children: updatedChildren,
+                      total_hierarchy_task_count: (node.total_hierarchy_task_count || 0) + 1
+                    };
+                  }
+                  return { ...node, children: updatedChildren };
+                }
                 return node;
               });
               return insertChildren(curr);

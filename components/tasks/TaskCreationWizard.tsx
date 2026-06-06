@@ -136,6 +136,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
 
     if (!description.trim()) {
       alert("Execution Notes (Remark) is mandatory.");
@@ -201,7 +202,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
 
   return (
     <EnterpriseWizardShell
-      title="Initialize Enterprise Task"
+      title={initialParentTaskId ? "Initialize Sub-Task" : "Initialize Enterprise Task"}
       subtitle="Configure task details, assignments, and requirements."
       onClose={onClose}
       size="lg"
@@ -340,13 +341,14 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, o
             </div>
             <div className="grid grid-cols-2 gap-5 mt-5">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Dependency</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Link</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
+                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                   }`}
                   value={parentTaskId}
                   onChange={e => setParentTaskId(e.target.value)}
+                  disabled={!!initialParentTaskId}
                 >
                   <option value="">-- No Parent (Independent) --</option>
                   {workspaceTasks.map(t => (
