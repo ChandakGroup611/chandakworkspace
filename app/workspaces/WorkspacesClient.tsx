@@ -150,8 +150,44 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
-  const [autoCollapse, setAutoCollapse] = useState(true);
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem('workspace_expanded_nodes');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    try {
+      if (Object.keys(expandedNodes).length > 0) {
+        sessionStorage.setItem('workspace_expanded_nodes', JSON.stringify(expandedNodes));
+      } else {
+        // If empty, it might be the initial mount before restoring. We only want to save actual changes.
+        // But to be safe, we just save the current state.
+        sessionStorage.setItem('workspace_expanded_nodes', JSON.stringify(expandedNodes));
+      }
+    } catch (e) {}
+  }, [expandedNodes]);
+
+  const [autoCollapse, setAutoCollapse] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('workspace_auto_collapse');
+        if (saved !== null) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return true; // default
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('workspace_auto_collapse', JSON.stringify(autoCollapse));
+    } catch (e) {}
+  }, [autoCollapse]);
+
   const [searchQuery, setSearchQuery] = useState("");
 
   const [newWS, setNewWS] = useState({ 
