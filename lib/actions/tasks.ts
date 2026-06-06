@@ -109,7 +109,9 @@ export async function createTask(payload: {
       }));
 
       if (participantData.length > 0) {
-        const { error: partErr } = await supabaseAdmin.from('task_participants').insert(participantData);
+        const { error: partErr } = await supabaseAdmin
+          .from('task_participants')
+          .upsert(participantData, { onConflict: 'task_id,user_id' });
         if (partErr) {
           console.error("[createTask] Participants Insert Error:", partErr);
           return { error: partErr.message || JSON.stringify(partErr) };
