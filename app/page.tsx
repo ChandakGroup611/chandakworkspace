@@ -9,7 +9,7 @@ export default async function Page() {
   const metricsResult = await fetchLiveDashboardMetrics();
 
   return (
-    <PageContainer strict={true}>
+    <PageContainer strict={false}>
       <PageHeader 
         title="Command Center Dashboard" 
         description="Real-time operational overview and enterprise key performance indicators." 

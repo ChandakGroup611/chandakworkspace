@@ -710,7 +710,7 @@ export default function MastersPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
         {/* Left Column Span 4: Navigational Tab Controller */}
         <div className="lg:col-span-4 space-y-4 flex flex-col min-h-0">
-          <AppCard className="p-4 space-y-3">
+          <AppCard className="flex-1 p-4 space-y-3 flex flex-col min-h-0 overflow-hidden">
             <div className={`flex items-center justify-between pb-2 border-b ${
               isLightMode ? "border-gray-100" : "border-white/5"
             }`}>
@@ -828,21 +828,6 @@ export default function MastersPage() {
             </div>
           </AppCard>
 
-          {/* System Guidelines Informational Context */}
-          <AppCard className={`p-4 space-y-2 ${
-            isLightMode ? "bg-gray-50/80 border-gray-200" : "bg-gradient-to-br from-slate-900/40 to-slate-950 border-white/5"
-          }`}>
-            <span className={`text-xs font-bold uppercase tracking-wider block ${
-              isLightMode ? "text-gray-700" : "text-gray-400"
-            }`}>
-              Operational Guidelines
-            </span>
-            <p className={`text-xs leading-relaxed font-sans ${
-              isLightMode ? "text-gray-600" : "text-gray-400"
-            }`}>
-              Dropdown lists in ticket and task creation forms directly load available active options from these directories. Disabling an item instantly hides it from new forms while keeping historical reports intact.
-            </p>
-          </AppCard>
         </div>
 
         {/* Right Column Span 8: Table Data Inspector */}

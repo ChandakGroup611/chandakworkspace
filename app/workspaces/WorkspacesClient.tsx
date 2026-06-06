@@ -435,6 +435,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const handleTaskWizardSuccess = async (taskData: any) => {
     try {
       const data = await createTask({ ...taskData, workspace_id: taskData.workspace_id || activeWorkspace?.id });
+      if (data && 'error' in data) {
+        throw new Error((data as any).error);
+      }
       
       // Close modal immediately for instant UI feedback
       setIsCreatingTask(false);
@@ -552,7 +555,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         <div className="flex-1 flex flex-col min-h-0">
             
             {/* Hierarchical Task Matrix */}
-            <AppCard className="flex-1 p-2 flex flex-col min-h-0 overflow-visible">
+            <AppCard className="flex-1 p-2 flex flex-col min-h-0 overflow-hidden">
               <div className="flex items-center justify-between border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
                   <button 
@@ -575,7 +578,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               {activeView === 'HIERARCHY' ? (
-                <div className="flex-1 overflow-visible min-h-0">
+                <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin pr-1">
                   <div className="flex justify-end mb-3 mr-2">
                     <label className={`flex items-center gap-2 text-xs font-medium cursor-pointer ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
                       <input 

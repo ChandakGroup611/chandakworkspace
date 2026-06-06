@@ -58,6 +58,10 @@ export async function generateRequirementTask(reqId: string, taskPayload: any, p
     created_by: performedBy
   });
 
+  if (task && 'error' in task) {
+    throw new Error((task as any).error);
+  }
+
   // 2. Link Task to Requirement
   await supabaseAdmin.from('requirement_tasks').insert({
     requirement_id: reqId,

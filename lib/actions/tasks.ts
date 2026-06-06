@@ -23,118 +23,135 @@ export async function createTask(payload: {
   attachments?: { file_name: string; file_url: string; file_type: string; size: number }[];
   participants?: { user_id: string; participation_role: string }[];
 }) {
-  let creatorId = payload.created_by;
-  if (!creatorId) {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthenticated user creating task");
-    creatorId = user.id;
-  }
+  try {
+    let creatorId = payload.created_by;
+    if (!creatorId) {
+      const cookieStore = await cookies();
+      const supabase = createClient(cookieStore);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: "Unauthenticated user creating task" };
+      creatorId = user.id;
+    }
 
-  // Find default status for tasks
-  let { data: statusMaster } = await supabaseAdmin
-    .from('status_master')
-    .select('id')
-    .eq('is_default', true)
-    .eq('scope_type', 'TASK')
-    .eq('is_deleted', false)
-    .maybeSingle();
-
-  if (!statusMaster) {
-    // Fallback to the first active task status
-    const { data: fallbackStatus } = await supabaseAdmin
+    // Find default status for tasks
+    let { data: statusMaster } = await supabaseAdmin
       .from('status_master')
       .select('id')
+      .eq('is_default', true)
       .eq('scope_type', 'TASK')
       .eq('is_deleted', false)
-      .limit(1);
+      .maybeSingle();
 
-    if (fallbackStatus && fallbackStatus.length > 0) {
-      statusMaster = fallbackStatus[0];
-    } else {
-      throw new Error('No active task status found in status_master to assign.');
-    }
-  }
+    if (!statusMaster) {
+      // Fallback to the first active task status
+      const { data: fallbackStatus } = await supabaseAdmin
+        .from('status_master')
+        .select('id')
+        .eq('scope_type', 'TASK')
+        .eq('is_deleted', false)
+        .limit(1);
 
-  // Create Task
-  const { data: task, error } = await supabaseAdmin
-    .from('tasks')
-    .insert([{
-      workspace_id: payload.workspace_id,
-      sub_workspace_id: payload.sub_workspace_id,
-      subject: payload.subject || payload.title || 'Untitled Task',
-      description: payload.description,
-      priority_id: payload.priority_id,
-      status_id: statusMaster.id,
-      start_date: payload.start_date,
-      end_date: payload.end_date,
-      estimated_hours: payload.estimated_hours,
-      custom_fields: payload.custom_fields,
-      created_by: creatorId,
-      assigned_to: payload.assigned_to,
-      owner_id: payload.assigned_to || creatorId
-    }])
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  // Insert Assignees and Watchers
-  if (payload.participants && payload.participants.length > 0) {
-    const rolePriority = { 'OWNER': 4, 'EXECUTOR': 3, 'REVIEWER': 2, 'WATCHER': 1 };
-    
-    // Group by user_id and keep highest priority role
-    const uniqueParticipantsMap = new Map<string, string>();
-    
-    for (const p of payload.participants) {
-      const existingRole = uniqueParticipantsMap.get(p.user_id);
-      const newPriority = rolePriority[p.participation_role as keyof typeof rolePriority] || 0;
-      const existingPriority = existingRole ? (rolePriority[existingRole as keyof typeof rolePriority] || 0) : -1;
-      
-      if (newPriority > existingPriority) {
-        uniqueParticipantsMap.set(p.user_id, p.participation_role);
+      if (fallbackStatus && fallbackStatus.length > 0) {
+        statusMaster = fallbackStatus[0];
+      } else {
+        return { error: 'No active task status found in status_master to assign.' };
       }
     }
 
-    const participantData = Array.from(uniqueParticipantsMap.entries()).map(([user_id, participation_role]) => ({
-      task_id: task.id,
-      user_id,
-      participation_role
-    }));
+    // Create Task
+    const { data: task, error } = await supabaseAdmin
+      .from('tasks')
+      .insert([{
+        workspace_id: payload.workspace_id,
+        sub_workspace_id: payload.sub_workspace_id,
+        subject: payload.subject || payload.title || 'Untitled Task',
+        description: payload.description,
+        priority_id: payload.priority_id,
+        status_id: statusMaster.id,
+        start_date: payload.start_date,
+        end_date: payload.end_date,
+        estimated_hours: payload.estimated_hours,
+        custom_fields: payload.custom_fields,
+        created_by: creatorId,
+        assigned_to: payload.assigned_to,
+        owner_id: payload.assigned_to || creatorId
+      }])
+      .select()
+      .single();
 
-    if (participantData.length > 0) {
-      await supabaseAdmin.from('task_participants').insert(participantData);
+    if (error) {
+      console.error("[createTask] DB Insert Error:", error);
+      return { error: error.message || JSON.stringify(error) };
     }
-  }
 
-  // Insert Checklist Items
-  if (payload.checklist_items && payload.checklist_items.length > 0) {
-    const checklistData = payload.checklist_items.map((item: string) => ({
-      task_id: task.id,
-      label: item,
-      is_completed: false
-    }));
-    await supabaseAdmin.from('task_checklists').insert(checklistData);
-  }
+    // Insert Assignees and Watchers
+    if (payload.participants && payload.participants.length > 0) {
+      const rolePriority = { 'OWNER': 4, 'EXECUTOR': 3, 'REVIEWER': 2, 'WATCHER': 1 };
+      
+      // Group by user_id and keep highest priority role
+      const uniqueParticipantsMap = new Map<string, string>();
+      
+      for (const p of payload.participants) {
+        const existingRole = uniqueParticipantsMap.get(p.user_id);
+        const newPriority = rolePriority[p.participation_role as keyof typeof rolePriority] || 0;
+        const existingPriority = existingRole ? (rolePriority[existingRole as keyof typeof rolePriority] || 0) : -1;
+        
+        if (newPriority > existingPriority) {
+          uniqueParticipantsMap.set(p.user_id, p.participation_role);
+        }
+      }
 
-  // Insert Attachments
-  if (payload.attachments && payload.attachments.length > 0) {
-    const attachmentData = payload.attachments.map((att) => ({
-      task_id: task.id,
-      file_name: att.file_name,
-      file_url: att.file_url,
-      file_type: att.file_type,
-      size: att.size,
-      uploaded_by: payload.created_by
-    }));
-    await supabaseAdmin.from('task_attachments').insert(attachmentData);
-  }
+      const participantData = Array.from(uniqueParticipantsMap.entries()).map(([user_id, participation_role]) => ({
+        task_id: task.id,
+        user_id,
+        participation_role
+      }));
 
-  // Log Activity is also now handled by the DB trigger, but if manual is preferred it can stay.
-  // Wait, DB trigger does it automatically. So we can remove manual logActivityEvent too to prevent duplicate timeline entries.
-  
-  return task;
+      if (participantData.length > 0) {
+        const { error: partErr } = await supabaseAdmin.from('task_participants').insert(participantData);
+        if (partErr) {
+          console.error("[createTask] Participants Insert Error:", partErr);
+          return { error: partErr.message || JSON.stringify(partErr) };
+        }
+      }
+    }
+
+    // Insert Checklist Items
+    if (payload.checklist_items && payload.checklist_items.length > 0) {
+      const checklistData = payload.checklist_items.map((item: string) => ({
+        task_id: task.id,
+        label: item,
+        is_completed: false
+      }));
+      const { error: chkErr } = await supabaseAdmin.from('task_checklists').insert(checklistData);
+      if (chkErr) {
+        console.error("[createTask] Checklist Insert Error:", chkErr);
+        return { error: chkErr.message || JSON.stringify(chkErr) };
+      }
+    }
+
+    // Insert Attachments
+    if (payload.attachments && payload.attachments.length > 0) {
+      const attachmentData = payload.attachments.map((att) => ({
+        task_id: task.id,
+        file_name: att.file_name,
+        file_url: att.file_url,
+        file_type: att.file_type,
+        size: att.size,
+        uploaded_by: creatorId
+      }));
+      const { error: attErr } = await supabaseAdmin.from('task_attachments').insert(attachmentData);
+      if (attErr) {
+        console.error("[createTask] Attachments Insert Error:", attErr);
+        return { error: attErr.message || JSON.stringify(attErr) };
+      }
+    }
+    
+    return task;
+  } catch (err: any) {
+    console.error("[createTask] Unexpected Error:", err);
+    return { error: err?.message || String(err) };
+  }
 }
 
 export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: string, performedBy?: string) {
