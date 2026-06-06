@@ -70,6 +70,7 @@ export default function IAMGovernanceCockpit({
   const [newRoleName, setNewRoleName] = useState("");
   
   const [isLoading, setIsLoading] = useState(true);
+  const [isRoleLoading, setIsRoleLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -108,14 +109,19 @@ export default function IAMGovernanceCockpit({
   useEffect(() => {
     if (activeRoleID) {
       async function loadRolePerms() {
+        setIsRoleLoading(true);
         try {
           const perms = await fetchRolePermissions(activeRoleID!);
           setActiveRolePerms(perms);
         } catch (err) {
           console.error("Failed to load role permissions:", err);
+        } finally {
+          setIsRoleLoading(false);
         }
       }
       loadRolePerms();
+    } else {
+      setActiveRolePerms([]);
     }
   }, [activeRoleID]);
 
@@ -536,7 +542,15 @@ export default function IAMGovernanceCockpit({
 
         {/* Capability Matrix Pane */}
         <div className="lg:col-span-8 flex flex-col">
-          <AppCard className={cn("flex-1 overflow-hidden flex flex-col", isLight ? "border-gray-200 bg-white shadow-sm" : "border-white/5 bg-[#0A0D14]/80 backdrop-blur-xl")}>
+          <AppCard className={cn("flex-1 overflow-hidden flex flex-col relative", isLight ? "border-gray-200 bg-white shadow-sm" : "border-white/5 bg-[#0A0D14]/80 backdrop-blur-xl")}>
+            {isRoleLoading && (
+              <div className="absolute inset-0 bg-[#0A0D14]/30 backdrop-blur-[2px] dark:bg-[#0A0D14]/30 bg-white/30 flex flex-col items-center justify-center space-y-3 z-50">
+                <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+                <span className={cn("text-xs font-bold uppercase tracking-widest animate-pulse", isLight ? "text-gray-500" : "text-gray-400")}>
+                  Loading Capabilities...
+                </span>
+              </div>
+            )}
             {activeRole ? (
               <>
                 {/* Visual Premium Header inside Matrix */}
