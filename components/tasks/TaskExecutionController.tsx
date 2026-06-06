@@ -1001,7 +1001,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     
                     let viewUrl = item.file_url;
                     if (!isNativeViewable && isOfficeDoc) {
-                      viewUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(item.file_url)}`;
+                      // Use window.location.origin to get the absolute path for the proxy so Microsoft can reach it
+                      const proxyUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/proxy-attachment/${item.id}` : '';
+                      viewUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(proxyUrl)}`;
                     }
                     
                     return (
