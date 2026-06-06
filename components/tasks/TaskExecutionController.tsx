@@ -881,6 +881,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             {tab === "checklist" && <CheckSquare className="h-3.5 w-3.5" />}
             {tab === "attachments" && <Paperclip className="h-3.5 w-3.5" />}
             <span>{tab}</span>
+            {tab === "checklist" && Math.max(task._meta?.checklistCount || 0, task.checklists?.length || 0) > 0 && (
+              <AppBadge className={`ml-1 px-1.5 py-0 text-[9px] ${activeTab === tab ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-gray-100 text-gray-500"}`}>
+                {Math.max(task._meta?.checklistCount || 0, task.checklists?.length || 0)}
+              </AppBadge>
+            )}
+            {tab === "attachments" && Math.max(task._meta?.attachmentCount || 0, task.attachments?.length || 0) > 0 && (
+              <AppBadge className={`ml-1 px-1.5 py-0 text-[9px] ${activeTab === tab ? "bg-purple-100 text-purple-700 border-purple-200" : "bg-gray-100 text-gray-500"}`}>
+                {Math.max(task._meta?.attachmentCount || 0, task.attachments?.length || 0)}
+              </AppBadge>
+            )}
           </button>
         ))}
       </div>
@@ -985,7 +995,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 )}
 
                 <div className="space-y-2">
-                  {(task.attachments || []).map((item: any) => (
+                  {(task.attachments || []).map((item: any) => {
+                    const isNativeViewable = !!item.file_name?.match(/\.(pdf|jpe?g|png|gif|webp|svg|txt|mp4|webm|mp3|wav|ogg)$/i);
+                    const viewUrl = isNativeViewable ? item.file_url : `https://docs.google.com/viewer?url=${encodeURIComponent(item.file_url)}&embedded=true`;
+                    
+                    return (
                     <div 
                       key={item.id} 
                       className={`flex items-center justify-between p-3 rounded-xl border ${
@@ -1001,10 +1015,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       </div>
                       <div className="flex items-center gap-1">
                         <a 
-                          href={item.file_url} 
+                          href={viewUrl} 
                           target="_blank" 
                           rel="noreferrer" 
-                          title="View Attachment"
+                          title={isNativeViewable ? "View Attachment" : "View via Document Viewer"}
                           className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -1019,7 +1033,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         </a>
                       </div>
                     </div>
-                  ))}
+                  )})}
                   {(task.attachments || []).length === 0 && (
                     <div className="text-center py-8 text-xs text-gray-500">No attachments linked to this directive.</div>
                   )}

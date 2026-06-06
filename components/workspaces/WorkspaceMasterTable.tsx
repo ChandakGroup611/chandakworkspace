@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronRight, ChevronDown, ExternalLink, Edit2, Share2, Trash2, MoreVertical, Folder, FolderTree, CheckSquare, CornerDownRight, CheckCircle2, CircleDashed } from "lucide-react";
+import { ChevronRight, ChevronDown, ExternalLink, Edit2, Share2, Trash2, MoreVertical, Folder, FolderTree, CheckSquare, CornerDownRight, CheckCircle2, CircleDashed, Paperclip } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { useRouter } from "next/navigation";
 
@@ -319,6 +319,11 @@ export function WorkspaceMasterTable({
                       }`}>
                         {node.workspace_name || node.name || node.subject || node.title}
                       </span>
+                      {node.attachmentCount > 0 && (
+                        <div className={`flex items-center justify-center p-0.5 px-1 rounded-md ml-1 ${isLightMode ? 'bg-purple-100 text-purple-600' : 'bg-purple-500/20 text-purple-400'}`} title={`${node.attachmentCount} Attachment(s)`}>
+                          <Paperclip className="h-3 w-3" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

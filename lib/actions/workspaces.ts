@@ -785,9 +785,21 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
       participantsMap.get(p.task_id).push(p);
     });
 
+    // Fetch attachment counts
+    const { data: attachmentData } = await supabase
+      .from('task_attachments')
+      .select('task_id')
+      .in('task_id', taskIds);
+      
+    const attachmentMap = new Map();
+    (attachmentData || []).forEach(a => {
+      attachmentMap.set(a.task_id, (attachmentMap.get(a.task_id) || 0) + 1);
+    });
+
     data.forEach((t: any) => {
       t.workspace = null;
       t.creator = null;
+      t.attachmentCount = attachmentMap.get(t.id) || 0;
       t.participants = participantsMap.get(t.id) || [];
       t.assignees = t.participants.map((p: any) => ({ ...p.user, role: p.participation_role }));
       

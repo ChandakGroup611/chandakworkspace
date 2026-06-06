@@ -14,7 +14,7 @@ import {
   AppTableHead,
   AppTableCell
 } from "@/components/ui/AppTable";
-import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2 } from "lucide-react";
+import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip } from "lucide-react";
 import Link from "next/link";
 import { deleteTask, getTaskStatuses, updateTaskStatusInline } from "@/lib/actions/tasks";
 import { createClient } from "@/utils/supabase/client";
@@ -162,10 +162,16 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           if (usersData) assignees = usersData;
         }
 
+        // Fetch Attachments Count
+        const { data: attachmentData } = await supabase.from("task_attachments").select("task_id").in("task_id", data.map((t:any) => t.id));
+        const attachmentMap = new Map();
+        (attachmentData || []).forEach((a:any) => attachmentMap.set(a.task_id, (attachmentMap.get(a.task_id) || 0) + 1));
+
         data.forEach((t: any) => {
           t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
           t.creator = users?.find((u: any) => u.id === t.created_by) || null;
           t.assignee = assignees.find((a: any) => a.id === t.assigned_to) || null;
+          t.attachmentCount = attachmentMap.get(t.id) || 0;
         });
       }
       
@@ -565,7 +571,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   </AppTableCell>
                   <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                   <AppTableCell>
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">{task.title || '—'}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-semibold text-gray-900 dark:text-gray-100">{task.title || '—'}</div>
+                      {task.attachmentCount > 0 && (
+                        <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400" title={`${task.attachmentCount} Attachment(s)`}>
+                          <Paperclip className="h-3 w-3" />
+                        </div>
+                      )}
+                    </div>
                     <div className="text-[10px] text-gray-500 line-clamp-1">{task.description}</div>
                     {task.custom_fields?.progress_percentage !== undefined && (
                       <div className="mt-1.5 flex items-center gap-2">

@@ -428,6 +428,13 @@ export async function getTaskDetails(taskId: string) {
     if (assigneeData) task.assignee = assigneeData;
   }
   
+  const { count: checklistCount } = await supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId);
+  const { count: attachmentCount } = await supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId);
+  task._meta = {
+    checklistCount: checklistCount || 0,
+    attachmentCount: attachmentCount || 0
+  };
+  
   const { data: participants } = await supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId);
   
   let participantIds = new Set<string>();
