@@ -245,34 +245,46 @@ export function WorkspaceMasterTable({
         isLightMode ? 'border-gray-200' : 'border-white/5'
       }`} style={{ gridTemplateColumns: gridCols }}>
 
-          {/* Guide Line for Nested Items */}
-          {depth > 0 && (() => {
-            let guideLineColor = isLightMode ? 'border-gray-200' : 'border-white/10';
-            if (node.type === 'SUB_WORKSPACE') {
-              guideLineColor = isLightMode ? 'border-indigo-400' : 'border-indigo-500/80';
-            } else if (node.type === 'TASK') {
-              guideLineColor = isLightMode ? 'border-emerald-400' : 'border-emerald-500/80';
-            } else if (node.type === 'SUB_TASK') {
-              guideLineColor = isLightMode ? 'border-amber-400' : 'border-amber-500/80';
+          {/* VS Code Style Guide Lines for Nested Items */}
+          {depth > 0 && Array.from({ length: depth }).map((_, i) => {
+            const isLast = i === depth - 1;
+            let guideLineColor = isLightMode ? 'border-gray-300' : 'border-white/20';
+            
+            if (isLast) {
+              if (node.type === 'SUB_WORKSPACE') guideLineColor = isLightMode ? 'border-indigo-400' : 'border-indigo-500/80';
+              else if (node.type === 'TASK') guideLineColor = isLightMode ? 'border-emerald-400' : 'border-emerald-500/80';
+              else if (node.type === 'SUB_TASK') guideLineColor = isLightMode ? 'border-amber-400' : 'border-amber-500/80';
             }
+
             return (
-              <div 
-                className={`absolute left-0 top-0 bottom-0 border-l-[3px] ${guideLineColor}`}
-                style={{ marginLeft: `${depth * 1.5 + 0.9}rem` }}
-              />
+              <React.Fragment key={i}>
+                <div 
+                  className={`absolute top-0 bottom-0 border-l-[2px] ${isLast ? guideLineColor : (isLightMode ? 'border-gray-200 border-dashed opacity-70' : 'border-white/10 border-dashed opacity-50')}`}
+                  style={{ left: `${i * 2.5 + 1.95}rem` }}
+                />
+                {isLast && (
+                  <div 
+                    className={`absolute top-[22px] border-b-[2px] ${guideLineColor}`}
+                    style={{ 
+                      left: `${i * 2.5 + 1.95}rem`, 
+                      width: '1.0rem' 
+                    }}
+                  />
+                )}
+              </React.Fragment>
             );
-          })()}
+          })}
 
           {/* Entity Name */}
-          <div className="py-2 px-2 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 1.5 + 1.2}rem` }}>
+          <div className="py-2 px-2 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 2.5 + 1.2}rem` }}>
             <div className="flex items-start gap-2 min-w-0 w-full">
-              <div className="mt-0.5 flex-shrink-0">
+              <div className="mt-0.5 flex-shrink-0 z-10 bg-transparent">
                 {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : (childTaskCount > 0 || hasChildren)) ? (
                   <button 
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
-                    className={`p-1 rounded-md transition-colors ${
-                      isLightMode ? 'hover:bg-gray-200 text-gray-500' : 'hover:bg-white/10 text-gray-400'
+                    className={`p-1 rounded-md transition-colors relative z-20 ${
+                      isLightMode ? 'hover:bg-gray-200 text-gray-500 bg-white' : 'hover:bg-white/10 text-gray-400 bg-[#1C1C28]'
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
@@ -284,14 +296,13 @@ export function WorkspaceMasterTable({
                     )}
                   </button>
                 ) : (
-                  <div className="w-6" /> // spacer
+                  <div className="w-6 h-6" /> // spacer matching button size
                 )}
               </div>
               
-              <div className="flex flex-col min-w-0 flex-1 justify-center py-0.5">
+              <div className="flex flex-col min-w-0 flex-1 justify-center py-0.5 relative z-10">
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-1.5 min-w-0 max-w-full">
-                    {depth > 0 && !isWorkspaceType && <CornerDownRight className={`h-3.5 w-3.5 flex-shrink-0 ${isLightMode ? 'text-gray-400' : 'text-gray-500'}`} />}
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
                       isWorkspaceType ? (depth === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500/80') : 'text-emerald-500'
                     }`} />
