@@ -326,6 +326,20 @@ export function WorkspaceMasterTable({
                     </span>
                   </div>
                 )}
+                {!isWorkspaceType && childTaskCount > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1 ml-[22px]">
+                    <span 
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/tasks/${node.id}`);
+                      }}
+                      className={`text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-amber-500 bg-white hover:bg-amber-50 border border-amber-400' : 'text-amber-500 bg-[#1C1C28] hover:bg-amber-900/20 border border-amber-500/50'}`} 
+                      title={`${childTaskCount} Sub-Tasks (Double-click to open)`}
+                    >
+                      {childTaskCount} Sub-Task{childTaskCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

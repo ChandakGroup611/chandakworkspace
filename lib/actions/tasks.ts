@@ -65,6 +65,9 @@ export async function createTask(payload: {
       .insert([{
         workspace_id: cleanUUID(payload.workspace_id),
         sub_workspace_id: cleanUUID(payload.sub_workspace_id),
+        parent_task_id: cleanUUID(payload.parent_task_id),
+        sprint_id: cleanUUID(payload.sprint_id),
+        template_id: cleanUUID(payload.template_id),
         subject: payload.subject || payload.title || 'Untitled Task',
         description: payload.description,
         priority_id: cleanUUID(payload.priority_id),
