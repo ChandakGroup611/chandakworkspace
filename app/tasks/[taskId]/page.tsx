@@ -49,12 +49,12 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
           <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/80">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-xs uppercase tracking-[0.28em] text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-2 py-1 rounded font-bold">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <p className="text-[11px] font-mono tracking-wider text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-2 py-0.5 rounded font-bold">
                     {task.task_code || "TASK"}
                   </p>
-                  <p className="text-xs uppercase tracking-[0.28em] text-gray-500 px-2 py-1 border border-gray-200 dark:border-white/10 rounded font-bold">
-                    Workspace: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
+                  <p className="text-[11px] tracking-wider text-gray-500 px-2 py-0.5 border border-gray-200 dark:border-white/10 rounded font-bold bg-white dark:bg-transparent">
+                    WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
