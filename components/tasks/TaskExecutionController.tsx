@@ -997,7 +997,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <div className="space-y-2">
                   {(task.attachments || []).map((item: any) => {
                     const isNativeViewable = !!item.file_name?.match(/\.(pdf|jpe?g|png|gif|webp|svg|txt|mp4|webm|mp3|wav|ogg)$/i);
-                    const viewUrl = isNativeViewable ? item.file_url : `https://docs.google.com/viewer?url=${encodeURIComponent(item.file_url)}&embedded=true`;
+                    const isOfficeDoc = !!item.file_name?.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i);
+                    
+                    let viewUrl = item.file_url;
+                    if (!isNativeViewable && isOfficeDoc) {
+                      viewUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(item.file_url)}`;
+                    }
                     
                     return (
                     <div 
@@ -1018,7 +1023,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           href={viewUrl} 
                           target="_blank" 
                           rel="noreferrer" 
-                          title={isNativeViewable ? "View Attachment" : "View via Document Viewer"}
+                          title={(!isNativeViewable && isOfficeDoc) ? "View via Office Viewer" : "View Attachment"}
                           className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
                         >
                           <Eye className="h-3.5 w-3.5" />
