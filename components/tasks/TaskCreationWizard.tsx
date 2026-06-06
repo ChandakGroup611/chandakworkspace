@@ -12,11 +12,11 @@ import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWiza
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
 
-export default function TaskCreationWizard({ workspaceId, initialParentTaskId, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, onClose: () => void, onSuccess: (data: any) => void }) {
+export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
 
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTaskName || "");
   const [description, setDescription] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [startDate, setStartDate] = useState("");
