@@ -198,7 +198,7 @@ export async function createRequirement(payload: {
     .from('requirements')
     .insert([{
       workspace_id: payload.workspace_id,
-      sub_workspace_id: payload.sub_workspace_id,
+      sub_workspace_id: (payload.sub_workspace_id && payload.sub_workspace_id.trim()) ? payload.sub_workspace_id : null,
       requirement_code: code,
       title: payload.title,
       objective: payload.objective,
@@ -208,7 +208,7 @@ export async function createRequirement(payload: {
       risk_assessment: payload.risk_assessment,
       custom_fields: payload.custom_fields,
       created_by: payload.created_by,
-      status_id: statusId
+      status_id: (statusId && statusId.trim()) ? statusId : null
     }])
     .select()
     .single();

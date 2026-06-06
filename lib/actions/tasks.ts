@@ -59,22 +59,23 @@ export async function createTask(payload: {
     }
 
     // Create Task
+    const cleanUUID = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
     const { data: task, error } = await supabaseAdmin
       .from('tasks')
       .insert([{
-        workspace_id: payload.workspace_id,
-        sub_workspace_id: payload.sub_workspace_id,
+        workspace_id: cleanUUID(payload.workspace_id),
+        sub_workspace_id: cleanUUID(payload.sub_workspace_id),
         subject: payload.subject || payload.title || 'Untitled Task',
         description: payload.description,
-        priority_id: payload.priority_id,
+        priority_id: cleanUUID(payload.priority_id),
         status_id: statusMaster.id,
         start_date: (payload.start_date && payload.start_date.trim()) ? payload.start_date : null,
         end_date: (payload.end_date && payload.end_date.trim()) ? payload.end_date : null,
         estimated_hours: payload.estimated_hours,
         custom_fields: payload.custom_fields,
         created_by: creatorId,
-        assigned_to: payload.assigned_to,
-        owner_id: payload.assigned_to || creatorId
+        assigned_to: cleanUUID(payload.assigned_to),
+        owner_id: cleanUUID(payload.assigned_to) || creatorId
       }])
       .select()
       .single();
@@ -580,13 +581,30 @@ export async function updateTask(taskId: string, payload: any) {
     }
   }
 
-  // Sanitize empty date strings to NULL to avoid DB syntax errors
+  // Sanitize empty date/UUID strings to NULL to avoid DB syntax errors
   const updatePayload = { ...payload };
+  const cleanField = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
+
   if (updatePayload.start_date !== undefined) {
-    updatePayload.start_date = (updatePayload.start_date && updatePayload.start_date.trim()) ? updatePayload.start_date : null;
+    updatePayload.start_date = cleanField(updatePayload.start_date);
   }
   if (updatePayload.end_date !== undefined) {
-    updatePayload.end_date = (updatePayload.end_date && updatePayload.end_date.trim()) ? updatePayload.end_date : null;
+    updatePayload.end_date = cleanField(updatePayload.end_date);
+  }
+  if (updatePayload.priority_id !== undefined) {
+    updatePayload.priority_id = cleanField(updatePayload.priority_id);
+  }
+  if (updatePayload.status_id !== undefined) {
+    updatePayload.status_id = cleanField(updatePayload.status_id);
+  }
+  if (updatePayload.sub_workspace_id !== undefined) {
+    updatePayload.sub_workspace_id = cleanField(updatePayload.sub_workspace_id);
+  }
+  if (updatePayload.assigned_to !== undefined) {
+    updatePayload.assigned_to = cleanField(updatePayload.assigned_to);
+  }
+  if (updatePayload.parent_task_id !== undefined) {
+    updatePayload.parent_task_id = cleanField(updatePayload.parent_task_id);
   }
 
   const { error } = await supabaseAdmin.from('tasks').update(updatePayload).eq('id', taskId);

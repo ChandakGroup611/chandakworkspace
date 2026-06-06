@@ -152,13 +152,15 @@ export async function updateTicketDetails(ticketId: string, payload: {
   // Relaxed: Allow all authenticated members to update the ticket
   // Removed strict capability/creator check as per new requirement.
 
+  const cleanField = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
+
   const updateData: any = {};
   if (payload.title !== undefined) updateData.title = payload.title;
   if (payload.description !== undefined) updateData.description = payload.description;
-  if (payload.status_id !== undefined) updateData.status_id = payload.status_id;
-  if (payload.assignee_id !== undefined) updateData.assignee_id = payload.assignee_id;
-  if (payload.department_id !== undefined) updateData.department_id = payload.department_id;
-  if (payload.priority_id !== undefined) updateData.priority_id = payload.priority_id;
+  if (payload.status_id !== undefined) updateData.status_id = cleanField(payload.status_id);
+  if (payload.assignee_id !== undefined) updateData.assignee_id = cleanField(payload.assignee_id);
+  if (payload.department_id !== undefined) updateData.department_id = cleanField(payload.department_id);
+  if (payload.priority_id !== undefined) updateData.priority_id = cleanField(payload.priority_id);
   if (payload.custom_fields !== undefined) updateData.custom_fields = payload.custom_fields;
 
   updateData.updated_at = new Date().toISOString();
@@ -311,13 +313,29 @@ export async function createEnterpriseTicket(payload: any) {
     throw new Error(`Invalid Scope Type: ${payload.scope_type}`);
   }
 
+  // Sanitize UUID/optional relation fields that might be passed as empty string
+  const cleanField = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
+
+  const priority_id = cleanField(payload.priority_id);
+  const issue_type_id = cleanField(payload.issue_type_id);
+  const issue_sub_type_id = cleanField(payload.issue_sub_type_id);
+  const category_id = cleanField(payload.category_id);
+  const sub_category_id = cleanField(payload.sub_category_id);
+  const asset_id = cleanField(payload.asset_id);
+  const software_system_id = cleanField(payload.software_system_id);
+  const module_id = cleanField(payload.module_id);
+  const sub_module_id = cleanField(payload.sub_module_id);
+  const assignee_id = cleanField(payload.assignee_id);
+  const department_id = cleanField(payload.department_id);
+  const due_date = cleanField(payload.due_date);
+
   // Fetch Category
   let isRequirement = false;
-  if (payload.category_id) {
+  if (category_id) {
     const { data: cat } = await supabaseAdmin
       .from('ticket_categories')
       .select('is_requirement_category')
-      .eq('id', payload.category_id)
+      .eq('id', category_id)
       .single();
     if (cat?.is_requirement_category) {
       isRequirement = true;
@@ -347,7 +365,7 @@ export async function createEnterpriseTicket(payload: any) {
   if (!newState) throw new Error(`System Error: 'NEW' status_master state not found for ${dbScopeType} or global.`);
 
   // Fallback for priority_id if strictly scoped priorities are missing (prevents 23502 NOT NULL)
-  let finalPriorityId = payload.priority_id;
+  let finalPriorityId = priority_id;
   if (!finalPriorityId) {
     const { data: fallbackPrio } = await supabaseAdmin
       .from('priority_master')
@@ -359,7 +377,7 @@ export async function createEnterpriseTicket(payload: any) {
   }
 
   // Fallback for department_id (prevents 23502 NOT NULL if user has no department)
-  let finalDeptId = payload.department_id || creatorInfo?.department_id;
+  let finalDeptId = department_id || creatorInfo?.department_id;
   if (!finalDeptId) {
     const { data: fallbackDept } = await supabaseAdmin.from('departments').select('id').limit(1).single();
     if (fallbackDept) finalDeptId = fallbackDept.id;
@@ -373,9 +391,21 @@ export async function createEnterpriseTicket(payload: any) {
     creator_id: user.id,
     department_id: finalDeptId,
     status_id: newState.id,
-    priority_id: finalPriorityId,
     queue_owner_id: creatorInfo?.manager_id || null,
-    custom_fields: payload.custom_fields || {}
+    custom_fields: payload.custom_fields || {},
+
+    // Explicit override with sanitized values to ensure no empty string is written
+    priority_id: finalPriorityId,
+    issue_type_id,
+    issue_sub_type_id,
+    category_id,
+    sub_category_id,
+    asset_id,
+    software_system_id,
+    module_id,
+    sub_module_id,
+    assignee_id,
+    due_date
   };
 
   const { createTicket } = await import('@/lib/repositories/tickets');
@@ -400,7 +430,7 @@ export async function createEnterpriseTicket(payload: any) {
           description: payload.custom_fields.requirement_description,
           business_justification: payload.custom_fields.business_reason,
           department_id: insertPayload.department_id,
-          priority_id: payload.priority_id,
+          priority_id: insertPayload.priority_id,
           status_id: reqState?.id || newState.id,
           created_by: user.id
         }).select().single();

@@ -18,6 +18,14 @@ const getAdminClient = () => {
 };
 
 export async function saveUserAction(editUserId: string | null, payload: any, password?: string) {
+  // Sanitize empty string UUIDs to null to avoid database type syntax errors
+  if (payload) {
+    payload.role_id = (payload.role_id && payload.role_id.trim()) ? payload.role_id : null;
+    payload.department_id = (payload.department_id && payload.department_id.trim()) ? payload.department_id : null;
+    payload.designation_id = (payload.designation_id && payload.designation_id.trim()) ? payload.designation_id : null;
+    payload.manager_id = (payload.manager_id && payload.manager_id.trim()) ? payload.manager_id : null;
+  }
+
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 

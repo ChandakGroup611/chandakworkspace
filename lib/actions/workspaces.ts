@@ -184,12 +184,12 @@ export async function createWorkspace(formData: any) {
         workspace_name: formData.name,
         workspace_code: formData.code || null,
         description: formData.description,
-        company_id: formData.company_id,
+        company_id: (formData.company_id && formData.company_id.trim()) ? formData.company_id : null,
         start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
         end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
         status_id: statusId,
         workspace_owner_id: userId,
-        parent_workspace_id: formData.parent_workspace_id || null,
+        parent_workspace_id: (formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null,
         visibility_settings: formData.visibility_settings || { public: false }
       }])
       .select()
@@ -543,10 +543,12 @@ export async function updateWorkspace(id: string, formData: any) {
   const updatePayload = {
     workspace_name: formData.name,
     description: formData.description,
-    company_id: formData.company_id,
+    company_id: (formData.company_id && formData.company_id.trim()) ? formData.company_id : null,
     start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
     end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
-    parent_workspace_id: formData.parent_workspace_id !== undefined ? formData.parent_workspace_id : undefined,
+    parent_workspace_id: (formData.parent_workspace_id !== undefined)
+      ? ((formData.parent_workspace_id && formData.parent_workspace_id.trim()) ? formData.parent_workspace_id : null)
+      : undefined,
     ...(formData.visibility_settings !== undefined && { visibility_settings: formData.visibility_settings }),
   };
 
@@ -1041,7 +1043,7 @@ export async function createTaskTemplate(workspaceId: string, formData: any) {
     template_name: formData.template_name,
     subject: formData.subject,
     description: formData.description,
-    default_priority_id: formData.default_priority_id,
+    default_priority_id: (formData.default_priority_id && formData.default_priority_id.trim()) ? formData.default_priority_id : null,
     default_tags: formData.default_tags || [],
     created_by: user.id
   }]).select().single();
