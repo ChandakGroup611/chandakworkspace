@@ -9,6 +9,9 @@ import { createClient } from '@/utils/supabase/server';
 export async function createTask(payload: {
   workspace_id: string;
   sub_workspace_id?: string;
+  parent_task_id?: string;
+  sprint_id?: string;
+  template_id?: string;
   subject?: string;
   title?: string;
   description?: string;
