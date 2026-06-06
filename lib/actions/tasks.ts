@@ -68,8 +68,8 @@ export async function createTask(payload: {
         description: payload.description,
         priority_id: payload.priority_id,
         status_id: statusMaster.id,
-        start_date: payload.start_date,
-        end_date: payload.end_date,
+        start_date: (payload.start_date && payload.start_date.trim()) ? payload.start_date : null,
+        end_date: (payload.end_date && payload.end_date.trim()) ? payload.end_date : null,
         estimated_hours: payload.estimated_hours,
         custom_fields: payload.custom_fields,
         created_by: creatorId,
@@ -580,7 +580,16 @@ export async function updateTask(taskId: string, payload: any) {
     }
   }
 
-  const { error } = await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
+  // Sanitize empty date strings to NULL to avoid DB syntax errors
+  const updatePayload = { ...payload };
+  if (updatePayload.start_date !== undefined) {
+    updatePayload.start_date = (updatePayload.start_date && updatePayload.start_date.trim()) ? updatePayload.start_date : null;
+  }
+  if (updatePayload.end_date !== undefined) {
+    updatePayload.end_date = (updatePayload.end_date && updatePayload.end_date.trim()) ? updatePayload.end_date : null;
+  }
+
+  const { error } = await supabaseAdmin.from('tasks').update(updatePayload).eq('id', taskId);
   if (error) return { error: error.message || JSON.stringify(error) };
 
   // Fix audit log trigger fallback

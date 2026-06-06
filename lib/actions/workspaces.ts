@@ -185,8 +185,8 @@ export async function createWorkspace(formData: any) {
         workspace_code: formData.code || null,
         description: formData.description,
         company_id: formData.company_id,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
+        start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
+        end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
         status_id: statusId,
         workspace_owner_id: userId,
         parent_workspace_id: formData.parent_workspace_id || null,
@@ -544,8 +544,8 @@ export async function updateWorkspace(id: string, formData: any) {
     workspace_name: formData.name,
     description: formData.description,
     company_id: formData.company_id,
-    start_date: formData.start_date,
-    end_date: formData.end_date,
+    start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
+    end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
     parent_workspace_id: formData.parent_workspace_id !== undefined ? formData.parent_workspace_id : undefined,
     ...(formData.visibility_settings !== undefined && { visibility_settings: formData.visibility_settings }),
   };
@@ -977,8 +977,8 @@ export async function createSprint(workspaceId: string, formData: any) {
     workspace_id: workspaceId,
     name: formData.name,
     goal: formData.goal,
-    start_date: formData.start_date,
-    end_date: formData.end_date,
+    start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
+    end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
     status: formData.status || 'PLANNING',
     created_by: user.id
   }]).select().single();
@@ -1020,8 +1020,8 @@ export async function updateSprint(id: string, formData: any) {
     .update({
       name: formData.name,
       goal: formData.goal,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
+      start_date: (formData.start_date && formData.start_date.trim()) ? formData.start_date : null,
+      end_date: (formData.end_date && formData.end_date.trim()) ? formData.end_date : null,
       status: formData.status,
       updated_at: new Date().toISOString()
     })
