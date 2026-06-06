@@ -9,7 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { 
   CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2, 
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
-  ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink
+  ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye
 } from "lucide-react";
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
@@ -999,14 +999,25 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           <span className="text-[0.7rem] text-gray-500 block">{(item.size / 1024 / 1024).toFixed(2)} MB</span>
                         </div>
                       </div>
-                      <a 
-                        href={item.file_url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </a>
+                      <div className="flex items-center gap-1">
+                        <a 
+                          href={item.file_url} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          title="View Attachment"
+                          className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </a>
+                        <a 
+                          href={`${item.file_url}?download=`} 
+                          download
+                          title="Download Attachment"
+                          className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
                     </div>
                   ))}
                   {(task.attachments || []).length === 0 && (
