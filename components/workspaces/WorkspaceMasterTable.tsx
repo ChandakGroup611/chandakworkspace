@@ -173,7 +173,7 @@ export function WorkspaceMasterTable({
   const gridCols = 'minmax(250px, 4fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(130px, 1fr)';
 
 
-  const HierarchyRow = React.memo(({ node, depth, isExpanded }: { node: any, depth: number, isExpanded: boolean }) => {
+  const HierarchyRow = React.memo(({ node, parentNode, depth, isExpanded }: { node: any, parentNode: any, depth: number, isExpanded: boolean }) => {
     const hasChildren = node.children && node.children.length > 0;
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
     const isSubWorkspace = node.type === 'SUB_WORKSPACE';
@@ -317,8 +317,8 @@ export function WorkspaceMasterTable({
                       } ${
                         isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
                       }`}>
-                        {isSubWorkspace && node.parent && (node.parent.workspace_name || node.parent.name) && !(node.workspace_name || node.name || '').startsWith((node.parent.workspace_name || node.parent.name) + ' -')
-                          ? `${node.parent.workspace_name || node.parent.name} - ${node.workspace_name || node.name}`
+                        {isSubWorkspace && parentNode && (parentNode.workspace_name || parentNode.name) && !(node.workspace_name || node.name || '').startsWith((parentNode.workspace_name || parentNode.name) + ' -')
+                          ? `${parentNode.workspace_name || parentNode.name} - ${node.workspace_name || node.name}`
                           : (node.workspace_name || node.name || node.subject || node.title)}
                       </span>
                       {node.attachmentCount > 0 && (
@@ -461,16 +461,15 @@ export function WorkspaceMasterTable({
       );
     }, (prevProps, nextProps) => {
       // Memoize the row, only re-render if node identity or expanded state changes
-      return prevProps.node === nextProps.node && prevProps.isExpanded === nextProps.isExpanded;
+      return prevProps.node === nextProps.node && prevProps.isExpanded === nextProps.isExpanded && prevProps.parentNode === nextProps.parentNode;
     });
 
     const renderTree = (nodes: any[], depth = 0, parentNode: any = null) => {
       return nodes.map((node) => {
         const isActuallyExpanded = forceExpandAll || !!expandedNodes[node.id];
-        const enrichedNode = parentNode ? { ...node, parent: parentNode } : node;
         return (
           <React.Fragment key={node.id}>
-            <HierarchyRow node={enrichedNode} depth={depth} isExpanded={isActuallyExpanded} />
+            <HierarchyRow node={node} parentNode={parentNode} depth={depth} isExpanded={isActuallyExpanded} />
             {isActuallyExpanded && node.children && renderTree(node.children, depth + 1, node)}
           </React.Fragment>
         );
