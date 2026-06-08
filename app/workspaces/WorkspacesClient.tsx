@@ -270,6 +270,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       setIsSubmitting(true);
       let finalName = newWS.name;
 
+      if (newWS.parent_workspace_id && parentWorkspace && parentWorkspace.name) {
+        const prefix = `${parentWorkspace.name} - `;
+        if (!finalName.startsWith(prefix)) {
+          finalName = `${parentWorkspace.name} - ${finalName}`;
+        }
+      }
+
       const payload = {
         name: finalName,
         description: newWS.description,
