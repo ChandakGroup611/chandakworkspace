@@ -111,6 +111,17 @@ export default function SettingsGallery() {
       previewBorder: "border-indigo-500/30",
       accentColor: "bg-pink-500",
     },
+    {
+      id: "pure-elegance",
+      name: "Pure Elegance",
+      tagline: "Minimalist Warm Ivory",
+      benefit: "Luxurious, sophisticated contrast",
+      sentiment: "Premium & Refined",
+      icon: Sparkles,
+      previewBg: "bg-[#FCFBF9] text-[#1C1917]",
+      previewBorder: "border-[#D6D3D1]",
+      accentColor: "bg-[#D4AF37]",
+    },
   ];
 
   const densitiesList: {
@@ -153,7 +164,7 @@ export default function SettingsGallery() {
     { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible structural forms.", css: "font-sans" }
   ];
 
-  const isLightMode = theme === "executive-light" || theme === "material-ocean" || theme === "aurora-breeze";
+  const isLightMode = theme === "executive-light" || theme === "material-ocean" || theme === "aurora-breeze" || theme === "pure-elegance";
 
   return (
     <div className="space-y-8 pb-12">

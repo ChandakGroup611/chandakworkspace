@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "executive-light" | "midnight-operations" | "glass-intelligence" | "material-ocean" | "aurora-breeze";
+export type ThemeType = "executive-light" | "midnight-operations" | "glass-intelligence" | "material-ocean" | "aurora-breeze" | "pure-elegance";
 export type DensityType = "comfortable" | "compact" | "dense";
 export type FontFamilyType = "inter" | "outfit" | "roboto";
 
@@ -41,7 +41,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const storedBaseSize = localStorage.getItem("app_base_font_size");
     const storedSubtextSize = localStorage.getItem("app_subtext_font_size");
 
-    if (storedTheme && ["executive-light", "midnight-operations", "glass-intelligence", "material-ocean", "aurora-breeze"].includes(storedTheme)) {
+    if (storedTheme && ["executive-light", "midnight-operations", "glass-intelligence", "material-ocean", "aurora-breeze", "pure-elegance"].includes(storedTheme)) {
       setThemeState(storedTheme);
     } else {
       setThemeState("glass-intelligence");
@@ -77,7 +77,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     activeSubtextSize?: number
   ) => {
     if (typeof document === "undefined") return;
-    const isLight = activeTheme === "executive-light" || activeTheme === "material-ocean" || activeTheme === "aurora-breeze";
+    const isLight = activeTheme === "executive-light" || activeTheme === "material-ocean" || activeTheme === "aurora-breeze" || activeTheme === "pure-elegance";
     
     // Inject dynamic root classes to gracefully steer hardcoded container defaults
     if (isLight) {
