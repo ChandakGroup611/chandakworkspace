@@ -15,7 +15,7 @@ import {
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
   approveTask, reopenTask, createChecklistItem, 
   createTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses,
-  getTaskChecklists, getTaskAttachments
+  getTaskChecklists, getTaskAttachments, executeTaskBatchOperation
 } from "@/lib/actions/tasks";
 import { toggleChecklistItem } from "@/lib/actions/workspaces";
 import { useRouter } from "next/navigation";
@@ -284,42 +284,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       return;
     }
 
+    const t0 = performance.now();
     setSaveRemarksLoading(true);
     setError(null);
     try {
-      // 1. Process pending status change
-      if (pendingStatus) {
-        let res: any;
-        if (pendingStatus === "ST_IN_PROGRESS") {
-          res = await transitionTaskStatus(taskId, "ST_IN_PROGRESS");
-        } else if (pendingStatus === "ST_RESOLVED") {
-          res = await resolveTask(taskId);
-        } else if (pendingStatus === "ST_CLOSED") {
-          res = await approveTask(taskId);
-        } else if (pendingStatus === "ST_REOPEN") {
-          res = await reopenTask(taskId);
-        } else {
-          res = await transitionTaskStatus(taskId, pendingStatus);
-        }
-        if (res?.error) throw new Error("Status Error: " + res.error);
-      }
-
-      // 2. Create new checklists
-      for (const label of pendingChecklists) {
-        const newItem = await createChecklistItem(taskId, label);
-        // replace temp placeholder with real item
-        setTask((prev: any) => {
-          const updated = prev.checklists.map((c: any) => c.label === label && c.is_temp ? newItem : c);
-          return { ...prev, checklists: updated };
-        });
-      }
-
-      // 3. Apply edited checklist statuses
-      for (const [chkId, newStatus] of Object.entries(editedChecklists)) {
-        await toggleChecklistItem(chkId, newStatus);
-      }
-
-      // 4. Upload pending files
+      // Step 1: Upload pending files separately (Phase T6)
+      const attachmentIds = [];
       for (const file of pendingFiles) {
         const reader = new FileReader();
         const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -327,33 +297,49 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        await createTaskAttachment(taskId, file.name, dataUrl, file.size);
+        const att = await createTaskAttachment(taskId, file.name, dataUrl, file.size);
+        if (att && att.id) attachmentIds.push(att.id);
       }
 
-      // 5. Save custom fields and pending properties if changed
+      // Step 2: Prepare Batch Payload
       const updatePayload: any = {};
-      
-      // Only include custom fields if they actually changed
       if (Object.keys(localCustomFields).length) {
         if (JSON.stringify(localCustomFields) !== JSON.stringify(task.custom_fields || {})) {
           updatePayload.custom_fields = localCustomFields;
         }
       }
-
       if (Object.keys(pendingTaskUpdates).length) Object.assign(updatePayload, pendingTaskUpdates);
-      
-      if (Object.keys(updatePayload).length > 0) {
-        const res = await updateTask(taskId, updatePayload);
-        if (res?.error) throw new Error("Update Error: " + res.error);
+
+      let finalStatusId = undefined;
+      if (pendingStatus) {
+         const matchedStatus = statuses.find(s => (s.code || s.status_code) === pendingStatus);
+         if (matchedStatus) finalStatusId = matchedStatus.id;
+         else finalStatusId = pendingStatus;
       }
 
-      // 6. Save remark if present
-      if (remarksDraft.trim()) {
-        const res = await addTaskRemark(taskId, remarksDraft);
-        if (res?.error) throw new Error("Remark Error: " + res.error);
-        if (res?.data) {
-          setRemarksHistory(prev => [...prev, res.data]);
-        }
+      const t1 = performance.now();
+      const res = await executeTaskBatchOperation({
+        taskId,
+        updates: updatePayload,
+        statusChanges: finalStatusId,
+        checklistCreates: pendingChecklists,
+        checklistUpdates: editedChecklists,
+        remarks: remarksDraft.trim(),
+        attachmentIds
+      });
+
+      const t2 = performance.now();
+      
+      if (res?.error) throw new Error("Batch Save Error: " + res.error);
+
+      // Step 3: Direct Hydration (Phase T5)
+      if (res?.data) {
+        setTask((prev: any) => ({
+          ...res.data.task,
+          checklists: res.data.checklists,
+          attachments: res.data.attachments
+        }));
+        setRemarksHistory(res.data.comments || []);
       }
 
       // Reset pending states
@@ -363,22 +349,22 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       setPendingFiles([]);
       setRemarksDraft("");
 
-      await loadTaskDetails(true);
-      if (isChecklistsLoaded) await loadChecklists(true);
-      if (isAttachmentsLoaded) await loadAttachments(true);
-      if (isCommentsLoaded || !isHistoryCollapsed) await loadComments(true);
+      setIsChecklistsLoaded(true);
+      setIsAttachmentsLoaded(true);
+      setIsCommentsLoaded(true);
+
+      const t3 = performance.now();
+      console.log(`[Task Save Metrics] Uploads+Prep: ${(t1 - t0).toFixed(2)}ms | Backend+Network: ${(t2 - t1).toFixed(2)}ms | Render Hydration: ${(t3 - t2).toFixed(2)}ms | Total: ${(t3 - t0).toFixed(2)}ms`);
 
       triggerToast("Task updated successfully");
       if (onUpdate) {
         onUpdate();
       } else {
-        // If no onUpdate callback is provided, we are on the standalone page, so route back to list
+        // Phase T8: Return to List Optimization using cache (soft navigation)
         setTimeout(() => {
           router.push(task.workspace_id ? `/workspaces?workspace=${task.workspace_id}` : "/workspaces");
-        }, 1000);
+        }, 300);
       }
-      // Note: router.refresh() removed — it caused Server Component re-render errors.
-      // State is refreshed via loadTaskDetails() above.
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to save changes.");

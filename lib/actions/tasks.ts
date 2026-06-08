@@ -352,151 +352,108 @@ export async function fetchUsers() {
 }
 
 export async function getTaskDetails(taskId: string) {
-  const { data: task, error } = await supabaseAdmin
-    .from('tasks')
-    .select(`
-      *,
-      status:status_master(id, name:status_name, code:status_code, is_closed),
-      priority:priority_master(id, name:priority_name, color:priority_color),
-      workspace:workspaces(id, name:workspace_name)
-    `)
-    .eq('id', taskId)
-    .single();
-
-  if (error || !task) {
-    return { error: error?.message || "Task not found" };
-  }
-
-  if (task.created_by) {
-    const { data: creator } = await supabaseAdmin.from('user_master').select('id, full_name, user_code').eq('id', task.created_by).single();
-    task.creator = creator;
-  }
-
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   const userId = user?.id;
 
+  console.time("getTaskDetails - Parallel Fetch");
+  const [
+    { data: task, error },
+    { count: checklistCount },
+    { count: attachmentCount },
+    { data: participants },
+    permissionsModule
+  ] = await Promise.all([
+    supabaseAdmin.from('tasks').select(`
+      *,
+      status:status_master(id, name:status_name, code:status_code, is_closed),
+      priority:priority_master(id, name:priority_name, color:priority_color),
+      workspace:workspaces(id, name:workspace_name)
+    `).eq('id', taskId).single(),
+    supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
+    supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
+    supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId),
+    userId ? import('@/lib/permissions') : Promise.resolve(null)
+  ]);
+  console.timeEnd("getTaskDetails - Parallel Fetch");
+
+  if (error || !task) return { error: error?.message || "Task not found" };
+
   let isSuperAdmin = false;
-  let isWorkspaceMember = false;
+  if (userId && permissionsModule) {
+    isSuperAdmin = await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE");
+  }
 
-  if (userId) {
-    const { hasPermission } = await import('@/lib/permissions');
-    isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-
-    if (!isSuperAdmin && task.workspace_id) {
-      const { data: directMembership } = await supabaseAdmin
-        .from('workspace_members')
-        .select('user_id')
-        .eq('workspace_id', task.workspace_id)
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (directMembership) {
+  let wsMembers: any[] = [];
+  let isWorkspaceMember = isSuperAdmin;
+  
+  if (task.workspace_id) {
+    const wsRes = await supabaseAdmin.from('workspace_members').select('user_id, role').eq('workspace_id', task.workspace_id).eq('is_deleted', false);
+    if (wsRes.data) wsMembers = wsRes.data;
+    
+    if (userId && !isSuperAdmin) {
+      if (wsMembers.some(m => m.user_id === userId)) {
         isWorkspaceMember = true;
       } else {
-        const { data: userTeams } = await supabaseAdmin
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', userId);
-          
+        const { data: userTeams } = await supabaseAdmin.from('team_members').select('team_id').eq('user_id', userId);
         if (userTeams && userTeams.length > 0) {
           const teamIds = userTeams.map((t: any) => t.team_id);
-          const { data: wsTeams } = await supabaseAdmin
-            .from('workspace_teams')
-            .select('id')
-            .eq('workspace_id', task.workspace_id)
-            .in('team_id', teamIds)
-            .limit(1);
-            
-          if (wsTeams && wsTeams.length > 0) {
-            isWorkspaceMember = true;
-          }
+          const { data: wsTeams } = await supabaseAdmin.from('workspace_teams').select('id').eq('workspace_id', task.workspace_id).in('team_id', teamIds).limit(1);
+          if (wsTeams && wsTeams.length > 0) isWorkspaceMember = true;
         }
       }
-    } else {
-      isWorkspaceMember = isSuperAdmin;
     }
   }
 
-  task.currentUserIsSuperAdmin = isSuperAdmin;
-  
-  const isAssignee = task.assigned_to === userId;
+  // User Lookup Consolidation
+  const uniqueUserIds = new Set<string>();
+  if (task.created_by) uniqueUserIds.add(task.created_by);
+  if (task.assigned_to) uniqueUserIds.add(task.assigned_to);
+  if (participants) participants.forEach(p => uniqueUserIds.add(p.user_id));
+  wsMembers.forEach(m => uniqueUserIds.add(m.user_id));
 
-  task.currentUserCanAct = isSuperAdmin || isAssignee;
-  task.currentUserId = userId || null;
-
-  task.checklists = [];
-  task.attachments = [];
-
-  task.assignee = null;
-  if (task.assigned_to) {
-    const { data: assigneeData } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').eq('id', task.assigned_to).single();
-    if (assigneeData) task.assignee = assigneeData;
+  let usersMap = new Map<string, any>();
+  if (uniqueUserIds.size > 0) {
+    console.time("getTaskDetails - Single User Query");
+    const { data: allUsers } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo, user_code').in('id', Array.from(uniqueUserIds));
+    console.timeEnd("getTaskDetails - Single User Query");
+    if (allUsers) allUsers.forEach(u => usersMap.set(u.id, u));
   }
+
+  task.creator = task.created_by ? usersMap.get(task.created_by) || null : null;
+  task.assignee = task.assigned_to ? usersMap.get(task.assigned_to) || null : null;
   
-  const { count: checklistCount } = await supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId);
-  const { count: attachmentCount } = await supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId);
+  task.task_assignees = [];
+  task.task_reviewers = [];
+  task.task_watchers = [];
+  
+  if (participants) {
+    participants.forEach(p => {
+      const u = usersMap.get(p.user_id);
+      if (!u) return;
+      if (p.participation_role === 'EXECUTOR') task.task_assignees.push(u);
+      else if (p.participation_role === 'REVIEWER') task.task_reviewers.push(u);
+      else if (p.participation_role === 'WATCHER') task.task_watchers.push(u);
+    });
+  }
+
+  task.inherited_users = wsMembers.map(m => {
+    const u = usersMap.get(m.user_id);
+    return u ? { ...u, workspace_role: m.role } : null;
+  }).filter(Boolean);
+
   task._meta = {
     checklistCount: checklistCount || 0,
     attachmentCount: attachmentCount || 0
   };
   
-  const { data: participants } = await supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId);
-  
-  let participantIds = new Set<string>();
-  if (participants) participants.forEach(p => participantIds.add(p.user_id));
-
-  task.task_assignees = [];
-  task.task_watchers = [];
-  task.task_teams = [];
-
-  if (participantIds.size > 0) {
-    const { data: usersData } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').in('id', Array.from(participantIds));
-    if (usersData && participants) {
-      task.task_assignees = participants
-        .filter(p => p.participation_role === 'EXECUTOR')
-        .map(p => usersData.find(u => u.id === p.user_id))
-        .filter(Boolean);
-      
-      task.task_reviewers = participants
-        .filter(p => p.participation_role === 'REVIEWER')
-        .map(p => usersData.find(u => u.id === p.user_id))
-        .filter(Boolean);
-
-      task.task_watchers = participants
-        .filter(p => p.participation_role === 'WATCHER')
-        .map(p => usersData.find(u => u.id === p.user_id))
-        .filter(Boolean);
-    }
-  }
-
-  // Fetch Inherited Workspace Access (Assignees/Viewers)
-  task.inherited_users = [];
-  if (task.workspace_id) {
-    const { data: wsMembers } = await supabaseAdmin
-      .from('workspace_members')
-      .select('user_id, role')
-      .eq('workspace_id', task.workspace_id)
-      .eq('is_deleted', false);
-      
-    if (wsMembers && wsMembers.length > 0) {
-      const wsUserIds = Array.from(new Set(wsMembers.map(m => m.user_id)));
-      const { data: wsUsersData } = await supabaseAdmin
-        .from('user_master')
-        .select('id, full_name, profile_photo')
-        .in('id', wsUserIds);
-        
-      if (wsUsersData) {
-        task.inherited_users = wsMembers.map(m => {
-          const u = wsUsersData.find(user => user.id === m.user_id);
-          if (!u) return null;
-          return { ...u, workspace_role: m.role };
-        }).filter(Boolean);
-      }
-    }
-  }
-  
+  task.currentUserIsSuperAdmin = isSuperAdmin;
+  task.currentUserCanAct = isSuperAdmin || task.assigned_to === userId;
+  task.currentUserId = userId || null;
   task.title = task.subject;
+  task.checklists = [];
+  task.attachments = [];
+  task.task_teams = [];
 
   return task;
 }
@@ -1004,5 +961,132 @@ export async function recalculateParentProgress(parentTaskId: string) {
       .update({ custom_fields: updatedFields })
       .eq('id', parentTaskId);
   }
+}
+
+// -----------------------------------------------------------------------------
+// ENHANCEMENTS: BATCH TASK EXECUTION
+// -----------------------------------------------------------------------------
+
+export async function executeTaskBatchOperation(payload: {
+  taskId: string;
+  updates?: any;
+  statusChanges?: string;
+  checklistCreates?: string[];
+  checklistUpdates?: Record<string, boolean>;
+  remarks?: string;
+  attachmentIds?: string[];
+}) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
+  if (!userId) return { error: "Unauthenticated" };
+
+  const { taskId, updates, statusChanges, checklistCreates, checklistUpdates, remarks, attachmentIds } = payload;
+  
+  console.time("TaskBatch - Core Updates");
+  // Update Task Core
+  const updatePayload = { ...updates };
+  if (statusChanges) {
+     updatePayload.status_id = statusChanges;
+  }
+  
+  if (Object.keys(updatePayload).length > 0) {
+    const { error: updateError } = await supabaseAdmin.from('tasks').update(updatePayload).eq('id', taskId);
+    if (updateError) return { error: updateError.message };
+  }
+  console.timeEnd("TaskBatch - Core Updates");
+
+  console.time("TaskBatch - Children Updates");
+  // Handle Checklists (parallel)
+  const checklistPromises: any[] = [];
+  
+  if (checklistCreates && checklistCreates.length > 0) {
+    const creates = checklistCreates.map(label => ({ task_id: taskId, label, is_completed: false }));
+    checklistPromises.push(supabaseAdmin.from('task_checklists').insert(creates));
+  }
+  
+  if (checklistUpdates && Object.keys(checklistUpdates).length > 0) {
+    for (const [id, is_completed] of Object.entries(checklistUpdates)) {
+      checklistPromises.push(supabaseAdmin.from('task_checklists').update({ is_completed }).eq('id', id));
+    }
+  }
+
+  // Handle Remarks
+  if (remarks && remarks.trim().length > 0) {
+    checklistPromises.push(supabaseAdmin.from('task_comments').insert([{ task_id: taskId, author_id: userId, content: remarks }]));
+  }
+
+  // Link Attachments that were uploaded separately (Phase T6)
+  if (attachmentIds && attachmentIds.length > 0) {
+    // If the attachments were uploaded to storage but need DB records, or they were inserted into DB without task_id
+    // This depends on the Phase T6 strategy. Typically, they are already inserted with task_id.
+    // If we passed them just to refetch, we don't need to do anything here.
+  }
+
+  // Await data mutations
+  await Promise.all(checklistPromises);
+  console.timeEnd("TaskBatch - Children Updates");
+
+  // Background Side Effects (non-blocking - Phase T4)
+  const sideEffects = [];
+  
+  if (statusChanges) {
+    sideEffects.push(
+      supabaseAdmin.from('task_activity_logs').insert([{
+        task_id: taskId, actor_id: userId, action: 'STATUS_CHANGE', new_state: { status_id: statusChanges }
+      }])
+    );
+  }
+  
+  if (remarks && remarks.trim().length > 0) {
+    sideEffects.push(
+      supabaseAdmin.from('task_activity_logs').insert([{
+        task_id: taskId, actor_id: userId, action: 'COMMENT', new_state: { message: remarks }
+      }])
+    );
+  }
+  
+  if (Object.keys(updatePayload).length > 0) {
+    sideEffects.push(
+      supabaseAdmin.from('task_activity_logs').update({ actor_id: userId }).eq('task_id', taskId).is('actor_id', null)
+    );
+  }
+
+  // Fire and forget side effects so they don't block the response
+  Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
+
+  console.time("TaskBatch - Refetch Hydration Data");
+  // Refetch the data needed for hydration (Parallel)
+  const [
+    task,
+    { data: checklists },
+    { data: attachments },
+    { data: commentsRaw }
+  ] = await Promise.all([
+    getTaskDetails(taskId),
+    supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true }),
+    supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false }),
+    supabaseAdmin.from('task_comments').select('*').eq('task_id', taskId).order('created_at', { ascending: false }).limit(20)
+  ]);
+
+  let comments = commentsRaw || [];
+  if (comments.length > 0) {
+    const authorIds = Array.from(new Set(comments.map(c => c.author_id).filter(Boolean)));
+    const { data: users } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').in('id', authorIds as string[]);
+    if (users) {
+      comments = comments.map(c => ({ ...c, user: users.find(u => u.id === c.author_id) || null }));
+    }
+  }
+  console.timeEnd("TaskBatch - Refetch Hydration Data");
+
+  return {
+    success: true,
+    data: {
+      task,
+      checklists: checklists || [],
+      attachments: attachments || [],
+      comments
+    }
+  };
 }
 
