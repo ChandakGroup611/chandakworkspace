@@ -35,7 +35,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const router = useRouter();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = theme === "executive-light";
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const [workspaces, setWorkspaces] = useState<any[]>(initialData?.workspaces || []);
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);
@@ -132,7 +132,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         >
           <div className="flex items-center gap-2">
             {depth > 0 && <span className={isLightMode ? "text-gray-400" : "text-gray-600"}>↳</span>}
-            <div className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{w.code}</div>
+            <div className={`font-bold ${"text-foreground"}`}>{w.code}</div>
           </div>
           <div className={`text-[10px] text-gray-500 truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
         </button>
@@ -548,7 +548,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   if (!mounted || permsLoading || loading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+        "bg-surface text-foreground"
       }`}>
         <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
         <p className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Hydrating Enterprise Workspaces...</p>
@@ -559,7 +559,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   if (!hasPermission("WORKSPACES_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+        "bg-surface text-foreground"
       }`}>
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <ShieldAlert className="h-10 w-10" />
@@ -757,7 +757,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       ) : (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
           <FolderKanban className="h-12 w-12 text-gray-400 opacity-50" />
-          <h2 className={`text-lg font-bold ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>No Active Workspaces Found</h2>
+          <h2 className={`text-lg font-bold ${"text-foreground"}`}>No Active Workspaces Found</h2>
           <p className="text-xs text-gray-500">Initialize a new enterprise workspace to begin orchestrating tasks.</p>
           <AppButton variant="primary" onClick={() => setWsModalMode('ROOT')} disabled={!hasPermission("WORKSPACES_CREATE")}>Create Workspace</AppButton>
         </div>
@@ -783,12 +783,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           <div className="space-y-6">
             
             {/* Section 1: Workspace Identity */}
-            <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
                 <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
                   <Building2 className="h-4 w-4" />
                 </div>
-                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Workspace Identity</h3>
+                <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Workspace Identity</h3>
               </div>
               
               <div className="grid grid-cols-1 gap-5 mb-5">
@@ -810,7 +810,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Name *</label>
-                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                  <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className={"bg-surface"} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
@@ -847,22 +847,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             </div>
 
             {/* Section 2: Timeline & Objectives */}
-            <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
                 <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
                   <Target className="h-4 w-4" />
                 </div>
-                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Timeline & Objectives</h3>
+                <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Timeline & Objectives</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-5 mb-5">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
-                  <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                  <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className={"bg-surface"} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target End Date</label>
-                  <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className={isLightMode ? "bg-white" : "bg-black/30"} />
+                  <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className={"bg-surface"} />
                 </div>
               </div>
 
@@ -880,12 +880,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             </div>
 
             {/* Section 3: Access & Security */}
-            <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+            <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
                 <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
                   <ShieldCheck className="h-4 w-4" />
                 </div>
-                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Access & Stakeholders</h3>
+                <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Access & Stakeholders</h3>
               </div>
 
               <div className="space-y-1.5 relative mb-6">
@@ -972,7 +972,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5 cursor-pointer"
                 />
                 <label htmlFor="is_public" className="cursor-pointer flex flex-col">
-                  <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Public Visibility</span>
+                  <span className={`text-sm font-bold ${"text-foreground"}`}>Public Visibility</span>
                   <span className="text-xs text-gray-500">Allow any authenticated personnel to view and join this workspace.</span>
                 </label>
               </div>

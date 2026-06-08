@@ -69,7 +69,7 @@ export function EnterpriseModalShell({
             isLightMode ? "border-gray-200 bg-gray-50/50" : "border-white/10 bg-white/[0.02]"
           }`}>
             <div>
-              {title && <h2 className={`text-lg font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{title}</h2>}
+              {title && <h2 className={`text-lg font-bold tracking-tight ${"text-foreground"}`}>{title}</h2>}
               {subtitle && <div className="text-xs text-gray-500 mt-1">{subtitle}</div>}
             </div>
             <button 

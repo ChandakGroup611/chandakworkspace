@@ -39,7 +39,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <Activity className={`h-10 w-10 ${isLightMode ? "text-gray-400" : "text-gray-700"}`} />
         </div>
         <div className="space-y-1">
-          <h3 className={`text-xl font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Select a Ticket to Inspect</h3>
+          <h3 className={`text-xl font-bold ${"text-foreground"}`}>Select a Ticket to Inspect</h3>
           <p className="text-sm text-gray-500 max-w-xs">Select an operational record from the sidebar to view full diagnostic data and collaboration history.</p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                 {status?.name || "Active"}
               </AppBadge>
             </div>
-            <h2 className={`text-2xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{ticket.title}</h2>
+            <h2 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>{ticket.title}</h2>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
               <div className={`h-2 w-2 rounded-full ${
                 priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : (isLightMode ? "bg-indigo-600" : "bg-indigo-500")
               }`} />
-              <span className={`text-sm font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>{priority?.name || "Medium"}</span>
+              <span className={`text-sm font-semibold ${"text-foreground"}`}>{priority?.name || "Medium"}</span>
             </div>
           </div>
 
@@ -91,21 +91,21 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <Building className="h-3 w-3" /> Department
             </div>
-            <span className={`text-sm font-semibold truncate block ${isLightMode ? "text-gray-900" : "text-white"}`}>{dept?.name || "General"}</span>
+            <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{dept?.name || "General"}</span>
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <User className="h-3 w-3" /> Assignee
             </div>
-            <span className={`text-sm font-semibold truncate block ${isLightMode ? "text-gray-900" : "text-white"}`}>{ticket.assignedTo || "Unassigned"}</span>
+            <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{ticket.assignedTo || "Unassigned"}</span>
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <Clock className="h-3 w-3" /> Created
             </div>
-            <span className={`text-sm font-semibold ${isLightMode ? "text-gray-900" : "text-white"}`}>
+            <span className={`text-sm font-semibold ${"text-foreground"}`}>
               {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
@@ -149,15 +149,15 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                 <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Category</span>
-                    <span className={`font-medium ${isLightMode ? "text-gray-900" : "text-white"}`}>{ticket.categoryObj?.name || "Unclassified"}</span>
+                    <span className={`font-medium ${"text-foreground"}`}>{ticket.categoryObj?.name || "Unclassified"}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Sub-Category</span>
-                    <span className={`font-medium ${isLightMode ? "text-gray-900" : "text-white"}`}>{ticket.subcategoryObj?.name || "Unclassified"}</span>
+                    <span className={`font-medium ${"text-foreground"}`}>{ticket.subcategoryObj?.name || "Unclassified"}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Issue Type</span>
-                    <span className={`font-medium ${isLightMode ? "text-gray-900" : "text-white"}`}>{ticket.issueTypeObj?.name || "General"}</span>
+                    <span className={`font-medium ${"text-foreground"}`}>{ticket.issueTypeObj?.name || "General"}</span>
                   </div>
                 </div>
               </div>

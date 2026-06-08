@@ -69,7 +69,7 @@ export function EnterpriseDrawerShell({
           isLightMode ? "border-gray-200 bg-white" : "border-white/10 bg-[#0B0F19]"
         }`}>
           <div>
-            {title && <h2 className={`text-xl font-extrabold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{title}</h2>}
+            {title && <h2 className={`text-xl font-extrabold tracking-tight ${"text-foreground"}`}>{title}</h2>}
             {subtitle && <div className="text-sm text-gray-500 mt-1">{subtitle}</div>}
           </div>
           <button 

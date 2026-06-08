@@ -143,7 +143,7 @@ export default function TicketsPage() {
   if (!mounted || permissionsLoading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+        "bg-surface text-foreground"
       }`}>
         <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
         <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
@@ -156,7 +156,7 @@ export default function TicketsPage() {
   if (!hasPermission("TICKETS_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+        "bg-surface text-foreground"
       }`}>
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Database className="h-10 w-10" />
@@ -176,7 +176,7 @@ export default function TicketsPage() {
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className={`text-[0.65rem] font-bold uppercase tracking-widest ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
+              <span className={`text-[0.65rem] font-bold uppercase tracking-widest ${"text-muted"}`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
             </div>
             <div className={`h-4 w-px ${isLightMode ? "bg-gray-300" : "bg-white/10"}`} />
             <div className="flex items-center gap-4 text-xs">
@@ -224,7 +224,7 @@ export default function TicketsPage() {
       {/* Main Two-Column Layout */}
       <div className="flex-1 flex min-h-0 overflow-hidden gap-6">
         {/* Left Column: Scope filtering sidebar */}
-        <div className={`w-[380px] shrink-0 border-r ${isLightMode ? "border-gray-200" : "border-white/5"}`}>
+        <div className={`w-[380px] shrink-0 border-r ${"border-border"}`}>
           <TicketListSidebar 
             tickets={filteredTickets}
             selectedTicketId={selectedTicket?.dbId || selectedTicket?.id}

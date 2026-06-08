@@ -40,18 +40,16 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
         {label && (
           <label 
             htmlFor={inputId} 
-            className={`text-xs font-semibold tracking-wide select-none flex items-center justify-between ${
-              isLight ? "text-gray-700" : "text-gray-300"
-            }`}
+            className="text-xs font-semibold tracking-wide select-none flex items-center justify-between text-foreground"
           >
             <span>{label}</span>
-            {error && <span className="text-xs text-rose-500 font-medium">{error}</span>}
+            {error && <span className="text-xs text-danger font-medium">{error}</span>}
           </label>
         )}
 
         <div className="relative flex items-center w-full">
           {leftIcon && (
-            <div className="absolute left-3 flex items-center text-gray-400 pointer-events-none">
+            <div className="absolute left-3 flex items-center text-muted pointer-events-none">
               {leftIcon}
             </div>
           )}
@@ -62,12 +60,10 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             disabled={disabled}
             className={cn(
               "h-8 w-full rounded-[var(--radius-input,4px)] border text-[13px] focus:outline-none transition-all duration-150",
-              isLight 
-                ? "bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-                : "border-white/10 bg-[#111827] text-white placeholder-gray-500 focus:border-blue-500 focus:bg-[#1A2234]",
+              "bg-surface border-border text-foreground placeholder-muted focus:border-accent focus:ring-1 focus:ring-accent",
               leftIcon ? "pl-10" : "pl-3",
               rightIcon ? "pr-10" : "pr-3.5",
-              error ? "border-rose-500/50 focus:border-rose-500 bg-rose-500/[0.02]" : "",
+              error ? "border-danger focus:border-danger bg-danger/[0.02]" : "",
               disabled ? "opacity-50 cursor-not-allowed" : "",
               className
             )}

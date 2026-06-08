@@ -51,7 +51,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <Activity className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <h3 className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Workload Intelligence</h3>
+              <h3 className={`font-bold ${"text-foreground"}`}>Workload Intelligence</h3>
               <p className="text-xs text-gray-500">Capacity & bandwidth analysis</p>
             </div>
           </div>

@@ -303,7 +303,7 @@ export default function UserProfileEditor() {
             <Image className="h-5 w-5 text-blue-500" />
             <AppCardTitle>Profile Picture</AppCardTitle>
           </div>
-          <p className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+          <p className={`text-xs ${"text-muted"}`}>
             View and update your profile picture
           </p>
         </AppCardHeader>
@@ -383,7 +383,7 @@ export default function UserProfileEditor() {
             <User className="h-5 w-5 text-blue-500" />
             <AppCardTitle>Profile Details</AppCardTitle>
           </div>
-          <p className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+          <p className={`text-xs ${"text-muted"}`}>
             Manage and update your personal profile details.
           </p>
         </AppCardHeader>
@@ -392,7 +392,7 @@ export default function UserProfileEditor() {
             {/* Full Name */}
             <div className="space-y-1.5">
               <label className={`text-xs font-bold uppercase tracking-wider block ${
-                isLightMode ? "text-gray-600" : "text-gray-400"
+                "text-muted"
               }`}>
                 Full Name
               </label>
@@ -408,7 +408,7 @@ export default function UserProfileEditor() {
             {/* Email */}
             <div className="space-y-1.5">
               <label className={`text-xs font-bold uppercase tracking-wider block flex items-center gap-2 ${
-                isLightMode ? "text-gray-600" : "text-gray-400"
+                "text-muted"
               }`}>
                 <Mail className="h-3.5 w-3.5" />
                 Email
@@ -426,7 +426,7 @@ export default function UserProfileEditor() {
             {/* User Code */}
             <div className="space-y-1.5">
               <label className={`text-xs font-bold uppercase tracking-wider block ${
-                isLightMode ? "text-gray-600" : "text-gray-400"
+                "text-muted"
               }`}>
                 User Code
               </label>
@@ -474,7 +474,7 @@ export default function UserProfileEditor() {
             <Lock className="h-5 w-5 text-purple-500" />
             <AppCardTitle>Change Password</AppCardTitle>
           </div>
-          <p className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+          <p className={`text-xs ${"text-muted"}`}>
             Update your password to keep your account secure
           </p>
         </AppCardHeader>
@@ -483,7 +483,7 @@ export default function UserProfileEditor() {
             {/* New Password */}
             <div className="space-y-1.5">
               <label className={`text-xs font-bold uppercase tracking-wider block ${
-                isLightMode ? "text-gray-600" : "text-gray-400"
+                "text-muted"
               }`}>
                 New Password
               </label>
@@ -499,7 +499,7 @@ export default function UserProfileEditor() {
             {/* Confirm Password */}
             <div className="space-y-1.5">
               <label className={`text-xs font-bold uppercase tracking-wider block ${
-                isLightMode ? "text-gray-600" : "text-gray-400"
+                "text-muted"
               }`}>
                 Confirm Password
               </label>

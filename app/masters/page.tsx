@@ -626,7 +626,7 @@ export default function MastersPage() {
   if (!mounted || permsLoading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+        "bg-surface text-foreground"
       }`}>
         <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
         <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
@@ -639,7 +639,7 @@ export default function MastersPage() {
   if (!hasPermission("MASTERS_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+        "bg-surface text-foreground"
       }`}>
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Lock className="h-10 w-10" />
@@ -712,7 +712,7 @@ export default function MastersPage() {
         <div className="lg:col-span-4 space-y-4 flex flex-col min-h-0">
           <AppCard className="flex-1 p-4 space-y-3 flex flex-col min-h-0 overflow-hidden">
             <div className={`flex items-center justify-between pb-2 border-b ${
-              isLightMode ? "border-gray-100" : "border-white/5"
+              "border-border"
             }`}>
               <span className={`text-[0.8rem] font-bold tracking-wider uppercase select-none ${
                 isLightMode ? "text-gray-700" : "text-gray-400"
@@ -833,21 +833,21 @@ export default function MastersPage() {
         {/* Right Column Span 8: Table Data Inspector */}
         <div className="lg:col-span-8 flex flex-col space-y-4">
           <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden shadow-xl ${
-            isLightMode ? "border-gray-200" : "border-white/10"
+            "border-border"
           }`}>
             <AppCardHeader className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${
               isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.005]"
             }`}>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <AppCardTitle className={`font-bold text-base ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                  <AppCardTitle className={`font-bold text-base ${"text-foreground"}`}>
                     {currentConfig.label}
                   </AppCardTitle>
                   <AppBadge variant="info" className="uppercase font-mono text-xs tracking-wider">
                     {activeTab.replace(/_/g, ' ')}
                   </AppBadge>
                 </div>
-                <p className={`text-[0.8rem] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                <p className={`text-[0.8rem] ${"text-muted"}`}>
                   Active configuration choices currently live for staff use across the platform.
                 </p>
               </div>
@@ -880,8 +880,8 @@ export default function MastersPage() {
                         !
                       </div>
                       <div className="space-y-1 max-w-sm mx-auto">
-                        <h4 className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>No Master Data Configured</h4>
-                        <p className={`text-[0.8rem] ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                        <h4 className={`text-xs font-bold ${"text-foreground"}`}>No Master Data Configured</h4>
+                        <p className={`text-[0.8rem] ${"text-muted"}`}>
                           No operational items are currently defined in this directory. Add your first record to make it available for workspace selection.
                         </p>
                       </div>
@@ -930,7 +930,7 @@ export default function MastersPage() {
                               <AppTableCell>
                                 <div className="space-y-0.5">
                                   <div className="flex items-center gap-2">
-                                    <span className={`font-bold text-xs block ${isLightMode ? "text-gray-900" : "text-white"}`}>{rec.name}</span>
+                                    <span className={`font-bold text-xs block ${"text-foreground"}`}>{rec.name}</span>
                                     <span className={`text-[0.65rem] font-bold px-1 rounded border tracking-tighter ${
                                       rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
                                         ? "text-purple-400 border-purple-500/30 bg-purple-500/5"
@@ -946,7 +946,7 @@ export default function MastersPage() {
                                     </span>
                                   </div>
                                   {rec.description && (
-                                    <span className={`text-xs block line-clamp-1 max-w-[180px] ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>{rec.description}</span>
+                                    <span className={`text-xs block line-clamp-1 max-w-[180px] ${"text-muted"}`}>{rec.description}</span>
                                   )}
                                 </div>
                               </AppTableCell>
@@ -1077,10 +1077,10 @@ export default function MastersPage() {
               isLightMode ? "border-gray-100 bg-gray-50" : "border-white/10 bg-white/[0.01]"
             }`}>
               <div className="space-y-0.5">
-                <h3 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                <h3 className={`text-sm font-bold ${"text-foreground"}`}>
                   {editRecordId ? "Edit Details:" : "Add New"} {currentConfig.label}
                 </h3>
-                <p className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                <p className={`text-xs ${"text-muted"}`}>
                   {editRecordId ? "Modify specific attributes of this pre-existing record." : "Enter the specific details to create this record in the company directory."}
                 </p>
               </div>
@@ -1270,7 +1270,7 @@ export default function MastersPage() {
 
               {/* Submit / Action buttons */}
               <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
-                isLightMode ? "border-gray-200" : "border-white/10"
+                "border-border"
               }`}>
                 <AppButton 
                   type="button" 

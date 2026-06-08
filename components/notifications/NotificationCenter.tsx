@@ -97,7 +97,7 @@ export default function NotificationCenter() {
           }`}>
             <div className={`p-4 border-b flex items-center justify-between ${isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-black/20"}`}>
               <div className="flex items-center gap-2">
-                <h3 className={`font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Notifications</h3>
+                <h3 className={`font-bold ${"text-foreground"}`}>Notifications</h3>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
                   unreadCount > 0 ? "bg-rose-500/10 text-rose-500" : "bg-gray-500/10 text-gray-500"
                 }`}>
@@ -124,7 +124,7 @@ export default function NotificationCenter() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <h4 className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{n.title}</h4>
+                      <h4 className={`text-xs font-bold ${"text-foreground"}`}>{n.title}</h4>
                       <p className="text-[0.8rem] text-gray-500 leading-snug line-clamp-2">{n.message}</p>
                       <span className="text-[0.7rem] text-gray-400 font-mono mt-2 block">
                         {new Date(n.created_at).toLocaleString()}

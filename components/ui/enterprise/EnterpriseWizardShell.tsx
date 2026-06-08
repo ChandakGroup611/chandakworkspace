@@ -90,8 +90,8 @@ export function EnterpriseWizardShell({
           <div className={`absolute inset-0 bg-gradient-to-b ${ACCENT_MAP[headerAccent]} pointer-events-none opacity-50`} />
           
           <div className="relative z-10 flex flex-col justify-center">
-            {title && <h2 className={`text-2xl font-black tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{title}</h2>}
-            {subtitle && <div className={`mt-1 text-sm font-medium ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>{subtitle}</div>}
+            {title && <h2 className={`text-2xl font-black tracking-tight ${"text-foreground"}`}>{title}</h2>}
+            {subtitle && <div className={`mt-1 text-sm font-medium ${"text-muted"}`}>{subtitle}</div>}
           </div>
           <button 
             onClick={onClose}

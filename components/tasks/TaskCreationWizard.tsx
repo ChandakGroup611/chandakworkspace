@@ -231,13 +231,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
         <div className="space-y-6">
           
           {/* Section 1: Core Details */}
-          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
             <div className="flex items-center gap-2 mb-4 justify-between">
               <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-purple-100 text-purple-600" : "bg-purple-500/20 text-purple-400"}`}>
                   <LayoutTemplate className="h-4 w-4" />
                 </div>
-                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Core Details</h3>
+                <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Core Details</h3>
               </div>
               
               <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Title *</label>
-                <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required className={isLightMode ? "bg-white" : "bg-black/30"} />
+                <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required className={"bg-surface"} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
@@ -271,17 +271,17 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             
             <div className="mt-5 space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">External Link (Optional)</label>
-              <AppInput placeholder="https://..." value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className={isLightMode ? "bg-white" : "bg-black/30"} />
+              <AppInput placeholder="https://..." value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className={"bg-surface"} />
             </div>
           </div>
 
           {/* Section 2: Timeline & Priority */}
-          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
             <div className="flex items-center gap-2 mb-4">
               <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
                 <CalendarDays className="h-4 w-4" />
               </div>
-              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Timeline & Classification</h3>
+              <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Timeline & Classification</h3>
             </div>
             
             <div className="grid grid-cols-2 gap-5 mb-5">
@@ -292,7 +292,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   min={localTodayString} 
                   value={startDate} 
                   onChange={e => setStartDate(e.target.value)} 
-                  className={isLightMode ? "bg-white" : "bg-black/30"} 
+                  className={"bg-surface"} 
                 />
               </div>
               <div className="space-y-1.5">
@@ -302,7 +302,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   min={startDate || localTodayString} 
                   value={endDate} 
                   onChange={e => setEndDate(e.target.value)} 
-                  className={isLightMode ? "bg-white" : "bg-black/30"} 
+                  className={"bg-surface"} 
                 />
               </div>
             </div>
@@ -375,12 +375,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 3: Assignment & Execution */}
-          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
             <div className="flex items-center gap-2 mb-4">
               <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
                 <Users className="h-4 w-4" />
               </div>
-              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Assignment & Execution</h3>
+              <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Assignment & Execution</h3>
             </div>
             
             <div className="space-y-1.5 mb-5">
@@ -521,7 +521,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     }
                   }}
                   placeholder="Type a tag (e.g. Bug, Frontend) and press Enter..." 
-                  className={`h-9 flex-1 ${isLightMode ? "bg-white" : "bg-black/30"}`}
+                  className={`h-9 flex-1 ${"bg-surface"}`}
                 />
                 <AppButton type="button" variant="primary" className="h-9 px-3 shrink-0 bg-purple-600 hover:bg-purple-700 text-white border-0" onClick={() => {
                   if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -534,18 +534,18 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 4: Tasks & Assets */}
-          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
             <div className="flex items-center gap-2 mb-6">
               <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
                 <LayoutList className="h-4 w-4" />
               </div>
-              <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Tasks & Assets</h3>
+              <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Tasks & Assets</h3>
             </div>
 
             {/* Checklist */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Action Items</h4>
+                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${"text-foreground"}`}>Action Items</h4>
                 <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{checklistItems.length} items</span>
               </div>
               
@@ -563,7 +563,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       }
                     }}
                     placeholder="Type an actionable step and press Enter..." 
-                    className={`h-10 ${isLightMode ? "bg-white" : "bg-black/30"}`}
+                    className={`h-10 ${"bg-surface"}`}
                   />
                 </div>
                 <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-blue-600 hover:bg-blue-700 text-white border-0" onClick={() => {
@@ -578,7 +578,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${isLightMode ? "border-gray-200 bg-white hover:border-blue-300 shadow-sm" : "border-white/10 bg-black/20 hover:border-blue-500/50"}`}>
                     <div className="flex items-center gap-3 overflow-hidden flex-1">
                       <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center ${isLightMode ? "border-gray-300 bg-gray-50" : "border-gray-600 bg-black/40"}`} />
-                      <span className={`text-sm truncate ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>{item}</span>
+                      <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
                     </div>
                     <button
                       type="button"
@@ -601,7 +601,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             {/* Attachments */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>Attachments</h4>
+                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${"text-foreground"}`}>Attachments</h4>
                 <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{attachments.length} files</span>
               </div>
               
@@ -645,7 +645,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         {item.file_type.substring(0,3).toUpperCase()}
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className={`text-xs font-semibold truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{item.file_name}</span>
+                        <span className={`text-xs font-semibold truncate ${"text-foreground"}`}>{item.file_name}</span>
                         <span className="text-[10px] text-gray-500">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Unknown size"}</span>
                       </div>
                     </div>
@@ -663,13 +663,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 5: Extended Properties */}
-          <div className={`p-5 rounded-2xl border ${isLightMode ? "bg-white/60 border-gray-200/60 shadow-sm" : "bg-white/[0.02] border-white/5 shadow-lg"}`}>
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
                   <Activity className="h-4 w-4" />
                 </div>
-                <h3 className={`text-sm font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>Extended Properties</h3>
+                <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Extended Properties</h3>
               </div>
               <button 
                 type="button" 
@@ -694,7 +694,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         handleAddField();
                       }
                     }}
-                    className={`h-10 ${isLightMode ? "bg-white" : "bg-black/30"}`}
+                    className={`h-10 ${"bg-surface"}`}
                   />
                 </div>
                 <div className="w-full sm:flex-1 space-y-1.5">
@@ -721,7 +721,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
                     value={fieldValues[f.field_key] || ""} 
                     onChange={e => setFieldValues({...fieldValues, [f.field_key]: e.target.value})} 
-                    className={isLightMode ? "bg-white" : "bg-black/30"}
+                    className={"bg-surface"}
                   />
                 </div>
               ))}

@@ -271,10 +271,10 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
     <AppCard className={`flex flex-col border ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0c16] border-white/10"}`}>
 
       {/* Header */}
-      <div className={`p-4 border-b flex items-center justify-between gap-2 ${isLightMode ? "border-gray-200" : "border-white/5"}`}>
+      <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>
         <div className="flex items-center gap-2">
           <MessageSquare className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
-          <h3 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
+          <h3 className={`text-sm font-bold ${"text-foreground"}`}>
             Realtime Collaboration
           </h3>
         </div>

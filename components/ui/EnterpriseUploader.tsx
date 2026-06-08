@@ -149,10 +149,10 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
         <div className={`p-3 rounded-xl mb-3 ${isLightMode ? "bg-white shadow-sm" : "bg-white/10"}`}>
           <UploadCloud className={`h-6 w-6 ${isLightMode ? "text-indigo-600" : "text-gray-300"}`} />
         </div>
-        <h4 className={`text-sm font-bold mb-1 ${isLightMode ? "text-gray-900" : "text-white"}`}>
+        <h4 className={`text-sm font-bold mb-1 ${"text-foreground"}`}>
           Click or drag files to upload
         </h4>
-        <p className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+        <p className={`text-xs ${"text-muted"}`}>
           Max 50MB per file. Prohibited: .exe, .bat, .cmd, .sh
         </p>
       </div>
@@ -162,17 +162,17 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
         <div className="space-y-2">
           {files.map((fileObj, index) => (
             <div key={index} className={`flex items-center gap-3 p-3 rounded-xl border ${
-              isLightMode ? "bg-white border-gray-200" : "bg-white/5 border-white/10"
+              "bg-surface border-border"
             }`}>
               <div className="flex-shrink-0">
                 {getFileIcon(fileObj.file.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-semibold truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                <p className={`text-xs font-semibold truncate ${"text-foreground"}`}>
                   {fileObj.file.name}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-xs ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                  <span className={`text-xs ${"text-muted"}`}>
                     {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
                   </span>
                   {fileObj.status === 'error' && (

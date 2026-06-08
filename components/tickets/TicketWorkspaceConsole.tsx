@@ -489,7 +489,7 @@ export function TicketWorkspaceConsole({
                   <div className={`text-3xl font-black tracking-tight mb-1 ${
                     slaStatus === "BREACHED" ? "text-red-500" : 
                     slaStatus === "MET" ? "text-green-500" : 
-                    isLightMode ? "text-gray-900" : "text-white"
+                    "text-foreground"
                   }`}>
                     {slaTimeRemaining || "Calculating..."}
                   </div>

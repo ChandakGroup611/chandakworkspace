@@ -46,7 +46,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   };
 
   return (
-    <div className={`p-8 w-full max-w-7xl mx-auto space-y-6 ${isLightMode ? "text-gray-900" : "text-white"}`}>
+    <div className={`p-8 w-full max-w-7xl mx-auto space-y-6 ${"text-foreground"}`}>
       <div className="flex items-center justify-between border-b pb-4 border-gray-200 dark:border-white/10">
         <div className="flex items-center gap-3">
           <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>

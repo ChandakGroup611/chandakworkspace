@@ -256,7 +256,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                     <Paperclip className={`h-4 w-4 ${isLightMode ? "text-indigo-600" : "text-gray-400"}`} />
                   </div>
                   <div>
-                    <p className={`text-xs font-medium ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
+                    <p className={`text-xs font-medium ${"text-foreground"}`}>
                       {formData.attachment ? formData.attachment.name : "Select or Drop Technical Evidence"}
                     </p>
                     <p className="text-xs text-gray-500 uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>

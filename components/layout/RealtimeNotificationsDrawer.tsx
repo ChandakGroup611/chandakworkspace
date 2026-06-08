@@ -246,7 +246,7 @@ export default function RealtimeNotificationsDrawer() {
               <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
-              <span className={`text-lg font-bold tracking-wider ${isLightMode ? "text-gray-900" : "text-white"}`}>Enterprise Stream</span>
+              <span className={`text-lg font-bold tracking-wider ${"text-foreground"}`}>Enterprise Stream</span>
             </div>
           }
           subtitle="Live Database Mutations"
@@ -339,7 +339,7 @@ export default function RealtimeNotificationsDrawer() {
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-1.5">
                           <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider truncate flex items-center gap-1">
-                            <span className={isLightMode ? "text-gray-900" : "text-white"}>{item.entity_id}</span>
+                            <span className={"text-foreground"}>{item.entity_id}</span>
                             <span className="text-gray-400">•</span>
                             <span className="text-cyan-600 dark:text-cyan-400/90">{item.module}</span>
                           </span>
@@ -351,7 +351,7 @@ export default function RealtimeNotificationsDrawer() {
                           {displayMessage}
                         </p>
                         <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 ${isLightMode ? "border-gray-100 text-gray-400" : "border-white/5 text-gray-500"}`}>
-                          <span>Actor: <strong className={isLightMode ? "text-gray-600" : "text-gray-400"}>{item.actor}</strong></span>
+                          <span>Actor: <strong className={"text-muted"}>{item.actor}</strong></span>
                           <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>

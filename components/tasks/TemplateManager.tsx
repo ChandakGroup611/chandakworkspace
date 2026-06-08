@@ -127,7 +127,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
               </div>
             ) : (
               templates.map(t => (
-                <div key={t.id} className={`p-4 rounded-xl border flex justify-between items-center ${isLightMode ? "bg-white border-gray-200" : "bg-white/5 border-white/10"}`}>
+                <div key={t.id} className={`p-4 rounded-xl border flex justify-between items-center ${"bg-surface border-border"}`}>
                   <div>
                     <h4 className="font-bold text-sm">{t.template_name}</h4>
                     <p className="text-xs text-gray-500 truncate max-w-md mt-0.5">{t.subject}</p>

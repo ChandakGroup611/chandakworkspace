@@ -100,12 +100,12 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
               </div>
               <div className="flex-1 pb-8">
                 <div className="flex items-center justify-between gap-4 mb-1">
-                  <span className={`text-xs font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>{activity.actor}</span>
+                  <span className={`text-xs font-bold tracking-wide ${"text-foreground"}`}>{activity.actor}</span>
                   <span className="text-xs text-gray-500 font-medium">
                     {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <p className={`text-sm leading-relaxed ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                <p className={`text-sm leading-relaxed ${"text-muted"}`}>
                   {activity.action}
                 </p>
                 {activity.event_type === "STATE_CHANGE" && (

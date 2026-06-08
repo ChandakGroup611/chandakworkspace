@@ -61,7 +61,7 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
   return (
     <div className="space-y-6">
       {/* Summary Card */}
-      <div className={`p-4 rounded-xl border ${isLightMode ? "bg-white border-gray-200" : "bg-white/5 border-white/10"}`}>
+      <div className={`p-4 rounded-xl border ${"bg-surface border-border"}`}>
         <div className="flex justify-between items-end mb-2">
           <div className="space-y-1">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Logged</p>
@@ -96,14 +96,14 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
             placeholder="Hours" 
             value={hours} 
             onChange={e => setHours(e.target.value)} 
-            className={`w-24 ${isLightMode ? "bg-white" : "bg-black/30"}`}
+            className={`w-24 ${"bg-surface"}`}
           />
           <AppInput 
             required 
             placeholder="What did you work on?" 
             value={description} 
             onChange={e => setDescription(e.target.value)} 
-            className={`flex-1 ${isLightMode ? "bg-white" : "bg-black/30"}`}
+            className={`flex-1 ${"bg-surface"}`}
           />
         </div>
         <AppButton type="submit" disabled={isSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white border-0 h-9">

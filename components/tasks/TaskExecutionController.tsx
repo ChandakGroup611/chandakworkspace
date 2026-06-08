@@ -931,7 +931,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     onChange={() => {}} // Controlled by parent div click
                     className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 h-4 w-4 shrink-0 pointer-events-none"
                   />
-                  <span className={`text-xs ${item.is_completed ? "line-through text-gray-500" : isLightMode ? "text-gray-900" : "text-white"}`}>
+                  <span className={`text-xs ${item.is_completed ? "line-through text-gray-500" : "text-foreground"}`}>
                     {item.label}
                   </span>
                 </div>
@@ -1017,7 +1017,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       <div className="flex items-center gap-2 truncate">
                         <Paperclip className="h-4 w-4 text-purple-400 shrink-0" />
                         <div className="truncate space-y-0.5">
-                          <span className={`text-xs font-bold block truncate ${isLightMode ? "text-gray-900" : "text-white"}`}>{item.file_name}</span>
+                          <span className={`text-xs font-bold block truncate ${"text-foreground"}`}>{item.file_name}</span>
                           <span className="text-[0.7rem] text-gray-500 block">{(item.size / 1024 / 1024).toFixed(2)} MB</span>
                         </div>
                       </div>

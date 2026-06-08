@@ -181,7 +181,7 @@ export default function SettingsGallery() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sliders className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
-            <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+            <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
               1. Aesthetic Palette System
             </h2>
           </div>
@@ -243,18 +243,18 @@ export default function SettingsGallery() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
                       <IconComponent className={`h-4 w-4 ${isSelected ? "text-blue-500" : "text-gray-400"}`} />
-                      <h3 className={`font-bold text-sm tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                      <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
                         {t.name}
                       </h3>
                     </div>
-                    <p className={`text-[0.8rem] font-medium ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                    <p className={`text-[0.8rem] font-medium ${"text-muted"}`}>
                       {t.tagline}
                     </p>
                   </div>
                 </div>
 
                 {/* Benefits / Sentiment blocks */}
-                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${"border-border"}`}>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-medium">Primary Benefit:</span>
                     <span className={`font-semibold text-right ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{t.benefit}</span>
@@ -274,7 +274,7 @@ export default function SettingsGallery() {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Grid className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
-          <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+          <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
             2. Grid Rhythm & Data Density
           </h2>
         </div>
@@ -304,7 +304,7 @@ export default function SettingsGallery() {
                       <div className={`p-1.5 rounded-lg ${isSelected ? "bg-blue-500 text-white" : "bg-white/5 text-gray-400"}`}>
                         <IconComponent className="h-4 w-4" />
                       </div>
-                      <span className={`font-bold text-xs tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>{d.name}</span>
+                      <span className={`font-bold text-xs tracking-tight ${"text-foreground"}`}>{d.name}</span>
                     </div>
                     {isSelected && <AppBadge variant="success">Active</AppBadge>}
                   </div>
@@ -320,7 +320,7 @@ export default function SettingsGallery() {
                   </div>
                 </div>
 
-                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${"border-border"}`}>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-medium">Primary Benefit:</span>
                     <span className={`font-semibold ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{d.benefit}</span>
@@ -341,7 +341,7 @@ export default function SettingsGallery() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Type className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
-            <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+            <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
               3. Typography Engine & Font Scale
             </h2>
           </div>
@@ -369,10 +369,10 @@ export default function SettingsGallery() {
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{f.name}</span>
+                      <span className={`text-xs font-bold ${"text-foreground"}`}>{f.name}</span>
                       {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
                     </div>
-                    <p className={`text-[0.8rem] italic ${isLightMode ? "text-gray-600" : "text-gray-400"} ${f.css}`}>
+                    <p className={`text-[0.8rem] italic ${"text-muted"} ${f.css}`}>
                       "{f.sample}"
                     </p>
                   </div>
@@ -389,7 +389,7 @@ export default function SettingsGallery() {
             
             <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
               <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
-                <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Base Text Size</span>
+                <span className={`text-xs font-bold ${"text-foreground"}`}>Base Text Size</span>
                 <AppBadge variant="info">{baseFontSize}px</AppBadge>
               </div>
               <div className="flex items-center gap-3">
@@ -415,7 +415,7 @@ export default function SettingsGallery() {
 
             <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
               <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
-                <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Subtext / UI Size</span>
+                <span className={`text-xs font-bold ${"text-foreground"}`}>Subtext / UI Size</span>
                 <AppBadge variant="info">{subtextFontSize}px</AppBadge>
               </div>
               <div className="flex items-center gap-3">
@@ -447,7 +447,7 @@ export default function SettingsGallery() {
       <section className="space-y-4 pt-2">
         <div className="flex items-center gap-2">
           <MousePointerClick className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
-          <h2 className={`text-sm font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+          <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
             4. Tactile Interaction Protocol
           </h2>
         </div>
@@ -455,15 +455,15 @@ export default function SettingsGallery() {
         <AppCard className={`p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isLightMode ? "bg-white/80 border-gray-200" : ""}`}>
           <div className="space-y-1 max-w-xl">
             <div className="flex items-center gap-2">
-              <h3 className={`font-bold text-sm tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>
+              <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
                 Tactile Utility Layer
               </h3>
               <AppBadge variant="info">Preset Enabled</AppBadge>
             </div>
-            <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+            <p className={`text-xs ${"text-muted"}`}>
               Applies hardware-accelerated subtle lifts (`translateY`), targeted micro-animations, and visible focus boundaries across table elements and interactive buttons.
             </p>
-            <div className={`flex gap-4 pt-1 text-[0.8rem] font-medium ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
+            <div className={`flex gap-4 pt-1 text-[0.8rem] font-medium ${"text-foreground"}`}>
               <span><strong className="text-gray-400">Primary Benefit:</strong> Interactive feedback</span>
               <span>•</span>
               <span><strong className="text-gray-400">User Sentiment:</strong> <span className="text-blue-500 font-semibold">Satisfying & Reliable</span></span>
@@ -490,7 +490,7 @@ export default function SettingsGallery() {
       {/* Live Operational State Reflection Sandbox */}
       <section className="space-y-3 pt-4 border-t border-white/5">
         <div className="flex items-center justify-between">
-          <span className={`text-xs font-semibold uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+          <span className={`text-xs font-semibold uppercase tracking-wider ${"text-muted"}`}>
             Live Workspace Preview Sandbox
           </span>
           <span className="text-[0.8rem] text-gray-500 italic">Interacting reflects your active state instant mappings</span>

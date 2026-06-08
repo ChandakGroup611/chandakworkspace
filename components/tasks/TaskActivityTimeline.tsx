@@ -81,7 +81,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
     <AppCard className={`p-5 space-y-4 border ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0c16] border-white/10"}`}>
       <div className="flex items-center gap-2 border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
         <Clock className={`h-4 w-4 ${isLightMode ? "text-purple-600" : "text-purple-400"}`} />
-        <h3 className={`text-sm font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>Activity Timeline</h3>
+        <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>
       </div>
 
       {loading ? (

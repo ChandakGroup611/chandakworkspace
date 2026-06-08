@@ -176,7 +176,7 @@ export default function CompanyMasterPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Building2 className={`h-6 w-6 ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`} />
-            <h1 className={`text-2xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>Company Master</h1>
+            <h1 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Company Master</h1>
             <AppBadge variant="info">Global Enterprise</AppBadge>
           </div>
           <p className="text-xs text-gray-500">Manage client engagements, sister organizations, and enterprise structures.</p>
@@ -242,7 +242,7 @@ export default function CompanyMasterPage() {
                   <td className="py-3 px-4 font-mono text-xs font-bold text-indigo-400">{c.code}</td>
                   <td className="py-3 px-4">
                     <div className="flex flex-col">
-                      <span className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>{c.name}</span>
+                      <span className={`text-sm font-bold ${"text-foreground"}`}>{c.name}</span>
                       <span className="text-xs text-gray-500">{c.short_name}</span>
                     </div>
                   </td>

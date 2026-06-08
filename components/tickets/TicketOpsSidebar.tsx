@@ -54,7 +54,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           }`}>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <span className={`text-2xl font-bold tabular-nums ${isLightMode ? "text-gray-900" : "text-white"}`}>{timeLeft}m</span>
+                <span className={`text-2xl font-bold tabular-nums ${"text-foreground"}`}>{timeLeft}m</span>
                 <p className="text-xs text-gray-500 font-medium">Until Resolution Breach</p>
               </div>
               <div className={`p-3 rounded-xl ${isLightMode ? "bg-indigo-50" : "bg-indigo-500/10"}`}>

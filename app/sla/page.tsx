@@ -104,10 +104,10 @@ export default function SLAPage() {
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full transition-colors duration-300">
       {/* SLA Module Title Banner */}
-      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${isLightMode ? "border-gray-200" : "border-white/5"}`}>
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${"border-border"}`}>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>SLA Governance & Surveillance Engine</h1>
+            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>SLA Governance & Surveillance Engine</h1>
             <AppBadge variant="danger">Realtime Tracking</AppBadge>
           </div>
           <p className="text-xs text-gray-500">
@@ -172,7 +172,7 @@ export default function SLAPage() {
                         </AppTableCell>
                         <AppTableCell>
                           <div className="space-y-0.5 text-xs">
-                            <span className={`${isLightMode ? "text-gray-700" : "text-gray-300"} font-medium block`}>{item.allocatedWindow}</span>
+                            <span className={`${"text-foreground"} font-medium block`}>{item.allocatedWindow}</span>
                             <span className={`text-[0.8rem] font-mono block ${isLightMode ? "text-amber-600" : "text-amber-400"}`}>{item.elapsedTime}</span>
                           </div>
                         </AppTableCell>
@@ -217,8 +217,8 @@ export default function SLAPage() {
         {/* Right Span 1: Multi-Level Escalation Routing Architecture */}
         <div className="space-y-6">
           <AppCard className={`p-5 space-y-4 ${isLightMode ? "bg-white border-gray-200" : ""}`}>
-            <div className={`pb-2 border-b ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
-              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-2 ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+            <div className={`pb-2 border-b ${"border-border"}`}>
+              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-2 ${"text-muted"}`}>
                 <BellRing className={`h-3.5 w-3.5 ${isLightMode ? "text-amber-500" : "text-amber-400"}`} />
                 <span>Escalation Level Routing Matrix</span>
               </span>
@@ -231,7 +231,7 @@ export default function SLAPage() {
                 }`}>
                   <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-amber-500 to-rose-500 opacity-60" />
                   <div className="flex items-center justify-between">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>{lvl.level}</span>
+                    <span className={`text-xs font-bold uppercase tracking-wider ${"text-foreground"}`}>{lvl.level}</span>
                     <span className={`text-[0.7rem] px-1.5 py-0.2 rounded font-bold uppercase border ${
                       isLightMode ? "bg-white text-gray-500 border-gray-200" : "bg-white/5 text-gray-400 border-white/10"
                     }`}>
@@ -243,7 +243,7 @@ export default function SLAPage() {
               ))}
             </div>
 
-            <div className={`pt-2 border-t text-center ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+            <div className={`pt-2 border-t text-center ${"border-border"}`}>
               <span className="text-xs text-gray-500 italic">
                 Higher level breaches instantly stack downstream action notifications automatically.
               </span>

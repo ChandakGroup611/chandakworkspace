@@ -728,7 +728,7 @@ export default function UserMasterPage() {
   if (!mounted || permsLoading || loading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
+        "bg-surface text-foreground"
       }`}>
         <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
         <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
@@ -743,14 +743,14 @@ export default function UserMasterPage() {
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full font-sans">
       {/* Platform Page Header */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b ${
-        isLightMode ? "border-gray-200" : "border-white/5"
+        "border-border"
       }`}>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className={`text-xl font-bold tracking-tight ${isLightMode ? "text-gray-900" : "text-white"}`}>Enterprise Personnel Registry</h1>
+            <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>Enterprise Personnel Registry</h1>
             <AppBadge variant="info">Identity Directory</AppBadge>
           </div>
-          <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+          <p className={`text-xs ${"text-muted"}`}>
             Governed system personnel records supporting strict department routing, role assignments, and instant audit trails.
           </p>
         </div>
@@ -811,7 +811,7 @@ export default function UserMasterPage() {
         {/* Left Spanning List View: User Array Indexing */}
         <div className="lg:col-span-7 flex flex-col space-y-4">
           <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-xl ${
-            isLightMode ? "border-gray-200" : "border-white/10"
+            "border-border"
           }`}>
             {/* Control Bar Header */}
             <AppCardHeader className={`flex flex-col gap-3 pb-3 border-b ${
@@ -819,7 +819,7 @@ export default function UserMasterPage() {
             }`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="space-y-0.5">
-                  <AppCardTitle className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                  <AppCardTitle className={`text-sm font-bold ${"text-foreground"}`}>
                     Personnel Registry
                   </AppCardTitle>
                   <span className="text-xs text-gray-500 font-mono block">
@@ -829,7 +829,7 @@ export default function UserMasterPage() {
 
                 {/* Status Switcher Tabs */}
                 <div className={`flex items-center p-1 rounded-lg border text-xs font-bold ${
-                  isLightMode ? "bg-white border-gray-200" : "bg-white/5 border-white/10"
+                  "bg-surface border-border"
                 }`}>
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
                     <button
@@ -1024,7 +1024,7 @@ export default function UserMasterPage() {
         <div className="lg:col-span-5 flex flex-col overflow-hidden">
           {selectedUser ? (
             <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden shadow-2xl ${
-              isLightMode ? "border-gray-200" : "border-white/10"
+              "border-border"
             }`}>
               {/* Card Profile Overview Header */}
               <AppCardHeader className={`flex flex-col items-center p-6 text-center border-b relative ${
@@ -1053,7 +1053,7 @@ export default function UserMasterPage() {
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-center gap-2 flex-wrap">
-                    <AppCardTitle className={`text-base font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                    <AppCardTitle className={`text-base font-bold ${"text-foreground"}`}>
                       {selectedUser.full_name}
                     </AppCardTitle>
                     <span className={`text-xs font-mono font-bold px-1.5 py-0.2 rounded border ${
@@ -1063,7 +1063,7 @@ export default function UserMasterPage() {
                     </span>
                   </div>
 
-                  <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                  <p className={`text-xs ${"text-muted"}`}>
                     {selectedUser.email}
                   </p>
 
@@ -1082,7 +1082,7 @@ export default function UserMasterPage() {
                 {/* Structural Assignments Grid */}
                 <div className="space-y-2">
                   <span className={`text-xs font-bold tracking-wider uppercase block ${
-                    isLightMode ? "text-gray-500" : "text-gray-400"
+                    "text-muted"
                   }`}>
                     Hierarchical Attachments
                   </span>
@@ -1146,7 +1146,7 @@ export default function UserMasterPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-bold tracking-wider uppercase block ${
-                      isLightMode ? "text-gray-500" : "text-gray-400"
+                      "text-muted"
                     }`}>
                       Live Access Times Tracker
                     </span>
@@ -1164,7 +1164,7 @@ export default function UserMasterPage() {
                           <span>Last Log-In Time:</span>
                         </span>
                         <span className={`text-xs font-mono font-bold block ${
-                          selectedUser.last_login_at ? (isLightMode ? "text-gray-900" : "text-white") : "text-gray-500"
+                          selectedUser.last_login_at ? ("text-foreground") : "text-gray-500"
                         }`}>
                           {selectedUser.last_login_at ? new Date(selectedUser.last_login_at).toLocaleString() : "Never Logged In"}
                         </span>
@@ -1189,7 +1189,7 @@ export default function UserMasterPage() {
                           <span>Last Log-Out Time:</span>
                         </span>
                         <span className={`text-xs font-mono font-bold block ${
-                          selectedUser.last_logout_at ? (isLightMode ? "text-gray-900" : "text-white") : "text-gray-500"
+                          selectedUser.last_logout_at ? ("text-foreground") : "text-gray-500"
                         }`}>
                           {selectedUser.last_logout_at ? new Date(selectedUser.last_logout_at).toLocaleString() : "Active Ongoing"}
                         </span>
@@ -1211,7 +1211,7 @@ export default function UserMasterPage() {
                 {/* Event Actions Bar: Mail Trigger Simulation */}
                 <div className="space-y-2 pt-1">
                   <span className={`text-xs font-bold tracking-wider uppercase block ${
-                    isLightMode ? "text-gray-500" : "text-gray-400"
+                    "text-muted"
                   }`}>
                     Outbound Triggers
                   </span>
@@ -1238,7 +1238,7 @@ export default function UserMasterPage() {
                 <div className="space-y-2 pt-1 border-t border-white/5">
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-bold tracking-wider uppercase block flex items-center gap-1 ${
-                      isLightMode ? "text-gray-500" : "text-gray-400"
+                      "text-muted"
                     }`}>
                       <History className="h-3 w-3" />
                       <span>Personnel Audit Logs</span>
@@ -1270,7 +1270,7 @@ export default function UserMasterPage() {
                             </span>
                           </div>
                           
-                          <p className={`text-xs leading-snug ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
+                          <p className={`text-xs leading-snug ${"text-foreground"}`}>
                             {lg.payload ? (lg.payload.status || lg.payload.action || lg.payload.event || lg.payload.updateScope || JSON.stringify(lg.payload)) : "Metadata schema payload execution"}
                           </p>
                           <span className="text-[0.7rem] text-gray-500 block italic">
@@ -1313,10 +1313,10 @@ export default function UserMasterPage() {
               {/* Top Modal Navigation Banner */}
               <div className="flex items-center justify-between px-6 pt-6 pb-2 shrink-0">
                 <div className="space-y-0.5">
-                  <h3 className={`text-base font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>
+                  <h3 className={`text-base font-bold ${"text-foreground"}`}>
                     {isEditingMode ? "Update Identity Record" : "Register User Account"}
                   </h3>
-                  <p className={`text-[0.8rem] ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                  <p className={`text-[0.8rem] ${"text-muted"}`}>
                     Provide corporate credential definitions mapped against database authorization structures.
                   </p>
                 </div>
@@ -1687,7 +1687,7 @@ export default function UserMasterPage() {
               {/* Row 5: Secure Credential Auth Settings */}
               <div className="space-y-3 pt-2 border-t border-white/5">
                 <span className={`text-xs font-bold tracking-wider uppercase block ${
-                  isLightMode ? "text-gray-500" : "text-gray-400"
+                  "text-muted"
                 }`}>
                   Authentication Secrets & Locks
                 </span>
@@ -1843,7 +1843,7 @@ export default function UserMasterPage() {
             {deleteWarningData.loading ? (
               <div className="flex flex-col items-center justify-center py-10 space-y-4">
                 <RefreshCw className="h-10 w-10 animate-spin text-blue-500" />
-                <p className={`text-xs font-semibold ${isLightMode ? "text-gray-700" : "text-gray-300"}`}>
+                <p className={`text-xs font-semibold ${"text-foreground"}`}>
                   Performing Security Integrity Checks...
                 </p>
                 <p className="text-xs text-gray-500">
@@ -1861,8 +1861,8 @@ export default function UserMasterPage() {
                     <h3 className="text-sm font-bold tracking-tight text-amber-500">
                       Delete Warning: Active Assignments
                     </h3>
-                    <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
-                      Personnel <strong className={isLightMode ? "text-gray-900" : "text-white"}>{deleteInspectUser.full_name}</strong> is associated with active assignments.
+                    <p className={`text-xs ${"text-muted"}`}>
+                      Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> is associated with active assignments.
                     </p>
                   </div>
                 </div>
@@ -1964,13 +1964,13 @@ export default function UserMasterPage() {
                     <h3 className="text-sm font-bold tracking-tight text-emerald-500">
                       Delete Account Confirmation
                     </h3>
-                    <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
-                      Personnel <strong className={isLightMode ? "text-gray-900" : "text-white"}>{deleteInspectUser.full_name}</strong> has no active references in Tickets, Tasks, or Requirements.
+                    <p className={`text-xs ${"text-muted"}`}>
+                      Personnel <strong className={"text-foreground"}>{deleteInspectUser.full_name}</strong> has no active references in Tickets, Tasks, or Requirements.
                     </p>
                   </div>
                 </div>
 
-                <p className={`text-xs leading-relaxed ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                <p className={`text-xs leading-relaxed ${"text-muted"}`}>
                   Are you sure you want to permanently archive and delete this user?
                 </p>
 

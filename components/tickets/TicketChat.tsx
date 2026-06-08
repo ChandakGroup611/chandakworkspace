@@ -97,7 +97,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
             <MessageSquare className={`h-10 w-10 mb-4 ${isLightMode ? "text-gray-400" : "text-gray-700"}`} />
-            <p className={`text-sm font-medium ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>No collaboration history yet.</p>
+            <p className={`text-sm font-medium ${"text-muted"}`}>No collaboration history yet.</p>
           </div>
         ) : (
           messages.map((msg) => (
@@ -109,7 +109,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold tracking-wide ${isLightMode ? "text-gray-900" : "text-white"}`}>{msg.author}</span>
+                  <span className={`text-xs font-bold tracking-wide ${"text-foreground"}`}>{msg.author}</span>
                   {msg.is_private ? (
                     <span className={`flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
                       isLightMode ? "text-amber-700 bg-amber-50" : "text-amber-500 bg-amber-500/10"
@@ -141,7 +141,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
       </div>
 
       {/* Input Area */}
-      <div className={`pt-4 border-t ${isLightMode ? "border-gray-100" : "border-white/5"}`}>
+      <div className={`pt-4 border-t ${"border-border"}`}>
         <form onSubmit={handleSendMessage} className="space-y-4">
           <div className="flex items-center gap-4 px-2">
             <button 
