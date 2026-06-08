@@ -318,32 +318,15 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     // 3. Hierarchy Roots Only (Level 1)
     const masterHierarchy = await fetchHierarchyRoots(user.id, workspaces);
 
-    // 4. Extract all unique User IDs needed for UI mapping (restricted to root workspaces)
-    const uniqueUserIds = new Set<string>();
-    uniqueUserIds.add(user.id);
-    
-    // Scan workspaces for owners, creators, and members
-    workspaces.forEach((w: any) => {
-      if (w.owner_id) uniqueUserIds.add(w.owner_id);
-      if (w.created_by) uniqueUserIds.add(w.created_by);
-      if (w.members) w.members.forEach((m: any) => uniqueUserIds.add(m.user_id));
-    });
-
-    // Scan hierarchy
-    masterHierarchy.forEach((w: any) => {
-      if (w.owner_id) uniqueUserIds.add(w.owner_id);
-      if (w.created_by) uniqueUserIds.add(w.created_by);
-      if (w.members) w.members.forEach((m: any) => uniqueUserIds.add(m.user_id));
-    });
-
-    // Fetch ONLY the required users (drastically reduces Server-to-Client JSON payload)
-    const allUsersResult = await supabaseAdmin
+    // Fetch ALL assignable users for dropdowns and mappings
+    const { data: allUsersData } = await supabaseAdmin
       .from("user_master")
-      .select("id, full_name, user_code")
-      .in("id", Array.from(uniqueUserIds))
-      .eq("is_deleted", false);
+      .select("id, full_name, user_code, profile_photo")
+      .eq("is_deleted", false)
+      .eq("is_active", true)
+      .order("full_name", { ascending: true });
 
-    const allUsers = allUsersResult.data || [];
+    const allUsers = allUsersData || [];
 
     return {
       userProfile,
@@ -412,7 +395,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
     let subWsQuery = supabaseAdmin
         .from('workspaces')
-        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), hierarchy_task_count, hierarchy_subws_count, parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code)')
+        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), hierarchy_task_count, hierarchy_subws_count, members:workspace_members(user_id, role), parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code)')
         .eq('parent_workspace_id', parentId)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
@@ -431,7 +414,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       subWsQuery,
       supabaseAdmin
         .from('tasks')
-        .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
+        .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
         .eq('workspace_id', parentId)
         .is('parent_task_id', null)
         .eq('is_deleted', false)
