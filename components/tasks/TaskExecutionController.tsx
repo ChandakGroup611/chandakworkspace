@@ -522,16 +522,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Primary Assignee</span>
             <div className="flex items-center gap-1.5">
               {task.assignee ? (
-                <>
-                  {task.assignee.profile_photo ? (
-                    <img src={task.assignee.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
-                      {task.assignee.full_name?.substring(0, 2).toUpperCase() || "U"}
-                    </div>
-                  )}
                   <span className="text-xs font-medium dark:text-gray-200 truncate">{task.assignee.full_name}</span>
-                </>
               ) : (
                 <span className="text-xs font-medium text-gray-400 italic">Unassigned</span>
               )}
