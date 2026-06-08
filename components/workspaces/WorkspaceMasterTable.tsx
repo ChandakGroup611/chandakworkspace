@@ -306,11 +306,11 @@ export function WorkspaceMasterTable({
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
                       isWorkspaceType ? (depth === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500/80') : 'text-emerald-500'
                     }`} />
-                    <div className="flex items-center gap-2">
-                      <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold shrink-0">
                         {node.workspace_code || node.task_code || ""}
                       </span>
-                      <span className={`truncate max-w-[500px] ${
+                      <span className={`truncate ${
                         isWorkspaceType ? 'font-bold tracking-tight text-[14px]' : 
                         isSubWorkspace ? 'font-semibold tracking-tight text-[13px]' : 
                         'font-medium text-[13px]'
