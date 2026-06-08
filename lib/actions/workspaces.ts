@@ -319,16 +319,6 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     // 3. Hierarchy Roots Only (Level 1)
     const masterHierarchy = await fetchHierarchyRoots(user.id, workspaces);
 
-    // Fetch ALL assignable users for dropdowns and mappings
-    const { data: allUsersData } = await supabaseAdmin
-      .from("user_master")
-      .select("id, full_name, user_code, profile_photo")
-      .eq("is_deleted", false)
-      .eq("is_active", true)
-      .order("full_name", { ascending: true });
-
-    const allUsers = allUsersData || [];
-
     return {
       userProfile,
       workspaces,
@@ -339,7 +329,7 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       prefetchStakeholders: [], // DEFERRED TO LAZY LOAD
       masterHierarchy,
       taskStatuses,
-      allUsers
+      allUsers: [] // Deferred to lazy load on client
     };
   } catch (err: any) {
     console.error("[fetchWorkspaceDashboardData] Error:", err?.message || String(err));
