@@ -894,6 +894,10 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
     recalculateParentProgress(currentTask.parent_task_id).catch(e => console.error('[recalculateParentProgress]', e));
   }
 
+  const { revalidatePath } = await import('next/cache');
+  revalidatePath('/workspaces', 'page');
+  revalidatePath('/tasks', 'layout');
+
   return { success: true };
 }
 

@@ -240,7 +240,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       await Promise.all(Array.from(selectedTaskIds).map(id => updateTaskStatusInline(id, bulkNewStatus, bulkRemark || "Bulk Status Update")));
       
       const stMaster = masterStatuses.find(s => s.id === bulkNewStatus);
-      setTasks(prev => prev.map(t => selectedTaskIds.has(t.id) ? { ...t, status_id: bulkNewStatus, status: stMaster } : t));
+      const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
+      setTasks(prev => prev.map(t => selectedTaskIds.has(t.id) ? { ...t, status_id: bulkNewStatus, status: mappedStatus } : t));
       setSelectedTaskIds(new Set());
       setBulkStatusModalOpen(false);
       triggerToast(`Successfully updated tasks.`);
@@ -276,7 +277,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     }
 
     const stMaster = masterStatuses.find(s => s.id === inlineNewStatus);
-    setTasks(prev => prev.map(t => t.id === inlineTask.id ? { ...t, status_id: inlineNewStatus, status: stMaster } : t));
+    const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
+    setTasks(prev => prev.map(t => t.id === inlineTask.id ? { ...t, status_id: inlineNewStatus, status: mappedStatus } : t));
 
     triggerToast("Task updated successfully!");
     setInlineLoading(false);
