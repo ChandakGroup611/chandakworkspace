@@ -101,7 +101,7 @@ export default function LoginPage() {
             <div className="p-2 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg text-white">
               <Cpu className="h-5 w-5" />
             </div>
-            <span>Enterprise Service Platform</span>
+            <span>Chandak Workspace</span>
           </div>
           <p className={`text-sm sm:text-base max-w-sm mx-auto ${isLight ? "text-gray-500" : "text-gray-400"}`}>
             Secure Organizational Access Gateway

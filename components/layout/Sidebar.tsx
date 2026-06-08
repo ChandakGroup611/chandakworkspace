@@ -158,7 +158,7 @@ export default function Sidebar() {
             </div>
             <div className="flex flex-col min-w-0">
               <span className={`text-xs font-bold tracking-tight truncate ${isLight ? "text-gray-900" : "text-white"}`}>
-                ADIOS Platform
+                Chandak Workspace
               </span>
               <span className="text-[0.7rem] font-mono font-semibold text-blue-500 tracking-wider truncate uppercase">
                 {roleCode === "SUPER_ADMIN" ? "Governance Master" : "Enterprise Stack"}

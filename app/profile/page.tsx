@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import UserProfileEditor from "@/components/settings/UserProfileEditor";
 
 export const metadata: Metadata = {
-  title: "My Profile | ADIOS Enterprise",
+  title: "My Profile | Chandak Workspace",
   description: "Manage your profile, update profile picture, and change password.",
 };
 

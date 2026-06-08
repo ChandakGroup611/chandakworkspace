@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import TaskListViewClient from "@/components/tasks/TaskListViewClient";
 
 export const metadata: Metadata = {
-  title: "All Workspace Tasks | ADIOS",
+  title: "All Workspace Tasks | Chandak Workspace",
   description: "Detailed and filterable list of all workspace tasks.",
 };
 

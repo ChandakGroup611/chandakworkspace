@@ -31,7 +31,7 @@ export default function LearningHubClient() {
             Enterprise Learning Hub
           </h1>
           <p className={`text-lg md:text-xl max-w-2xl mx-auto ${isLight ? "text-gray-600" : "text-gray-400"}`}>
-            Master the core concepts of the ADIOS platform. Select a module below to begin your detailed learning journey.
+            Master the core concepts of the Chandak Workspace platform. Select a module below to begin your detailed learning journey.
           </p>
         </div>
 

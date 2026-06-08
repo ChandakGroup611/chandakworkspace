@@ -11,7 +11,7 @@ const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
 const roboto = Roboto({ subsets: ['latin'], weight: ['300', '400', '500', '700'], variable: '--font-roboto' })
 
 export const metadata = {
-  title: 'Enterprise Operations Platform',
+  title: 'Chandak Workspace',
   description: 'Complete Enterprise Implementation Blueprint',
 }
 

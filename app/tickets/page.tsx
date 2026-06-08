@@ -176,7 +176,7 @@ export default function TicketsPage() {
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className={`text-[0.65rem] font-bold uppercase tracking-widest ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>Live Node: ADIOS-ENTERPRISE-01</span>
+              <span className={`text-[0.65rem] font-bold uppercase tracking-widest ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
             </div>
             <div className={`h-4 w-px ${isLightMode ? "bg-gray-300" : "bg-white/10"}`} />
             <div className="flex items-center gap-4 text-xs">

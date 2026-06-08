@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import ReportsClient from "@/components/reports/ReportsClient";
 
 export const metadata: Metadata = {
-  title: "Reports & Analytics | ADIOS",
+  title: "Reports & Analytics | Chandak Workspace",
   description: "Comprehensive reporting and analytics for execution tracking.",
 };
 
