@@ -218,7 +218,7 @@ export function WorkspaceMasterTable({
       subWsCount = node.children.filter((c: any) => c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE').length;
     }
     
-    const companyName = node.company?.name || (isWorkspaceType ? "Independent" : "---");
+
     const creatorId = node.created_by || node.owner_id || node.workspace_owner_id;
 
     const fullDate = node.created_at ? new Date(node.created_at).toLocaleString() : '---';
