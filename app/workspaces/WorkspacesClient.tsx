@@ -303,6 +303,34 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       }
       
       // Refresh the execution hierarchy tree to show the newly created workspace
+      if (!editWSId) {
+        setMasterHierarchy(curr => {
+          const newNode = {
+            ...data,
+            type: newWS.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
+            children: [],
+            childrenFetched: true,
+            subworkspace_count: 0,
+            direct_task_count: 0,
+            child_task_count: 0,
+            total_hierarchy_task_count: 0
+          };
+
+          if (newWS.parent_workspace_id) {
+            const insertChildOptimistic = (tree: any[]): any[] => tree.map(node => {
+              if (node.id === newWS.parent_workspace_id) {
+                return { ...node, children: [newNode, ...(node.children || [])], childrenFetched: true, subworkspace_count: (node.subworkspace_count || 0) + 1 };
+              }
+              if (node.children) return { ...node, children: insertChildOptimistic(node.children) };
+              return node;
+            });
+            return insertChildOptimistic(curr);
+          } else {
+            return [newNode, ...curr];
+          }
+        });
+      }
+
       import("@/lib/actions/workspaces").then(m => {
         if (newWS.parent_workspace_id) {
           setExpandedNodes(prev => ({ ...prev, [newWS.parent_workspace_id]: true }));
