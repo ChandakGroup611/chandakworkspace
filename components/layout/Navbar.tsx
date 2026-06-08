@@ -172,14 +172,8 @@ export default function Navbar() {
 
   return (
     <>
-      <header 
-        className={`sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b px-6 backdrop-blur-xl shadow-sm transition-all duration-300 ${
-          isLight ? "text-gray-800 bg-white/80" : "text-white bg-[#0A0D14]/80"
-        }`}
-        style={{
-          background: "var(--bg-surface)",
-          borderColor: "var(--border-subtle)"
-        }}
+      <header
+        className={`fixed top-0 right-0 z-30 flex h-16 w-[calc(100%-16rem)] shrink-0 items-center justify-between border-b border-border bg-surface transition-all duration-300 px-6`}
       >
         <div className="flex items-center gap-4 flex-1 max-w-md">
           <div className="relative flex items-center w-full">
@@ -262,12 +256,10 @@ export default function Navbar() {
             {profileOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                <div className={`absolute right-0 top-12 mt-2 w-64 rounded-xl border p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${
-                  isLight ? "bg-white border-gray-200 text-gray-800" : "bg-[#0c101b] border-white/10 text-white"
-                }`}>
-                  <div className="px-2 py-2 border-b border-white/5 space-y-0.5">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Active Identity Bound</span>
-                    <span className="text-xs font-bold text-white block truncate">{userData?.full_name}</span>
+                <div className="absolute right-0 top-12 mt-2 w-64 rounded-xl border border-border p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-150 bg-popover text-popover-foreground">
+                  <div className="px-2 py-2 border-b border-border space-y-0.5">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Active Identity Bound</span>
+                    <span className="text-xs font-bold text-foreground block truncate">{userData?.full_name}</span>
                     <span className="text-xs font-medium text-blue-400 block truncate">{userData?.email}</span>
                     <span className="text-[0.7rem] font-mono text-emerald-500/80 block">✓ Session Signature Active</span>
                   </div>

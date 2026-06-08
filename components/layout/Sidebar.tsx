@@ -141,23 +141,19 @@ export default function Sidebar() {
       <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 border-r select-none ${
+      className={`relative z-40 flex flex-col shrink-0 transition-all duration-300 border-r border-border select-none bg-surface ${
         isCompact ? "w-16" : "w-64"
-      } ${
-        isLight 
-          ? "bg-white border-gray-200 shadow-sm" 
-          : "bg-[#0A0D14] border-white/5"
       }`}
     >
       {/* Sidebar Top Master Header */}
-      <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${isLight ? "border-gray-100" : "border-white/5"}`}>
+      <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
         {!isCompact ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/20">
               <Sparkles className="h-4 w-4" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className={`text-xs font-bold tracking-tight truncate ${isLight ? "text-gray-900" : "text-white"}`}>
+              <span className={`text-xs font-bold tracking-tight truncate ${"text-foreground"}`}>
                 Chandak Workspace
               </span>
               <span className="text-[0.7rem] font-mono font-semibold text-blue-500 tracking-wider truncate uppercase">
@@ -177,9 +173,7 @@ export default function Sidebar() {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           className={`absolute -right-3 top-5 flex h-6 w-6 items-center justify-center rounded-full border shadow-md transition-all hover:scale-125 duration-300 z-50 ${
-            isLight 
-              ? "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-blue-400" 
-              : "bg-[#111522] border-white/10 text-gray-400 hover:text-white hover:border-blue-500"
+            "bg-surface border-border text-muted hover:text-foreground hover:border-accent"
           }`}
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
@@ -200,7 +194,7 @@ export default function Sidebar() {
           return (
             <div key={groupIdx} className="flex flex-col">
               {!isCompact && (
-                <span className={`px-3 mb-2 text-[0.8rem] font-semibold tracking-wider uppercase ${isLight ? "text-gray-500" : "text-gray-400"}`}>
+                <span className={`px-3 mb-2 text-[0.8rem] font-semibold tracking-wider uppercase ${"text-muted"}`}>
                   {group.label}
                 </span>
               )}

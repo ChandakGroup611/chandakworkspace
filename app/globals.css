@@ -10,3 +10,13 @@
 @import '../src/styles/themes/material-ocean.css';
 @import '../src/styles/themes/aurora-breeze.css';
 @import '../src/styles/themes/pure-elegance.css';
+
+/* Universal Theme Enhancements */
+@layer utilities {
+  .bg-surface {
+    backdrop-filter: var(--backdrop-blur, none) var(--backdrop-saturate, none);
+  }
+  .bg-elevated {
+    backdrop-filter: var(--backdrop-blur, none) var(--backdrop-saturate, none);
+  }
+}
