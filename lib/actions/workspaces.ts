@@ -414,7 +414,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       subWsQuery,
       supabaseAdmin
         .from('tasks')
-        .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
+        .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
         .eq('workspace_id', parentId)
         .is('parent_task_id', null)
         .eq('is_deleted', false)
