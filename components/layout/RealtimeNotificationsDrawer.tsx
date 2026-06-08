@@ -23,6 +23,8 @@ import {
 import { AppBadge } from "@/components/ui/AppBadge";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
+import { useProfile } from "@/hooks/usePermissions";
+import { useQuery } from "@tanstack/react-query";
 
 export interface NotificationItem {
   id: string;
@@ -46,61 +48,47 @@ export default function RealtimeNotificationsDrawer() {
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<"ALL" | "UNREAD" | "CRITICAL">("UNREAD");
   const [toasts, setToasts] = useState<NotificationItem[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
+  const { data: profile } = useProfile();
+  const currentUserId = profile?.id;
 
-  useEffect(() => {
-    setMounted(true);
-    async function fetchUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-        loadNotifications(user.id);
-      }
-    }
-    fetchUser();
-  }, []);
+  // Track state locally for optimistic updates and read toggles
+  const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
 
-  const loadNotifications = async (userId: string) => {
-    setLoading(true);
-    try {
+  const { data: fetchedNotifications, isLoading: loading } = useQuery({
+    queryKey: ['notifications', currentUserId],
+    enabled: isOpen && !!currentUserId,
+    queryFn: async () => {
+      console.count("Notification Fetch Count");
       const { data, error } = await supabase
         .from("notification_queue")
         .select("*")
-        .or(`target_user_id.eq.${userId},target_user_id.eq.GLOBAL_OPS`)
+        .or(`target_user_id.eq.${currentUserId},target_user_id.eq.GLOBAL_OPS`)
         .order("created_at", { ascending: false })
         .limit(40);
 
       if (error) throw error;
-      setNotifications(data || []);
-    } catch (err) {
-      console.warn("Postgres Realtime Queue query warning. Initializing persistent offline buffers.", err);
-      setNotifications([
-        {
-          id: "nq-1",
-          entity_type: "ticket",
-          entity_id: "TKT-9910",
-          module: "tickets",
-          action_type: "sla_breached",
-          actor: "SLA Surveillance Engine",
-          target_user_id: "GLOBAL_OPS",
-          payload: { message: "Critical SLA Response time ceiling exceeded due to pending approval validation.", metric: "SLA Response Breached" },
-          redirect_url: "/tickets?id=TKT-9910&focus=sla",
-          priority_level: "CRITICAL",
-          is_read: false,
-          created_at: new Date(Date.now() - 300000).toISOString()
-        }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data || [];
+    },
+    staleTime: 60000,
+  });
 
   useEffect(() => {
-    if (mounted && currentUserId) {
+    setMounted(true);
+  }, []);
+
+  // Sync fetched data to local state
+  useEffect(() => {
+    if (fetchedNotifications) {
+      setLocalNotifications(fetchedNotifications);
+    }
+  }, [fetchedNotifications]);
+
+  // Realtime subscription ONLY active when drawer is open
+  useEffect(() => {
+    if (mounted && currentUserId && isOpen) {
       const channel = supabase
         .channel("global_notification_buffer")
         .on(
@@ -111,15 +99,7 @@ export default function RealtimeNotificationsDrawer() {
             
             // Verify target user is this logged in user
             if (newItem.target_user_id === currentUserId || newItem.target_user_id === 'GLOBAL_OPS') {
-              setNotifications(prev => [newItem, ...prev]);
-              
-              // Mobile-style Toast alert: display for 2 seconds
-              if (!newItem.is_read) {
-                setToasts(prev => [...prev, newItem]);
-                setTimeout(() => {
-                  setToasts(prev => prev.filter(t => t.id !== newItem.id));
-                }, 2000);
-              }
+              setLocalNotifications(prev => [newItem, ...prev]);
             }
           }
         )
@@ -129,10 +109,10 @@ export default function RealtimeNotificationsDrawer() {
         supabase.removeChannel(channel);
       };
     }
-  }, [mounted, currentUserId]);
+  }, [mounted, currentUserId, isOpen]);
 
   const handleConsumeNotification = async (item: NotificationItem) => {
-    setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
+    setLocalNotifications(prev => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
 
     try {
       await supabase
@@ -160,29 +140,29 @@ export default function RealtimeNotificationsDrawer() {
 
   const handleDismissNotification = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setLocalNotifications(prev => prev.filter(n => n.id !== id));
     try {
       await supabase.from("notification_queue").delete().eq("id", id);
     } catch (_) {}
   };
 
   const markAllAsRead = async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setLocalNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     try {
       await supabase.from("notification_queue").update({ is_read: true }).eq("is_read", false);
     } catch (_) {}
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-  const criticalCount = notifications.filter(n => n.priority_level === "CRITICAL" && !n.is_read).length;
+  const unreadCount = localNotifications.filter(n => !n.is_read).length;
+  const criticalCount = localNotifications.filter(n => n.priority_level === "CRITICAL" && !n.is_read).length;
 
-  const filteredItems = notifications.filter(n => {
+  const filteredItems = localNotifications.filter(n => {
     if (activeFilter === "UNREAD") return !n.is_read;
     if (activeFilter === "CRITICAL") return n.priority_level === "CRITICAL";
     return true;
   });
 
-  const stickyCriticalAlerts = notifications.filter(n => n.priority_level === "CRITICAL" && !n.is_read);
+  const stickyCriticalAlerts = localNotifications.filter(n => n.priority_level === "CRITICAL" && !n.is_read);
 
   return (
     <>
@@ -304,7 +284,7 @@ export default function RealtimeNotificationsDrawer() {
                     activeFilter === "ALL" ? isLightMode ? "bg-white shadow text-gray-800" : "bg-white/10 text-white" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
                   }`}
                 >
-                  All ({notifications.length})
+                  All ({localNotifications.length})
                 </button>
               </div>
               

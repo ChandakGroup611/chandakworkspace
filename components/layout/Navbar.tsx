@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
+import { useProfile } from "@/hooks/usePermissions";
 
 // Configured Session Idle Constants
 const SESSION_TIMEOUT_SECONDS = 300; // 5 Minutes total idle budget
@@ -38,16 +39,12 @@ export default function Navbar() {
 
   // Session Security States
   const [profileOpen, setProfileOpen] = useState(false);
-  const [userData, setUserData] = useState<{
-    id: string;
-    full_name: string;
-    email: string;
-    profile_photo: string | null;
-  } | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
 
+  const { data: profileData } = useProfile();
+  const userData = profileData || null;
+
   // Time-out countdown counter state — uses timestamp-based calculation
-  // so it works correctly even when the tab is minimized/hidden
   const lastActivityTimestampRef = useRef<number>(Date.now());
   const [secondsRemaining, setSecondsRemaining] = useState(SESSION_TIMEOUT_SECONDS);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
@@ -55,40 +52,6 @@ export default function Navbar() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Read current real signed-in session profile on mount if available
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user && mounted) {
-        return;
-      }
-      
-      if (user) {
-        // Fetch full profile from user_master (excluding heavy profile_photo payload)
-        const { data: profile } = await supabase
-          .from("user_master")
-          .select("id, full_name, email")
-          .eq("id", user.id)
-          .single();
-
-        if (profile) {
-          setUserData({ ...profile, profile_photo: null });
-        } else {
-          // Fallback if user_master sync is pending
-          setUserData({
-            id: user.id,
-            full_name: user.user_metadata?.full_name || "New Personnel",
-            email: user.email || "",
-            profile_photo: null
-          });
-        }
-      }
-    };
-    if (mounted) {
-      checkSession();
-    }
-  }, [supabase.auth, mounted]);
 
   // Activity listeners to reset Idle Clock
   const handleUserActivity = useCallback(() => {
@@ -292,7 +255,7 @@ export default function Navbar() {
               {userData?.profile_photo ? (
                 <img src={userData.profile_photo} alt="Profile" className="h-full w-full object-cover" />
               ) : (
-                userData?.full_name?.split(' ').map(n => n[0]).join('') || 'OP'
+                userData?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'OP'
               )}
             </div>
 
