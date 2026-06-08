@@ -9,7 +9,7 @@ import { getWorkloadSnapshot } from "@/lib/actions/tasks";
 
 export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, onClose: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any>(null);

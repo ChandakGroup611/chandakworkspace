@@ -11,7 +11,7 @@ export const AppCard = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+    isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   } catch (e) {}
 
   return (
@@ -37,7 +37,7 @@ export const AppCardHeader = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+    isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   } catch (e) {}
 
   return (
@@ -61,7 +61,7 @@ export const AppCardTitle = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+    isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   } catch (e) {}
 
   return (
@@ -105,7 +105,7 @@ export const AppCardFooter = React.forwardRef<
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+    isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   } catch (e) {}
 
   return (

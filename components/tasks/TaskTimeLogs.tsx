@@ -9,7 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 export default function TaskTimeLogs({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   
   const [logs, setLogs] = useState<any[]>([]);
   const [estimatedHours, setEstimatedHours] = useState<number>(0);

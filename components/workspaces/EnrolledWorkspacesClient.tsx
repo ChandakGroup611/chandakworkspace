@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspaces }: { initialWorkspaces: any[], initialSubWorkspaces: any[] }) {
   const { theme } = useTheme();
   const router = useRouter();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const [searchQuery, setSearchQuery] = useState("");
   

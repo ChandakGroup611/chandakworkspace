@@ -34,7 +34,7 @@ export default function Navbar() {
   const router = useRouter();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   const [mounted, setMounted] = useState(false);
 
   // Session Security States

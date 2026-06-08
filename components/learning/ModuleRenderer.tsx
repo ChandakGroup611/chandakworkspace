@@ -15,7 +15,7 @@ import {
 
 export default function ModuleRenderer({ module }: { module: LearningModule }) {
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   if (!module) return null;
 

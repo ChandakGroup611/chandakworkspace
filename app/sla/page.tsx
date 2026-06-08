@@ -42,7 +42,7 @@ interface SLATracker {
 
 export default function SLAPage() {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   
   const [slas, setSlas] = useState<SLATracker[]>([
     {

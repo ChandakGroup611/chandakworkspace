@@ -43,7 +43,7 @@ export function TicketWorkspaceConsole({
   currentUserId
 }: TicketWorkspaceConsoleProps) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
 
   const [assigneesList, setAssigneesList] = useState<any[]>([]);

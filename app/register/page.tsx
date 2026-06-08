@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");

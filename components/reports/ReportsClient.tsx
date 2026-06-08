@@ -36,7 +36,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 export default function ReportsClient() {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const [entityType, setEntityType] = useState<ReportEntityType>("WORKSPACE");
   const [scope, setScope] = useState<ReportScope>("CREATED_BY_ME");

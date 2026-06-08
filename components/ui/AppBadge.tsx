@@ -14,7 +14,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       const themeCtx = useTheme();
       theme = themeCtx.theme;
     } catch (e) {}
-    const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+    const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
     const variants = {
       success: isLight 

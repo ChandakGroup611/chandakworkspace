@@ -24,7 +24,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[] }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const router = useRouter();
   const { hasPermission } = usePermissions();

@@ -12,7 +12,7 @@ import { Plus, Search, CheckCircle2, X, AlertTriangle, Building2, Trash2, Check,
 export default function CompanyMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -32,7 +32,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
     let isLight = false;
     try {
       const { theme } = useTheme();
-      isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+      isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
     } catch (e) {}
 
     return (

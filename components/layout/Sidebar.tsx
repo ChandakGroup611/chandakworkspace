@@ -118,7 +118,7 @@ export default function Sidebar() {
 
   const { theme } = useTheme();
   const { hasPermission, roleCode } = usePermissions();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   // When minimized, simply gliding mouse over sidebar gracefully expands it to reveal full module names and links temporarily
   const isCompact = isCompactState && !isHovered;
