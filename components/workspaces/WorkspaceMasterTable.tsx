@@ -55,6 +55,16 @@ export function WorkspaceMasterTable({
 
   const [loadingNodes, setLoadingNodes] = useState<Record<string, boolean>>({});
 
+  const usersMap = React.useMemo(() => {
+    const map = new Map<string, any>();
+    if (allUsers) {
+      for (const u of allUsers) {
+        map.set(u.id, u);
+      }
+    }
+    return map;
+  }, [allUsers]);
+
   const toggleNode = async (node: any, e: React.MouseEvent) => {
     e.stopPropagation();
     const id = node.id;
@@ -111,7 +121,7 @@ export function WorkspaceMasterTable({
   };
 
   const getUserName = (userId: string) => {
-    const user = allUsers.find(u => u.id === userId);
+    const user = usersMap.get(userId);
     return user ? user.full_name : "System";
   };
 
@@ -134,7 +144,7 @@ export function WorkspaceMasterTable({
         <div className="flex -space-x-2">
           {displayMembers.map((m: any, idx: number) => {
             const uid = m.user_id || m.id;
-            const uInfo = allUsers.find(u => u.id === uid);
+            const uInfo = usersMap.get(uid);
             const isOnline = onlineUsers.has(uid);
             return (
               <div key={idx} className="relative">
@@ -158,7 +168,7 @@ export function WorkspaceMasterTable({
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {
               const uid = m.user_id || m.id;
-              const uInfo = allUsers.find(u => u.id === uid);
+              const uInfo = usersMap.get(uid);
               const isOnline = onlineUsers.has(uid);
               return (
                 <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-white/5">
