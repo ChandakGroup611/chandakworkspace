@@ -47,8 +47,8 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
         <div className="space-y-6">
           <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/80">
-            <div className="flex items-center justify-between gap-4">
-              <div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <p className="text-[11px] font-mono tracking-wider text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-2 py-0.5 rounded font-bold">
                     {task.task_code || "TASK"}
@@ -57,8 +57,8 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
                     WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-lg font-bold text-slate-900 dark:text-white">{task.title}</h1>
+                <div className="flex items-center gap-3 min-w-0 w-full">
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-white break-words whitespace-normal">{task.title}</h1>
                 </div>
                 <div 
                   className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed prose prose-sm dark:prose-invert"
@@ -66,13 +66,13 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
                 />
                 
                 {task.custom_fields?.link_url && (
-                  <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 max-w-full overflow-hidden">
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 w-full overflow-hidden">
                     <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 shrink-0 uppercase tracking-wider">External Link:</span>
                     <a 
                       href={task.custom_fields.link_url.startsWith('http') ? task.custom_fields.link_url : `https://${task.custom_fields.link_url}`}
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline truncate"
+                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline break-all whitespace-normal"
                     >
                       {task.custom_fields.link_url}
                     </a>
