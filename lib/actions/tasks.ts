@@ -1056,14 +1056,12 @@ export async function executeTaskBatchOperation(payload: {
   Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
 
   console.time("TaskBatch - Refetch Hydration Data");
-  // Refetch the data needed for hydration (Parallel)
+  // Refetch only the collections needed for hydration (Parallel)
   const [
-    task,
     { data: checklists },
     { data: attachments },
     { data: commentsRaw }
   ] = await Promise.all([
-    getTaskDetails(taskId),
     supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true }),
     supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false }),
     supabaseAdmin.from('task_comments').select('*').eq('task_id', taskId).order('created_at', { ascending: false }).limit(20)
@@ -1082,7 +1080,6 @@ export async function executeTaskBatchOperation(payload: {
   return {
     success: true,
     data: {
-      task,
       checklists: checklists || [],
       attachments: attachments || [],
       comments

@@ -334,11 +334,20 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       // Step 3: Direct Hydration (Phase T5)
       if (res?.data) {
-        setTask((prev: any) => ({
-          ...res.data.task,
-          checklists: res.data.checklists,
-          attachments: res.data.attachments
-        }));
+        setTask((prev: any) => {
+          const newState = { ...prev };
+          // Optimistically apply the changes
+          if (updatePayload && Object.keys(updatePayload).length > 0) {
+             Object.assign(newState, updatePayload);
+          }
+          if (finalStatusId) {
+             const newStatusObj = statuses.find(s => s.id === finalStatusId || s.code === finalStatusId || s.status_code === finalStatusId);
+             if (newStatusObj) newState.status = newStatusObj;
+          }
+          newState.checklists = res.data.checklists;
+          newState.attachments = res.data.attachments;
+          return newState;
+        });
         setRemarksHistory(res.data.comments || []);
       }
 
