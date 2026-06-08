@@ -35,7 +35,8 @@ export function useProfile() {
     queryKey: ['profile'],
     queryFn: async () => {
       console.time("profile-load");
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) {
         console.timeEnd("profile-load");
         return null;

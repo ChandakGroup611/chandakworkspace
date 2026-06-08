@@ -17,7 +17,7 @@ export default async function WorkspacesPage({ searchParams }: { searchParams: {
   }
 
   // Fetch all initial data on the server! Next.js will prefetch this on hover.
-  const dashboardData = await fetchWorkspaceDashboardData(targetWorkspaceId);
+  // const dashboardData = await fetchWorkspaceDashboardData(targetWorkspaceId);
 
-  return <WorkspacesClient initialData={dashboardData} initialTaskId={searchParams?.task} />;
+  return <WorkspacesClient initialData={null} initialTaskId={searchParams?.task} targetWorkspaceId={targetWorkspaceId} />;
 }
