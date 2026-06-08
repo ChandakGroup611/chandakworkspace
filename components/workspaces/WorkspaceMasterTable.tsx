@@ -425,9 +425,8 @@ export function WorkspaceMasterTable({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap">
-            {isWorkspaceType && directTaskCount > 0 && (
+            {isWorkspaceType && (
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
