@@ -117,7 +117,13 @@ export function WorkspaceMasterTable({
 
   const renderAssignees = (node: any) => {
     // Workspaces have .members array, tasks might have .assignees or we fallback
-    const members = node.members || node.assignees || [];
+    let members = node.members || node.assignees || [];
+    if (members.length === 0) {
+      if (node.assignee && node.assignee.id) members = [{ user_id: node.assignee.id }];
+      else if (node.assigned_to) members = [{ user_id: node.assigned_to }];
+      else if (node.owner_id) members = [{ user_id: node.owner_id }];
+    }
+    
     if (!members || members.length === 0) return <span className="text-gray-500 text-[10px]">Unassigned</span>;
 
     const displayMembers = members.slice(0, 3);

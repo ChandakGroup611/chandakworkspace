@@ -70,7 +70,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
         fetchPriorities('e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'),
         fetchTasksByWorkspace(workspaceId),
         fetchStatusesByScope('TASK', 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'),
-        m.fetchWorkspaceStakeholders(workspaceId),
+        m.fetchAssignableUsers(),
         m.fetchSprints(workspaceId),
         m.fetchTaskTemplates(workspaceId)
       ]);
