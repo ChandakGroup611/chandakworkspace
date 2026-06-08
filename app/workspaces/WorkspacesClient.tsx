@@ -31,7 +31,7 @@ import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTab
 import { SprintBoard } from "@/components/workspaces/sprints/SprintBoard";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-export default function WorkspacesClient({ initialData, initialTaskId, targetWorkspaceId }: { initialData?: any; initialTaskId?: string | null; targetWorkspaceId?: string | null }) {
+export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
@@ -45,8 +45,7 @@ export default function WorkspacesClient({ initialData, initialTaskId, targetWor
   const [tasks, setTasks] = useState<any[]>(initialData?.prefetchTasks || []);
   const [stakeholders, setStakeholders] = useState<any[]>(initialData?.prefetchStakeholders || []);
   const [masterHierarchy, setMasterHierarchy] = useState<any[]>(initialData?.masterHierarchy || []);
-  const [loading, setLoading] = useState(!initialData);
-  const [isClientFetching, setIsClientFetching] = useState(!initialData);
+  const [loading, setLoading] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
 
@@ -73,25 +72,8 @@ export default function WorkspacesClient({ initialData, initialTaskId, targetWor
         body: JSON.stringify({ _action: 'mark_read', taskId: initialTaskId })
       }).catch(() => {});
     }
+  }, [initialTaskId]);
 
-    if (!initialData) {
-      import("@/lib/actions/workspaces").then(m => {
-        m.fetchWorkspaceDashboardData(targetWorkspaceId).then(res => {
-          setWorkspaces(res.workspaces || []);
-          setCompanies(res.companies || []);
-          setPriorities(res.priorities || []);
-          setMasterHierarchy(res.masterHierarchy || []);
-          setCurrentUser(res.userProfile || null);
-          if (res.prefetchWorkspaceId) {
-             const tw = res.workspaces?.find((w: any) => w.id === res.prefetchWorkspaceId);
-             if (tw) setActiveWorkspace(tw);
-          }
-          setLoading(false);
-          setIsClientFetching(false);
-        });
-      });
-    }
-  }, [initialTaskId, initialData, targetWorkspaceId]);
   // Sync active workspace from server data on soft navigation
   useEffect(() => {
     if (initialData?.prefetchWorkspaceId) {
@@ -563,7 +545,7 @@ export default function WorkspacesClient({ initialData, initialTaskId, targetWor
     }
   };
 
-  if (!mounted || permsLoading || isClientFetching) {
+  if (!mounted || permsLoading || loading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         isLightMode ? "bg-gray-50 text-gray-900" : "bg-[#070913] text-white"
