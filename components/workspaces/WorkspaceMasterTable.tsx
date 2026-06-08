@@ -116,26 +116,53 @@ export function WorkspaceMasterTable({
   };
 
   const renderAssignees = (node: any) => {
+    // Workspaces have .members array, tasks might have .assignees or we fallback
     const members = node.members || node.assignees || [];
-    if (!members || members.length === 0) return <span className="text-gray-500 text-[10px] italic">Unassigned</span>;
+    if (!members || members.length === 0) return <span className="text-gray-500 text-[10px]">Unassigned</span>;
 
-    const displayMembers = members.slice(0, 2);
-    const extraCount = members.length - 2;
+    const displayMembers = members.slice(0, 3);
+    const extraCount = members.length - 3;
 
     return (
-      <div className="flex flex-col gap-1">
-        {displayMembers.map((m: any, idx: number) => {
-          const uid = m.user_id || m.id;
-          const uInfo = allUsers.find(u => u.id === uid);
-          const isOnline = onlineUsers.has(uid);
-          return (
-            <div key={idx} className="flex items-center gap-1.5" title={isOnline ? "Online" : "Offline"}>
-              <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-              <span className="text-[11px] font-semibold text-gray-700 whitespace-nowrap">{uInfo?.full_name || "Unknown"}</span>
+      <div className="relative group/assignee inline-flex items-center cursor-pointer">
+        <div className="flex -space-x-2">
+          {displayMembers.map((m: any, idx: number) => {
+            const uid = m.user_id || m.id;
+            const uInfo = allUsers.find(u => u.id === uid);
+            const isOnline = onlineUsers.has(uid);
+            return (
+              <div key={idx} className="relative">
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17] bg-indigo-600'}`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : '#4f46e5' }}>
+                  {uInfo?.profile_photo ? <img src={uInfo.profile_photo} className="h-full w-full rounded-full" alt="" /> : (uInfo?.full_name?.substring(0,2).toUpperCase() || "U")}
+                </div>
+                <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17]'} ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              </div>
+            );
+          })}
+          {extraCount > 0 && (
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-gray-600 bg-gray-200 border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17]'}`}>
+              +{extraCount}
             </div>
-          );
-        })}
-        {extraCount > 0 && <span className="text-[10px] text-gray-500 font-medium">+{extraCount} more</span>}
+          )}
+        </div>
+
+        {/* Hover Tooltip */}
+        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] ${isLightMode ? 'bg-white border border-gray-200' : 'bg-gray-900 border border-white/10'}`}>
+          <div className="text-[10px] font-bold uppercase text-gray-500 mb-2 px-1 border-b pb-1 border-gray-200 dark:border-white/10">Assigned Users ({members.length})</div>
+          <div className="max-h-32 overflow-y-auto space-y-1">
+            {members.map((m: any, idx: number) => {
+              const uid = m.user_id || m.id;
+              const uInfo = allUsers.find(u => u.id === uid);
+              const isOnline = onlineUsers.has(uid);
+              return (
+                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-white/5">
+                  <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
+                  <span className={`text-[11px] truncate ${isOnline ? (isLightMode ? 'text-gray-800' : 'text-gray-200') : 'text-red-500 font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   };

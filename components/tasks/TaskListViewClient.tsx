@@ -649,8 +649,23 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   </AppTableCell>
                   <AppTableCell>
                     {task.assignee ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-semibold text-gray-800 break-words">{task.assignee.full_name}</span>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                           const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                           if (!a) return null;
+                           return (
+                             <>
+                               {a.profile_photo ? (
+                                 <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
+                               ) : (
+                                 <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                   {a.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                 </div>
+                               )}
+                               <span className="text-xs font-semibold text-gray-800 break-words">{a.full_name}</span>
+                             </>
+                           );
+                        })()}
                       </div>
                     ) : (
                       <span className="text-xs text-gray-400 italic">Unassigned</span>
