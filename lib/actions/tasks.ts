@@ -16,6 +16,7 @@ export async function createTask(payload: {
   title?: string;
   description?: string;
   priority_id: string;
+  status_id?: string;
   start_date?: string;
   end_date?: string;
   estimated_hours?: number;
@@ -36,29 +37,34 @@ export async function createTask(payload: {
       creatorId = user.id;
     }
 
-    // Find default status for tasks
-    let { data: statusMaster } = await supabaseAdmin
-      .from('status_master')
-      .select('id')
-      .eq('is_default', true)
-      .eq('scope_type', 'TASK')
-      .eq('is_deleted', false)
-      .maybeSingle();
+    let finalStatusId = payload.status_id;
 
-    if (!statusMaster) {
-      // Fallback to the first active task status
-      const { data: fallbackStatus } = await supabaseAdmin
+    if (!finalStatusId) {
+      // Find default status for tasks
+      let { data: statusMaster } = await supabaseAdmin
         .from('status_master')
         .select('id')
+        .eq('is_default', true)
         .eq('scope_type', 'TASK')
         .eq('is_deleted', false)
-        .limit(1);
+        .maybeSingle();
 
-      if (fallbackStatus && fallbackStatus.length > 0) {
-        statusMaster = fallbackStatus[0];
-      } else {
-        return { error: 'No active task status found in status_master to assign.' };
+      if (!statusMaster) {
+        // Fallback to the first active task status
+        const { data: fallbackStatus } = await supabaseAdmin
+          .from('status_master')
+          .select('id')
+          .eq('scope_type', 'TASK')
+          .eq('is_deleted', false)
+          .limit(1);
+
+        if (fallbackStatus && fallbackStatus.length > 0) {
+          statusMaster = fallbackStatus[0];
+        } else {
+          return { error: 'No active task status found in status_master to assign.' };
+        }
       }
+      finalStatusId = statusMaster.id;
     }
 
     // Create Task
@@ -74,7 +80,7 @@ export async function createTask(payload: {
         subject: payload.subject || payload.title || 'Untitled Task',
         description: payload.description,
         priority_id: cleanUUID(payload.priority_id),
-        status_id: statusMaster.id,
+        status_id: finalStatusId,
         start_date: (payload.start_date && payload.start_date.trim()) ? payload.start_date : null,
         end_date: (payload.end_date && payload.end_date.trim()) ? payload.end_date : null,
         estimated_hours: payload.estimated_hours,
