@@ -62,6 +62,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+  const [includeDescendants, setIncludeDescendants] = useState<boolean>(false);
 
   // Inline Status Update State
   const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
@@ -132,55 +133,51 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     });
   }, [tasks, scope, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo]);
 
-  const refresh = async () => {
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchTasksData = async (pageNum: number, isLoadMore = false) => {
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("tasks").select(`
-        *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code)`)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false });
-        
-      if (error) {
-        console.error("Supabase Error fetching tasks:", error);
-      }
-        
-      if (data && data.length > 0) {
-        // Fetch Workspaces
-        const wsIds = Array.from(new Set(data.map((t: any) => t.workspace_id).filter(Boolean)));
-        const { data: workspaces } = await supabase.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
-        
-        // Fetch Creators
-        const creatorIds = Array.from(new Set(data.map((t: any) => t.created_by).filter(Boolean)));
-        const { data: users } = await supabase.from("user_master").select("id, manager_id").in("id", creatorIds);
-
-        // Fetch Assignees
-        const assigneeIds = Array.from(new Set(data.map((t: any) => t.assigned_to).filter(Boolean)));
-        let assignees: any[] = [];
-        if (assigneeIds.length > 0) {
-          const { data: usersData } = await supabase.from("user_master").select("id, full_name, profile_photo, user_code").in("id", assigneeIds);
-          if (usersData) assignees = usersData;
-        }
-
-        // Fetch Attachments Count
-        const { data: attachmentData } = await supabase.from("task_attachments").select("task_id").in("task_id", data.map((t:any) => t.id));
-        const attachmentMap = new Map();
-        (attachmentData || []).forEach((a:any) => attachmentMap.set(a.task_id, (attachmentMap.get(a.task_id) || 0) + 1));
-
-        data.forEach((t: any) => {
-          t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
-          t.creator = users?.find((u: any) => u.id === t.created_by) || null;
-          t.assignee = assignees.find((a: any) => a.id === t.assigned_to) || null;
-          t.attachmentCount = attachmentMap.get(t.id) || 0;
-        });
-      }
+      const { fetchTasksByWorkspace, fetchAllTasks } = await import('@/lib/actions/workspaces');
       
-      setTasks(data || []);
+      let newTasks = [];
+      if (selectedWorkspaceId) {
+        newTasks = await fetchTasksByWorkspace(selectedWorkspaceId, pageNum, 50, includeDescendants);
+      } else {
+        // We'll limit fetchAllTasks as well in a moment, but for now we call it directly
+        const supabase = createClient();
+        const { data } = await supabase.from("tasks").select(`
+          *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code)`)
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: false })
+          .range((pageNum - 1) * 50, pageNum * 50 - 1);
+        newTasks = data || [];
+      }
+
+      if (newTasks.length < 50) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+
+      setTasks(prev => isLoadMore ? [...prev, ...newTasks] : newTasks);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const refresh = async () => {
+    setPage(1);
+    await fetchTasksData(1, false);
+  };
+
+  const loadMore = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await fetchTasksData(nextPage, true);
   };
 
   const handleDeleteTask = async (e: React.MouseEvent, taskId: string) => {
@@ -278,10 +275,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       return;
     }
 
+    const stMaster = masterStatuses.find(s => s.id === inlineNewStatus);
+    setTasks(prev => prev.map(t => t.id === inlineTask.id ? { ...t, status_id: inlineNewStatus, status: stMaster } : t));
+
     triggerToast("Task updated successfully!");
     setInlineLoading(false);
     setStatusModalOpen(false);
-    refresh();
   };
 
   useEffect(() => {
@@ -419,7 +418,30 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Workspace:</span>
             <select
               value={selectedWorkspaceId || ""}
-              onChange={(e) => setSelectedWorkspaceId(e.target.value || null)}
+              onChange={(e) => {
+                const newWsId = e.target.value || null;
+                setSelectedWorkspaceId(newWsId);
+                // We must trigger a fetch manually here because state updates are async
+                setPage(1);
+                setLoading(true);
+                import('@/lib/actions/workspaces').then(async ({ fetchTasksByWorkspace, fetchAllTasks }) => {
+                  let newTasks = [];
+                  if (newWsId) {
+                    newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, includeDescendants);
+                  } else {
+                    const supabase = createClient();
+                    const { data } = await supabase.from("tasks").select(`
+                      *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code)`)
+                      .eq("is_deleted", false)
+                      .order("created_at", { ascending: false })
+                      .range(0, 49);
+                    newTasks = data || [];
+                  }
+                  setTasks(newTasks);
+                  setHasMore(newTasks.length >= 50);
+                  setLoading(false);
+                });
+              }}
               className="text-xs font-bold px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             >
               <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
@@ -429,6 +451,22 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </option>
               ))}
             </select>
+            {selectedWorkspaceId && (
+              <label className="flex items-center gap-2 text-[10px] font-semibold text-gray-600 dark:text-gray-400 cursor-pointer ml-2 bg-gray-50 dark:bg-white/5 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/5">
+                <input 
+                  type="checkbox" 
+                  checked={includeDescendants} 
+                  onChange={(e) => {
+                    setIncludeDescendants(e.target.checked);
+                    // Reset and fetch immediately on toggle
+                    setPage(1);
+                    fetchTasksData(1, false);
+                  }} 
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                />
+                Include Sub-Workspaces
+              </label>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -663,9 +701,18 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </AppTable>
         </div>
 
-      {filtered.length === 0 && (
-        <div className="text-center py-10 text-gray-500">No tasks found for this filter.</div>
-      )}
+        {filtered.length === 0 && !loading && (
+          <div className="text-center py-10 text-gray-500">No tasks found for this filter.</div>
+        )}
+        
+        {hasMore && filtered.length > 0 && (
+          <div className="flex justify-center py-4 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0B0F19]">
+            <AppButton variant="outline" size="sm" onClick={loadMore} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Load More Tasks
+            </AppButton>
+          </div>
+        )}
 
       {/* Side Drawer Component */}
       {selectedTask && (

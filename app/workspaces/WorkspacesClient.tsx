@@ -249,6 +249,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     { 
       fallbackData: { tasks: initialData?.prefetchTasks || [], stakeholders: initialData?.prefetchStakeholders || [] },
       revalidateOnFocus: false,
+      dedupingInterval: 60000,
+      keepPreviousData: true
     }
   );
 

@@ -315,54 +315,23 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     // Determine active workspace ID to prefetch
     const activeWSId = preferredWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
 
-    // 3. Dependent Queries: Hierarchy Roots & Active Workspace Data (Parallel)
-    let prefetchTasks: any[] = [];
-    let prefetchStakeholders: any[] = [];
-    let masterHierarchy: any[] = [];
+    // 3. Hierarchy Roots Only (Level 1)
+    const masterHierarchy = await fetchHierarchyRoots(user.id, workspaces);
 
-    const secondBatch: Promise<any>[] = [
-      // Pass the already fetched workspaces into fetchHierarchyRoots to avoid hitting the DB twice!
-      fetchHierarchyRoots(user.id, workspaces).then(res => { masterHierarchy = res; })
-    ];
-
-    if (activeWSId) {
-      secondBatch.push(
-        fetchTasksByWorkspace(activeWSId).then(res => { prefetchTasks = res; }),
-        fetchWorkspaceStakeholders(activeWSId).then(res => { prefetchStakeholders = res; })
-      );
-    }
-
-    // Await the second batch concurrently
-    await Promise.all(secondBatch);
-
-    // 4. Extract all unique User IDs needed for UI mapping to prevent sending the entire company directory
+    // 4. Extract all unique User IDs needed for UI mapping (restricted to root workspaces)
     const uniqueUserIds = new Set<string>();
     uniqueUserIds.add(user.id);
     
-    // Scan workspaces
+    // Scan workspaces for owners and creators only (since members are stripped)
     workspaces.forEach((w: any) => {
       if (w.owner_id) uniqueUserIds.add(w.owner_id);
       if (w.created_by) uniqueUserIds.add(w.created_by);
-      w.members?.forEach((m: any) => uniqueUserIds.add(m.user_id));
     });
 
     // Scan hierarchy
     masterHierarchy.forEach((w: any) => {
       if (w.owner_id) uniqueUserIds.add(w.owner_id);
       if (w.created_by) uniqueUserIds.add(w.created_by);
-      w.members?.forEach((m: any) => uniqueUserIds.add(m.user_id));
-    });
-
-    // Scan tasks
-    prefetchTasks.forEach((t: any) => {
-      if (t.owner_id) uniqueUserIds.add(t.owner_id);
-      if (t.created_by) uniqueUserIds.add(t.created_by);
-      t.assignees?.forEach((m: any) => uniqueUserIds.add(m.user_id));
-    });
-
-    // Scan stakeholders
-    prefetchStakeholders.forEach((s: any) => {
-      if (s.user_id) uniqueUserIds.add(s.user_id);
     });
 
     // Fetch ONLY the required users (drastically reduces Server-to-Client JSON payload)
@@ -380,8 +349,8 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       companies,
       priorities,
       prefetchWorkspaceId: activeWSId,
-      prefetchTasks,
-      prefetchStakeholders,
+      prefetchTasks: [], // DEFERRED TO LAZY LOAD
+      prefetchStakeholders: [], // DEFERRED TO LAZY LOAD
       masterHierarchy,
       taskStatuses,
       allUsers
@@ -441,10 +410,9 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
     let subWsQuery = supabaseAdmin
         .from('workspaces')
-        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), members:workspace_members(user_id, role), stats:workspace_statistics(subworkspace_count, task_count, subtask_count), hierarchy_task_count, hierarchy_subws_count, parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code)')
+        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), hierarchy_task_count, hierarchy_subws_count, parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code)')
         .eq('parent_workspace_id', parentId)
         .eq('is_deleted', false)
-        .eq('workspace_members.is_deleted', false)
         .order('created_at', { ascending: false });
 
     if (!canManageAll) {
@@ -461,11 +429,12 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       subWsQuery,
       supabaseAdmin
         .from('tasks')
-        .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
+        .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
         .eq('workspace_id', parentId)
         .is('parent_task_id', null)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
+        .limit(100) // Safety net to prevent UI freeze on expansion
     ]);
 
     const subWs = subWsRes.data;
@@ -497,10 +466,11 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   if (parentType === 'TASK' || parentType === 'SUB_TASK') {
     const { data: subTasks } = await supabaseAdmin
       .from('tasks')
-      .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), assignees:task_participants(user_id, role:participation_role), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
+      .select('id, name:subject, code:task_code, description, owner_id, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code)')
       .eq('parent_task_id', parentId)
       .eq('is_deleted', false)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (subTasks) {
       return subTasks.map((t: any) => ({
@@ -713,11 +683,7 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
   const userIds = members.map(m => m.user_id);
   const { data: users, error: userError } = await supabaseAdmin
     .from("user_master")
-    .select(`
-      id, full_name, user_code, 
-      designation:designations(name), 
-      department:departments(name)
-    `)
+    .select(`id, full_name, user_code`)
     .in("id", userIds);
     
   if (userError || !users) {
@@ -737,33 +703,42 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
 }
 
 
-export async function fetchTasksByWorkspace(workspaceId: string) {
+export async function fetchTasksByWorkspace(workspaceId: string, page: number = 1, limit: number = 50, includeDescendants: boolean = false) {
   if (!workspaceId) return [];
   
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
-  // 1. Fetch all workspaces to build the descendant tree
-  const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
+  let targetWorkspaceIds = [workspaceId];
+
+  if (includeDescendants) {
+    // 1. Fetch all workspaces to build the descendant tree
+    const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
+    
+    const getDescendants = (id: string, all: any[]): string[] => {
+      const children = all.filter((w: any) => w.parent_workspace_id === id);
+      return [id, ...children.flatMap((c: any) => getDescendants(c.id, all))];
+    };
+    
+    targetWorkspaceIds = getDescendants(workspaceId, allWs || []);
+  }
   
-  const getDescendants = (id: string, all: any[]): string[] => {
-    const children = all.filter((w: any) => w.parent_workspace_id === id);
-    return [id, ...children.flatMap((c: any) => getDescendants(c.id, all))];
-  };
-  
-  const hierarchyIds = getDescendants(workspaceId, allWs || []);
-  
+  const startIdx = (page - 1) * limit;
+  const endIdx = startIdx + limit - 1;
+
   const { data, error } = await supabase
     .from("tasks")
     .select(`
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code)
+      priority:priority_master(name:priority_name, code:priority_code),
+      assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code)
     `)
-    .in("workspace_id", hierarchyIds)
+    .in("workspace_id", targetWorkspaceIds)
     .eq("is_deleted", false)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false })
+    .range(startIdx, endIdx);
     
   if (error) {
     console.error("[Workspaces] Error fetching tasks:", error);
@@ -771,37 +746,13 @@ export async function fetchTasksByWorkspace(workspaceId: string) {
   }
   
   if (data && data.length > 0) {
-    const taskIds = data.map((t: any) => t.id);
-    
-    // Fetch task participants
-    const { data: participantsData } = await supabase
-      .from('task_participants')
-      .select('*, user:user_master(id, full_name, profile_photo)')
-      .in('task_id', taskIds);
-      
-    const participantsMap = new Map();
-    (participantsData || []).forEach(p => {
-      if (!participantsMap.has(p.task_id)) participantsMap.set(p.task_id, []);
-      participantsMap.get(p.task_id).push(p);
-    });
-
-    // Fetch attachment counts
-    const { data: attachmentData } = await supabase
-      .from('task_attachments')
-      .select('task_id')
-      .in('task_id', taskIds);
-      
-    const attachmentMap = new Map();
-    (attachmentData || []).forEach(a => {
-      attachmentMap.set(a.task_id, (attachmentMap.get(a.task_id) || 0) + 1);
-    });
-
+    // Note: Participants and Attachments are now lazy-loaded in the Task Details Drawer per Phase 6 optimization.
     data.forEach((t: any) => {
       t.workspace = null;
       t.creator = null;
-      t.attachmentCount = attachmentMap.get(t.id) || 0;
-      t.participants = participantsMap.get(t.id) || [];
-      t.assignees = t.participants.map((p: any) => ({ ...p.user, role: p.participation_role }));
+      t.attachmentCount = 0;
+      t.participants = [];
+      t.assignees = [];
       
       // Calculate progress percentage
       if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
