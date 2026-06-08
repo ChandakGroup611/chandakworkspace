@@ -165,7 +165,8 @@ export async function createWorkspace(formData: any) {
         const { data: status } = await supabase
           .from("status_master")
           .select("id")
-          .eq("status_code", "ST_OPEN")
+          .eq("status_code", "OPEN")
+          .limit(1)
           .single();
         statusId = status?.id;
         if (!statusId) {
