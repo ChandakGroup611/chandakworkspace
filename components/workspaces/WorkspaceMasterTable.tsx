@@ -310,7 +310,7 @@ export function WorkspaceMasterTable({
                       <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold shrink-0">
                         {node.workspace_code || node.task_code || ""}
                       </span>
-                      <span className={`truncate ${
+                      <span className={`whitespace-normal break-words ${
                         isWorkspaceType ? 'font-bold tracking-tight text-[14px]' : 
                         isSubWorkspace ? 'font-semibold tracking-tight text-[13px]' : 
                         'font-medium text-[13px]'
