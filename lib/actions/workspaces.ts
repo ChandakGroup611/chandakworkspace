@@ -322,16 +322,18 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     const uniqueUserIds = new Set<string>();
     uniqueUserIds.add(user.id);
     
-    // Scan workspaces for owners and creators only (since members are stripped)
+    // Scan workspaces for owners, creators, and members
     workspaces.forEach((w: any) => {
       if (w.owner_id) uniqueUserIds.add(w.owner_id);
       if (w.created_by) uniqueUserIds.add(w.created_by);
+      if (w.members) w.members.forEach((m: any) => uniqueUserIds.add(m.user_id));
     });
 
     // Scan hierarchy
     masterHierarchy.forEach((w: any) => {
       if (w.owner_id) uniqueUserIds.add(w.owner_id);
       if (w.created_by) uniqueUserIds.add(w.created_by);
+      if (w.members) w.members.forEach((m: any) => uniqueUserIds.add(m.user_id));
     });
 
     // Fetch ONLY the required users (drastically reduces Server-to-Client JSON payload)

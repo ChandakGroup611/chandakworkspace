@@ -24,7 +24,8 @@ export async function getVisibleWorkspaces(userId: string) {
         company:company_master(name:company_name),
         status:status_master(name:status_name, status_color),
         hierarchy_task_count,
-        hierarchy_subws_count
+        hierarchy_subws_count,
+        members:workspace_members(user_id, role)
       `)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false });
@@ -71,7 +72,8 @@ export async function getVisibleWorkspaces(userId: string) {
       company:company_master(name:company_name),
       status:status_master(name:status_name, status_color),
       hierarchy_task_count,
-      hierarchy_subws_count
+      hierarchy_subws_count,
+      members:workspace_members(user_id, role)
     `)
     .in('id', authorizedWorkspaceIds)
     .eq('is_deleted', false)
