@@ -170,7 +170,7 @@ export function WorkspaceMasterTable({
   // Perfectly balanced layout matrix:
   // Using minmax(minPixels, fr) for ALL columns allows the previously locked right-side columns (Assign/Create/Actions)
   // to expand proportionally on wide screens, aggressively stealing and absorbing the massive blank space from the left side,
-  const gridCols = 'minmax(150px, 2.5fr) minmax(100px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(130px, 1fr)';
+  const gridCols = 'minmax(250px, 4fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(130px, 1fr)';
 
 
   const HierarchyRow = React.memo(({ node, depth, isExpanded }: { node: any, depth: number, isExpanded: boolean }) => {
@@ -310,7 +310,7 @@ export function WorkspaceMasterTable({
                       <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold">
                         {node.workspace_code || node.task_code || ""}
                       </span>
-                      <span className={`truncate max-w-[200px] ${
+                      <span className={`truncate max-w-[500px] ${
                         isWorkspaceType ? 'font-bold tracking-tight text-[14px]' : 
                         isSubWorkspace ? 'font-semibold tracking-tight text-[13px]' : 
                         'font-medium text-[13px]'
@@ -362,11 +362,6 @@ export function WorkspaceMasterTable({
             </div>
           </div>
           
-          {/* Company */}
-          <div className="py-1 px-2 text-xs text-gray-500 break-words">
-            {companyName}
-          </div>
-
           {/* Created Date */}
           <div className="py-1 px-2 text-xs text-gray-500 whitespace-nowrap" title={fullDate}>
             {shortDate}
@@ -490,7 +485,6 @@ export function WorkspaceMasterTable({
           isLightMode ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-white/[0.02] text-gray-400 border-white/10'
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>
-          <div className="py-2 px-2">Company</div>
           <div className="py-2 px-2">Created Date</div>
           <div className="py-2 px-2">Created By</div>
           <div className="py-2 px-2 text-center">Assign</div>
