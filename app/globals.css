@@ -11,6 +11,22 @@
 @import '../src/styles/themes/aurora-breeze.css';
 @import '../src/styles/themes/pure-elegance.css';
 
+@theme {
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-secondary);
+  --color-border: var(--border-subtle);
+  --color-border-active: var(--border-active);
+  --color-accent: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+}
+
 /* Universal Theme Enhancements */
 @layer utilities {
   .bg-surface {
