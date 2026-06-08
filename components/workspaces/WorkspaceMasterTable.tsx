@@ -317,7 +317,9 @@ export function WorkspaceMasterTable({
                       } ${
                         isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
                       }`}>
-                        {node.workspace_name || node.name || node.subject || node.title}
+                        {isSubWorkspace && node.parent && (node.parent.workspace_name || node.parent.name) && !(node.workspace_name || node.name || '').startsWith((node.parent.workspace_name || node.parent.name) + ' -')
+                          ? `${node.parent.workspace_name || node.parent.name} - ${node.workspace_name || node.name}`
+                          : (node.workspace_name || node.name || node.subject || node.title)}
                       </span>
                       {node.attachmentCount > 0 && (
                         <div className={`flex items-center justify-center p-0.5 px-1 rounded-md ml-1 ${isLightMode ? 'bg-purple-100 text-purple-600' : 'bg-purple-500/20 text-purple-400'}`} title={`${node.attachmentCount} Attachment(s)`}>
@@ -467,13 +469,14 @@ export function WorkspaceMasterTable({
       return prevProps.node === nextProps.node && prevProps.isExpanded === nextProps.isExpanded;
     });
 
-    const renderTree = (nodes: any[], depth = 0) => {
+    const renderTree = (nodes: any[], depth = 0, parentNode: any = null) => {
       return nodes.map((node) => {
         const isActuallyExpanded = forceExpandAll || !!expandedNodes[node.id];
+        const enrichedNode = parentNode ? { ...node, parent: parentNode } : node;
         return (
           <React.Fragment key={node.id}>
-            <HierarchyRow node={node} depth={depth} isExpanded={isActuallyExpanded} />
-            {isActuallyExpanded && node.children && renderTree(node.children, depth + 1)}
+            <HierarchyRow node={enrichedNode} depth={depth} isExpanded={isActuallyExpanded} />
+            {isActuallyExpanded && node.children && renderTree(node.children, depth + 1, node)}
           </React.Fragment>
         );
       });
