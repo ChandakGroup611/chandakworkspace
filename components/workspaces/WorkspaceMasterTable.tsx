@@ -233,8 +233,10 @@ export function WorkspaceMasterTable({
           }
         }}
         onClick={(e) => {
-          // Open full task page on single click for tasks
-          if (node.type === 'TASK' || node.type === 'SUB_TASK') {
+          if (isWorkspaceType) {
+            router.push(`/workspaces/tasks?workspaceId=${node.id}`);
+          } else if (node.type === 'TASK' || node.type === 'SUB_TASK') {
+            // Open full task page on single click for tasks
             router.push(`/tasks/${node.id}`);
           }
         }}
