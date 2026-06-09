@@ -202,7 +202,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     : null;
 
   const availableUsers = parentWorkspace 
-    ? allUsers.filter(u => parentWorkspace.members?.some((m: any) => m.user_id === u.id) || u.id === currentUser?.id)
+    ? allUsers.filter(u => {
+        const membersList = parentWorkspace.members || parentWorkspace.assignees || [];
+        return membersList.some((m: any) => (m.user_id === u.id || m.id === u.id)) || u.id === currentUser?.id;
+      })
     : allUsers;
 
   // Fetch users immediately if missing (e.g. on hot reload or missing initialData)
