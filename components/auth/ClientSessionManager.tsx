@@ -26,6 +26,7 @@ export default function ClientSessionManager() {
   const isLeaderRef = useRef<boolean>(true); // Whether this tab owns the heartbeat
   const broadcastRef = useRef<BroadcastChannel | null>(null);
   const isMountedRef = useRef(true);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Send a heartbeat to the server ──────────────────────────────
   const sendHeartbeat = useCallback(async (event: "heartbeat" | "tab_close" = "heartbeat") => {
@@ -188,7 +189,7 @@ export default function ClientSessionManager() {
 
     // ── 3. User activity tracking ───────────────────────────────
     // Any user interaction resets the idle timer
-    const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+    // (inactivityTimerRef is declared at the top of the component)
 
     const resetInactivityTimer = () => {
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
