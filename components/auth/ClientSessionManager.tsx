@@ -188,9 +188,28 @@ export default function ClientSessionManager() {
 
     // ── 3. User activity tracking ───────────────────────────────
     // Any user interaction resets the idle timer
+    const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(async () => {
+        // Force logout due to inactivity
+        console.warn("[SessionManager] 5 minutes of inactivity reached. Forcing logout.");
+        try {
+          const supabase = createClient();
+          await supabase.auth.signOut();
+        } finally {
+          if (isMountedRef.current) {
+            router.push("/login?reason=timeout");
+          }
+        }
+      }, SESSION_IDLE_LIMIT_MS);
+    };
+
     const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
     const handleActivity = () => {
       lastActivityRef.current = Date.now();
+      resetInactivityTimer();
 
       // Broadcast activity to other tabs
       try {
@@ -200,6 +219,9 @@ export default function ClientSessionManager() {
         });
       } catch {}
     };
+
+    // Initial timer setup
+    resetInactivityTimer();
 
     activityEvents.forEach((evt) => {
       window.addEventListener(evt, handleActivity, { passive: true });
@@ -232,6 +254,56 @@ export default function ClientSessionManager() {
         return;
       }
 
+      // Initialize session token for active_sessions tracking
+      let sessionToken = sessionStorage.getItem("app_session_token");
+      if (!sessionToken) {
+        sessionToken = crypto.randomUUID();
+        sessionStorage.setItem("app_session_token", sessionToken);
+      }
+
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // Send initial session token to active_sessions
+          const { error } = await supabase.from("active_sessions").upsert({
+            user_id: user.id,
+            session_token: sessionToken,
+            last_active_at: new Date().toISOString()
+          }, { onConflict: "user_id" });
+          
+          if (error) {
+            console.error("Failed to update active sessions:", error);
+          }
+
+          // Subscribe to concurrent login changes
+          const channel = supabase
+            .channel(`active_sessions_${user.id}`)
+            .on(
+              "postgres_changes",
+              { event: "UPDATE", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },
+              (payload) => {
+                const newSessionToken = payload.new.session_token;
+                if (newSessionToken && newSessionToken !== sessionToken) {
+                  // Another device logged in and took over the session
+                  alert("You have been logged out because your account was logged in on another device.");
+                  supabase.auth.signOut().then(() => {
+                    router.push("/login");
+                  });
+                }
+              }
+            )
+            .subscribe();
+            
+          // Add channel to cleanup
+          (window as any).__active_session_channel = channel;
+        }
+      } catch (e) {
+        // active_sessions table might not exist yet if migration pending
+        console.error("Concurrent session tracking error:", e);
+      }
+
       // Session is valid — start heartbeats
       lastActivityRef.current = Date.now();
       startHeartbeat();
@@ -241,6 +313,12 @@ export default function ClientSessionManager() {
     return () => {
       isMountedRef.current = false;
       stopHeartbeat();
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+
+      if ((window as any).__active_session_channel) {
+        const supabase = createClient();
+        supabase.removeChannel((window as any).__active_session_channel);
+      }
 
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       activityEvents.forEach((evt) => {

@@ -68,6 +68,34 @@ export default function LoginPage() {
 
       if (error) throw error;
 
+      if (data.user) {
+        try {
+          // Check for concurrent active sessions
+          const { data: sessionData } = await supabase
+            .from("active_sessions")
+            .select("last_active_at")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (sessionData && sessionData.last_active_at) {
+            const lastActive = new Date(sessionData.last_active_at).getTime();
+            const now = Date.now();
+            // If active within the last 5 minutes, consider it an active concurrent session
+            if (now - lastActive < 5 * 60 * 1000) {
+              const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
+              if (!proceed) {
+                // User cancelled, sign out
+                await supabase.auth.signOut();
+                setLoading(false);
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore table not found errors if migration is pending
+        }
+      }
+
       setSuccessMsg("Signed in securely. Loading dashboard...");
       setTimeout(() => {
         router.push("/");

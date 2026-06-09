@@ -30,9 +30,11 @@
 /* Universal Theme Enhancements */
 @layer utilities {
   .bg-surface {
-    backdrop-filter: var(--backdrop-blur, none) var(--backdrop-saturate, none);
+    background-color: var(--color-surface);
+    backdrop-filter: var(--backdrop-blur, blur(0)) var(--backdrop-saturate, saturate(100%));
   }
   .bg-elevated {
-    backdrop-filter: var(--backdrop-blur, none) var(--backdrop-saturate, none);
+    background-color: var(--color-elevated);
+    backdrop-filter: var(--backdrop-blur, blur(0)) var(--backdrop-saturate, saturate(100%));
   }
 }

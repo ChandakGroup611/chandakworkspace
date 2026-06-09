@@ -1,5 +1,5 @@
 /* Theme 1: Executive Light — Premium Soft Pearl Foundation */
-:root, [data-theme="executive-light"] {
+[data-theme="executive-light"] {
   /* Crisp Soft Slate Backgrounds */
   --bg-primary: #F8FAFC;
   --bg-surface: #FFFFFF;
