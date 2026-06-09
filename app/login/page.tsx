@@ -32,10 +32,36 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("reason=timeout")) {
-      setErrorMsg("Your session expired due to inactivity. Please sign in again.");
-    }
-  }, []);
+    const checkSession = async () => {
+      if (typeof window === "undefined") return;
+      
+      const searchParams = new URLSearchParams(window.location.search);
+      const isLogout = searchParams.get("action") === "logout";
+      const isTimeout = searchParams.get("reason") === "timeout";
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (isLogout) {
+        if (session) {
+          await supabase.auth.signOut();
+        }
+        setSuccessMsg("You have been successfully logged out.");
+        // Clear the URL to avoid repeated logouts on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (isTimeout) {
+        if (session) {
+          await supabase.auth.signOut();
+        }
+        setErrorMsg("Your session expired due to inactivity. Please sign in again.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (session) {
+        // Auto login if already authenticated
+        router.push("/");
+      }
+    };
+
+    checkSession();
+  }, [router, supabase.auth]);
 
   const handlePrefill = (role: "admin" | "auditor") => {
     if (role === "admin") {

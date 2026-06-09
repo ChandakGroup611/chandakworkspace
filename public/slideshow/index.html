@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chandak Workspace - WhatsApp Status Demo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #05070D;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mobile Container to simulate WhatsApp Status aspect ratio (9:16) */
+        .status-container {
+            width: 400px;
+            height: 711px;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border-radius: 20px;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .slide.active {
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            filter: brightness(0.4);
+            transform: scale(1.1);
+            transition: transform 6s linear;
+        }
+
+        .slide.active .bg-image {
+            transform: scale(1.0);
+        }
+
+        .overlay-text {
+            text-align: center;
+            padding: 20px;
+            z-index: 2;
+        }
+
+        h1 {
+            font-weight: 900;
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+            background: linear-gradient(to right, #60a5fa, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 1s ease-out 0.5s;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            margin: 0;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 1s ease-out 0.8s;
+        }
+
+        .slide.active h1, .slide.active p {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .logo-img {
+            width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 1s ease-out 0.3s;
+            background: white;
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .slide.active .logo-img {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            position: absolute;
+            top: 20px;
+            left: 10px;
+            right: 10px;
+            height: 4px;
+            display: flex;
+            gap: 5px;
+            z-index: 100;
+        }
+
+        .progress-segment {
+            flex: 1;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <p style="position: absolute; top: 20px; text-align: center; width: 100%; color: #888;">
+        Screen Record this box! Press F11 for Full Screen.
+    </p>
+
+    <div class="status-container">
+        
+        <div class="progress-bar-container" id="progressBars">
+            <!-- JS will inject segments here -->
+        </div>
+
+        <!-- Slide 1: Logo -->
+        <div class="slide">
+            <div class="overlay-text">
+                <img src="/logo.png" class="logo-img" alt="Logo">
+                <h1>The Future of Work</h1>
+                <p>Enterprise Management is Here. 🚀</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Login / Security -->
+        <div class="slide">
+            <img src="slide1.png" class="bg-image">
+            <div class="overlay-text">
+                <h1>Enterprise Security</h1>
+                <p>Secure Identity & Access Control. 🔐</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Dashboard -->
+        <div class="slide">
+            <img src="slide2.png" class="bg-image">
+            <div class="overlay-text">
+                <h1>Real-Time Analytics</h1>
+                <p>Data-Driven Decisions. 📊</p>
+            </div>
+        </div>
+
+        <!-- Slide 4: Navigation / Profile -->
+        <div class="slide">
+            <img src="slide3.png" class="bg-image">
+            <div class="overlay-text">
+                <h1>Beautiful Design</h1>
+                <p>Uncompromising UI Speed. ✨</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: Modules -->
+        <div class="slide">
+            <img src="slide4.png" class="bg-image">
+            <div class="overlay-text">
+                <h1>Unified Execution</h1>
+                <p>Tickets, Projects, and Compliance. 📂</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Outro -->
+        <div class="slide">
+            <div class="overlay-text">
+                <img src="/logo.png" class="logo-img" alt="Logo">
+                <h1 style="font-size: 3rem;">We Are LIVE</h1>
+                <p style="font-size: 0.9rem; margin-top: 20px;">Powered by the Foundation for Tomorrow</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressContainer = document.getElementById('progressBars');
+        const slideDuration = 5000; // 5 seconds per slide
+        let currentSlide = 0;
+
+        // Create progress segments
+        slides.forEach((_, i) => {
+            const segment = document.createElement('div');
+            segment.className = 'progress-segment';
+            const fill = document.createElement('div');
+            fill.className = 'progress-fill';
+            fill.id = `fill-${i}`;
+            segment.appendChild(fill);
+            progressContainer.appendChild(segment);
+        });
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                const fill = document.getElementById(`fill-${i}`);
+                if (i < index) {
+                    fill.style.width = '100%';
+                    fill.style.transition = 'none';
+                } else if (i > index) {
+                    fill.style.width = '0%';
+                    fill.style.transition = 'none';
+                }
+            });
+
+            slides[index].classList.add('active');
+            
+            // Animate current progress bar
+            const currentFill = document.getElementById(`fill-${index}`);
+            currentFill.style.width = '0%';
+            currentFill.style.transition = 'none';
+            
+            setTimeout(() => {
+                currentFill.style.width = '100%';
+                currentFill.style.transition = `width ${slideDuration}ms linear`;
+            }, 50);
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }
+
+        // Start
+        showSlide(currentSlide);
+        setInterval(nextSlide, slideDuration);
+    </script>
+</body>
+</html>

@@ -55,7 +55,10 @@ export default function ClientSessionManager() {
         // Session has expired server-side — redirect to login
         console.warn("[SessionManager] Server returned 401. Session expired.");
         if (isMountedRef.current) {
-          router.push("/login?reason=timeout");
+          const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
+          if (!isAuthPage) {
+            router.push("/login?reason=timeout");
+          }
         }
         return;
       }
@@ -156,32 +159,39 @@ export default function ClientSessionManager() {
 
     // ── 2. Visibility change handler ────────────────────────────
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible") {
-        // Tab became visible — check how long we've been away
-        const elapsed = Date.now() - lastActivityRef.current;
+      try {
+        if (document.visibilityState === "visible") {
+          // Tab became visible — check how long we've been away
+          const elapsed = Date.now() - lastActivityRef.current;
 
-        if (elapsed >= SESSION_IDLE_LIMIT_MS) {
-          // We've been idle longer than the session limit while hidden
-          // Check if the JWT is still valid before forcing logout
-          const isValid = await checkSessionValidity();
-          if (!isValid) {
-            // JWT expired — force redirect to login
-            console.warn("[SessionManager] Session expired while tab was hidden.");
-            router.push("/login?reason=timeout");
-            return;
+          if (elapsed >= SESSION_IDLE_LIMIT_MS) {
+            // We've been idle longer than the session limit while hidden
+            // Check if the JWT is still valid before forcing logout
+            const isValid = await checkSessionValidity();
+            if (!isValid) {
+              // JWT expired — force redirect to login
+              console.warn("[SessionManager] Session expired while tab was hidden.");
+              const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
+              if (!isAuthPage) {
+                window.location.href = "/login?reason=timeout";
+              }
+              return;
+            }
+            // JWT is still valid — the user may have been active in another tab
+            // Reset activity and continue
           }
-          // JWT is still valid — the user may have been active in another tab
-          // Reset activity and continue
-        }
 
-        // Resume heartbeats
-        lastActivityRef.current = Date.now();
-        isLeaderRef.current = true;
-        startHeartbeat();
-      } else {
-        // Tab is now hidden — stop heartbeats to save resources
-        // The server will see no heartbeats and eventually mark user as offline
-        stopHeartbeat();
+          // Resume heartbeats
+          lastActivityRef.current = Date.now();
+          isLeaderRef.current = true;
+          startHeartbeat();
+        } else {
+          // Tab is now hidden — stop heartbeats to save resources
+          // The server will see no heartbeats and eventually mark user as offline
+          stopHeartbeat();
+        }
+      } catch (err) {
+        console.error("[SessionManager] Error in visibility change:", err);
       }
     };
 
@@ -199,9 +209,14 @@ export default function ClientSessionManager() {
         try {
           const supabase = createClient();
           await supabase.auth.signOut();
+        } catch (err) {
+          console.error("Signout error:", err);
         } finally {
           if (isMountedRef.current) {
-            router.push("/login?reason=timeout");
+            const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
+            if (!isAuthPage) {
+              window.location.href = "/login?reason=timeout";
+            }
           }
         }
       }, SESSION_IDLE_LIMIT_MS);
@@ -248,66 +263,75 @@ export default function ClientSessionManager() {
     // On mount, verify the session is still valid (handles the case of
     // opening a tab after a long time — e.g., next day)
     (async () => {
-      const isValid = await checkSessionValidity();
-      if (!isValid) {
-        console.warn("[SessionManager] No valid session on mount. Redirecting to login.");
-        router.push("/login?reason=timeout");
-        return;
-      }
-
-      // Initialize session token for active_sessions tracking
-      let sessionToken = sessionStorage.getItem("app_session_token");
-      if (!sessionToken) {
-        sessionToken = crypto.randomUUID();
-        sessionStorage.setItem("app_session_token", sessionToken);
-      }
-
       try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        // Skip redirect if we are already on an auth page
+        const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
         
-        if (user) {
-          // Send initial session token to active_sessions
-          const { error } = await supabase.from("active_sessions").upsert({
-            user_id: user.id,
-            session_token: sessionToken,
-            last_active_at: new Date().toISOString()
-          }, { onConflict: "user_id" });
-          
-          if (error) {
-            console.error("Failed to update active sessions:", error);
+        const isValid = await checkSessionValidity();
+        if (!isValid) {
+          if (!isAuthPage) {
+            console.warn("[SessionManager] No valid session on mount. Redirecting to login.");
+            window.location.href = "/login?reason=timeout";
           }
-
-          // Subscribe to concurrent login changes
-          const channel = supabase
-            .channel(`active_sessions_${user.id}`)
-            .on(
-              "postgres_changes",
-              { event: "UPDATE", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },
-              (payload) => {
-                const newSessionToken = payload.new.session_token;
-                if (newSessionToken && newSessionToken !== sessionToken) {
-                  // Another device logged in and took over the session
-                  alert("You have been logged out because your account was logged in on another device.");
-                  supabase.auth.signOut().then(() => {
-                    router.push("/login");
-                  });
-                }
-              }
-            )
-            .subscribe();
-            
-          // Add channel to cleanup
-          (window as any).__active_session_channel = channel;
+          return;
         }
-      } catch (e) {
-        // active_sessions table might not exist yet if migration pending
-        console.error("Concurrent session tracking error:", e);
-      }
 
-      // Session is valid — start heartbeats
-      lastActivityRef.current = Date.now();
-      startHeartbeat();
+        // Initialize session token for active_sessions tracking
+        let sessionToken = sessionStorage.getItem("app_session_token");
+        if (!sessionToken) {
+          sessionToken = crypto.randomUUID();
+          sessionStorage.setItem("app_session_token", sessionToken);
+        }
+
+        try {
+          const supabase = createClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Send initial session token to active_sessions
+            const { error } = await supabase.from("active_sessions").upsert({
+              user_id: user.id,
+              session_token: sessionToken,
+              last_active_at: new Date().toISOString()
+            }, { onConflict: "user_id" });
+            
+            if (error) {
+              console.error("Failed to update active sessions:", error);
+            }
+
+            // Subscribe to concurrent login changes
+            const channel = supabase
+              .channel(`active_sessions_${user.id}`)
+              .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },
+                (payload) => {
+                  const newSessionToken = payload.new.session_token;
+                  if (newSessionToken && newSessionToken !== sessionToken) {
+                    // Another device logged in and took over the session
+                    alert("You have been logged out because your account was logged in on another device.");
+                    supabase.auth.signOut().catch(()=>{}).finally(() => {
+                      window.location.href = "/login";
+                    });
+                  }
+                }
+              )
+              .subscribe();
+              
+            // Add channel to cleanup
+            (window as any).__active_session_channel = channel;
+          }
+        } catch (e) {
+          // active_sessions table might not exist yet if migration pending
+          console.error("Concurrent session tracking error:", e);
+        }
+
+        // Session is valid — start heartbeats
+        lastActivityRef.current = Date.now();
+        startHeartbeat();
+      } catch (err) {
+        console.error("[SessionManager] Initialization error:", err);
+      }
     })();
 
     // ── Cleanup ─────────────────────────────────────────────────

@@ -132,11 +132,7 @@ export default function Navbar() {
     } catch (_) {}
     
     setTimeout(() => {
-      if (mounted) {
-        router.push("/login");
-      } else {
-        window.location.href = "/login";
-      }
+      window.location.href = "/login";
     }, 600);
   };
 
@@ -256,53 +252,59 @@ export default function Navbar() {
             {profileOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                <div className="absolute right-0 top-12 mt-2 w-64 rounded-xl border border-border p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-150 bg-popover text-popover-foreground">
-                  <div className="px-2 py-2 border-b border-border space-y-0.5">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Active Identity Bound</span>
-                    <span className="text-xs font-bold text-foreground block truncate">{userData?.full_name}</span>
-                    <span className="text-xs font-medium text-blue-400 block truncate">{userData?.email}</span>
-                    <span className="text-[0.7rem] font-mono text-emerald-500/80 block">✓ Session Signature Active</span>
+                <div className={`absolute right-0 top-12 mt-2 w-64 rounded-xl border p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${isLight ? 'bg-white border-gray-200 text-gray-800' : 'bg-[#0A0D14] border-white/10 text-white'}`}>
+                  <div className={`px-2 py-2 border-b space-y-1 ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Active Identity Bound</span>
+                    <span className="text-sm font-bold block truncate">{userData?.full_name}</span>
+                    <span className="text-xs font-medium text-blue-500 block truncate">{userData?.email}</span>
+                    <span className="text-[0.7rem] font-mono text-emerald-500 flex items-center gap-1 mt-1">
+                      <ShieldCheck className="h-3 w-3" /> Session Signature Active
+                    </span>
                   </div>
 
-                  <div className="py-1 space-y-0.5">
+                  <div className="py-2 space-y-1">
                     <Link
                       href="/profile"
                       onClick={() => setProfileOpen(false)}
-                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-2 ${
+                      className={`w-full text-left px-2 py-2 rounded-lg text-xs transition-colors flex items-center gap-2 font-medium ${
                         isLight ? "hover:bg-gray-100 text-gray-700" : "hover:bg-white/5 text-gray-300"
                       }`}
                     >
-                      <User className="h-3 w-3 text-purple-400" />
+                      <User className="h-3.5 w-3.5 text-purple-500" />
                       <span>My Profile & Settings</span>
                     </Link>
 
-                    <div className="px-2 py-1 flex items-center justify-between text-xs text-gray-400 font-mono mt-1 pt-1 border-t border-white/5">
+                    <div className={`px-2 py-2 flex items-center justify-between text-xs font-mono mt-1 mb-1 rounded-lg ${isLight ? 'bg-gray-50 text-gray-500' : 'bg-white/5 text-gray-400'}`}>
                       <span>Lease Countdown:</span>
-                      <strong className="text-white">{formatTime(secondsRemaining)}</strong>
+                      <strong className={isLight ? "text-gray-900" : "text-white"}>{formatTime(secondsRemaining)}</strong>
                     </div>
 
                     <button 
                       onClick={() => { handleUserActivity(); setProfileOpen(false); }}
-                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors flex items-center gap-2 ${
+                      className={`w-full text-left px-2 py-2 rounded-lg text-xs transition-colors flex items-center gap-2 font-medium ${
                         isLight ? "hover:bg-gray-100 text-gray-700" : "hover:bg-white/5 text-gray-300"
                       }`}
                     >
-                      <RefreshCw className="h-3 w-3 text-emerald-400" />
+                      <RefreshCw className="h-3.5 w-3.5 text-emerald-500" />
                       <span>Refresh Idle Keep-Alive</span>
                     </button>
                   </div>
 
-                  <div className="pt-1 border-t border-white/5">
+                  <div className={`pt-2 border-t ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
                     <button 
                       onClick={handleExecuteSignOut}
                       disabled={loggingOut}
-                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 transition-all flex items-center justify-between font-semibold font-sans group cursor-pointer"
+                      className={`w-full text-left px-2 py-2 rounded-lg text-xs transition-all flex items-center justify-between font-bold cursor-pointer group ${
+                        isLight 
+                          ? "bg-red-50 hover:bg-red-100 text-red-600 border border-red-100" 
+                          : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20"
+                      }`}
                     >
                       <span className="flex items-center gap-2">
-                        <LogOut className="h-3.5 w-3.5 text-rose-400 group-hover:rotate-12 transition-transform" />
+                        <LogOut className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform" />
                         <span>{loggingOut ? "Terminating Auth..." : "Log Out Securely"}</span>
                       </span>
-                      <span className="text-[0.7rem] font-mono bg-rose-500/20 px-1 rounded text-rose-400">FLUSH</span>
+                      <span className={`text-[0.7rem] font-mono px-1.5 py-0.5 rounded ${isLight ? 'bg-red-100 text-red-700' : 'bg-rose-500/20 text-rose-400'}`}>FLUSH</span>
                     </button>
                   </div>
                 </div>
