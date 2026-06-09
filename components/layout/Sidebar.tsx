@@ -152,12 +152,9 @@ export default function Sidebar() {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-white shadow-sm overflow-hidden p-0.5">
               <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain" />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className={`text-xs font-bold tracking-tight truncate ${"text-foreground"}`}>
+            <div className="flex flex-col min-w-0 justify-center">
+              <span className={`text-[14px] font-black tracking-tight truncate bg-clip-text text-transparent bg-gradient-to-r drop-shadow-sm ${isLight ? "from-blue-700 via-indigo-600 to-purple-700" : "from-blue-400 via-indigo-300 to-purple-400"}`}>
                 Chandak Workspace
-              </span>
-              <span className="text-[0.7rem] font-mono font-semibold text-blue-500 tracking-wider truncate uppercase">
-                {roleCode === "SUPER_ADMIN" ? "Governance Master" : "Enterprise Stack"}
               </span>
             </div>
           </Link>
