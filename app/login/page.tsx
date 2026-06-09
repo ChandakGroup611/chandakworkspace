@@ -125,10 +125,12 @@ export default function LoginPage() {
       {/* Central Login Authentication Form Container */}
       <div className="w-full max-w-[400px] relative z-10 animate-in fade-in-50 zoom-in-95 duration-500 my-auto">
         <div className="text-center mb-6 space-y-2">
-          <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>
-            <div className="p-2 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg text-white">
-              <Cpu className="h-5 w-5" />
+          <div className="flex justify-center mb-3">
+            <div className="h-24 w-32 p-2 bg-white rounded-xl shadow-lg border border-gray-100 flex items-center justify-center">
+              <img src="/logo.png" alt="Chandak Logo" className="max-h-full max-w-full object-contain" />
             </div>
+          </div>
+          <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>
             <span>Chandak Workspace</span>
           </div>
           <p className={`text-sm sm:text-base max-w-sm mx-auto ${isLight ? "text-gray-500" : "text-gray-400"}`}>

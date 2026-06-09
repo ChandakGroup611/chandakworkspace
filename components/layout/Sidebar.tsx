@@ -149,8 +149,8 @@ export default function Sidebar() {
       <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
         {!isCompact ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/20">
-              <Sparkles className="h-4 w-4" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-white shadow-sm overflow-hidden p-0.5">
+              <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col min-w-0">
               <span className={`text-xs font-bold tracking-tight truncate ${"text-foreground"}`}>
@@ -162,8 +162,8 @@ export default function Sidebar() {
             </div>
           </Link>
         ) : (
-          <Link href="/" className="flex h-8 w-8 mx-auto shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-md">
-            <Sparkles className="h-4 w-4" />
+          <Link href="/" className="flex h-8 w-8 mx-auto shrink-0 items-center justify-center rounded bg-white shadow-sm overflow-hidden p-0.5">
+            <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain" />
           </Link>
         )}
 
