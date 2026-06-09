@@ -179,7 +179,7 @@ export async function createWorkspace(formData: any) {
       }
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("workspaces")
       .insert([{
         workspace_name: formData.name,
@@ -503,7 +503,7 @@ export async function updateWorkspace(id: string, formData: any) {
     return { error: "Validation Error: A workspace cannot be assigned as its own parent." };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("workspaces")
     .update(updatePayload)
     .eq("id", id)
@@ -624,7 +624,7 @@ export async function deleteWorkspace(id: string) {
     }
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("workspaces")
     .update({ is_deleted: true })
     .eq("id", id);
