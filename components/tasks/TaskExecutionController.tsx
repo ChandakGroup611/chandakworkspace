@@ -441,7 +441,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     task.inherited_users.forEach((u: any) => {
       if (task.assignee?.id === u.id) return;
       if (explicitExecutors.some((e: any) => e.id === u.id)) return;
-      if (explicitReviewers.some((e: any) => e.id === u.id)) return;
       if (explicitWatchers.some((e: any) => e.id === u.id)) return;
       
       // All inherited workspace access defaults to being a Watcher
@@ -546,17 +545,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
           </div>
           
-          {/* Reviewers */}
+          {/* Team (Watchers) */}
           <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-blue-500">Reviewers</span>
-            <div className="text-xs font-medium dark:text-gray-200">
-              {explicitReviewers.length > 0 ? explicitReviewers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
-            </div>
-          </div>
-
-          {/* Watchers */}
-          <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-amber-500">Watchers</span>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-amber-500">Team</span>
             <div className="text-xs font-medium dark:text-gray-200">
               {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
             </div>
@@ -622,7 +613,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
-              disabled={!canEditCore}
+              disabled={!canEditCore && !(isOwner || isExecutor)}
               onChange={(e) => {
                 const newCode = e.target.value;
                 if (newCode === currentStatusCode) {
@@ -633,7 +624,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               }}
               className={`w-full p-1.5 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
                 isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
-              } ${!canEditCore ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${(!canEditCore && !(isOwner || isExecutor)) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
@@ -697,7 +688,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </>
               )}
 
-              {task.status?.is_closed && task.currentUserCanAct && (
+              {task.status?.is_closed && (task.currentUserCanAct || isExecutor) && (
                 <AppButton 
                   size="sm" 
                   variant="outline" 

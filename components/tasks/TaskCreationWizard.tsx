@@ -40,10 +40,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
   const [statuses, setStatuses] = useState<any[]>([]);
   const [parentTaskId, setParentTaskId] = useState(initialParentTaskId || "");
   const [workspaceTasks, setWorkspaceTasks] = useState<any[]>([]);
-  const [assignedTo, setAssignedTo] = useState(""); // This is the Single Owner
-  const [executors, setExecutors] = useState<string[]>([]);
-  const [reviewers, setReviewers] = useState<string[]>([]);
-  const [watchers, setWatchers] = useState<string[]>([]);
+  const [assignees, setAssignees] = useState<string[]>([]);
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -103,23 +100,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     }
   }, [templateId, templates]);
 
-  // Auto-assign all other stakeholders as watchers when Assignee is selected
-  useEffect(() => {
-    if (assignedTo && stakeholders.length > 0) {
-      const allOtherIds = stakeholders
-        .filter(s => s.id !== assignedTo)
-        .map(s => s.id);
-      
-      setWatchers(allOtherIds);
-      
-      // Also remove the new assignee from executors/reviewers if they were there
-      setExecutors(prev => prev.filter(id => id !== assignedTo));
-      setReviewers(prev => prev.filter(id => id !== assignedTo));
-    } else if (!assignedTo && stakeholders.length > 0) {
-       // If assignee is cleared, we could optionally clear watchers, or just leave them.
-       // Let's leave them for now to avoid wiping manual selections unnecessarily.
-    }
-  }, [assignedTo, stakeholders]);
+  // Auto-assignment of Watchers logic is handled at submission time.
 
   const handleAddField = async () => {
     if (!newFieldName) return;
@@ -158,8 +139,8 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       return;
     }
 
-    if (!assignedTo) {
-      alert("You must explicitly select an Owner for this task.");
+    if (assignees.length === 0) {
+      alert("You must explicitly select at least one Assignee for this task.");
       return;
     }
 
@@ -169,11 +150,15 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     }
     
     // Prepare multi-assignee execution team
-    const participants = [];
-    if (assignedTo) participants.push({ user_id: assignedTo, participation_role: 'OWNER' });
-    executors.forEach(id => { if (id !== assignedTo) participants.push({ user_id: id, participation_role: 'EXECUTOR' }); });
-    reviewers.forEach(id => { if (id !== assignedTo) participants.push({ user_id: id, participation_role: 'REVIEWER' }); });
-    watchers.forEach(id => { if (id !== assignedTo) participants.push({ user_id: id, participation_role: 'WATCHER' }); });
+    const participants: any[] = [];
+    assignees.forEach(id => participants.push({ user_id: id, participation_role: 'EXECUTOR' }));
+    
+    // Auto-assign remaining workspace members as Watchers (Team)
+    stakeholders.forEach(s => {
+      if (!assignees.includes(s.id)) {
+        participants.push({ user_id: s.id, participation_role: 'WATCHER' });
+      }
+    });
 
     try {
       setIsLoading(true);
@@ -187,7 +172,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
         parent_task_id: parentTaskId || null,
         sprint_id: sprintId || null,
         template_id: templateId || null,
-        assigned_to: assignedTo,
+        assigned_to: assignees[0] || null,
         participants,
         custom_fields: { ...fieldValues, tags, link_url: linkUrl || null },
         checklist_items: checklistItems,
@@ -389,97 +374,27 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
             
             <div className="space-y-1.5 mb-5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assignee (Task Owner) *</label>
-              <select
-                className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors cursor-pointer ${
-                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
-                }`}
-                value={assignedTo}
-                onChange={e => setAssignedTo(e.target.value)}
-              >
-                <option value="">-- Unassigned --</option>
-                {stakeholders.map(s => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name} ({s.workspace_role})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={`p-4 rounded-xl border mb-5 ${isLightMode ? "bg-gray-50/80 border-gray-200" : "bg-white/[0.01] border-white/10"}`}>
-              <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">Supporting Stakeholders (Optional)</h4>
-              <div className="grid grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5">
-                    <label className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Executors</label>
-                    <button type="button" onClick={() => {
-                      const available = stakeholders.filter(s => s.id !== assignedTo).map(s => s.id);
-                      if (executors.length === available.length && available.length > 0) setExecutors([]);
-                      else setExecutors(available);
-                    }} className="text-[9px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
-                      {executors.length === stakeholders.filter(s => s.id !== assignedTo).length && stakeholders.filter(s => s.id !== assignedTo).length > 0 ? "Clear" : "Select All"}
-                    </button>
-                  </div>
-                  <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent">
-                    {stakeholders.filter(s => s.id !== assignedTo).map(s => (
-                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
-                        <input type="checkbox" className="accent-emerald-500" checked={executors.includes(s.id)} onChange={e => {
-                          if (e.target.checked) setExecutors([...executors, s.id]);
-                          else setExecutors(executors.filter(id => id !== s.id));
-                        }} />
-                        <span className="truncate">{s.full_name}</span>
-                      </label>
-                    ))}
-                    {stakeholders.filter(s => s.id !== assignedTo).length === 0 && <span className="text-[10px] text-gray-500">No other users.</span>}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5">
-                    <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Reviewers</label>
-                    <button type="button" onClick={() => {
-                      const available = stakeholders.filter(s => s.id !== assignedTo).map(s => s.id);
-                      if (reviewers.length === available.length && available.length > 0) setReviewers([]);
-                      else setReviewers(available);
-                    }} className="text-[9px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-wider">
-                      {reviewers.length === stakeholders.filter(s => s.id !== assignedTo).length && stakeholders.filter(s => s.id !== assignedTo).length > 0 ? "Clear" : "Select All"}
-                    </button>
-                  </div>
-                  <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-blue-500/20 scrollbar-track-transparent">
-                    {stakeholders.filter(s => s.id !== assignedTo).map(s => (
-                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
-                        <input type="checkbox" className="accent-blue-500" checked={reviewers.includes(s.id)} onChange={e => {
-                          if (e.target.checked) setReviewers([...reviewers, s.id]);
-                          else setReviewers(reviewers.filter(id => id !== s.id));
-                        }} />
-                        <span className="truncate">{s.full_name}</span>
-                      </label>
-                    ))}
-                    {stakeholders.filter(s => s.id !== assignedTo).length === 0 && <span className="text-[10px] text-gray-500">No other users.</span>}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5">
-                    <label className="text-[10px] font-bold text-amber-500 uppercase tracking-wider block">Watchers</label>
-                    <button type="button" onClick={() => {
-                      const available = stakeholders.filter(s => s.id !== assignedTo).map(s => s.id);
-                      if (watchers.length === available.length && available.length > 0) setWatchers([]);
-                      else setWatchers(available);
-                    }} className="text-[9px] font-bold text-amber-600 hover:text-amber-700 uppercase tracking-wider">
-                      {watchers.length === stakeholders.filter(s => s.id !== assignedTo).length && stakeholders.filter(s => s.id !== assignedTo).length > 0 ? "Clear" : "Select All"}
-                    </button>
-                  </div>
-                  <div className="max-h-28 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent">
-                    {stakeholders.filter(s => s.id !== assignedTo).map(s => (
-                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1.5 rounded-md transition-colors">
-                        <input type="checkbox" className="accent-amber-500" checked={watchers.includes(s.id)} onChange={e => {
-                          if (e.target.checked) setWatchers([...watchers, s.id]);
-                          else setWatchers(watchers.filter(id => id !== s.id));
-                        }} />
-                        <span className="truncate">{s.full_name}</span>
-                      </label>
-                    ))}
-                    {stakeholders.filter(s => s.id !== assignedTo).length === 0 && <span className="text-[10px] text-gray-500">No other users.</span>}
-                  </div>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assignees (Task Owners) *</label>
+                <button type="button" onClick={() => {
+                  if (assignees.length === stakeholders.length && stakeholders.length > 0) setAssignees([]);
+                  else setAssignees(stakeholders.map(s => s.id));
+                }} className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
+                  {assignees.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
+                </button>
+              </div>
+              <div className={`p-2 rounded-xl border max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                  {stakeholders.map(s => (
+                    <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
+                      <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={assignees.includes(s.id)} onChange={e => {
+                        if (e.target.checked) setAssignees([...assignees, s.id]);
+                        else setAssignees(assignees.filter(id => id !== s.id));
+                      }} />
+                      <span className="truncate font-medium">{s.full_name} <span className="text-gray-400 font-normal ml-1">({s.workspace_role})</span></span>
+                    </label>
+                  ))}
+                  {stakeholders.length === 0 && <span className="text-xs text-gray-500 p-2">No users available in this workspace.</span>}
                 </div>
               </div>
             </div>
