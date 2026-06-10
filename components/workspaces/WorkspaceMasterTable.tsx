@@ -193,7 +193,6 @@ export function WorkspaceMasterTable({
     const hasChildren = node.children && node.children.length > 0;
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
     const isSubWorkspace = node.type === 'SUB_WORKSPACE';
-    const isRoot = depth === 0;
     
     // Distinct icons based on depth and type
     let TypeIcon = Folder;
