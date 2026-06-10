@@ -440,12 +440,12 @@ export default function MastersPage() {
         // Push global update notification broadcast
         await supabase.from("notification_queue").insert([{
           entity_type: currentConfig.table,
-          entity_id: editRecordId,
+          entity_id: payload.code || payload.name || editRecordId,
           module: "masters",
           action_type: "update",
           actor: "System Administrator",
           target_user_id: "GLOBAL_OPS",
-          payload: { message: `Master record '${payload.code}' updated in relation '${currentConfig.table}'.`, values: payload },
+          payload: { message: `Master record '${payload.code || payload.name}' updated in relation '${currentConfig.table}'.`, values: payload },
           redirect_url: `/masters?scope=OTHER`,
           priority_level: "MEDIUM",
           is_read: false
@@ -494,10 +494,15 @@ export default function MastersPage() {
       // Push global creation notification broadcast
       await supabase.from("notification_queue").insert([{
         entity_type: currentConfig.table,
-        entity_id: data?.id || "00000000-0000-0000-0000-000000000000",
+        entity_id: payload.code || payload.name || data?.id || "00000000-0000-0000-0000-000000000000",
         module: "masters",
         action_type: "create",
         actor: "System Administrator",
+        target_user_id: "GLOBAL_OPS",
+        payload: { message: `Master record '${payload.code || payload.name}' created in relation '${currentConfig.table}'.`, values: payload },
+        redirect_url: `/masters?scope=OTHER`,
+        priority_level: "MEDIUM",
+        is_read: false
       }]).then(() => {}, () => {});
 
       setSuccessAlert(`Successfully provisioned dynamic master record '${payload.code}'.`);
@@ -546,7 +551,7 @@ export default function MastersPage() {
       // Push global update notification broadcast
       await supabase.from("notification_queue").insert([{
         entity_type: currentConfig.table,
-        entity_id: record.id,
+        entity_id: record.code || record.name || record.id,
         module: "masters",
         action_type: "update",
         actor: "System Administrator",
@@ -597,7 +602,7 @@ export default function MastersPage() {
       // Push global deletion notification broadcast
       await supabase.from("notification_queue").insert([{
         entity_type: currentConfig.table,
-        entity_id: record.id,
+        entity_id: record.code || record.name || record.id,
         module: "masters",
         action_type: "delete",
         actor: "System Administrator",

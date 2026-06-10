@@ -428,6 +428,7 @@ export default function UserMasterPage() {
 
   // Append robust local log helper
   const appendLocalAudit = (usrId: string, op: string, pl: any) => {
+    const usr = users.find(u => u.id === usrId) || selectedUser;
     const newLog: AuditLogItem = {
       id: `audit-${Date.now()}`,
       operation: op,
@@ -454,7 +455,7 @@ export default function UserMasterPage() {
 
     supabase.from("notification_queue").insert([{
       entity_type: "user_master",
-      entity_id: usrId,
+      entity_id: usr ? (usr.user_code || usr.full_name || usr.id) : usrId,
       module: "users",
       action_type: op.toLowerCase(),
       actor: "System Administrator",
