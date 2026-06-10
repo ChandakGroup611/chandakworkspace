@@ -1087,3 +1087,61 @@ export async function executeTaskBatchOperation(payload: {
   };
 }
 
+export async function updateTaskAssignees(taskId: string, workspaceId: string, assignees: string[]) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
+  if (!userId) return { error: "Unauthenticated" };
+
+  // Fetch the task
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
+  if (!task) return { error: "Task not found" };
+
+  const { hasPermission } = await import('@/lib/permissions');
+  const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+
+  // Check if current user is an Executor or Super Admin
+  const { data: participant } = await supabaseAdmin
+    .from('task_participants')
+    .select('id')
+    .eq('task_id', taskId)
+    .eq('user_id', userId)
+    .eq('participation_role', 'EXECUTOR')
+    .maybeSingle();
+
+  if (!isSuperAdmin && !participant && task.assigned_to !== userId) {
+    return { error: "You do not have permission to edit assignees. Only Executors and Super Admins can do this." };
+  }
+
+  if (assignees.length === 0) {
+    return { error: "At least one assignee must be selected." };
+  }
+
+  // Fetch all workspace members
+  const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
+  const stakeholders = await fetchWorkspaceStakeholders(workspaceId);
+
+  // Prepare participants array
+  const participants: any[] = [];
+  assignees.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'EXECUTOR' }));
+
+  // Add Watchers (Team)
+  stakeholders.forEach((s: any) => {
+    if (!assignees.includes(s.id)) {
+      participants.push({ task_id: taskId, user_id: s.id, participation_role: 'WATCHER' });
+    }
+  });
+
+  // Perform the swap transactionally (via sequential queries in this case)
+  const { error: deleteError } = await supabaseAdmin.from('task_participants').delete().eq('task_id', taskId);
+  if (deleteError) return { error: deleteError.message };
+
+  const { error: insertError } = await supabaseAdmin.from('task_participants').insert(participants);
+  if (insertError) return { error: insertError.message };
+
+  const { error: updateError } = await supabaseAdmin.from('tasks').update({ assigned_to: assignees[0] }).eq('id', taskId);
+  if (updateError) return { error: updateError.message };
+
+  return { success: true };
+}
+

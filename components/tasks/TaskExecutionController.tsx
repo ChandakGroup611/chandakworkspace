@@ -66,6 +66,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [editedChecklists, setEditedChecklists] = useState<Record<string, boolean>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingTaskUpdates, setPendingTaskUpdates] = useState<Record<string, any>>({});
+  
+  // Assignee Editing
+  const [isEditingAssignees, setIsEditingAssignees] = useState(false);
+  const [stakeholders, setStakeholders] = useState<any[]>([]);
+  const [editingAssigneesList, setEditingAssigneesList] = useState<string[]>([]);
+  const [isSavingAssignees, setIsSavingAssignees] = useState(false);
 
   const loadTaskDetails = async (forceUpdate = false) => {
     if (!forceUpdate && initialTask && task) return;
@@ -539,16 +545,81 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           </div>
           {/* Executors */}
           <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-emerald-500">Executors</span>
-            <div className="text-xs font-medium dark:text-gray-200">
-              {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
+            <div className="flex items-center justify-between">
+              <span className="text-[0.7rem] font-bold uppercase tracking-wider text-emerald-500">Executors</span>
+              { (isExecutor || task.currentUserIsSuperAdmin) && !isFrozen && (
+                <button 
+                  onClick={async () => {
+                    if (!isEditingAssignees) {
+                      // Fetch stakeholders if not loaded
+                      if (stakeholders.length === 0) {
+                        try {
+                          const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
+                          const res = await fetchWorkspaceStakeholders(task.workspace_id);
+                          setStakeholders(res);
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }
+                      setEditingAssigneesList(explicitExecutors.map((e: any) => e.id));
+                    }
+                    setIsEditingAssignees(!isEditingAssignees);
+                  }} 
+                  className="text-[10px] font-bold text-blue-500 hover:text-blue-400 underline"
+                >
+                  {isEditingAssignees ? 'Cancel' : 'Edit'}
+                </button>
+              )}
             </div>
+            
+            {isEditingAssignees ? (
+              <div className={`p-2 rounded-xl border max-h-40 overflow-y-auto scrollbar-thin mt-1 ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}>
+                <div className="flex flex-col gap-1">
+                  {stakeholders.map(s => (
+                    <label key={s.id} className="flex items-center gap-2 text-[10px] text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-md transition-colors">
+                      <input type="checkbox" className="accent-emerald-500 h-3 w-3" checked={editingAssigneesList.includes(s.id)} onChange={e => {
+                        if (e.target.checked) setEditingAssigneesList([...editingAssigneesList, s.id]);
+                        else setEditingAssigneesList(editingAssigneesList.filter(id => id !== s.id));
+                      }} />
+                      <span className="truncate">{s.full_name}</span>
+                    </label>
+                  ))}
+                  {stakeholders.length === 0 && <span className="text-[10px] text-gray-500 p-1">Loading...</span>}
+                </div>
+                <AppButton 
+                  size="sm" 
+                  className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-[10px] h-6" 
+                  disabled={isSavingAssignees}
+                  onClick={async () => {
+                    setIsSavingAssignees(true);
+                    try {
+                      const { updateTaskAssignees } = await import("@/lib/actions/tasks");
+                      const res = await updateTaskAssignees(taskId, task.workspace_id, editingAssigneesList);
+                      if (res.error) throw new Error(res.error);
+                      triggerToast("Assignees updated successfully");
+                      setIsEditingAssignees(false);
+                      await loadTaskDetails(true);
+                    } catch (e: any) {
+                      setError(e.message || "Failed to update assignees.");
+                    } finally {
+                      setIsSavingAssignees(false);
+                    }
+                  }}
+                >
+                  {isSavingAssignees ? 'Saving...' : 'Save Assignees'}
+                </AppButton>
+              </div>
+            ) : (
+              <div className="text-xs font-medium dark:text-gray-200">
+                {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
+              </div>
+            )}
           </div>
           
           {/* Team (Watchers) */}
-          <div className="space-y-1">
+          <div className="space-y-1 md:col-span-4">
             <span className="text-[0.7rem] font-bold uppercase tracking-wider text-amber-500">Team</span>
-            <div className="text-xs font-medium dark:text-gray-200">
+            <div className="text-xs font-medium dark:text-gray-200 leading-relaxed">
               {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
             </div>
           </div>
