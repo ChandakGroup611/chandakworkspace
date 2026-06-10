@@ -143,6 +143,11 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       return;
     }
 
+    if (!startDate || !endDate) {
+      alert("Start Date and Target Due Date are mandatory.");
+      return;
+    }
+
     if (startDate && startDate < localTodayString) {
       alert("Start Date cannot be less than the creation date (today).");
       return;
@@ -286,7 +291,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             
             <div className="grid grid-cols-2 gap-5 mb-5">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date <span className="text-red-500">*</span></label>
                 <AppInput 
                   type="date" 
                   min={localTodayString} 
@@ -296,7 +301,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Due Date</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Due Date <span className="text-red-500">*</span></label>
                 <AppInput 
                   type="date" 
                   min={startDate || localTodayString} 
@@ -481,7 +486,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                <AlignLeft className="h-3 w-3" /> Execution Notes (Rich Text)
+                <AlignLeft className="h-3 w-3" /> Execution Notes (Rich Text) <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={description}

@@ -776,11 +776,11 @@ export async function fetchAllTasks() {
   const visibleWorkspaces = await getVisibleWorkspaces(user.id);
   const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
 
-  if (visibleWsIds.length === 0) {
-    return [];
-  }
+  // Fetch task IDs where user is a participant
+  const { data: partData } = await supabaseAdmin.from("task_participants").select("task_id").eq("user_id", user.id);
+  const partTaskIds = partData ? partData.map((p: any) => p.task_id) : [];
 
-  const { data: allTasks, error: tasksError } = await supabase
+  let query = supabase
     .from("tasks")
     .select(`
       *,
@@ -788,9 +788,19 @@ export async function fetchAllTasks() {
       status:status_master(name:status_name, code:status_code, status_color),
       priority:priority_master(name:priority_name, code:priority_code)
     `)
-    .in("workspace_id", visibleWsIds)
-    .eq("is_deleted", false)
-    .order("created_at", { ascending: false });
+    .eq("is_deleted", false);
+
+  if (visibleWsIds.length > 0 && partTaskIds.length > 0) {
+    query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),id.in.(${partTaskIds.join(',')}),assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
+  } else if (visibleWsIds.length > 0) {
+    query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
+  } else if (partTaskIds.length > 0) {
+    query = query.or(`id.in.(${partTaskIds.join(',')}),assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
+  } else {
+    query = query.or(`assigned_to.eq.${user.id},owner_id.eq.${user.id}`);
+  }
+
+  const { data: allTasks, error: tasksError } = await query.order("created_at", { ascending: false });
 
   if (tasksError) {
     console.error("[Workspaces] Error fetching all tasks:", tasksError);

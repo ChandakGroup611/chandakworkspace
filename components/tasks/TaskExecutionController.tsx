@@ -473,14 +473,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
           </div>
           <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Start Date</span>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Start Date <span className="text-red-500">*</span></span>
             <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-gray-400" />
               {task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"}
             </div>
           </div>
           <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Due Date</span>
+            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Due Date <span className="text-red-500">*</span></span>
             <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-gray-400" />
               {task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"}
@@ -733,7 +733,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         )}
  
         <div className="space-y-3">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Task Remarks</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Task Remarks <span className="text-red-500">*</span></label>
           <textarea
             value={remarksDraft}
             onChange={e => setRemarksDraft(e.target.value)}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -31,6 +31,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface SLATracker {
   id: string;
+  displayId?: string;
   targetEntity: string;
   type: "First Response" | "Resolution SLA" | "Escalation SLA";
   allocatedWindow: string;
@@ -44,38 +45,38 @@ export default function SLAPage() {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   
-  const [slas, setSlas] = useState<SLATracker[]>([
-    {
-      id: "SLA-401",
-      targetEntity: "TKT-2041 (Database Saturation)",
-      type: "Resolution SLA",
-      allocatedWindow: "60m target",
-      elapsedTime: "56m elapsed",
-      status: "Warning",
-      escalationTier: "Level 3",
-      actionRecipient: "Department Operations Manager"
-    },
-    {
-      id: "SLA-389",
-      targetEntity: "REQ-902 (Snapshot Materialization)",
-      type: "First Response",
-      allocatedWindow: "15m target",
-      elapsedTime: "18m elapsed",
-      status: "Breached",
-      escalationTier: "Level 4",
-      actionRecipient: "Executive VP Ops Dashboard Alert"
-    },
-    {
-      id: "SLA-405",
-      targetEntity: "TKT-2039 (Middleware Invalidation)",
-      type: "First Response",
-      allocatedWindow: "30m target",
-      elapsedTime: "8m elapsed",
-      status: "Healthy",
-      escalationTier: "Level 1",
-      actionRecipient: "Assigned Service Desk Agent"
+  const [slas, setSlas] = useState<SLATracker[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'ALL' | 'UPCOMING' | 'ESCALATED'>('ALL');
+
+  const fetchSlas = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/sla');
+      const data = await res.json();
+      if (data.slas) {
+        setSlas(data.slas);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchSlas();
+  }, []);
+
+  const totalRecords = slas.length;
+  const upcomingRecords = slas.filter(s => s.status === 'Warning').length;
+  const escalatedRecords = slas.filter(s => s.status === 'Breached').length;
+
+  const filteredSlas = slas.filter(s => {
+    if (filter === 'UPCOMING') return s.status === 'Warning';
+    if (filter === 'ESCALATED') return s.status === 'Breached';
+    return true;
+  });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -83,10 +84,11 @@ export default function SLAPage() {
     setIsRefreshing(true);
     setTimeout(() => {
       setSlas(slas.map(s => {
-        if (s.status === "Warning") return { ...s, status: "Breached", escalationTier: "Level 4", elapsedTime: "62m elapsed" };
+        if (s.status === "Warning") return { ...s, status: "Breached", escalationTier: "Level 4", elapsedTime: "0h remaining" };
         return s;
       }));
       setIsRefreshing(false);
+      fetchSlas(); // Refresh from backend too
     }, 1500);
   };
 
@@ -128,7 +130,38 @@ export default function SLAPage() {
           </AppButton>
         </div>
       </div>
+      {/* Interactive SLA Governance Heatmap Metrics */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <AppCard 
+          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-indigo-500' : 'hover:bg-gray-50/50 dark:hover:bg-white/5'} ${isLightMode ? "bg-white" : ""}`}
+          onClick={() => setFilter('ALL')}
+        >
+          <AppCardContent className="p-4 flex flex-col items-center justify-center">
+            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total Records</span>
+            <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{loading ? '-' : totalRecords}</span>
+          </AppCardContent>
+        </AppCard>
 
+        <AppCard 
+          className={`cursor-pointer transition-all ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-amber-500/10'} ${isLightMode ? "bg-white" : ""}`}
+          onClick={() => setFilter('UPCOMING')}
+        >
+          <AppCardContent className="p-4 flex flex-col items-center justify-center">
+            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
+            <span className="text-3xl font-bold text-amber-500">{loading ? '-' : upcomingRecords}</span>
+          </AppCardContent>
+        </AppCard>
+
+        <AppCard 
+          className={`cursor-pointer transition-all ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-rose-500/10'} ${isLightMode ? "bg-white" : ""}`}
+          onClick={() => setFilter('ESCALATED')}
+        >
+          <AppCardContent className="p-4 flex flex-col items-center justify-center">
+            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
+            <span className="text-3xl font-bold text-rose-600 dark:text-rose-400">{loading ? '-' : escalatedRecords}</span>
+          </AppCardContent>
+        </AppCard>
+      </div>
       {/* Primary Orchestration Column Layouts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Span 2: Active Timers & Escalation Targets Matrix */}
@@ -145,7 +178,7 @@ export default function SLAPage() {
               <span className={`text-xs px-2 py-0.5 rounded font-mono font-bold uppercase border ${
                 isLightMode ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
               }`}>
-                Breach Count: {slas.filter(s => s.status === "Breached").length}
+                Breach Count: {escalatedRecords}
               </span>
             </AppCardHeader>
 
@@ -161,11 +194,11 @@ export default function SLAPage() {
                     </tr>
                   </AppTableHeader>
                   <AppTableBody>
-                    {slas.map((item) => (
+                    {filteredSlas.map((item) => (
                       <AppTableRow key={item.id} className={isLightMode ? "hover:bg-gray-50" : ""}>
                         <AppTableCell>
                           <div className="space-y-0.5">
-                            <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-indigo-600" : "text-white"}`}>{item.id}</span>
+                            <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-indigo-600" : "text-white"}`}>{item.displayId || item.id}</span>
                             <span className="text-[0.8rem] text-gray-500 block truncate max-w-[150px]">{item.targetEntity}</span>
                             <span className={`text-xs font-semibold ${isLightMode ? "text-indigo-500" : "text-indigo-400"}`}>{item.type}</span>
                           </div>
