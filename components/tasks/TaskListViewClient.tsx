@@ -554,8 +554,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       
       <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
         <AppTable className="table-auto w-full">
-          <AppTableHeader className="sticky top-0 z-10 bg-white dark:bg-[#06080f]">
-            <AppTableRow>
+          <AppTableHeader className="sticky top-0 z-10 bg-[#4472C4] text-white">
+            <AppTableRow className="border-b-0 hover:bg-transparent">
               <AppTableCell className="text-center p-0">
                 <input 
                   type="checkbox" 
@@ -591,7 +591,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               return (
                 <AppTableRow 
                   key={task.id} 
-                  className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-50 dark:bg-blue-500/10" : virtualRow.index % 2 === 0 ? "bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/20" : "bg-slate-50 dark:bg-gray-900/30 hover:bg-gray-100 dark:hover:bg-gray-800/30"}`}
+                  className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-100 dark:bg-blue-900/40" : virtualRow.index % 2 === 0 ? "bg-[#D9E1F2] dark:bg-[#1E293B] hover:bg-[#c9d5ec] dark:hover:bg-[#334155]" : "bg-[#B4C6E7] dark:bg-[#334155] hover:bg-[#a3b8e0] dark:hover:bg-[#475569]"}`}
                 >
                   <AppTableCell className="px-2 text-center" onClick={(e) => e.stopPropagation()}>
                     <input 

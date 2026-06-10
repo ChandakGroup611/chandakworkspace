@@ -207,11 +207,11 @@ export function WorkspaceMasterTable({
     
     // Ultra-premium minimalist shading (Notion / Linear style)
     if (isLightMode) {
-      rowBg = 'even:bg-slate-50 odd:bg-white';
-      hoverBg = 'hover:bg-gray-100';
+      rowBg = depth % 2 === 0 ? 'bg-[#D9E1F2]' : 'bg-[#B4C6E7]';
+      hoverBg = depth % 2 === 0 ? 'hover:bg-[#c9d5ec]' : 'hover:bg-[#a3b8e0]';
     } else {
-      rowBg = 'even:bg-[#1C1C28]/60 odd:bg-[#1C1C28]';
-      hoverBg = 'hover:bg-[#252535]';
+      rowBg = depth % 2 === 0 ? 'bg-[#1E293B]' : 'bg-[#334155]';
+      hoverBg = depth % 2 === 0 ? 'hover:bg-[#334155]' : 'hover:bg-[#475569]';
     }
     
     let subWsCount = node.subworkspace_count || 0;
@@ -488,7 +488,7 @@ export function WorkspaceMasterTable({
       <div className="w-full flex flex-col">
         {/* Header */}
         <div className={`grid items-center text-xs uppercase tracking-wider font-semibold border-b ${
-          isLightMode ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-white/[0.02] text-gray-400 border-white/10'
+          isLightMode ? 'bg-[#4472C4] text-white border-blue-600' : 'bg-[#4472C4]/80 text-white border-blue-600/50'
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>
           <div className="py-2 px-2">Created Date</div>
