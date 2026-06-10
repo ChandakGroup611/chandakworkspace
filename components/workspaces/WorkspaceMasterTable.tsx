@@ -207,11 +207,11 @@ export function WorkspaceMasterTable({
     
     // Ultra-premium minimalist shading (Notion / Linear style)
     if (isLightMode) {
-      rowBg = depth % 2 === 0 ? 'bg-[#D9E1F2]' : 'bg-[#B4C6E7]';
-      hoverBg = depth % 2 === 0 ? 'hover:bg-[#c9d5ec]' : 'hover:bg-[#a3b8e0]';
+      rowBg = depth % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+      hoverBg = depth % 2 === 0 ? 'hover:bg-slate-50' : 'hover:bg-slate-100';
     } else {
-      rowBg = depth % 2 === 0 ? 'bg-[#1E293B]' : 'bg-[#334155]';
-      hoverBg = depth % 2 === 0 ? 'hover:bg-[#334155]' : 'hover:bg-[#475569]';
+      rowBg = depth % 2 === 0 ? 'bg-[#0B0D17]' : 'bg-[#161B22]';
+      hoverBg = depth % 2 === 0 ? 'hover:bg-slate-800/50' : 'hover:bg-slate-800/80';
     }
     
     let subWsCount = node.subworkspace_count || 0;
@@ -416,7 +416,7 @@ export function WorkspaceMasterTable({
           </div>
 
           <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap">
-            {isWorkspaceType && (
+            {isWorkspaceType && totalTaskCount > 0 && (
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -487,8 +487,8 @@ export function WorkspaceMasterTable({
     <div className="w-full">
       <div className="w-full flex flex-col">
         {/* Header */}
-        <div className={`grid items-center text-xs uppercase tracking-wider font-semibold border-b ${
-          isLightMode ? 'bg-[#4472C4] text-white border-blue-600' : 'bg-[#4472C4]/80 text-white border-blue-600/50'
+        <div className={`grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
+          isLightMode ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700'
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>
           <div className="py-2 px-2">Created Date</div>

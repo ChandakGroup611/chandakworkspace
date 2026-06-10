@@ -62,7 +62,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
-  const [includeDescendants, setIncludeDescendants] = useState<boolean>(false);
 
   // Inline Status Update State
   const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
@@ -136,14 +135,16 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchTasksData = async (pageNum: number, isLoadMore = false) => {
+  const fetchTasksData = async (pageNum: number, isLoadMore = false, overrideWsId?: string | null) => {
     setLoading(true);
+    const currentWsId = overrideWsId !== undefined ? overrideWsId : selectedWorkspaceId;
+
     try {
       const { fetchTasksByWorkspace, fetchAllTasks } = await import('@/lib/actions/workspaces');
       
       let newTasks = [];
-      if (selectedWorkspaceId) {
-        newTasks = await fetchTasksByWorkspace(selectedWorkspaceId, pageNum, 50, includeDescendants);
+      if (currentWsId) {
+        newTasks = await fetchTasksByWorkspace(currentWsId, pageNum, 50, false);
         if (newTasks.length < 50) {
           setHasMore(false);
         } else {
@@ -294,14 +295,16 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     }
     whoami();
 
+    let wsId: string | null = null;
+
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const wsId = params.get("workspaceId");
+      wsId = params.get("workspaceId");
       setSelectedWorkspaceId(wsId || null);
     }
     
     // Always refresh on mount since we removed server-side fetching for speed
-    refresh();
+    fetchTasksData(1, false, wsId);
   }, []);
 
   const exportToExcel = async () => {
@@ -425,7 +428,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   import('@/lib/actions/workspaces').then(async ({ fetchTasksByWorkspace, fetchAllTasks }) => {
                     let newTasks = [];
                     if (newWsId) {
-                      newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, includeDescendants);
+                      newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, false);
                       setHasMore(newTasks.length >= 50);
                     } else {
                       newTasks = await fetchAllTasks();
@@ -444,15 +447,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   </option>
                 ))}
               </select>
-              {selectedWorkspaceId && (
-                <>
-                  <div className="w-px h-4 bg-gray-200 dark:bg-white/10 mx-1"></div>
-                  <label className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-600 dark:text-gray-400 cursor-pointer pr-1">
-                    <input type="checkbox" checked={includeDescendants} onChange={(e) => { setIncludeDescendants(e.target.checked); setPage(1); fetchTasksData(1, false); }} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    Include Sub-Workspaces
-                  </label>
-                </>
-              )}
             </div>
 
             {/* Advanced Filters */}
@@ -505,50 +499,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </div>
         )}
 
-      <style>{`
-        .task-table {
-          border-collapse: separate;
-          border-spacing: 0;
-        }
-        .task-table tbody tr {
-          border-bottom: 1px solid #e5e7eb;
-        }
-        .task-table tbody tr:last-child {
-          border-bottom: none;
-        }
-        .task-table tbody tr:nth-child(odd) {
-          background-color: #ffffff;
-        }
-        .task-table tbody tr:nth-child(even) {
-          background-color: #f9fafb;
-        }
-        .task-table tbody tr:hover {
-          background-color: #f3f4f6 !important;
-        }
-        .task-table thead {
-          background-color: #f3f4f6;
-        }
-        .task-table thead th {
-          font-weight: 600;
-          color: #1f2937;
-          letter-spacing: 0.025em;
-          border-bottom: 2px solid #d1d5db;
-          padding: 8px 12px;
-          background-color: #f3f4f6;
-          font-size: 11px;
-          text-transform: uppercase;
-        }
-        .task-table tbody td {
-          color: #374151;
-          padding: 6px 12px;
-          font-size: 13px;
-        }
-      `}</style>
-      
+
       <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
         <AppTable className="table-auto w-full">
-          <AppTableHeader className="sticky top-0 z-10 bg-[#4472C4] text-white">
-            <AppTableRow className="border-b-0 hover:bg-transparent">
+          <AppTableHeader className="sticky top-0 z-10">
+            <AppTableRow>
               <AppTableCell className="text-center p-0">
                 <input 
                   type="checkbox" 
@@ -582,10 +537,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const task = filtered[virtualRow.index];
               return (
-                <AppTableRow 
-                  key={task.id} 
-                  className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-100 dark:bg-blue-900/40" : virtualRow.index % 2 === 0 ? "bg-[#D9E1F2] dark:bg-[#1E293B] hover:bg-[#c9d5ec] dark:hover:bg-[#334155]" : "bg-[#B4C6E7] dark:bg-[#334155] hover:bg-[#a3b8e0] dark:hover:bg-[#475569]"}`}
-                >
+                <AppTableRow key={task.id} data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}>
                   <AppTableCell className="px-2 text-center" onClick={(e) => e.stopPropagation()}>
                     <input 
                       type="checkbox" 

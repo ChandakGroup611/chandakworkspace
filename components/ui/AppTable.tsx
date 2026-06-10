@@ -7,7 +7,7 @@ export const AppTableContainer = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("w-full overflow-x-auto rounded-xl border border-white/5 bg-white/[0.01]", className)}
+    className={cn("w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#0B0D17]", className)}
     {...props}
   />
 ));
@@ -19,7 +19,7 @@ export const AppTable = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <table
     ref={ref}
-    className={cn("w-full caption-bottom text-xs text-left border-collapse", className)}
+    className={cn("w-full caption-bottom text-sm text-left border-collapse", className)}
     {...props}
   />
 ));
@@ -31,7 +31,7 @@ export const AppTableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("border-b border-white/5 bg-[#4472C4] dark:bg-[#4472C4]/80 text-xs font-semibold text-white tracking-wider uppercase", className)}
+    className={cn("border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 tracking-wider uppercase", className)}
     {...props}
   />
 ));
@@ -43,7 +43,7 @@ export const AppTableBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tbody
     ref={ref}
-    className={cn("divide-y divide-white/5 font-medium text-gray-200", className)}
+    className={cn("divide-y divide-slate-100 dark:divide-white/5 font-medium", className)}
     {...props}
   />
 ));
@@ -56,10 +56,11 @@ export const AppTableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "transition-colors duration-150 text-gray-900 dark:text-gray-100",
-      "even:bg-[#D9E1F2] dark:even:bg-[#1E293B] even:hover:bg-[#c9d5ec] dark:even:hover:bg-[#334155]",
-      "odd:bg-[#B4C6E7] dark:odd:bg-[#334155] odd:hover:bg-[#a3b8e0] dark:odd:hover:bg-[#475569]",
-      "data-[state=selected]:bg-blue-100 dark:data-[state=selected]:bg-blue-900/40",
+      "transition-colors duration-150 text-slate-900 dark:text-slate-100",
+      "[tbody_&]:even:bg-white dark:[tbody_&]:even:bg-[#0B0D17] [tbody_&]:even:hover:bg-slate-50 dark:[tbody_&]:even:hover:bg-slate-800/50",
+      "[tbody_&]:odd:bg-slate-50 dark:[tbody_&]:odd:bg-[#161B22] [tbody_&]:odd:hover:bg-slate-100 dark:[tbody_&]:odd:hover:bg-slate-800/50",
+      "data-[state=selected]:bg-blue-50 dark:data-[state=selected]:bg-blue-900/20",
+      "[thead_&]:bg-transparent [thead_&]:hover:bg-transparent", // Ensure header row doesn't have zebra background
       className
     )}
     {...props}
@@ -73,7 +74,7 @@ export const AppTableHead = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
-    className={cn("h-8 px-2 text-left align-middle font-semibold text-white", className)}
+    className={cn("h-10 px-3 text-left align-middle font-bold", className)}
     {...props}
   />
 ));
@@ -85,8 +86,9 @@ export const AppTableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-2 align-middle text-gray-300", className)}
+    className={cn("p-3 align-middle", className)}
     {...props}
   />
 ));
 AppTableCell.displayName = "AppTableCell";
+
