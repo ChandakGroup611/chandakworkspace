@@ -45,7 +45,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 export default function TaskListViewClient({ initialTasks }: { initialTasks: Task[] }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
-  const [scope, setScope] = useState<"ALL" | "CREATOR" | "MANAGER">("ALL");
+  const [scope, setScope] = useState<"ALL" | "ASSIGNEE" | "CREATOR" | "MANAGER">("ALL");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -142,7 +142,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     try {
       const { fetchTasksByWorkspace, fetchAllTasks } = await import('@/lib/actions/workspaces');
       
-      let newTasks = [];
+      let newTasks: any[] = [];
       if (currentWsId) {
         newTasks = await fetchTasksByWorkspace(currentWsId, pageNum, 50, true);
         if (newTasks.length < 50) {
