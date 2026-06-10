@@ -144,7 +144,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       
       let newTasks = [];
       if (currentWsId) {
-        newTasks = await fetchTasksByWorkspace(currentWsId, pageNum, 50, false);
+        newTasks = await fetchTasksByWorkspace(currentWsId, pageNum, 50, true);
         if (newTasks.length < 50) {
           setHasMore(false);
         } else {
@@ -428,7 +428,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   import('@/lib/actions/workspaces').then(async ({ fetchTasksByWorkspace, fetchAllTasks }) => {
                     let newTasks = [];
                     if (newWsId) {
-                      newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, false);
+                      newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, true);
                       setHasMore(newTasks.length >= 50);
                     } else {
                       newTasks = await fetchAllTasks();
