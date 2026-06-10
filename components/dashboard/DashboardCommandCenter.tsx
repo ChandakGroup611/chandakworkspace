@@ -96,18 +96,20 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
       if (m.module === 'Tickets') ticketsReqsTotal++;
       if (m.module === 'Requirements') reqsTotal++;
 
-      // SLA logic matches dashboardMetrics
-      if (isResolved) {
-        // Resolved not included in SLA warnings
-        healthy++;
-      } else {
-        if (isEscalated || m.isOverdue) {
-          breached++;
-        } else if (m.dueDate && new Date(m.dueDate).getTime() - Date.now() <= 7 * 24 * 3600 * 1000) {
-          warning++;
-          if (m.module === 'Tasks') tasksUpcoming++;
-        } else {
+      // SLA logic matches dashboardMetrics but ONLY for Tasks as requested
+      if (m.module === 'Tasks') {
+        if (isResolved) {
+          // Resolved not included in SLA warnings
           healthy++;
+        } else {
+          if (isEscalated || m.isOverdue) {
+            breached++;
+          } else if (m.dueDate && new Date(m.dueDate).getTime() - Date.now() <= 7 * 24 * 3600 * 1000) {
+            warning++;
+            tasksUpcoming++;
+          } else {
+            healthy++;
+          }
         }
       }
     });
