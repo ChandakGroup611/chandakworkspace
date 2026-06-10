@@ -27,8 +27,32 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setActivities(data || []);
-    } catch (err) {
+      
+      const rawData = data || [];
+      if (rawData.length === 0) {
+        setActivities([]);
+        return;
+      }
+      
+      const actorIds = [...new Set(rawData.map((n: any) => n.actor).filter(Boolean))];
+      if (actorIds.length > 0) {
+        const { data: userData } = await supabase
+          .from("user_master")
+          .select("id, full_name")
+          .in("id", actorIds);
+          
+        if (userData) {
+          const userMap = Object.fromEntries(userData.map((u: any) => [u.id, u.full_name]));
+          const mappedData = rawData.map((n: any) => ({
+            ...n,
+            actor_name: userMap[n.actor] || n.actor
+          }));
+          setActivities(mappedData);
+          return;
+        }
+      }
+      
+      setActivities(rawData);
       console.error("Activity stream fetch error:", err);
     } finally {
       setLoading(false);
@@ -100,7 +124,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
               </div>
               <div className="flex-1 pb-8">
                 <div className="flex items-center justify-between gap-4 mb-1">
-                  <span className={`text-xs font-bold tracking-wide ${"text-foreground"}`}>{activity.actor}</span>
+                  <span className={`text-xs font-bold tracking-wide ${"text-foreground"}`}>{activity.actor_name || activity.actor}</span>
                   <span className="text-xs text-gray-500 font-medium">
                     {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>

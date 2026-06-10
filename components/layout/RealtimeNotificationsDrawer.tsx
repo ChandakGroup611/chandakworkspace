@@ -39,6 +39,7 @@ export interface NotificationItem {
   priority_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   is_read: boolean;
   created_at: string;
+  actor_name?: string;
 }
 
 export default function RealtimeNotificationsDrawer() {
@@ -70,7 +71,27 @@ export default function RealtimeNotificationsDrawer() {
         .limit(40);
 
       if (error) throw error;
-      return data || [];
+      
+      const rawData = data || [];
+      if (rawData.length === 0) return [];
+
+      const actorIds = [...new Set(rawData.map((n: any) => n.actor).filter(Boolean))];
+      if (actorIds.length > 0) {
+        const { data: userData } = await supabase
+          .from("user_master")
+          .select("id, full_name")
+          .in("id", actorIds);
+          
+        if (userData) {
+          const userMap = Object.fromEntries(userData.map((u: any) => [u.id, u.full_name]));
+          return rawData.map((n: any) => ({
+            ...n,
+            actor_name: userMap[n.actor] || n.actor
+          }));
+        }
+      }
+
+      return rawData;
     },
     staleTime: 60000,
   });
@@ -228,7 +249,7 @@ export default function RealtimeNotificationsDrawer() {
                   {displayMessage}
                 </p>
                 <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-white/5 mt-1 text-gray-500">
-                  <span>Actor: <strong>{toast.actor}</strong></span>
+                  <span>Actor: <strong>{toast.actor_name || toast.actor}</strong></span>
                   <span className="text-cyan-500 font-bold group-hover:underline">View details →</span>
                 </div>
               </div>
@@ -351,7 +372,7 @@ export default function RealtimeNotificationsDrawer() {
                           {displayMessage}
                         </p>
                         <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 ${isLightMode ? "border-gray-100 text-gray-400" : "border-white/5 text-gray-500"}`}>
-                          <span>Actor: <strong className={"text-muted"}>{item.actor}</strong></span>
+                          <span>Actor: <strong className={"text-muted"}>{item.actor_name || item.actor}</strong></span>
                           <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
