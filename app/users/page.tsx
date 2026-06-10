@@ -455,7 +455,7 @@ export default function UserMasterPage() {
 
     supabase.from("notification_queue").insert([{
       entity_type: "user_master",
-      entity_id: usrId,
+      entity_id: usr ? (usr.user_code || usr.full_name || usr.id) : usrId,
       module: "users",
       action_type: op.toLowerCase(),
       actor: "System Administrator",
