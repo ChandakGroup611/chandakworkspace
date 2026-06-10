@@ -377,22 +377,124 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   return (
     <ExperienceProvider mode="operational">
-      <div className="space-y-2">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <AppButton variant="outline" size="sm" onClick={() => router.push(selectedWorkspaceId ? `/workspaces?workspace=${selectedWorkspaceId}` : "/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
-            Back
-          </AppButton>
-          <div className="flex items-center gap-2 p-1 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5">
-            {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
-              <button
-                key={sc}
-                onClick={() => setScope(sc)}
-                className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-colors ${scope === sc ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10"}`}
+      <div className="space-y-4">
+        {/* Header and Export Actions */}
+        <header className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-white/10">
+          <div className="flex items-center gap-3">
+            <AppButton variant="outline" size="sm" onClick={() => router.push(selectedWorkspaceId ? `/workspaces?workspace=${selectedWorkspaceId}` : "/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+              Back
+            </AppButton>
+            <h1 className="text-xl font-bold leading-normal text-gray-900 dark:text-white">All Workspace Tasks</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}>
+              Excel
+            </AppButton>
+            <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-rose-600 dark:text-rose-400" />}>
+              PDF
+            </AppButton>
+          </div>
+        </header>
+
+        {/* Unified Filters Box */}
+        <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3 md:gap-4">
+            {/* Scope Filter */}
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
+              {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
+                <button
+                  key={sc}
+                  onClick={() => setScope(sc)}
+                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${scope === sc ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"}`}
+                >
+                  {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
+                </button>
+              ))}
+            </div>
+
+            {/* Workspace Filter Select */}
+            <div className="flex items-center gap-2 bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 p-1.5 rounded-lg">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider pl-1">Workspace:</span>
+              <select
+                value={selectedWorkspaceId || ""}
+                onChange={(e) => {
+                  const newWsId = e.target.value || null;
+                  setSelectedWorkspaceId(newWsId);
+                  setPage(1);
+                  setLoading(true);
+                  import('@/lib/actions/workspaces').then(async ({ fetchTasksByWorkspace, fetchAllTasks }) => {
+                    let newTasks = [];
+                    if (newWsId) {
+                      newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, includeDescendants);
+                      setHasMore(newTasks.length >= 50);
+                    } else {
+                      newTasks = await fetchAllTasks();
+                      setHasMore(false);
+                    }
+                    setTasks(newTasks);
+                    setLoading(false);
+                  });
+                }}
+                className="text-[11px] font-medium px-2 py-1 rounded bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0 transition-colors"
               >
-                {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
-              </button>
-            ))}
+                <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
+                {uniqueWorkspaces.map((ws: any) => (
+                  <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
+                    {ws.code} - {ws.name}
+                  </option>
+                ))}
+              </select>
+              {selectedWorkspaceId && (
+                <>
+                  <div className="w-px h-4 bg-gray-200 dark:bg-white/10 mx-1"></div>
+                  <label className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-600 dark:text-gray-400 cursor-pointer pr-1">
+                    <input type="checkbox" checked={includeDescendants} onChange={(e) => { setIncludeDescendants(e.target.checked); setPage(1); fetchTasksData(1, false); }} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    Include Sub-Workspaces
+                  </label>
+                </>
+              )}
+            </div>
+
+            {/* Advanced Filters */}
+            <div className="flex items-center gap-2">
+              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-[11px] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="">All Statuses</option>
+                {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              
+              <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-[11px] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="">All Priorities</option>
+                {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              
+              <label className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-gray-300 cursor-pointer bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 px-3 py-2 rounded-lg">
+                <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-gray-300 text-rose-500 focus:ring-rose-500" />
+                Escalated Only
+              </label>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300 ml-auto bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-lg">
+              <span className="text-gray-500 uppercase tracking-wider text-[9px]">Date:</span>
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-[11px] rounded bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none" />
+              <span className="text-gray-400">to</span>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-[11px] rounded bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none" />
+              
+              {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo) && (
+                <>
+                  <div className="w-px h-4 bg-gray-200 dark:bg-white/10 mx-1"></div>
+                  <button onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); }} className="text-[10px] uppercase text-rose-500 hover:text-rose-600 font-bold">
+                    Clear
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-200 dark:border-white/10">
+            <AppInput placeholder="Search tasks, code, workspace..." value={query} onChange={(e:any) => setQuery(e.target.value)} className="w-full max-w-md text-sm bg-white dark:bg-[#0f111a]" />
+            <AppButton variant="outline" size="sm" onClick={refresh} leftIcon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />}>
+              Refresh Data
+            </AppButton>
           </div>
         </div>
 
@@ -402,115 +504,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <span className="text-xs font-semibold">{successToast}</span>
           </div>
         )}
-
-        <div className="flex items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2 border-r border-white/10 pr-3 mr-1">
-            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-400" />}>
-              Excel
-            </AppButton>
-            <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-rose-400" />}>
-              PDF
-            </AppButton>
-          </div>
-          {/* Workspace Filter Select */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Workspace:</span>
-            <select
-              value={selectedWorkspaceId || ""}
-              onChange={(e) => {
-                const newWsId = e.target.value || null;
-                setSelectedWorkspaceId(newWsId);
-                // We must trigger a fetch manually here because state updates are async
-                setPage(1);
-                setLoading(true);
-                import('@/lib/actions/workspaces').then(async ({ fetchTasksByWorkspace, fetchAllTasks }) => {
-                  let newTasks = [];
-                  if (newWsId) {
-                    newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, includeDescendants);
-                    setHasMore(newTasks.length >= 50);
-                  } else {
-                    newTasks = await fetchAllTasks();
-                    setHasMore(false);
-                  }
-                  setTasks(newTasks);
-                  setLoading(false);
-                });
-              }}
-              className="text-xs font-bold px-3 py-2 rounded-xl bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-gray-100 hover:border-gray-400 dark:hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-            >
-              <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
-              {uniqueWorkspaces.map((ws: any) => (
-                <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
-                  {ws.code} - {ws.name}
-                </option>
-              ))}
-            </select>
-            {selectedWorkspaceId && (
-              <label className="flex items-center gap-2 text-[10px] font-semibold text-gray-600 dark:text-gray-400 cursor-pointer ml-2 bg-gray-50 dark:bg-white/5 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/5">
-                <input 
-                  type="checkbox" 
-                  checked={includeDescendants} 
-                  onChange={(e) => {
-                    setIncludeDescendants(e.target.checked);
-                    // Reset and fetch immediately on toggle
-                    setPage(1);
-                    fetchTasksData(1, false);
-                  }} 
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                />
-                Include Sub-Workspaces
-              </label>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <AppInput placeholder="Search tasks, code, workspace..." value={query} onChange={(e:any) => setQuery(e.target.value)} className="w-72 text-sm" />
-            <AppButton variant="outline" size="sm" onClick={refresh} leftIcon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />}>
-              Refresh
-            </AppButton>
-          </div>
-        </div>
-      </div>
-
-            {/* Advanced Filters Row */}
-      <div className="flex items-center flex-wrap gap-2 bg-gray-50 dark:bg-white/5 p-2 rounded-xl border border-gray-200 dark:border-white/5">
-        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-[11px] px-2 py-1.5 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
-          <option value="">All Statuses</option>
-          {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        
-        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-[11px] px-2 py-1.5 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
-          <option value="">All Priorities</option>
-          {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-        
-        <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
-          <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-gray-300 text-rose-500 focus:ring-rose-500" />
-          Escalated Only
-        </label>
-        
-        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 ml-auto">
-          <span>Date Between:</span>
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-[11px] px-2 py-1 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          <span>to</span>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-[11px] px-2 py-1 rounded-[var(--radius-input,4px)] border border-gray-300 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          
-          {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo) && (
-            <button 
-              onClick={() => {
-                setSelectedStatus("");
-                setSelectedPriority("");
-                setShowEscalatedOnly(false);
-                setDateFrom("");
-                setDateTo("");
-              }}
-              className="ml-2 text-[10px] uppercase text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 underline"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
 
       <style>{`
         .task-table {
