@@ -87,6 +87,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   const parentRef = useRef<HTMLDivElement>(null);
 
+  const [allWorkspaces, setAllWorkspaces] = useState<any[]>([]);
+
+  useEffect(() => {
+    import('@/lib/actions/workspaces').then(({ fetchWorkspaces }) => {
+      fetchWorkspaces().then(setAllWorkspaces).catch(console.error);
+    });
+  }, []);
+
   const uniqueWorkspaces = useMemo(() => {
     const map = new Map();
     initialTasks.forEach(t => {
@@ -428,7 +436,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 className="text-[11px] font-medium px-2 py-1 rounded bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0 transition-colors"
               >
                 <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
-                {uniqueWorkspaces.map((ws: any) => (
+                {((roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN") ? allWorkspaces : uniqueWorkspaces).map((ws: any) => (
                   <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
                     {ws.workspace_code || ws.code} - {ws.workspace_name || ws.name}
                   </option>
