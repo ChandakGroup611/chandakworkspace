@@ -709,7 +709,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
       priority:priority_master(name:priority_name, code:priority_code),
-      assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code)
+      assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code, profile_photo)
     `)
     .in("workspace_id", targetWorkspaceIds)
     .eq("is_deleted", false)
@@ -722,9 +722,13 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
   }
   
   if (data && data.length > 0) {
+    // Fetch the workspaces for the returned tasks
+    const wsIds = Array.from(new Set(data.map((t: any) => t.workspace_id).filter(Boolean)));
+    const { data: workspaces } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
+    
     // Note: Participants and Attachments are now lazy-loaded in the Task Details Drawer per Phase 6 optimization.
     data.forEach((t: any) => {
-      t.workspace = null;
+      t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
       t.creator = null;
       t.attachmentCount = 0;
       t.participants = [];
@@ -795,19 +799,20 @@ export async function fetchAllTasks() {
   
   if (allTasks && allTasks.length > 0) {
       const wsIds = Array.from(new Set(allTasks.map((t: any) => t.workspace_id).filter(Boolean)));
-      const creatorIds = Array.from(new Set(allTasks.map((t: any) => t.created_by).filter(Boolean)));
+      const userIds = Array.from(new Set(allTasks.flatMap((t: any) => [t.created_by, t.assigned_to]).filter(Boolean)));
       
       const [
         { data: workspaces },
         { data: users }
       ] = await Promise.all([
         supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
-        supabaseAdmin.from("user_master").select("id, full_name, manager_id").in("id", creatorIds)
+        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds)
       ]);
         
       allTasks.forEach((t: any) => {
         t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
         t.creator = users?.find((u: any) => u.id === t.created_by) || null;
+        t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
         t.assignees = []; // Implicitly workspace members
 
         // Calculate progress percentage

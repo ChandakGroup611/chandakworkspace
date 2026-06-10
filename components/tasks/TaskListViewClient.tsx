@@ -144,21 +144,18 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       let newTasks = [];
       if (selectedWorkspaceId) {
         newTasks = await fetchTasksByWorkspace(selectedWorkspaceId, pageNum, 50, includeDescendants);
+        if (newTasks.length < 50) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
       } else {
-        // We'll limit fetchAllTasks as well in a moment, but for now we call it directly
-        const supabase = createClient();
-        const { data } = await supabase.from("tasks").select(`
-          *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code), workspace:workspaces(id, name:workspace_name, code:workspace_code), assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code, profile_photo)`)
-          .eq("is_deleted", false)
-          .order("created_at", { ascending: false })
-          .range((pageNum - 1) * 50, pageNum * 50 - 1);
-        newTasks = data || [];
-      }
-
-      if (newTasks.length < 50) {
+        if (isLoadMore) {
+          setLoading(false);
+          return; // fetchAllTasks already returns everything, don't append it again
+        }
+        newTasks = await fetchAllTasks();
         setHasMore(false);
-      } else {
-        setHasMore(true);
       }
 
       setTasks(prev => isLoadMore ? [...prev, ...newTasks] : newTasks);
@@ -430,17 +427,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   let newTasks = [];
                   if (newWsId) {
                     newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, includeDescendants);
+                    setHasMore(newTasks.length >= 50);
                   } else {
-                    const supabase = createClient();
-                    const { data } = await supabase.from("tasks").select(`
-                      *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code), workspace:workspaces(id, name:workspace_name, code:workspace_code), assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code, profile_photo)`)
-                      .eq("is_deleted", false)
-                      .order("created_at", { ascending: false })
-                      .range(0, 49);
-                    newTasks = data || [];
+                    newTasks = await fetchAllTasks();
+                    setHasMore(false);
                   }
                   setTasks(newTasks);
-                  setHasMore(newTasks.length >= 50);
                   setLoading(false);
                 });
               }}
