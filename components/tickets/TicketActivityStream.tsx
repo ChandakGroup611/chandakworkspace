@@ -53,6 +53,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
       }
       
       setActivities(rawData);
+    } catch (err) {
       console.error("Activity stream fetch error:", err);
     } finally {
       setLoading(false);
