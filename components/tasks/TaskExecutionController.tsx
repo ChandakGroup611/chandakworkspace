@@ -66,6 +66,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [editedChecklists, setEditedChecklists] = useState<Record<string, boolean>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingTaskUpdates, setPendingTaskUpdates] = useState<Record<string, any>>({});
+  const [pendingAssignees, setPendingAssignees] = useState<string[] | null>(null);
   
   // Assignee Editing
   const [isEditingAssignees, setIsEditingAssignees] = useState(false);
@@ -338,6 +339,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       
       if (res?.error) throw new Error("Batch Save Error: " + res.error);
 
+      if (pendingAssignees) {
+        const { updateTaskAssignees } = await import("@/lib/actions/tasks");
+        const assigneesRes = await updateTaskAssignees(taskId, task.workspace_id, pendingAssignees);
+        if (assigneesRes.error) throw new Error(assigneesRes.error);
+        setPendingAssignees(null);
+        // Force hydration since assignment changed
+        await loadTaskDetails(true);
+      }
+
       // Step 3: Direct Hydration (Phase T5)
       if (res?.data) {
         setTask((prev: any) => {
@@ -589,29 +599,21 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   size="sm" 
                   className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-[10px] h-6" 
-                  disabled={isSavingAssignees}
-                  onClick={async () => {
-                    setIsSavingAssignees(true);
-                    try {
-                      const { updateTaskAssignees } = await import("@/lib/actions/tasks");
-                      const res = await updateTaskAssignees(taskId, task.workspace_id, editingAssigneesList);
-                      if (res.error) throw new Error(res.error);
-                      triggerToast("Assignees updated successfully");
-                      setIsEditingAssignees(false);
-                      await loadTaskDetails(true);
-                    } catch (e: any) {
-                      setError(e.message || "Failed to update assignees.");
-                    } finally {
-                      setIsSavingAssignees(false);
-                    }
+                  onClick={() => {
+                    setPendingAssignees(editingAssigneesList);
+                    setIsEditingAssignees(false);
                   }}
                 >
-                  {isSavingAssignees ? 'Saving...' : 'Save Assignees'}
+                  Stage Assignees
                 </AppButton>
               </div>
             ) : (
               <div className="text-xs font-medium dark:text-gray-200">
-                {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
+                {pendingAssignees ? (
+                  <span className="text-emerald-500 font-bold italic animate-pulse">Pending save...</span>
+                ) : (
+                  explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>
+                )}
               </div>
             )}
           </div>
@@ -789,8 +791,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
         {pendingStatus && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
-            <span>Status change to <strong>{statuses.find(s => s.status_code === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Status & Save Remark"</strong> to save both.</span>
+            <span>Status change to <strong>{statuses.find(s => s.status_code === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
             <button onClick={() => setPendingStatus(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-2 underline hover:no-underline">Cancel Change</button>
+          </div>
+        )}
+
+        {pendingAssignees && (
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
+            <span>Executors change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
+            <button onClick={() => setPendingAssignees(null)} className="text-xs text-emerald-500/60 hover:text-emerald-500 font-bold px-2 underline hover:no-underline">Cancel Change</button>
           </div>
         )}
  
@@ -809,7 +818,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <span className="text-xs text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
             {canAddRemark && (
               <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
-                {saveRemarksLoading ? "Saving..." : pendingStatus ? "Commit Status & Save Remark" : "Save Remarks"}
+                {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingAssignees) ? "Commit Updates & Save Remark" : "Save Remarks"}
               </AppButton>
             )}
           </div>
