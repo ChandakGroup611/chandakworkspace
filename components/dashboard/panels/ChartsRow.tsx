@@ -61,11 +61,11 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
     });
 
     return [
-      { name: "Tickets", value: tickets || 1, color: "var(--red)" },
-      { name: "Tasks", value: tasks || 1, color: "var(--teal)" },
-      { name: "Requirements", value: reqs || 1, color: "var(--purple)" },
-      { name: "Workspaces", value: workspaces || 1, color: "var(--accent)" },
-    ];
+      { name: "Tickets", value: tickets, color: "var(--red)" },
+      { name: "Tasks", value: tasks, color: "var(--teal)" },
+      { name: "Requirements", value: reqs, color: "var(--purple)" },
+      { name: "Workspaces", value: workspaces, color: "var(--accent)" },
+    ].filter(d => d.value > 0);
   }, [metrics]);
 
   const total = donutData.reduce((acc, curr) => acc + curr.value, 0);
