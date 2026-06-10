@@ -87,16 +87,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const [allWorkspaces, setAllWorkspaces] = useState<any[]>([]);
-
-  useEffect(() => {
-    import('@/lib/actions/workspaces').then(({ fetchWorkspaces }) => {
-      fetchWorkspaces().then(setAllWorkspaces).catch(console.error);
+  const uniqueWorkspaces = useMemo(() => {
+    const map = new Map();
+    initialTasks.forEach(t => {
+      if (t.workspace) {
+        map.set(t.workspace.id || t.workspace_id, t.workspace);
+      }
     });
-  }, []);
+    return Array.from(map.values()) as any[];
+  }, [initialTasks]);
 
   const filtered = useMemo(() => {
     return tasks.filter(t => {
+      if (scope === "ASSIGNEE" && t.assigned_to !== currentUserId) return false;
       if (scope === "CREATOR" && t.created_by !== currentUserId) return false;
       if (scope === "MANAGER" && t.creator?.manager_id !== currentUserId) return false;
       
@@ -438,7 +441,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 className="text-[11px] font-medium px-2 py-1 rounded bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0 transition-colors"
               >
                 <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
-                {allWorkspaces.map((ws: any) => (
+                {uniqueWorkspaces.map((ws: any) => (
                   <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
                     {ws.workspace_code || ws.code} - {ws.workspace_name || ws.name}
                   </option>

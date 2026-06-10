@@ -691,12 +691,14 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
     // 1. Fetch all workspaces to build the descendant tree
     const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
     
-    const getDescendants = (id: string, all: any[]): string[] => {
+    const getDescendants = (id: string, all: any[], visited: Set<string> = new Set()): string[] => {
+      if (visited.has(id)) return [];
+      visited.add(id);
       const children = all.filter((w: any) => w.parent_workspace_id === id);
-      return [id, ...children.flatMap((c: any) => getDescendants(c.id, all))];
+      return [id, ...children.flatMap((c: any) => getDescendants(c.id, all, visited))];
     };
     
-    targetWorkspaceIds = getDescendants(workspaceId, allWs || []);
+    targetWorkspaceIds = getDescendants(workspaceId, allWs || [], new Set());
   }
   
   const startIdx = (page - 1) * limit;
