@@ -11,14 +11,19 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
   
   const burndownData = useMemo(() => {
     // Generate actual burndown-like data using the createdAt dates in the metrics
-    const days: Record<string, { total: number; resolved: number }> = {};
+    const days: Record<string, { 
+      tasksT: number; tasksR: number;
+      wsT: number; wsR: number;
+      ticT: number; ticR: number;
+      reqT: number; reqR: number;
+    }> = {};
     const now = new Date();
     
     // Initialize last 15 days
     for (let i = 14; i >= 0; i--) {
       const d = new Date(now.getTime() - i * 24 * 3600 * 1000);
       const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      days[dateStr] = { total: 0, resolved: 0 };
+      days[dateStr] = { tasksT: 0, tasksR: 0, wsT: 0, wsR: 0, ticT: 0, ticR: 0, reqT: 0, reqR: 0 };
     }
 
     metrics.forEach(m => {
@@ -28,24 +33,41 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
       if (diffDays >= 0 && diffDays < 15) {
         const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         if (days[dateStr]) {
-          days[dateStr].total++;
-          if (String(m.status).toLowerCase() === 'resolved') {
-            days[dateStr].resolved++;
+          const isRes = String(m.status).toLowerCase() === 'resolved';
+          if (m.module === 'Tasks') {
+            days[dateStr].tasksT++;
+            if (isRes) days[dateStr].tasksR++;
+          } else if (m.module === 'Workspaces') {
+            days[dateStr].wsT++;
+            if (isRes) days[dateStr].wsR++;
+          } else if (m.module === 'Tickets') {
+            days[dateStr].ticT++;
+            if (isRes) days[dateStr].ticR++;
+          } else if (m.module === 'Requirements') {
+            days[dateStr].reqT++;
+            if (isRes) days[dateStr].reqR++;
           }
         }
       }
     });
 
-    let runningTotal = 0;
-    let runningResolved = 0;
+    let rTasksT = 0, rTasksR = 0;
+    let rWsT = 0, rWsR = 0;
+    let rTicT = 0, rTicR = 0;
+    let rReqT = 0, rReqR = 0;
 
     return Object.keys(days).map(day => {
-      runningTotal += days[day].total;
-      runningResolved += days[day].resolved;
+      rTasksT += days[day].tasksT; rTasksR += days[day].tasksR;
+      rWsT += days[day].wsT; rWsR += days[day].wsR;
+      rTicT += days[day].ticT; rTicR += days[day].ticR;
+      rReqT += days[day].reqT; rReqR += days[day].reqR;
+
       return {
         day,
-        active: runningTotal - runningResolved,
-        total: runningTotal
+        tasksActive: rTasksT - rTasksR,
+        wsActive: rWsT - rWsR,
+        ticActive: rTicT - rTicR,
+        reqActive: rReqT - rReqR,
       };
     });
 
@@ -91,8 +113,10 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '8px', color: '#0f172a', fontSize: '11px', fontFamily: 'var(--mono)' }}
                   itemStyle={{ color: '#0f172a' }}
                 />
-                <Line type="monotone" dataKey="total" stroke="rgba(139,145,168,0.35)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Total Created" />
-                <Line type="monotone" dataKey="active" stroke="#6e7bff" strokeWidth={2} dot={{ r: 3, fill: '#6e7bff', strokeWidth: 0 }} name="Active" />
+                <Line type="monotone" dataKey="tasksActive" stroke="var(--teal)" strokeWidth={2} dot={{ r: 3, fill: 'var(--teal)', strokeWidth: 0 }} name="Tasks" />
+                <Line type="monotone" dataKey="wsActive" stroke="var(--accent)" strokeWidth={2} dot={false} name="Workspaces" />
+                <Line type="monotone" dataKey="ticActive" stroke="var(--red)" strokeWidth={2} dot={false} name="Tickets" />
+                <Line type="monotone" dataKey="reqActive" stroke="var(--purple)" strokeWidth={2} dot={false} name="Requirements" />
               </LineChart>
             </ResponsiveContainer>
           </div>

@@ -77,6 +77,54 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
     });
   }, [metrics, globalScope, globalUser, globalStatus]);
 
+  // Dynamic KPIs calculated strictly from filteredMetrics for full segregation
+  const dynamicKpis = useMemo(() => {
+    let tasksTotal = 0, tasksResolved = 0, tasksUpcoming = 0;
+    let ticketsReqsTotal = 0, reqsTotal = 0;
+    let healthy = 0, warning = 0, breached = 0;
+
+    filteredMetrics.forEach(m => {
+      const sLower = String(m.status).toLowerCase();
+      const isResolved = sLower.includes('resolv') || sLower.includes('done');
+      const isEscalated = sLower.includes('escalat') || sLower.includes('block');
+      
+      // Module specific
+      if (m.module === 'Tasks') {
+        tasksTotal++;
+        if (isResolved) tasksResolved++;
+      }
+      if (m.module === 'Tickets') ticketsReqsTotal++;
+      if (m.module === 'Requirements') reqsTotal++;
+
+      // SLA logic matches dashboardMetrics
+      if (isResolved) {
+        // Resolved not included in SLA warnings
+        healthy++;
+      } else {
+        if (isEscalated || m.isOverdue) {
+          breached++;
+        } else if (m.dueDate && new Date(m.dueDate).getTime() - Date.now() <= 7 * 24 * 3600 * 1000) {
+          warning++;
+          if (m.module === 'Tasks') tasksUpcoming++;
+        } else {
+          healthy++;
+        }
+      }
+    });
+
+    return {
+      tasks: { total: tasksTotal, resolved: tasksResolved, upcoming_due: tasksUpcoming },
+      workspaces: kpis?.workspaces || { enrolled_workspaces: 0, enrolled_sub_workspaces: 0 },
+      tickets_reqs: { total_tickets: ticketsReqsTotal, total_requirements: reqsTotal },
+      sla: { escalated_or_breached: breached, healthy, warning, breached },
+      workload: { 
+        active_tasks: tasksTotal - tasksResolved, 
+        active_tickets: ticketsReqsTotal, 
+        active_requirements: reqsTotal 
+      }
+    };
+  }, [filteredMetrics, kpis]);
+
   if (!mounted) {
     return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading Exact Match Dashboard...</div>;
   }
@@ -154,9 +202,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
             </div>
           )}
 
-          {kpis && (
+          {dynamicKpis && (
             <div className="mb-6">
-              <CentralOperationsDashboard analytics={kpis} preferences={{ widget_layout: { sla: 'top', workload: 'bottom' } }} />
+              <CentralOperationsDashboard analytics={dynamicKpis} preferences={{ widget_layout: { sla: 'top', workload: 'bottom' } }} />
             </div>
           )}
           
