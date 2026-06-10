@@ -1052,8 +1052,8 @@ export async function executeTaskBatchOperation(payload: {
     );
   }
 
-  // Fire and forget side effects so they don't block the response
-  Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
+  // Await side effects so that actor_id is correctly patched before we refetch the logs for the UI
+  await Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
 
   console.time("TaskBatch - Refetch Hydration Data");
   // Refetch only the collections needed for hydration (Parallel)
