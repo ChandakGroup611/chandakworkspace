@@ -87,15 +87,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const uniqueWorkspaces = useMemo(() => {
-    const map = new Map();
-    initialTasks.forEach(t => {
-      if (t.workspace) {
-        map.set(t.workspace.id || t.workspace_id, t.workspace);
-      }
+  const [allWorkspaces, setAllWorkspaces] = useState<any[]>([]);
+
+  useEffect(() => {
+    import('@/lib/actions/workspaces').then(({ fetchWorkspaces }) => {
+      fetchWorkspaces().then(setAllWorkspaces).catch(console.error);
     });
-    return Array.from(map.values()) as any[];
-  }, [initialTasks]);
+  }, []);
 
   const filtered = useMemo(() => {
     return tasks.filter(t => {
@@ -423,25 +421,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 onChange={(e) => {
                   const newWsId = e.target.value || null;
                   setSelectedWorkspaceId(newWsId);
-                  setPage(1);
-                  setLoading(true);
-                  import('@/lib/actions/workspaces').then(async ({ fetchTasksByWorkspace, fetchAllTasks }) => {
-                    let newTasks = [];
-                    if (newWsId) {
-                      newTasks = await fetchTasksByWorkspace(newWsId, 1, 50, true);
-                      setHasMore(newTasks.length >= 50);
-                    } else {
-                      newTasks = await fetchAllTasks();
-                      setHasMore(false);
-                    }
-                    setTasks(newTasks);
-                    setLoading(false);
-                  });
+                  fetchTasksData(1, false, newWsId);
                 }}
                 className="text-[11px] font-medium px-2 py-1 rounded bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0 transition-colors"
               >
                 <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
-                {uniqueWorkspaces.map((ws: any) => (
+                {allWorkspaces.map((ws: any) => (
                   <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
                     {ws.workspace_code || ws.code} - {ws.workspace_name || ws.name}
                   </option>
