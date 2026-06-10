@@ -207,21 +207,12 @@ export function WorkspaceMasterTable({
     let hoverBg = '';
     
     // Ultra-premium minimalist shading (Notion / Linear style)
-    if (node.type === 'WORKSPACE') {
-      rowBg = isLightMode ? 'bg-indigo-50/80' : 'bg-indigo-900/15';
-      hoverBg = isLightMode ? 'hover:bg-indigo-100/70' : 'hover:bg-indigo-900/30';
-    } else if (node.type === 'SUB_WORKSPACE') {
-      rowBg = isLightMode ? 'bg-indigo-50/40' : 'bg-indigo-900/10';
-      hoverBg = isLightMode ? 'hover:bg-indigo-100/50' : 'hover:bg-indigo-900/20';
-    } else if (node.type === 'TASK') {
-      rowBg = isLightMode ? 'bg-emerald-50/40' : 'bg-emerald-900/10';
-      hoverBg = isLightMode ? 'hover:bg-emerald-100/50' : 'hover:bg-emerald-900/20';
-    } else if (node.type === 'SUB_TASK') {
-      rowBg = isLightMode ? 'bg-amber-50/40' : 'bg-amber-900/10';
-      hoverBg = isLightMode ? 'hover:bg-amber-100/50' : 'hover:bg-amber-900/20';
+    if (isLightMode) {
+      rowBg = 'even:bg-slate-50 odd:bg-white';
+      hoverBg = 'hover:bg-gray-100';
     } else {
-      rowBg = isLightMode ? 'bg-white' : 'bg-[#1C1C28]';
-      hoverBg = isLightMode ? 'hover:bg-gray-50' : 'hover:bg-[#252535]';
+      rowBg = 'even:bg-[#1C1C28]/60 odd:bg-[#1C1C28]';
+      hoverBg = 'hover:bg-[#252535]';
     }
     
     let subWsCount = node.subworkspace_count || 0;

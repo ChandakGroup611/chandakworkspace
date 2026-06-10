@@ -591,7 +591,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               return (
                 <AppTableRow 
                   key={task.id} 
-                  className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-gray-800/20"}`}
+                  className={`transition-colors duration-150 ${selectedTaskIds.has(task.id) ? "bg-blue-50 dark:bg-blue-500/10" : virtualRow.index % 2 === 0 ? "bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800/20" : "bg-slate-50 dark:bg-gray-900/30 hover:bg-gray-100 dark:hover:bg-gray-800/30"}`}
                 >
                   <AppTableCell className="px-2 text-center" onClick={(e) => e.stopPropagation()}>
                     <input 
