@@ -84,7 +84,7 @@ export async function fetchPriorities(scopeId?: string) {
     .eq('is_deleted', false);
     
   if (scopeId) {
-    query = query.or(`scope_id.eq.${scopeId},scope_id.is.null`);
+    query = query.eq('scope_id', scopeId);
   } else {
     query = query.is('scope_id', null);
   }
@@ -93,15 +93,16 @@ export async function fetchPriorities(scopeId?: string) {
   if (error) console.error(`[fetchPriorities] Error: ${error.message}`);
   
   let results = data || [];
-  if (scopeId && results.length > 0) {
-    const uniqueMap = new Map();
-    for (const p of results) {
-       const existing = uniqueMap.get(p.name);
-       if (!existing || p.scope_id) {
-          uniqueMap.set(p.name, p);
-       }
-    }
-    results = Array.from(uniqueMap.values());
+  
+  // If a scope was specified but no custom priorities exist for it, fallback to global
+  if (scopeId && results.length === 0) {
+    const { data: fallback } = await supabase
+      .from("priority_master")
+      .select("id, name:priority_name, code:priority_code, scope_id")
+      .eq('is_active', true)
+      .eq('is_deleted', false)
+      .is('scope_id', null);
+    results = fallback || [];
   }
   
   return results;
@@ -119,7 +120,7 @@ export async function fetchStatusesByScope(scopeType: string, scopeId?: string) 
     .eq('scope_type', scopeType);
     
   if (scopeId) {
-    query = query.or(`scope_id.eq.${scopeId},scope_id.is.null`);
+    query = query.eq('scope_id', scopeId);
   } else {
     query = query.is('scope_id', null);
   }
@@ -128,21 +129,20 @@ export async function fetchStatusesByScope(scopeType: string, scopeId?: string) 
   if (error) console.error(`[fetchStatusesByScope] Error: ${error.message}`);
   
   let results = data || [];
-  if (scopeId && results.length > 0) {
-    const uniqueMap = new Map();
-    for (const s of results) {
-       const existing = uniqueMap.get(s.name);
-       if (!existing || s.scope_id) {
-          uniqueMap.set(s.name, s);
-       }
-    }
-    results = Array.from(uniqueMap.values());
+  
+  // If a scope was specified but no custom statuses exist for it, fallback to global
+  if (scopeId && results.length === 0) {
+    const { data: fallback } = await supabase
+      .from("status_master")
+      .select("id, name:status_name, code:status_code, scope_id, status_order")
+      .eq('is_active', true)
+      .eq('is_deleted', false)
+      .eq('scope_type', scopeType)
+      .is('scope_id', null);
+    results = fallback || [];
   }
   
-  // Sort by status_order after deduplication
-  results.sort((a, b) => (a.status_order || 0) - (b.status_order || 0));
-  
-  return results;
+  return results.sort((a, b) => (a.status_order || 0) - (b.status_order || 0));
 }
 
 export async function createWorkspace(formData: any) {
