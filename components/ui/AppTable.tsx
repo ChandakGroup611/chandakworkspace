@@ -31,7 +31,7 @@ export const AppTableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("border-b-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 tracking-wider uppercase", className)}
+    className={cn("border-b-2 border-slate-300 dark:border-slate-600 bg-slate-200 dark:bg-slate-800 text-[12px] font-bold text-slate-800 dark:text-slate-100 tracking-wider uppercase shadow-sm", className)}
     {...props}
   />
 ));
@@ -43,7 +43,7 @@ export const AppTableBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tbody
     ref={ref}
-    className={cn("divide-y divide-slate-100 dark:divide-white/5 font-medium", className)}
+    className={cn("divide-y divide-slate-200/60 dark:divide-white/5 font-medium", className)}
     {...props}
   />
 ));
@@ -56,10 +56,10 @@ export const AppTableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "transition-colors duration-150 text-slate-900 dark:text-slate-100",
-      "[tbody_&]:even:bg-white dark:[tbody_&]:even:bg-[#0B0D17] [tbody_&]:even:hover:bg-slate-50 dark:[tbody_&]:even:hover:bg-slate-800/50",
-      "[tbody_&]:odd:bg-slate-50 dark:[tbody_&]:odd:bg-[#161B22] [tbody_&]:odd:hover:bg-slate-100 dark:[tbody_&]:odd:hover:bg-slate-800/50",
-      "data-[state=selected]:bg-blue-50 dark:data-[state=selected]:bg-blue-900/20",
+      "transition-colors duration-150 text-slate-800 dark:text-slate-200",
+      "[tbody_&]:even:bg-white dark:[tbody_&]:even:bg-[#0B0D17] [tbody_&]:even:hover:bg-blue-50/60 dark:[tbody_&]:even:hover:bg-blue-900/20",
+      "[tbody_&]:odd:bg-slate-50 dark:[tbody_&]:odd:bg-[#121620] [tbody_&]:odd:hover:bg-blue-50/60 dark:[tbody_&]:odd:hover:bg-blue-900/20",
+      "data-[state=selected]:bg-blue-100 dark:data-[state=selected]:bg-blue-900/30",
       "[thead_&]:bg-transparent [thead_&]:hover:bg-transparent", // Ensure header row doesn't have zebra background
       className
     )}
