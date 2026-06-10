@@ -45,6 +45,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
       case 'CREATE': return <Activity className="h-4 w-4 text-purple-500" />;
       case 'DELETE': return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'RESTORE': return <Activity className="h-4 w-4 text-emerald-500" />;
+      case 'ASSIGNMENT_CHANGE': return <Edit className="h-4 w-4 text-emerald-600" />;
       default: return <AlertCircle className="h-4 w-4 text-gray-500" />;
     }
   };
@@ -72,6 +73,8 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
         return 'restored the task';
       case 'UPDATE':
         return 'updated the task details';
+      case 'ASSIGNMENT_CHANGE':
+        return `changed the Executors to: ${log.new_state?.executors_text || 'Unknown'}`;
       default:
         return `performed action: ${log.action.toLowerCase()}`;
     }

@@ -1142,6 +1142,19 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const { error: updateError } = await supabaseAdmin.from('tasks').update({ assigned_to: assignees[0] }).eq('id', taskId);
   if (updateError) return { error: updateError.message };
 
+  // Log the assignment change in audit trail
+  const newExecutorNames = assignees
+    .map(id => stakeholders.find((s: any) => s.id === id)?.full_name)
+    .filter(Boolean)
+    .join(', ');
+    
+  await supabaseAdmin.from('task_activity_logs').insert([{
+    task_id: taskId,
+    actor_id: userId,
+    action: 'ASSIGNMENT_CHANGE',
+    new_state: { executors_text: newExecutorNames }
+  }]);
+
   return { success: true };
 }
 
