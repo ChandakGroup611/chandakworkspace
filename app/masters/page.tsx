@@ -840,33 +840,35 @@ export default function MastersPage() {
           <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden shadow-xl ${
             "border-border"
           }`}>
-            <AppCardHeader className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${
-              isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.005]"
-            }`}>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <AppCardTitle className={`font-bold text-base ${"text-foreground"}`}>
-                    {currentConfig.label}
-                  </AppCardTitle>
-                  <AppBadge variant="info" className="uppercase font-mono text-xs tracking-wider">
-                    {activeTab.replace(/_/g, ' ')}
-                  </AppBadge>
+            {/* Unified Filter Box Header */}
+            <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+                      {currentConfig.label}
+                    </h2>
+                    <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider py-0 px-1.5 h-4 min-h-0 border border-blue-200">
+                      {activeTab.replace(/_/g, ' ')}
+                    </AppBadge>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-medium">
+                    Active configuration choices currently live for staff use across the platform.
+                  </p>
                 </div>
-                <p className={`text-[0.8rem] ${"text-muted"}`}>
-                  Active configuration choices currently live for staff use across the platform.
-                </p>
               </div>
 
-              <div className="w-full sm:w-64 shrink-0">
+              {/* Dynamic Quick Text Search bar */}
+              <div className="flex items-center pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
                 <AppInput 
                   placeholder="Filter records by string parameters..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   leftIcon={<Search className="h-3.5 w-3.5" />}
-                  className="h-8 text-xs"
+                  className="w-full h-9 text-xs bg-white dark:bg-[#0f111a]"
                 />
               </div>
-            </AppCardHeader>
+            </div>
 
             {/* Table Output Array Container */}
             <div className="p-4 flex-1 overflow-y-auto">

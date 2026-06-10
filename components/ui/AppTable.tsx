@@ -31,7 +31,7 @@ export const AppTableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("border-b border-white/5 bg-white/[0.02] text-xs font-semibold text-gray-400 tracking-wider uppercase", className)}
+    className={cn("border-b border-white/5 bg-[#4472C4] dark:bg-[#4472C4]/80 text-xs font-semibold text-white tracking-wider uppercase", className)}
     {...props}
   />
 ));
@@ -56,7 +56,10 @@ export const AppTableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "hover:bg-white/[0.02] transition-colors data-[state=selected]:bg-white/[0.04]",
+      "transition-colors duration-150 text-gray-900 dark:text-gray-100",
+      "even:bg-[#D9E1F2] dark:even:bg-[#1E293B] even:hover:bg-[#c9d5ec] dark:even:hover:bg-[#334155]",
+      "odd:bg-[#B4C6E7] dark:odd:bg-[#334155] odd:hover:bg-[#a3b8e0] dark:odd:hover:bg-[#475569]",
+      "data-[state=selected]:bg-blue-100 dark:data-[state=selected]:bg-blue-900/40",
       className
     )}
     {...props}
@@ -70,7 +73,7 @@ export const AppTableHead = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
-    className={cn("h-8 px-2 text-left align-middle font-semibold text-gray-400", className)}
+    className={cn("h-8 px-2 text-left align-middle font-semibold text-white", className)}
     {...props}
   />
 ));

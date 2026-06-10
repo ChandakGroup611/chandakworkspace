@@ -814,33 +814,29 @@ export default function UserMasterPage() {
           <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-xl ${
             "border-border"
           }`}>
-            {/* Control Bar Header */}
-            <AppCardHeader className={`flex flex-col gap-3 pb-3 border-b ${
-              isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.005]"
-            }`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            {/* Unified Filter Box Header */}
+            <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
-                  <AppCardTitle className={`text-sm font-bold ${"text-foreground"}`}>
+                  <h2 className="text-sm font-bold text-gray-900 dark:text-white">
                     Personnel Registry
-                  </AppCardTitle>
-                  <span className="text-xs text-gray-500 font-mono block">
-                    {filteredUsers.length} Users retrieved from database
+                  </h2>
+                  <span className="text-[10px] text-gray-500 font-mono font-bold tracking-wider uppercase">
+                    {filteredUsers.length} Users Found
                   </span>
                 </div>
 
                 {/* Status Switcher Tabs */}
-                <div className={`flex items-center p-1 rounded-lg border text-xs font-bold ${
-                  "bg-surface border-border"
-                }`}>
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
                     <button
                       key={flt}
                       type="button"
                       onClick={() => setStatusFilter(flt)}
-                      className={`px-2 py-1 rounded-md transition-all ${
+                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
                         statusFilter === flt 
-                          ? (isLightMode ? "bg-blue-600 text-white shadow-xs" : "bg-blue-500 text-white shadow-xs") 
-                          : (isLightMode ? "text-gray-600 hover:text-gray-900" : "text-gray-400 hover:text-gray-200")
+                          ? "bg-blue-600 text-white shadow-sm" 
+                          : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                       }`}
                     >
                       {flt}
@@ -850,16 +846,16 @@ export default function UserMasterPage() {
               </div>
 
               {/* Dynamic Quick Text Search bar */}
-              <div className="w-full">
+              <div className="flex items-center pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
                 <AppInput
                   placeholder="Search by Full Name, User Code, Email string, or Department..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   leftIcon={<Search className="h-3.5 w-3.5" />}
-                  className="h-9 text-xs"
+                  className="w-full h-9 text-xs bg-white dark:bg-[#0f111a]"
                 />
               </div>
-            </AppCardHeader>
+            </div>
 
             {/* Main Output List Table */}
             <div className="p-0 flex-1 overflow-y-auto max-h-[650px] min-h-[400px]">
