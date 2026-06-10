@@ -133,12 +133,12 @@ export default function RealtimeNotificationsDrawer() {
   }, [mounted, currentUserId, isOpen]);
 
   const handleConsumeNotification = async (item: NotificationItem) => {
-    setLocalNotifications(prev => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
+    setLocalNotifications(prev => prev.filter(n => n.id !== item.id));
 
     try {
       await supabase
         .from("notification_queue")
-        .update({ is_read: true })
+        .delete()
         .eq("id", item.id);
 
       await supabase.from("notification_history").insert([{
@@ -168,9 +168,9 @@ export default function RealtimeNotificationsDrawer() {
   };
 
   const markAllAsRead = async () => {
-    setLocalNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setLocalNotifications(prev => prev.filter(n => n.is_read));
     try {
-      await supabase.from("notification_queue").update({ is_read: true }).eq("is_read", false);
+      await supabase.from("notification_queue").delete().eq("is_read", false);
     } catch (_) {}
   };
 
