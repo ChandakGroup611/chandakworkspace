@@ -426,18 +426,23 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   const isFrozen = task.status?.is_closed;
   
+  // Allow unfreezing if the user is staging a status change to an open status
+  const targetStatusId = pendingStatus || currentStatusCode;
+  const targetStatusObj = statuses.find(s => s.code === targetStatusId || s.status_code === targetStatusId);
+  const isEffectivelyFrozen = pendingStatus ? (targetStatusObj?.is_closed ?? isFrozen) : isFrozen;
+  
   // Roles
   const isOwner = task.currentUserCanAct; // Owner/Assignee or SuperAdmin
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   
   // Owners and Executors can edit core properties
-  const canEditCore = (isOwner || isExecutor) && !isFrozen;
+  const canEditCore = (isOwner || isExecutor) && !isEffectivelyFrozen;
   const canEditAux = canEditCore;
   const canDeleteTask = isOwner && canDelete;
   
   // Reviewers & Watchers
-  const canAddRemark = (canEditAux || isWatcherOrReviewer) && !isFrozen;
+  const canAddRemark = (canEditAux || isWatcherOrReviewer) && !isEffectivelyFrozen;
   // Filter inherited workspace members to remove anyone explicitly assigned
   const explicitExecutors = [...(task.task_assignees || [])];
   
@@ -553,7 +558,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[0.7rem] font-bold uppercase tracking-wider text-emerald-500">Executors</span>
-              { (isExecutor || task.currentUserIsSuperAdmin) && !isFrozen && (
+              { (isExecutor || task.currentUserIsSuperAdmin) && !isEffectivelyFrozen && (
                 <button 
                   onClick={async () => {
                     if (!isEditingAssignees) {
