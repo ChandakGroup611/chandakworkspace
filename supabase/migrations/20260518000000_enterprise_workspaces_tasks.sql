@@ -62,12 +62,12 @@
     );
 
     -- 4. TASKS NORMALIZATION (Using existing workspace_tasks)
-    ALTER TABLE public.workspace_tasks ALTER COLUMN department_id DROP NOT NULL;
+    ALTER TABLE IF EXISTS public.workspace_tasks ALTER COLUMN department_id DROP NOT NULL;
     ALTER TABLE public.workspaces ALTER COLUMN department_id DROP NOT NULL;
-    ALTER TABLE public.workspace_tasks ADD COLUMN IF NOT EXISTS priority_id UUID;
-    ALTER TABLE public.workspace_tasks ADD COLUMN IF NOT EXISTS start_date DATE;
-    ALTER TABLE public.workspace_tasks ADD COLUMN IF NOT EXISTS end_date DATE;
-    ALTER TABLE public.workspace_tasks ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
+    ALTER TABLE IF EXISTS public.workspace_tasks ADD COLUMN IF NOT EXISTS priority_id UUID;
+    ALTER TABLE IF EXISTS public.workspace_tasks ADD COLUMN IF NOT EXISTS start_date DATE;
+    ALTER TABLE IF EXISTS public.workspace_tasks ADD COLUMN IF NOT EXISTS end_date DATE;
+    ALTER TABLE IF EXISTS public.workspace_tasks ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
 
     -- Task Assignments
     CREATE TABLE IF NOT EXISTS public.task_assignees (

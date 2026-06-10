@@ -14,8 +14,8 @@ export default async function TasksPage() {
   
   return (
     <div className="w-full space-y-2 animate-in fade-in-50 duration-500">
-      <header className="border-b border-white/5 pb-2">
-        <h1 className="text-xl font-bold">All Workspace Tasks</h1>
+      <header className="border-b border-white/5 pb-2 pt-1">
+        <h1 className="text-xl font-bold leading-normal">All Workspace Tasks</h1>
         <p className="text-xs text-gray-400 mt-1">Comprehensive view of tasks across all workspaces. Use filters to narrow down operations.</p>
       </header>
 

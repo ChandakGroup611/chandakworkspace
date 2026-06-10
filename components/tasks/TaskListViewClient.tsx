@@ -148,7 +148,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         // We'll limit fetchAllTasks as well in a moment, but for now we call it directly
         const supabase = createClient();
         const { data } = await supabase.from("tasks").select(`
-          *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code)`)
+          *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code), workspace:workspaces(id, name:workspace_name, code:workspace_code), assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code, profile_photo)`)
           .eq("is_deleted", false)
           .order("created_at", { ascending: false })
           .range((pageNum - 1) * 50, pageNum * 50 - 1);
@@ -433,7 +433,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   } else {
                     const supabase = createClient();
                     const { data } = await supabase.from("tasks").select(`
-                      *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code)`)
+                      *, title:subject, status:status_master(name:status_name,code:status_code,status_color), priority:priority_master(name:priority_name,code:priority_code), workspace:workspaces(id, name:workspace_name, code:workspace_code), assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code, profile_photo)`)
                       .eq("is_deleted", false)
                       .order("created_at", { ascending: false })
                       .range(0, 49);
