@@ -704,66 +704,77 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
   const startIdx = (page - 1) * limit;
   const endIdx = startIdx + limit - 1;
 
-  const { data, error } = await supabase
+  const { data: workspaceTasks, error: tasksError } = await supabase
     .from("tasks")
     .select(`
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code),
-      assignee:user_master!tasks_assigned_to_fkey(id, full_name, user_code, profile_photo)
+      priority:priority_master(name:priority_name, code:priority_code)
     `)
     .in("workspace_id", targetWorkspaceIds)
     .eq("is_deleted", false)
     .order("created_at", { ascending: false })
     .range(startIdx, endIdx);
-    
-  if (error) {
-    console.error("[Workspaces] Error fetching tasks:", error);
+
+  if (tasksError) {
+    console.error("[Workspaces] Error fetching tasks by workspace:", tasksError);
     return [];
   }
-  
-  if (data && data.length > 0) {
-    // Fetch the workspaces for the returned tasks
-    const wsIds = Array.from(new Set(data.map((t: any) => t.workspace_id).filter(Boolean)));
-    const { data: workspaces } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
-    
-    // Note: Participants and Attachments are now lazy-loaded in the Task Details Drawer per Phase 6 optimization.
-    data.forEach((t: any) => {
-      t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
-      t.creator = null;
-      t.attachmentCount = 0;
-      t.participants = [];
-      t.assignees = [];
-      
-      // Calculate progress percentage
-      if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
-        t.progress_percentage = 100;
-      } else if (t.checklists && t.checklists.length > 0) {
-        const completed = t.checklists.filter((c: any) => c.is_completed).length;
-        t.progress_percentage = Math.round((completed / t.checklists.length) * 100);
-      } else {
-        // Fallback: Use status to infer progress if no checklists exist
-        if (t.status?.code === "IN_PROGRESS" || t.status?.code === "WIP") {
-          t.progress_percentage = 50;
-        } else if (t.status?.code === "REVIEW" || t.status?.code === "TESTING") {
-          t.progress_percentage = 80;
-        } else {
-          t.progress_percentage = 0;
-        }
-      }
-    });
 
-    // Structure parent/child tasks
-    const taskMap = new Map(data.map((t: any) => [t.id, t]));
-    data.forEach((t: any) => {
-      if (t.parent_task_id && taskMap.has(t.parent_task_id)) {
-        t.parent_task = taskMap.get(t.parent_task_id);
-      }
-    });
+  if (workspaceTasks && workspaceTasks.length > 0) {
+      const wsIds = Array.from(new Set(workspaceTasks.map((t: any) => t.workspace_id).filter(Boolean)));
+      const userIds = Array.from(new Set(workspaceTasks.flatMap((t: any) => [t.created_by, t.assigned_to]).filter(Boolean)));
+      
+      const [
+        { data: workspaces },
+        { data: users }
+      ] = await Promise.all([
+        supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
+        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds)
+      ]);
+        
+      workspaceTasks.forEach((t: any) => {
+        t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
+        t.creator = users?.find((u: any) => u.id === t.created_by) || null;
+        t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
+        t.assignees = []; // Implicitly workspace members
+
+        // Calculate progress percentage
+        if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
+          t.progress_percentage = 100;
+        } else if (t.checklists && t.checklists.length > 0) {
+          const completed = t.checklists.filter((c: any) => c.is_completed).length;
+          t.progress_percentage = Math.round((completed / t.checklists.length) * 100);
+        } else {
+          // Fallback: Use status to infer progress if no checklists exist
+          if (t.status?.code === "IN_PROGRESS" || t.status?.code === "WIP") {
+            t.progress_percentage = 50;
+          } else if (t.status?.code === "REVIEW" || t.status?.code === "TESTING") {
+            t.progress_percentage = 80;
+          } else {
+            t.progress_percentage = 0;
+          }
+        }
+      });
+  }
+
+  // Also fetch parent tasks for sub-tasks
+  const subTasks = workspaceTasks?.filter(t => t.parent_task_id) || [];
+  if (subTasks.length > 0) {
+    const parentIds = Array.from(new Set(subTasks.map(t => t.parent_task_id)));
+    const { data: parentTasks } = await supabaseAdmin.from("tasks").select("id, subject, task_code").in("id", parentIds);
+    if (parentTasks) {
+      const taskMap = new Map(parentTasks.map(t => [t.id, { id: t.id, title: t.subject, code: t.task_code }]));
+      workspaceTasks?.forEach(t => {
+        if (t.parent_task_id && taskMap.has(t.parent_task_id)) {
+          t.parent_task = taskMap.get(t.parent_task_id);
+        }
+      });
+    }
   }
   
-  return data || [];
+  return workspaceTasks || [];
 }
 
 export async function fetchAllTasks() {
