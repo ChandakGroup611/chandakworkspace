@@ -384,12 +384,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       triggerToast("Task updated successfully");
       if (onUpdate) {
         onUpdate();
-      } else {
-        // Phase T8: Return to List Optimization using cache (soft navigation)
-        setTimeout(() => {
-          router.push(task.workspace_id ? `/workspaces?workspace=${task.workspace_id}` : "/workspaces");
-        }, 300);
       }
+      // We no longer force navigation away to let the user stay on the same page
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to save changes.");
