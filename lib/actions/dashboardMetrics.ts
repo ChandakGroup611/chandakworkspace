@@ -64,6 +64,7 @@ export async function fetchLiveDashboardMetrics() {
         due_date, assignee_id
       `)
       .or(`creator_id.eq.${userId},assignee_id.eq.${userId}`)
+      .eq("is_deleted", false)
       .order("created_at", { ascending: false });
 
     // Ensure backwards compatibility if requirements doesn't have assignee_id yet
@@ -75,6 +76,7 @@ export async function fetchLiveDashboardMetrics() {
         due_date
       `)
       .eq('creator_id', userId)
+      .eq("is_deleted", false)
       .order("created_at", { ascending: false });
 
     const workspacesPromise = workspaceIds.length > 0 ? supabase
