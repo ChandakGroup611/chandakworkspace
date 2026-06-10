@@ -196,6 +196,12 @@ export async function fetchLiveDashboardMetrics() {
 
     requirementsData?.forEach((r: any) => {
       const status = mapStatus(r.status_master?.status_name);
+      if (r.due_date && status !== "Resolved") {
+        const diffDays = (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24);
+        if (diffDays >= 0 && diffDays <= 7) upcomingTasks++;
+        if (diffDays < 0) escalatedCount++;
+      }
+
       allItems.push({
         module: "Requirements",
         id: r.id,
@@ -213,6 +219,12 @@ export async function fetchLiveDashboardMetrics() {
 
     workspacesData?.forEach((w: any) => {
       const status = mapStatus(w.status_master?.status_name);
+      if (w.end_date && status !== "Resolved") {
+        const diffDays = (new Date(w.end_date).getTime() - now) / (1000 * 3600 * 24);
+        if (diffDays >= 0 && diffDays <= 7) upcomingTasks++;
+        if (diffDays < 0) escalatedCount++;
+      }
+
       allItems.push({
         module: "Workspaces",
         id: w.id,
@@ -242,7 +254,7 @@ export async function fetchLiveDashboardMetrics() {
       },
       sla: {
         escalated_or_breached: escalatedCount,
-        healthy: Math.max(0, totalTasks + (ticketsData?.length || 0) - escalatedCount - upcomingTasks),
+        healthy: Math.max(0, allItems.length - escalatedCount - upcomingTasks),
         warning: upcomingTasks,
         breached: escalatedCount
       },
