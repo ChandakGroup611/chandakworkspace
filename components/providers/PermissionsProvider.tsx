@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { createContext, useContext, ReactNode, useCallback, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
 
 const supabase = createClient();
@@ -52,6 +52,19 @@ interface UnifiedAuthData {
   permissions: string[];
   roleCode: string | null;
 }
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+        queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
+      }
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [queryClient]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['global_auth_context'],
