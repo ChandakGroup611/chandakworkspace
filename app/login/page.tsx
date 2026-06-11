@@ -58,6 +58,9 @@ export default function LoginPage() {
         // Auto login if already authenticated
         router.push("/");
       }
+
+      // Proactively prefetch the dashboard so that the bundle is ready
+      router.prefetch("/");
     };
 
     checkSession();
@@ -123,14 +126,13 @@ export default function LoginPage() {
       }
 
       setSuccessMsg("Signed in securely. Loading dashboard...");
-      setTimeout(() => {
-        router.push("/");
-      }, 1000);
+      
+      // Removed the artificial 1000ms timeout for instant performance
+      router.push("/");
 
     } catch (err: any) {
       setErrorMsg(err.message || "Invalid email or password.");
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only stop loading if there was an error
     }
   };
 
