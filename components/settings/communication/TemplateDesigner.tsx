@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Save, Loader2, Play, Plus, Trash2, Code2, Eye } from "lucide-react";
+import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 const MODULES = ["Task", "Workspace", "Ticket", "Requirement", "Approval"];

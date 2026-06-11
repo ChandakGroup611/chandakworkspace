@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Trash2, Save, Filter, Users, Send, Loader2 } from "lucide-react";
+import { Plus, Trash2, Save, Filter, Users, Send, Loader2, Workflow } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { toast } from "sonner"; // Oops, I shouldn't use sonner. Let me fix this internally.
 
 // Define available modules and their events/statuses
 const MODULE_CONFIG: Record<string, { events: string[], statuses: string[] }> = {

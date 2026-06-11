@@ -1,7 +1,7 @@
 import React from "react";
 import { Metadata } from "next";
 import Link from "next/link";
-import { Server, LayoutTemplate, Workflow, ActivityLog } from "lucide-react";
+import { Server, LayoutTemplate, Workflow, Activity } from "lucide-react";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,7 +43,7 @@ const MODULES = [
     title: "Delivery Logs",
     description: "Audit trail of all communication dispatch, fallbacks, and delivery receipts.",
     href: "/settings/communication/logs",
-    icon: ActivityLog,
+    icon: Activity,
     color: "text-amber-400",
     bg: "bg-amber-500/10",
     border: "border-amber-500/20"
