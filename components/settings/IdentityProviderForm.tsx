@@ -3,11 +3,17 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle, Shield, Key, Link2, Users, Save, Loader2, AlertCircle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { toast } from "sonner";
 
 export default function IdentityProviderForm() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [toastMsg, setToastMsg] = useState<{type: "success" | "error", text: string} | null>(null);
+
+  const triggerToast = (text: string, type: "success" | "error" = "success") => {
+    setToastMsg({ text, type });
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
   const [config, setConfig] = useState<any>({
     provider_type: "AZURE_AD",
     tenant_id: "",
@@ -67,9 +73,9 @@ export default function IdentityProviderForm() {
         if (error) throw error;
       }
 
-      toast.success("Identity Provider Configuration Saved");
+      triggerToast("Identity Provider Configuration Saved", "success");
     } catch (err: any) {
-      toast.error(err.message || "Failed to save configuration");
+      triggerToast(err.message || "Failed to save configuration", "error");
     } finally {
       setLoading(false);
     }
@@ -223,6 +229,14 @@ export default function IdentityProviderForm() {
           <span>{loading ? "Saving..." : "Save Configuration"}</span>
         </button>
       </div>
+
+      {/* Local Toast Notification */}
+      {toastMsg && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'}`}>
+          {toastMsg.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          <span className="text-xs font-semibold">{toastMsg.text}</span>
+        </div>
+      )}
 
     </div>
   );
