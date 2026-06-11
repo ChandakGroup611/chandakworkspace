@@ -128,6 +128,9 @@ export default function Navbar() {
     setLoggingOut(true);
     setProfileOpen(false);
     try {
+      if (userData?.id) {
+        await supabase.from("active_sessions").delete().eq("user_id", userData.id);
+      }
       await supabase.auth.signOut();
     } catch (_) {}
     
@@ -140,6 +143,9 @@ export default function Navbar() {
     setLoggingOut(true);
     setShowTimeoutWarning(false);
     try {
+      if (userData?.id) {
+        await supabase.from("active_sessions").delete().eq("user_id", userData.id);
+      }
       await supabase.auth.signOut();
     } catch (_) {}
 
