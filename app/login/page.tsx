@@ -135,7 +135,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`min-h-screen w-full flex flex-col items-center justify-center relative overflow-y-auto font-sans p-4 sm:p-8 transition-colors duration-300 ${
+    <div className={`min-h-[100dvh] w-full flex flex-col items-center justify-center relative overflow-y-auto font-sans p-3 sm:p-8 transition-colors duration-300 ${
       isLight ? "bg-gray-50 text-gray-900" : "bg-[#05070D] text-white"
     }`}>
       {/* Dynamic Glow Accents */}
@@ -150,9 +150,9 @@ export default function LoginPage() {
 
       {/* Central Login Authentication Form Container */}
       <div className="w-full max-w-[400px] relative z-10 animate-in fade-in-50 zoom-in-95 duration-500 my-auto">
-        <div className="text-center mb-6 space-y-2">
-          <div className="flex justify-center mb-3">
-            <div className="h-24 w-32 p-2 bg-white rounded-xl shadow-lg border border-gray-100 flex items-center justify-center">
+        <div className="text-center mb-3 sm:mb-6 space-y-1 sm:space-y-2">
+          <div className="flex justify-center mb-2 sm:mb-3">
+            <div className="h-12 w-20 sm:h-16 sm:w-24 p-1.5 sm:p-2 bg-white rounded-xl shadow-lg border border-gray-100 flex items-center justify-center">
               <img src="/logo.png" alt="Chandak Logo" className="max-h-full max-w-full object-contain" />
             </div>
           </div>
@@ -175,7 +175,7 @@ export default function LoginPage() {
             <span className="text-xs text-gray-500 font-medium block mt-1">Identity Authentication Portal</span>
           </AppCardHeader>
 
-          <AppCardContent className="p-5 sm:p-6 space-y-5">
+          <AppCardContent className="p-4 sm:p-6 space-y-3 sm:space-y-5">
             {/* Realtime Alert Displays */}
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300 text-xs flex items-start gap-2 animate-in fade-in duration-200">
@@ -213,7 +213,7 @@ export default function LoginPage() {
                   placeholder="e.g. user@enterprise.internal"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  leftIcon={<Mail className="h-4 w-4" />}
+                  leftIcon={<Mail className={`h-4 w-4 ${isLight ? "text-gray-500" : "text-gray-400"}`} />}
                   className="h-10 text-sm rounded-lg"
                   autoComplete="off"
                   data-lpignore="true"
@@ -233,7 +233,7 @@ export default function LoginPage() {
                   placeholder="••••••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  leftIcon={<Lock className="h-4 w-4" />}
+                  leftIcon={<Lock className={`h-4 w-4 ${isLight ? "text-gray-500" : "text-gray-400"}`} />}
                   className="h-10 text-sm rounded-lg"
                   autoComplete="new-password"
                   data-lpignore="true"
@@ -245,7 +245,7 @@ export default function LoginPage() {
                 variant="primary" 
                 type="submit" 
                 disabled={loading || !!successMsg}
-                className="w-full h-10 mt-5 rounded-lg font-bold text-sm tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-600/20 text-white transition-all transform hover:scale-[1.02] active:scale-95"
+                className="w-full h-10 mt-4 sm:mt-5 rounded-lg font-bold text-sm tracking-wide bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-600/20 text-white transition-all transform hover:scale-[1.02] active:scale-95"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

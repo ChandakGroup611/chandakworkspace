@@ -276,8 +276,10 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
 
+    console.time("auth");
     // 1. Get current authenticated user
     const { data: userData } = await supabase.auth.getUser();
+    console.timeEnd("auth");
     const user = userData.user;
     
     if (!user) {
@@ -294,10 +296,16 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
 
 
     // 2. Fetch independent data first
-    const [profileRes, managedDeptsRes, workspaces, companies, priorities, taskStatuses] = await Promise.all([
-      supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single(),
+    console.time("profile");
+    const profileRes = await supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single();
+    console.timeEnd("profile");
+
+    console.time("workspace-query");
+    const workspaces = await getVisibleWorkspaces(user.id);
+    console.timeEnd("workspace-query");
+
+    const [managedDeptsRes, companies, priorities, taskStatuses] = await Promise.all([
       supabase.from("departments").select("id").eq("manager_id", user.id),
-      getVisibleWorkspaces(user.id), // Direct fast repository call
       fetchCompanies(),
       fetchPriorities(),
       import('@/lib/actions/tasks').then(m => m.getTaskStatuses())

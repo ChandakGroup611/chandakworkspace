@@ -76,6 +76,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   const loadTaskDetails = async (forceUpdate = false) => {
     if (!forceUpdate && initialTask && task) return;
+    const t0 = performance.now();
     setLoading(true);
     setError(null);
     setPendingStatus(null);
@@ -103,6 +104,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       setError(e.message || "Failed to load task details.");
     } finally {
       setLoading(false);
+      const t1 = performance.now();
+      console.log(`[Performance] Task Open Duration (loadTaskDetails): ${(t1 - t0).toFixed(2)}ms`);
     }
   };
 
@@ -296,7 +299,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setError(null);
     try {
       // Step 1: Upload pending files separately (Phase T6)
-      const attachmentIds = [];
+      const attachmentIds: string[] = [];
+      const newAttachments: any[] = [];
       for (const file of pendingFiles) {
         const reader = new FileReader();
         const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -305,7 +309,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           reader.readAsDataURL(file);
         });
         const att = await createTaskAttachment(taskId, file.name, dataUrl, file.size);
-        if (att && att.id) attachmentIds.push(att.id);
+        if (att && att.id) {
+           attachmentIds.push(att.id);
+           newAttachments.push(att);
+        }
       }
 
       // Step 2: Prepare Batch Payload
@@ -360,11 +367,35 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
              const newStatusObj = statuses.find(s => s.id === finalStatusId || s.code === finalStatusId || s.status_code === finalStatusId);
              if (newStatusObj) newState.status = newStatusObj;
           }
-          newState.checklists = res.data.checklists;
-          newState.attachments = res.data.attachments;
+          // Merge new checklists
+          const existingChecklists = [...(prev.checklists || [])];
+          
+          if (res.data.checklistsUpdates && res.data.checklistsUpdates.length > 0) {
+             res.data.checklistsUpdates.forEach((upd: any) => {
+                const idx = existingChecklists.findIndex(c => c.id === upd.id);
+                if (idx !== -1) existingChecklists[idx] = upd;
+             });
+          }
+          
+          if (res.data.checklistsCreates && res.data.checklistsCreates.length > 0) {
+             // Remove temporary placeholders
+             const cleanChecklists = existingChecklists.filter(c => !String(c.id).startsWith("temp-"));
+             newState.checklists = [...cleanChecklists, ...res.data.checklistsCreates];
+          } else {
+             newState.checklists = existingChecklists;
+          }
+          
+          if (newAttachments && newAttachments.length > 0) {
+             const existingAtts = [...(prev.attachments || [])].filter(a => !a.is_temp);
+             newState.attachments = [...newAttachments, ...existingAtts];
+          }
+          
           return newState;
         });
-        setRemarksHistory(res.data.comments || []);
+        
+        if (res.data.comments && res.data.comments.length > 0) {
+           setRemarksHistory(prev => [...res.data.comments, ...prev]);
+        }
       }
 
       // Reset pending states

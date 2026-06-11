@@ -368,7 +368,7 @@ export async function getTaskDetails(taskId: string) {
       *,
       status:status_master(id, name:status_name, code:status_code, is_closed),
       priority:priority_master(id, name:priority_name, color:priority_color),
-      workspace:workspaces(id, name:workspace_name)
+      workspace:workspaces(id, name:workspace_name, members:workspace_members(user_id, role))
     `).eq('id', taskId).single(),
     supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
     supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
@@ -388,8 +388,7 @@ export async function getTaskDetails(taskId: string) {
   let isWorkspaceMember = isSuperAdmin;
   
   if (task.workspace_id) {
-    const wsRes = await supabaseAdmin.from('workspace_members').select('user_id, role').eq('workspace_id', task.workspace_id).eq('is_deleted', false);
-    if (wsRes.data) wsMembers = wsRes.data;
+    wsMembers = task.workspace?.members || [];
     
     if (userId && !isSuperAdmin) {
       if (wsMembers.some(m => m.user_id === userId)) {
@@ -998,33 +997,37 @@ export async function executeTaskBatchOperation(payload: {
 
   console.time("TaskBatch - Children Updates");
   // Handle Checklists (parallel)
-  const checklistPromises: any[] = [];
+  console.time("TaskBatch - Children Updates");
+  // Handle Checklists (parallel)
+  const checklistInsertPromise = (checklistCreates && checklistCreates.length > 0)
+    ? supabaseAdmin.from('task_checklists').insert(checklistCreates.map(label => ({ task_id: taskId, label, is_completed: false }))).select()
+    : Promise.resolve({ data: [] });
   
-  if (checklistCreates && checklistCreates.length > 0) {
-    const creates = checklistCreates.map(label => ({ task_id: taskId, label, is_completed: false }));
-    checklistPromises.push(supabaseAdmin.from('task_checklists').insert(creates));
-  }
-  
-  if (checklistUpdates && Object.keys(checklistUpdates).length > 0) {
-    for (const [id, is_completed] of Object.entries(checklistUpdates)) {
-      checklistPromises.push(supabaseAdmin.from('task_checklists').update({ is_completed }).eq('id', id));
+  const checklistUpdatePromises = (checklistUpdates && Object.keys(checklistUpdates).length > 0)
+    ? Object.entries(checklistUpdates).map(([id, is_completed]) => supabaseAdmin.from('task_checklists').update({ is_completed }).eq('id', id).select())
+    : [];
+
+  const commentPromise = (remarks && remarks.trim().length > 0)
+    ? supabaseAdmin.from('task_comments').insert([{ task_id: taskId, author_id: userId, content: remarks }]).select()
+    : Promise.resolve({ data: [] });
+
+  const [insertRes, commentRes, ...updateResArr] = await Promise.all([
+    checklistInsertPromise,
+    commentPromise,
+    ...checklistUpdatePromises
+  ]);
+
+  const checklistsCreates = insertRes.data || [];
+  const checklistsUpdates = updateResArr.flatMap(r => r.data || []);
+  let comments = commentRes.data || [];
+
+  if (comments.length > 0) {
+    const { data: users } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').eq('id', userId);
+    if (users && users.length > 0) {
+      comments = comments.map(c => ({ ...c, user: users[0] }));
     }
   }
 
-  // Handle Remarks
-  if (remarks && remarks.trim().length > 0) {
-    checklistPromises.push(supabaseAdmin.from('task_comments').insert([{ task_id: taskId, author_id: userId, content: remarks }]));
-  }
-
-  // Link Attachments that were uploaded separately (Phase T6)
-  if (attachmentIds && attachmentIds.length > 0) {
-    // If the attachments were uploaded to storage but need DB records, or they were inserted into DB without task_id
-    // This depends on the Phase T6 strategy. Typically, they are already inserted with task_id.
-    // If we passed them just to refetch, we don't need to do anything here.
-  }
-
-  // Await data mutations
-  await Promise.all(checklistPromises);
   console.timeEnd("TaskBatch - Children Updates");
 
   // Background Side Effects (non-blocking - Phase T4)
@@ -1052,36 +1055,14 @@ export async function executeTaskBatchOperation(payload: {
     );
   }
 
-  // Await side effects so that actor_id is correctly patched before we refetch the logs for the UI
-  await Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
-
-  console.time("TaskBatch - Refetch Hydration Data");
-  // Refetch only the collections needed for hydration (Parallel)
-  const [
-    { data: checklists },
-    { data: attachments },
-    { data: commentsRaw }
-  ] = await Promise.all([
-    supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true }),
-    supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false }),
-    supabaseAdmin.from('task_comments').select('*').eq('task_id', taskId).order('created_at', { ascending: false }).limit(20)
-  ]);
-
-  let comments = commentsRaw || [];
-  if (comments.length > 0) {
-    const authorIds = Array.from(new Set(comments.map(c => c.author_id).filter(Boolean)));
-    const { data: users } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').in('id', authorIds as string[]);
-    if (users) {
-      comments = comments.map(c => ({ ...c, user: users.find(u => u.id === c.author_id) || null }));
-    }
-  }
-  console.timeEnd("TaskBatch - Refetch Hydration Data");
+  // FIRE AND FORGET - DO NOT AWAIT SIDE EFFECTS
+  Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
 
   return {
     success: true,
     data: {
-      checklists: checklists || [],
-      attachments: attachments || [],
+      checklistsCreates,
+      checklistsUpdates,
       comments
     }
   };
