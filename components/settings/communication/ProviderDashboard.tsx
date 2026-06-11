@@ -48,7 +48,7 @@ export default function ProviderDashboard() {
       
       setProviders(slots);
     } catch (err) {
-      console.error(err);
+      console.error("[ProviderDashboard Error]", JSON.stringify(err, null, 2));
     } finally {
       setLoading(false);
     }

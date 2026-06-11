@@ -59,6 +59,26 @@ async function run() {
     results.explain_workspaces = "RPC 'execute_sql' not available for direct explain analyze.";
   }
 
+  // 4. Measure Task Creation Latency (Simulating UI Thread Block)
+  const startCreate = performance.now();
+  const { data: newTask, error: createError } = await supabase
+    .from('tasks')
+    .insert([{
+      subject: "Performance Verification Benchmark Task",
+      workspace_id: workspaces?.[0]?.id || null, // Just use the first workspace if available
+      priority_id: "00000000-0000-0000-0000-000000000000", // Will likely fail FK if strict, but that's fine, we just want latency
+      is_deleted: true // Mark deleted instantly so we don't pollute DB
+    }])
+    .select('id')
+    .single();
+  const endCreate = performance.now();
+  
+  results.task_creation_latency = {
+    execution_ms: Math.round(endCreate - startCreate),
+    status: createError ? "Simulated Insert Attempted (Constraint Failed)" : "Successful Insert",
+    error: createError ? createError.message : null
+  };
+
   console.log(JSON.stringify(results, null, 2));
 }
 
