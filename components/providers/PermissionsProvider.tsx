@@ -47,78 +47,79 @@ interface PermissionsContextValue {
 const PermissionsContext = createContext<PermissionsContextValue | undefined>(undefined);
 
 export function PermissionsProvider({ children }: { children: ReactNode }) {
-  // Global Profile Query
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      console.count('[PROFILER] loadProfile_executed');
-      console.count('[PROFILER] auth.getSession_executed');
+interface UnifiedAuthData {
+  profile: ProfileData | null;
+  permissions: string[];
+  roleCode: string | null;
+}
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['global_auth_context'],
+    queryFn: async (): Promise<UnifiedAuthData> => {
+      console.count('[PROFILER] loadAuthContext_executed');
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
-      if (!user) return null;
+      if (!user) return { profile: null, permissions: [], roleCode: null };
 
-      let roleCode = user.app_metadata?.role || null;
+      // PHASE 5: SAFE WATERFALL FLATTENING
+      // Execute independent profile and permissions queries in parallel
+      const [profileRes, permsRes] = await Promise.all([
+        supabase
+          .from("user_master")
+          .select("id, full_name, email, profile_photo, role:roles(code)")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("user_permissions_snapshot")
+          .select("permission_code")
+          .eq("user_id", user.id)
+      ]);
 
-      const { data: profileData } = await supabase
-        .from("user_master")
-        .select("id, full_name, email, profile_photo, role:roles(code)")
-        .eq("id", user.id)
-        .single();
-      
+      const profileData = profileRes.data;
+      const snapshot = permsRes.data;
+      const error = permsRes.error;
+
+      let baseRoleCode = user.app_metadata?.role || null;
       if (profileData) {
         const dbRoleCode = Array.isArray(profileData.role) ? (profileData.role[0] as any)?.code : (profileData.role as any)?.code;
-        if (dbRoleCode === "SUPER_ADMIN") roleCode = "SUPER_ADMIN";
+        if (dbRoleCode === "SUPER_ADMIN") baseRoleCode = "SUPER_ADMIN";
       }
 
-      return { 
+      const profile: ProfileData = { 
         id: user.id, 
         email: user.email, 
         full_name: profileData?.full_name || user.user_metadata?.full_name || "Unknown User",
         profile_photo: profileData?.profile_photo || null,
-        roleCode
+        roleCode: baseRoleCode
       };
-    },
-    staleTime: 300000,
-    gcTime: 1800000,
-  });
 
-  // Global Permissions Query
-  const { data: permsData, isLoading: isPermsLoading } = useQuery({
-    queryKey: ['permissions', profile?.id],
-    enabled: !!profile?.id,
-    queryFn: async () => {
-      console.count('[PROFILER] loadPermissions_executed');
-      let roleCode = profile?.roleCode;
-      
-      const { data: snapshot, error } = await supabase
-        .from("user_permissions_snapshot")
-        .select("permission_code")
-        .eq("user_id", profile!.id);
-
+      let finalRoleCode = baseRoleCode;
       let perms: string[] = [];
+
       if (error) {
         console.warn("[Permissions] Snapshot lookup failed:", error);
         const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
-        if (profile?.email && adminEmails.includes(profile.email)) {
-          roleCode = "SUPER_ADMIN";
+        if (profile.email && adminEmails.includes(profile.email)) {
+          finalRoleCode = "SUPER_ADMIN";
         }
       } else {
         const rawPerms = snapshot ? snapshot.map((r: any) => r.permission_code) : [];
         perms = expandPermissions(rawPerms);
         if (rawPerms.includes("SUPER_ADMIN")) {
-          roleCode = "SUPER_ADMIN";
+          finalRoleCode = "SUPER_ADMIN";
         }
       }
-      
-      return { permissions: perms, roleCode };
+
+      return { profile, permissions: perms, roleCode: finalRoleCode };
     },
     staleTime: 300000,
     gcTime: 1800000,
   });
 
-  const loading = isProfileLoading || (!!profile?.id && isPermsLoading);
-  const permissions = permsData?.permissions || [];
-  const roleCode = permsData?.roleCode || profile?.roleCode || null;
+  const loading = isLoading;
+  const profile = data?.profile || null;
+  const permissions = data?.permissions || [];
+  const roleCode = data?.roleCode || null;
 
   const hasPermission = useCallback((permissionCode: string) => {
     if (loading) return false;
