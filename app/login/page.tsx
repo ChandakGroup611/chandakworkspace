@@ -137,7 +137,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`min-h-[100dvh] w-full flex flex-col items-center justify-center relative overflow-y-auto font-sans p-3 sm:p-8 transition-colors duration-300 ${
+    <div className={`h-[100dvh] w-full flex flex-col items-center justify-center relative overflow-hidden font-sans p-3 sm:p-8 transition-colors duration-300 ${
       isLight ? "bg-gray-50 text-gray-900" : "bg-[#05070D] text-white"
     }`}>
       {/* Dynamic Glow Accents */}

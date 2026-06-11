@@ -141,7 +141,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className={`min-h-screen w-full flex flex-col items-center justify-center relative overflow-y-auto font-sans p-4 sm:p-12 transition-colors duration-300 ${
+    <div className={`min-h-screen w-full flex flex-col items-center justify-center relative font-sans p-4 sm:p-12 transition-colors duration-300 ${
       isLight ? "bg-gray-50 text-gray-900" : "bg-[#05070D] text-white"
     }`}>
       {/* Dynamic Glow Accents */}
