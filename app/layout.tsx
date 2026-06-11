@@ -4,6 +4,7 @@ import WorkspaceShell from '@/components/layout/WorkspaceShell'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import ClientSessionManager from '@/components/auth/ClientSessionManager'
 import QueryProvider from '@/components/providers/QueryProvider'
+import { PermissionsProvider } from '@/components/providers/PermissionsProvider'
 import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -50,10 +51,12 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-foreground min-h-screen antialiased font-sans" suppressHydrationWarning>
         <QueryProvider>
-          <ThemeProvider>
-            <ClientSessionManager />
-            <WorkspaceShell>{children}</WorkspaceShell>
-          </ThemeProvider>
+          <PermissionsProvider>
+            <ThemeProvider>
+              <ClientSessionManager />
+              <WorkspaceShell>{children}</WorkspaceShell>
+            </ThemeProvider>
+          </PermissionsProvider>
         </QueryProvider>
       </body>
     </html>

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Force Tailwind v4 to use class-based dark mode instead of media queries */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Import Phase 1 Enterprise Design Token Foundation Layers */
 @import '../src/styles/themes/base.css';
 @import '../src/styles/themes/executive-light.css';

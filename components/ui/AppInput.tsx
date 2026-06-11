@@ -49,7 +49,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
 
         <div className="relative flex items-center w-full">
           {leftIcon && (
-            <div className="absolute left-3 flex items-center text-muted pointer-events-none">
+            <div className="absolute left-3 z-10 flex items-center text-muted pointer-events-none">
               {leftIcon}
             </div>
           )}

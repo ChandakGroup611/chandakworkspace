@@ -149,8 +149,8 @@ export default function Sidebar() {
       <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
         {!isCompact ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-white shadow-sm overflow-hidden p-0.5">
-              <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain" />
+            <div className="flex h-12 shrink-0 items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain drop-shadow-md" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
               <span className={`text-[14px] font-black tracking-tight truncate bg-clip-text text-transparent bg-gradient-to-r drop-shadow-sm ${isLight ? "from-blue-700 via-indigo-600 to-purple-700" : "from-blue-400 via-indigo-300 to-purple-400"}`}>
@@ -159,8 +159,8 @@ export default function Sidebar() {
             </div>
           </Link>
         ) : (
-          <Link href="/" className="flex h-8 w-8 mx-auto shrink-0 items-center justify-center rounded bg-white shadow-sm overflow-hidden p-0.5">
-            <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain" />
+          <Link href="/" className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center overflow-hidden">
+            <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain drop-shadow-md" />
           </Link>
         )}
 

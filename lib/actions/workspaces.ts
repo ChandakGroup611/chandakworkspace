@@ -295,16 +295,10 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     }
 
 
-    // 2. Fetch independent data first
-    console.time("profile");
-    const profileRes = await supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single();
-    console.timeEnd("profile");
-
-    console.time("workspace-query");
-    const workspaces = await getVisibleWorkspaces(user.id);
-    console.timeEnd("workspace-query");
-
-    const [managedDeptsRes, companies, priorities, taskStatuses] = await Promise.all([
+    // 2. Fetch independent data concurrently to avoid waterfalls
+    const [profileRes, workspaces, managedDeptsRes, companies, priorities, taskStatuses] = await Promise.all([
+      supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single(),
+      getVisibleWorkspaces(user.id), // Independent, can run concurrently
       supabase.from("departments").select("id").eq("manager_id", user.id),
       fetchCompanies(),
       fetchPriorities(),

@@ -1,9 +1,9 @@
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { hasPermission } from '@/lib/permissions';
 
-export async function getVisibleWorkspaces(userId: string) {
+export async function getVisibleWorkspaces(userId: string, isSuperAdmin?: boolean) {
   // 1. Super Admin bypass (cache leveraged in hasPermission)
-  const canManageAll = await hasPermission(userId, "WORKSPACES_MANAGE");
+  const canManageAll = isSuperAdmin !== undefined ? isSuperAdmin : await hasPermission(userId, "WORKSPACES_MANAGE");
   
   if (canManageAll) {
     const { data: visibleWorkspaces, error } = await supabaseAdmin

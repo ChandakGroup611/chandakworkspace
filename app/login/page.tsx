@@ -150,10 +150,10 @@ export default function LoginPage() {
 
       {/* Central Login Authentication Form Container */}
       <div className="w-full max-w-[400px] relative z-10 animate-in fade-in-50 zoom-in-95 duration-500 my-auto">
-        <div className="text-center mb-3 sm:mb-6 space-y-1 sm:space-y-2">
-          <div className="flex justify-center mb-2 sm:mb-3">
-            <div className="h-12 w-20 sm:h-16 sm:w-24 p-1.5 sm:p-2 bg-white rounded-xl shadow-lg border border-gray-100 flex items-center justify-center">
-              <img src="/logo.png" alt="Chandak Logo" className="max-h-full max-w-full object-contain" />
+        <div className="text-center mb-2 sm:mb-4 space-y-0.5 sm:space-y-1">
+          <div className="flex justify-center mb-1 sm:mb-1.5">
+            <div className="h-16 w-auto sm:h-20 sm:w-auto p-1 flex items-center justify-center">
+              <img src="/logo.png" alt="Chandak Logo" className="max-h-full max-w-full object-contain drop-shadow-md" />
             </div>
           </div>
           <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>
@@ -167,7 +167,7 @@ export default function LoginPage() {
         <AppCard className={`shadow-2xl backdrop-blur-2xl transition-all border ${
           isLight ? "bg-white/80 border-white shadow-blue-900/5" : "bg-[#0A0D14]/70 border-white/10 shadow-black/50"
         }`}>
-          <AppCardHeader className={`pb-4 border-b text-center ${isLight ? "border-gray-100/50" : "border-white/5"}`}>
+          <AppCardHeader className={`pb-2 border-b text-center ${isLight ? "border-gray-100/50" : "border-white/5"}`}>
             <AppCardTitle className={`text-lg font-bold flex items-center justify-center gap-2 ${isLight ? "text-gray-900" : "text-white"}`}>
               <Lock className="h-4 w-4 text-blue-500" />
               <span>Account Sign In</span>
@@ -175,7 +175,7 @@ export default function LoginPage() {
             <span className="text-xs text-gray-500 font-medium block mt-1">Identity Authentication Portal</span>
           </AppCardHeader>
 
-          <AppCardContent className="p-4 sm:p-6 space-y-3 sm:space-y-5">
+          <AppCardContent className="p-3 sm:p-5 space-y-2 sm:space-y-3">
             {/* Realtime Alert Displays */}
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300 text-xs flex items-start gap-2 animate-in fade-in duration-200">
@@ -213,7 +213,7 @@ export default function LoginPage() {
                   placeholder="e.g. user@enterprise.internal"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  leftIcon={<Mail className={`h-4 w-4 ${isLight ? "text-gray-500" : "text-gray-400"}`} />}
+                  leftIcon={<Mail className="h-4 w-4 text-blue-500 dark:text-blue-400" />}
                   className="h-10 text-sm rounded-lg"
                   autoComplete="off"
                   data-lpignore="true"
@@ -233,7 +233,7 @@ export default function LoginPage() {
                   placeholder="••••••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  leftIcon={<Lock className={`h-4 w-4 ${isLight ? "text-gray-500" : "text-gray-400"}`} />}
+                  leftIcon={<Lock className="h-4 w-4 text-blue-500 dark:text-blue-400" />}
                   className="h-10 text-sm rounded-lg"
                   autoComplete="new-password"
                   data-lpignore="true"
