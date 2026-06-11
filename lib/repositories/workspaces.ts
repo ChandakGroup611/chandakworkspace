@@ -2,6 +2,9 @@ import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { hasPermission } from '@/lib/permissions';
 
 export async function getVisibleWorkspaces(userId: string, isSuperAdmin?: boolean) {
+  const tId = Math.random().toString(36).substr(2, 5);
+  console.time(`[PROFILER] getVisibleWorkspaces_TOTAL_${tId}`);
+  try {
   // 1. Super Admin bypass (cache leveraged in hasPermission)
   const canManageAll = isSuperAdmin !== undefined ? isSuperAdmin : await hasPermission(userId, "WORKSPACES_MANAGE");
   
@@ -82,6 +85,9 @@ export async function getVisibleWorkspaces(userId: string, isSuperAdmin?: boolea
   if (error) throw error;
   
   return visibleWorkspaces || [];
+  } finally {
+    console.timeEnd(`[PROFILER] getVisibleWorkspaces_TOTAL_${tId}`);
+  }
 }
 
 export async function getWorkspaceById(workspaceId: string, userId: string) {

@@ -51,6 +51,8 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
+      console.count('[PROFILER] loadProfile_executed');
+      console.count('[PROFILER] auth.getSession_executed');
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) return null;
@@ -85,6 +87,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     queryKey: ['permissions', profile?.id],
     enabled: !!profile?.id,
     queryFn: async () => {
+      console.count('[PROFILER] loadPermissions_executed');
       let roleCode = profile?.roleCode;
       
       const { data: snapshot, error } = await supabase

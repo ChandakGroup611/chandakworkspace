@@ -272,6 +272,8 @@ export async function fetchWorkspacesInitialData() {
 }
 
 export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string | null) {
+  const tId = Math.random().toString(36).substr(2, 5);
+  console.time(`[PROFILER] fetchWorkspaceDashboardData_TOTAL_${tId}`);
   try {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
@@ -336,11 +338,16 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
   } catch (err: any) {
     console.error("[fetchWorkspaceDashboardData] Error:", err?.message || String(err));
     throw new Error(err?.message || "Failed to load workspace dashboard");
+  } finally {
+    console.timeEnd(`[PROFILER] fetchWorkspaceDashboardData_TOTAL_${tId}`);
   }
 }
 
 export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspaces?: any[]) {
-  // 1. Fetch ALL Visible Workspaces (use cached if provided to save DB queries)
+  const tId = Math.random().toString(36).substr(2, 5);
+  console.time(`[PROFILER] fetchHierarchyRoots_TOTAL_${tId}`);
+  try {
+    // 1. Fetch ALL Visible Workspaces (use cached if provided to save DB queries)
   const visibleWorkspaces = cachedVisibleWorkspaces || await getVisibleWorkspaces(userId);
   const wsIds = visibleWorkspaces.map((w: any) => w.id);
   
@@ -359,6 +366,9 @@ export async function fetchHierarchyRoots(userId: string, cachedVisibleWorkspace
     total_hierarchy_task_count: ws.hierarchy_task_count || 0,
     children: [] // Children will be fetched on demand
   }));
+  } finally {
+    console.timeEnd(`[PROFILER] fetchHierarchyRoots_TOTAL_${tId}`);
+  }
 }
 
 export async function fetchHierarchyChildren(parentId: string, parentType: string) {
@@ -682,9 +692,12 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
 
 
 export async function fetchTasksByWorkspace(workspaceId: string, page: number = 1, limit: number = 50, includeDescendants: boolean = false) {
-  if (!workspaceId) return [];
+  const tId = Math.random().toString(36).substr(2, 5);
+  console.time(`[PROFILER] fetchTasksByWorkspace_TOTAL_${tId}`);
+  try {
+    if (!workspaceId) return [];
   
-  const cookieStore = await cookies();
+    const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
   let targetWorkspaceIds = [workspaceId];
@@ -777,6 +790,9 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
   }
   
   return workspaceTasks || [];
+  } finally {
+    console.timeEnd(`[PROFILER] fetchTasksByWorkspace_TOTAL_${tId}`);
+  }
 }
 
 export async function fetchAllTasks() {
