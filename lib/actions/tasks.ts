@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { revalidatePath } from 'next/cache';
 import { dispatchNotification } from '@/lib/actions/notifications';
+import { queueBusinessEvent } from '@/lib/actions/notification-engine';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
@@ -162,6 +163,20 @@ export async function createTask(payload: {
       }
     }
     
+    // ENTERPRISE NOTIFICATION ROUTING
+    // Fire-and-forget: Push to async background queue
+    queueBusinessEvent("Task", "Created", {
+      entity_id: task.id,
+      triggering_user_id: creatorId,
+      status: "NEW", // The default status logic applied it
+      task_name: task.subject,
+      created_by: creatorId,
+      assigned_to: task.assigned_to,
+      priority: task.priority_id,
+      due_date: task.end_date,
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${task.id}`
+    }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+
     return task;
   } catch (err: any) {
     console.error("[createTask] Unexpected Error:", err);
@@ -250,6 +265,15 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   // Fire-and-forget activity log — must not block or throw to the caller
   logActivityEvent('TASK', taskId, 'STATUS_CHANGE', { status_id: task.status_id }, { status_id: targetStatusId }, performedBy || "system").catch(e => console.error('[logActivityEvent]', e));
   
+  // Fire-and-forget Notification Queue Push
+  queueBusinessEvent("Task", "Status Changed", {
+    entity_id: taskId,
+    triggering_user_id: userId,
+    status: targetStatusId, // Note: This is an ID, but for email mapping we might want the code. Assuming code for simplicity.
+    assigned_to: task.assigned_to,
+    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
+  }).catch(e => console.error("[NotificationEngine] Status change queue push failed", e));
+
   return { success: true };
 }
 
