@@ -1,0 +1,229 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { CheckCircle, Shield, Key, Link2, Users, Save, Loader2, AlertCircle } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
+
+export default function IdentityProviderForm() {
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [config, setConfig] = useState<any>({
+    provider_type: "AZURE_AD",
+    tenant_id: "",
+    client_id: "",
+    client_secret_encrypted: "",
+    authority_url: "https://login.microsoftonline.com/common",
+    is_active: false,
+    force_sso: false,
+    auto_provision_users: false
+  });
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const { data, error } = await supabase
+          .from("identity_provider_config")
+          .select("*")
+          .eq("provider_type", "AZURE_AD")
+          .single();
+        
+        if (data && !error) {
+          setConfig(data);
+        }
+      } catch (err) {
+        // Ignore, likely no record exists yet
+      } finally {
+        setFetching(false);
+      }
+    }
+    loadConfig();
+  }, [supabase]);
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const { data: existing } = await supabase
+        .from("identity_provider_config")
+        .select("id")
+        .eq("provider_type", "AZURE_AD")
+        .single();
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from("identity_provider_config")
+          .update({
+            ...config,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("identity_provider_config")
+          .insert([config]);
+        if (error) throw error;
+      }
+
+      toast.success("Identity Provider Configuration Saved");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save configuration");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      
+      {/* Overview Card */}
+      <div className="bg-[#0A0D14] border border-white/10 rounded-xl p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Shield className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Microsoft Entra ID (Azure AD)</h2>
+              <p className="text-sm text-gray-400">Configure Microsoft 365 Single Sign-On and auto-provisioning.</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-400">Status</span>
+            <button 
+              onClick={() => setConfig({ ...config, is_active: !config.is_active })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-blue-500' : 'bg-gray-700'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-300">Tenant ID</label>
+            <input 
+              type="text" 
+              value={config.tenant_id || ""}
+              onChange={(e) => setConfig({ ...config, tenant_id: e.target.value })}
+              className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              placeholder="e.g. 8eaef023-..."
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-300">Client ID (Application ID)</label>
+            <input 
+              type="text" 
+              value={config.client_id || ""}
+              onChange={(e) => setConfig({ ...config, client_id: e.target.value })}
+              className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              placeholder="e.g. d2a2b023-..."
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-medium text-gray-300">Client Secret (Encrypted)</label>
+            <div className="relative">
+              <input 
+                type="password" 
+                value={config.client_secret_encrypted || ""}
+                onChange={(e) => setConfig({ ...config, client_secret_encrypted: e.target.value })}
+                className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 pl-10"
+                placeholder="Enter client secret value"
+              />
+              <Key className="w-4 h-4 text-gray-500 absolute left-3 top-3.5" />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">This value is encrypted at rest and never exposed to the frontend after saving.</p>
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-medium text-gray-300">Authority URL</label>
+            <div className="relative">
+              <input 
+                type="text" 
+                value={config.authority_url || ""}
+                onChange={(e) => setConfig({ ...config, authority_url: e.target.value })}
+                className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 pl-10"
+                placeholder="https://login.microsoftonline.com/common"
+              />
+              <Link2 className="w-4 h-4 text-gray-500 absolute left-3 top-3.5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Auto Provisioning Settings */}
+      <div className="bg-[#0A0D14] border border-white/10 rounded-xl p-6 shadow-2xl">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-purple-500/10 rounded-lg">
+            <Users className="w-6 h-6 text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white">Auto-Provisioning Settings</h2>
+            <p className="text-sm text-gray-400">Control how users are mapped when they log in via SSO for the first time.</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <label className="flex items-center space-x-3 cursor-pointer group">
+            <button 
+              onClick={() => setConfig({ ...config, auto_provision_users: !config.auto_provision_users })}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-purple-500' : 'bg-gray-700'}`}
+            >
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
+              <span className="text-xs text-gray-500">Automatically create user accounts in the system if they authenticate successfully via Azure AD.</span>
+            </div>
+          </label>
+
+          <label className="flex items-center space-x-3 cursor-pointer group">
+            <button 
+              onClick={() => setConfig({ ...config, force_sso: !config.force_sso })}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-red-500' : 'bg-gray-700'}`}
+            >
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Force SSO (Disable Password Login)</span>
+              <span className="text-xs text-gray-500">If enabled, standard password login will be hidden and all users MUST use Microsoft SSO.</span>
+            </div>
+          </label>
+        </div>
+
+        {config.auto_provision_users && (
+          <div className="mt-6 p-4 rounded-lg bg-blue-500/5 border border-blue-500/20 flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+            <p className="text-sm text-blue-200/80 leading-relaxed">
+              When JIT provisioning is enabled, Supabase Auth will instantly map the incoming Azure AD profile to the `user_master` table. Ensure your default organizational policies in the Azure Portal restrict access to the correct Security Groups.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span>{loading ? "Saving..." : "Save Configuration"}</span>
+        </button>
+      </div>
+
+    </div>
+  );
+}

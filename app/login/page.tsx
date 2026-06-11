@@ -136,6 +136,22 @@ export default function LoginPage() {
     }
   };
 
+  const handleMicrosoftLogin = async () => {
+    try {
+      // Direct OAuth call to Supabase utilizing the underlying Azure integration
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          scopes: 'email profile User.Read',
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to initialize Microsoft login.");
+    }
+  };
+
   return (
     <div className={`h-[100dvh] w-full flex flex-col items-center justify-center relative overflow-hidden font-sans p-3 sm:p-8 transition-colors duration-300 ${
       isLight ? "bg-gray-50 text-gray-900" : "bg-[#05070D] text-white"
@@ -262,6 +278,30 @@ export default function LoginPage() {
                 )}
               </AppButton>
             </form>
+
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className={`w-full border-t ${isLight ? 'border-gray-200' : 'border-white/10'}`}></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className={`px-2 font-semibold ${isLight ? 'bg-white text-gray-400' : 'bg-[#121620] text-gray-500'}`}>Or continue with</span>
+              </div>
+            </div>
+
+            <AppButton
+              variant="outline"
+              type="button"
+              onClick={handleMicrosoftLogin}
+              className="w-full h-10 rounded-lg font-bold text-sm tracking-wide transition-all border-[#0078D4]/20 hover:bg-[#0078D4]/10 text-gray-800 dark:text-gray-200 flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 21 21">
+                <path fill="#f25022" d="M1 1h9v9H1z"/>
+                <path fill="#00a4ef" d="M1 11h9v9H1z"/>
+                <path fill="#7fba00" d="M11 1h9v9h-9z"/>
+                <path fill="#ffb900" d="M11 11h9v9h-9z"/>
+              </svg>
+              Microsoft
+            </AppButton>
 
             {/* Navigation link to Registration screen */}
             <div className={`pt-4 text-center border-t text-sm text-gray-500 ${isLight ? "border-gray-100" : "border-white/5"}`}>

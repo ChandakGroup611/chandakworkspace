@@ -92,7 +92,8 @@ const navGroups: NavGroup[] = [
         icon: Settings,
         subItems: [
           { label: "Design Gallery", href: "/settings" },
-          { label: "Email Config", href: "/settings/email" },
+          { label: "Identity & Access", href: "/settings/identity" },
+          { label: "Communication Center", href: "/settings/communication" },
           { label: "Notifications", href: "/settings/notifications" }
         ]
       },
