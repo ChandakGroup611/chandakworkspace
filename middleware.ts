@@ -35,6 +35,13 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // Prevent browser caching for protected routes to avoid "Back Button" ghost sessions
+  if (!isAuthRoute && !isApiRoute) {
+    supabaseResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    supabaseResponse.headers.set("Pragma", "no-cache");
+    supabaseResponse.headers.set("Expires", "0");
+  }
+
   return supabaseResponse;
 }
 
