@@ -106,10 +106,20 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [isCompactState, setIsCompactState] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  // Default expanding the tree context if user accesses master route mapping
-  const [expandedTrees, setExpandedTrees] = useState<Record<string, boolean>>({
-    "/masters": true
-  });
+  // Accordion state
+  const [expandedTrees, setExpandedTrees] = useState<Record<string, boolean>>({});
+
+  // Sync accordion with active route on navigation
+  useEffect(() => {
+    const activeItem = navGroups.flatMap(g => g.items).find(item => 
+      item.href !== "/" && pathname.startsWith(item.href)
+    );
+    if (activeItem && activeItem.subItems) {
+      setExpandedTrees({ [activeItem.href]: true });
+    } else {
+      setExpandedTrees({});
+    }
+  }, [pathname]);
   const [clientQuery, setClientQuery] = useState("");
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -125,8 +135,10 @@ export default function Sidebar() {
   const isCompact = isCompactState && !isHovered;
 
   const toggleTree = (href: string, e: React.MouseEvent) => {
-    // If clicking on chevron or item, ensure it toggles local view state smoothly
-    setExpandedTrees(prev => ({ ...prev, [href]: !prev[href] }));
+    e.preventDefault();
+    e.stopPropagation();
+    // Accordion behavior: toggle the target, close everything else
+    setExpandedTrees(prev => ({ [href]: !prev[href] }));
   };
 
   // Broadcast compact state to outer layout so main content can adapt
@@ -200,7 +212,7 @@ export default function Sidebar() {
                 {visibleItems.map((item) => {
                 const IconComponent = item.icon;
                 const isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-                const isTreeExpanded = expandedTrees[item.href] || isBaseActive;
+                const isTreeExpanded = !!expandedTrees[item.href];
                 
                 const dynamicBadge = item.badge;
 
