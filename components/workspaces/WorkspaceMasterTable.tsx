@@ -319,9 +319,9 @@ export function WorkspaceMasterTable({
                         {node.workspace_code || node.task_code || ""}
                       </span>
                       <span className={`whitespace-normal break-words ${
-                        isWorkspaceType ? 'font-bold tracking-tight text-[14px]' : 
-                        isSubWorkspace ? 'font-semibold tracking-tight text-[13px]' : 
-                        'font-medium text-[13px]'
+                        isWorkspaceType ? 'font-semibold tracking-tight text-[14px]' : 
+                        isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
+                        'text-[13px]'
                       } ${
                         isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
                       }`}>
@@ -345,10 +345,10 @@ export function WorkspaceMasterTable({
                         e.stopPropagation();
                         router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                       }}
-                      className={`text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-orange-500 bg-white hover:bg-orange-50 border border-orange-400' : 'text-orange-500 bg-[#1C1C28] hover:bg-orange-900/20 border border-orange-500/50'}`} 
+                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-orange-500 bg-white hover:bg-orange-50 border border-orange-400' : 'text-orange-500 bg-[#1C1C28] hover:bg-orange-900/20 border border-orange-500/50'}`} 
                       title={`${directTaskCount} Direct, ${childTaskCount} Child (Double-click to open)`}
                     >
-                      {totalTaskCount} Tasks <span className="opacity-75 font-semibold">({directTaskCount} Direct)</span>
+                      {totalTaskCount} Tasks <span className="opacity-75 font-medium">({directTaskCount} Direct)</span>
                     </span>
                   </div>
                 )}
@@ -359,7 +359,7 @@ export function WorkspaceMasterTable({
                         e.stopPropagation();
                         router.push(`/tasks/${node.id}`);
                       }}
-                      className={`text-[9px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-amber-500 bg-white hover:bg-amber-50 border border-amber-400' : 'text-amber-500 bg-[#1C1C28] hover:bg-amber-900/20 border border-amber-500/50'}`} 
+                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-amber-500 bg-white hover:bg-amber-50 border border-amber-400' : 'text-amber-500 bg-[#1C1C28] hover:bg-amber-900/20 border border-amber-500/50'}`} 
                       title={`${childTaskCount} Sub-Tasks (Double-click to open)`}
                     >
                       {childTaskCount} Sub-Task{childTaskCount !== 1 ? 's' : ''}
@@ -391,7 +391,7 @@ export function WorkspaceMasterTable({
               {isWorkspaceType && onCreateSubWorkspace && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
-                  className={`text-[10px] font-bold uppercase px-2 py-1 rounded shadow-sm border transition-all active:scale-95 w-auto ${
+                  className={`text-[10px] font-medium uppercase px-2 py-1 rounded shadow-sm border transition-all active:scale-95 w-auto ${
                     isLightMode 
                       ? 'bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300' 
                       : 'bg-[#0B0D17] border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 hover:border-indigo-400'
@@ -403,7 +403,7 @@ export function WorkspaceMasterTable({
               {onCreateTask && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
-                  className={`text-[10px] font-bold uppercase px-2 py-1 rounded shadow-sm border transition-all active:scale-95 w-auto ${
+                  className={`text-[10px] font-medium uppercase px-2 py-1 rounded shadow-sm border transition-all active:scale-95 w-auto ${
                     isLightMode 
                       ? 'bg-white border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300' 
                       : 'bg-[#0B0D17] border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400'
@@ -487,7 +487,7 @@ export function WorkspaceMasterTable({
     <div className="w-full">
       <div className="w-full flex flex-col">
         {/* Header */}
-        <div className={`grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
+        <div className={`grid items-center text-xs uppercase tracking-wider font-semibold border-b-2 ${
           isLightMode ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700'
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>

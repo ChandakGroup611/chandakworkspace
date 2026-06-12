@@ -199,8 +199,8 @@ export default function Sidebar() {
               <div className="space-y-1">
                 {visibleItems.map((item) => {
                 const IconComponent = item.icon;
-                const isBaseActive = pathname === item.href;
-                const isTreeExpanded = expandedTrees[item.href];
+                const isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                const isTreeExpanded = expandedTrees[item.href] || isBaseActive;
                 
                 const dynamicBadge = item.badge;
 
@@ -211,23 +211,34 @@ export default function Sidebar() {
                         href={item.href}
                         className={`group relative flex-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200 ${
                           isBaseActive 
-                            ? (isLight ? "bg-blue-50 text-blue-700 font-semibold" : "bg-white/10 text-white shadow-sm font-semibold") 
-                            : (isLight ? "text-gray-600 hover:bg-gray-50 hover:text-gray-900" : "text-gray-400 hover:bg-white/5 hover:text-gray-200")
+                            ? (isLight ? "bg-blue-500/10 text-blue-700 font-semibold" : "bg-blue-500/10 text-blue-400 shadow-sm font-semibold") 
+                            : (isLight ? "text-gray-600 hover:bg-gray-100 hover:text-gray-900" : "text-gray-400 hover:bg-white/10 hover:text-gray-200")
                         } ${isCompact ? "justify-center" : ""}`}
+                        style={{
+                          ...(isBaseActive ? {
+                            // Empty object, we use the overlay div for background opacity
+                          } : {})
+                        }}
                       >
+                        {/* We use an overlay div for the background color so text stays opaque */}
                         {isBaseActive && (
-                          <div className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-blue-500 transition-all group-hover:h-6" />
+                           <div className="absolute inset-0 rounded-xl opacity-10" style={{ backgroundColor: "var(--accent-primary)" }} />
+                        )}
+                        {/* Text wrapper with z-10 so it's above the background overlay */}
+                        <div className="relative z-10 flex items-center gap-3 w-full">
+                        {isBaseActive && (
+                          <div className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6" style={{ backgroundColor: "var(--accent-primary)" }} />
                         )}
                         
                         {/* Responsive dynamically scaled icon */}
                         <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-110 ${
                           isCompact ? "h-3.5 w-3.5" : "h-4 w-4"
                         } ${
-                          isBaseActive ? "text-blue-500" : (isLight ? "text-gray-400 group-hover:text-gray-600" : "text-gray-400 group-hover:text-gray-300")
-                        }`} />
+                          isBaseActive ? "" : (isLight ? "text-gray-400 group-hover:text-gray-600" : "text-gray-400 group-hover:text-gray-300")
+                        }`} style={isBaseActive ? { color: "var(--accent-primary)" } : {}} />
                         
                         {!isCompact && (
-                          <span className="flex-1 truncate transition-colors duration-150">{item.label}</span>
+                          <span className="flex-1 truncate transition-colors duration-150" style={isBaseActive ? { color: "var(--accent-primary)" } : {}}>{item.label}</span>
                         )}
                         
                         {!isCompact && item.badge && (
@@ -235,6 +246,7 @@ export default function Sidebar() {
                             {item.badge}
                           </span>
                         )}
+                        </div>
                       </Link>
 
                       {/* Expand Tree Toggle chevron button right side */}
@@ -288,14 +300,18 @@ export default function Sidebar() {
                               key={sub.href}
                               href={sub.href}
                               onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
-                              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[0.8rem] font-medium transition-all ${
+                              className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-lg text-[0.8rem] font-medium transition-all overflow-hidden ${
                                 isSubActive 
-                                  ? (isLight ? "bg-blue-50 text-blue-700 font-bold" : "bg-blue-500/10 text-blue-400 font-bold") 
-                                  : (isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-50" : "text-gray-400 hover:text-white hover:bg-white/5")
+                                  ? (isLight ? "text-blue-700 font-bold" : "text-blue-400 font-bold") 
+                                  : (isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-gray-400 hover:text-white hover:bg-white/10")
                               }`}
+                              style={isSubActive ? { color: "var(--accent-primary)" } : {}}
                             >
-                              <span className={`text-[0.65rem] ${isSubActive ? "text-blue-500" : "opacity-40"}`}>▪</span>
-                              <span className="truncate">{sub.label}</span>
+                              {isSubActive && (
+                                <div className="absolute inset-0 opacity-10" style={{ backgroundColor: "var(--accent-primary)" }} />
+                              )}
+                              <span className={`text-[0.65rem] relative z-10 ${isSubActive ? "" : "opacity-40"}`} style={isSubActive ? { color: "var(--accent-primary)" } : {}}>▪</span>
+                              <span className="truncate relative z-10">{sub.label}</span>
                             </Link>
                           );
                         })}

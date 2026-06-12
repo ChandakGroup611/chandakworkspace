@@ -40,4 +40,14 @@
     background-color: var(--color-elevated);
     backdrop-filter: var(--backdrop-blur, blur(0)) var(--backdrop-saturate, saturate(100%));
   }
+  
+  .font-semibold {
+    font-weight: var(--ui-weight-semibold, 600) !important;
+  }
+  .font-bold {
+    font-weight: var(--ui-weight-bold, 700) !important;
+  }
+  .font-extrabold {
+    font-weight: var(--ui-weight-extrabold, 800) !important;
+  }
 }

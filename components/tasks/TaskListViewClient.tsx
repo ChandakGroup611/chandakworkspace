@@ -639,6 +639,16 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   </AppTableRow>
                 );
               })}
+              {virtualizer.getVirtualItems().length > 0 && (
+                <tr>
+                  <td 
+                    colSpan={10} 
+                    style={{ 
+                      height: `${virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end}px` 
+                    }} 
+                  />
+                </tr>
+              )}
             </AppTableBody>
           </AppTable>
         </div>

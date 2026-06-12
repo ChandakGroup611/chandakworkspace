@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTheme, ThemeType, DensityType, FontFamilyType } from "@/components/theme/ThemeProvider";
+import { useTheme, ThemeType, DensityType, FontFamilyType, FontWeightProfileType, AccentColorType } from "@/components/theme/ThemeProvider";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent, AppCardDescription } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -19,9 +19,12 @@ import {
   Monitor,
   Maximize2,
   Minimize2,
-  Type
+  Type,
+  Palette,
+  Save
 } from "lucide-react";
 import CustomFieldsConfigurator from "@/components/settings/CustomFieldsConfigurator";
+import { saveDesignPreferences } from "@/lib/actions/preferences";
 
 export default function SettingsGallery() {
   const { 
@@ -29,20 +32,39 @@ export default function SettingsGallery() {
     density, 
     tactileFeedback, 
     fontFamily, 
+    fontWeightProfile,
     baseFontSize,
     subtextFontSize,
     setTheme,
     setDensity,
     setTactileFeedback,
     setFontFamily, 
+    setFontWeightProfile,
     setBaseFontSize,
-    setSubtextFontSize
+    setSubtextFontSize,
+    accentColor,
+    setAccentColor
   } = useTheme();
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const triggerToast = (msg: string) => {
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 3000);
+  };
+
+  const handleSavePreferences = async () => {
+    setIsSaving(true);
+    const prefs = {
+      theme, density, tactile: tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize
+    };
+    const res = await saveDesignPreferences(prefs);
+    setIsSaving(false);
+    if (res.success) {
+      triggerToast("Preferences saved to your account permanently.");
+    } else {
+      triggerToast(res.error || "Failed to save preferences.");
+    }
   };
 
   const themesList: {
@@ -56,17 +78,6 @@ export default function SettingsGallery() {
     previewBorder: string;
     accentColor: string;
   }[] = [
-    {
-      id: "glass-intelligence",
-      name: "Glassmorphism",
-      tagline: "Controlled Translucent Surfaces",
-      benefit: "Visual depth & layering",
-      sentiment: "Futuristic & Premium",
-      icon: Sparkles,
-      previewBg: "bg-gradient-to-br from-[#121926]/90 to-[#1A2436]/60 backdrop-blur-md",
-      previewBorder: "border-white/10",
-      accentColor: "bg-indigo-500",
-    },
     {
       id: "midnight-operations",
       name: "Layered Dark",
@@ -163,6 +174,22 @@ export default function SettingsGallery() {
     { id: "outfit", name: "Outfit Premium", sample: "Warm modern corporate rounded humanist.", css: "font-sans tracking-wide" },
     { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible structural forms.", css: "font-sans" }
   ];
+
+  const weightProfilesList: { id: FontWeightProfileType; name: string; desc: string }[] = [
+    { id: "heavy", name: "Heavy / Thick", desc: "High contrast strong bolding" },
+    { id: "standard", name: "Standard", desc: "Balanced legible emphasis" },
+    { id: "light", name: "Lightweight", desc: "Minimalist soft highlights" }
+  ];
+
+  const accentsList: { id: AccentColorType; name: string; hex: string }[] = [
+    { id: "blue", name: "Executive Blue", hex: "bg-blue-500" },
+    { id: "emerald", name: "Secure Emerald", hex: "bg-emerald-500" },
+    { id: "rose", name: "Alert Rose", hex: "bg-rose-500" },
+    { id: "amber", name: "Warm Amber", hex: "bg-amber-500" },
+    { id: "purple", name: "Creative Purple", hex: "bg-purple-500" },
+    { id: "slate", name: "Minimal Slate", hex: "bg-slate-500" }
+  ];
+
 
   const isLightMode = theme === "executive-light" || theme === "material-ocean" || theme === "aurora-breeze" || theme === "pure-elegance";
 
@@ -264,6 +291,42 @@ export default function SettingsGallery() {
                     <span className="text-indigo-400 font-semibold text-right">{t.sentiment}</span>
                   </div>
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Row 1b: Color Combinations (Accents) */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Palette className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+            <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
+              1B. Aesthetic Color Combinations
+            </h2>
+          </div>
+          <AppBadge variant="info">Global Accent Color</AppBadge>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          {accentsList.map((a) => {
+            const isSelected = accentColor === a.id;
+            return (
+              <div
+                key={a.id}
+                onClick={() => {
+                  setAccentColor(a.id);
+                  triggerToast(`Accent color applied: ${a.name}`);
+                }}
+                className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+                  isSelected 
+                    ? `ring-2 ring-blue-500 ${isLightMode ? "bg-white border-blue-500 shadow-md" : "bg-white/5 border-blue-500"}`
+                    : `${isLightMode ? "bg-white/50 border-gray-200 hover:bg-white" : "bg-white/[0.01] border-white/5 hover:border-white/10"}`
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-full ${a.hex} ${isSelected ? "ring-2 ring-offset-2 ring-offset-background ring-current" : ""}`} />
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-center">{a.name}</span>
               </div>
             );
           })}
@@ -441,6 +504,40 @@ export default function SettingsGallery() {
 
           </div>
         </div>
+
+        {/* Sub-grid C: Font Weight Intensity */}
+        <div className="space-y-2 pt-2">
+          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">C. Global Font Weight Intensity</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {weightProfilesList.map((w) => {
+              const isSelected = fontWeightProfile === w.id;
+              return (
+                <div
+                  key={w.id}
+                  onClick={() => {
+                    setFontWeightProfile(w.id);
+                    triggerToast(`Weight active: ${w.name}`);
+                  }}
+                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                    isSelected 
+                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] ${isLightMode ? "border-blue-500" : "border-blue-500/40"}` 
+                      : `hover:border-white/10 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs font-bold ${"text-foreground"}`}>{w.name}</span>
+                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
+                    </div>
+                    <p className={`text-[0.8rem] ${"text-muted"}`}>
+                      {w.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       {/* Row 4: Interaction Mechanics (Tactile Utility) */}
@@ -530,7 +627,7 @@ export default function SettingsGallery() {
               isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
             }`}>
               <span className="text-xs text-gray-400 font-semibold block">Active Visual Depth</span>
-              <span className="text-lg font-bold tracking-tight block mt-1">{theme === "glass-intelligence" ? "Translucent" : theme === "midnight-operations" ? "Graphite Layer" : "Executive Warm"}</span>
+              <span className="text-lg font-bold tracking-tight block mt-1">{theme === "midnight-operations" ? "Graphite Layer" : "Executive Warm"}</span>
               <span className="text-[0.7rem] text-blue-400 font-mono mt-1 block">var(--backdrop-blur)</span>
             </div>
 
@@ -557,6 +654,42 @@ export default function SettingsGallery() {
       {/* Row 4: End-to-End Dynamic Custom Fields Dictionaries Map */}
       <section className="space-y-4 pt-4">
         <CustomFieldsConfigurator />
+      </section>
+
+      {/* Row 5: Persistent Saving */}
+      <section className="space-y-4 pt-6 border-t border-white/5">
+        <AppCard className={`p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isLightMode ? "bg-white/80 border-gray-200" : ""}`}>
+          <div className="space-y-1 max-w-xl">
+            <div className="flex items-center gap-2">
+              <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
+                Persistent Database Saving
+              </h3>
+              <AppBadge variant="success">Cloud Sync</AppBadge>
+            </div>
+            <p className={`text-xs ${"text-muted"}`}>
+              Save your perfect layout, theme, color combination, and density settings to your account. These preferences will automatically be downloaded and applied whenever you log in from any device.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <AppButton 
+              id="save-preferences-btn"
+              variant="primary"
+              size="lg"
+              onClick={handleSavePreferences}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <span className="animate-pulse">Saving...</span>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  <span>Set as Default Account Preferences</span>
+                </>
+              )}
+            </AppButton>
+          </div>
+        </AppCard>
       </section>
     </div>
   );
