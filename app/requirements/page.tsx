@@ -31,6 +31,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import RequirementDraftModal from "@/components/requirements/RequirementDraftModal";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
+import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 
 interface RequirementItem {
   id: string;
@@ -91,6 +92,7 @@ export default function RequirementsPage() {
   const [approvalTypesList, setApprovalTypesList] = useState<any[]>([]);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configWarnings, setConfigWarnings] = useState<string[]>([]);
+  const [showWizard, setShowWizard] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -338,10 +340,10 @@ export default function RequirementsPage() {
               variant="primary" 
               size="sm" 
               leftIcon={<Plus className="h-3.5 w-3.5" />}
-              disabled={!hasPermission("REQUIREMENTS_CREATE") || !activeWorkspaceId}
-              onClick={() => setIsCreating(true)}
+              disabled={!hasPermission("REQUIREMENTS_CREATE")}
+              onClick={() => setShowWizard(true)}
             >
-              Draft Scope
+              Create Requirement
             </AppButton>
           </>
         }
@@ -379,6 +381,18 @@ export default function RequirementsPage() {
             await m.generateRequirementTask(selectedReq.dbId || selectedReq.id, fullTaskPayload, user.id);
             setIsGeneratingTask(false);
             // Optional: trigger toast
+          }}
+        />
+      )}
+
+      {showWizard && (
+        <TicketCreationWizard 
+          onClose={() => setShowWizard(false)}
+          onSuccess={(id) => {
+            setShowWizard(false);
+            if (activeWorkspaceId) {
+              loadRequirements(activeWorkspaceId);
+            }
           }}
         />
       )}
