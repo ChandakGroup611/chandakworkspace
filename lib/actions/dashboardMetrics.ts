@@ -103,7 +103,7 @@ export async function fetchLiveDashboardMetrics() {
       workspacesPromise
     ]);
 
-    if (tasksError) console.error("Tasks Error:", tasksError);
+    if (tasksError) console.error("Tasks Error:", JSON.stringify(tasksError, null, 2));
 
     // Fetch user details manually to avoid foreign key ambiguity errors
     const userIdsToFetch = new Set<string>();

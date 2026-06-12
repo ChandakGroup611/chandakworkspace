@@ -296,7 +296,7 @@ export default function ClientSessionManager() {
             }, { onConflict: "user_id" });
             
             if (error) {
-              console.error("Failed to update active sessions:", error);
+              console.error("Failed to update active sessions:", JSON.stringify(error, null, 2));
             }
 
             // Subscribe to concurrent login changes

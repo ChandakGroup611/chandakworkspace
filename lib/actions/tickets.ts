@@ -427,15 +427,21 @@ export async function createEnterpriseTicket(payload: any) {
       try {
         const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').insert({
           title: ticket.title || ticket.subject || 'New Requirement',
-          description: payload.custom_fields.requirement_description,
-          business_justification: payload.custom_fields.business_reason,
-          department_id: insertPayload.department_id,
-          priority_id: insertPayload.priority_id,
+          objective: payload.custom_fields.business_reason,
+          functional_scope: payload.custom_fields.requirement_description,
+          source_ticket_id: ticket.id,
+          requester_id: user.id,
+          requester_department_id: creatorInfo?.department_id,
+          scope: payload.scope_type,
+          requirement_reason: payload.custom_fields.business_reason,
           status_id: reqState?.id || newState.id,
-          created_by: user.id
+          creator_id: user.id,
+          department_id: insertPayload.department_id // inherited from ticket/creator
         }).select().single();
 
-        if (!reqErr && req) {
+        if (reqErr) {
+          console.error("Requirement insertion failed:", reqErr);
+        } else if (req) {
           // Link Ticket and Requirement
           await supabaseAdmin.from('ticket_requirements').insert({
             ticket_id: ticket.id,
@@ -443,9 +449,9 @@ export async function createEnterpriseTicket(payload: any) {
             linked_by: user.id
           });
 
-          // Notify Queue / Assignees
+          // Notify SUPER_ADMIN queue
           await supabaseAdmin.from('notification_queue').insert({
-            recipient_id: creatorInfo?.manager_id || user.id, // e.g. Dept Manager
+            recipient_id: user.id, // For now notify self, ideally fetch SUPER_ADMIN
             payload: {
               type: 'REQUIREMENT_CREATED',
               message: `New Requirement auto-generated from Ticket ${ticket.code}`,

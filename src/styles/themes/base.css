@@ -75,14 +75,12 @@ html {
 [data-theme="material-ocean"] .text-gray-400,
 [data-theme="aurora-breeze"] .text-gray-400 {
   color: #475569 !important; /* Deep dark slate-600 */
-  font-weight: 600;
 }
 .theme-light .text-gray-500,
 [data-theme="executive-light"] .text-gray-500,
 [data-theme="material-ocean"] .text-gray-500,
 [data-theme="aurora-breeze"] .text-gray-500 {
   color: #334155 !important; /* Deep dark slate-700 */
-  font-weight: 600;
 }
 
 /* Global Fix for Select Dropdown Options Legibility in Dark/Light Modes */

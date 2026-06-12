@@ -56,6 +56,20 @@ interface RequirementItem {
     date: string;
     changes: string;
   }[];
+  budgetImpact?: number;
+  estimatedEffort?: string;
+  dependencyNotes?: string;
+  scope?: string;
+  sourceTicketId?: string;
+  approvalFlow?: {
+    id: string;
+    level: number;
+    departmentName: string;
+    approverDesignationName: string;
+    approverName?: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HOLD' | 'CLARIFICATION';
+    remarks?: string;
+  }[];
 }
 
 export default function RequirementsPage() {
@@ -89,8 +103,8 @@ export default function RequirementsPage() {
         id: d.requirement_code,
         dbId: d.id,
         title: d.title,
-        objective: d.objective,
-        functionalScope: d.functional_scope,
+        objective: d.requirement_reason || d.objective,
+        functionalScope: d.functional_scope || d.description,
         technicalScope: d.technical_scope || "Pending definition...",
         risk: d.risk_assessment || "Low",
         stage: d.status?.name || "Draft",
@@ -98,7 +112,21 @@ export default function RequirementsPage() {
         criteria: d.custom_fields?.criteria || [],
         customFields: d.custom_fields || {},
         versionTag: d.custom_fields?.versionTag || "v1.0-DRAFT",
-        versionHistory: d.custom_fields?.versionHistory || []
+        versionHistory: d.custom_fields?.versionHistory || [],
+        budgetImpact: d.budget_impact,
+        estimatedEffort: d.estimated_effort,
+        dependencyNotes: d.dependency_notes,
+        scope: d.scope,
+        sourceTicketId: d.source_ticket_id,
+        approvalFlow: d.requirement_approval_flow?.map((f: any) => ({
+          id: f.id,
+          level: f.level,
+          departmentName: f.departments?.name || "Unknown Dept",
+          approverDesignationName: f.designations?.name || "Assigned Role",
+          approverName: f.user_master?.full_name,
+          status: f.status,
+          remarks: f.remarks
+        })) || []
       }));
       setReqs(mapped);
       if (mapped.length > 0 && !selectedReq) {
@@ -383,6 +411,12 @@ export default function RequirementsPage() {
                     </AppBadge>
                   </div>
 
+                  {r.sourceTicketId && (
+                    <div className="text-[10px] text-indigo-400 font-mono mb-1 flex items-center gap-1">
+                      <FileCode className="h-3 w-3" /> Source: {r.sourceTicketId}
+                    </div>
+                  )}
+
                   <h3 className="text-xs font-bold text-white tracking-tight line-clamp-2 mb-2">
                     {r.title}
                   </h3>
@@ -391,8 +425,8 @@ export default function RequirementsPage() {
                     <span className={`font-semibold ${r.risk === "High" ? "text-rose-400" : "text-gray-400"}`}>
                       Risk: {r.risk}
                     </span>
-                    <span className="text-amber-400/80 font-semibold flex items-center gap-1">
-                      Inspect Scope →
+                    <span className="text-gray-500 font-medium">
+                      Scope: {r.scope || 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -547,8 +581,24 @@ export default function RequirementsPage() {
                     <AppInput 
                       type="number" 
                       className="h-8 text-xs bg-white/5 border-white/10"
-                      value={selectedReq.customFields?.budget_allocation_usd || ""}
+                      value={selectedReq.budgetImpact || selectedReq.customFields?.budget_allocation_usd || ""}
                       onChange={(e) => handleCustomFieldChange("budget_allocation_usd", Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Estimated Effort</label>
+                    <AppInput 
+                      className="h-8 text-xs bg-white/5 border-white/10"
+                      value={selectedReq.estimatedEffort || ""}
+                      onChange={(e) => handleCustomFieldChange("estimatedEffort", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Dependency Notes</label>
+                    <AppInput 
+                      className="h-8 text-xs bg-white/5 border-white/10"
+                      value={selectedReq.dependencyNotes || ""}
+                      onChange={(e) => handleCustomFieldChange("dependencyNotes", e.target.value)}
                     />
                   </div>
                 </div>
@@ -560,48 +610,55 @@ export default function RequirementsPage() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 block">
                   <Users className="h-3 w-3" />
-                  <span>Multi-Tier Authority Sign-Off Engine</span>
+                  <span>Dynamic Snapshot Approval Flow</span>
                 </span>
-                {approvalTypesList.length > 0 && (
-                  <span className="text-[0.7rem] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
-                    {approvalTypesList.length} DB Gating Rules
-                  </span>
-                )}
+                <span className="text-[0.7rem] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                  {selectedReq.approvalFlow?.length || 0} Sequential Gates
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                {[
-                  { tier: "business" as const, label: "Business Lead", role: approvalTypesList.find(a => a.code === "APP_TIER1_MGR")?.name || "Line Mgr" },
-                  { tier: "technical" as const, label: "Technical Lead", role: approvalTypesList.find(a => a.code === "APP_TIER2_CAB")?.name || "CAB Gate" },
-                  { tier: "compliance" as const, label: "Compliance Team", role: "Sec Daemon" },
-                  { tier: "final" as const, label: "Final Release Gate", role: "Super Admin" },
-                ].map((app) => {
-                  const isApproved = selectedReq.approvals[app.tier];
-                  return (
-                    <button
-                      key={app.tier}
-                      type="button"
-                      onClick={() => toggleApproval(app.tier)}
-                      disabled={!hasPermission("REQUIREMENTS_UPDATE")}
-                      className={`p-2.5 rounded-xl border text-left transition-all duration-200 select-none flex flex-col justify-between h-16 disabled:opacity-45 disabled:cursor-not-allowed ${
-                        isApproved 
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
-                          : "bg-white/[0.01] border-white/5 hover:border-white/10 text-gray-500"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full text-xs">
-                        <span className="font-bold text-gray-300 truncate" title={app.role}>{app.label}</span>
-                        {isApproved ? <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" /> : <Clock className="h-3 w-3 text-gray-600 shrink-0" />}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+                {(selectedReq.approvalFlow && selectedReq.approvalFlow.length > 0) ? (
+                  selectedReq.approvalFlow.map((flow) => {
+                    const isApproved = flow.status === 'APPROVED';
+                    const isPending = flow.status === 'PENDING';
+                    const isRejected = flow.status === 'REJECTED';
+                    
+                    return (
+                      <div
+                        key={flow.id}
+                        className={`p-3 rounded-xl border text-left transition-all duration-200 select-none flex flex-col justify-between h-20 ${
+                          isApproved 
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
+                            : isRejected 
+                            ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                            : "bg-white/[0.01] border-white/5 hover:border-white/10 text-gray-400"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full text-[11px]">
+                          <span className="font-bold text-gray-300 truncate">Lvl {flow.level}: {flow.departmentName}</span>
+                          {isApproved && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+                          {isPending && <Clock className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
+                          {isRejected && <ShieldAlert className="h-3.5 w-3.5 text-rose-400 shrink-0" />}
+                        </div>
+                        <div className="space-y-0.5 mt-1">
+                          <span className="text-[10px] text-gray-500 block truncate" title={flow.approverDesignationName}>
+                            {flow.approverName || flow.approverDesignationName}
+                          </span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider block ${
+                            isApproved ? "text-emerald-400" : isRejected ? "text-rose-400" : "text-amber-400"
+                          }`}>
+                            {flow.status}
+                          </span>
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[0.65rem] text-gray-500 block truncate">{app.role}</span>
-                        <span className={`text-[0.7rem] font-bold uppercase tracking-wider block ${isApproved ? "text-emerald-400" : "text-gray-600"}`}>
-                          {isApproved ? "Approved" : "Pending"}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full p-4 rounded-xl border border-dashed border-white/10 text-center text-xs text-gray-500">
+                    No approval flow snapshot generated. Complete analysis to generate flow.
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-between text-xs text-gray-500 border-t border-white/5">

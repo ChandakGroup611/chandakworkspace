@@ -234,3 +234,66 @@ export async function fetchRequirementStatuses() {
   }
   return data || [];
 }
+
+export async function generateApprovalFlow(reqId: string, performedBy: string) {
+  const { data: req } = await supabaseAdmin.from('requirements').select('*').eq('id', reqId).single();
+  if (!req) throw new Error("Requirement not found");
+
+  const { data: impacts } = await supabaseAdmin.from('requirement_impacted_departments').select('department_id').eq('requirement_id', reqId).order('selection_order');
+  if (!impacts || impacts.length === 0) throw new Error("No impacted departments defined");
+
+  // Fetch matrix for all impacted departments
+  const deptIds = impacts.map(i => i.department_id);
+  const { data: matrix } = await supabaseAdmin.from('requirement_approval_matrix').select('*').in('department_id', deptIds);
+
+  let flowEntries = [];
+  let currentGlobalLevel = 1;
+
+  for (const impact of impacts) {
+    const deptMatrix = matrix?.filter(m => m.department_id === impact.department_id).sort((a, b) => a.level - b.level) || [];
+    for (const m of deptMatrix) {
+      flowEntries.push({
+        requirement_id: reqId,
+        level: currentGlobalLevel++,
+        department_id: m.department_id,
+        approver_designation_id: m.designation_id,
+        status: 'PENDING'
+      });
+    }
+  }
+
+  if (flowEntries.length > 0) {
+    await supabaseAdmin.from('requirement_approval_flow').delete().eq('requirement_id', reqId);
+    await supabaseAdmin.from('requirement_approval_flow').insert(flowEntries);
+  }
+
+  await logActivityEvent('REQUIREMENT', reqId, 'APPROVAL_FLOW_GENERATED', null, { levels: currentGlobalLevel - 1 }, performedBy);
+  revalidatePath(`/requirements/${reqId}`);
+}
+
+export async function processApprovalAction(reqId: string, level: number, action: 'APPROVED' | 'REJECTED' | 'HOLD' | 'CLARIFICATION', remarks: string, performedBy: string) {
+  if (!remarks) throw new Error("Remarks are mandatory");
+
+  const { data: flow } = await supabaseAdmin.from('requirement_approval_flow').select('*').eq('requirement_id', reqId).eq('level', level).single();
+  if (!flow) throw new Error("Approval level not found");
+  
+  if (flow.status !== 'PENDING' && flow.status !== 'HOLD' && flow.status !== 'CLARIFICATION') {
+    throw new Error("This level has already been actioned");
+  }
+
+  await supabaseAdmin.from('requirement_approval_flow').update({
+    status: action,
+    remarks: remarks,
+    actioned_at: new Date().toISOString(),
+    approver_id: performedBy
+  }).eq('id', flow.id);
+
+  await logActivityEvent('REQUIREMENT', reqId, `APPROVAL_ACTION_${action}`, null, { level, remarks }, performedBy);
+
+  // If rejected/clarification, update req status accordingly
+  if (action === 'REJECTED') {
+    // Optionally fetch rejected status
+  }
+  
+  revalidatePath(`/requirements/${reqId}`);
+}

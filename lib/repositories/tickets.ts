@@ -13,8 +13,8 @@ export async function getVisibleTickets(userId: string, customSelect?: string) {
   
   const defaultSelect = `
       *,
-      creator:user_master!creator_id(full_name, profile_photo),
-      assignee:user_master!assignee_id(full_name, profile_photo),
+      creator:user_master!fk_tickets_creator(full_name, profile_photo),
+      assignee:user_master!fk_tickets_assignee(full_name, profile_photo),
       department:departments(name),
       priority:priority_master(priority_name, priority_color),
       status:status_master(status_name, status_color, is_terminal)
