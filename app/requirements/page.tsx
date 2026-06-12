@@ -40,7 +40,7 @@ interface RequirementItem {
   functionalScope: string;
   technicalScope: string;
   risk: "Low" | "Medium" | "High";
-  stage: "Draft" | "Analysis" | "Approval" | "Development" | "QA" | "Released";
+  stage: string;
   approvals: {
     business: boolean;
     technical: boolean;
@@ -70,6 +70,15 @@ interface RequirementItem {
     status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'HOLD' | 'CLARIFICATION';
     remarks?: string;
   }[];
+  current_stage?: string;
+  approval_status?: string;
+  tat_status?: string;
+  completion_percentage?: number;
+  owner?: any;
+  analyst?: any;
+  created_at?: string;
+  code?: string;
+  department?: any;
 }
 
 export default function RequirementsPage() {
@@ -100,14 +109,14 @@ export default function RequirementsPage() {
       const m = await import("@/lib/actions/requirements");
       const data = await m.fetchRequirements(wsId);
       const mapped = data.map((d: any) => ({
-        id: d.requirement_code,
+        id: d.code || d.requirement_code || d.id,
         dbId: d.id,
-        title: d.title,
-        objective: d.requirement_reason || d.objective,
-        functionalScope: d.functional_scope || d.description,
+        title: d.title || 'Untitled',
+        objective: d.objective || d.custom_fields?.business_reason || d.requirement_reason || '',
+        functionalScope: d.functional_scope || d.custom_fields?.requirement_description || d.description || '',
         technicalScope: d.technical_scope || "Pending definition...",
         risk: d.risk_assessment || "Low",
-        stage: d.status?.name || "Draft",
+        stage: d.current_stage || d.status?.name || "Draft",
         approvals: { business: false, technical: false, compliance: false, final: false },
         criteria: d.custom_fields?.criteria || [],
         customFields: d.custom_fields || {},
@@ -126,7 +135,16 @@ export default function RequirementsPage() {
           approverName: f.user_master?.full_name,
           status: f.status,
           remarks: f.remarks
-        })) || []
+        })) || [],
+        current_stage: d.current_stage || d.status?.name || 'Requirement Registration',
+        approval_status: d.approval_status || 'Draft',
+        tat_status: d.tat_status || 'On Time',
+        completion_percentage: d.completion_percentage || 0,
+        owner: d.owner_id ? { full_name: 'Owner' } : null,
+        analyst: null,
+        created_at: d.created_at,
+        code: d.code || d.requirement_code,
+        department: d.department_id ? { name: 'Dept' } : null
       }));
       setReqs(mapped);
       if (mapped.length > 0 && !selectedReq) {
