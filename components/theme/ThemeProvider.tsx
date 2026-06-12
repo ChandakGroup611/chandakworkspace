@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "executive-light" | "midnight-operations" | "material-ocean" | "aurora-breeze" | "pure-elegance";
+export type ThemeType = "executive-light" | "midnight-operations" | "material-ocean" | "aurora-breeze" | "pure-elegance" | "glass-intelligence" | "enterprise-bento" | "tactical-utility";
 export type DensityType = "comfortable" | "compact" | "dense";
 export type FontFamilyType = "inter" | "outfit" | "roboto";
 export type FontWeightProfileType = "heavy" | "standard" | "light";
@@ -53,7 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const storedSubtextSize = localStorage.getItem("app_subtext_font_size");
 
       const applyState = (state: any) => {
-        if (state.theme && ["executive-light", "midnight-operations", "material-ocean", "aurora-breeze", "pure-elegance"].includes(state.theme)) {
+        if (state.theme && ["executive-light", "midnight-operations", "material-ocean", "aurora-breeze", "pure-elegance", "glass-intelligence", "enterprise-bento", "tactical-utility"].includes(state.theme)) {
           setThemeState(state.theme);
         }
         if (state.density && ["comfortable", "compact", "dense"].includes(state.density)) {

@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* Force Tailwind v4 to use class-based dark mode instead of media queries */
-@custom-variant dark (&:where(.dark, .dark *));
-
 /* Import Phase 1 Enterprise Design Token Foundation Layers */
 @import '../src/styles/themes/base.css';
 @import '../src/styles/themes/executive-light.css';
@@ -13,6 +10,9 @@
 @import '../src/styles/themes/material-ocean.css';
 @import '../src/styles/themes/aurora-breeze.css';
 @import '../src/styles/themes/pure-elegance.css';
+
+/* Force Tailwind v4 to use class-based dark mode instead of media queries */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-background: var(--bg-primary);
