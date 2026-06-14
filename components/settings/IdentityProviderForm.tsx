@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle, Shield, Key, Link2, Users, Save, Loader2, AlertCircle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function IdentityProviderForm() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [toastMsg, setToastMsg] = useState<{type: "success" | "error", text: string} | null>(null);
+  const { hasPermission, loading: permsLoading } = usePermissions();
 
   const triggerToast = (text: string, type: "success" | "error" = "success") => {
     setToastMsg({ text, type });
@@ -81,10 +83,22 @@ export default function IdentityProviderForm() {
     }
   };
 
-  if (fetching) {
+  if (fetching || permsLoading) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (!hasPermission("SETTINGS_IDENTITY_VIEW")) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 py-12">
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Shield className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view Identity Settings.</p>
       </div>
     );
   }
@@ -222,7 +236,7 @@ export default function IdentityProviderForm() {
       <div className="flex justify-end pt-4">
         <button
           onClick={handleSave}
-          disabled={loading}
+          disabled={loading || !hasPermission("SETTINGS_IDENTITY_MANAGE")}
           className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

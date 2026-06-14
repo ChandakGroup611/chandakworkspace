@@ -7,11 +7,13 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
-import { Plus, Search, CheckCircle2, X, AlertTriangle, Building2, Trash2, Check, RefreshCw } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Plus, Search, CheckCircle2, X, AlertTriangle, Building2, Trash2, Check, RefreshCw, Lock } from "lucide-react";
 
 export default function CompanyMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
+  const { hasPermission, loading: permsLoading } = usePermissions();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
@@ -167,6 +169,30 @@ export default function CompanyMasterPage() {
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     c.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (permsLoading) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50" : "bg-[#070913]"
+      }`}>
+        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+      </div>
+    );
+  }
+
+  if (!hasPermission("COMPANIES_VIEW")) {
+    return (
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+        isLightMode ? "bg-gray-50" : "bg-[#070913]"
+      }`}>
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Lock className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view the Company Master.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`h-screen overflow-y-auto flex flex-col font-sans p-6 space-y-6 ${

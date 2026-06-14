@@ -139,7 +139,7 @@ export default function RequirementsPage() {
     );
   }
 
-  if (!hasPermission("REQUIREMENTS_VIEW")) {
+  if (!hasPermission("REQUIREMENTS_APPROVALS_VIEW")) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-[#070913] text-white">
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">

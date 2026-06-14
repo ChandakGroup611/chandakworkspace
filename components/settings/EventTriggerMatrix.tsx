@@ -2,10 +2,13 @@
 
 import React, { useState } from "react";
 import { updateEventTriggerConfig } from "@/lib/actions/email-config";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Shield } from "lucide-react";
 
 export default function EventTriggerMatrix({ configList }: { configList: any[] }) {
   const [configs, setConfigs] = useState(configList);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const { hasPermission, loading: permsLoading } = usePermissions();
 
   const handleToggle = async (id: string, field: "is_email_enabled" | "is_inapp_enabled", currentValue: boolean) => {
     setLoadingId(id);
@@ -20,6 +23,24 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   };
 
   const modules = Array.from(new Set(configs.map(c => c.module_code)));
+
+  if (permsLoading) {
+    return <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto my-12" />;
+  }
+
+  if (!hasPermission("SETTINGS_NOTIFICATIONS_VIEW")) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 py-12">
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Shield className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view Notification Settings.</p>
+      </div>
+    );
+  }
+
+  const canManage = hasPermission("SETTINGS_NOTIFICATIONS_MANAGE");
 
   return (
     <div className="bg-white/5 border border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
@@ -52,7 +73,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                           className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500/50" 
                           checked={config.is_inapp_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_inapp_enabled', config.is_inapp_enabled !== false)}
-                          disabled={loadingId === config.id}
+                          disabled={loadingId === config.id || !canManage}
                         />
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -62,7 +83,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                           className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500/50" 
                           checked={config.is_email_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_email_enabled', config.is_email_enabled !== false)}
-                          disabled={loadingId === config.id}
+                          disabled={loadingId === config.id || !canManage}
                         />
                       </label>
                     </div>

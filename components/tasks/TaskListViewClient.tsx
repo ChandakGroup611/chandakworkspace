@@ -14,7 +14,7 @@ import {
   AppTableHead,
   AppTableCell
 } from "@/components/ui/AppTable";
-import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip } from "lucide-react";
+import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield } from "lucide-react";
 import Link from "next/link";
 import { deleteTask, getTaskStatuses, updateTaskStatusInline } from "@/lib/actions/tasks";
 import { createClient } from "@/utils/supabase/client";
@@ -74,7 +74,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false);
   const [bulkNewStatus, setBulkNewStatus] = useState<string>("");
   const [bulkRemark, setBulkRemark] = useState<string>("");
-  const { hasPermission, roleCode } = usePermissions();
+  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
   const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
   const canUpdate = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_UPDATE");
 
@@ -383,9 +383,25 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const virtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 64, // Approximate row height in pixels
-    overscan: 10,
+    estimateSize: () => 64,
+    overscan: 5,
   });
+
+  if (permsLoading) {
+    return <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto my-12" />;
+  }
+
+  if (!hasPermission("TASKS_VIEW")) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 py-12">
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Shield className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view Workspace Tasks.</p>
+      </div>
+    );
+  }
 
   return (
     <ExperienceProvider mode="operational">

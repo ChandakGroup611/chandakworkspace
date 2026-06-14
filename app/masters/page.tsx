@@ -641,7 +641,7 @@ export default function MastersPage() {
     );
   }
 
-  if (!hasPermission("MASTERS_VIEW")) {
+  if (!hasPermission("SYSTEM_MASTERS_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"

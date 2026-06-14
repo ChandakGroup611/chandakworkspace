@@ -59,8 +59,8 @@ const navGroups: NavGroup[] = [
         icon: FileCheck2,
         permission: "REQUIREMENTS_VIEW",
         subItems: [
-          { label: "Requirements Master", href: "/requirements" },
-          { label: "Requirement Approvals", href: "/requirements/approvals" }
+          { label: "Requirements Master", href: "/requirements", permission: "REQUIREMENTS_VIEW" },
+          { label: "Requirement Approvals", href: "/requirements/approvals", permission: "REQUIREMENTS_APPROVALS_VIEW" }
         ]
       },
       { 
@@ -69,7 +69,9 @@ const navGroups: NavGroup[] = [
         icon: FolderKanban, 
         permission: "WORKSPACES_VIEW",
         subItems: [
-          { label: "Workspace Master", href: "/workspaces" },
+          { label: "Workspace Master", href: "/workspaces", permission: "WORKSPACES_VIEW" },
+          { label: "Enrolled Workspaces", href: "/workspaces/enrolled", permission: "ENROLLED_WORKSPACES_VIEW" },
+          { label: "Workspace Tasks", href: "/workspaces/tasks", permission: "TASKS_VIEW" },
           { label: "Reports & Analytics", href: "/workspaces/reports", permission: "REPORTS_VIEW" }
         ]
       },
@@ -93,8 +95,8 @@ const navGroups: NavGroup[] = [
         icon: Database,
         permission: "MASTERS_VIEW",
         subItems: [
-          { label: "Company Master", href: "/masters/companies" },
-          { label: "System Master", href: "/masters" }
+          { label: "Company Master", href: "/masters/companies", permission: "COMPANIES_VIEW" },
+          { label: "System Master", href: "/masters", permission: "SYSTEM_MASTERS_VIEW" }
         ]
       },
       { label: "Compliance Hub", href: "/compliance", icon: Settings, permission: "COMPLIANCE_VIEW" },
@@ -104,10 +106,10 @@ const navGroups: NavGroup[] = [
         icon: Settings,
         permission: "SETTINGS_MANAGE",
         subItems: [
-          { label: "Design Gallery", href: "/settings" },
-          { label: "Identity & Access", href: "/settings/identity" },
-          { label: "Communication Center", href: "/settings/communication" },
-          { label: "Notifications", href: "/settings/notifications" }
+          { label: "Design Gallery", href: "/settings", permission: "SETTINGS_THEME_VIEW" },
+          { label: "Identity & Access", href: "/settings/identity", permission: "SETTINGS_IDENTITY_VIEW" },
+          { label: "Communication Center", href: "/settings/communication", permission: "SETTINGS_COMMUNICATION_VIEW" },
+          { label: "Notifications", href: "/settings/notifications", permission: "SETTINGS_NOTIFICATIONS_VIEW" }
         ]
       },
     ]

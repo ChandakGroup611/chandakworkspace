@@ -1,15 +1,9 @@
+"use client";
+
 import React from "react";
-import { Metadata } from "next";
 import Link from "next/link";
-import { Server, LayoutTemplate, Workflow, Activity } from "lucide-react";
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
-export const metadata: Metadata = {
-  title: "Communication Center | Enterprise Operations",
-  description: "Enterprise Identity & Communication Framework hub.",
-};
+import { Server, LayoutTemplate, Workflow, Activity, Shield } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const MODULES = [
   {
@@ -51,6 +45,28 @@ const MODULES = [
 ];
 
 export default function CommunicationCenterHub() {
+  const { hasPermission, loading: permsLoading } = usePermissions();
+
+  if (permsLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+      </div>
+    );
+  }
+
+  if (!hasPermission("SETTINGS_COMMUNICATION_VIEW")) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 py-12">
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <Shield className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view Communication Settings.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <header className="border-b border-white/5 pb-4">

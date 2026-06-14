@@ -9,10 +9,12 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { AppTable, AppTableContainer, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { AppInput } from "@/components/ui/AppInput";
 import { useRouter } from "next/navigation";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspaces }: { initialWorkspaces: any[], initialSubWorkspaces: any[] }) {
   const { theme } = useTheme();
   const router = useRouter();
+  const { hasPermission, loading: permsLoading } = usePermissions();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,6 +46,24 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
     // We'll stub this out for now, to be implemented via an API route or server action
     alert(`Delete action requested for ${item.type === 'workspace' ? item.workspace_name : item.name}`);
   };
+
+  if (permsLoading) {
+    return <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto my-12" />;
+  }
+
+  if (!hasPermission("ENROLLED_WORKSPACES_VIEW")) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 py-12">
+        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <FolderKanban className="h-10 w-10" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view Enrolled Workspaces.</p>
+      </div>
+    );
+  }
+
+  const canManage = hasPermission("ENROLLED_WORKSPACES_MANAGE");
 
   return (
     <div className={`p-8 w-full max-w-7xl mx-auto space-y-6 ${"text-foreground"}`}>
@@ -127,12 +147,16 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
                           <AppButton variant="ghost" size="sm" onClick={() => handleView(item)} className="h-8 px-2 text-blue-500 hover:bg-blue-500/10">
                             <Eye className="h-4 w-4 mr-1" /> View
                           </AppButton>
-                          <AppButton variant="ghost" size="sm" onClick={() => handleUpdate(item)} className="h-8 px-2 text-amber-500 hover:bg-amber-500/10">
-                            <Edit2 className="h-4 w-4 mr-1" /> Update
-                          </AppButton>
-                          <AppButton variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-red-500 hover:bg-red-500/10">
-                            <Trash2 className="h-4 w-4 mr-1" /> Delete
-                          </AppButton>
+                          {canManage && (
+                            <>
+                              <AppButton variant="ghost" size="sm" onClick={() => handleUpdate(item)} className="h-8 px-2 text-amber-500 hover:bg-amber-500/10">
+                                <Edit2 className="h-4 w-4 mr-1" /> Update
+                              </AppButton>
+                              <AppButton variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-red-500 hover:bg-red-500/10">
+                                <Trash2 className="h-4 w-4 mr-1" /> Delete
+                              </AppButton>
+                            </>
+                          )}
                         </div>
                       </AppTableCell>
                     </AppTableRow>
