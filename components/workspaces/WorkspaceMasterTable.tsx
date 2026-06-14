@@ -389,47 +389,55 @@ export function WorkspaceMasterTable({
           <div className="py-1 px-2">
             <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
               {isWorkspaceType && onCreateSubWorkspace && (
-                <button
+                <AppButton
+                  variant="outline"
+                  size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
-                  className={`text-[10px] font-medium uppercase px-2 py-1 rounded shadow-sm border transition-all active:scale-95 w-auto ${
+                  className={`h-6 px-2 text-[10px] font-medium uppercase ${
                     isLightMode 
-                      ? 'bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300' 
-                      : 'bg-[#0B0D17] border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 hover:border-indigo-400'
+                      ? 'border-indigo-200 text-indigo-600 hover:bg-indigo-50' 
+                      : 'border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10'
                   }`}
                 >
                   + Sub WS
-                </button>
+                </AppButton>
               )}
               {onCreateTask && (
-                <button
+                <AppButton
+                  variant="outline"
+                  size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
-                  className={`text-[10px] font-medium uppercase px-2 py-1 rounded shadow-sm border transition-all active:scale-95 w-auto ${
+                  className={`h-6 px-2 text-[10px] font-medium uppercase ${
                     isLightMode 
-                      ? 'bg-white border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300' 
-                      : 'bg-[#0B0D17] border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400'
+                      ? 'border-purple-200 text-purple-600 hover:bg-purple-50' 
+                      : 'border-purple-500/30 text-purple-400 hover:bg-purple-500/10'
                   }`}
                 >
                   {isWorkspaceType ? '+ Task' : '+ Sub Task'}
-                </button>
+                </AppButton>
               )}
             </div>
           </div>
 
           <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap">
             {isWorkspaceType && totalTaskCount > 0 && (
-              <button 
+              <AppButton 
+                variant="ghost"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                 }}
-                className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-gray-500 hover:bg-gray-200' : 'text-gray-400 hover:bg-white/10'}`}
+                className={`h-7 w-7 p-0 ${isLightMode ? 'text-gray-500 hover:bg-gray-200' : 'text-gray-400 hover:bg-white/10'}`}
                 title="Open Task List"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-              </button>
+              </AppButton>
             )}
             
-            <button 
+            <AppButton 
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 if (isWorkspaceType) {
@@ -438,30 +446,34 @@ export function WorkspaceMasterTable({
                   router.push(`/tasks/${node.id}`);
                 }
               }}
-              className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-indigo-600 hover:bg-indigo-50' : 'text-indigo-400 hover:bg-indigo-500/20'}`}
+              className={`h-7 w-7 p-0 ${isLightMode ? 'text-indigo-600 hover:bg-indigo-50' : 'text-indigo-400 hover:bg-indigo-500/20'}`}
               title="Edit"
             >
               <Edit2 className="h-3.5 w-3.5" />
-            </button>
+            </AppButton>
 
             {onShareNode && isWorkspaceType && (
-              <button 
+              <AppButton 
+                variant="ghost"
+                size="sm"
                 onClick={() => onShareNode(node)}
-                className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-emerald-600 hover:bg-emerald-50' : 'text-emerald-400 hover:bg-emerald-500/20'}`}
+                className={`h-7 w-7 p-0 ${isLightMode ? 'text-emerald-600 hover:bg-emerald-50' : 'text-emerald-400 hover:bg-emerald-500/20'}`}
                 title="Share Workspace"
               >
                 <Share2 className="h-3.5 w-3.5" />
-              </button>
+              </AppButton>
             )}
 
             {onDeleteNode && (
-              <button 
+              <AppButton 
+                variant="ghost"
+                size="sm"
                 onClick={() => onDeleteNode(node)}
-                className={`p-1 rounded-md transition-colors ${isLightMode ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/20'}`}
+                className={`h-7 w-7 p-0 ${isLightMode ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/20'}`}
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              </AppButton>
             )}
           </div>
         </div>

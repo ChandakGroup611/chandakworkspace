@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { AppCard } from "@/components/ui/AppCard";
+import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
+import { AppButton } from "@/components/ui/AppButton";
+import { Users, ArrowRight } from "lucide-react";
 
 interface TeamPerformanceProps {
   metrics?: any[];
@@ -42,55 +46,69 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
   };
 
   return (
-    <div className="panel" style={{ marginTop: '20px' }}>
-      <div className="panel-header">
-        <i className="ti ti-users-group" style={{ fontSize: '16px', color: 'var(--purple)' }} aria-hidden="true"></i>
-        <span className="panel-title">Team Performance · Sprint 24</span>
-        <span className="panel-action">Full Report ↗</span>
-      </div>
-      <div className="panel-body">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 0 }}>
-          <div style={{ display: 'contents' }}>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--mono)', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0 10px 0', borderBottom: '0.5px solid var(--border)', gridColumn: 1 }}>Member</div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--mono)', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0 10px 16px', borderBottom: '0.5px solid var(--border)', gridColumn: 2 }}>Closed</div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--mono)', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0 10px 16px', borderBottom: '0.5px solid var(--border)', gridColumn: 3 }}>Story Pts</div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--mono)', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0 10px 16px', borderBottom: '0.5px solid var(--border)', gridColumn: 4 }}>Progress</div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--mono)', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0 10px 16px', borderBottom: '0.5px solid var(--border)', gridColumn: 5 }}>Avg Days</div>
-          </div>
+    <AppCard className="mt-5">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-purple-500" />
+          <span className="text-sm font-bold text-foreground">Team Performance · Sprint 24</span>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {teamStats.map((u: any, i: number) => {
-            const isLast = i === teamStats.length - 1;
-            const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-            const colors = ['var(--green)', 'var(--teal)', 'var(--amber)', 'var(--purple)', 'var(--green)'];
-            const color = colors[i % colors.length];
-
-            return (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 3fr 1fr', alignItems: 'center', padding: '12px 0', borderBottom: isLast ? 'none' : '0.5px solid var(--border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                  <div className={`mini-avatar a${(i % 5) + 1}`} style={{ width: '30px', height: '30px', fontSize: '11px' }}>{u.initials}</div>
-                  <div>
-                    <div style={{ fontSize: '12.5px', color: 'var(--text1)', fontWeight: 500 }}>{u.name}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>{getRole(i)}</div>
-                  </div>
-                </div>
-                <div style={{ fontFamily: 'var(--syne)', fontSize: '18px', fontWeight: 600, color: color, paddingLeft: '16px' }}>{u.closed}</div>
-                <div style={{ fontFamily: 'var(--syne)', fontSize: '18px', fontWeight: 600, color: 'var(--accent)', paddingLeft: '16px' }}>{u.pts}</div>
-                <div style={{ padding: '0 16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontFamily: 'var(--mono)', color: 'var(--text3)', marginBottom: '4px' }}>
-                    <span>Sprint goal</span><span>{progress}%</span>
-                  </div>
-                  <div className="prog-bar-wrap">
-                    <div className="prog-bar" style={{ width: `${progress}%`, background: color }}></div>
-                  </div>
-                </div>
-                <div style={{ fontSize: '14px', fontFamily: 'var(--mono)', color: 'var(--text2)', paddingLeft: '16px' }}>{getAvgDays(i)}d</div>
-              </div>
-            );
-          })}
-        </div>
+        <AppButton variant="ghost" size="sm" className="h-6 text-xs gap-1">Full Report <ArrowRight className="h-3 w-3" /></AppButton>
       </div>
-    </div>
+      <div className="p-0 bg-background overflow-x-auto">
+        <AppTable>
+          <AppTableHeader>
+            <AppTableRow>
+              <AppTableHead>Member</AppTableHead>
+              <AppTableHead className="text-center">Closed</AppTableHead>
+              <AppTableHead className="text-center">Story Pts</AppTableHead>
+              <AppTableHead>Progress</AppTableHead>
+              <AppTableHead className="text-right">Avg Days</AppTableHead>
+            </AppTableRow>
+          </AppTableHeader>
+          <AppTableBody>
+            {teamStats.map((u: any, i: number) => {
+              const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
+              const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-amber-500', 'bg-purple-500', 'bg-blue-500'];
+              const textColors = ['text-emerald-500', 'text-teal-500', 'text-amber-500', 'text-purple-500', 'text-blue-500'];
+              const color = colors[i % colors.length];
+              const textColor = textColors[i % textColors.length];
+
+              return (
+                <AppTableRow key={i}>
+                  <AppTableCell>
+                    <div className="flex items-center gap-3">
+                      <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold text-white ${color}`}>
+                        {u.initials}
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-foreground">{u.name}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">{getRole(i)}</div>
+                      </div>
+                    </div>
+                  </AppTableCell>
+                  <AppTableCell className={`text-center font-bold text-lg ${textColor}`}>
+                    {u.closed}
+                  </AppTableCell>
+                  <AppTableCell className="text-center font-bold text-lg text-indigo-500">
+                    {u.pts}
+                  </AppTableCell>
+                  <AppTableCell>
+                    <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1.5">
+                      <span>Sprint goal</span><span>{progress}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden">
+                      <div className={`h-full ${color}`} style={{ width: `${progress}%` }}></div>
+                    </div>
+                  </AppTableCell>
+                  <AppTableCell className="text-right font-mono text-xs text-muted-foreground">
+                    {getAvgDays(i)}d
+                  </AppTableCell>
+                </AppTableRow>
+              );
+            })}
+          </AppTableBody>
+        </AppTable>
+      </div>
+    </AppCard>
   );
 }

@@ -4,6 +4,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import { Suspense } from "react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { useEffect, useState } from "react";
 
@@ -37,7 +38,11 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
       }}
     >
       {/* Sidebar Navigation */}
-      {!isAuthRoute && <Sidebar />}
+      {!isAuthRoute && (
+        <Suspense fallback={null}>
+          <Sidebar />
+        </Suspense>
+      )}
 
       {/* Main Orchestration Column */}
       <div className="flex flex-1 flex-col min-w-0 h-screen relative">

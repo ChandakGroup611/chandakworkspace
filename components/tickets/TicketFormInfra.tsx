@@ -31,9 +31,12 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
     assetId: "",
     subject: "",
     remark: "",
+    requirement_description: "",
+    business_reason: "",
     attachment: null as File | null,
   });
 
+  const [isReqCategory, setIsReqCategory] = useState(false);
   const [slaPreview, setSlaPreview] = useState<string | null>(null);
 
   // 1. Initial Load of Scoped Masters
@@ -74,10 +77,14 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
   useEffect(() => {
     if (!formData.categoryId) {
       setSubCategories([]);
+      setIsReqCategory(false);
       return;
     }
+    const cat = (masters.ticket_category || []).find((c: any) => c.id === formData.categoryId);
+    setIsReqCategory(cat?.is_requirement_category || cat?.name?.toUpperCase().includes('REQUIREMENT') || false);
+
     fetchDependentMasters("ticket_subcategory", formData.categoryId).then(setSubCategories);
-  }, [formData.categoryId]);
+  }, [formData.categoryId, masters.ticket_category]);
 
   const handlePriorityChange = (id: string) => {
     const prios = masters.master_priority || [];
@@ -100,11 +107,11 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
   return (
     <div className="animate-in slide-in-from-right-4 duration-500">
         <form 
-          onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }}
+          onSubmit={(e) => { e.preventDefault(); onSubmit({ ...formData, isReqCategory }); }}
           className="space-y-4"
         >
           {/* Main Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
             
             {/* Issue Type & Subtype */}
             <div className="space-y-2">
@@ -183,8 +190,9 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                 }`}
                 value={formData.assetId}
                 onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
+                required
               >
-                <option value="">No Specific Asset (General Fault)</option>
+                <option value="">Select Asset</option>
                 {(masters.asset || []).map((a: any) => (
                   <option key={a.id} value={a.id}>{a.name} [{a.asset_tag}]</option>
                 ))}
@@ -205,17 +213,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
-              {slaPreview && (
-                <div className={`flex items-center gap-2 mt-2 px-3 py-2 rounded-lg border animate-in fade-in slide-in-from-top-1 ${
-                  isLightMode ? "bg-indigo-50 border-indigo-100 text-indigo-700" : "bg-indigo-500/10 border-indigo-500/20 text-indigo-400"
-                }`}>
-                  <Clock className="h-3 w-3" />
-                  <span className="text-xs font-bold uppercase tracking-tight">{slaPreview}</span>
-                </div>
-              )}
+
             </div>
 
-            <div className="md:col-span-2 space-y-2">
+            <div className="md:col-span-2 lg:col-span-3 space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Subject</label>
               <AppInput 
                 placeholder="Summarize the infrastructure fault..."
@@ -240,49 +241,83 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             />
           </div>
 
-          <div className="space-y-2">
-            <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Operational Attachments (Log Files / Screenshots)</label>
-            <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
-              isLightMode ? "border-gray-100 hover:border-indigo-200 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
-            }`}>
-              <input 
-                type="file" 
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
-              />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}>
-                    <Paperclip className={`h-4 w-4 ${isLightMode ? "text-indigo-600" : "text-gray-400"}`} />
-                  </div>
-                  <div>
-                    <p className={`text-xs font-medium ${"text-foreground"}`}>
-                      {formData.attachment ? formData.attachment.name : "Select or Drop Technical Evidence"}
-                    </p>
-                    <p className="text-xs text-gray-500 uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
-                  </div>
-                </div>
-                {formData.attachment && (
-                  <button 
-                    type="button"
-                    onClick={() => setFormData({ ...formData, attachment: null })}
-                    className="p-1 rounded-md hover:bg-red-500/10 text-red-500 transition-colors relative z-20"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+          {isReqCategory && (
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-2xl">
+              <h4 className="text-sm font-bold text-indigo-400 mb-2">Requirement Details (Mandatory)</h4>
+              
+              <div className="space-y-2">
+                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Reason <span className="text-red-500">*</span></label>
+                <textarea 
+                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[100px] resize-none ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                  }`}
+                  placeholder="Why is this requirement needed? (Business Objective)"
+                  value={formData.business_reason}
+                  onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Details <span className="text-red-500">*</span></label>
+                <textarea 
+                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[120px] resize-none ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                  }`}
+                  placeholder="Provide detailed functional scope and technical requirements..."
+                  value={formData.requirement_description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
+                  required
+                />
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center justify-end gap-3 pt-6 border-t border-white/10">
-            <AppButton variant="ghost" type="button" onClick={onCancel} className={isLightMode ? "text-gray-500" : "text-gray-400 hover:text-white"}>
-              Cancel
-            </AppButton>
-            <AppButton variant="primary" type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white min-w-[140px]">
-              <Send className="h-4 w-4 mr-2" />
-              Submit Ticket
-            </AppButton>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
+            <div className="flex-1 space-y-2">
+              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Operational Attachments (Log Files / Screenshots)</label>
+              <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
+                isLightMode ? "border-gray-100 hover:border-indigo-200 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
+              }`}>
+                <input 
+                  type="file" 
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
+                />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}>
+                      <Paperclip className={`h-4 w-4 ${isLightMode ? "text-indigo-600" : "text-gray-400"}`} />
+                    </div>
+                    <div>
+                      <p className={`text-xs font-medium ${"text-foreground"}`}>
+                        {formData.attachment ? formData.attachment.name : "Select or Drop Technical Evidence"}
+                      </p>
+                      <p className="text-xs text-gray-500 uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
+                    </div>
+                  </div>
+                  {formData.attachment && (
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({ ...formData, attachment: null })}
+                      className="p-1 rounded-md hover:bg-red-500/10 text-red-500 transition-colors relative z-20"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0 pb-1">
+              <AppButton variant="ghost" type="button" onClick={onCancel} className={isLightMode ? "text-gray-500" : "text-gray-400 hover:text-white"}>
+                Cancel
+              </AppButton>
+              <AppButton variant="primary" type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white min-w-[140px]">
+                <Send className="h-4 w-4 mr-2" />
+                Submit Ticket
+              </AppButton>
+            </div>
           </div>
         </form>
     </div>

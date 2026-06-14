@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 export interface AppBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "success" | "warning" | "danger" | "info" | "neutral" | "custom";
+  variant?: "success" | "warning" | "danger" | "info" | "neutral" | "accent" | "custom";
   customColor?: string | null;
 }
 
@@ -29,6 +29,8 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       info: isLight 
         ? "bg-blue-50 text-blue-700 border-blue-200" 
         : "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      accent: 
+        "bg-accent/10 text-accent border-accent/20",
       neutral: isLight 
         ? "bg-gray-50 text-gray-700 border-gray-200" 
         : "bg-white/5 text-gray-300 border-white/10",

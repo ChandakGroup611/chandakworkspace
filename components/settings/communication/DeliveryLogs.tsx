@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Loader2, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { AppCard } from "@/components/ui/AppCard";
+import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
+import { AppButton } from "@/components/ui/AppButton";
 
 export default function DeliveryLogs() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -52,73 +55,74 @@ export default function DeliveryLogs() {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
+      <AppCard className="flex justify-between items-center p-4">
         <div>
-          <h2 className="text-lg font-bold text-white">Transmission Logs</h2>
-          <p className="text-xs text-gray-400">View recent async email dispatch attempts and delivery receipts.</p>
+          <h2 className="text-lg font-bold text-foreground">Transmission Logs</h2>
+          <p className="text-xs text-muted-foreground">View recent async email dispatch attempts and delivery receipts.</p>
         </div>
-        <button
+        <AppButton
           onClick={fetchLogs}
           disabled={loading}
-          className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-white transition-colors"
+          variant="secondary"
+          size="sm"
         >
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </AppButton>
+      </AppCard>
 
-      <div className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl">
+      <AppCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white/5 border-b border-white/5">
-                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Timestamp</th>
-                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Trigger Event</th>
-                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Recipient</th>
-                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Gateway</th>
-                <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
+          <AppTable>
+            <AppTableHeader>
+              <AppTableRow>
+                <AppTableHead>Timestamp</AppTableHead>
+                <AppTableHead>Trigger Event</AppTableHead>
+                <AppTableHead>Recipient</AppTableHead>
+                <AppTableHead>Gateway</AppTableHead>
+                <AppTableHead>Status</AppTableHead>
+              </AppTableRow>
+            </AppTableHeader>
+            <AppTableBody>
               {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-6 py-4 text-xs text-gray-400 whitespace-nowrap">
+                <AppTableRow key={log.id}>
+                  <AppTableCell className="text-xs text-muted-foreground whitespace-nowrap">
                     {new Date(log.recorded_at).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4">
+                  </AppTableCell>
+                  <AppTableCell>
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold text-foreground">
                         {log.email_queue?.module} - {log.email_queue?.event}
                       </span>
-                      <span className="text-xs text-gray-500 truncate max-w-[200px]">
+                      <span className="text-xs text-muted-foreground truncate max-w-[200px]">
                         {log.email_queue?.subject}
                       </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-mono text-blue-400">
+                  </AppTableCell>
+                  <AppTableCell className="font-mono text-blue-500">
                     {log.recipient_email}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-400">
+                  </AppTableCell>
+                  <AppTableCell className="text-xs text-muted-foreground">
                     {log.email_providers?.provider_name || 'System Default'}
-                  </td>
-                  <td className="px-6 py-4">
+                  </AppTableCell>
+                  <AppTableCell>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(log.status)}
-                      <span className="text-xs font-bold text-gray-300">{log.status}</span>
+                      <span className="text-xs font-bold text-foreground">{log.status}</span>
                     </div>
-                  </td>
-                </tr>
+                  </AppTableCell>
+                </AppTableRow>
               ))}
               {logs.length === 0 && !loading && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm">
+                <AppTableRow>
+                  <AppTableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     No delivery logs found.
-                  </td>
-                </tr>
+                  </AppTableCell>
+                </AppTableRow>
               )}
-            </tbody>
-          </table>
+            </AppTableBody>
+          </AppTable>
         </div>
-      </div>
+      </AppCard>
     </div>
   );
 }

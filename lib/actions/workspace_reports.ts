@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 export type ReportEntityType = "WORKSPACE" | "SUB_WORKSPACE" | "TASK" | "SUB_TASK";
-export type ReportScope = "ALL" | "CREATED_BY_ME" | "ASSIGNED_TO_ME";
+export type ReportScope = "ALL" | "CREATED_BY_ME" | "ASSIGNED_TO_ME" | "TASK_OWNER";
 
 export async function generateWorkspaceReportData(entityType: ReportEntityType, scope: ReportScope) {
   const cookieStore = await cookies();
@@ -30,6 +30,7 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         end_date,
         created_at,
         created_by,
+        owner_id,
         workspace_id,
         parent_task_id,
         status:status_master!tasks_status_id_fkey(name:status_name, color:status_color),
@@ -140,14 +141,20 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         return item.members?.some((m: any) => m.user_id === userId);
       }
     });
+  } else if (scope === "TASK_OWNER") {
+    filteredData = filteredData.filter((item: any) => {
+      if (isTask) return item.owner_id === userId;
+      else return item.created_by === userId; // workspace owner
+    });
   } else if (scope === "ALL") {
     // Standard visibility
     filteredData = filteredData.filter((item: any) => {
       const isCreator = item.created_by === userId;
+      const isOwner = isTask ? item.owner_id === userId : item.created_by === userId;
       const isAssigned = isTask 
         ? item.assignees?.some((a: any) => a.user_id === userId)
         : item.members?.some((m: any) => m.user_id === userId);
-      return isCreator || isAssigned;
+      return isCreator || isAssigned || isOwner;
     });
   }
 

@@ -81,7 +81,6 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
     fetchDependentMasters("software_submodule", formData.moduleId).then(setSubmodules);
   }, [formData.moduleId]);
 
-  // 3. Dependency: Category -> Subcategory
   useEffect(() => {
     if (!formData.categoryId) {
       setSubcategories([]);
@@ -89,7 +88,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
       return;
     }
     const cat = (masters.ticket_category || []).find((c: any) => c.id === formData.categoryId);
-    setIsReqCategory(cat?.is_requirement_category || false);
+    setIsReqCategory(cat?.is_requirement_category || cat?.name?.toUpperCase().includes('REQUIREMENT') || false);
 
     fetchDependentMasters("ticket_subcategory", formData.categoryId).then(setSubcategories);
   }, [formData.categoryId, masters.ticket_category]);
@@ -114,8 +113,8 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
 
   return (
     <div className="animate-in slide-in-from-bottom-4 duration-500">
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSubmit({ ...formData, isReqCategory }); }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
             
             {/* Software Hierarchy */}
             <div className="space-y-2">
@@ -149,14 +148,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
                   <option key={prio.id} value={prio.id}>{prio.name}</option>
                 ))}
               </select>
-              {slaPreview && (
-                <div className={`flex items-center gap-2 mt-2 px-3 py-2 rounded-lg border animate-in fade-in slide-in-from-top-1 ${
-                  isLightMode ? "bg-indigo-50 border-indigo-100 text-indigo-700" : "bg-indigo-500/10 border-indigo-500/20 text-indigo-400"
-                }`}>
-                  <Clock className="h-3 w-3" />
-                  <span className="text-xs font-bold uppercase tracking-tight">{slaPreview}</span>
-                </div>
-              )}
+
             </div>
 
             <div className="space-y-2">
@@ -225,7 +217,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               </select>
             </div>
 
-            <div className="md:col-span-2 space-y-2">
+            <div className="md:col-span-2 lg:col-span-3 space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Subject</label>
               <AppInput 
                 placeholder="Operational summary of the software issue"
@@ -246,86 +238,87 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               placeholder="Describe the application fault, bug behavior, or system error in detail..."
               value={formData.remark}
               onChange={(e) => setFormData(prev => ({ ...prev, remark: e.target.value }))}
-              required={!isReqCategory}
+              required
             />
           </div>
 
           {isReqCategory && (
-            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-2xl">
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-2xl mt-4">
               <h4 className="text-sm font-bold text-indigo-400 mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Description <span className="text-red-500">*</span></label>
+                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[100px] resize-none ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
                   }`}
-                  placeholder="Provide technical scope and required capabilities..."
-                  value={formData.requirement_description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
+                  placeholder="Why is this requirement needed? (Business Objective)"
+                  value={formData.business_reason}
+                  onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Business Justification <span className="text-red-500">*</span></label>
+                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[80px] resize-none ${
+                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[120px] resize-none ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
                   }`}
-                  placeholder="Explain why this requirement is needed for the business..."
-                  value={formData.business_reason}
-                  onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
+                  placeholder="Provide detailed functional scope and technical requirements..."
+                  value={formData.requirement_description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
                   required
                 />
               </div>
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Technical Evidence (Screenshots / Logs)</label>
-            <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
-              isLightMode ? "border-gray-100 hover:border-indigo-200 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
-            } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-red-500/5' : ''}`}>
-              <input 
-                type="file" 
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
-                required={isReqCategory && !formData.attachment}
-              />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}>
-                    <Paperclip className={`h-4 w-4 ${isLightMode ? "text-indigo-600" : "text-gray-400"}`} />
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
+            <div className="flex-1 space-y-2">
+              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Technical Evidence (Screenshots / Logs)</label>
+              <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
+                isLightMode ? "border-gray-100 hover:border-indigo-200 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
+              } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-red-500/5' : ''}`}>
+                <input 
+                  type="file" 
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
+                />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}>
+                      <Paperclip className={`h-4 w-4 ${isLightMode ? "text-indigo-600" : "text-gray-400"}`} />
+                    </div>
+                    <div>
+                      <p className={`text-xs font-medium ${"text-foreground"}`}>
+                        {formData.attachment ? formData.attachment.name : "Attach Bug Evidence or Logs"}
+                      </p>
+                      <p className="text-xs text-gray-500 uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`text-xs font-medium ${"text-foreground"}`}>
-                      {formData.attachment ? formData.attachment.name : "Attach Bug Evidence or Logs"}
-                    </p>
-                    <p className="text-xs text-gray-500 uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
-                  </div>
+                  {formData.attachment && (
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({ ...formData, attachment: null })}
+                      className="p-1 rounded-md hover:bg-red-500/10 text-red-500 transition-colors relative z-20"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                {formData.attachment && (
-                  <button 
-                    type="button"
-                    onClick={() => setFormData({ ...formData, attachment: null })}
-                    className="p-1 rounded-md hover:bg-red-500/10 text-red-500 transition-colors relative z-20"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-end gap-3 pt-6 border-t border-white/10">
-            <AppButton variant="ghost" type="button" onClick={onCancel} className={isLightMode ? "text-gray-500" : "text-gray-400 hover:text-white"}>
-              Cancel
-            </AppButton>
-            <AppButton variant="primary" type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white min-w-[140px]">
-              <Send className="h-4 w-4 mr-2" />
-              Initialize Workflow
-            </AppButton>
+            <div className="flex items-center gap-3 shrink-0 pb-1">
+              <AppButton variant="ghost" type="button" onClick={onCancel} className={isLightMode ? "text-gray-500" : "text-gray-400 hover:text-white"}>
+                Cancel
+              </AppButton>
+              <AppButton variant="primary" type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white min-w-[140px]">
+                <Send className="h-4 w-4 mr-2" />
+                Initialize Workflow
+              </AppButton>
+            </div>
           </div>
         </form>
     </div>

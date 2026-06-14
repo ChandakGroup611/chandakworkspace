@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { AppCard } from "@/components/ui/AppCard";
+import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -682,18 +683,18 @@ export default function IAMGovernanceCockpit({
                 <div className="flex-1 overflow-y-auto p-6 max-h-[600px] custom-scrollbar">
                   {gridModules.length > 0 ? (
                     <div className="overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className={cn("border-b text-xs font-extrabold uppercase tracking-wider text-left", isLight ? "border-gray-200 text-gray-500" : "border-white/5 text-gray-400")}>
-                            <th className="py-3 px-4 font-mono">Module Directory</th>
-                            <th className="py-3 px-4 text-center font-mono">View</th>
-                            <th className="py-3 px-4 text-center font-mono">Create</th>
-                            <th className="py-3 px-4 text-center font-mono">Update</th>
-                            <th className="py-3 px-4 text-center font-mono">Delete</th>
-                            <th className="py-3 px-4 text-center font-mono">Manage</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-transparent">
+                      <AppTable>
+                        <AppTableHeader>
+                          <AppTableRow>
+                            <AppTableHead>Module Directory</AppTableHead>
+                            <AppTableHead className="text-center">View</AppTableHead>
+                            <AppTableHead className="text-center">Create</AppTableHead>
+                            <AppTableHead className="text-center">Update</AppTableHead>
+                            <AppTableHead className="text-center">Delete</AppTableHead>
+                            <AppTableHead className="text-center">Manage</AppTableHead>
+                          </AppTableRow>
+                        </AppTableHeader>
+                        <AppTableBody>
                           {gridModules.map((m) => {
                             const isSuperAdmin = activeRole?.code === "SUPER_ADMIN";
 
@@ -708,14 +709,14 @@ export default function IAMGovernanceCockpit({
                             const actions = ["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"];
 
                             return (
-                              <tr 
+                              <AppTableRow 
                                 key={m.name}
                                 className={cn(
                                   "group/row transition-colors hover:bg-white/[0.01]",
                                   isLight ? "hover:bg-gray-50/40" : "hover:bg-white/[0.02]"
                                 )}
                               >
-                                <td className="py-4 px-4">
+                                <AppTableCell>
                                   <div className="space-y-0.5">
                                     <div className={cn("text-xs font-bold transition-colors", isLight ? "text-gray-900 group-hover/row:text-indigo-600" : "text-gray-100 group-hover/row:text-white")}>
                                       {m.name}
@@ -724,12 +725,12 @@ export default function IAMGovernanceCockpit({
                                       {m.code}_*
                                     </div>
                                   </div>
-                                </td>
+                                </AppTableCell>
                                 {actions.map((act) => {
                                   const checked = isActionChecked(act);
                                   const exists = !!getPermIdByAction(act);
                                   return (
-                                    <td key={act} className="py-4 px-4 text-center">
+                                    <AppTableCell key={act} className="text-center">
                                       {exists ? (
                                         <div className="flex justify-center">
                                           <button
@@ -752,14 +753,14 @@ export default function IAMGovernanceCockpit({
                                       ) : (
                                         <span className="text-xs text-gray-600 font-mono">-</span>
                                       )}
-                                    </td>
+                                    </AppTableCell>
                                   );
                                 })}
-                              </tr>
+                              </AppTableRow>
                             );
                           })}
-                        </tbody>
-                      </table>
+                        </AppTableBody>
+                      </AppTable>
                     </div>
                   ) : (
                     <div className="h-60 flex flex-col items-center justify-center space-y-2 border border-dashed rounded-2xl border-white/5">

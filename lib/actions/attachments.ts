@@ -57,8 +57,7 @@ export async function initializeAttachmentUpload(payload: {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("Unauthenticated.");
 
-  const canUpload = await hasPermission(user.id, "ATTACHMENTS_UPLOAD");
-  if (!canUpload) throw new Error("Unauthorized: Missing ATTACHMENTS_UPLOAD capability.");
+  // Relaxed: Allow all authenticated members to upload attachments
 
   validateFileSecurity(payload.file_name, payload.mime_type, payload.file_size);
 
@@ -115,15 +114,14 @@ export async function initializeAttachmentUpload(payload: {
 /**
  * Generates a signed download URL for an existing attachment
  */
-export async function getAttachmentDownloadUrl(attachmentId: string) {
+export async function getAttachmentDownloadUrl(attachmentId: string, forceDownload: boolean = false) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("Unauthenticated.");
 
-  const canView = await hasPermission(user.id, "ATTACHMENTS_VIEW");
-  if (!canView) throw new Error("Unauthorized: Missing ATTACHMENTS_VIEW capability.");
+  // Relaxed: Allow all authenticated members to view attachments
 
   // Fetch attachment details
   const { data: attachment, error: fetchError } = await supabaseAdmin
@@ -146,10 +144,12 @@ export async function getAttachmentDownloadUrl(attachmentId: string) {
                    : attachment.module_type === 'requirement' ? 'requirement-files'
                    : 'ticket-attachments';
 
+  const options = forceDownload ? { download: attachment.original_file_name || attachment.file_name } : undefined;
+
   const { data: signedUrl, error: storageError } = await supabaseAdmin
     .storage
     .from(bucketName)
-    .createSignedUrl(attachment.storage_path, 60 * 60); // 1 hour expiry
+    .createSignedUrl(attachment.storage_path, 60 * 60, options); // 1 hour expiry
 
   if (storageError) {
     throw new Error("Failed to generate secure download URL.");

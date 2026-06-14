@@ -74,7 +74,7 @@ export const AppTableHead = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
-    className={cn("h-10 px-3 text-left align-middle font-bold", className)}
+    className={cn("h-9 px-2 text-left align-middle font-bold", className)}
     {...props}
   />
 ));
@@ -86,7 +86,7 @@ export const AppTableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-3 align-middle", className)}
+    className={cn("px-2 py-1.5 align-middle", className)}
     {...props}
   />
 ));

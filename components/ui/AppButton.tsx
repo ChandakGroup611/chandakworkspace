@@ -7,7 +7,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 export interface AppButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "destructive" | "outline";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "icon" | "icon-sm";
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -35,11 +35,11 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     } catch (e) {}
 
     const baseStyles = 
-      "inline-flex items-center justify-center font-medium rounded-[var(--radius-button,6px)] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500/40 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
+      "inline-flex items-center justify-center font-medium rounded-[var(--radius-button,6px)] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
 
     const variants = {
       primary: 
-        "bg-blue-600 text-white hover:bg-blue-700 border border-blue-500/30",
+        "bg-accent text-white hover:opacity-90 shadow-sm border border-black/10 dark:border-white/10",
       secondary: isLight
         ? "bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 shadow-sm"
         : "bg-white/10 text-white hover:bg-white/15 border border-white/10 shadow-sm",
@@ -57,6 +57,8 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       sm: "h-7 px-2.5 text-[11px] gap-1.5",
       md: "h-8 px-3 text-[12px] gap-1.5",
       lg: "h-9 px-4 text-[13px] gap-2",
+      icon: "h-8 w-8 px-0 gap-0",
+      "icon-sm": "h-6 w-6 px-0 gap-0",
     };
 
     return (

@@ -320,7 +320,7 @@ export async function updateNodeStatus(nodeId: string, nodeType: string, newStat
 
 export async function logActivityEvent(moduleType: string, recordId: string, eventType: string, oldValue: any, newValue: any, performedBy: string) {
   try {
-    await supabaseAdmin.from('activity_events').insert([{
+    const res = await supabaseAdmin.from('activity_events').insert([{
       module_type: moduleType,
       record_id: recordId,
       event_type: eventType,
@@ -328,6 +328,9 @@ export async function logActivityEvent(moduleType: string, recordId: string, eve
       new_value: newValue,
       performed_by: performedBy
     }]);
+    if (res.error) {
+      console.error('[logActivityEvent] Supabase Error:', res.error);
+    }
   } catch (e) {
     console.error('[logActivityEvent] Failed to log activity (non-critical):', e);
   }

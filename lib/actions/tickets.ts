@@ -345,24 +345,24 @@ export async function createEnterpriseTicket(payload: any) {
   // Mandatory Requirement Validation
   if (isRequirement) {
     if (!payload.custom_fields?.requirement_description || 
-        !payload.custom_fields?.business_reason || 
-        !payload.attachments || payload.attachments.length === 0) {
-      throw new Error("Requirement Description, Business Reason, and Attachment are STRICTLY MANDATORY for Requirements.");
+        !payload.custom_fields?.business_reason) {
+      throw new Error("Requirement Description and Business Reason are STRICTLY MANDATORY for Requirements.");
     }
   }
 
   const dbScopeType = payload.scope_type === 'ERP/SOFTWARE' ? 'ERP' : payload.scope_type;
 
-  // Fetch 'NEW' status ID from status_master (fallback to global if scoped one is missing)
+  // Fetch 'NEW' or 'CONVERTED_TO_REQ' status ID from status_master (fallback to global if scoped one is missing)
+  const targetStatusCode = isRequirement ? 'CONVERTED_TO_REQ' : 'NEW';
   const { data: newStates } = await supabaseAdmin
     .from('status_master')
     .select('id')
-    .eq('status_code', 'NEW')
-    .or(`scope_type.eq.${dbScopeType},scope_type.is.null`)
+    .eq('status_code', targetStatusCode)
+    .or(`scope_type.eq.${dbScopeType},scope_type.eq.GLOBAL,scope_type.is.null`)
     .limit(1);
 
   const newState = newStates && newStates.length > 0 ? newStates[0] : null;
-  if (!newState) throw new Error(`System Error: 'NEW' status_master state not found for ${dbScopeType} or global.`);
+  if (!newState) throw new Error(`System Error: '${targetStatusCode}' status_master state not found for ${dbScopeType} or global.`);
 
   // Fallback for priority_id if strictly scoped priorities are missing (prevents 23502 NOT NULL)
   let finalPriorityId = priority_id;
@@ -370,7 +370,7 @@ export async function createEnterpriseTicket(payload: any) {
     const { data: fallbackPrio } = await supabaseAdmin
       .from('priority_master')
       .select('id')
-      .or(`scope_type.eq.${dbScopeType},scope_type.is.null`)
+      .or(`scope_type.eq.${dbScopeType},scope_type.eq.GLOBAL,scope_type.is.null`)
       .limit(1)
       .single();
     if (fallbackPrio) finalPriorityId = fallbackPrio.id;
@@ -416,7 +416,7 @@ export async function createEnterpriseTicket(payload: any) {
     const { data: reqStates } = await supabaseAdmin
       .from('status_master')
       .select('id')
-      .eq('status_code', 'NEW')
+      .eq('status_code', 'REQ_REGISTRATION')
       .or('scope_type.eq.REQUIREMENT,scope_type.is.null')
       .limit(1);
 
@@ -425,29 +425,60 @@ export async function createEnterpriseTicket(payload: any) {
     // Run Requirement Creation asynchronously to speed up Ticket CUD
     Promise.resolve().then(async () => {
       try {
+        const scopePrefix = payload.scope_type === 'ERP/SOFTWARE' ? 'ERP' : (payload.scope_type === 'INFRA' ? 'INF' : 'OTH');
+        const date = new Date();
+        const year = date.getFullYear();
+        const nextYear = (year + 1).toString().slice(-2);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const sequencePrefix = `${scopePrefix}-REQ-${year}-${nextYear}-${month}`;
+        
+        const reqCode = `${sequencePrefix}-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+        
         const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').insert({
+          code: reqCode,
           title: ticket.title || ticket.subject || 'New Requirement',
           objective: payload.custom_fields.business_reason,
           functional_scope: payload.custom_fields.requirement_description,
-          source_ticket_id: ticket.id,
-          requester_id: user.id,
-          requester_department_id: creatorInfo?.department_id,
-          scope: payload.scope_type,
-          requirement_reason: payload.custom_fields.business_reason,
           status_id: reqState?.id || newState.id,
           creator_id: user.id,
-          department_id: insertPayload.department_id // inherited from ticket/creator
+          department_id: creatorInfo?.department_id || finalDeptId,
+          custom_fields: {
+            source_ticket_id: ticket.id,
+            source_ticket_code: ticket.code,
+            requester_id: user.id,
+            requester_department_id: creatorInfo?.department_id,
+            scope: payload.scope_type,
+            requirement_reason: payload.custom_fields.business_reason,
+            requirement_details: payload.custom_fields.requirement_description,
+            approval_status: 'Pending',
+            tat_status: 'On Time',
+            current_stage: 'Requirement Registration',
+            requirement_status: 'Submitted'
+          }
         }).select().single();
 
         if (reqErr) {
           console.error("Requirement insertion failed:", reqErr);
         } else if (req) {
           // Link Ticket and Requirement
+          // Link Ticket and Requirement
           await supabaseAdmin.from('ticket_requirements').insert({
             ticket_id: ticket.id,
             requirement_id: req.id,
             linked_by: user.id
           });
+
+          // Update Ticket Status to "Converted To Requirement"
+          const { data: convertedState } = await supabaseAdmin
+            .from('status_master')
+            .select('id')
+            .eq('status_code', 'CONVERTED_TO_REQ')
+            .limit(1)
+            .single();
+
+          if (convertedState) {
+            await supabaseAdmin.from('tickets').update({ status_id: convertedState.id }).eq('id', ticket.id);
+          }
 
           // Notify SUPER_ADMIN queue
           await supabaseAdmin.from('notification_queue').insert({

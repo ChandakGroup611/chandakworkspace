@@ -52,7 +52,7 @@ export async function getVisibleUsers(userId: string) {
     for (const ur of rolesRes.data) {
       const role = ur.role as any;
       const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
-      if (roleCode === "SUPER_ADMIN") {
+      if (roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN") {
         isSuperAdmin = true;
         break;
       }

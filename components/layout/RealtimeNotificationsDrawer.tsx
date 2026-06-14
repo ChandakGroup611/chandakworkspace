@@ -25,6 +25,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { useProfile } from "@/hooks/usePermissions";
 import { useQuery } from "@tanstack/react-query";
+import { AppButton } from "@/components/ui/AppButton";
 
 export interface NotificationItem {
   id: string;
@@ -187,9 +188,11 @@ export default function RealtimeNotificationsDrawer() {
 
   return (
     <>
-      <button 
+      <AppButton 
+        variant="outline"
+        size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/5 text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-200 active:scale-95"
+        className="relative !h-10 !w-10 rounded-xl bg-surface border-border text-muted hover:bg-muted hover:text-foreground"
       >
         <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-blue-400 animate-bounce" : ""}`} />
         {unreadCount > 0 && (
@@ -197,7 +200,7 @@ export default function RealtimeNotificationsDrawer() {
             {unreadCount}
           </span>
         )}
-      </button>
+      </AppButton>
 
       {/* Mobile Toast Notification Overlay - Displays for 2 seconds on new mutations */}
       {mounted && createPortal(
@@ -230,17 +233,17 @@ export default function RealtimeNotificationsDrawer() {
                   <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider text-cyan-500">
                     {toast.entity_id}
                   </span>
-                  <button 
+                  <AppButton 
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       setToasts(prev => prev.filter(t => t.id !== toast.id));
                     }}
-                    className={`p-0.5 rounded-lg transition-colors ${
-                      isLightMode ? "text-gray-400 hover:text-gray-900 hover:bg-gray-100" : "text-gray-500 hover:text-white hover:bg-white/10"
-                    }`}
+                    className="!h-5 !w-5"
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </AppButton>
                 </div>
                 <h4 className="text-[0.8rem] font-bold uppercase tracking-wider leading-none">
                   {toast.action_type.toUpperCase().replace('_', ' ')}
@@ -283,41 +286,40 @@ export default function RealtimeNotificationsDrawer() {
           <div className="flex flex-col h-full space-y-4">
             <div className="flex items-center justify-between">
               <div className={`p-1.5 rounded-xl flex items-center gap-1 ${isLightMode ? "bg-gray-100" : "bg-white/5"}`}>
-                <button
+                <AppButton
+                  size="sm"
+                  variant={activeFilter === "UNREAD" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("UNREAD")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                    activeFilter === "UNREAD" ? "bg-cyan-500 text-white shadow" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
-                  }`}
+                  className={activeFilter !== "UNREAD" ? "text-muted-foreground" : ""}
                 >
                   Unread ({unreadCount})
-                </button>
-                <button
+                </AppButton>
+                <AppButton
+                  size="sm"
+                  variant={activeFilter === "CRITICAL" ? "destructive" : "ghost"}
                   onClick={() => setActiveFilter("CRITICAL")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                    activeFilter === "CRITICAL" ? "bg-rose-500/20 text-rose-500 border border-rose-500/30" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
-                  }`}
+                  className={activeFilter !== "CRITICAL" ? "text-muted-foreground" : ""}
                 >
                   Escalations ({criticalCount})
-                </button>
-                <button
+                </AppButton>
+                <AppButton
+                  size="sm"
+                  variant={activeFilter === "ALL" ? "secondary" : "ghost"}
                   onClick={() => setActiveFilter("ALL")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                    activeFilter === "ALL" ? isLightMode ? "bg-white shadow text-gray-800" : "bg-white/10 text-white" : isLightMode ? "text-gray-500 hover:text-gray-900" : "text-gray-400 hover:text-gray-200"
-                  }`}
+                  className={activeFilter !== "ALL" ? "text-muted-foreground" : ""}
                 >
                   All ({localNotifications.length})
-                </button>
+                </AppButton>
               </div>
               
               {unreadCount > 0 && (
-                <button
+                <AppButton
+                  variant="outline"
+                  size="sm"
                   onClick={markAllAsRead}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors ${
-                    isLightMode ? "bg-white border-gray-200 text-cyan-600 hover:bg-gray-50" : "bg-white/5 border-white/5 text-cyan-400 hover:bg-white/10"
-                  }`}
                 >
                   Clear Badges
-                </button>
+                </AppButton>
               )}
             </div>
 
@@ -364,9 +366,14 @@ export default function RealtimeNotificationsDrawer() {
                             <span className="text-gray-400">•</span>
                             <span className="text-cyan-600 dark:text-cyan-400/90">{item.module}</span>
                           </span>
-                          <button onClick={(e) => handleDismissNotification(e, item.id)} className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-rose-500">
-                            <Trash2 className="h-2.5 w-2.5" />
-                          </button>
+                          <AppButton 
+                            variant="ghost" 
+                            size="icon-sm"
+                            onClick={(e) => handleDismissNotification(e, item.id)} 
+                            className="opacity-0 group-hover:opacity-100 !h-6 !w-6 text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </AppButton>
                         </div>
                         <p className={`text-[0.8rem] leading-snug break-words ${!item.is_read ? (isLightMode ? "text-gray-900 font-medium" : "text-gray-100 font-medium") : "text-gray-500"}`}>
                           {displayMessage}

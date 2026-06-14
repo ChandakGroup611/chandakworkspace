@@ -193,26 +193,27 @@ export default function ReportsClient() {
   return (
     <div className="space-y-6">
       
-      {/* Entity Selection Tabs */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-4">
-        <button onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "WORKSPACE" ? (isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
-          <Briefcase className="h-4 w-4" /> Workspaces
-        </button>
-        <button onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? (isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
-          <Layers className="h-4 w-4" /> Sub-Workspaces
-        </button>
-        <button onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "TASK" ? (isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
-          <LayoutList className="h-4 w-4" /> Tasks
-        </button>
-        <button onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "SUB_TASK" ? (isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
-          <AlignLeft className="h-4 w-4" /> Sub-Tasks
-        </button>
-      </div>
+      {/* Top Row: Entity Selection & Scope Toggle */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-gray-200 dark:border-white/10 pb-4">
+        {/* Entity Selection Tabs */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "WORKSPACE" ? (isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+            <Briefcase className="h-4 w-4" /> Workspaces
+          </button>
+          <button onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? (isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+            <Layers className="h-4 w-4" /> Sub-Workspaces
+          </button>
+          <button onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "TASK" ? (isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+            <LayoutList className="h-4 w-4" /> Tasks
+          </button>
+          <button onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${entityType === "SUB_TASK" ? (isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+            <AlignLeft className="h-4 w-4" /> Sub-Tasks
+          </button>
+        </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Scope Toggle */}
-        <div className="flex items-center gap-2 p-1.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 overflow-x-auto">
-          {(["ALL", "CREATED_BY_ME", "ASSIGNED_TO_ME"] as ReportScope[]).map(sc => (
+        <div className="flex items-center gap-2 p-1.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 overflow-x-auto shrink-0">
+          {(["ALL", "CREATED_BY_ME", "ASSIGNED_TO_ME", "TASK_OWNER"] as ReportScope[]).map(sc => (
             <button
               key={sc}
               onClick={() => setScope(sc)}
@@ -226,8 +227,43 @@ export default function ReportsClient() {
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Exports & Actions */}
+      {/* Second Row: Date Filters, Export, Search, Refresh */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        
+        {/* Date Range & Clear Filters */}
+        <div className="flex items-center flex-wrap gap-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/[0.02] p-2 rounded-xl border border-gray-200 dark:border-white/5">
+            <span>Date Range:</span>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border ${isLightMode ? "border-gray-300 bg-white" : "border-white/10 bg-[#0f111a]"} focus:outline-none focus:ring-2 focus:ring-indigo-500`} />
+            <span>to</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border ${isLightMode ? "border-gray-300 bg-white" : "border-white/10 bg-[#0f111a]"} focus:outline-none focus:ring-2 focus:ring-indigo-500`} />
+            
+            {(selectedStatus || dateFrom || dateTo || query) && (
+              <button 
+                onClick={() => {
+                  setSelectedStatus("");
+                  setDateFrom("");
+                  setDateTo("");
+                  setQuery("");
+                }}
+                className="ml-2 px-2 py-1 text-[10px] uppercase font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          {(entityType === "TASK" || entityType === "SUB_TASK") && (
+            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl border ${isLightMode ? "border-gray-300 bg-gray-50 text-gray-700" : "border-white/5 bg-white/[0.02] text-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
+              <option value="">All Statuses</option>
+              {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+        </div>
+
+        {/* Exports, Search & Refresh */}
         <div className="flex items-center flex-wrap gap-3">
           <div className="flex items-center gap-2 border-r border-gray-200 dark:border-white/10 pr-3 mr-1">
             <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-500" />}>
@@ -244,37 +280,6 @@ export default function ReportsClient() {
               {loading ? "Loading..." : "Refresh"}
             </AppButton>
           </div>
-        </div>
-      </div>
-
-      {/* Advanced Filters */}
-      <div className="flex items-center flex-wrap gap-4 bg-gray-50 dark:bg-white/[0.02] p-4 rounded-xl border border-gray-200 dark:border-white/5">
-        {(entityType === "TASK" || entityType === "SUB_TASK") && (
-          <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2 rounded-lg border ${isLightMode ? "border-gray-300 bg-white text-gray-700" : "border-white/10 bg-[#0f111a] text-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
-            <option value="">All Statuses</option>
-            {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        )}
-        
-        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-          <span>Date Range:</span>
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border ${isLightMode ? "border-gray-300 bg-white" : "border-white/10 bg-[#0f111a]"} focus:outline-none focus:ring-2 focus:ring-indigo-500`} />
-          <span>to</span>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border ${isLightMode ? "border-gray-300 bg-white" : "border-white/10 bg-[#0f111a]"} focus:outline-none focus:ring-2 focus:ring-indigo-500`} />
-          
-          {(selectedStatus || dateFrom || dateTo || query) && (
-            <button 
-              onClick={() => {
-                setSelectedStatus("");
-                setDateFrom("");
-                setDateTo("");
-                setQuery("");
-              }}
-              className="ml-2 text-[10px] uppercase font-bold text-rose-500 hover:text-rose-600 underline"
-            >
-              Clear All
-            </button>
-          )}
         </div>
       </div>
 

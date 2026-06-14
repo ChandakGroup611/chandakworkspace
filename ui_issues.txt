@@ -1,0 +1,45 @@
+d:\adios\app\admin\performance\page.tsx uses raw <table> instead of <AppTable>
+d:\adios\app\admin\performance\page.tsx uses raw <button> instead of <AppButton>
+d:\adios\app\error.tsx uses raw <button> instead of <AppButton>
+d:\adios\app\learning\LearningHubClient.tsx uses raw <button> instead of <AppButton>
+d:\adios\app\masters\companies\page.tsx uses raw <table> instead of <AppTable>
+d:\adios\app\requirements\[id]\page.tsx uses raw <table> instead of <AppTable>
+d:\adios\app\requirements\[id]\page.tsx uses hardcoded card styles instead of <AppCard>
+d:\adios\app\requirements\[id]\page.tsx uses raw hardcoded modal backdrop instead of standard component
+d:\adios\components\collaboration\RealtimeChat.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\dashboard\DashboardCommandCenter.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\dashboard\panels\RecentTicketsTable.tsx uses raw <table> instead of <AppTable>
+d:\adios\components\dashboard\WorkloadAnalyzer.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\dashboards\WorkloadIntelligence.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\iam\IAMGovernanceCockpit.tsx uses raw <table> instead of <AppTable>
+d:\adios\components\layout\Navbar.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\layout\RealtimeNotificationsDrawer.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\layout\Sidebar.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\learning\ModuleRenderer.tsx uses raw <table> instead of <AppTable>
+d:\adios\components\notifications\NotificationCenter.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\requirements\EditRequirementModal.tsx uses raw hardcoded modal backdrop instead of standard component
+d:\adios\components\requirements\RequirementDetailDrawer.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\requirements\RequirementQueue.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\search\GlobalCommandCenter.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\settings\communication\DeliveryLogs.tsx uses raw <table> instead of <AppTable>
+d:\adios\components\settings\communication\DeliveryLogs.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\settings\communication\NotificationRuleBuilder.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\settings\communication\ProviderDashboard.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\settings\communication\TemplateDesigner.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\settings\IdentityProviderForm.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\settings\NotificationProviderForm.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\tasks\TaskDetailDrawer.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\theme\DashboardThemeSwitcher.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\tickets\TicketChat.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\tickets\TicketCreationWizard.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\tickets\TicketListSidebar.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\tickets\TicketScopeSelector.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\tickets\TicketWorkspaceConsole.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\ui\AppButton.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\ui\AppTable.tsx uses raw <table> instead of <AppTable>
+d:\adios\components\ui\enterprise\EnterpriseDrawerShell.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\ui\enterprise\EnterpriseModalShell.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\ui\enterprise\EnterpriseWizardShell.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\ui\EnterpriseUploader.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\workspaces\WorkspaceConsole.tsx uses raw <button> instead of <AppButton>
+d:\adios\components\workspaces\WorkspaceMasterTable.tsx uses raw <button> instead of <AppButton>

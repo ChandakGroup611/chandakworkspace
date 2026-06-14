@@ -1,6 +1,8 @@
 "use client";
 
 import React from 'react';
+import { AppButton } from "@/components/ui/AppButton";
+import { ArrowRight, Plus, Activity } from "lucide-react";
 
 export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
   return (
@@ -31,9 +33,9 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
               <span>Members:</span>
               <span className="text-gray-300 font-medium">{ws.members?.length || 0}</span>
             </div>
-            <button className="text-indigo-400 hover:text-indigo-300 font-medium">
-              Enter Workspace →
-            </button>
+            <AppButton variant="ghost" size="sm" className="h-auto p-0 text-indigo-400 hover:text-indigo-300 font-medium text-xs">
+              Enter Workspace <ArrowRight className="h-3 w-3 ml-1" />
+            </AppButton>
           </div>
         </div>
       ))}
@@ -51,12 +53,12 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
           <p className="text-sm text-gray-500 mt-1">Workspace operations and execution center</p>
         </div>
         <div className="flex gap-4">
-          <button className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors">
+          <AppButton variant="secondary" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors" leftIcon={<Activity className="h-4 w-4" />}>
             Check Availability
-          </button>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20">
-            + New Task
-          </button>
+          </AppButton>
+          <AppButton variant="primary" className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20" leftIcon={<Plus className="h-4 w-4" />}>
+            New Task
+          </AppButton>
         </div>
       </header>
       

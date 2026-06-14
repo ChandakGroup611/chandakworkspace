@@ -26,6 +26,8 @@ import { useRenderLog } from "@/hooks/use-render-log";
 import { onRenderCallback } from "@/utils/performance/profiler-utils";
 import { performanceGovernor, DegradationStage } from "@/utils/performance/PerformanceGovernanceEngine";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
+import { AppButton } from "@/components/ui/AppButton";
+import { Download, Plus } from "lucide-react";
 
 interface DashboardCommandCenterProps {
   metrics?: any[];
@@ -182,11 +184,12 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
               {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
 
-            <button className="tb-btn tb-export">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <AppButton variant="outline" size="sm" leftIcon={<Download className="h-3.5 w-3.5" />}>
               Export
-            </button>
-            <button className="tb-btn tb-primary">+ New Metric</button>
+            </AppButton>
+            <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>
+              New Metric
+            </AppButton>
             
             {refreshComponent && (
               <div className="ml-2 pl-2 border-l border-[var(--border)]">

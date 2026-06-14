@@ -77,10 +77,17 @@ export function usePresence(userIds: string[]): Map<string, PresenceInfo> {
 
     const fetchPresence = async () => {
       try {
+        const validUserIds = userIds.filter(id => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id));
+        
+        if (validUserIds.length === 0) {
+          if (!cancelled) setPresenceMap(new Map());
+          return;
+        }
+
         const { data, error } = await supabase
           .from("user_master")
           .select("id, last_active_at")
-          .in("id", userIds);
+          .in("id", validUserIds);
 
         if (error) {
           console.error("[usePresence] Failed to fetch presence:", error.message);

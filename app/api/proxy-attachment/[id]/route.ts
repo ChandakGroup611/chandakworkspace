@@ -13,7 +13,26 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       return new NextResponse('Attachment Not Found', { status: 404 });
     }
 
-    const fileResponse = await fetch(attachment.file_url);
+    let fetchUrl = attachment.file_url;
+    
+    if (fetchUrl.startsWith('storage:')) {
+      // Format: storage:bucketName:path
+      const parts = fetchUrl.replace('storage:', '').split(':');
+      const bucket = parts[0];
+      const path = parts.slice(1).join(':');
+      
+      const { data: signedUrl, error: storageError } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .createSignedUrl(path, 60);
+        
+      if (storageError || !signedUrl) {
+         return new NextResponse('Error generating secure URL', { status: 500 });
+      }
+      fetchUrl = signedUrl.signedUrl;
+    }
+
+    const fileResponse = await fetch(fetchUrl);
     if (!fileResponse.ok) {
       return new NextResponse('Error fetching file from storage', { status: fileResponse.status });
     }

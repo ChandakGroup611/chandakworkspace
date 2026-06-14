@@ -12,7 +12,7 @@ import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWiza
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
 
-export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, onClose: () => void, onSuccess: (data: any) => void }) {
+export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
@@ -53,7 +53,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
   const [checklistItems, setChecklistItems] = useState<string[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState("");
-  const [attachments, setAttachments] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<any[]>(initialAttachments || []);
   const [attachmentName, setAttachmentName] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentSizeKb, setAttachmentSizeKb] = useState("");

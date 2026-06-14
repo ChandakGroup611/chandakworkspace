@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useMemo } from "react";
-
 import { useRouter } from "next/navigation";
+import { AppCard } from "@/components/ui/AppCard";
+import { AppBadge } from "@/components/ui/AppBadge";
+import { CalendarClock, Calendar, AlertCircle, Flame } from "lucide-react";
 
 interface UpcomingDeadlinesProps {
   metrics?: any[];
@@ -23,32 +25,32 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
     const d2 = new Date(dueDate);
     const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
     
-    if (diff < 0) return <div className="deadline-when urgent">Overdue</div>;
-    if (diff === 0) return <div className="deadline-when urgent">Due Today</div>;
-    if (diff === 1) return <div className="deadline-when">Tomorrow</div>;
-    return <div className="deadline-when">In {diff} days</div>;
+    if (diff < 0) return <AppBadge variant="danger" className="text-[10px] uppercase font-bold py-0 h-5 border-rose-500/30 text-rose-500">Overdue</AppBadge>;
+    if (diff === 0) return <AppBadge variant="warning" className="text-[10px] uppercase font-bold py-0 h-5 border-amber-500/30 text-amber-500">Due Today</AppBadge>;
+    if (diff === 1) return <span className="text-xs font-medium text-muted-foreground">Tomorrow</span>;
+    return <span className="text-xs font-medium text-muted-foreground">In {diff} days</span>;
   };
 
-  const getIconColor = (dueDate: string) => {
+  const getIconData = (dueDate: string) => {
     const d1 = new Date();
     const d2 = new Date(dueDate);
     const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
-    if (diff < 0) return { color: 'var(--red)', icon: 'ti-flame' };
-    if (diff <= 2) return { color: 'var(--amber)', icon: 'ti-alert-circle' };
-    return { color: 'var(--text3)', icon: 'ti-calendar' };
+    if (diff < 0) return { icon: <Flame className="h-4 w-4 text-rose-500" /> };
+    if (diff <= 2) return { icon: <AlertCircle className="h-4 w-4 text-amber-500" /> };
+    return { icon: <Calendar className="h-4 w-4 text-muted-foreground" /> };
   };
 
   return (
-    <div className="panel">
-      <div className="panel-header">
-        <i className="ti ti-calendar-due" style={{ fontSize: '16px', color: 'var(--red)' }} aria-hidden="true"></i>
-        <span className="panel-title">Upcoming Deadlines</span>
+    <AppCard>
+      <div className="flex items-center gap-2 p-4 border-b border-border bg-surface">
+        <CalendarClock className="h-4 w-4 text-rose-500" />
+        <span className="text-sm font-bold text-foreground">Upcoming Deadlines</span>
       </div>
-      <div className="panel-body">
-        <div className="deadline-list">
+      <div className="p-4 bg-background">
+        <div className="space-y-3">
           {upcoming.map(m => {
             const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
-            const { color, icon } = getIconColor(m.dueDate);
+            const { icon } = getIconData(m.dueDate);
             
             const handleItemClick = () => {
               if (m.module === 'Tickets') router.push(`/tickets?ticket=${m.id}`);
@@ -58,21 +60,23 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
             };
 
             return (
-              <div key={m.id} className="deadline-item hover:bg-white/[0.05] transition-colors cursor-pointer" onClick={handleItemClick}>
-                <div className="deadline-icon" style={{ color }}><i className={`ti ${icon}`} aria-hidden="true"></i></div>
-                <div className="deadline-info">
-                  <div className="deadline-name">{m.module} Assignment ({m.priority})</div>
-                  <div className="deadline-proj">TF-{shortId} · Platform v3</div>
+              <div key={m.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-surface border border-transparent hover:border-border transition-colors cursor-pointer group" onClick={handleItemClick}>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-surface group-hover:bg-background transition-colors">{icon}</div>
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">{m.module} Assignment ({m.priority})</div>
+                    <div className="text-xs font-mono text-muted-foreground mt-0.5">TF-{shortId} · Platform v3</div>
+                  </div>
                 </div>
-                {renderDaysLeft(m.dueDate)}
+                <div>{renderDaysLeft(m.dueDate)}</div>
               </div>
             );
           })}
           {upcoming.length === 0 && (
-            <div style={{ fontSize: '12px', color: 'var(--text3)', textAlign: 'center', padding: '10px' }}>No upcoming deadlines.</div>
+            <div className="text-xs text-muted-foreground text-center py-2">No upcoming deadlines.</div>
           )}
         </div>
       </div>
-    </div>
+    </AppCard>
   );
 }

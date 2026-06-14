@@ -1,0 +1,142 @@
+"use client";
+
+import React, { useState } from "react";
+import { AppCard, AppCardContent } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
+import { CheckCircle, XCircle, PauseCircle, MessageSquareWarning, ArrowRight } from "lucide-react";
+import { useTheme } from "@/components/theme/ThemeProvider";
+
+interface ApprovalActionPanelProps {
+  flowId: string;
+  requirementId: string;
+  currentLevel: number;
+  departmentName: string;
+  onAction: (action: string, remarks: string) => Promise<void>;
+  isSuperAdmin?: boolean;
+}
+
+export default function ApprovalActionPanel({ 
+  flowId, 
+  requirementId, 
+  currentLevel, 
+  departmentName, 
+  onAction,
+  isSuperAdmin = false
+}: ApprovalActionPanelProps) {
+  const { theme } = useTheme();
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [remarks, setRemarks] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    if (!activeAction) return;
+    if (remarks.trim() === "") {
+      setError("Remarks are strictly mandatory for all workflow actions.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await onAction(activeAction, remarks);
+      setActiveAction(null);
+      setRemarks("");
+    } catch (err: any) {
+      setError(err.message || "Failed to process workflow action");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const actions = [
+    { id: "Approve", label: "Approve", icon: CheckCircle, color: isLightMode ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100" : "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" },
+    { id: "Reject", label: "Reject", icon: XCircle, color: isLightMode ? "text-red-600 bg-red-50 hover:bg-red-100" : "text-red-400 bg-red-500/10 hover:bg-red-500/20" },
+    { id: "Hold", label: "Hold", icon: PauseCircle, color: isLightMode ? "text-amber-600 bg-amber-50 hover:bg-amber-100" : "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20" },
+    { id: "Clarification", label: "Need Clarification", icon: MessageSquareWarning, color: isLightMode ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100" : "text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20" }
+  ];
+
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <AppCard className={`w-full overflow-hidden ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0d14] border-white/10"}`}>
+        <div className={`px-4 py-3 border-b flex items-center justify-between ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
+          <div className="flex items-center gap-3">
+            <div className={`p-1.5 rounded-full ${isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-400"}`}>
+              <ArrowRight className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Workflow Action Required</h4>
+              <p className={`text-[10px] uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+                Level {currentLevel} • {departmentName}
+                {isSuperAdmin && <span className="ml-2 text-indigo-500 font-bold">(Super Admin Override)</span>}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <AppCardContent className="p-4 space-y-4">
+          {error && (
+            <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs font-medium">
+              {error}
+            </div>
+          )}
+
+          {!activeAction ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {actions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <button
+                    key={action.id}
+                    onClick={() => { setActiveAction(action.id); setError(null); }}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${action.color} border-transparent`}
+                  >
+                    <Icon className="h-5 w-5 mb-1.5" />
+                    <span className="text-xs font-bold">{action.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-3 animate-in fade-in slide-in-from-right-2">
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+                  actions.find(a => a.id === activeAction)?.color.split(' ')[0]
+                }`}>
+                  {React.createElement(actions.find(a => a.id === activeAction)?.icon || ArrowRight, { className: "h-4 w-4" })}
+                  Action: {activeAction}
+                </span>
+                <button 
+                  onClick={() => setActiveAction(null)}
+                  className={`text-[10px] font-bold uppercase hover:underline ${isLightMode ? "text-gray-500" : "text-gray-400"}`}
+                >
+                  Change Action
+                </button>
+              </div>
+
+              <div>
+                <textarea
+                  className={`w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[80px] resize-none ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                  }`}
+                  placeholder="Enter mandatory justification or remarks..."
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <AppButton variant="primary" onClick={handleSubmit} disabled={loading} className="w-full sm:w-auto">
+                  {loading ? "Processing..." : "Confirm & Sign"}
+                </AppButton>
+              </div>
+            </div>
+          )}
+        </AppCardContent>
+      </AppCard>
+    </div>
+  );
+}

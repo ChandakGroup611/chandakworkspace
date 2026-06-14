@@ -25,6 +25,7 @@ import {
 import { useTheme } from "@/components/theme/ThemeProvider";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 import { useProfile } from "@/hooks/usePermissions";
+import { AppButton } from "@/components/ui/AppButton";
 
 // Configured Session Idle Constants
 const SESSION_TIMEOUT_SECONDS = 300; // 5 Minutes total idle budget
@@ -46,6 +47,7 @@ export default function Navbar() {
 
   // Time-out countdown counter state — uses timestamp-based calculation
   const lastActivityTimestampRef = useRef<number>(Date.now());
+  const lastActivityEventRef = useRef<number>(Date.now());
   const [secondsRemaining, setSecondsRemaining] = useState(SESSION_TIMEOUT_SECONDS);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
 
@@ -55,12 +57,15 @@ export default function Navbar() {
 
   // Activity listeners to reset Idle Clock
   const handleUserActivity = useCallback(() => {
-    if (!loggingOut) {
-      lastActivityTimestampRef.current = Date.now();
-      setSecondsRemaining(SESSION_TIMEOUT_SECONDS);
-      if (showTimeoutWarning) {
-        setShowTimeoutWarning(false);
-      }
+    if (loggingOut) return;
+    const now = Date.now();
+    if (now - lastActivityEventRef.current < 1000) return; // Throttle to 1 second
+    
+    lastActivityEventRef.current = now;
+    lastActivityTimestampRef.current = now;
+    
+    if (showTimeoutWarning) {
+      setShowTimeoutWarning(false);
     }
   }, [loggingOut, showTimeoutWarning]);
 
@@ -219,16 +224,14 @@ export default function Navbar() {
 
 
 
-          <button 
+          <AppButton 
+            variant="outline"
+            size="icon"
             onClick={toggleQuickTheme}
-            className={`relative flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${
-              isLight 
-                ? "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900" 
-                : "bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
-            }`}
+            className="!h-10 !w-10 rounded-xl bg-surface border-border text-muted hover:bg-muted hover:text-foreground"
           >
             {isLight ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-indigo-400" />}
-          </button>
+          </AppButton>
 
           <Link 
             href="/settings"
@@ -285,33 +288,27 @@ export default function Navbar() {
                       <strong className={isLight ? "text-gray-900" : "text-white"}>{formatTime(secondsRemaining)}</strong>
                     </div>
 
-                    <button 
+                    <AppButton 
+                      variant="ghost"
                       onClick={() => { handleUserActivity(); setProfileOpen(false); }}
-                      className={`w-full text-left px-2 py-2 rounded-lg text-xs transition-colors flex items-center gap-2 font-medium ${
-                        isLight ? "hover:bg-gray-100 text-gray-700" : "hover:bg-white/5 text-gray-300"
-                      }`}
+                      className="w-full justify-start rounded-lg text-xs font-medium px-2 py-2 !h-auto"
+                      leftIcon={<RefreshCw className="h-3.5 w-3.5 text-emerald-500" />}
                     >
-                      <RefreshCw className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Refresh Idle Keep-Alive</span>
-                    </button>
+                      Refresh Idle Keep-Alive
+                    </AppButton>
                   </div>
 
                   <div className={`pt-2 border-t ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
-                    <button 
+                    <AppButton 
+                      variant="destructive"
                       onClick={handleExecuteSignOut}
                       disabled={loggingOut}
-                      className={`w-full text-left px-2 py-2 rounded-lg text-xs transition-all flex items-center justify-between font-bold cursor-pointer group ${
-                        isLight 
-                          ? "bg-red-50 hover:bg-red-100 text-red-600 border border-red-100" 
-                          : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20"
-                      }`}
+                      className="w-full justify-between rounded-lg text-xs font-bold cursor-pointer group mt-2"
+                      leftIcon={<LogOut className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform" />}
                     >
-                      <span className="flex items-center gap-2">
-                        <LogOut className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform" />
-                        <span>{loggingOut ? "Terminating Auth..." : "Log Out Securely"}</span>
-                      </span>
+                      <span>{loggingOut ? "Terminating Auth..." : "Log Out Securely"}</span>
                       <span className={`text-[0.7rem] font-mono px-1.5 py-0.5 rounded ${isLight ? 'bg-red-100 text-red-700' : 'bg-rose-500/20 text-rose-400'}`}>FLUSH</span>
-                    </button>
+                    </AppButton>
                   </div>
                 </div>
               </>
@@ -347,19 +344,21 @@ export default function Navbar() {
             </div>
 
             <div className="flex gap-2.5 pt-2">
-              <button
+              <AppButton
+                variant="outline"
                 onClick={executeAutomatedTimeout}
-                className="flex-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gray-400 hover:text-white transition-colors"
+                className="flex-1"
               >
                 Log Out Now
-              </button>
+              </AppButton>
               
-              <button
+              <AppButton
+                variant="primary"
                 onClick={() => handleUserActivity()}
-                className="flex-1 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-bold text-white shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 border-none shadow-lg shadow-emerald-600/20 text-white"
               >
                 Keep Me Signed In
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>

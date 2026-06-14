@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { AppCard } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
+import { Activity, ArrowRight, CheckCircle2, AlertCircle, MessageSquare, Plus } from "lucide-react";
 
 interface ActivityFeedProps {
   metrics?: any[];
@@ -63,32 +66,38 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
   }, [metrics]);
 
   return (
-    <div className="panel">
-      <div className="panel-header">
-        <i className="ti ti-activity" style={{ fontSize: '16px', color: 'var(--green)' }} aria-hidden="true"></i>
-        <span className="panel-title">Recent Activity</span>
-        <span className="panel-action">All ↗</span>
+    <AppCard>
+      <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-emerald-500" />
+          <span className="text-sm font-bold text-foreground">Recent Activity</span>
+        </div>
+        <AppButton variant="ghost" size="sm" className="h-6 text-xs gap-1">All <ArrowRight className="h-3 w-3" /></AppButton>
       </div>
-      <div className="panel-body">
-        <div className="activity-list">
+      <div className="p-4 bg-background">
+        <div className="space-y-4">
           {activities.map((act, i) => {
-            const dotClass = `activity-dot ${act.type}`;
-            const icon = act.type === 'closed' ? 'ti-check' : act.type === 'blocked' ? 'ti-ban' : act.type === 'comment' ? 'ti-message' : 'ti-plus';
+            let iconElement;
+            if (act.type === 'closed') iconElement = <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+            else if (act.type === 'blocked') iconElement = <AlertCircle className="h-4 w-4 text-rose-500" />;
+            else if (act.type === 'comment') iconElement = <MessageSquare className="h-4 w-4 text-blue-500" />;
+            else iconElement = <Plus className="h-4 w-4 text-indigo-500" />;
+
             return (
-              <div key={act.id || i} className="activity-item">
-                <div className={dotClass}><i className={`ti ${icon}`} aria-hidden="true"></i></div>
+              <div key={act.id || i} className="flex gap-3">
+                <div className="mt-0.5">{iconElement}</div>
                 <div>
-                  <div className="activity-text"><strong>{act.user}</strong> {act.action} {act.target}</div>
-                  <div className="activity-time">{act.time}</div>
+                  <div className="text-xs text-foreground"><strong>{act.user}</strong> {act.action} <span className="font-mono text-muted-foreground">{act.target}</span></div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{act.time}</div>
                 </div>
               </div>
             );
           })}
           {activities.length === 0 && (
-            <div style={{ fontSize: '12px', color: 'var(--text3)', textAlign: 'center', padding: '10px' }}>No recent activity.</div>
+            <div className="text-xs text-muted-foreground text-center py-2">No recent activity.</div>
           )}
         </div>
       </div>
-    </div>
+    </AppCard>
   );
 }

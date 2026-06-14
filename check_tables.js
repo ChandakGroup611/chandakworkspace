@@ -1,16 +1,15 @@
-require('dotenv').config({path: '.env.local'});
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const { Client } = require('pg');
+const fs = require('fs');
+const env = fs.readFileSync('.env.local', 'utf-8');
+const dbUrl = env.match(/DATABASE_URL=(.*)/)[1].trim();
 
-async function check() {
-  const tables = ['requirements', 'requirement_tasks', 'requirement_approvals', 'requirement_versions'];
-  for (const table of tables) {
-    const { error } = await supabase.from(table).select('id').limit(1);
-    if (error && error.code === '42P01') {
-      console.log(`Table DOES NOT exist: ${table}`);
-    } else {
-      console.log(`Table EXISTS: ${table}`);
-    }
-  }
+const client = new Client({ connectionString: dbUrl });
+
+async function run() {
+  await client.connect();
+  const res = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'");
+  console.log(res.rows.map(r => r.table_name).filter(n => n.includes('workspace')));
+  await client.end();
 }
-check();
+
+run();

@@ -3,6 +3,7 @@
 import React from "react";
 import { Search, Filter, Clock, User, AlertCircle, Hash, Eye, Edit2, Trash2 } from "lucide-react";
 import { AppBadge } from "@/components/ui/AppBadge";
+import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface TicketListSidebarProps {
@@ -53,28 +54,32 @@ export function TicketListSidebar({
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <button 
+          <AppButton 
             onClick={() => onDeptChange("ALL")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+            variant={selectedDept === "ALL" ? "primary" : "ghost"}
+            size="sm"
+            className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
               selectedDept === "ALL" 
-                ? "bg-indigo-600 text-white" 
-                : (isLightMode ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-white/5 text-gray-400 hover:bg-white/10")
+                ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                : ""
             }`}
           >
             All Departments
-          </button>
+          </AppButton>
           {departments.map(dept => (
-            <button 
+            <AppButton 
               key={dept.id}
               onClick={() => onDeptChange(dept.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+              variant={selectedDept === dept.id ? "primary" : "ghost"}
+              size="sm"
+              className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
                 selectedDept === dept.id 
-                  ? "bg-indigo-600 text-white" 
-                  : (isLightMode ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-white/5 text-gray-400 hover:bg-white/10")
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                  : ""
               }`}
             >
               {dept.name}
-            </button>
+            </AppButton>
           ))}
         </div>
       </div>
@@ -148,15 +153,15 @@ export function TicketListSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button className="flex items-center justify-center p-1.5 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors" title="View" onClick={(e) => e.stopPropagation()}>
+                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20" title="View" onClick={(e) => e.stopPropagation()}>
                         <Eye className="h-3.5 w-3.5" />
-                      </button>
-                      <button className="flex items-center justify-center p-1.5 rounded bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-colors" title="Update" onClick={(e) => e.stopPropagation()}>
+                      </AppButton>
+                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" title="Update" onClick={(e) => e.stopPropagation()}>
                         <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button className="flex items-center justify-center p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors" title="Delete" onClick={(e) => e.stopPropagation()}>
+                      </AppButton>
+                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20" title="Delete" onClick={(e) => e.stopPropagation()}>
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </AppButton>
                     </div>
                   </div>
                 )}
