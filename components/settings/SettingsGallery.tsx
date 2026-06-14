@@ -309,7 +309,7 @@ export default function SettingsGallery() {
           <AppBadge variant="info">Global Accent Color</AppBadge>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           {accentsList.map((a) => {
             const isSelected = accentColor === a.id;
             return (
@@ -330,6 +330,35 @@ export default function SettingsGallery() {
               </div>
             );
           })}
+          
+          {/* Custom Color Picker Option */}
+          <div
+            className={`p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 ${
+              accentColor.startsWith("#") 
+                ? `ring-2 ring-blue-500 ${isLightMode ? "bg-white border-blue-500 shadow-md" : "bg-white/5 border-blue-500"}`
+                : `${isLightMode ? "bg-white/50 border-gray-200 hover:bg-white" : "bg-white/[0.01] border-white/5 hover:border-white/10"}`
+            }`}
+          >
+            <div 
+              className={`w-8 h-8 rounded-full flex items-center justify-center relative overflow-hidden ${
+                accentColor.startsWith("#") ? "ring-2 ring-offset-2 ring-offset-background ring-current" : ""
+              }`} 
+              style={{ backgroundColor: accentColor.startsWith("#") ? accentColor : (isLightMode ? "#e5e7eb" : "#374151") }}
+            >
+              <input
+                type="color"
+                value={accentColor.startsWith("#") ? accentColor : "#000000"}
+                onChange={(e) => {
+                  setAccentColor(e.target.value);
+                  triggerToast("Custom color applied");
+                }}
+                className="absolute inset-[-10px] w-12 h-12 cursor-pointer opacity-0"
+                title="Select Custom Color"
+              />
+              {!accentColor.startsWith("#") && <span className="absolute text-[14px] font-black mix-blend-difference text-white pointer-events-none">+</span>}
+            </div>
+            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-center">Custom</span>
+          </div>
         </div>
       </section>
 

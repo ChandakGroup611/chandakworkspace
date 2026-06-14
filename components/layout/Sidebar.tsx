@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Profiler } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { 
   LayoutDashboard, 
   Ticket, 
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { AppButton } from "@/components/ui/AppButton";
 import { useRenderLog } from "@/hooks/use-render-log";
 import { onRenderCallback } from "@/utils/performance/profiler-utils";
 
@@ -52,6 +53,15 @@ const navGroups: NavGroup[] = [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
       { label: "ITSM Tickets", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
       { 
+        label: "Requirements", 
+        href: "/requirements", 
+        icon: FileCheck2,
+        subItems: [
+          { label: "Requirements Master", href: "/requirements" },
+          { label: "Requirement Approvals", href: "/requirements/approvals" }
+        ]
+      },
+      { 
         label: "Workspaces", 
         href: "/workspaces", 
         icon: FolderKanban, 
@@ -66,7 +76,6 @@ const navGroups: NavGroup[] = [
   {
     label: "Governance & Analysis",
     items: [
-      { label: "Requirements", href: "/requirements", icon: FileCheck2 },
       { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert },
       { label: "User Master", href: "/users", icon: Users },
       { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
@@ -103,7 +112,8 @@ const navGroups: NavGroup[] = [
 
 export default function Sidebar() {
   useRenderLog("Sidebar", {});
-  const pathname = usePathname();
+  const pathname = usePathname() || "/";
+  const searchParams = useSearchParams();
   const [isCompactState, setIsCompactState] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   // Accordion state
@@ -177,18 +187,17 @@ export default function Sidebar() {
           </Link>
         )}
 
-        {/* Global Compact Minimize Handle Trigger */}
-        <button
+        <AppButton
+          variant="outline"
+          size="icon-sm"
           onClick={() => setIsCompactState(!isCompactState)}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`absolute -right-3 top-5 flex h-6 w-6 items-center justify-center rounded-full border shadow-md transition-all hover:scale-125 duration-300 z-50 ${
-            "bg-surface border-border text-muted hover:text-foreground hover:border-accent"
-          }`}
+          className="absolute -right-3 top-5 rounded-full shadow-md transition-all hover:scale-125 duration-300 z-50 bg-surface border-border text-muted hover:text-foreground hover:border-accent"
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
           {isCompactState ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-        </button>
+        </AppButton>
       </div>
 
       {/* Navigation Group Links */}
@@ -211,7 +220,10 @@ export default function Sidebar() {
               <div className="space-y-1">
                 {visibleItems.map((item) => {
                 const IconComponent = item.icon;
-                const isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                let isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                if (item.href === '/requirements' && searchParams?.get('from') === 'approvals') {
+                  isBaseActive = false;
+                }
                 const isTreeExpanded = !!expandedTrees[item.href];
                 
                 const dynamicBadge = item.badge;
@@ -223,34 +235,25 @@ export default function Sidebar() {
                         href={item.href}
                         className={`group relative flex-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200 ${
                           isBaseActive 
-                            ? (isLight ? "bg-blue-500/10 text-blue-700 font-semibold" : "bg-blue-500/10 text-blue-400 shadow-sm font-semibold") 
+                            ? "bg-accent/10 text-accent font-semibold shadow-sm" 
                             : (isLight ? "text-gray-600 hover:bg-gray-100 hover:text-gray-900" : "text-gray-400 hover:bg-white/10 hover:text-gray-200")
                         } ${isCompact ? "justify-center" : ""}`}
-                        style={{
-                          ...(isBaseActive ? {
-                            // Empty object, we use the overlay div for background opacity
-                          } : {})
-                        }}
                       >
-                        {/* We use an overlay div for the background color so text stays opaque */}
-                        {isBaseActive && (
-                           <div className="absolute inset-0 rounded-xl opacity-10" style={{ backgroundColor: "var(--accent-primary)" }} />
-                        )}
-                        {/* Text wrapper with z-10 so it's above the background overlay */}
+                        {/* Text wrapper with z-10 so it's above the background */}
                         <div className="relative z-10 flex items-center gap-3 w-full">
                         {isBaseActive && (
-                          <div className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6" style={{ backgroundColor: "var(--accent-primary)" }} />
+                          <div className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 bg-accent" />
                         )}
                         
                         {/* Responsive dynamically scaled icon */}
                         <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-110 ${
                           isCompact ? "h-3.5 w-3.5" : "h-4 w-4"
                         } ${
-                          isBaseActive ? "" : (isLight ? "text-gray-400 group-hover:text-gray-600" : "text-gray-400 group-hover:text-gray-300")
-                        }`} style={isBaseActive ? { color: "var(--accent-primary)" } : {}} />
+                          isBaseActive ? "text-accent drop-shadow-sm" : "text-accent/70 group-hover:text-accent"
+                        }`} />
                         
                         {!isCompact && (
-                          <span className="flex-1 truncate transition-colors duration-150" style={isBaseActive ? { color: "var(--accent-primary)" } : {}}>{item.label}</span>
+                          <span className="flex-1 truncate transition-colors duration-150 text-inherit">{item.label}</span>
                         )}
                         
                         {!isCompact && item.badge && (
@@ -263,19 +266,18 @@ export default function Sidebar() {
 
                       {/* Expand Tree Toggle chevron button right side */}
                       {!isCompact && item.subItems && (
-                        <button
-                          type="button"
+                        <AppButton
+                          variant="ghost"
+                          size="icon-sm"
                           onClick={(e) => toggleTree(item.href, e)}
-                          className={`absolute right-2 p-1 rounded-lg transition-colors ${
-                            isLight ? "hover:bg-gray-200/60 text-gray-400" : "hover:bg-white/10 text-gray-500"
-                          }`}
+                          className="absolute right-2 !h-6 !w-6"
                         >
                           {isTreeExpanded ? (
                             <ChevronDown className="h-3.5 w-3.5" />
                           ) : (
                             <ChevronRightIcon className="h-3.5 w-3.5" />
                           )}
-                        </button>
+                        </AppButton>
                       )}
 
                       {/* Premium Interactive Module Popover Tooltip with Open Action Indicator button when minimized */}
@@ -305,7 +307,12 @@ export default function Sidebar() {
                     {!isCompact && item.subItems && isTreeExpanded && (
                       <div className="pl-7 pr-1 py-1 space-y-1 relative border-l ml-5 transition-all animate-in fade-in-50 slide-in-from-top-1 duration-200 border-white/5">
                         {item.subItems.map((sub) => {
-                          const isSubActive = sub.scopeParam ? clientQuery.includes(sub.scopeParam) : pathname === sub.href;
+                          let isSubActive = pathname === sub.href;
+                          if (sub.href === '/requirements/approvals' && searchParams?.get('from') === 'approvals') {
+                            isSubActive = true;
+                          } else if (sub.href === '/requirements' && searchParams?.get('from') === 'approvals') {
+                            isSubActive = false;
+                          }
                           
                           return (
                             <Link

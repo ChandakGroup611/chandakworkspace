@@ -6,7 +6,7 @@ export type ThemeType = "executive-light" | "midnight-operations" | "material-oc
 export type DensityType = "comfortable" | "compact" | "dense";
 export type FontFamilyType = "inter" | "outfit" | "roboto";
 export type FontWeightProfileType = "heavy" | "standard" | "light";
-export type AccentColorType = "blue" | "emerald" | "rose" | "amber" | "purple" | "slate";
+export type AccentColorType = "blue" | "emerald" | "rose" | "amber" | "purple" | "slate" | string;
 
 interface ThemeContextType {
   theme: ThemeType;
@@ -68,7 +68,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (state.fontWeightProfile && ["heavy", "standard", "light"].includes(state.fontWeightProfile)) {
           setFontWeightProfileState(state.fontWeightProfile);
         }
-        if (state.accentColor && ["blue", "emerald", "rose", "amber", "purple", "slate"].includes(state.accentColor)) {
+        if (state.accentColor && (["blue", "emerald", "rose", "amber", "purple", "slate"].includes(state.accentColor) || state.accentColor.startsWith("#"))) {
           setAccentColorState(state.accentColor);
         }
         if (state.baseFontSize) {
@@ -186,6 +186,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else if (aColor === "slate") {
       document.documentElement.style.setProperty("--accent-primary", "#64748b");
       document.documentElement.style.setProperty("--accent-secondary", "#94a3b8");
+    } else if (aColor.startsWith("#")) {
+      document.documentElement.style.setProperty("--accent-primary", aColor);
+      document.documentElement.style.setProperty("--accent-secondary", aColor);
     }
   };
 
