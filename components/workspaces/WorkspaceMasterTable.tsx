@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronRight, ChevronDown, ExternalLink, Edit2, Share2, Trash2, MoreVertical, Folder, FolderTree, CheckSquare, CornerDownRight, CheckCircle2, CircleDashed, Paperclip } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { useRouter } from "next/navigation";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function WorkspaceMasterTable({ 
   hierarchy, 
@@ -44,6 +45,7 @@ export function WorkspaceMasterTable({
   autoCollapse?: boolean;
   forceExpandAll?: boolean;
 }) {
+  const { hasPermission, roleCode } = usePermissions();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const router = useRouter();
 
@@ -388,7 +390,7 @@ export function WorkspaceMasterTable({
           {/* Create Sub-Items */}
           <div className="py-1 px-2">
             <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-              {isWorkspaceType && onCreateSubWorkspace && (
+              {isWorkspaceType && onCreateSubWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE')) && (
                 <AppButton
                   variant="outline"
                   size="sm"
@@ -402,7 +404,7 @@ export function WorkspaceMasterTable({
                   + Sub WS
                 </AppButton>
               )}
-              {onCreateTask && (
+              {onCreateTask && (roleCode === 'SUPER_ADMIN' || hasPermission('TASKS_CREATE')) && (
                 <AppButton
                   variant="outline"
                   size="sm"
@@ -435,24 +437,26 @@ export function WorkspaceMasterTable({
               </AppButton>
             )}
             
-            <AppButton 
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isWorkspaceType) {
-                  onOpenWorkspace(node);
-                } else {
-                  router.push(`/tasks/${node.id}`);
-                }
-              }}
-              className={`h-7 w-7 p-0 ${isLightMode ? 'text-indigo-600 hover:bg-indigo-50' : 'text-indigo-400 hover:bg-indigo-500/20'}`}
-              title="Edit"
-            >
-              <Edit2 className="h-3.5 w-3.5" />
-            </AppButton>
+            {(roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? hasPermission('WORKSPACES_UPDATE') : hasPermission('TASKS_UPDATE'))) && (
+              <AppButton 
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isWorkspaceType) {
+                    onOpenWorkspace(node);
+                  } else {
+                    router.push(`/tasks/${node.id}`);
+                  }
+                }}
+                className={`h-7 w-7 p-0 ${isLightMode ? 'text-indigo-600 hover:bg-indigo-50' : 'text-indigo-400 hover:bg-indigo-500/20'}`}
+                title="Edit"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </AppButton>
+            )}
 
-            {onShareNode && isWorkspaceType && (
+            {onShareNode && isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE')) && (
               <AppButton 
                 variant="ghost"
                 size="sm"
@@ -464,7 +468,7 @@ export function WorkspaceMasterTable({
               </AppButton>
             )}
 
-            {onDeleteNode && (
+            {onDeleteNode && (roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? hasPermission('WORKSPACES_DELETE') : hasPermission('TASKS_DELETE'))) && (
               <AppButton 
                 variant="ghost"
                 size="sm"

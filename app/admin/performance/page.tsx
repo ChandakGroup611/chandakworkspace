@@ -6,8 +6,12 @@ import { websocketStore } from '@/utils/performance/websocket-tracker';
 import { hydrationStore } from '@/hooks/use-hydration-tracker';
 import { getPerformanceServerMetrics } from './actions';
 import { performanceGovernor, GovernanceMetrics, DegradationStage } from '@/utils/performance/PerformanceGovernanceEngine';
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function PerformanceCommandCenter() {
+  const { hasPermission, roleCode } = usePermissions();
+  const canView = roleCode === "SUPER_ADMIN" || hasPermission("SUPER_ADMIN");
+
   const [metrics, setMetrics] = useState<QueryMetrics[]>([]);
   const [violations, setViolations] = useState<any[]>([]);
   const [activeChannels, setActiveChannels] = useState(0);
@@ -34,6 +38,8 @@ export default function PerformanceCommandCenter() {
   };
 
   useEffect(() => {
+    if (!canView) return; // Prevent polling if not authorized
+    
     // Production Safe Mode: Reduced polling interval to 10s to minimize server action overhead.
     // (Was 2s = 30 calls/min per admin user. Now 6 calls/min.)
     const interval = setInterval(async () => {
@@ -52,7 +58,19 @@ export default function PerformanceCommandCenter() {
       setGovMetrics(performanceGovernor.getMetrics());
     }, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [canView]);
+
+  if (!canView) {
+    return (
+      <div className="flex h-[80vh] w-full items-center justify-center">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
+          <p className="text-gray-500">Super Admin privileges are required to view the Performance Command Center.</p>
+        </div>
+      </div>
+    );
+  }
+
 
   const totalQueries = metrics.length;
   const duplicateQueries = metrics.filter((m) => m.isDuplicate).length;

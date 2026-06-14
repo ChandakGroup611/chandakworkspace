@@ -28,6 +28,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SLATracker {
   id: string;
@@ -42,6 +43,9 @@ interface SLATracker {
 }
 
 export default function SLAPage() {
+  const { hasPermission, roleCode } = usePermissions();
+  const canView = roleCode === "SUPER_ADMIN" || hasPermission("SLA_VIEW");
+
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
   
@@ -224,12 +228,16 @@ export default function SLAPage() {
                               <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-500 hover:bg-blue-500/10" title="View SLA Tracker">
                                 <Eye className="h-3.5 w-3.5" />
                               </AppButton>
-                              <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-500 hover:bg-amber-500/10" title="Update Thresholds">
-                                <Edit2 className="h-3.5 w-3.5" />
-                              </AppButton>
-                              <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-red-500 hover:bg-red-500/10" title="Delete / Override Alert">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </AppButton>
+                              {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
+                                <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-500 hover:bg-amber-500/10" title="Update Thresholds">
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
+                              {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_DELETE")) && (
+                                <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-red-500 hover:bg-red-500/10" title="Delete / Override Alert">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
                             </div>
                           </div>
                         </AppTableCell>

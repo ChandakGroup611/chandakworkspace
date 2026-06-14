@@ -467,8 +467,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   
-  // Owners and Executors can edit core properties
-  const canEditCore = (isOwner || isExecutor) && !isEffectivelyFrozen;
+  // Owners and Executors can edit core properties, provided they have TASKS_UPDATE permission
+  const canEditCore = (isOwner || isExecutor) && !isEffectivelyFrozen && hasPermission("TASKS_UPDATE");
   const canEditAux = canEditCore;
   const canDeleteTask = isOwner && canDelete;
   

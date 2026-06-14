@@ -5,12 +5,15 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Plus, X, Trash2, LayoutTemplate } from "lucide-react";
 import { fetchTaskTemplates, createTaskTemplate, deleteTaskTemplate } from "@/lib/actions/workspaces";
 
 export default function TemplateManager({ workspaceId, onClose }: { workspaceId: string, onClose: () => void }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const { hasPermission, roleCode } = usePermissions();
+  const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
 
   const [templates, setTemplates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,9 +135,11 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                     <h4 className="font-bold text-sm">{t.template_name}</h4>
                     <p className="text-xs text-gray-500 truncate max-w-md mt-0.5">{t.subject}</p>
                   </div>
-                  <button onClick={() => handleDelete(t.id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {canDelete && (
+                    <button onClick={() => handleDelete(t.id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               ))
             )}

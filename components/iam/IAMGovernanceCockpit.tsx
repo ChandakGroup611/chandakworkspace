@@ -524,31 +524,31 @@ export default function IAMGovernanceCockpit({
               })}
             </div>
 
-            <div className={cn("p-6 border-t", isLight ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-black/20")}>
-              <form onSubmit={handleCreateRole} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Add Custom Role</span>
-                  <Settings className="h-3 w-3 text-gray-600" />
-                </div>
-                <div className="flex gap-2">
-                  <AppInput 
-                    placeholder={hasPermission("IAM_MANAGE") ? "New role name..." : "No permissions to add roles"}
-                    value={newRoleName}
-                    onChange={(e) => setNewRoleName(e.target.value)}
-                    disabled={!hasPermission("IAM_MANAGE")}
-                    className={cn("h-10 text-xs disabled:opacity-50", isLight ? "bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:bg-white" : "bg-black/40 border-white/5 focus:border-indigo-500/50 text-white")}
-                  />
-                  <AppButton 
-                    variant="secondary" 
-                    type="submit" 
-                    disabled={!hasPermission("IAM_MANAGE")}
-                    className="h-10 px-4 bg-indigo-500 hover:bg-indigo-400 text-white border-none shadow-lg shadow-indigo-500/20 disabled:opacity-50"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </AppButton>
-                </div>
-              </form>
-            </div>
+            {hasPermission("IAM_CREATE") && (
+              <div className={cn("p-6 border-t", isLight ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-black/20")}>
+                <form onSubmit={handleCreateRole} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Add Custom Role</span>
+                    <Settings className="h-3 w-3 text-gray-600" />
+                  </div>
+                  <div className="flex gap-2">
+                    <AppInput 
+                      placeholder="New role name..."
+                      value={newRoleName}
+                      onChange={(e) => setNewRoleName(e.target.value)}
+                      className={cn("h-10 text-xs", isLight ? "bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:bg-white" : "bg-black/40 border-white/5 focus:border-indigo-500/50 text-white")}
+                    />
+                    <AppButton 
+                      variant="secondary" 
+                      type="submit" 
+                      className="h-10 px-4 bg-indigo-500 hover:bg-indigo-400 text-white border-none shadow-lg shadow-indigo-500/20"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </AppButton>
+                  </div>
+                </form>
+              </div>
+            )}
           </AppCard>
         </div>
 
@@ -590,35 +590,35 @@ export default function IAMGovernanceCockpit({
                       </div>
                     </div>
 
-                    {/* Role Administration Action Row */}
                     <div className="flex items-center gap-2">
-                      <AppButton
-                        onClick={() => handleToggleStatus(activeRole)}
-                        disabled={!hasPermission("IAM_MANAGE")}
-                        className={cn("h-9 px-3 text-xs font-semibold gap-1.5 transition-all border disabled:opacity-50 disabled:cursor-not-allowed",
-                          activeRole.is_active
-                            ? "bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 border-rose-500/20"
-                            : "bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                        )}
-                      >
-                        <Power className="h-3.5 w-3.5" />
-                        {activeRole.is_active ? "Disable Role" : "Enable Role"}
-                      </AppButton>
+                      {hasPermission("IAM_UPDATE") && (
+                        <AppButton
+                          onClick={() => handleToggleStatus(activeRole)}
+                          className={cn("h-9 px-3 text-xs font-semibold gap-1.5 transition-all border",
+                            activeRole.is_active
+                              ? "bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 border-rose-500/20"
+                              : "bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                          )}
+                        >
+                          <Power className="h-3.5 w-3.5" />
+                          {activeRole.is_active ? "Disable Role" : "Enable Role"}
+                        </AppButton>
+                      )}
                       
-                      <AppButton
-                        onClick={() => handleCloneRole(activeRole)}
-                        disabled={!hasPermission("IAM_MANAGE")}
-                        className="h-9 px-3 text-xs font-semibold gap-1.5 bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 border border-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                        Clone Role
-                      </AppButton>
+                      {hasPermission("IAM_CREATE") && (
+                        <AppButton
+                          onClick={() => handleCloneRole(activeRole)}
+                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 border border-indigo-500/20"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          Clone Role
+                        </AppButton>
+                      )}
 
-                      {!activeRole.is_system && (
+                      {!activeRole.is_system && hasPermission("IAM_DELETE") && (
                         <AppButton
                           onClick={() => handleDeleteRole(activeRole)}
-                          disabled={!hasPermission("IAM_MANAGE")}
-                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Delete
@@ -735,7 +735,7 @@ export default function IAMGovernanceCockpit({
                                         <div className="flex justify-center">
                                           <button
                                             type="button"
-                                            disabled={isSuperAdmin || !hasPermission("IAM_MANAGE")}
+                                            disabled={isSuperAdmin || !hasPermission("IAM_UPDATE")}
                                             onClick={() => handleTogglePermissionByCode(m.code, act)}
                                             className={cn(
                                               "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
@@ -744,7 +744,7 @@ export default function IAMGovernanceCockpit({
                                                 : isLight
                                                   ? "border-gray-300 bg-white hover:border-indigo-400"
                                                   : "border-white/10 bg-black/40 hover:border-indigo-500/50",
-                                              isSuperAdmin || !hasPermission("IAM_MANAGE") ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                                              isSuperAdmin || !hasPermission("IAM_UPDATE") ? "cursor-not-allowed opacity-80" : "cursor-pointer"
                                             )}
                                           >
                                             {checked && <Check className="h-3.5 w-3.5 stroke-[3] animate-in zoom-in-50 duration-200" />}

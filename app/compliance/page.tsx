@@ -27,11 +27,23 @@ import {
   Compass,
   Archive
 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import DataRetentionClient from "./DataRetentionClient";
 
 export default function CompliancePage() {
+  const { hasPermission, roleCode, loading } = usePermissions();
   const [activeMainTab, setActiveMainTab] = useState<"accessibility" | "retention">("accessibility");
   const [isSimulatingLoad, setIsSimulatingLoad] = useState(false);
+
+  if (loading) return <div>Loading...</div>;
+  if (roleCode !== "SUPER_ADMIN" && !hasPermission("COMPLIANCE_VIEW")) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center space-y-4">
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-xs text-gray-500">You do not have capabilities to view Compliance Hub.</p>
+      </div>
+    );
+  }
 
   const triggerSimulatedLoad = () => {
     setIsSimulatingLoad(true);

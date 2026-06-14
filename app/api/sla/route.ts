@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { hasPermission } from "@/lib/permissions";
 
 export async function GET(request: Request) {
   try {
@@ -10,6 +11,11 @@ export async function GET(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    const canView = await hasPermission(user.id, "SLA_VIEW");
+    if (!canView) {
+      return NextResponse.json({ error: "Forbidden: SLA View access required" }, { status: 403 });
     }
 
     // 1. Fetch Tasks for User

@@ -1,12 +1,23 @@
-import { Metadata } from "next";
-import ReportsClient from "@/components/reports/ReportsClient";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Reports & Analytics | Chandak Workspace",
-  description: "Comprehensive reporting and analytics for execution tracking.",
-};
+import ReportsClient from "@/components/reports/ReportsClient";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function ReportsPage() {
+  const { hasPermission, roleCode } = usePermissions();
+  const canView = roleCode === "SUPER_ADMIN" || hasPermission("REPORTS_VIEW");
+
+  if (!canView) {
+    return (
+      <div className="flex h-[80vh] w-full items-center justify-center">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
+          <p className="text-gray-500">You do not have permission to view workspace reports.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
       <header className="border-b border-white/5 pb-4">

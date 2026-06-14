@@ -84,7 +84,7 @@ export function TicketWorkspaceConsole({
   // Allow any user with access to the console to edit fields (TICKETS_UPDATE checked by server)
   const isAssignee = currentUserId === ticket?.assignee_id;
   const isSuperAdmin = roleCode === "SUPER_ADMIN";
-  const canEditFields = true; // Relaxed restriction: Allow all members to edit
+  const canEditFields = isSuperAdmin || hasPermission("TICKETS_UPDATE");
   const canAddRemarks = true; // Everyone who can view the ticket can add a remark
 
   useEffect(() => {

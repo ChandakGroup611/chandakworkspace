@@ -23,6 +23,8 @@ type ViewType = "active" | "deleted";
 export default function DataRetentionClient() {
   const { roleCode, hasPermission } = usePermissions();
   const isSuperAdmin = roleCode === "SUPER_ADMIN" || hasPermission("SUPER_ADMIN");
+  const canRestore = isSuperAdmin || hasPermission("COMPLIANCE_UPDATE");
+  const canPurge = isSuperAdmin || hasPermission("COMPLIANCE_DELETE");
 
   const [activeTab, setActiveTab] = useState<TabType>("workspaces");
   const [activeView, setActiveView] = useState<ViewType>("active");
@@ -110,12 +112,16 @@ export default function DataRetentionClient() {
         <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
           <span className="text-sm font-bold text-gray-300">{selectedIds.size} workspace(s) selected</span>
           <div className="flex gap-2">
-            <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
-              Restore Selected
-            </AppButton>
-            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
-              Purge Selected
-            </AppButton>
+            {canRestore && (
+              <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
+                Restore Selected
+              </AppButton>
+            )}
+            {canPurge && (
+              <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
+                Purge Selected
+              </AppButton>
+            )}
           </div>
         </div>
       )}
@@ -148,12 +154,16 @@ export default function DataRetentionClient() {
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
                   <div className="flex justify-end gap-2">
-                    <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [ws.id])} disabled={isProcessing}>
-                      Restore
-                    </AppButton>
-                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [ws.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
-                      Purge
-                    </AppButton>
+                    {canRestore && (
+                      <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [ws.id])} disabled={isProcessing}>
+                        Restore
+                      </AppButton>
+                    )}
+                    {canPurge && (
+                      <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [ws.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                        Purge
+                      </AppButton>
+                    )}
                   </div>
                 ) : (
                   <AppBadge variant="success">Active Record</AppBadge>
@@ -180,12 +190,16 @@ export default function DataRetentionClient() {
         <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
           <span className="text-sm font-bold text-gray-300">{selectedIds.size} task(s) selected</span>
           <div className="flex gap-2">
-            <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
-              Restore Selected
-            </AppButton>
-            <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
-              Purge Selected
-            </AppButton>
+            {canRestore && (
+              <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
+                Restore Selected
+              </AppButton>
+            )}
+            {canPurge && (
+              <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
+                Purge Selected
+              </AppButton>
+            )}
           </div>
         </div>
       )}
@@ -218,12 +232,16 @@ export default function DataRetentionClient() {
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
                   <div className="flex justify-end gap-2">
-                    <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [task.id])} disabled={isProcessing}>
-                      Restore
-                    </AppButton>
-                    <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [task.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
-                      Purge
-                    </AppButton>
+                    {canRestore && (
+                      <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [task.id])} disabled={isProcessing}>
+                        Restore
+                      </AppButton>
+                    )}
+                    {canPurge && (
+                      <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [task.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                        Purge
+                      </AppButton>
+                    )}
                   </div>
                 ) : (
                   <AppBadge variant="success">Active Record</AppBadge>

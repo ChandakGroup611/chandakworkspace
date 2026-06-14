@@ -20,6 +20,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { generateWorkspaceReportData, ReportEntityType, ReportScope } from "@/lib/actions/workspace_reports";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return "—";
@@ -37,6 +38,8 @@ const formatDate = (dateString: string | null | undefined): string => {
 export default function ReportsClient() {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const { hasPermission, roleCode } = usePermissions();
+  const canExport = roleCode === "SUPER_ADMIN" || hasPermission("REPORTS_EXPORT");
 
   const [entityType, setEntityType] = useState<ReportEntityType>("WORKSPACE");
   const [scope, setScope] = useState<ReportScope>("CREATED_BY_ME");
@@ -265,14 +268,16 @@ export default function ReportsClient() {
 
         {/* Exports, Search & Refresh */}
         <div className="flex items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2 border-r border-gray-200 dark:border-white/10 pr-3 mr-1">
-            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-500" />}>
-              Export Excel
-            </AppButton>
-            <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-rose-500" />}>
-              Export PDF
-            </AppButton>
-          </div>
+          {canExport && (
+            <div className="flex items-center gap-2 border-r border-gray-200 dark:border-white/10 pr-3 mr-1">
+              <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-500" />}>
+                Export Excel
+              </AppButton>
+              <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-rose-500" />}>
+                Export PDF
+              </AppButton>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <AppInput placeholder="Search records..." value={query} onChange={(e:any) => setQuery(e.target.value)} className="w-64 text-sm" />

@@ -2,11 +2,24 @@
 
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { revalidatePath } from 'next/cache';
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { hasPermission } from "@/lib/permissions";
+
+async function verifySuperAdmin() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+  const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
+  if (!isSuperAdmin) throw new Error("Forbidden: Super Admin access required");
+}
 
 /**
  * Fetches workspaces, optionally filtering by soft-deleted status.
  */
 export async function fetchComplianceWorkspaces(isDeleted: boolean = false) {
+  await verifySuperAdmin();
   const { data, error } = await supabaseAdmin
     .from('workspaces')
     .select('id, workspace_name, workspace_code, is_deleted, created_at, updated_at')
@@ -24,6 +37,7 @@ export async function fetchComplianceWorkspaces(isDeleted: boolean = false) {
  * Fetches tasks, optionally filtering by soft-deleted status.
  */
 export async function fetchComplianceTasks(isDeleted: boolean = false) {
+  await verifySuperAdmin();
   const { data, error } = await supabaseAdmin
     .from('tasks')
     .select('id, subject, description, is_deleted, created_at, updated_at, workspace_id')
@@ -42,6 +56,7 @@ export async function fetchComplianceTasks(isDeleted: boolean = false) {
  * This completely destroys the rows.
  */
 export async function hardDeleteEntity(entityType: 'workspaces' | 'tasks', ids: string[]) {
+  await verifySuperAdmin();
   if (!ids || ids.length === 0) return { success: true };
 
   const { error } = await supabaseAdmin
@@ -66,6 +81,7 @@ export async function hardDeleteEntity(entityType: 'workspaces' | 'tasks', ids: 
  * RESTORES soft-deleted records back to active status.
  */
 export async function restoreEntity(entityType: 'workspaces' | 'tasks', ids: string[]) {
+  await verifySuperAdmin();
   if (!ids || ids.length === 0) return { success: true };
 
   const { error } = await supabaseAdmin

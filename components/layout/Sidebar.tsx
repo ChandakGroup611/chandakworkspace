@@ -38,6 +38,7 @@ interface NavItem {
     label: string;
     href: string;
     scopeParam?: string;
+    permission?: string;
   }[];
 }
 
@@ -56,6 +57,7 @@ const navGroups: NavGroup[] = [
         label: "Requirements", 
         href: "/requirements", 
         icon: FileCheck2,
+        permission: "REQUIREMENTS_VIEW",
         subItems: [
           { label: "Requirements Master", href: "/requirements" },
           { label: "Requirement Approvals", href: "/requirements/approvals" }
@@ -68,7 +70,7 @@ const navGroups: NavGroup[] = [
         permission: "WORKSPACES_VIEW",
         subItems: [
           { label: "Workspace Master", href: "/workspaces" },
-          { label: "Reports & Analytics", href: "/workspaces/reports" }
+          { label: "Reports & Analytics", href: "/workspaces/reports", permission: "REPORTS_VIEW" }
         ]
       },
     ]
@@ -76,10 +78,10 @@ const navGroups: NavGroup[] = [
   {
     label: "Governance & Analysis",
     items: [
-      { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert },
-      { label: "User Master", href: "/users", icon: Users },
+      { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert, permission: "SLA_VIEW" },
+      { label: "User Master", href: "/users", icon: Users, permission: "USERS_VIEW" },
       { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
-      { label: "Learning Hub", href: "/learning", icon: BookOpen },
+      { label: "Learning Hub", href: "/learning", icon: BookOpen, permission: "LEARNING_VIEW" },
     ]
   },
   {
@@ -89,16 +91,18 @@ const navGroups: NavGroup[] = [
         label: "Master Entities", 
         href: "/masters", 
         icon: Database,
+        permission: "MASTERS_VIEW",
         subItems: [
           { label: "Company Master", href: "/masters/companies" },
           { label: "System Master", href: "/masters" }
         ]
       },
-      { label: "Compliance Hub", href: "/compliance", icon: Settings },
+      { label: "Compliance Hub", href: "/compliance", icon: Settings, permission: "COMPLIANCE_VIEW" },
       { 
         label: "Settings", 
         href: "/settings", 
         icon: Settings,
+        permission: "SETTINGS_MANAGE",
         subItems: [
           { label: "Design Gallery", href: "/settings" },
           { label: "Identity & Access", href: "/settings/identity" },
@@ -307,6 +311,8 @@ export default function Sidebar() {
                     {!isCompact && item.subItems && isTreeExpanded && (
                       <div className="pl-7 pr-1 py-1 space-y-1 relative border-l ml-5 transition-all animate-in fade-in-50 slide-in-from-top-1 duration-200 border-white/5">
                         {item.subItems.map((sub) => {
+                          if (sub.permission && roleCode !== "SUPER_ADMIN" && !hasPermission(sub.permission)) return null;
+                          
                           let isSubActive = pathname === sub.href;
                           if (sub.href === '/requirements/approvals' && searchParams?.get('from') === 'approvals') {
                             isSubActive = true;

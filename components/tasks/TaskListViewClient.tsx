@@ -75,7 +75,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [bulkNewStatus, setBulkNewStatus] = useState<string>("");
   const [bulkRemark, setBulkRemark] = useState<string>("");
   const { hasPermission, roleCode } = usePermissions();
-  const canDelete = hasPermission("TASKS_DELETE");
+  const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
+  const canUpdate = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_UPDATE");
 
   useEffect(() => {
     getTaskStatuses().then(setMasterStatuses).catch(console.error);
@@ -570,11 +571,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   <AppTableCell className="text-gray-600 text-xs whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
                   <AppTableCell className="whitespace-nowrap">
                     <button 
-                      onClick={(e) => handleStatusClick(e, task)} 
-                      className="hover:opacity-80 transition-opacity focus:outline-none" 
-                      title="Update Status"
+                      onClick={(e) => canUpdate && handleStatusClick(e, task)} 
+                      className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
+                      title={canUpdate ? "Update Status" : "Status"}
                     >
-                      <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className="cursor-pointer border-dashed">
+                      <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""}>
                         {task.status?.name || '—'}
                       </AppBadge>
                     </button>
@@ -613,13 +614,15 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       >
                         <Eye className="h-4 w-4" />
                       </Link>
-                      <Link 
-                        href={`/tasks/${task.id}`}
-                        className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                        title="Edit Task"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Link>
+                      {canUpdate && (
+                        <Link 
+                          href={`/tasks/${task.id}`}
+                          className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                          title="Edit Task"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Link>
+                      )}
                       {canDelete && (
                         <button 
                           onClick={(e) => handleDeleteTask(e, task.id)}
@@ -724,7 +727,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </div>
           <div className="h-6 w-px bg-gray-300 dark:bg-white/20"></div>
           <div className="flex items-center gap-2">
-            <AppButton variant="outline" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update Status</AppButton>
+            {canUpdate && (
+              <AppButton variant="outline" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update Status</AppButton>
+            )}
             {canDelete && (
               <AppButton variant="outline" size="sm" onClick={handleBulkDelete} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10">Delete Tasks</AppButton>
             )}

@@ -1,13 +1,24 @@
-import React from "react";
-import { Metadata } from "next";
-import SettingsGallery from "@/components/settings/SettingsGallery";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Design Gallery & Governance | Enterprise Operations",
-  description: "Configure premium executive themes, bento grid layout density, and tactile interaction feedback layers.",
-};
+import React from "react";
+import SettingsGallery from "@/components/settings/SettingsGallery";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SettingsPage() {
+  const { hasPermission, roleCode } = usePermissions();
+  const canManage = roleCode === "SUPER_ADMIN" || hasPermission("SETTINGS_MANAGE");
+
+  if (!canManage) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
+          <p className="text-gray-500">You do not have permission to manage settings.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
       {/* Semantic main header wrapper ensuring heading hierarchy */}

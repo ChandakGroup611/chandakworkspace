@@ -56,13 +56,29 @@ interface UnifiedAuthData {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // 1. Listen for Auth State Changes (Login, Logout, Token Refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
         queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
       }
     });
+
+    // 2. Real-Time IAM Network Invalidation
+    // Listen for any capability modifications in IAM Governance Cockpit and instantly update all connected sessions globally
+    const channel = supabase.channel('iam_global_permissions_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'role_permissions' }, () => {
+        console.log("[IAM] Role permissions modified globally. Instantly invalidating cache.");
+        queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'roles' }, () => {
+        console.log("[IAM] Role metadata modified globally. Instantly invalidating cache.");
+        queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
+      })
+      .subscribe();
+
     return () => {
       subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [queryClient]);
 
