@@ -198,10 +198,13 @@ export async function syncRolePermissions(roleId: string, permissionIds: string[
     throw new Error("Failed to reset role permissions.");
   }
   
-  if (permissionIds.length === 0) return;
+  // Deduplicate and filter valid IDs
+  const validPermissionIds = Array.from(new Set(permissionIds.filter(Boolean)));
+  
+  if (validPermissionIds.length === 0) return;
 
   // 2. Insert new mappings
-  const mappings = permissionIds.map(pid => ({
+  const mappings = validPermissionIds.map(pid => ({
     role_id: roleId,
     permission_id: pid
   }));

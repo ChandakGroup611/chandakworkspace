@@ -147,7 +147,7 @@ export default function IAMGovernanceCockpit({
   const uniqueModules = useMemo(() => {
     const mods = new Set<string>();
     permissionsList.forEach((p: any) => {
-      if (p.module) mods.add(p.module);
+      if (p.module) mods.add(p.module.toUpperCase());
     });
     return ["ALL", ...Array.from(mods)].sort();
   }, [permissionsList]);
@@ -159,12 +159,13 @@ export default function IAMGovernanceCockpit({
     };
     
     permissionsList.forEach((p: any) => {
-      if (!stats[p.module]) {
-        stats[p.module] = { active: 0, total: 0 };
+      const mod = p.module ? p.module.toUpperCase() : "GENERAL";
+      if (!stats[mod]) {
+        stats[mod] = { active: 0, total: 0 };
       }
-      stats[p.module].total += 1;
+      stats[mod].total += 1;
       if (activeRolePerms.includes(p.id)) {
-        stats[p.module].active += 1;
+        stats[mod].active += 1;
       }
     });
     
@@ -174,7 +175,8 @@ export default function IAMGovernanceCockpit({
   // Filtering Permissions list based on module tab and search term
   const filteredPermissions = useMemo(() => {
     return permissionsList.filter((p: any) => {
-      const matchesModule = selectedModule === "ALL" || p.module === selectedModule;
+      const mod = p.module ? p.module.toUpperCase() : "GENERAL";
+      const matchesModule = selectedModule === "ALL" || mod === selectedModule.toUpperCase();
       const matchesSearch = p.name.toLowerCase().includes(permSearchQuery.toLowerCase()) ||
                             p.code.toLowerCase().includes(permSearchQuery.toLowerCase()) ||
                             (p.submodule && p.submodule.toLowerCase().includes(permSearchQuery.toLowerCase()));
@@ -186,7 +188,7 @@ export default function IAMGovernanceCockpit({
   const groupedFilteredPermissions = useMemo(() => {
     const groups: Record<string, any[]> = {};
     filteredPermissions.forEach((p: any) => {
-      const mod = p.module || "General";
+      const mod = p.module ? p.module.toUpperCase() : "GENERAL";
       if (!groups[mod]) groups[mod] = [];
       groups[mod].push(p);
     });
@@ -195,42 +197,60 @@ export default function IAMGovernanceCockpit({
 
   // Group the standard permissions by module for the 5-column grid representation
   const gridModules = useMemo(() => {
-    const modulesMap = new Map<string, { name: string; code: string; perms: any[] }>();
+    const modulesMap = new Map<string, { name: string; module: string; submodule: string; code: string; perms: any[] }>();
     
     permissionsList.forEach((p: any) => {
-      if (!p.module) return;
-      if (!modulesMap.has(p.module)) {
-        const baseCode = p.code.split("_")[0];
-        modulesMap.set(p.module, { name: p.module, code: baseCode, perms: [] });
+      const modName = p.module ? p.module.toUpperCase() : "GENERAL";
+      const subModName = p.submodule || "Core";
+      const groupKey = `${modName}__${subModName}`;
+      
+      if (!modulesMap.has(groupKey)) {
+        const codeParts = p.code.split("_");
+        const lastPart = codeParts[codeParts.length - 1];
+        if (["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"].includes(lastPart?.toUpperCase())) {
+          codeParts.pop();
+        }
+        const baseCode = codeParts.join("_");
+        
+        modulesMap.set(groupKey, { 
+          name: `${modName} - ${subModName}`, 
+          module: modName,
+          submodule: subModName,
+          code: baseCode, 
+          perms: [] 
+        });
       }
-      modulesMap.get(p.module)!.perms.push(p);
+      modulesMap.get(groupKey)!.perms.push(p);
     });
 
     return Array.from(modulesMap.values()).filter(m => {
       const matchesSearch = m.name.toLowerCase().includes(permSearchQuery.toLowerCase()) ||
                             m.perms.some(p => p.name.toLowerCase().includes(permSearchQuery.toLowerCase()) || p.code.toLowerCase().includes(permSearchQuery.toLowerCase()));
-      const matchesTab = selectedModule === "ALL" || m.name === selectedModule;
+      const matchesTab = selectedModule === "ALL" || m.module === selectedModule.toUpperCase();
       return matchesSearch && matchesTab;
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name));
   }, [permissionsList, permSearchQuery, selectedModule]);
 
   const handleTogglePermissionByCode = async (moduleCode: string, action: string) => {
     if (!activeRoleID) return;
     if (activeRole?.code === "SUPER_ADMIN") return;
 
-    const targetCode = `${moduleCode}_${action}`;
-    const permission = permissionsList.find((p: any) => p.code === targetCode);
+    const targetCode = `${moduleCode}_${action.toUpperCase()}`;
+    const permission = permissionsList.find((p: any) => p.code.toUpperCase() === targetCode.toUpperCase());
     if (!permission) return;
 
     const isCurrentlyEnabled = activeRolePerms.includes(permission.id);
     let newPermIds = [...activeRolePerms];
 
-    const modulePerms = permissionsList.filter((p: any) => p.module === permission.module);
-    const viewPerm = modulePerms.find((p: any) => p.action === "VIEW");
-    const createPerm = modulePerms.find((p: any) => p.action === "CREATE");
-    const updatePerm = modulePerms.find((p: any) => p.action === "UPDATE");
-    const deletePerm = modulePerms.find((p: any) => p.action === "DELETE");
-    const managePerm = modulePerms.find((p: any) => p.action === "MANAGE");
+    const modulePerms = permissionsList.filter((p: any) => 
+      p.module?.toUpperCase() === permission.module?.toUpperCase() && 
+      (p.submodule || 'Core') === (permission.submodule || 'Core')
+    );
+    const viewPerm = modulePerms.find((p: any) => p.action?.toUpperCase() === "VIEW");
+    const createPerm = modulePerms.find((p: any) => p.action?.toUpperCase() === "CREATE");
+    const updatePerm = modulePerms.find((p: any) => p.action?.toUpperCase() === "UPDATE");
+    const deletePerm = modulePerms.find((p: any) => p.action?.toUpperCase() === "DELETE");
+    const managePerm = modulePerms.find((p: any) => p.action?.toUpperCase() === "MANAGE");
 
     if (!isCurrentlyEnabled) {
       newPermIds.push(permission.id);
@@ -695,70 +715,88 @@ export default function IAMGovernanceCockpit({
                           </AppTableRow>
                         </AppTableHeader>
                         <AppTableBody>
-                          {gridModules.map((m) => {
-                            const isSuperAdmin = activeRole?.code === "SUPER_ADMIN";
+                          {(() => {
+                            const groupedByModule = gridModules.reduce((acc, m) => {
+                              if (!acc[m.module]) acc[m.module] = [];
+                              acc[m.module].push(m);
+                              return acc;
+                            }, {} as Record<string, typeof gridModules>);
 
-                            // Resolve if each action is enabled
-                            const getPermIdByAction = (action: string) => m.perms.find(p => p.action === action)?.id;
-                            const isActionChecked = (action: string) => {
-                              if (isSuperAdmin) return true;
-                              const id = getPermIdByAction(action);
-                              return id ? activeRolePerms.includes(id) : false;
-                            };
+                            return Object.keys(groupedByModule).sort().map(moduleName => (
+                              <React.Fragment key={moduleName}>
+                                <AppTableRow className={cn("border-y", isLight ? "bg-indigo-50/30" : "bg-indigo-500/[0.02]")}>
+                                  <AppTableCell colSpan={6} className="py-2">
+                                    <span className="text-[0.65rem] font-bold uppercase tracking-widest text-indigo-500">
+                                      {moduleName} DIRECTORY
+                                    </span>
+                                  </AppTableCell>
+                                </AppTableRow>
+                                {groupedByModule[moduleName].sort((a, b) => a.submodule.localeCompare(b.submodule)).map((m) => {
+                                  const isSuperAdmin = activeRole?.code === "SUPER_ADMIN";
 
-                            const actions = ["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"];
+                                  const getPermIdByAction = (action: string) => m.perms.find(p => p.action?.toUpperCase() === action.toUpperCase())?.id;
+                                  const isActionChecked = (action: string) => {
+                                    if (isSuperAdmin) return true;
+                                    const id = getPermIdByAction(action);
+                                    return id ? activeRolePerms.includes(id) : false;
+                                  };
 
-                            return (
-                              <AppTableRow 
-                                key={m.name}
-                                className={cn(
-                                  "group/row transition-colors hover:bg-white/[0.01]",
-                                  isLight ? "hover:bg-gray-50/40" : "hover:bg-white/[0.02]"
-                                )}
-                              >
-                                <AppTableCell>
-                                  <div className="space-y-0.5">
-                                    <div className={cn("text-xs font-bold transition-colors", isLight ? "text-gray-900 group-hover/row:text-indigo-600" : "text-gray-100 group-hover/row:text-white")}>
-                                      {m.name}
-                                    </div>
-                                    <div className="text-[0.7rem] font-mono text-gray-500 uppercase tracking-tighter">
-                                      {m.code}_*
-                                    </div>
-                                  </div>
-                                </AppTableCell>
-                                {actions.map((act) => {
-                                  const checked = isActionChecked(act);
-                                  const exists = !!getPermIdByAction(act);
+                                  const actions = ["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"];
+
                                   return (
-                                    <AppTableCell key={act} className="text-center">
-                                      {exists ? (
-                                        <div className="flex justify-center">
-                                          <button
-                                            type="button"
-                                            disabled={isSuperAdmin || !hasPermission("IAM_UPDATE")}
-                                            onClick={() => handleTogglePermissionByCode(m.code, act)}
-                                            className={cn(
-                                              "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
-                                              checked
-                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-105"
-                                                : isLight
-                                                  ? "border-gray-300 bg-white hover:border-indigo-400"
-                                                  : "border-white/10 bg-black/40 hover:border-indigo-500/50",
-                                              isSuperAdmin || !hasPermission("IAM_UPDATE") ? "cursor-not-allowed opacity-80" : "cursor-pointer"
-                                            )}
-                                          >
-                                            {checked && <Check className="h-3.5 w-3.5 stroke-[3] animate-in zoom-in-50 duration-200" />}
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <span className="text-xs text-gray-600 font-mono">-</span>
+                                    <AppTableRow 
+                                      key={m.name}
+                                      className={cn(
+                                        "group/row transition-colors hover:bg-white/[0.01]",
+                                        isLight ? "hover:bg-gray-50/40" : "hover:bg-white/[0.02]"
                                       )}
-                                    </AppTableCell>
+                                    >
+                                      <AppTableCell className="pl-6">
+                                        <div className="space-y-0.5">
+                                          <div className={cn("text-xs font-bold transition-colors", isLight ? "text-gray-900 group-hover/row:text-indigo-600" : "text-gray-100 group-hover/row:text-white")}>
+                                            {m.submodule}
+                                          </div>
+                                          <div className="text-[0.7rem] font-mono text-gray-500 uppercase tracking-tighter">
+                                            {m.code}_*
+                                          </div>
+                                        </div>
+                                      </AppTableCell>
+                                      {actions.map((act) => {
+                                        const checked = isActionChecked(act);
+                                        const exists = !!getPermIdByAction(act);
+                                        return (
+                                          <AppTableCell key={act} className="text-center">
+                                            {exists ? (
+                                              <div className="flex justify-center">
+                                                <button
+                                                  type="button"
+                                                  disabled={isSuperAdmin || !hasPermission("IAM_UPDATE")}
+                                                  onClick={() => handleTogglePermissionByCode(m.code, act)}
+                                                  className={cn(
+                                                    "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
+                                                    checked
+                                                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-105"
+                                                      : isLight
+                                                        ? "border-gray-300 bg-white hover:border-indigo-400"
+                                                        : "border-white/10 bg-black/40 hover:border-indigo-500/50",
+                                                    isSuperAdmin || !hasPermission("IAM_UPDATE") ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                                                  )}
+                                                >
+                                                  {checked && <Check className="h-3.5 w-3.5 stroke-[3] animate-in zoom-in-50 duration-200" />}
+                                                </button>
+                                              </div>
+                                            ) : (
+                                              <span className="text-xs text-gray-600 font-mono">-</span>
+                                            )}
+                                          </AppTableCell>
+                                        );
+                                      })}
+                                    </AppTableRow>
                                   );
                                 })}
-                              </AppTableRow>
-                            );
-                          })}
+                              </React.Fragment>
+                            ));
+                          })()}
                         </AppTableBody>
                       </AppTable>
                     </div>
