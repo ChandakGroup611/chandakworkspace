@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 
 /**
  * Enterprise IAM & RBAC Server Actions
@@ -81,6 +81,7 @@ async function checkIAMAuthorization(requiredPermission?: string) {
 }
 
 export async function fetchRoles() {
+  noStore();
   await checkIAMAuthorization("IAM_VIEW");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
@@ -100,6 +101,7 @@ export async function fetchRoles() {
 }
 
 export async function fetchPermissions() {
+  noStore();
   await checkIAMAuthorization("IAM_VIEW");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
@@ -118,6 +120,7 @@ export async function fetchPermissions() {
 }
 
 export async function fetchRolePermissions(roleId: string) {
+  noStore();
   await checkIAMAuthorization("IAM_VIEW");
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
