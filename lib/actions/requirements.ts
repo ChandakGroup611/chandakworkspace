@@ -142,7 +142,7 @@ export async function fetchRequirements(workspaceId?: string | null) {
   let query = supabaseAdmin
     .from('requirements')
     .select(`
-      id, code, requirement_code, title, scope, current_stage, approval_status, current_assignee_id, created_at, creator_id, requester_id,
+      id, code, title, scope, approval_status, current_assignee_id, created_at, creator_id, requester_id,
       status:status_master(name:status_name, status_color, code:status_code),
       department:departments!requirements_department_id_fkey(name),
       priority:priority_master!requirements_priority_id_fkey(name:priority_name, priority_color),
