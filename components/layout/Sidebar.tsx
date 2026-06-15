@@ -147,6 +147,19 @@ export default function Sidebar() {
   const { hasPermission, roleCode } = usePermissions();
   const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
+  // OPTIMIZATION: Memoize the massive permission evaluation tree
+  const visibleNavTree = React.useMemo(() => {
+    return navGroups.map(group => {
+      const visibleItems = (roleCode === "SUPER_ADMIN" ? group.items : group.items.filter(item => !item.permission || hasPermission(item.permission))).map(item => {
+        if (!item.subItems) return item;
+        const visibleSubItems = roleCode === "SUPER_ADMIN" ? item.subItems : item.subItems.filter(sub => !sub.permission || hasPermission(sub.permission));
+        return { ...item, subItems: visibleSubItems.length > 0 ? visibleSubItems : undefined };
+      });
+      if (visibleItems.length === 0) return null;
+      return { ...group, items: visibleItems };
+    }).filter(Boolean) as NavGroup[];
+  }, [roleCode, hasPermission]);
+
   // When minimized, simply gliding mouse over sidebar gracefully expands it to reveal full module names and links temporarily
   const isCompact = isCompactState && !isHovered;
 
@@ -208,13 +221,7 @@ export default function Sidebar() {
 
       {/* Navigation Group Links */}
       <div className={`flex-1 px-3 py-4 space-y-6 ${isCompact ? "overflow-visible" : "overflow-y-auto scrollbar-thin"}`}>
-        {navGroups.map((group, groupIdx) => {
-          // Dynamic Access Logic: Super Admin bypass or granular permission check
-          const visibleItems = roleCode === "SUPER_ADMIN" 
-            ? group.items 
-            : group.items.filter(item => !item.permission || hasPermission(item.permission));
-            
-          if (visibleItems.length === 0) return null;
+        {visibleNavTree.map((group, groupIdx) => {
           
           return (
             <div key={groupIdx} className="flex flex-col">
@@ -224,7 +231,7 @@ export default function Sidebar() {
                 </span>
               )}
               <div className="space-y-1">
-                {visibleItems.map((item) => {
+                {group.items.map((item) => {
                 const IconComponent = item.icon;
                 let isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
                 if (item.href === '/requirements' && searchParams?.get('from') === 'approvals') {
@@ -313,7 +320,6 @@ export default function Sidebar() {
                     {!isCompact && item.subItems && isTreeExpanded && (
                       <div className="pl-7 pr-1 py-1 space-y-1 relative border-l ml-5 transition-all animate-in fade-in-50 slide-in-from-top-1 duration-200 border-white/5">
                         {item.subItems.map((sub) => {
-                          if (sub.permission && roleCode !== "SUPER_ADMIN" && !hasPermission(sub.permission)) return null;
                           
                           let isSubActive = pathname === sub.href;
                           if (sub.href === '/requirements/approvals' && searchParams?.get('from') === 'approvals') {

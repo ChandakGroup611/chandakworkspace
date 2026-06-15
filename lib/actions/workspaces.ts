@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { dispatchNotification } from "@/lib/actions/notifications";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { revalidatePath } from "next/cache";
+import { getCachedUser } from "@/lib/auth/cached-user";
 
 import { hasPermission } from "@/lib/permissions";
 import { getVisibleWorkspaces } from "@/lib/repositories/workspaces";
@@ -280,9 +281,8 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
 
     console.time("auth");
     // 1. Get current authenticated user
-    const { data: userData } = await supabase.auth.getUser();
+    const { user } = await getCachedUser();
     console.timeEnd("auth");
-    const user = userData.user;
     
     if (!user) {
       return {
@@ -375,8 +375,8 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
+  const { user: authUser } = await getCachedUser();
+  const userId = authUser?.id;
   if (!userId) return [];
 
   // If expanding a Workspace/Sub-Workspace, fetch its Sub-Workspaces and Direct Tasks
