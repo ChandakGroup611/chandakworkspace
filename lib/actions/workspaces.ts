@@ -160,6 +160,10 @@ export async function createWorkspace(formData: any) {
       throw new Error("Unauthorized: Missing WORKSPACES_CREATE capability.");
     }
 
+    if (!formData.name || !formData.name.trim()) {
+      throw new Error("Validation Error: Workspace name is required.");
+    }
+
     let statusId = formData.status_id || null;
     if (!statusId) {
       try {
@@ -484,16 +488,16 @@ export async function updateWorkspace(id: string, formData: any) {
 
   const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE");
   
-  // Check if user is a member of the workspace
+  // Check if user is a manager of the workspace
   const { data: member } = await supabaseAdmin
     .from("workspace_members")
-    .select("id")
+    .select("role")
     .eq("workspace_id", id)
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (!hasAccess && !member) {
-    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or workspace membership." };
+  if (!hasAccess && (!member || member.role !== 'manager')) {
+    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or workspace manager role." };
   }
 
   const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name").eq("id", id).single();

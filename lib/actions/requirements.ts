@@ -199,6 +199,13 @@ export async function createRequirement(payload: {
   created_by: string;
   status_id?: string;
 }) {
+  const { hasPermission } = await import('@/lib/permissions');
+  const isAuthorized = await hasPermission(payload.created_by, 'REQUIREMENTS_CREATE');
+  if (!isAuthorized) throw new Error("Unauthorized: Missing REQUIREMENTS_CREATE capability.");
+
+  if (!payload.title || !payload.title.trim()) throw new Error("Validation Error: Requirement title is required.");
+  if (!payload.objective || !payload.objective.trim()) throw new Error("Validation Error: Requirement objective is required.");
+
   let statusId = payload.status_id;
   if (!statusId) {
     const { data: defaultStatus } = await supabaseAdmin
@@ -392,6 +399,14 @@ export async function fetchRequirementStatuses() {
 }
 
 export async function generateApprovalFlow(reqId: string, performedBy: string) {
+  const { hasPermission } = await import('@/lib/permissions');
+  const canManage = await hasPermission(performedBy, 'REQUIREMENTS_MANAGE');
+  const { data: userRole } = await supabaseAdmin.from('user_roles').select('roles(code)').eq('user_id', performedBy).single();
+  const isAdmin = (userRole?.roles as any)?.code === 'SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ROLE_SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ADMIN_ROLE' || (userRole?.roles as any)?.code === 'ROLE_ADMIN';
+  if (!canManage && !isAdmin) {
+      throw new Error("Unauthorized: You do not have permission to generate approval flows.");
+  }
+
   const { data: req } = await supabaseAdmin.from('requirements').select('*').eq('id', reqId).single();
   if (!req) throw new Error("Requirement not found");
   const { data: impacts } = await supabaseAdmin.from('requirement_impacted_departments').select('department_id').eq('requirement_id', reqId).order('selection_order');
