@@ -231,12 +231,11 @@ export default function IAMGovernanceCockpit({
     }).sort((a, b) => a.name.localeCompare(b.name));
   }, [permissionsList, permSearchQuery, selectedModule]);
 
-  const handleTogglePermissionByCode = async (moduleCode: string, action: string) => {
+  const handleTogglePermissionByCode = async (permissionId: string, action: string) => {
     if (!activeRoleID) return;
     if (activeRole?.code === "SUPER_ADMIN") return;
 
-    const targetCode = `${moduleCode}_${action.toUpperCase()}`;
-    const permission = permissionsList.find((p: any) => p.code.toUpperCase() === targetCode.toUpperCase());
+    const permission = permissionsList.find((p: any) => p.id === permissionId);
     if (!permission) return;
 
     const isCurrentlyEnabled = activeRolePerms.includes(permission.id);
@@ -771,7 +770,12 @@ export default function IAMGovernanceCockpit({
                                                 <button
                                                   type="button"
                                                   disabled={isSuperAdmin || !hasPermission("IAM_UPDATE")}
-                                                  onClick={() => handleTogglePermissionByCode(m.code, act)}
+                                                  onClick={() => {
+                                                    const permId = getPermIdByAction(act);
+                                                    if (permId) {
+                                                      handleTogglePermissionByCode(permId, act);
+                                                    }
+                                                  }}
                                                   className={cn(
                                                     "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
                                                     checked
