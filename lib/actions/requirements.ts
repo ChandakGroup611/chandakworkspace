@@ -176,7 +176,7 @@ export async function fetchRequirements(workspaceId?: string | null) {
         users.forEach(u => userMap[u.id] = u);
         data.forEach(d => {
           if (d.creator_id && userMap[d.creator_id]) {
-            d.creator = userMap[d.creator_id];
+            (d as any).creator = userMap[d.creator_id];
           }
         });
       }
