@@ -114,7 +114,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
        if (requirement.approval_status === 'Pending SignOff') {
          setIsCurrentApprover(isAdmin || isSuperAdmin);
        } else {
-         setIsCurrentApprover(!!isApproverCtx && (requirement.approval_status === 'Pending' || requirement.approval_status === 'Pending Approval'));
+         setIsCurrentApprover(!!isApproverCtx && (requirement.approval_status === 'Pending' || requirement.approval_status === 'Pending Approval') && approvalFlow.length > 0);
        }
     }
   }, [requirement, currentUserId, currentUserDepartmentId, isAdmin, isSuperAdmin, approvalFlow]);
