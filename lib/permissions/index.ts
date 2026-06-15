@@ -63,8 +63,24 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
  * Validates if a user has a specific permission code.
  */
 export async function hasPermission(userId: string, permissionCode: string): Promise<boolean> {
+  // BREAK GLASS EMERGENCY PATH
+  if (process.env.BREAK_GLASS_MODE === 'true') {
+    const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+    const { error } = await supabaseAdmin.from('activity_events').insert({
+      module_type: 'SYSTEM',
+      record_id: userId,
+      event_type: 'EMERGENCY_OVERRIDE',
+      old_value: null,
+      new_value: { action: 'BREAK_GLASS_AUTHORIZATION', permission: permissionCode },
+      performed_by: userId
+    });
+    if (error) console.error("Break glass log error", error);
+    return true;
+  }
+
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
+  
+  // Strict IAM explicit snapshot check ONLY
   return ctx.perms.has(permissionCode);
 }
 
@@ -72,8 +88,8 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
  * Validates if a user can access a specific ticket.
  */
 export async function canAccessTicket(userId: string, ticketId: string): Promise<boolean> {
+  if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
 
   const { data } = await supabaseAdmin
     .from("tickets")
@@ -92,8 +108,8 @@ export async function canAccessTicket(userId: string, ticketId: string): Promise
  * Validates if a user can access a specific task.
  */
 export async function canAccessTask(userId: string, taskId: string): Promise<boolean> {
+  if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
 
   const { data } = await supabaseAdmin
     .from("tasks")
@@ -114,8 +130,8 @@ export async function canAccessTask(userId: string, taskId: string): Promise<boo
  * Validates if a user can access a specific workspace.
  */
 export async function canAccessWorkspace(userId: string, workspaceId: string): Promise<boolean> {
+  if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
 
   const { data } = await supabaseAdmin
     .from("workspaces")
@@ -140,8 +156,8 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
  * Validates if a user can manage a specific workspace.
  */
 export async function canManageWorkspace(userId: string, workspaceId: string): Promise<boolean> {
+  if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
 
   const { data } = await supabaseAdmin
     .from("workspaces")

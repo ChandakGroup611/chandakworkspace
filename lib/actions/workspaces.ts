@@ -9,6 +9,7 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 
 import { hasPermission } from "@/lib/permissions";
 import { getVisibleWorkspaces } from "@/lib/repositories/workspaces";
+import { logActivityEvent } from "@/lib/actions/tasks";
 
 /**
  * Enterprise permission verification helper for server actions
@@ -486,8 +487,6 @@ export async function updateWorkspace(id: string, formData: any) {
     const userId = userData.user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
-  const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE");
-  
   // Check if user is a manager of the workspace
   const { data: member } = await supabaseAdmin
     .from("workspace_members")
@@ -496,8 +495,9 @@ export async function updateWorkspace(id: string, formData: any) {
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (!hasAccess && (!member || member.role !== 'manager')) {
-    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or workspace manager role." };
+  if (!member || member.role !== 'manager') {
+    await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'UPDATE_WORKSPACE' }, userId);
+    return { error: "Unauthorized: Missing workspace manager role." };
   }
 
   const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name").eq("id", id).single();
@@ -632,13 +632,11 @@ export async function deleteWorkspace(id: string) {
     const userId = userData.user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
-  const hasAccess = await checkServerPermission(supabase, userId, "WORKSPACES_DELETE");
-  if (!hasAccess) {
     const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
     if (!ws || ws.workspace_owner_id !== userId) {
-      return { error: "Unauthorized: Missing WORKSPACES_DELETE capability." };
+      await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'DELETE_WORKSPACE' }, userId);
+      return { error: "Unauthorized: You must be the workspace owner to delete this workspace." };
     }
-  }
 
   const { error } = await supabaseAdmin
     .from("workspaces")

@@ -200,9 +200,6 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   if (!task) return { error: "Task not found" };
 
   if (task.assigned_to !== userId) {
-    const { hasPermission } = await import('@/lib/permissions');
-    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-    
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
       .select('id')
@@ -210,8 +207,12 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (!isSuperAdmin && !participant) {
-       return { error: "You do not have permission to transition this task status. Only the Task Assignee, Participants, or Super Admin can edit the status." };
+    if (!participant) {
+       await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+         action_attempted: 'UPDATE_STATUS', 
+         target_status: newStatusIdOrCode 
+       }, userId);
+       return { error: "You do not have permission to transition this task status. Only the Task Assignee or Participants can edit the status." };
     }
   }
 
@@ -474,7 +475,7 @@ export async function getTaskDetails(taskId: string) {
   };
   
   task.currentUserIsSuperAdmin = isSuperAdmin;
-  task.currentUserCanAct = isSuperAdmin || task.assigned_to === userId;
+  task.currentUserCanAct = task.assigned_to === userId || (participants && participants.some(p => p.user_id === userId));
   task.currentUserId = userId || null;
   task.title = task.subject;
   task.checklists = [];
@@ -541,10 +542,6 @@ export async function updateTask(taskId: string, payload: any) {
   if (!task) return { error: "Task not found" };
 
   if (task.assigned_to !== userId) {
-    const { hasPermission } = await import('@/lib/permissions');
-    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-    
-    // Check if user is a participant (Executor, Watcher, Reviewer)
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
       .select('id')
@@ -552,8 +549,11 @@ export async function updateTask(taskId: string, payload: any) {
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (!isSuperAdmin && !participant) {
-       return { error: "You do not have permission to edit this task. Only the Task Owner, Participants, or Super Admin can edit." };
+    if (!participant) {
+       await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+         action_attempted: 'UPDATE_TASK'
+       }, userId);
+       return { error: "You do not have permission to edit this task. Only the Task Owner or Participants can edit." };
     }
   }
 
@@ -648,10 +648,12 @@ export async function updateTask(taskId: string, payload: any) {
     if (!userId) return { error: "Unauthenticated" };
 
     const { hasPermission } = await import('@/lib/permissions');
-    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
     const canDelete = await hasPermission(userId, "TASKS_DELETE");
 
-    if (!isSuperAdmin && !canDelete) {
+    if (!canDelete) {
+      await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+        action_attempted: 'DELETE_TASK'
+      }, userId);
       return { error: "You do not have permission to delete this task. Only users with specific IAM permissions can delete." };
     }
 
@@ -809,9 +811,6 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
   // If changing status, must be assigned user
   if (newStatusId && newStatusId !== currentTask.status_id) {
     if (currentTask.assigned_to !== userId) {
-      const { hasPermission } = await import('@/lib/permissions');
-      const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-      
       const { data: participant } = await supabaseAdmin
         .from('task_participants')
         .select('id')
@@ -819,8 +818,11 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (!isSuperAdmin && !participant) {
-        return { error: "Only the assigned user, execution team, or Super Admin can change the task status." };
+      if (!participant) {
+        await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+          action_attempted: 'UPDATE_STATUS_INLINE'
+        }, userId);
+        return { error: "Only the assigned user or execution team can change the task status." };
       }
     }
 
@@ -1105,10 +1107,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  const { hasPermission } = await import('@/lib/permissions');
-  const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
-
-  // Check if current user is an Executor or Super Admin
+  // Check if current user is an Executor
   const { data: participant } = await supabaseAdmin
     .from('task_participants')
     .select('id')
@@ -1117,8 +1116,11 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     .eq('participation_role', 'EXECUTOR')
     .maybeSingle();
 
-  if (!isSuperAdmin && !participant && task.assigned_to !== userId) {
-    return { error: "You do not have permission to edit assignees. Only Executors and Super Admins can do this." };
+  if (!participant && task.assigned_to !== userId) {
+    await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+      action_attempted: 'UPDATE_ASSIGNMENT'
+    }, userId);
+    return { error: "You do not have permission to edit assignees. Only the Assignee or Executors can do this." };
   }
 
   if (assignees.length === 0) {
