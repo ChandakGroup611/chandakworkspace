@@ -487,15 +487,25 @@ export async function updateWorkspace(id: string, formData: any) {
     const userId = userData.user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
-  // Check if user is a manager of the workspace
-  const { data: member } = await supabaseAdmin
-    .from("workspace_members")
-    .select("role")
-    .eq("workspace_id", id)
-    .eq("user_id", userId)
-    .maybeSingle();
+  // Check if user is a manager of the workspace OR has global manage permissions
+  const canManageAll = await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
+  
+  let isManager = canManageAll;
+  
+  if (!isManager) {
+    const { data: member } = await supabaseAdmin
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+      
+    if (member && member.role === 'manager') {
+      isManager = true;
+    }
+  }
 
-  if (!member || member.role !== 'manager') {
+  if (!isManager) {
     await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'UPDATE_WORKSPACE' }, userId);
     return { error: "Unauthorized: Missing workspace manager role." };
   }
