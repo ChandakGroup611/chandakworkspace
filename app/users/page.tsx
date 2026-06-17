@@ -1484,39 +1484,39 @@ export default function UserMasterPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 pt-2 pb-4">
-                    <label className="text-sm font-medium text-slate-800">Account Access Status</label>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-sm text-slate-700">{formIsActive ? 'Active' : 'Disabled'}</span>
+                  <div className="flex items-center justify-between pt-2 pb-2">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-slate-800">Account Access Status</label>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-sm text-slate-700">{formIsActive ? 'Active' : 'Disabled'}</span>
+                        <button
+                          type="button"
+                          onClick={() => setFormIsActive(!formIsActive)}
+                          disabled={!isSuperAdmin}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B2D6C] focus:ring-offset-2 ${formIsActive ? 'bg-[#3B2D6C]' : 'bg-slate-300'}`}
+                        >
+                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${formIsActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 self-end pb-1">
                       <button
                         type="button"
-                        onClick={() => setFormIsActive(!formIsActive)}
-                        disabled={!isSuperAdmin}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B2D6C] focus:ring-offset-2 ${formIsActive ? 'bg-[#3B2D6C]' : 'bg-slate-300'}`}
+                        onClick={() => setShowModal(false)}
+                        className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                       >
-                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${formIsActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#3B2D6C] hover:bg-[#32255e] transition-all flex items-center gap-2"
+                      >
+                        {isEditingMode ? "Save Changes" : "Save Changes"}
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-
-              {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 px-8 py-5 shrink-0 border-t border-slate-100 bg-white dark:bg-[#0A0D14] dark:border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#3B2D6C] hover:bg-[#32255e] transition-all flex items-center gap-2"
-                >
-                  {isEditingMode ? "Save Changes" : "Save Changes"}
-                </button>
               </div>
             
 </form>
