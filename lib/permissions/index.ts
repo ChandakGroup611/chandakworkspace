@@ -80,6 +80,10 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
 
   const ctx = await getUserContext(userId);
   
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.role === "admin-role-id") {
+    return true;
+  }
+
   // Strict IAM explicit snapshot check ONLY
   return ctx.perms.has(permissionCode);
 }
