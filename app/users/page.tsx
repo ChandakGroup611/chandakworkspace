@@ -1373,11 +1373,11 @@ export default function UserMasterPage() {
                         {photoUploading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                         <span>{photoUploading ? 'Uploading...' : 'Upload'}</span>
                       </button>
-                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                        {PRESET_AVATARS.slice(0, 6).map((avatar, idx) => (
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none max-w-[250px] sm:max-w-[400px]">
+                        {PRESET_AVATARS.map((avatar, idx) => (
                           <img 
                             key={idx} src={avatar} alt="Preset" 
-                            className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-[#3B2D6C] transition-all" 
+                            className="w-8 h-8 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-[#3B2D6C] transition-all" 
                             onClick={() => setFormPhoto(avatar)} 
                           />
                         ))}
@@ -1517,7 +1517,7 @@ export default function UserMasterPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-end justify-start gap-16 pt-1 pb-1">
+                  <div className="flex items-end justify-between pt-1 pb-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-slate-800">Account Access Status</label>
                       <div className="flex items-center gap-3 mt-1">
