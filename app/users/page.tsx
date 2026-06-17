@@ -1360,23 +1360,33 @@ export default function UserMasterPage() {
                     </div>
                   </div>
                   
-                  <div className="flex flex-col items-start gap-2">
+                  <div className="flex flex-col items-start gap-1.5">
                     <h2 className="text-xl font-bold text-slate-900">{formFullName || 'New User'}</h2>
-                    <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={photoUploading}
-                      className="px-4 py-2 rounded-lg bg-[#3B2D6C] hover:bg-[#32255e] text-white text-sm font-medium flex items-center gap-2 transition-all shadow-sm"
-                    >
-                      {photoUploading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                      <span>{photoUploading ? 'Uploading...' : 'Upload New Photo'}</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={photoUploading}
+                        className="px-4 py-1.5 rounded-lg bg-[#3B2D6C] hover:bg-[#32255e] text-white text-sm font-medium flex items-center gap-2 transition-all shadow-sm shrink-0"
+                      >
+                        {photoUploading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        <span>{photoUploading ? 'Uploading...' : 'Upload'}</span>
+                      </button>
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        {PRESET_AVATARS.slice(0, 6).map((avatar, idx) => (
+                          <img 
+                            key={idx} src={avatar} alt="Preset" 
+                            className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-[#3B2D6C] transition-all" 
+                            onClick={() => setFormPhoto(avatar)} 
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
-                  {/* Row 1 */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1.5">
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Full Name</label>
                     <input 
@@ -1385,14 +1395,6 @@ export default function UserMasterPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Designation</label>
-                    <input 
-                      placeholder="e.g. Senior UX Designer" value={formDesigId} onChange={(e) => setFormDesigId(e.target.value)} disabled={!isSuperAdmin}
-                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                  {/* Row 2 */}
-                  <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">User Code</label>
                     <input 
                       placeholder="e.g. SC8839" value={formUserCode} onChange={(e) => setFormUserCode(e.target.value)} required disabled={!isSuperAdmin}
@@ -1400,19 +1402,38 @@ export default function UserMasterPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Role</label>
-                    <input 
-                      placeholder="e.g. Lead Designer" value={formRoleId} onChange={(e) => setFormRoleId(e.target.value)} disabled={!isSuperAdmin}
-                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                  {/* Row 3 */}
-                  <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Email</label>
                     <input 
                       type="email" placeholder="e.g. sarah.chen@innovate.co" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} required disabled={!isSuperAdmin}
                       className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-800">Designation</label>
+                    <div className="relative">
+                      <select 
+                        value={formDesigId} onChange={(e) => setFormDesigId(e.target.value)} disabled={!isSuperAdmin}
+                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                      >
+                        <option value="">Select Designation...</option>
+                        {designations.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-800">Role</label>
+                    <div className="relative">
+                      <select 
+                        value={formRoleId} onChange={(e) => setFormRoleId(e.target.value)} disabled={!isSuperAdmin}
+                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                      >
+                        <option value="">Select Role...</option>
+                        {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Manager</label>
@@ -1424,34 +1445,39 @@ export default function UserMasterPage() {
                         <option value="">Michael Thompson</option>
                         {availableManagers.map(mgr => <option key={mgr.id} value={mgr.id}>{mgr.full_name}</option>)}
                       </select>
-                      <ChevronDown className="absolute right-3 top-3 h-4 w-4 pointer-events-none text-slate-400" />
+                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
                     </div>
                   </div>
-                  {/* Row 4 */}
+
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Department</label>
-                    <input 
-                      placeholder="e.g. Product Design" value={formDeptId} onChange={(e) => setFormDeptId(e.target.value)} disabled={!isSuperAdmin}
-                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-800">Assigned Hardware Assets</label>
-                  <div className="min-h-[32px] p-1 rounded-lg border border-slate-300 bg-white shadow-sm flex flex-wrap items-center gap-1.5 relative">
-                    {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
-                      <span key={idx} className="text-sm px-2 py-1 flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-md">
-                        [{tag}] <X className="h-3 w-3 cursor-pointer opacity-50 hover:opacity-100" onClick={() => {
-                          const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
-                          setFormAssignedAssets(currentArr.filter(x => x !== tag).join(', '));
-                        }}/>
-                      </span>
-                    ))}
-                    <div className="flex-1 min-w-[100px] relative">
-                      <input type="text" className="w-full bg-transparent border-none outline-none text-sm px-2 text-slate-800 placeholder-slate-400" placeholder={!formAssignedAssets ? "Add asset..." : ""} />
+                    <div className="relative">
+                      <select 
+                        value={formDeptId} onChange={(e) => setFormDeptId(e.target.value)} disabled={!isSuperAdmin}
+                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                      >
+                        <option value="">Select Department...</option>
+                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
                     </div>
-                    <ChevronDown className="absolute right-2 top-3 h-4 w-4 pointer-events-none text-slate-400" />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-sm font-medium text-slate-800">Assigned Hardware Assets</label>
+                    <div className="min-h-[32px] p-1 rounded-lg border border-slate-300 bg-white shadow-sm flex flex-wrap items-center gap-1.5 relative">
+                      {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
+                        <span key={idx} className="text-sm px-2 py-0.5 flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-md">
+                          [{tag}] <X className="h-3 w-3 cursor-pointer opacity-50 hover:opacity-100" onClick={() => {
+                            const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
+                            setFormAssignedAssets(currentArr.filter(x => x !== tag).join(', '));
+                          }}/>
+                        </span>
+                      ))}
+                      <div className="flex-1 min-w-[100px] relative">
+                        <input type="text" className="w-full bg-transparent border-none outline-none text-sm px-2 text-slate-800 placeholder-slate-400" placeholder={!formAssignedAssets ? "Add asset..." : ""} />
+                      </div>
+                      <ChevronDown className="absolute right-2 top-2 h-4 w-4 pointer-events-none text-slate-400" />
+                    </div>
                   </div>
                 </div>
 
@@ -1468,15 +1494,18 @@ export default function UserMasterPage() {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-slate-800">Password</label>
-                      <div className="relative">
-                        <input 
-                          type="password" placeholder="••••••••" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} disabled={!isSuperAdmin}
-                          className="w-full h-8 pl-3.5 pr-40 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                        />
-                        <button type="button" className="absolute right-1 top-1 bottom-1 px-3 rounded-md bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 text-sm font-medium flex items-center gap-2">
-                          Change Password
+                      <div className="relative flex items-center">
+                        <div className="relative flex-1">
+                          <input 
+                            type={showModal ? "password" : "text"}
+                            placeholder="••••••••" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} disabled={!isSuperAdmin}
+                            className="w-full h-8 pl-3.5 pr-10 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          />
+                          <EyeOff className="absolute right-2.5 top-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-600" />
+                        </div>
+                        <button type="button" className="ml-2 h-8 px-3 rounded-md bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 text-xs font-medium flex items-center shrink-0">
+                          Change
                         </button>
-                        <EyeOff className="absolute -right-8 top-2.5 h-5 w-5 cursor-pointer text-slate-400 hover:text-slate-600" />
                       </div>
                     </div>
                   </div>
