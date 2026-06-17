@@ -1319,7 +1319,7 @@ export default function UserMasterPage() {
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
           <div className={`relative w-full max-w-3xl max-h-[95vh] rounded-[24px] border shadow-2xl overflow-hidden flex flex-col ${
-            isLightMode ? "bg-white border-slate-200 text-slate-800" : "bg-[#0A0D14] border-white/10 text-slate-100"
+            isLightMode ? "bg-white/95 backdrop-blur-xl border-slate-200/50 text-slate-800 shadow-[0_12px_40px_rgba(0,0,0,0.08)]" : "bg-[#0A0D14]/90 backdrop-blur-xl border-white/10 text-slate-100 shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
           }`}>
             <form onSubmit={handleSubmitForm} className="flex flex-col h-full overflow-hidden">
               {/* Modal Header */}
@@ -1792,24 +1792,26 @@ export default function UserMasterPage() {
               </div>
 
               {/* Modal Footer */}
-              <div className={`flex items-center justify-end gap-3 px-8 py-5 border-t shrink-0 ${
-                isLightMode ? "border-slate-100 bg-slate-50/50" : "border-white/5 bg-[#0A0D14]"
+              <div className={`flex items-center justify-end gap-3 px-8 py-5 shrink-0 border-t ${
+                isLightMode ? "border-slate-100 bg-slate-50/50" : "border-white/5 bg-white/[0.02]"
               }`}>
-                <AppButton 
-                  type="button" 
-                  variant="outline" 
+                <button
+                  type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-xl font-medium px-5 h-10"
+                  className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    isLightMode ? "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300" : "bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                  }`}
                 >
                   Cancel
-                </AppButton>
-                <AppButton 
-                  type="submit" 
-                  variant="primary" 
-                  className="rounded-xl font-medium px-6 h-10 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shadow-sm border-0"
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {isEditingMode ? "Save Changes" : "Create Account"}
-                </AppButton>
+                  {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
+                  {isSaving ? "Saving..." : (isEditingMode ? "Save Changes" : "Create Account")}
+                </button>
               </div>
             </form>
 
