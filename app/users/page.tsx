@@ -41,7 +41,11 @@ import {
   Shield, 
   History,
   Eye,
-  Image
+  Image,
+  MonitorSmartphone,
+  ChevronDown,
+  Key,
+  AlertCircle
 } from "lucide-react";
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
@@ -1310,500 +1314,499 @@ export default function UserMasterPage() {
       {/* ── Dynamic Personnel Register & Update Overlay Modal ── */}
       {showModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
-          style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
+          className="fixed inset-0 z-50 flex items-start pt-16 pb-16 overflow-y-auto justify-center px-4 animate-in fade-in-0 duration-200"
+          style={{ backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
-          <div className={`relative w-full max-w-xl max-h-[85vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col ${
-            isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0A0D14] border-white/10 text-white"
+          <div className={`relative w-full max-w-2xl max-h-[90vh] rounded-[24px] border shadow-2xl overflow-hidden flex flex-col ${
+            isLightMode ? "bg-white border-slate-200 text-slate-800" : "bg-[#0A0D14] border-white/10 text-slate-100"
           }`}>
             <form onSubmit={handleSubmitForm} className="flex flex-col h-full overflow-hidden">
-              {/* Top Modal Navigation Banner */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-2 shrink-0">
-                <div className="space-y-0.5">
-                  <h3 className={`text-base font-bold ${"text-foreground"}`}>
+              {/* Modal Header */}
+              <div className={`flex items-center justify-between px-8 py-6 shrink-0 border-b ${
+                isLightMode ? "border-slate-100" : "border-white/5"
+              }`}>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-semibold tracking-tight">
                     {isEditingMode ? "Update Identity Record" : "Register User Account"}
                   </h3>
-                  <p className={`text-[0.8rem] ${"text-muted"}`}>
-                    Provide corporate credential definitions mapped against database authorization structures.
+                  <p className={`text-sm ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
+                    Manage profile details, assignments, and authentication for this user.
                   </p>
                 </div>
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                  className={`p-2 rounded-full transition-colors ${
+                    isLightMode ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100" : "text-slate-500 hover:text-slate-200 hover:bg-white/10"
+                  }`}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Scrollable Form parameters view */}
-              <div className="px-6 pb-6 pt-4 space-y-5 overflow-y-auto flex-1 scrollbar-thin min-h-0">
-              {/* Profile Photo selector preview section */}
-              <div className="space-y-2 pb-2 border-b border-white/5">
-                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                  Profile Photo Target Preview
-                </label>
-                
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="relative shrink-0">
-                    <img 
-                      src={formPhoto || PRESET_AVATARS[0]} 
-                      alt="Target Photo"
-                      className={`w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md ${
-                        photoUploading ? "opacity-40 animate-pulse" : ""
-                      }`}
-                      onError={(e) => { (e.target as any).src = PRESET_AVATARS[0]; }}
-                    />
-                    {photoUploading && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <RefreshCw className="h-5 w-5 animate-spin text-blue-500" />
+              <div className="px-8 py-6 space-y-8 overflow-y-auto flex-1 scrollbar-thin min-h-0">
+                {/* Profile Photo selector */}
+                <div className="space-y-4">
+                  <label className={`text-sm font-medium ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                    Profile Photo
+                  </label>
+                  
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                    <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      <img 
+                        src={formPhoto || PRESET_AVATARS[0]} 
+                        alt="Profile"
+                        className={`w-20 h-20 rounded-full object-cover shadow-sm ring-4 ring-offset-2 transition-all ${
+                          photoUploading ? "opacity-40 animate-pulse" : ""
+                        } ${isLightMode ? "ring-indigo-50 ring-offset-white" : "ring-indigo-500/20 ring-offset-[#0A0D14]"}`}
+                        onError={(e) => { (e.target as any).src = PRESET_AVATARS[0]; }}
+                      />
+                      <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Image className="h-6 w-6 text-white" />
                       </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 flex-1 w-full">
-                    {/* Native system image selection hidden input */}
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handlePhotoUpload} 
-                      accept="image/*" 
-                      className="hidden" 
-                    />
-
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsViewingPhoto(true)}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
-                          isLightMode 
-                            ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-blue-600" 
-                            : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-blue-400"
-                        }`}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        <span>View Profile Picture</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={photoUploading}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
-                          photoUploading
-                            ? "opacity-50 cursor-not-allowed"
-                            : (isLightMode ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-blue-600" : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-blue-400")
-                        }`}
-                      >
-                        {photoUploading ? (
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin text-blue-500" />
-                        ) : (
-                          <Image className="h-3.5 w-3.5" />
-                        )}
-                        <span>{photoUploading ? "Uploading..." : "Change Profile Picture"}</span>
-                      </button>
+                      {photoUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <RefreshCw className="h-6 w-6 animate-spin text-indigo-500" />
+                        </div>
+                      )}
                     </div>
 
-                    {/* Fun convenient quick interactive avatar presets selection */}
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                      <span className="text-xs text-gray-500 font-medium">Quick Avatars:</span>
-                      {PRESET_AVATARS.map((avUrl, aIdx) => (
+                    <div className="flex flex-col gap-3 flex-1 w-full">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handlePhotoUpload} 
+                        accept="image/*" 
+                        className="hidden" 
+                      />
+
+                      <div className="flex items-center gap-3">
                         <button
-                          key={aIdx}
                           type="button"
-                          onClick={() => setFormPhoto(avUrl)}
-                          className={`w-6 h-6 rounded-full overflow-hidden border transition-all hover:scale-110 ${
-                            formPhoto === avUrl ? "border-blue-500 ring-2 ring-blue-500/30" : "border-white/10 opacity-70"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={photoUploading}
+                          className={`px-4 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-all shadow-sm ${
+                            photoUploading
+                              ? "opacity-50 cursor-not-allowed"
+                              : (isLightMode ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300" : "bg-white/5 border-white/10 text-slate-200 hover:bg-white/10")
                           }`}
                         >
-                          <img src={avUrl} alt={`p-${aIdx}`} className="w-full h-full object-cover" />
+                          {photoUploading ? <RefreshCw className="h-4 w-4 animate-spin text-indigo-500" /> : <Image className="h-4 w-4" />}
+                          <span>{photoUploading ? "Uploading..." : "Upload New Photo"}</span>
                         </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setIsViewingPhoto(true)}
+                          className={`p-2 rounded-lg border transition-all ${
+                            isLightMode ? "border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700" : "border-white/10 text-slate-400 hover:bg-white/10 hover:text-slate-200"
+                          }`}
+                          title="View Photo"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {/* Presets */}
+                      <div className="flex items-center gap-2 pt-1">
+                        {PRESET_AVATARS.map((avUrl, aIdx) => (
+                          <button
+                            key={aIdx}
+                            type="button"
+                            onClick={() => setFormPhoto(avUrl)}
+                            className={`w-8 h-8 rounded-full overflow-hidden border-2 transition-all hover:-translate-y-0.5 ${
+                              formPhoto === avUrl 
+                                ? (isLightMode ? "border-indigo-500 shadow-md" : "border-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.3)]") 
+                                : "border-transparent opacity-70 hover:opacity-100"
+                            }`}
+                          >
+                            <img src={avUrl} alt={`p-${aIdx}`} className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid 1: Basic Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className={`text-sm font-medium ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <AppInput 
+                      placeholder="e.g. Richard Hendricks"
+                      value={formFullName}
+                      onChange={(e) => setFormFullName(e.target.value)}
+                      required
+                      disabled={!isSuperAdmin}
+                      className="text-sm rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={`text-sm font-medium ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      User Code <span className="text-rose-500">*</span>
+                    </label>
+                    <AppInput 
+                      placeholder="e.g. USR-ENG-009"
+                      value={formUserCode}
+                      onChange={(e) => setFormUserCode(e.target.value)}
+                      className="font-mono text-sm uppercase rounded-xl"
+                      required
+                      disabled={!isSuperAdmin}
+                    />
+                  </div>
+
+                  <div className="space-y-2 sm:col-span-2">
+                    <label className={`text-sm font-medium ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      Email Address <span className="text-rose-500">*</span>
+                    </label>
+                    <AppInput 
+                      type="email"
+                      placeholder="e.g. richard@enterprise.com"
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      className="text-sm rounded-xl"
+                      required
+                      disabled={!isSuperAdmin}
+                    />
+                  </div>
+                </div>
+
+                {/* Grid 2: Organization */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <div className="space-y-2">
+                    <label className={`text-sm font-medium flex items-center gap-2 ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      <Layers className="h-4 w-4 text-indigo-500" />
+                      Department
+                    </label>
+                    <select
+                      value={formDeptId}
+                      onChange={(e) => {
+                        setFormDeptId(e.target.value);
+                        setFormDesigId("");
+                      }}
+                      disabled={!isSuperAdmin}
+                      className={`w-full h-10 px-3.5 rounded-xl border text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 ${
+                        !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                      } ${
+                        isLightMode ? "bg-white border-slate-200 text-slate-800 hover:border-slate-300" : "bg-[#0F131D] border-white/10 text-slate-200 hover:border-white/20"
+                      }`}
+                    >
+                      <option value="" className="text-slate-400">Select Department...</option>
+                      {departments.map(d => (
+                        <option key={d.id} value={d.id}>{d.name} ({d.code})</option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={`text-sm font-medium flex items-center gap-2 ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      <Briefcase className="h-4 w-4 text-emerald-500" />
+                      Designation
+                    </label>
+                    <select
+                      value={formDesigId}
+                      onChange={(e) => setFormDesigId(e.target.value)}
+                      disabled={!isSuperAdmin}
+                      className={`w-full h-10 px-3.5 rounded-xl border text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 ${
+                        !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                      } ${
+                        isLightMode ? "bg-white border-slate-200 text-slate-800 hover:border-slate-300" : "bg-[#0F131D] border-white/10 text-slate-200 hover:border-white/20"
+                      }`}
+                    >
+                      <option value="" className="text-slate-400">Select Designation...</option>
+                      {designations
+                        .filter(dg => !formDeptId || dg.department_id === formDeptId)
+                        .map(dg => (
+                        <option key={dg.id} value={dg.id}>{dg.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={`text-sm font-medium flex items-center gap-2 ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      <Shield className="h-4 w-4 text-purple-500" />
+                      System Role
+                    </label>
+                    <select
+                      value={formRoleId}
+                      onChange={(e) => setFormRoleId(e.target.value)}
+                      disabled={!isSuperAdmin}
+                      className={`w-full h-10 px-3.5 rounded-xl border text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 ${
+                        !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                      } ${
+                        isLightMode ? "bg-white border-slate-200 text-slate-800 hover:border-slate-300" : "bg-[#0F131D] border-white/10 text-slate-200 hover:border-white/20"
+                      }`}
+                    >
+                      <option value="" className="text-slate-400">Standard User</option>
+                      {roles.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={`text-sm font-medium flex items-center gap-2 ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      <UserCheck className="h-4 w-4 text-blue-500" />
+                      Reporting Manager
+                    </label>
+                    <select
+                      value={formManagerId}
+                      onChange={(e) => setFormManagerId(e.target.value)}
+                      disabled={!isSuperAdmin}
+                      className={`w-full h-10 px-3.5 rounded-xl border text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${
+                        !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                      } ${
+                        isLightMode ? "bg-white border-slate-200 text-slate-800 hover:border-slate-300" : "bg-[#0F131D] border-white/10 text-slate-200 hover:border-white/20"
+                      }`}
+                    >
+                      <option value="" className="text-slate-400">None (Top Level)</option>
+                      {availableManagers.map(mgr => (
+                        <option key={mgr.id} value={mgr.id}>{mgr.full_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Assigned Assets */}
+                <div className="space-y-2 relative pt-4 border-t border-slate-100 dark:border-white/5">
+                  <label className={`text-sm font-medium flex items-center gap-2 ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                    <MonitorSmartphone className="h-4 w-4 text-amber-500" />
+                    Assigned Hardware
+                  </label>
+                  
+                  <div 
+                    onClick={() => { if (isSuperAdmin) setIsAssetDropdownOpen(!isAssetDropdownOpen) }}
+                    className={`min-h-11 p-2 rounded-xl border flex items-center justify-between gap-2 transition-all ${
+                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                    } ${
+                      isLightMode 
+                        ? "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm" 
+                        : "bg-[#0F131D] border-white/10 hover:border-white/20"
+                    } ${isAssetDropdownOpen ? (isLightMode ? "ring-2 ring-amber-500/20 border-amber-500" : "ring-2 ring-amber-500/20 border-amber-500") : ""}`}
+                  >
+                    <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0 px-1.5">
+                      {formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean).length > 0 ? (
+                        formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean).map((tagStr, tagIdx) => {
+                          const matchedAst = availableAssets.find(a => (a.asset_tag || a.code) === tagStr);
+                          return (
+                            <span 
+                              key={tagIdx}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const currentArr = formAssignedAssets.split(",").map(x => x.trim()).filter(Boolean);
+                                setFormAssignedAssets(currentArr.filter(x => x !== tagStr).join(", "));
+                              }}
+                              className={`text-xs font-medium px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors hover:opacity-80 ${
+                                isLightMode 
+                                  ? "bg-amber-50 text-amber-900" 
+                                  : "bg-amber-500/15 text-amber-200"
+                              }`}
+                            >
+                              <MonitorSmartphone className="h-3 w-3 opacity-70" />
+                              <span>{matchedAst ? matchedAst.name.split(" ")[0] : tagStr}</span>
+                              <X className="h-3 w-3 ml-0.5 hover:text-rose-500 cursor-pointer" />
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className={`text-sm px-1.5 ${isLightMode ? "text-slate-400" : "text-slate-500"}`}>
+                          Select physical devices...
+                        </span>
+                      )}
+                    </div>
+                    <div className={`p-1 shrink-0 transition-transform ${isAssetDropdownOpen ? "rotate-180" : ""} ${isLightMode ? "text-slate-400" : "text-slate-500"}`}>
+                      <ChevronDown className="h-4 w-4" />
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Row 1: Full Name & User Code */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                    Full Name <span className="text-rose-400">*</span>
-                  </label>
-                  <AppInput 
-                    placeholder="e.g. Richard Hendricks"
-                    value={formFullName}
-                    onChange={(e) => setFormFullName(e.target.value)}
-                    className="text-xs"
-                    required
-                    disabled={!isSuperAdmin}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                    User Code <span className="text-rose-400">*</span>
-                  </label>
-                  <AppInput 
-                    placeholder="e.g. USR-ENG-009"
-                    value={formUserCode}
-                    onChange={(e) => setFormUserCode(e.target.value)}
-                    className="font-mono text-xs uppercase"
-                    required
-                    disabled={!isSuperAdmin}
-                  />
-                  <span className="text-[0.7rem] text-gray-500 block">Unique code string indexing tuple logic.</span>
-                </div>
-              </div>
-
-              {/* Row 2: Registered Email */}
-              <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                  Registered Email Address <span className="text-rose-400">*</span>
-                </label>
-                <AppInput 
-                  type="email"
-                  placeholder="e.g. richard.hendricks@enterprise.internal"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  className="text-xs"
-                  required
-                  disabled={!isSuperAdmin}
-                />
-              </div>
-
-              {/* Row 3: Department & Designation */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                    Department Mapping
-                  </label>
-                  <select
-                    value={formDeptId}
-                    onChange={(e) => {
-                      setFormDeptId(e.target.value);
-                      setFormDesigId("");
-                    }}
-                    disabled={!isSuperAdmin}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 ${
-                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                    } ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-gray-200"
-                    }`}
-                  >
-                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- Select Department Scope --</option>
-                    {departments.map(d => (
-                      <option key={d.id} value={d.id} className={isLightMode ? "text-gray-900 bg-white" : "text-gray-200 bg-[#0F131D]"}>
-                        {d.name} ({d.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                    Designation Title
-                  </label>
-                  <select
-                    value={formDesigId}
-                    onChange={(e) => setFormDesigId(e.target.value)}
-                    disabled={!isSuperAdmin}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 ${
-                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                    } ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-gray-200"
-                    }`}
-                  >
-                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- Select Designation --</option>
-                    {designations
-                      .filter(dg => !formDeptId || dg.department_id === formDeptId)
-                      .map(dg => (
-                      <option key={dg.id} value={dg.id} className={isLightMode ? "text-gray-900 bg-white" : "text-gray-200 bg-[#0F131D]"}>
-                        {dg.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 4: Role Mapping & Line Manager */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-purple-400 uppercase tracking-wider block">
-                    RBAC Role Scope
-                  </label>
-                  <select
-                    value={formRoleId}
-                    onChange={(e) => setFormRoleId(e.target.value)}
-                    disabled={!isSuperAdmin}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-purple-500/50 ${
-                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                    } ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-purple-300"
-                    }`}
-                  >
-                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- Default Basic Identity --</option>
-                    {roles.map(r => (
-                      <option key={r.id} value={r.id} className={isLightMode ? "text-gray-900 bg-white" : "text-purple-300 bg-[#0F131D]"}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-indigo-400 uppercase tracking-wider block">
-                    Reporting Line Manager
-                  </label>
-                  <select
-                    value={formManagerId}
-                    onChange={(e) => setFormManagerId(e.target.value)}
-                    disabled={!isSuperAdmin}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-indigo-500/50 ${
-                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                    } ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0F131D] border-white/10 text-indigo-300"
-                    }`}
-                  >
-                    <option value="" className={isLightMode ? "text-gray-500 bg-white" : "text-gray-400 bg-[#0F131D]"}>-- None (Top Executive) --</option>
-                    {availableManagers.map(mgr => (
-                      <option key={mgr.id} value={mgr.id} className={isLightMode ? "text-gray-900 bg-white" : "text-indigo-300 bg-[#0F131D]"}>
-                        {mgr.full_name} ({mgr.user_code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 4.5: Assigned Hardware Assets Multi Selection Dropdown */}
-              <div className="space-y-1.5 relative">
-                <label className="text-[0.8rem] font-bold text-amber-500 uppercase tracking-wider block">
-                  Assigned Hardware Assets Scope
-                </label>
-                
-                {/* Custom multi selection trigger wrapper */}
-                <div 
-                  onClick={() => {
-                    if (isSuperAdmin) setIsAssetDropdownOpen(!isAssetDropdownOpen)
-                  }}
-                  className={`min-h-9 p-1.5 rounded-xl border flex items-center justify-between gap-2 transition-all ${
-                    !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                  } ${
-                    isLightMode 
-                      ? "bg-white border-gray-300 hover:border-gray-400" 
-                      : "bg-white/5 border-white/10 hover:border-white/20"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center gap-1 flex-1 min-w-0 px-1">
-                    {formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean).length > 0 ? (
-                      formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean).map((tagStr, tagIdx) => {
-                        const matchedAst = availableAssets.find(a => (a.asset_tag || a.code) === tagStr);
-                        return (
-                          <span 
-                            key={tagIdx}
-                            onClick={(e) => {
-                              e.stopPropagation(); // prevent toggling dropdown
-                              const currentArr = formAssignedAssets.split(",").map(x => x.trim()).filter(Boolean);
-                              setFormAssignedAssets(currentArr.filter(x => x !== tagStr).join(", "));
-                            }}
-                            className={`text-xs font-mono font-medium px-2 py-0.5 rounded-md flex items-center gap-1 border transition-all hover:opacity-80 ${
-                              isLightMode 
-                                ? "bg-amber-50 text-amber-900 border-amber-200" 
-                                : "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                            }`}
-                            title="Click to deselect asset tag"
-                          >
-                            <span>💻 {matchedAst ? matchedAst.name.split(" ")[0] : tagStr}</span>
-                            <span className="text-[0.7rem] opacity-60">({tagStr})</span>
-                            <span className="font-bold ml-0.5 hover:text-rose-400">×</span>
-                          </span>
-                        );
-                      })
-                    ) : (
-                      <span className={`text-xs px-1 ${isLightMode ? "text-gray-400" : "text-gray-500"}`}>
-                        Click to fetch &amp; select assigned physical assets...
-                      </span>
-                    )}
-                  </div>
-                  <div className={`p-1 rounded shrink-0 ${isLightMode ? "text-gray-400" : "text-gray-500"}`}>
-                    <span className="text-xs font-bold">▼</span>
-                  </div>
-                </div>
-
-                {/* Dropdown Options Drawer Panel */}
-                {isAssetDropdownOpen && (
-                  <div className={`absolute left-0 right-0 top-full mt-1.5 z-50 p-2 rounded-xl border shadow-xl max-h-48 overflow-y-auto scrollbar-thin ${
-                    isLightMode 
-                      ? "bg-white border-gray-200" 
-                      : "bg-[#0A0D14] border-white/10"
-                  }`}>
-                    <div className="text-xs font-bold text-gray-400 px-2 pt-1 pb-1.5 border-b border-white/5 uppercase tracking-wider flex justify-between">
-                      <span>Available Hardware Inventory</span>
-                      <span className="text-amber-500 lowercase font-mono font-normal">fetched from asset master</span>
-                    </div>
-
-                    <div className="space-y-1 pt-1.5">
-                      {availableAssets
-                        .filter((ast) => !ast.assigned_user_id || ast.assigned_user_id === editUserId)
-                        .map((ast) => {
-                        const tagValue = ast.asset_tag || ast.code;
-                        const selectedTags = formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean);
-                        const isAssigned = selectedTags.includes(tagValue);
-                        return (
-                          <div
-                            key={ast.id}
-                            onClick={() => {
-                              if (isAssigned) {
-                                setFormAssignedAssets(selectedTags.filter(t => t !== tagValue).join(", "));
-                              } else {
-                                setFormAssignedAssets([...selectedTags, tagValue].join(", "));
-                              }
-                            }}
-                            className={`w-full p-2 rounded-lg text-left transition-all flex items-center justify-between gap-2.5 border text-xs cursor-pointer ${
-                              isAssigned
-                                ? (isLightMode ? "bg-amber-50/80 border-amber-200 text-amber-900 font-medium" : "bg-amber-500/10 border-amber-500/30 text-amber-300 font-medium")
-                                : (isLightMode ? "bg-transparent border-transparent hover:bg-gray-50 text-gray-700" : "bg-transparent border-transparent hover:bg-white/[0.02] text-gray-300")
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <input 
-                                type="checkbox"
-                                checked={isAssigned}
-                                onChange={() => {}} // dummy to satisfy react, parent div handles logic
-                                className="rounded border-gray-400 text-amber-500 focus:ring-amber-500 h-3.5 w-3.5 pointer-events-none shrink-0"
-                              />
-                              <span className="truncate block font-semibold">{ast.name}</span>
+                  {isAssetDropdownOpen && (
+                    <div className={`absolute left-0 right-0 top-full mt-2 z-50 p-2 rounded-xl border shadow-xl max-h-56 overflow-y-auto scrollbar-thin animate-in fade-in slide-in-from-top-2 duration-150 ${
+                      isLightMode 
+                        ? "bg-white border-slate-200" 
+                        : "bg-[#1A1D24] border-white/10"
+                    }`}>
+                      <div className="space-y-1">
+                        {availableAssets
+                          .filter((ast) => !ast.assigned_user_id || ast.assigned_user_id === editUserId)
+                          .map((ast) => {
+                          const tagValue = ast.asset_tag || ast.code;
+                          const selectedTags = formAssignedAssets.split(",").map(t => t.trim()).filter(Boolean);
+                          const isAssigned = selectedTags.includes(tagValue);
+                          return (
+                            <div
+                              key={ast.id}
+                              onClick={() => {
+                                if (isAssigned) {
+                                  setFormAssignedAssets(selectedTags.filter(t => t !== tagValue).join(", "));
+                                } else {
+                                  setFormAssignedAssets([...selectedTags, tagValue].join(", "));
+                                }
+                              }}
+                              className={`w-full p-2.5 rounded-lg text-left transition-colors flex items-center justify-between gap-3 text-sm cursor-pointer ${
+                                isAssigned
+                                  ? (isLightMode ? "bg-amber-50 text-amber-900" : "bg-amber-500/10 text-amber-200")
+                                  : (isLightMode ? "hover:bg-slate-50 text-slate-700" : "hover:bg-white/5 text-slate-300")
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className={`flex items-center justify-center h-4 w-4 rounded border transition-colors ${
+                                  isAssigned 
+                                    ? "bg-amber-500 border-amber-500 text-white" 
+                                    : (isLightMode ? "border-slate-300" : "border-slate-600")
+                                }`}>
+                                  {isAssigned && <Check className="h-3 w-3" />}
+                                </div>
+                                <span className="truncate font-medium">{ast.name}</span>
+                              </div>
+                              <span className={`text-xs font-mono px-2 py-0.5 rounded-md shrink-0 ${
+                                isAssigned 
+                                  ? (isLightMode ? "bg-white text-amber-800" : "bg-[#0A0D14] text-amber-400")
+                                  : (isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/5 text-slate-400")
+                              }`}>{tagValue}</span>
                             </div>
-                            <span className={`text-[0.7rem] font-mono px-1.5 py-0.2 rounded border shrink-0 ${
-                              isAssigned 
-                                ? (isLightMode ? "bg-white text-amber-800 border-amber-200" : "bg-[#0A0D14] text-amber-400 border-amber-500/20")
-                                : (isLightMode ? "bg-gray-100 text-gray-500 border-gray-200" : "bg-white/5 text-gray-500 border-white/5")
-                            }`}>{tagValue}</span>
+                          );
+                        })}
+                        {availableAssets.filter((ast) => !ast.assigned_user_id || ast.assigned_user_id === editUserId).length === 0 && (
+                          <div className={`p-4 text-center text-sm ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
+                            No unassigned assets available.
                           </div>
-                        );
-                      })}
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Authentication & Security */}
+                <div className="space-y-5 pt-6 border-t border-slate-100 dark:border-white/5">
+                  <h4 className={`text-sm font-semibold flex items-center gap-2 ${isLightMode ? "text-slate-800" : "text-slate-200"}`}>
+                    <Key className="h-4 w-4" />
+                    Authentication & Security
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <label className={`text-sm font-medium flex items-center gap-1.5 ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                        Password 
+                        {isEditingMode ? (
+                          <span className="text-xs text-slate-400 font-normal">(Leave blank to keep)</span>
+                        ) : (
+                          <span className="text-rose-500">*</span>
+                        )}
+                      </label>
+                      <AppInput 
+                        type="password"
+                        placeholder="••••••••"
+                        value={formPassword}
+                        onChange={(e) => setFormPassword(e.target.value)}
+                        className="text-sm rounded-xl"
+                        required={!isEditingMode}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className={`text-sm font-medium ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                        Confirm Password {isEditingMode ? "" : <span className="text-rose-500">*</span>}
+                      </label>
+                      <AppInput 
+                        type="password"
+                        placeholder="••••••••"
+                        value={formConfirmPassword}
+                        onChange={(e) => setFormConfirmPassword(e.target.value)}
+                        className={`text-sm rounded-xl ${formPassword && formConfirmPassword && formPassword !== formConfirmPassword ? 'border-rose-500 focus:ring-rose-500/20' : ''}`}
+                        required={!isEditingMode && !!formPassword}
+                      />
                     </div>
                   </div>
-                )}
 
-                <span className="text-[0.7rem] text-gray-500 block">
-                  Click picker dropdown to assign individual devices linked from canonical backend asset master mapping.
-                </span>
-              </div>
+                  {formPassword && formPassword !== formConfirmPassword && (
+                    <div className="flex items-center gap-2 text-rose-500 text-sm font-medium animate-in slide-in-from-top-1">
+                      <AlertCircle className="h-4 w-4" />
+                      Passwords do not match.
+                    </div>
+                  )}
 
-              {/* Row 5: Secure Credential Auth Settings */}
-              <div className="space-y-3 pt-2 border-t border-white/5">
-                <span className={`text-xs font-bold tracking-wider uppercase block ${
-                  "text-muted"
-                }`}>
-                  Authentication Secrets & Locks
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                      Account Password {isEditingMode ? "(Leave empty to keep unchanged)" : <span className="text-rose-400">*</span>}
+                  {/* Account Status */}
+                  <div className="space-y-3 pt-2">
+                    <label className={`text-sm font-medium ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
+                      Account Status
                     </label>
-                    <AppInput 
-                      type="password"
-                      placeholder="••••••••"
-                      value={formPassword}
-                      onChange={(e) => setFormPassword(e.target.value)}
-                      className="text-xs"
-                      required={!isEditingMode}
-                    />
-                  </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all flex-1 ${
+                        !isSuperAdmin ? "opacity-60 pointer-events-none" : ""
+                      } ${
+                        formIsActive
+                          ? (isLightMode ? "bg-emerald-50 border-emerald-200 shadow-sm" : "bg-emerald-500/10 border-emerald-500/30")
+                          : (isLightMode ? "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50" : "bg-[#0F131D] border-white/10 hover:border-white/20 hover:bg-white/5")
+                      }`}>
+                        <input 
+                          type="radio" 
+                          name="accountStatus" 
+                          checked={formIsActive === true} 
+                          onChange={() => setFormIsActive(true)}
+                          className="sr-only"
+                          disabled={!isSuperAdmin}
+                        />
+                        <div className={`flex items-center justify-center h-8 w-8 rounded-full ${formIsActive ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
+                          <UserCheck className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-semibold ${formIsActive ? (isLightMode ? "text-emerald-900" : "text-emerald-100") : (isLightMode ? "text-slate-700" : "text-slate-300")}`}>Active</p>
+                          <p className={`text-xs ${formIsActive ? (isLightMode ? "text-emerald-700" : "text-emerald-300/70") : "text-slate-500"}`}>Can sign in</p>
+                        </div>
+                        {formIsActive && <Check className="h-5 w-5 ml-auto text-emerald-500" />}
+                      </label>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                      Confirm Account Password {isEditingMode ? "" : <span className="text-rose-400">*</span>}
-                    </label>
-                    <AppInput 
-                      type="password"
-                      placeholder="••••••••"
-                      value={formConfirmPassword}
-                      onChange={(e) => setFormConfirmPassword(e.target.value)}
-                      className="text-xs"
-                      required={!isEditingMode && !!formPassword}
-                    />
+                      <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all flex-1 ${
+                        !isSuperAdmin ? "opacity-60 pointer-events-none" : ""
+                      } ${
+                        !formIsActive
+                          ? (isLightMode ? "bg-rose-50 border-rose-200 shadow-sm" : "bg-rose-500/10 border-rose-500/30")
+                          : (isLightMode ? "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50" : "bg-[#0F131D] border-white/10 hover:border-white/20 hover:bg-white/5")
+                      }`}>
+                        <input 
+                          type="radio" 
+                          name="accountStatus" 
+                          checked={formIsActive === false} 
+                          onChange={() => setFormIsActive(false)}
+                          className="sr-only"
+                          disabled={!isSuperAdmin}
+                        />
+                        <div className={`flex items-center justify-center h-8 w-8 rounded-full ${!formIsActive ? "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
+                          <Lock className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-semibold ${!formIsActive ? (isLightMode ? "text-rose-900" : "text-rose-100") : (isLightMode ? "text-slate-700" : "text-slate-300")}`}>Disabled</p>
+                          <p className={`text-xs ${!formIsActive ? (isLightMode ? "text-rose-700" : "text-rose-300/70") : "text-slate-500"}`}>Access blocked</p>
+                        </div>
+                        {!formIsActive && <Check className="h-5 w-5 ml-auto text-rose-500" />}
+                      </label>
+                    </div>
                   </div>
                 </div>
 
-                {/* Account Status radio group */}
-                <div className="space-y-2 pt-1 border-t border-white/5">
-                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
-                    Account Access Status
-                  </label>
-                  <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all flex-1 w-full justify-center ${
-                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                    } ${
-                      formIsActive
-                        ? (isLightMode ? "bg-emerald-50 border-emerald-300 text-emerald-800" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300")
-                        : (isLightMode ? "bg-transparent border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-transparent border-white/10 text-gray-400 hover:bg-white/[0.02]")
-                    }`}>
-                      <input 
-                        type="radio" 
-                        name="accountStatus" 
-                        checked={formIsActive === true} 
-                        onChange={() => setFormIsActive(true)}
-                        className="sr-only"
-                        disabled={!isSuperAdmin}
-                      />
-                      <UserCheck className={`h-4 w-4 ${formIsActive ? "text-emerald-500" : "text-gray-400"}`} />
-                      <span>Active & Authorized</span>
-                    </label>
-
-                    <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all flex-1 w-full justify-center ${
-                      !isSuperAdmin ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-                    } ${
-                      !formIsActive
-                        ? (isLightMode ? "bg-rose-50 border-rose-300 text-rose-800" : "bg-rose-500/10 border-rose-500/30 text-rose-300")
-                        : (isLightMode ? "bg-transparent border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-transparent border-white/10 text-gray-400 hover:bg-white/[0.02]")
-                    }`}>
-                      <input 
-                        type="radio" 
-                        name="accountStatus" 
-                        checked={formIsActive === false} 
-                        onChange={() => setFormIsActive(false)}
-                        className="sr-only"
-                        disabled={!isSuperAdmin}
-                      />
-                      <Lock className={`h-4 w-4 ${!formIsActive ? "text-rose-500" : "text-gray-400"}`} />
-                      <span>Disabled / Restrained</span>
-                    </label>
-                  </div>
-                  <span className="text-[0.7rem] text-gray-500 block">
-                    Disabled accounts are blocked from system sign-in and will show in restricted directory status filters.
-                  </span>
-                </div>
-                
-                {formPassword && formPassword !== formConfirmPassword && (
-                  <span className="text-xs text-rose-400 block font-medium animate-in fade-in-20">
-                    ⚠ Passwords do not match. Please verify input values.
-                  </span>
-                )}
               </div>
 
-              </div>
-
-              {/* Modal footer commit buttons */}
-              <div className={`flex items-center justify-end gap-2 px-6 py-4 border-t shrink-0 ${
-                isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.002]"
+              {/* Modal Footer */}
+              <div className={`flex items-center justify-end gap-3 px-8 py-5 border-t shrink-0 ${
+                isLightMode ? "border-slate-100 bg-slate-50/50" : "border-white/5 bg-[#0A0D14]"
               }`}>
                 <AppButton 
                   type="button" 
                   variant="outline" 
-                  size="sm"
                   onClick={() => setShowModal(false)}
+                  className="rounded-xl font-medium px-5 h-10"
                 >
                   Cancel
                 </AppButton>
                 <AppButton 
                   type="submit" 
                   variant="primary" 
-                  size="sm"
+                  className="rounded-xl font-medium px-6 h-10 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shadow-sm border-0"
                 >
                   {isEditingMode ? "Save Changes" : "Create Account"}
                 </AppButton>
@@ -1812,21 +1815,21 @@ export default function UserMasterPage() {
 
             {isViewingPhoto && (
               <div 
-                className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-200"
+                className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200"
                 style={{ backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
                 onClick={() => setIsViewingPhoto(false)}
               >
-                <div className="relative max-w-sm w-full flex flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                <div className="relative max-w-sm w-full flex flex-col items-center gap-6" onClick={(e) => e.stopPropagation()}>
                   <img 
                     src={formPhoto || PRESET_AVATARS[0]} 
-                    alt="Profile Picture" 
-                    className="w-72 h-72 rounded-2xl object-cover border-4 border-white/10 shadow-2xl animate-in scale-in-95 duration-200"
+                    alt="Profile" 
+                    className="w-64 h-64 sm:w-80 sm:h-80 rounded-[2rem] object-cover border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
                     onError={(e) => { (e.target as any).src = PRESET_AVATARS[0]; }}
                   />
                   <button
                     type="button"
                     onClick={() => setIsViewingPhoto(false)}
-                    className="px-4 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-all border border-white/20 shadow-lg"
+                    className="px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all border border-white/20 backdrop-blur-sm"
                   >
                     Close View
                   </button>
