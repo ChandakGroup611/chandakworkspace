@@ -1410,7 +1410,7 @@ export default function UserMasterPage() {
                       </div>
 
                       {/* Presets */}
-                      <div className="flex items-center gap-2 pt-1">
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
                         {PRESET_AVATARS.map((avUrl, aIdx) => (
                           <button
                             key={aIdx}
