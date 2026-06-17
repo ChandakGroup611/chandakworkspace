@@ -1318,12 +1318,12 @@ export default function UserMasterPage() {
           style={{ backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
-          <div className={`relative w-full max-w-2xl max-h-[90vh] rounded-[24px] border shadow-2xl overflow-hidden flex flex-col ${
+          <div className={`relative w-full max-w-3xl max-h-[95vh] rounded-[24px] border shadow-2xl overflow-hidden flex flex-col ${
             isLightMode ? "bg-white border-slate-200 text-slate-800" : "bg-[#0A0D14] border-white/10 text-slate-100"
           }`}>
             <form onSubmit={handleSubmitForm} className="flex flex-col h-full overflow-hidden">
               {/* Modal Header */}
-              <div className={`flex items-center justify-between px-8 py-6 shrink-0 border-b ${
+              <div className={`flex items-center justify-between px-8 py-5 shrink-0 border-b ${
                 isLightMode ? "border-slate-100" : "border-white/5"
               }`}>
                 <div className="space-y-1">
@@ -1346,7 +1346,7 @@ export default function UserMasterPage() {
               </div>
 
               {/* Scrollable Form parameters view */}
-              <div className="px-8 py-6 space-y-8 overflow-y-auto flex-1 scrollbar-thin min-h-0">
+              <div className="px-8 py-5 space-y-6 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0">
                 {/* Profile Photo selector */}
                 <div className="space-y-4">
                   <label className={`text-sm font-medium ${isLightMode ? "text-slate-700" : "text-slate-300"}`}>
