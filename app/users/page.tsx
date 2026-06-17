@@ -934,32 +934,26 @@ export default function UserMasterPage() {
                               </div>
                             </AppTableCell>
 
-                            <AppTableCell className="min-w-[250px]">
-                              <div className="flex flex-col justify-center min-w-0 py-1">
-                                <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  <span className={`text-sm font-semibold truncate block max-w-[180px] sm:max-w-xs ${
-                                    isLightMode ? "text-slate-800" : "text-slate-200"
-                                  }`}>
+                            <AppTableCell>
+                              <div className="flex flex-col justify-center gap-1.5 py-2">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-sm font-bold truncate max-w-[180px] sm:max-w-[220px] ${isLightMode ? "text-slate-900" : "text-white"}`}>
                                     {usr.full_name}
                                   </span>
                                   {usr.user_code && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap shrink-0 ${
-                                      isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/5 text-slate-400"
-                                    }`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap shrink-0 ${isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/10 text-slate-300"}`}>
                                       {usr.user_code}
                                     </span>
                                   )}
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium tracking-wide uppercase whitespace-nowrap shrink-0 ${
-                                    isLightMode ? "bg-indigo-50 text-indigo-600" : "bg-indigo-500/10 text-indigo-400"
-                                  }`}>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap shrink-0 ${isLightMode ? "bg-indigo-50 text-indigo-700" : "bg-indigo-500/20 text-indigo-300"}`}>
                                     {usr.designationObj?.name || "General Assignee"}
                                   </span>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-2 text-xs mt-0.5">
+                                <div className="flex items-center gap-2 text-xs">
                                   <span className={`truncate max-w-[200px] ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
                                     {usr.email}
                                   </span>
-                                  <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">•</span>
+                                  <span className="text-slate-300 dark:text-slate-600">•</span>
                                   <span className={`flex items-center gap-1 shrink-0 ${isLightMode ? "text-slate-600 font-medium" : "text-slate-300 font-medium"}`}>
                                     <Layers className="h-3 w-3 opacity-70" />
                                     <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
@@ -969,14 +963,14 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <div className="flex flex-wrap gap-1.5 max-w-[180px]">
+                              <div className="flex flex-wrap items-center gap-1.5">
                                 {usr.assigned_assets && usr.assigned_assets.length > 0 ? (
                                   usr.assigned_assets.map((ast, aIdx) => (
-                                    <span key={aIdx} className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                                      isLightMode ? "bg-amber-50 text-amber-700" : "bg-amber-500/10 text-amber-400"
+                                    <span key={aIdx} className={`text-[10px] px-2 py-1 rounded-md flex items-center gap-1 border ${
+                                      isLightMode ? "bg-white border-amber-200 text-amber-700 shadow-sm" : "bg-amber-500/5 border-amber-500/20 text-amber-400"
                                     }`} title={ast}>
-                                      <span className="opacity-60 text-[8px]">💻</span>
-                                      <span className="truncate max-w-[80px] font-mono">{ast}</span>
+                                      <span className="opacity-70 text-[9px]">💻</span>
+                                      <span className="font-mono tracking-tight">{ast}</span>
                                     </span>
                                   ))
                                 ) : (
