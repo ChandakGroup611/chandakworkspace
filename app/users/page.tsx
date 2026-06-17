@@ -1510,19 +1510,27 @@ export default function UserMasterPage() {
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-800">Authentication</label>
-                      <input 
-                        type="text" disabled value="Password"
-                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-100/50 text-slate-400 text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-800">Password</label>
+                      <label className="text-sm font-medium text-slate-800">Password {editUserId && <span className="text-slate-400 font-normal text-xs">(Leave blank to keep unchanged)</span>}</label>
                       <div className="relative flex items-center">
                         <div className="relative flex-1">
                           <input 
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} disabled={!isSuperAdmin && !!editUserId}
+                            className="w-full h-8 pl-3.5 pr-10 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          />
+                          <div className="absolute right-2.5 top-2 cursor-pointer text-slate-400 hover:text-slate-600" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-slate-800">Confirm Password</label>
+                      <div className="relative flex items-center">
+                        <div className="relative flex-1">
+                          <input 
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••" value={formConfirmPassword} onChange={(e) => setFormConfirmPassword(e.target.value)} disabled={!isSuperAdmin && !!editUserId}
                             className="w-full h-8 pl-3.5 pr-10 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                           <div className="absolute right-2.5 top-2 cursor-pointer text-slate-400 hover:text-slate-600" onClick={() => setShowPassword(!showPassword)}>
