@@ -148,6 +148,7 @@ export default function UserMasterPage() {
   const [formRoleId, setFormRoleId] = useState("");
   const [formManagerId, setFormManagerId] = useState("");
   const [formPassword, setFormPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [formConfirmPassword, setFormConfirmPassword] = useState("");
   const [formPhoto, setFormPhoto] = useState(PRESET_AVATARS[0]);
   const [formAssignedAssets, setFormAssignedAssets] = useState("");
@@ -1481,7 +1482,23 @@ export default function UserMasterPage() {
                         </span>
                       ))}
                       <div className="flex-1 min-w-[100px] relative">
-                        <input type="text" className="w-full bg-transparent border-none outline-none text-sm px-2 text-slate-800 placeholder-slate-400" placeholder={!formAssignedAssets ? "Add asset..." : ""} />
+                        <select 
+                          className="w-full bg-transparent border-none outline-none text-sm px-2 text-slate-800 placeholder-slate-400 appearance-none"
+                          value=""
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
+                            if (!currentArr.includes(e.target.value)) {
+                              setFormAssignedAssets(currentArr.concat(e.target.value).join(', '));
+                            }
+                          }}
+                          disabled={!isSuperAdmin && !!editUserId}
+                        >
+                          <option value="" disabled hidden>{!formAssignedAssets ? "Select an asset..." : "Add another asset..."}</option>
+                          {availableAssets.map(a => (
+                            <option key={a.id} value={a.asset_tag || a.code}>{a.asset_tag || a.code} - {a.name}</option>
+                          ))}
+                        </select>
                       </div>
                       <ChevronDown className="absolute right-2 top-2 h-4 w-4 pointer-events-none text-slate-400" />
                     </div>
@@ -1504,15 +1521,14 @@ export default function UserMasterPage() {
                       <div className="relative flex items-center">
                         <div className="relative flex-1">
                           <input 
-                            type={showModal ? "password" : "text"}
-                            placeholder="••••••••" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} disabled={!isSuperAdmin}
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} disabled={!isSuperAdmin && !!editUserId}
                             className="w-full h-8 pl-3.5 pr-10 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
-                          <EyeOff className="absolute right-2.5 top-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-600" />
+                          <div className="absolute right-2.5 top-2 cursor-pointer text-slate-400 hover:text-slate-600" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </div>
                         </div>
-                        <button type="button" className="ml-2 h-8 px-3 rounded-md bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 text-xs font-medium flex items-center shrink-0">
-                          Change
-                        </button>
                       </div>
                     </div>
                   </div>
