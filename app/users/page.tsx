@@ -1315,7 +1315,7 @@ export default function UserMasterPage() {
       {/* ── Dynamic Personnel Register & Update Overlay Modal ── */}
       {showModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-start pt-16 pb-16 overflow-y-auto justify-center px-4 animate-in fade-in-0 duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in-0 duration-200"
           style={{ backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
@@ -1347,9 +1347,9 @@ export default function UserMasterPage() {
               </div>
 
               {/* Scrollable Form parameters view */}
-              <div className="px-8 py-6 space-y-6 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0 bg-white">
+              <div className="px-8 py-4 space-y-4 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0 bg-white">
                 {/* Profile Photo selector */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                   <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                     <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center bg-slate-200/50 text-slate-400">
                       {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
@@ -1378,7 +1378,7 @@ export default function UserMasterPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                   {/* Row 1 */}
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Full Name</label>
