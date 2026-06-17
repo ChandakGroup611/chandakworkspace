@@ -1455,10 +1455,10 @@ export default function UserMasterPage() {
                   </div>
                 </div>
 
-                <div className="space-y-5 pt-4">
+                <div className="space-y-3 pt-2">
                   <h4 className="text-lg font-bold text-slate-900">Authentication & Status</h4>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-slate-800">Authentication</label>
                       <input 
@@ -1481,7 +1481,7 @@ export default function UserMasterPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-end justify-start gap-16 pt-2 pb-2">
+                  <div className="flex items-end justify-start gap-16 pt-1 pb-1">
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-slate-800">Account Access Status</label>
                       <div className="flex items-center gap-3 mt-1">
