@@ -61,7 +61,7 @@ export async function POST(req: Request) {
               actor: 'System', // Would fetch actual actor name if cached
               target_user_id: m.user_id,
               payload: event.payload,
-              redirect_url: `/workspaces?task=${event.entity_id}`,
+              redirect_url: `/tasks/${event.entity_id}`,
               priority_level: 'MEDIUM',
               is_read: false
             }));

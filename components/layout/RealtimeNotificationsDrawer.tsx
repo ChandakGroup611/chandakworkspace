@@ -61,7 +61,7 @@ export default function RealtimeNotificationsDrawer() {
 
   const { data: fetchedNotifications, isLoading: loading } = useQuery({
     queryKey: ['notifications', currentUserId],
-    enabled: isOpen && !!currentUserId,
+    enabled: !!currentUserId,
     queryFn: async () => {
       console.count("Notification Fetch Count");
       const { data, error } = await supabase
@@ -108,9 +108,9 @@ export default function RealtimeNotificationsDrawer() {
     }
   }, [fetchedNotifications]);
 
-  // Realtime subscription ONLY active when drawer is open
+  // Realtime subscription active for the badge count
   useEffect(() => {
-    if (mounted && currentUserId && isOpen) {
+    if (mounted && currentUserId) {
       const channel = supabase
         .channel("global_notification_buffer")
         .on(
@@ -131,7 +131,7 @@ export default function RealtimeNotificationsDrawer() {
         supabase.removeChannel(channel);
       };
     }
-  }, [mounted, currentUserId, isOpen]);
+  }, [mounted, currentUserId]);
 
   const handleConsumeNotification = async (item: NotificationItem) => {
     setLocalNotifications(prev => prev.filter(n => n.id !== item.id));
