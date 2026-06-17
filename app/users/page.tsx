@@ -1331,9 +1331,6 @@ export default function UserMasterPage() {
                   <h3 className="text-xl font-semibold tracking-tight">
                     {isEditingMode ? "Update Identity Record" : "Register User Account"}
                   </h3>
-                  <p className={`text-sm ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
-                    Manage profile details, assignments, and authentication for this user.
-                  </p>
                 </div>
                 <button 
                   type="button" 
@@ -1484,7 +1481,7 @@ export default function UserMasterPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 pb-2">
+                  <div className="flex items-end justify-start gap-16 pt-2 pb-2">
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-slate-800">Account Access Status</label>
                       <div className="flex items-center gap-3 mt-1">
@@ -1500,7 +1497,7 @@ export default function UserMasterPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 self-end pb-1">
+                    <div className="flex items-center gap-3 pb-0.5">
                       <button
                         type="button"
                         onClick={() => setShowModal(false)}
