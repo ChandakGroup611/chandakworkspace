@@ -1410,14 +1410,34 @@ export default function UserMasterPage() {
                   </div>
 
                   <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-800">Department</label>
+                    <div className="relative">
+                      <select 
+                        value={formDeptId} 
+                        onChange={(e) => {
+                          setFormDeptId(e.target.value);
+                          setFormDesigId("");
+                        }} 
+                        disabled={!isSuperAdmin}
+                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                      >
+                        <option value="">Select Department...</option>
+                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Designation</label>
                     <div className="relative">
                       <select 
-                        value={formDesigId} onChange={(e) => setFormDesigId(e.target.value)} disabled={!isSuperAdmin}
+                        value={formDesigId} onChange={(e) => setFormDesigId(e.target.value)} disabled={!isSuperAdmin || !formDeptId}
                         className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                       >
-                        <option value="">Select Designation...</option>
-                        {designations.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                        <option value="">{formDeptId ? "Select Designation..." : "Select Department First"}</option>
+                        {designations
+                          .filter(d => !formDeptId || d.department_id === formDeptId)
+                          .map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                       </select>
                       <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
                     </div>
@@ -1435,6 +1455,7 @@ export default function UserMasterPage() {
                       <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
                     </div>
                   </div>
+
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Manager</label>
                     <div className="relative">
@@ -1444,20 +1465,6 @@ export default function UserMasterPage() {
                       >
                         <option value="">Michael Thompson</option>
                         {availableManagers.map(mgr => <option key={mgr.id} value={mgr.id}>{mgr.full_name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Department</label>
-                    <div className="relative">
-                      <select 
-                        value={formDeptId} onChange={(e) => setFormDeptId(e.target.value)} disabled={!isSuperAdmin}
-                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
-                      >
-                        <option value="">Select Department...</option>
-                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                       </select>
                       <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
                     </div>
