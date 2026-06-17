@@ -45,7 +45,8 @@ import {
   MonitorSmartphone,
   ChevronDown,
   Key,
-  AlertCircle
+  AlertCircle,
+  EyeOff
 } from "lucide-react";
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
