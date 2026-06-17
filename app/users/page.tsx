@@ -1806,11 +1806,9 @@ export default function UserMasterPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all flex items-center gap-2"
                 >
-                  {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
-                  {isSaving ? "Saving..." : (isEditingMode ? "Save Changes" : "Create Account")}
+                  {isEditingMode ? "Save Changes" : "Create Account"}
                 </button>
               </div>
             </form>
