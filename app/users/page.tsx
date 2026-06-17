@@ -1315,16 +1315,16 @@ export default function UserMasterPage() {
       {/* ── Dynamic Personnel Register & Update Overlay Modal ── */}
       {showModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in-0 duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-2 animate-in fade-in-0 duration-200"
           style={{ backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(8px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
-          <div className={`relative w-full max-w-3xl max-h-[95vh] rounded-[24px] border shadow-2xl overflow-hidden flex flex-col ${
+          <div className={`relative w-full max-w-3xl max-h-[100dvh] rounded-[24px] border shadow-2xl overflow-hidden flex flex-col ${
             isLightMode ? "bg-white/95 backdrop-blur-xl border-slate-200/50 text-slate-800 shadow-[0_12px_40px_rgba(0,0,0,0.08)]" : "bg-[#0A0D14]/90 backdrop-blur-xl border-white/10 text-slate-100 shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
           }`}>
             <form onSubmit={handleSubmitForm} className="flex flex-col h-full overflow-hidden">
               {/* Modal Header */}
-              <div className={`flex items-center justify-between px-8 py-5 shrink-0 border-b ${
+              <div className={`flex items-center justify-between px-6 py-3 shrink-0 border-b ${
                 isLightMode ? "border-slate-100" : "border-white/5"
               }`}>
                 <div className="space-y-1">
@@ -1344,9 +1344,9 @@ export default function UserMasterPage() {
               </div>
 
               {/* Scrollable Form parameters view */}
-              <div className="px-6 py-2 space-y-2 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0 bg-white">
+              <div className="px-6 py-1 space-y-1 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0 bg-white">
                 {/* Profile Photo selector */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                     <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-200/50 text-slate-400">
                       {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
