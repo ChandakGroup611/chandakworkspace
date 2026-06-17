@@ -487,27 +487,22 @@ export async function updateWorkspace(id: string, formData: any) {
     const userId = userData.user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
-  // Check if user is a manager of the workspace OR has global manage permissions
-  const canManageAll = await checkServerPermission(supabase, userId, "WORKSPACES_MANAGE");
+  // Check if user has global UPDATE permissions via IAM/RBAC
+  const canUpdateGlobal = await checkServerPermission(supabase, userId, "WORKSPACES_UPDATE");
   
-  let isManager = canManageAll;
+  let canUpdate = canUpdateGlobal;
   
-  if (!isManager) {
-    const { data: member } = await supabaseAdmin
-      .from("workspace_members")
-      .select("role")
-      .eq("workspace_id", id)
-      .eq("user_id", userId)
-      .maybeSingle();
-      
-    if (member && member.role === 'manager') {
-      isManager = true;
+  // If no global permissions, check if they are the owner of the workspace
+  if (!canUpdate) {
+    const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
+    if (ws && ws.workspace_owner_id === userId) {
+      canUpdate = true;
     }
   }
 
-  if (!isManager) {
+  if (!canUpdate) {
     await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'UPDATE_WORKSPACE' }, userId);
-    return { error: "Unauthorized: Missing workspace manager role." };
+    return { error: "Unauthorized: Missing WORKSPACES_UPDATE capability or owner access." };
   }
 
   const { data: oldWs } = await supabaseAdmin.from("workspaces").select("workspace_name").eq("id", id).single();
@@ -643,9 +638,14 @@ export async function deleteWorkspace(id: string) {
     if (!userId) return { error: "Unauthenticated" };
 
     const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
-    if (!ws || ws.workspace_owner_id !== userId) {
+    
+    // Check if user has global DELETE permissions via IAM/RBAC
+    const canDeleteGlobal = await checkServerPermission(supabase, userId, "WORKSPACES_DELETE");
+    const isOwner = ws && ws.workspace_owner_id === userId;
+    
+    if (!canDeleteGlobal && !isOwner) {
       await logActivityEvent('WORKSPACE', id, 'UNAUTHORIZED_WORKSPACE_ACTION', null, { action_attempted: 'DELETE_WORKSPACE' }, userId);
-      return { error: "Unauthorized: You must be the workspace owner to delete this workspace." };
+      return { error: "Unauthorized: Missing WORKSPACES_DELETE capability or owner access." };
     }
 
   const { error } = await supabaseAdmin
