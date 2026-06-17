@@ -1344,11 +1344,11 @@ export default function UserMasterPage() {
               </div>
 
               {/* Scrollable Form parameters view */}
-              <div className="px-8 py-4 space-y-4 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0 bg-white">
+              <div className="px-6 py-2 space-y-2 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0 bg-white">
                 {/* Profile Photo selector */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                    <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center bg-slate-200/50 text-slate-400">
+                    <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-200/50 text-slate-400">
                       {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
                         <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />
                       ) : (
@@ -1361,7 +1361,7 @@ export default function UserMasterPage() {
                   </div>
                   
                   <div className="flex flex-col items-start gap-2">
-                    <h2 className="text-2xl font-bold text-slate-900">{formFullName || 'New User'}</h2>
+                    <h2 className="text-xl font-bold text-slate-900">{formFullName || 'New User'}</h2>
                     <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
                     <button
                       type="button"
@@ -1375,20 +1375,20 @@ export default function UserMasterPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
                   {/* Row 1 */}
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Full Name</label>
                     <input 
                       placeholder="e.g. Sarah Chen" value={formFullName} onChange={(e) => setFormFullName(e.target.value)} required disabled={!isSuperAdmin}
-                      className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Designation</label>
                     <input 
                       placeholder="e.g. Senior UX Designer" value={formDesigId} onChange={(e) => setFormDesigId(e.target.value)} disabled={!isSuperAdmin}
-                      className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   {/* Row 2 */}
@@ -1396,14 +1396,14 @@ export default function UserMasterPage() {
                     <label className="text-sm font-medium text-slate-800">User Code</label>
                     <input 
                       placeholder="e.g. SC8839" value={formUserCode} onChange={(e) => setFormUserCode(e.target.value)} required disabled={!isSuperAdmin}
-                      className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-800">Role</label>
                     <input 
                       placeholder="e.g. Lead Designer" value={formRoleId} onChange={(e) => setFormRoleId(e.target.value)} disabled={!isSuperAdmin}
-                      className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   {/* Row 3 */}
@@ -1411,7 +1411,7 @@ export default function UserMasterPage() {
                     <label className="text-sm font-medium text-slate-800">Email</label>
                     <input 
                       type="email" placeholder="e.g. sarah.chen@innovate.co" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} required disabled={!isSuperAdmin}
-                      className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -1419,7 +1419,7 @@ export default function UserMasterPage() {
                     <div className="relative">
                       <select 
                         value={formManagerId} onChange={(e) => setFormManagerId(e.target.value)} disabled={!isSuperAdmin}
-                        className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                       >
                         <option value="">Michael Thompson</option>
                         {availableManagers.map(mgr => <option key={mgr.id} value={mgr.id}>{mgr.full_name}</option>)}
@@ -1432,14 +1432,14 @@ export default function UserMasterPage() {
                     <label className="text-sm font-medium text-slate-800">Department</label>
                     <input 
                       placeholder="e.g. Product Design" value={formDeptId} onChange={(e) => setFormDeptId(e.target.value)} disabled={!isSuperAdmin}
-                      className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-800">Assigned Hardware Assets</label>
-                  <div className="min-h-[42px] p-1.5 rounded-lg border border-slate-300 bg-white shadow-sm flex flex-wrap items-center gap-1.5 relative">
+                  <div className="min-h-[32px] p-1 rounded-lg border border-slate-300 bg-white shadow-sm flex flex-wrap items-center gap-1.5 relative">
                     {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
                       <span key={idx} className="text-sm px-2 py-1 flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-md">
                         [{tag}] <X className="h-3 w-3 cursor-pointer opacity-50 hover:opacity-100" onClick={() => {
@@ -1455,15 +1455,15 @@ export default function UserMasterPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-2">
-                  <h4 className="text-lg font-bold text-slate-900">Authentication & Status</h4>
+                <div className="space-y-2 pt-0">
+                  <h4 className="text-base font-bold text-slate-900">Authentication & Status</h4>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-slate-800">Authentication</label>
                       <input 
                         type="text" disabled value="Password"
-                        className="w-full h-10 px-3.5 rounded-lg border border-slate-200 bg-slate-100/50 text-slate-400 text-sm"
+                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-100/50 text-slate-400 text-sm"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1471,7 +1471,7 @@ export default function UserMasterPage() {
                       <div className="relative">
                         <input 
                           type="password" placeholder="••••••••" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} disabled={!isSuperAdmin}
-                          className="w-full h-10 pl-3.5 pr-40 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          className="w-full h-8 pl-3.5 pr-40 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                         />
                         <button type="button" className="absolute right-1 top-1 bottom-1 px-3 rounded-md bg-slate-200/80 hover:bg-slate-300/80 text-slate-700 text-sm font-medium flex items-center gap-2">
                           Change Password
@@ -1501,13 +1501,13 @@ export default function UserMasterPage() {
                       <button
                         type="button"
                         onClick={() => setShowModal(false)}
-                        className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        className="px-5 py-1.5 rounded-lg text-sm font-semibold transition-all bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#3B2D6C] hover:bg-[#32255e] transition-all flex items-center gap-2"
+                        className="px-6 py-1.5 rounded-lg text-sm font-semibold text-white bg-[#3B2D6C] hover:bg-[#32255e] transition-all flex items-center gap-2"
                       >
                         {isEditingMode ? "Save Changes" : "Save Changes"}
                       </button>
