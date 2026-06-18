@@ -114,7 +114,22 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       
       if (selectedStatus && t.status?.name !== selectedStatus) return false;
       if (selectedPriority && t.priority?.name !== selectedPriority) return false;
-      if (showEscalatedOnly && t.status?.name?.toLowerCase() !== "escalated") return false;
+      if (showEscalatedOnly) {
+        const sName = t.status?.name?.toLowerCase() || "";
+        const isStatusEscalated = sName.includes("escalat") || sName.includes("block");
+        const isResolved = sName.includes("resolv") || sName.includes("done") || t.status?.is_closed;
+        
+        let isOverdue = false;
+        if (!isResolved && t.end_date) {
+          const dueDate = new Date(t.end_date);
+          dueDate.setHours(23, 59, 59, 999);
+          if (Date.now() > dueDate.getTime()) {
+            isOverdue = true;
+          }
+        }
+        
+        if (!isStatusEscalated && !isOverdue) return false;
+      }
 
       if (dateFrom) {
         const fromDate = new Date(dateFrom).getTime();

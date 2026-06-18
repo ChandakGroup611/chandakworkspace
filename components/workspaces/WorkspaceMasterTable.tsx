@@ -191,7 +191,7 @@ export function WorkspaceMasterTable({
   const gridCols = 'minmax(250px, 4fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(130px, 1fr)';
 
 
-  const HierarchyRow = React.memo(({ node, parentNode, depth, isExpanded }: { node: any, parentNode: any, depth: number, isExpanded: boolean }) => {
+  const renderHierarchyRow = (node: any, parentNode: any, depth: number, isExpanded: boolean) => {
     const hasChildren = node.children && node.children.length > 0;
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
     const isSubWorkspace = node.type === 'SUB_WORKSPACE';
@@ -482,17 +482,14 @@ export function WorkspaceMasterTable({
           </div>
         </div>
       );
-    }, (prevProps, nextProps) => {
-      // Memoize the row, only re-render if node identity or expanded state changes
-      return prevProps.node === nextProps.node && prevProps.isExpanded === nextProps.isExpanded && prevProps.parentNode === nextProps.parentNode;
-    });
+    };
 
     const renderTree = (nodes: any[], depth = 0, parentNode: any = null) => {
       return nodes.map((node) => {
         const isActuallyExpanded = forceExpandAll || !!expandedNodes[node.id];
         return (
           <React.Fragment key={node.id}>
-            <HierarchyRow node={node} parentNode={parentNode} depth={depth} isExpanded={isActuallyExpanded} />
+            {renderHierarchyRow(node, parentNode, depth, isActuallyExpanded)}
             {isActuallyExpanded && node.children && renderTree(node.children, depth + 1, node)}
           </React.Fragment>
         );

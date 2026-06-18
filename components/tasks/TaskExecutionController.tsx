@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -75,6 +75,19 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [editingAssigneesList, setEditingAssigneesList] = useState<string[]>([]);
   const [isSavingAssignees, setIsSavingAssignees] = useState(false);
+  
+  // Click-outside reference for Executors Edit Panel
+  const assigneesRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (isEditingAssignees && assigneesRef.current && !assigneesRef.current.contains(event.target as Node)) {
+        setIsEditingAssignees(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isEditingAssignees]);
 
   const loadTaskDetails = async (forceUpdate = false) => {
     if (!forceUpdate && initialTask && task) return;
@@ -518,8 +531,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   }
 
   return (
-    <ExperienceProvider mode="compact">
-    <AppCard className="p-4 space-y-4 border-t-2 border-t-blue-500">
+    <ExperienceProvider mode="operational">
+    <AppCard className="p-5 space-y-6 border-t-4 border-t-blue-500 shadow-sm">
       
       {/* Sleek Error Notification Banner */}
       {error && (
@@ -531,238 +544,215 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* Title & Core Meta removed to avoid duplication with parent page layout */}
       
-      {/* Extended Metadata Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3 bg-gray-50/50 dark:bg-[#111827] p-3 rounded-md border border-gray-100 dark:border-white/5">
-          <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Priority</span>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
-              <span className="text-xs font-medium dark:text-gray-200">{task.priority?.name || "Standard"}</span>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Start Date <span className="text-red-500">*</span></span>
-            <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
-              {task.currentUserIsSuperAdmin ? (
-                <input
-                  type="date"
-                  className="px-1.5 py-0.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0B0F19] text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
-                  onChange={(e) => {
-                    const newStartDate = e.target.value;
-                    setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
-                    setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
-                  }}
-                />
-              ) : (
-                task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"
-              )}
-            </div>
-          </div>
-          <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Due Date <span className="text-red-500">*</span></span>
-            <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
-              {task.currentUserIsSuperAdmin ? (
-                <input
-                  type="date"
-                  className="px-1.5 py-0.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0B0F19] text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
-                  onChange={(e) => {
-                    const newEndDate = e.target.value;
-                    setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDate }));
-                    setTask((prev: any) => ({ ...prev, end_date: newEndDate }));
-                  }}
-                />
-              ) : (
-                task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"
-              )}
-            </div>
-          </div>
-          <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Duration (Days)</span>
-            <div className="text-xs font-medium dark:text-gray-200 flex items-center gap-1.5">
-              {task.currentUserIsSuperAdmin ? (
-                <input
-                  type="number"
-                  className="w-16 px-1.5 py-0.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0B0F19] text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
-                  onChange={(e) => {
-                    if (!task.start_date) return;
-                    const days = parseInt(e.target.value, 10);
-                    if (!isNaN(days) && days > 0) {
-                      const startDate = new Date(task.start_date);
-                      startDate.setDate(startDate.getDate() + (days - 1));
-                      const newEndDateStr = startDate.toISOString().split('T')[0];
-                      setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
-                      setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
-                    }
-                  }}
-                />
-              ) : (
-                <span>
-                  {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="space-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-gray-400">Primary Assignee</span>
-            <div className="flex items-center gap-1.5">
-              {task.assignee ? (
-                (() => {
-                   const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
-                   if (!a) return null;
-                   return (
-                     <>
-                       {a.profile_photo ? (
-                         <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
-                       ) : (
-                         <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
-                           {a.full_name?.substring(0, 2).toUpperCase() || "U"}
-                         </div>
-                       )}
-                       <span className="text-xs font-medium dark:text-gray-200 truncate">{a.full_name}</span>
-                     </>
-                   );
-                })()
-              ) : (
-                <span className="text-xs font-medium text-gray-400 italic">Unassigned</span>
-              )}
-            </div>
-          </div>
-          {/* Executors */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[0.7rem] font-bold uppercase tracking-wider text-emerald-500">Executors</span>
-              { (isExecutor || task.currentUserIsSuperAdmin) && !isEffectivelyFrozen && (
-                <button 
-                  onClick={async () => {
-                    if (!isEditingAssignees) {
-                      // Fetch stakeholders if not loaded
-                      if (stakeholders.length === 0) {
-                        try {
-                          const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
-                          const res = await fetchWorkspaceStakeholders(task.workspace_id);
-                          setStakeholders(res);
-                        } catch (err) {
-                          console.error(err);
-                        }
-                      }
-                      setEditingAssigneesList(explicitExecutors.map((e: any) => e.id));
-                    }
-                    setIsEditingAssignees(!isEditingAssignees);
-                  }} 
-                  className="text-[10px] font-bold text-blue-500 hover:text-blue-400 underline"
-                >
-                  {isEditingAssignees ? 'Cancel' : 'Edit'}
-                </button>
-              )}
-            </div>
-            
-            {isEditingAssignees ? (
-              <div className={`p-2 rounded-xl border max-h-40 overflow-y-auto scrollbar-thin mt-1 ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}>
-                <div className="flex flex-col gap-1">
-                  {stakeholders.map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-[10px] text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-md transition-colors">
-                      <input type="checkbox" className="accent-emerald-500 h-3 w-3" checked={editingAssigneesList.includes(s.id)} onChange={e => {
-                        if (e.target.checked) setEditingAssigneesList([...editingAssigneesList, s.id]);
-                        else setEditingAssigneesList(editingAssigneesList.filter(id => id !== s.id));
-                      }} />
-                      <span className="truncate">{s.full_name}</span>
-                    </label>
-                  ))}
-                  {stakeholders.length === 0 && <span className="text-[10px] text-gray-500 p-1">Loading...</span>}
+      {/* Extended Metadata Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4">
+        
+        {/* Timeline & Meta Block */}
+        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-300 dark:hover:shadow-blue-500/20 dark:hover:border-blue-500/40 ${isLightMode ? "bg-white border-gray-200/80 shadow-sm" : "bg-[#111827]/40 border-white/5"} space-y-4`}>
+          <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Timeline & Meta</h4>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Priority</span>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border dark:border-white/10" style={{ backgroundColor: isLightMode ? `${task.priority?.color}15` || '#f1f5f9' : `${task.priority?.color}25` || '#1e293b' }}>
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
+                  <span className="text-xs font-semibold" style={{ color: task.priority?.color || (isLightMode ? '#64748b' : '#cbd5e1') }}>{task.priority?.name || "Standard"}</span>
                 </div>
-                <AppButton 
-                  size="sm" 
-                  className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-[10px] h-6" 
-                  onClick={() => {
-                    setPendingAssignees(editingAssigneesList);
-                    setIsEditingAssignees(false);
-                  }}
-                >
-                  Stage Assignees
-                </AppButton>
               </div>
-            ) : (
-              <div className="text-xs font-medium dark:text-gray-200">
-                {pendingAssignees ? (
-                  <span className="text-emerald-500 font-bold italic animate-pulse">Pending save...</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Duration</span>
+              <div className="text-sm font-medium dark:text-gray-200 mt-1">
+                {task.currentUserIsSuperAdmin ? (
+                  <div className="flex items-center gap-1 text-xs">
+                    <input
+                      type="number"
+                      className="w-16 px-2 py-1 border border-gray-200 dark:border-white/10 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+                      value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
+                      onChange={(e) => {
+                        if (!task.start_date) return;
+                        const days = parseInt(e.target.value, 10);
+                        if (!isNaN(days) && days > 0) {
+                          const startDate = new Date(task.start_date);
+                          startDate.setDate(startDate.getDate() + (days - 1));
+                          const newEndDateStr = startDate.toISOString().split('T')[0];
+                          setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
+                          setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
+                        }
+                      }}
+                    /> <span className="text-gray-400">Days</span>
+                  </div>
                 ) : (
-                  explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>
+                  <span>
+                    {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0} <span className="text-gray-400 font-normal text-xs">Days</span>
+                  </span>
                 )}
               </div>
-            )}
-          </div>
-          
-          {/* Team (Watchers) */}
-          <div className="space-y-1 md:col-span-4">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wider text-amber-500">Team</span>
-            <div className="text-xs font-medium dark:text-gray-200 leading-relaxed">
-              {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic">None</span>}
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Start Date <span className="text-red-500">*</span></span>
+              <div>
+                {task.currentUserIsSuperAdmin ? (
+                  <input
+                    type="date"
+                    className="px-2 py-1 w-full border border-gray-200 dark:border-white/10 rounded-md bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
+                    onChange={(e) => {
+                      const newStartDate = e.target.value;
+                      setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
+                      setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
+                    }}
+                  />
+                ) : (
+                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ${isLightMode ? "bg-gray-100 text-gray-700" : "bg-white/5 text-gray-300"}`}>
+                    {task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Due Date <span className="text-red-500">*</span></span>
+              <div>
+                {task.currentUserIsSuperAdmin ? (
+                  <input
+                    type="date"
+                    className="px-2 py-1 w-full border border-gray-200 dark:border-white/10 rounded-md bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
+                    onChange={(e) => {
+                      const newEndDate = e.target.value;
+                      setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDate }));
+                      setTask((prev: any) => ({ ...prev, end_date: newEndDate }));
+                    }}
+                  />
+                ) : (
+                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ${
+                    task.end_date && new Date(task.end_date) < new Date() ? "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400" : isLightMode ? "bg-gray-100 text-gray-700" : "bg-white/5 text-gray-300"
+                  }`}>
+                    {task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Editable Custom Fields */}
-        {localCustomFields && Object.keys(localCustomFields).length > 0 && (
-          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/5">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Custom Properties</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {Object.entries(localCustomFields).map(([key, val]) => {
-                const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
-                const isReadOnly = false;
-                return (
-                  <div key={key} className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                      {key.replace(/_/g, ' ')}
-                    </label>
-                    {isReadOnly || !canEditCore ? (
-                      <div className={`w-full p-2 rounded-md text-[13px] border ${normalizedKey !== 'link_url' && 'cursor-not-allowed'} ${
-                        isLightMode ? "bg-gray-100 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
-                      }`}>
-                        {normalizedKey === 'link_url' && val ? (
-                          <a href={String(val).startsWith('http') ? String(val) : `https://${val}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{String(val)}</a>
-                        ) : (
-                          String(val)
-                        )}
-                      </div>
-                    ) : (
-                      <div className="relative flex items-center">
-                        <AppInput 
-                          value={String(val)} 
-                          onChange={e => handleCustomFieldChange(key, e.target.value)} 
-                          className={normalizedKey === 'link_url' && val ? "pr-8" : ""}
-                        />
-                        {normalizedKey === 'link_url' && val && (
-                          <a 
-                            href={String(val).startsWith('http') ? String(val) : `https://${val}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            title="Open Link"
-                            className="absolute right-2 text-blue-500 hover:text-blue-600 transition-colors"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                      </div>
-                    )}
+        {/* Execution Team Block */}
+        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-300 dark:hover:shadow-blue-500/20 dark:hover:border-blue-500/40 ${isLightMode ? "bg-blue-50/50 border-blue-100/50" : "bg-blue-900/10 border-blue-500/10"} space-y-4`}>
+          <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1 border-b border-blue-100 dark:border-blue-500/10 pb-2 flex items-center gap-2"><Users2 className="w-3.5 h-3.5" /> Execution Team</h4>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Primary Assignee</span>
+              <div className="flex items-center gap-2 bg-white/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5">
+                {task.assignee ? (
+                  (() => {
+                     const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                     if (!a) return null;
+                     return (
+                       <>
+                         {a.profile_photo ? (
+                           <img src={a.profile_photo} alt="" className="w-6 h-6 rounded-full object-cover bg-gray-200 shadow-sm" />
+                         ) : (
+                           <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shadow-sm">
+                             {a.full_name?.substring(0, 2).toUpperCase() || "U"}
+                           </div>
+                         )}
+                         <span className="text-sm font-semibold dark:text-gray-200 truncate">{a.full_name}</span>
+                       </>
+                     );
+                  })()
+                ) : (
+                  <span className="text-xs font-medium text-gray-400 italic">Unassigned</span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">Executors</span>
+                { (isExecutor || task.currentUserIsSuperAdmin) && !isEffectivelyFrozen && (
+                  <button 
+                    onClick={async () => {
+                      if (!isEditingAssignees) {
+                        if (stakeholders.length === 0) {
+                          try {
+                            const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
+                            const res = await fetchWorkspaceStakeholders(task.workspace_id);
+                            setStakeholders(res);
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }
+                        setEditingAssigneesList(explicitExecutors.map((e: any) => e.id));
+                      }
+                      setIsEditingAssignees(!isEditingAssignees);
+                    }} 
+                    className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 hover:opacity-80 underline"
+                  >
+                    {isEditingAssignees ? 'Cancel' : 'Edit'}
+                  </button>
+                )}
+              </div>
+              
+              {isEditingAssignees ? (
+                <div ref={assigneesRef} className={`p-2 rounded-xl border max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 ${isLightMode ? "bg-white border-emerald-200" : "bg-black/30 border-emerald-500/30"}`}>
+                  <div className="flex flex-col gap-1">
+                    {stakeholders.map(s => (
+                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-md transition-colors">
+                        <input type="checkbox" className="accent-emerald-500 h-3 w-3 rounded" checked={editingAssigneesList.includes(s.id)} onChange={e => {
+                          if (e.target.checked) setEditingAssigneesList([...editingAssigneesList, s.id]);
+                          else setEditingAssigneesList(editingAssigneesList.filter(id => id !== s.id));
+                        }} />
+                        <span className="truncate">{s.full_name}</span>
+                      </label>
+                    ))}
+                    {stakeholders.length === 0 && <span className="text-xs text-gray-500 p-1">Loading...</span>}
                   </div>
-                );
-              })}
+                  <AppButton 
+                    size="sm" 
+                    className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-[10px] h-7" 
+                    onClick={() => {
+                      setPendingAssignees(editingAssigneesList);
+                      setIsEditingAssignees(false);
+                    }}
+                  >
+                    Stage Assignees
+                  </AppButton>
+                </div>
+              ) : (
+                <div className="text-sm font-medium dark:text-gray-200 bg-white/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5 min-h-[42px] flex items-center">
+                  {pendingAssignees ? (
+                    <span className="text-emerald-500 font-bold italic animate-pulse text-xs">Pending save...</span>
+                  ) : (
+                    <span className="truncate">
+                      {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic text-xs">None</span>}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-1.5 col-span-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">Watchers (Team)</span>
+              <div className="text-sm font-medium dark:text-gray-200 leading-relaxed bg-white/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5">
+                {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic text-xs">None</span>}
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      </div>
 
-      {/* Interactive Lifecycle State Transition Panel */}
-      <div className={`p-3 rounded-md border space-y-3 ${
-        isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.01] border-white/5"
+      {/* Interactive Lifecycle State Transition Panel (MOVED TO TOP) */}
+      <div className={`p-4 rounded-xl border shadow-sm space-y-3 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:border-purple-300 dark:hover:shadow-purple-500/20 dark:hover:border-purple-500/40 ${
+        isLightMode ? "bg-white border-gray-200/80" : "bg-[#111827]/40 border-white/10"
       }`}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Status Field</label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
               disabled={!canEditCore && !(isOwner || isExecutor)}
@@ -774,8 +764,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingStatus(newCode);
                 }
               }}
-              className={`w-full p-1.5 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
+              className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow ${
+                isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
               } ${(!canEditCore && !(isOwner || isExecutor)) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
@@ -784,8 +774,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </select>
           </div>
           
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Department Field</label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Department Field</label>
             <select
               value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
               disabled={!canEditCore && !(isOwner || isExecutor)}
@@ -797,8 +787,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingDepartment(newDept);
                 }
               }}
-              className={`w-full p-1.5 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
+              className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow ${
+                isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
               } ${(!canEditCore && !(isOwner || isExecutor)) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="">-- No Department --</option>
@@ -808,17 +798,17 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </select>
           </div>
           
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1">
+          <div className="space-y-1.5 w-full">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 block text-right w-full">
               Quick Action Operations
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-0.5 w-full">
               {currentStatusCode === "ST_OPEN" && canEditCore && (
                 <AppButton 
                   size="sm" 
                   variant="primary" 
                   className="bg-indigo-600 hover:bg-indigo-700"
-                  leftIcon={<Play className="h-3.5 w-3.5" />}
+                  leftIcon={<Play className="h-4 w-4" />}
                   disabled={actionLoading}
                   onClick={() => handleStatusTransition("start")}
                 >
@@ -831,7 +821,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   size="sm" 
                   variant="primary" 
                   className="bg-emerald-600 hover:bg-emerald-700"
-                  leftIcon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                  leftIcon={<CheckCircle2 className="h-4 w-4" />}
                   disabled={actionLoading}
                   onClick={() => handleStatusTransition("resolve")}
                 >
@@ -845,7 +835,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     size="sm" 
                     variant="primary" 
                     className="bg-blue-600 hover:bg-blue-700"
-                    leftIcon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                    leftIcon={<CheckCircle2 className="h-4 w-4" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("approve")}
                   >
@@ -854,8 +844,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <AppButton 
                     size="sm" 
                     variant="ghost" 
-                    className="text-rose-400 hover:bg-rose-500/10"
-                    leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+                    className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                    leftIcon={<RotateCcw className="h-4 w-4" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("reopen")}
                   >
@@ -868,7 +858,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   size="sm" 
                   variant="outline" 
-                  leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+                  leftIcon={<RotateCcw className="h-4 w-4" />}
                   disabled={actionLoading}
                   onClick={() => handleStatusTransition("reopen")}
                 >
@@ -876,15 +866,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              <div className="flex-1" />
               {canDeleteTask && (
                 <AppButton 
                   variant="outline" 
                   size="sm" 
-                  className="text-rose-400 hover:bg-rose-500/10 border-rose-500/20 hover:border-rose-500/50" 
+                  className="text-rose-500 hover:bg-rose-50 border-rose-200 dark:border-rose-500/20 dark:hover:bg-rose-500/10" 
                   onClick={handleDeleteTask} 
                   disabled={deleteLoading}
-                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                  leftIcon={<Trash2 className="h-4 w-4" />}
                 >
                   Delete Task
                 </AppButton>
@@ -892,6 +881,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
           </div>
         </div>
+      </div>
 
         {pendingStatus && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
@@ -1042,7 +1032,57 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             )}
           </div>
         </div>
-      </div>
+
+        {/* Editable Custom Fields */}
+        {localCustomFields && Object.keys(localCustomFields).length > 0 && (
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2"><Pin className="w-3.5 h-3.5" /> Custom Properties</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {Object.entries(localCustomFields).map(([key, val]) => {
+                const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
+                const isReadOnly = false;
+                return (
+                  <div key={key} className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                      {key.replace(/_/g, ' ')}
+                    </label>
+                    {isReadOnly || !canEditCore ? (
+                      <div className={`w-full p-2.5 rounded-lg text-sm border shadow-sm ${normalizedKey !== 'link_url' && 'cursor-not-allowed'} ${
+                        isLightMode ? "bg-gray-50 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
+                      }`}>
+                        {normalizedKey === 'link_url' && val && val !== "null" ? (
+                          <a href={String(val).startsWith('http') ? String(val) : `https://${val}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{String(val)}</a>
+                        ) : (
+                          val === null || val === "null" ? "" : String(val)
+                        )}
+                      </div>
+                    ) : (
+                      <div className="relative flex items-center">
+                        <AppInput 
+                          value={val === null || val === "null" ? "" : String(val)} 
+                          onChange={e => handleCustomFieldChange(key, e.target.value)} 
+                          className={`shadow-sm ${normalizedKey === 'link_url' && val && val !== "null" ? "pr-8" : ""}`}
+                        />
+                        {normalizedKey === 'link_url' && val && val !== "null" && (
+                          <a 
+                            href={String(val).startsWith('http') ? String(val) : `https://${val}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            title="Open Link"
+                            className="absolute right-3 text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
 
       {/* Tabs Menu */}
       <div className={`flex border-b border-gray-200 dark:border-white/5`}>

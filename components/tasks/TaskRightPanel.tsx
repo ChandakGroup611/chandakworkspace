@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MessageCircle, ActivitySquare, Clock } from "lucide-react";
@@ -21,11 +21,22 @@ const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), {
 
 export default function TaskRightPanel({ taskId }: { taskId: string }) {
   const [activeTab, setActiveTab] = useState("none"); // Default to no heavy module loaded
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (activeTab !== "none" && panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setActiveTab("none");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeTab]);
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-950/80">
-        <Tabs defaultValue="none" onValueChange={setActiveTab} value={activeTab}>
+    <div className="h-full" ref={panelRef}>
+      <div className="h-full rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-950/80 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-300 dark:hover:shadow-blue-500/20 dark:hover:border-blue-500/40">
+        <Tabs defaultValue="none" onValueChange={setActiveTab} value={activeTab} className="flex flex-col h-full">
           <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="chat" className="text-xs font-bold gap-1.5 px-1">
               <MessageCircle className="h-3.5 w-3.5" />
