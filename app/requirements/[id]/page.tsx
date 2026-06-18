@@ -111,10 +111,12 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
        const isExplicitApprover = requirement.current_assignee_id === currentUserId || (currentUserDepartmentId && requirement.current_assignee_id === currentUserDepartmentId) || isApproverInFlow;
        const isApproverCtx = isExplicitApprover || isAdmin || isSuperAdmin;
        
-       if (requirement.approval_status === 'Pending SignOff') {
+       if (approvalFlow.length === 0) {
+         setIsCurrentApprover(false);
+       } else if (requirement.approval_status === 'Pending SignOff') {
          setIsCurrentApprover(isAdmin || isSuperAdmin);
        } else {
-         setIsCurrentApprover(!!isApproverCtx && (requirement.approval_status === 'Pending' || requirement.approval_status === 'Pending Approval') && approvalFlow.length > 0);
+         setIsCurrentApprover(!!isApproverCtx && (requirement.approval_status === 'Pending' || requirement.approval_status === 'Pending Approval'));
        }
     }
   }, [requirement, currentUserId, currentUserDepartmentId, isAdmin, isSuperAdmin, approvalFlow]);

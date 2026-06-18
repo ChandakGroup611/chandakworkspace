@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 const TaskRightPanel = dynamic(() => import("@/components/tasks/TaskRightPanel"), {
   loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-32 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Panel...</div>
 });
-import { getTaskDetails, getTaskStatuses } from "@/lib/actions/tasks";
+import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/tasks";
 import { notFound } from "next/navigation";
 
 interface TaskPageProps {
@@ -19,10 +19,12 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
   const { taskId } = await params;
   let task;
   let statuses: any[] = [];
+  let departments: any[] = [];
 
   try {
     task = await getTaskDetails(taskId);
     statuses = await getTaskStatuses();
+    departments = await getDepartments();
   } catch (error) {
     task = null;
   }
@@ -118,7 +120,7 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
             </div>
           </div>
 
-          <TaskExecutionController taskId={taskId} initialTask={task} initialStatuses={statuses} />
+          <TaskExecutionController taskId={taskId} initialTask={task} initialStatuses={statuses} initialDepartments={departments} />
         </div>
 
         <div className="space-y-6">

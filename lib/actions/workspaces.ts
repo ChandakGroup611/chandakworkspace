@@ -284,10 +284,10 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
 
-    console.time("auth");
+    console.time(`auth_${tId}`);
     // 1. Get current authenticated user
     const { user } = await getCachedUser();
-    console.timeEnd("auth");
+    console.timeEnd(`auth_${tId}`);
     
     if (!user) {
       return {

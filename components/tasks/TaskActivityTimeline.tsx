@@ -39,6 +39,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const getActionIcon = (action: string) => {
     switch (action) {
       case 'STATUS_CHANGE': return <Activity className="h-4 w-4 text-blue-500" />;
+      case 'DEPARTMENT_CHANGE': return <Activity className="h-4 w-4 text-blue-500" />;
       case 'CHECKLIST_UPDATE': return <CheckSquare className="h-4 w-4 text-emerald-500" />;
       case 'COMMENT': return <MessageSquare className="h-4 w-4 text-indigo-500" />;
       case 'EDIT': return <Edit className="h-4 w-4 text-amber-500" />;
@@ -60,6 +61,11 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
           return `transitioned status from "${oldStatusName}" to "${statusName}"`;
         }
         return `changed status to "${statusName}"`;
+      }
+      case 'DEPARTMENT_CHANGE': {
+        const oldDeptName = log.new_state?.old_department_name || 'None';
+        const newDeptName = log.new_state?.department_name || 'None';
+        return `Change department from ${oldDeptName} to ${newDeptName}`;
       }
       case 'CHECKLIST_UPDATE':
         return 'updated the task checklist';
@@ -106,6 +112,13 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
                     {log.actor?.full_name || 'System Administrator'}
                   </strong> {getActionText(log)}
                 </p>
+                {log.action === 'COMMENT' && log.new_state?.message && (
+                  <div className={`mt-2 p-2 rounded-md border text-xs whitespace-pre-wrap ${
+                    isLightMode ? "bg-white border-gray-200 text-gray-600" : "bg-black/50 border-white/5 text-gray-400"
+                  }`}>
+                    {log.new_state.message}
+                  </div>
+                )}
                 <span className="text-xs text-gray-500 font-mono mt-1 block">
                   {new Date(log.created_at).toLocaleString()}
                 </span>

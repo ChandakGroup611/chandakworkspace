@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 
-export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[] }) {
+export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[] }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
@@ -31,6 +31,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const canDelete = hasPermission("TASKS_DELETE");
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
+  const [departments, setDepartments] = useState<any[]>(initialDepartments || []);
   const [loading, setLoading] = useState(!initialTask);
   const [activeTab, setActiveTab] = useState<"checklist" | "attachments">("checklist");
   
@@ -61,6 +62,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [pendingDepartment, setPendingDepartment] = useState<string | null>(null);
   const [localCustomFields, setLocalCustomFields] = useState<Record<string, any>>({});
   const [pendingChecklists, setPendingChecklists] = useState<string[]>([]);
   const [editedChecklists, setEditedChecklists] = useState<Record<string, boolean>>({});
@@ -331,11 +333,23 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
          else finalStatusId = pendingStatus;
       }
 
+      let departmentChangeObj = undefined;
+      if (pendingDepartment !== null) {
+         const matchedDept = departments.find(d => d.id === pendingDepartment);
+         departmentChangeObj = {
+            new_id: pendingDepartment,
+            new_name: matchedDept?.name || matchedDept?.code || pendingDepartment,
+            old_id: task.department_id,
+            old_name: task.department?.name || 'None'
+         };
+      }
+
       const t1 = performance.now();
       const res = await executeTaskBatchOperation({
         taskId,
         updates: updatePayload,
         statusChanges: finalStatusId,
+        departmentChange: departmentChangeObj,
         checklistCreates: pendingChecklists,
         checklistUpdates: editedChecklists,
         remarks: remarksDraft.trim(),
@@ -366,6 +380,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           if (finalStatusId) {
              const newStatusObj = statuses.find(s => s.id === finalStatusId || s.code === finalStatusId || s.status_code === finalStatusId);
              if (newStatusObj) newState.status = newStatusObj;
+          }
+          if (departmentChangeObj && departmentChangeObj.new_id !== undefined) {
+             newState.department_id = departmentChangeObj.new_id || null;
+             // also update the relational object so UI components that rely on it update
+             const matchedDept = departments.find(d => d.id === departmentChangeObj.new_id);
+             newState.department = matchedDept || null;
           }
           // Merge new checklists
           const existingChecklists = [...(prev.checklists || [])];
@@ -400,6 +420,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       // Reset pending states
       setPendingStatus(null);
+      setPendingDepartment(null);
       setPendingChecklists([]);
       setEditedChecklists({});
       setPendingFiles([]);
@@ -739,7 +760,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       <div className={`p-3 rounded-md border space-y-3 ${
         isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.01] border-white/5"
       }`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Status Field</label>
             <select
@@ -759,6 +780,30 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Department Field</label>
+            <select
+              value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
+              disabled={!canEditCore && !(isOwner || isExecutor)}
+              onChange={(e) => {
+                const newDept = e.target.value;
+                if (newDept === (task.department_id || "")) {
+                  setPendingDepartment(null);
+                } else {
+                  setPendingDepartment(newDept);
+                }
+              }}
+              className={`w-full p-1.5 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
+              } ${(!canEditCore && !(isOwner || isExecutor)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <option value="">-- No Department --</option>
+              {departments.map(dept => (
+                <option key={dept.id} value={dept.id}>{dept.name}</option>
               ))}
             </select>
           </div>
@@ -839,8 +884,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   className="text-rose-400 hover:bg-rose-500/10 border-rose-500/20 hover:border-rose-500/50" 
                   onClick={handleDeleteTask} 
                   disabled={deleteLoading}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
                 >
-                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Task
+                  Delete Task
                 </AppButton>
               )}
             </div>
@@ -851,6 +897,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
             <span>Status change to <strong>{statuses.find(s => s.status_code === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
             <button onClick={() => setPendingStatus(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-2 underline hover:no-underline">Cancel Change</button>
+          </div>
+        )}
+
+        {pendingDepartment && (
+          <div className="p-3 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
+            <span>Department change to <strong>{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
+            <button onClick={() => setPendingDepartment(null)} className="text-xs text-purple-400/60 hover:text-purple-400 font-bold px-2 underline hover:no-underline">Cancel Change</button>
           </div>
         )}
 
@@ -876,7 +929,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <span className="text-xs text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
             {canAddRemark && (
               <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
-                {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingAssignees) ? "Commit Updates & Save Remark" : "Save Remarks"}
+                {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingDepartment || pendingAssignees) ? "Commit Updates & Save Remark" : "Save Remarks"}
               </AppButton>
             )}
           </div>

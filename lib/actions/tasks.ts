@@ -7,6 +7,20 @@ import { queueBusinessEvent } from '@/lib/actions/notification-engine';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
+export async function getDepartments() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data, error } = await supabase
+    .from('departments')
+    .select('id, name, code')
+    .eq('is_deleted', false)
+    .order('name');
+  if (error) {
+    console.error('Error fetching departments:', error);
+    return [];
+  }
+  return data;
+}
 export async function createTask(payload: {
   workspace_id: string;
   sub_workspace_id?: string;
@@ -17,6 +31,7 @@ export async function createTask(payload: {
   title?: string;
   description?: string;
   priority_id: string;
+  department_id?: string;
   status_id?: string;
   start_date?: string;
   end_date?: string;
@@ -81,6 +96,7 @@ export async function createTask(payload: {
         subject: payload.subject || payload.title || 'Untitled Task',
         description: payload.description,
         priority_id: cleanUUID(payload.priority_id),
+        department_id: cleanUUID(payload.department_id),
         status_id: finalStatusId,
         start_date: (payload.start_date && payload.start_date.trim()) ? payload.start_date : null,
         end_date: (payload.end_date && payload.end_date.trim()) ? payload.end_date : null,
@@ -160,6 +176,26 @@ export async function createTask(payload: {
       if (attErr) {
         console.error("[createTask] Attachments Insert Error:", attErr);
         return { error: attErr.message || JSON.stringify(attErr) };
+      }
+    }
+    
+    // Insert Initial Description as a Remark (Comment)
+    if (payload.description && payload.description.trim() !== '') {
+      const { error: commentErr } = await supabaseAdmin.from('task_comments').insert([{
+        task_id: task.id,
+        author_id: creatorId,
+        content: payload.description.trim()
+      }]);
+      if (commentErr) {
+        console.error("[createTask] Initial Comment Insert Error:", commentErr);
+        // non-blocking
+      } else {
+        await supabaseAdmin.from('task_activity_logs').insert([{
+          task_id: task.id,
+          actor_id: creatorId,
+          action: 'COMMENT',
+          new_state: { message: payload.description.trim() }
+        }]);
       }
     }
     
@@ -396,6 +432,7 @@ export async function getTaskDetails(taskId: string) {
       *,
       status:status_master(id, name:status_name, code:status_code, is_closed),
       priority:priority_master(id, name:priority_name, color:priority_color),
+      department:departments(id, name),
       workspace:workspaces(id, name:workspace_name, members:workspace_members(user_id, role))
     `).eq('id', taskId).single(),
     supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
@@ -999,6 +1036,7 @@ export async function executeTaskBatchOperation(payload: {
   taskId: string;
   updates?: any;
   statusChanges?: string;
+  departmentChange?: { old_id?: string | null, new_id?: string | null, old_name?: string | null, new_name?: string | null };
   checklistCreates?: string[];
   checklistUpdates?: Record<string, boolean>;
   remarks?: string;
@@ -1009,13 +1047,16 @@ export async function executeTaskBatchOperation(payload: {
   const userId = user?.id;
   if (!userId) return { error: "Unauthenticated" };
 
-  const { taskId, updates, statusChanges, checklistCreates, checklistUpdates, remarks, attachmentIds } = payload;
+  const { taskId, updates, statusChanges, departmentChange, checklistCreates, checklistUpdates, remarks, attachmentIds } = payload;
   
   console.time("TaskBatch - Core Updates");
   // Update Task Core
   const updatePayload = { ...updates };
   if (statusChanges) {
      updatePayload.status_id = statusChanges;
+  }
+  if (departmentChange && departmentChange.new_id !== undefined) {
+     updatePayload.department_id = departmentChange.new_id;
   }
   
   if (Object.keys(updatePayload).length > 0) {
@@ -1066,6 +1107,19 @@ export async function executeTaskBatchOperation(payload: {
     sideEffects.push(
       supabaseAdmin.from('task_activity_logs').insert([{
         task_id: taskId, actor_id: userId, action: 'STATUS_CHANGE', new_state: { status_id: statusChanges }
+      }])
+    );
+  }
+  
+  if (departmentChange && departmentChange.new_id !== departmentChange.old_id) {
+    sideEffects.push(
+      supabaseAdmin.from('task_activity_logs').insert([{
+        task_id: taskId, actor_id: userId, action: 'DEPARTMENT_CHANGE', new_state: { 
+          department_id: departmentChange.new_id, 
+          department_name: departmentChange.new_name,
+          old_department_id: departmentChange.old_id,
+          old_department_name: departmentChange.old_name
+        }
       }])
     );
   }

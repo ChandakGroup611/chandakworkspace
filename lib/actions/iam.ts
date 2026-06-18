@@ -287,3 +287,11 @@ export async function deleteRole(roleId: string) {
   
   revalidatePath("/iam");
 }
+
+
+export async function fetchDepartments() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data } = await supabase.from('departments').select('*').eq('is_deleted', false).order('name', { ascending: true });
+  return data || [];
+}

@@ -1,0 +1,278 @@
+{/* Section 3: Assignment & Execution */}
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+                <Users className="h-4 w-4" />
+              </div>
+              <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Assignment & Execution</h3>
+            </div>
+            
+            <div className="space-y-1.5 mb-5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assignees (Task Owners) *</label>
+                <button type="button" onClick={() => {
+                  if (assignees.length === stakeholders.length && stakeholders.length > 0) setAssignees([]);
+                  else setAssignees(stakeholders.map(s => s.id));
+                }} className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
+                  {assignees.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
+                </button>
+              </div>
+              <div className={`p-2 rounded-xl border max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                  {stakeholders.map(s => (
+                    <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
+                      <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={assignees.includes(s.id)} onChange={e => {
+                        if (e.target.checked) setAssignees([...assignees, s.id]);
+                        else setAssignees(assignees.filter(id => id !== s.id));
+                      }} />
+                      <span className="truncate font-medium">{s.full_name} <span className="text-gray-400 font-normal ml-1">({s.workspace_role})</span></span>
+                    </label>
+                  ))}
+                  {stakeholders.length === 0 && <span className="text-xs text-gray-500 p-2">No users available in this workspace.</span>}
+                </div>
+              </div>
+            </div>
+
+
+            <div className="space-y-1.5 mt-5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                Tags & Labels
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {tags.map((tag, idx) => (
+                  <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400"}`}>
+                    {tag}
+                    <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-rose-500"><X className="h-3 w-3" /></button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2 items-center">
+                <AppInput 
+                  value={newTag} 
+                  onChange={e => setNewTag(e.target.value)} 
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newTag.trim() && !tags.includes(newTag.trim())) {
+                        setTags([...tags, newTag.trim()]);
+                        setNewTag("");
+                      }
+                    }
+                  }}
+                  placeholder="Type a tag (e.g. Bug, Frontend) and press Enter..." 
+                  className={`h-9 flex-1 ${"bg-surface"}`}
+                />
+                <AppButton type="button" variant="primary" className="h-9 px-3 shrink-0 bg-purple-600 hover:bg-purple-700 text-white border-0" onClick={() => {
+                  if (newTag.trim() && !tags.includes(newTag.trim())) {
+                    setTags([...tags, newTag.trim()]);
+                    setNewTag("");
+                  }
+                }}>Add Tag</AppButton>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Tasks & Assets */}
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
+            <div className="flex items-center gap-2 mb-6">
+              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-blue-100 text-blue-600" : "bg-blue-500/20 text-blue-400"}`}>
+                <LayoutList className="h-4 w-4" />
+              </div>
+              <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Tasks & Assets</h3>
+            </div>
+
+            {/* Checklist */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${"text-foreground"}`}>Action Items</h4>
+                <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{checklistItems.length} items</span>
+              </div>
+              
+              <div className="flex gap-2 items-start mb-3">
+                <div className="flex-1">
+                  <AppInput 
+                    value={newChecklistItem} 
+                    onChange={e => setNewChecklistItem(e.target.value)} 
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!newChecklistItem.trim()) return;
+                        setChecklistItems([...checklistItems, newChecklistItem.trim()]);
+                        setNewChecklistItem("");
+                      }
+                    }}
+                    placeholder="Type an actionable step and press Enter..." 
+                    className={`h-10 ${"bg-surface"}`}
+                  />
+                </div>
+                <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-blue-600 hover:bg-blue-700 text-white border-0" onClick={() => {
+                  if (!newChecklistItem.trim()) return;
+                  setChecklistItems([...checklistItems, newChecklistItem.trim()]);
+                  setNewChecklistItem("");
+                }}>Add</AppButton>
+              </div>
+
+              <div className="space-y-2">
+                {checklistItems.map((item, index) => (
+                  <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${isLightMode ? "border-gray-200 bg-white hover:border-blue-300 shadow-sm" : "border-white/10 bg-black/20 hover:border-blue-500/50"}`}>
+                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+                      <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center ${isLightMode ? "border-gray-300 bg-gray-50" : "border-gray-600 bg-black/40"}`} />
+                      <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
+                      className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {checklistItems.length === 0 && (
+                  <div className={`rounded-xl border border-dashed p-6 text-[11px] font-medium text-center flex flex-col items-center justify-center gap-2 ${isLightMode ? "border-gray-300 text-gray-500 bg-gray-50" : "border-white/10 text-gray-500"}`}>
+                    <LayoutList className="h-6 w-6 text-gray-400 opacity-50" />
+                    <span>No action items defined. Break down the work into smaller steps.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Attachments */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className={`text-[11px] font-bold uppercase tracking-wider ${"text-foreground"}`}>Attachments</h4>
+                <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{attachments.length} files</span>
+              </div>
+              
+              <div className="mb-3">
+                <input 
+                  type="file" 
+                  id="task-attachment" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const mockUrl = URL.createObjectURL(file);
+                    const fileType = file.name.split('.').pop()?.trim().toLowerCase() || "unknown";
+                    setAttachments([...attachments, {
+                      file_name: file.name,
+                      file_url: mockUrl,
+                      file_type: fileType,
+                      size: file.size
+                    }]);
+                    e.target.value = "";
+                  }}
+                />
+                <label 
+                  htmlFor="task-attachment"
+                  className={`flex items-center justify-center gap-2 w-full py-4 rounded-xl text-sm font-bold border border-dashed cursor-pointer transition-all ${
+                    isLightMode 
+                      ? "bg-gray-50/50 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600" 
+                      : "bg-black/20 border-white/10 text-gray-400 hover:bg-black/40 hover:border-blue-500/50 hover:text-blue-400"
+                  }`}
+                >
+                  <Paperclip className="h-4 w-4" />
+                  <span>Click to Browse & Attach Files</span>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {attachments.map((item, index) => (
+                  <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${isLightMode ? "border-gray-200 bg-white hover:border-blue-300 shadow-sm" : "border-white/10 bg-black/20 hover:border-blue-500/50"}`}>
+                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+                      <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold ${isLightMode ? "bg-blue-100 text-blue-700" : "bg-blue-500/20 text-blue-400"}`}>
+                        {item.file_type.substring(0,3).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className={`text-xs font-semibold truncate ${"text-foreground"}`}>{item.file_name}</span>
+                        <span className="text-[10px] text-gray-500">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Unknown size"}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
+                      className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 5: Extended Properties */}
+          <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
+                  <Activity className="h-4 w-4" />
+                </div>
+                <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Extended Properties</h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsAddingField(!isAddingField)}
+                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${isLightMode ? "bg-amber-100 text-amber-700 hover:bg-amber-200" : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"}`}
+              >
+                <Plus className="h-3 w-3" /> New Field
+              </button>
+            </div>
+
+            {isAddingField && (
+              <div className={`p-4 rounded-xl border mb-5 flex flex-col sm:flex-row items-end gap-3 ${isLightMode ? "bg-amber-50/50 border-amber-200" : "bg-amber-500/[0.05] border-amber-500/20"}`}>
+                <div className="w-full sm:flex-1 space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Field Name</label>
+                  <AppInput 
+                    placeholder="e.g. Jira Ticket URL" 
+                    value={newFieldName} 
+                    onChange={e => setNewFieldName(e.target.value)} 
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddField();
+                      }
+                    }}
+                    className={`h-10 ${"bg-surface"}`}
+                  />
+                </div>
+                <div className="w-full sm:flex-1 space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Data Type</label>
+                  <select 
+                    className={`w-full h-10 px-3 rounded-xl text-sm border focus:outline-none cursor-pointer ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10 text-white"}`}
+                    value={newFieldType}
+                    onChange={e => setNewFieldType(e.target.value)}
+                  >
+                    <option value="text">Text Input</option>
+                    <option value="number">Numeric</option>
+                    <option value="date">Date</option>
+                  </select>
+                </div>
+                <AppButton type="button" variant="primary" onClick={handleAddField} className="w-full sm:w-auto h-10 bg-amber-600 hover:bg-amber-700 text-white border-0">Save Field</AppButton>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {customFields.map(f => (
+                <div key={f.field_key} className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
+                  <AppInput 
+                    type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
+                    value={fieldValues[f.field_key] || ""} 
+                    onChange={e => setFieldValues({...fieldValues, [f.field_key]: e.target.value})} 
+                    className={"bg-surface"}
+                  />
+                </div>
+              ))}
+              {customFields.length === 0 && !isAddingField && (
+                <div className="col-span-1 sm:col-span-2 py-4 text-center text-[11px] font-medium text-gray-500">
+                  No extended properties configured for this task.
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+
+    

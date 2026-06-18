@@ -216,7 +216,7 @@ export async function handleMentions(taskId: string, messageId: string, mentione
       uid,
       notifTitle,
       notifMessage,
-      `/workspaces?task=${taskId}`
+      `/tasks/${taskId}`
     );
   }
 }

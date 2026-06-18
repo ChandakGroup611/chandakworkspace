@@ -1,16 +1,19 @@
 const fs = require('fs');
-let content = fs.readFileSync('d:/adios/lib/actions/requirements.ts', 'utf8');
 
-// Fix 1: Header import
-if (!content.includes("dispatchNotification")) {
-  content = content.replace(
-    /"use server";\r?\n/,
-    `"use server";\n\nimport { dispatchNotification } from '@/lib/actions/notifications';\n`
-  );
-}
+const path = 'd:\\adios\\components\\tasks\\TaskCreationWizard.tsx';
+let content = fs.readFileSync(path, 'utf8');
 
-// Fix 2: Type error
-content = content.replace('const userMap = {};', 'const userMap: Record<string, any> = {};');
+// Fix departmentId duplicate
+content = content.replace(/const \[departmentId, setDepartmentId\] = useState\(""\);\n\s*const \[departments, setDepartments\] = useState<any\[\]>\(\[\]\);\n/g, "");
+content = content.replace(/const \[title, setTitle\] = useState/, `const [departmentId, setDepartmentId] = useState("");
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [title, setTitle] = useState`);
 
-fs.writeFileSync('d:/adios/lib/actions/requirements.ts', content);
-console.log("Fixed TS errors");
+// Fix deptList
+content = content.replace(/setDepartments\(departmentList \|\| \[\]\);/g, "setDepartments(deptList || []);");
+
+// Fix duplicate department_id in payload
+content = content.replace(/department_id: departmentId \|\| null,\s*department_id: departmentId \|\| null,/g, "department_id: departmentId || null,");
+
+fs.writeFileSync(path, content);
+console.log("Syntax fixes applied");
