@@ -124,23 +124,28 @@ export default function DataRetentionClient() {
     setSuccessBanner(null);
     
     try {
+      let result;
       if (actionType === 'restore') {
-        await restoreEntity(currentTabConfig.entity as ComplianceEntity, ids);
-        setSuccessBanner(`Successfully restored ${ids.length} record(s).`);
+        result = await restoreEntity(currentTabConfig.entity as ComplianceEntity, ids);
+        if (result.success) setSuccessBanner(`Successfully restored ${ids.length} record(s).`);
       } else {
-        await hardDeleteEntity(currentTabConfig.entity as ComplianceEntity, ids);
-        setSuccessBanner(`Successfully purged ${ids.length} record(s).`);
+        result = await hardDeleteEntity(currentTabConfig.entity as ComplianceEntity, ids);
+        if (result.success) setSuccessBanner(`Successfully purged ${ids.length} record(s).`);
       }
-      setSelectedIds(new Set());
-      await loadData();
+      
+      if (!result.success && result.error) {
+        if (result.error.includes('attached child records') || result.error.includes('foreign_key_violation')) {
+          setErrorDetails(result.error);
+          setShowErrorModal(true);
+        } else {
+          setErrorBanner(result.error);
+        }
+      } else {
+        setSelectedIds(new Set());
+        await loadData();
+      }
     } catch (e: any) {
-      // Check if it's a foreign key constraint error
-      if (e.message.includes('attached child records') || e.message.includes('foreign_key_violation')) {
-        setErrorDetails(e.message);
-        setShowErrorModal(true);
-      } else {
-        setErrorBanner(e.message);
-      }
+      setErrorBanner(e.message || "An unexpected error occurred");
     } finally {
       setIsProcessing(false);
     }

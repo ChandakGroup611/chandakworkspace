@@ -105,9 +105,9 @@ export async function hardDeleteEntity(entityType: ComplianceEntity, ids: string
     console.error(`Failed to hard delete ${entityType} ${ids}:`, error);
     // Code 23503 is postgres foreign_key_violation
     if (error.code === '23503') {
-      throw new Error(`Cannot delete ${entityType}. They contain attached child records (like tasks or members) which must be deleted first.`);
+      return { success: false, error: `Cannot delete ${entityType}. They contain attached child records (like tasks or members) which must be deleted first.` };
     }
-    throw new Error(`Hard delete failed: ${error.message}`);
+    return { success: false, error: `Hard delete failed: ${error.message}` };
   }
 
   revalidatePath('/compliance');
@@ -128,7 +128,7 @@ export async function restoreEntity(entityType: ComplianceEntity, ids: string[])
 
   if (error) {
     console.error(`Failed to restore ${entityType} ${ids}:`, error);
-    throw new Error(`Restore failed: ${error.message}`);
+    return { success: false, error: `Restore failed: ${error.message}` };
   }
 
   revalidatePath('/compliance');

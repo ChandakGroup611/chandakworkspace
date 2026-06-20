@@ -37,21 +37,22 @@ import { getAllReportCustomFields } from "@/lib/actions/workspace_reports";
 
 type Task = any;
 
-function DraggableTableHead({ col }: { col: any }) {
+function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
   const style = { 
     transform: CSS.Translate.toString(transform), 
     transition, 
     minWidth: col.column_width ? `${col.column_width}px` : undefined,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto',
-    position: 'relative' as any
+    zIndex: isDragging ? 50 : (isFirst ? 30 : 'auto'),
+    position: (isFirst ? 'sticky' : 'relative') as any,
+    left: isFirst ? '40px' : undefined,
   };
   return (
     <AppTableHead 
       ref={setNodeRef} 
       style={style} 
-      className={`font-bold text-xs uppercase text-gray-500 px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-colors ${col.field_key === "actions" ? "w-[50px]" : ""} ${["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "updated_at"].includes(col.field_key) ? "text-right" : ""}`}
+      className={`select-none ${isFirst ? 'bg-gray-50 dark:bg-[#1a1d2d] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] border-r border-gray-200 dark:border-white/5' : ''} font-bold text-xs uppercase text-gray-500 px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-colors ${col.field_key === "actions" ? "w-[50px]" : ""} ${["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "updated_at"].includes(col.field_key) ? "text-right" : ""}`}
       {...attributes} 
       {...listeners}
     >
@@ -71,7 +72,6 @@ const INITIAL_TASK_FIELDS: UIFieldDefinition[] = [
   { field_key: "assignee", display_name: "Assignee", data_type: "user", is_default: true, default_width: 150 },
   { field_key: "created_at", display_name: "Created At", data_type: "date", is_default: true, default_width: 120 },
   { field_key: "actions", display_name: "Actions", data_type: "custom", is_default: true, default_width: 80 },
-  // Hidden by default fields that users can add
   { field_key: "start_date", display_name: "Start Date", data_type: "date", is_default: false, default_width: 120 },
   { field_key: "duration", display_name: "Duration", data_type: "custom", is_default: false, default_width: 100 },
   { field_key: "progress", display_name: "Checklist Progress", data_type: "custom", is_default: false, default_width: 130 },
@@ -84,7 +84,6 @@ const INITIAL_TASK_FIELDS: UIFieldDefinition[] = [
   { field_key: "updated_at", display_name: "Updated At", data_type: "date", is_default: false, default_width: 120 },
 ];
 
-// Format date consistently without locale-based variations
 const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return "—";
   try {
@@ -131,7 +130,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
-  // Inline Status Update State
   const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [inlineTask, setInlineTask] = useState<Task | null>(null);
@@ -210,7 +208,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         if (taskDate < fromDate) return false;
       }
       if (dateTo) {
-        const toDate = new Date(dateTo).getTime() + 86400000; // include full day
+        const toDate = new Date(dateTo).getTime() + 86400000;
         const taskDate = new Date(t.created_at).getTime();
         if (taskDate >= toDate) return false;
       }
@@ -276,7 +274,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       } else {
         if (isLoadMore) {
           setLoading(false);
-          return; // fetchAllTasks already returns everything, don't append it again
+          return;
         }
         newTasks = await fetchAllTasks();
         setHasMore(false);
@@ -522,7 +520,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setSelectedWorkspaceId(wsId || null);
     }
     
-    // Always refresh on mount since we removed server-side fetching for speed
     fetchTasksData(1, false, wsId);
   }, []);
 
@@ -641,7 +638,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   return (
     <ExperienceProvider mode="operational">
       <div className="space-y-4">
-        {/* Header and Export Actions */}
         <header className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-3">
             <AppButton variant="outline" size="sm" onClick={() => router.push(selectedWorkspaceId ? `/workspaces?workspace=${selectedWorkspaceId}` : "/workspaces")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
@@ -659,9 +655,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </div>
         </header>
 
-        {/* Unified Filters Box */}
         <div className="bg-gray-50 dark:bg-white/5 p-1.5 rounded-lg border border-gray-200 dark:border-white/10 shadow-sm flex flex-wrap items-center gap-1.5">
-          {/* Scope Filter */}
           <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
             {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
               <button
@@ -674,7 +668,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             ))}
           </div>
 
-          {/* Workspace Filter Select */}
           <div className="flex items-center gap-1 bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 p-1 rounded-lg">
             <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider pl-1">Workspace:</span>
             <select
@@ -695,7 +688,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             </select>
           </div>
 
-          {/* Advanced Filters */}
           <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-[10px] font-bold px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
             <option value="">All Statuses</option>
             {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
@@ -754,7 +746,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </button>
         </div>
 
-        {/* Dynamic Report Builder Modal */}
         <DynamicReportBuilder 
           isOpen={isConfigOpen} 
           onClose={() => setIsConfigOpen(false)} 
@@ -765,20 +756,18 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           reportName="Workspace Tasks"
         />
 
-        {/* Toast Notification */}
         {successToast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
             <span className="text-xs font-semibold">{successToast}</span>
           </div>
         )}
 
-
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
           <AppTable className="table-auto w-full">
             <AppTableHeader className="sticky top-0 z-10">
               <AppTableRow>
-                <AppTableCell className="text-center p-0 w-10">
+                <AppTableHead className="text-center p-0 w-10 sticky left-0 top-0 z-30 bg-gray-50 dark:bg-[#1a1d2d] border-r border-gray-200 dark:border-white/5">
                   <input 
                     type="checkbox" 
                     checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
@@ -790,10 +779,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                     onChange={handleSelectAll}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                </AppTableCell>
+                </AppTableHead>
                 <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
-                  {visibleColumns.map(col => (
-                    <DraggableTableHead key={col.field_id} col={col} />
+                  {visibleColumns.map((col, index) => (
+                    <DraggableTableHead key={col.field_id} col={col} isFirst={index === 0} />
                   ))}
                 </SortableContext>
               </AppTableRow>
@@ -808,7 +797,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               const task = filtered[virtualRow.index];
               return (
                 <AppTableRow key={task.id} data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}>
-                  <AppTableCell className="px-2 text-center" onClick={(e) => e.stopPropagation()}>
+                  <AppTableCell className="px-2 text-center sticky left-0 z-20 bg-white dark:bg-[#06080f] border-r border-gray-200 dark:border-white/5" onClick={(e) => e.stopPropagation()}>
                     <input 
                       type="checkbox" 
                       checked={selectedTaskIds.has(task.id)}
@@ -816,13 +805,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </AppTableCell>
-                  {visibleColumns.map(col => {
-                    switch(col.field_key) {
+                  {visibleColumns.map((col, index) => {
+                    const renderCell = () => {
+                      switch(col.field_key) {
                       case "code": return (
-                        <AppTableCell key={col.field_id} className="font-mono text-[11px] text-blue-600 font-bold whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                        <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                       );
                       case "title_description": return (
-                        <AppTableCell key={col.field_id}>
+                        <AppTableCell>
                           <div className="flex items-center gap-2">
                             <div className="font-semibold text-gray-900 dark:text-gray-100">{task.title || '—'}</div>
                             {task.attachmentCount > 0 && (
@@ -843,10 +833,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "workspace": return (
-                        <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400">{task.workspace?.name || task.workspace?.code || '—'}</AppTableCell>
+                        <AppTableCell className="text-xs text-gray-600 dark:text-gray-400">{task.workspace?.name || task.workspace?.code || '—'}</AppTableCell>
                       );
                       case "department": return (
-                        <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        <AppTableCell className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                           <button 
                             onClick={(e) => canUpdate && handleDepartmentClick(e, task)} 
                             className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
@@ -859,17 +849,17 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "priority": return (
-                        <AppTableCell key={col.field_id}>
+                        <AppTableCell>
                           <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null}>
                             {task.priority?.name || '—'}
                           </AppBadge>
                         </AppTableCell>
                       );
                       case "due_date": return (
-                        <AppTableCell key={col.field_id} className="text-gray-600 text-xs whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
+                        <AppTableCell className="text-gray-600 text-xs whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
                       );
                       case "status": return (
-                        <AppTableCell key={col.field_id} className="whitespace-nowrap">
+                        <AppTableCell className="whitespace-nowrap">
                           <button 
                             onClick={(e) => canUpdate && handleStatusClick(e, task)} 
                             className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
@@ -882,7 +872,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "assignee": return (
-                        <AppTableCell key={col.field_id}>
+                        <AppTableCell>
                           {task.assignee ? (
                             <div className="flex items-center gap-2">
                               {(() => {
@@ -908,10 +898,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "creator_name": return (
-                        <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400">{task.creator_name || '—'}</AppTableCell>
+                        <AppTableCell className="text-xs text-gray-600 dark:text-gray-400">{task.creator_name || '—'}</AppTableCell>
                       );
                       case "start_date": return (
-                        <AppTableCell key={col.field_id} className="text-gray-600 text-xs whitespace-nowrap">{formatDate(task.start_date)}</AppTableCell>
+                        <AppTableCell className="text-gray-600 text-xs whitespace-nowrap">{formatDate(task.start_date)}</AppTableCell>
                       );
                       case "duration": {
                         let text = "—";
@@ -919,10 +909,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
                           text = `${diff} day(s)`;
                         }
-                        return <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400">{text}</AppTableCell>;
+                        return <AppTableCell className="text-xs text-gray-600 dark:text-gray-400">{text}</AppTableCell>;
                       }
                       case "progress": return (
-                        <AppTableCell key={col.field_id} className="w-[120px]">
+                        <AppTableCell className="w-[120px]">
                           {task.progress_percentage !== undefined ? (
                             <div className="flex items-center gap-2">
                               <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -934,7 +924,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "executors": return (
-                        <AppTableCell key={col.field_id}>
+                        <AppTableCell>
                           {task.executors && task.executors.length > 0 ? (
                             <div className="flex -space-x-1.5 overflow-hidden">
                               {task.executors.slice(0, 3).map((u: any) => (
@@ -956,7 +946,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "reviewers": return (
-                        <AppTableCell key={col.field_id}>
+                        <AppTableCell>
                           {task.reviewers && task.reviewers.length > 0 ? (
                             <div className="flex -space-x-1.5 overflow-hidden">
                               {task.reviewers.slice(0, 3).map((u: any) => (
@@ -978,7 +968,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "attachments": return (
-                        <AppTableCell key={col.field_id} className="text-center">
+                        <AppTableCell className="text-center">
                           {task.attachmentCount > 0 ? (
                             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 font-medium text-[11px]">
                               <Paperclip className="h-3 w-3" />
@@ -988,7 +978,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "comments": return (
-                        <AppTableCell key={col.field_id} className="text-center">
+                        <AppTableCell className="text-center">
                           {task.commentCount > 0 ? (
                             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium text-[11px]">
                               <MessageSquare className="h-3 w-3" />
@@ -998,7 +988,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "external_link": return (
-                        <AppTableCell key={col.field_id} className="text-xs">
+                        <AppTableCell className="text-xs">
                           {task.custom_fields?.link_url ? (
                             <a href={task.custom_fields.link_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
                               <ExternalLink className="h-3 w-3 flex-shrink-0" />
@@ -1008,13 +998,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "created_at": return (
-                        <AppTableCell key={col.field_id} className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                        <AppTableCell className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
                       );
                       case "updated_at": return (
-                        <AppTableCell key={col.field_id} className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
+                        <AppTableCell className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
                       );
                       case "actions": return (
-                        <AppTableCell key={col.field_id} className="text-right">
+                        <AppTableCell className="text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <Link 
                               href={`/tasks/${task.id}?mode=view`}
@@ -1056,7 +1046,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         else if (col.data_type === "date") val = formatDate(val);
                         
                         return (
-                          <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400 break-words">
+                          <AppTableCell className="text-xs text-gray-600 dark:text-gray-400 break-words">
                             {col.data_type === "link" && val !== "—" ? (
                               <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{val}</a>
                             ) : col.data_type === "badge" && val !== "—" ? (
@@ -1068,6 +1058,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         );
                       }
                     }
+                    };
+                    const cellNode = renderCell() as React.ReactElement<any>;
+                    const isFirst = index === 0;
+                    return React.cloneElement(cellNode, {
+                      key: col.field_id,
+                      className: `${cellNode.props.className || ''} ${isFirst ? 'sticky left-[40px] z-20 bg-white dark:bg-[#06080f] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] border-r border-gray-200 dark:border-white/5' : ''}`.trim(),
+                    });
                   })}
                 </AppTableRow>
               );
