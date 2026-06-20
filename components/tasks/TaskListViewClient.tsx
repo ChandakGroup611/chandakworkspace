@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/AppTable";
 import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield } from "lucide-react";
 import Link from "next/link";
-import { deleteTask, getTaskStatuses, updateTaskStatusInline } from "@/lib/actions/tasks";
+import { deleteTask, getTaskStatuses, updateTaskStatusInline, getDepartments, executeTaskBatchOperation } from "@/lib/actions/tasks";
 import { createClient } from "@/utils/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
@@ -26,8 +26,63 @@ import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportConfig";
+import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
+import { Settings2, MessageSquare, ExternalLink } from "lucide-react";
+
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { getAllReportCustomFields } from "@/lib/actions/workspace_reports";
 
 type Task = any;
+
+function DraggableTableHead({ col }: { col: any }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
+  const style = { 
+    transform: CSS.Translate.toString(transform), 
+    transition, 
+    minWidth: col.column_width ? `${col.column_width}px` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+    position: 'relative' as any
+  };
+  return (
+    <AppTableHead 
+      ref={setNodeRef} 
+      style={style} 
+      className={`font-bold text-xs uppercase text-gray-500 px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-colors ${col.field_key === "actions" ? "w-[50px]" : ""} ${["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "updated_at"].includes(col.field_key) ? "text-right" : ""}`}
+      {...attributes} 
+      {...listeners}
+    >
+      {col.display_name}
+    </AppTableHead>
+  );
+}
+
+const INITIAL_TASK_FIELDS: UIFieldDefinition[] = [
+  { field_key: "code", display_name: "Code", data_type: "text", is_default: true, default_width: 80 },
+  { field_key: "title_description", display_name: "Title & Description", data_type: "custom", is_default: true, default_width: 300 },
+  { field_key: "workspace", display_name: "Workspace", data_type: "text", is_default: true, default_width: 150 },
+  { field_key: "department", display_name: "Department", data_type: "badge", is_default: true, default_width: 150 },
+  { field_key: "priority", display_name: "Priority", data_type: "badge", is_default: true, default_width: 120 },
+  { field_key: "due_date", display_name: "Due Date", data_type: "date", is_default: true, default_width: 120 },
+  { field_key: "status", display_name: "Status", data_type: "badge", is_default: true, default_width: 150 },
+  { field_key: "assignee", display_name: "Assignee", data_type: "user", is_default: true, default_width: 150 },
+  { field_key: "created_at", display_name: "Created At", data_type: "date", is_default: true, default_width: 120 },
+  { field_key: "actions", display_name: "Actions", data_type: "custom", is_default: true, default_width: 80 },
+  // Hidden by default fields that users can add
+  { field_key: "start_date", display_name: "Start Date", data_type: "date", is_default: false, default_width: 120 },
+  { field_key: "duration", display_name: "Duration", data_type: "custom", is_default: false, default_width: 100 },
+  { field_key: "progress", display_name: "Checklist Progress", data_type: "custom", is_default: false, default_width: 130 },
+  { field_key: "executors", display_name: "Executors", data_type: "custom", is_default: false, default_width: 150 },
+  { field_key: "reviewers", display_name: "Watchers & Reviewers", data_type: "custom", is_default: false, default_width: 150 },
+  { field_key: "attachments", display_name: "Attachments", data_type: "custom", is_default: false, default_width: 100 },
+  { field_key: "comments", display_name: "Remarks & Comments", data_type: "custom", is_default: false, default_width: 150 },
+  { field_key: "external_link", display_name: "External Link", data_type: "link", is_default: false, default_width: 200 },
+  { field_key: "creator_name", display_name: "Creator", data_type: "user", is_default: false, default_width: 150 },
+  { field_key: "updated_at", display_name: "Updated At", data_type: "date", is_default: false, default_width: 120 },
+];
 
 // Format date consistently without locale-based variations
 const formatDate = (dateString: string | null | undefined): string => {
@@ -48,6 +103,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [scope, setScope] = useState<"ALL" | "ASSIGNEE" | "CREATOR" | "MANAGER">("ALL");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
+  const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
+  const canUpdate = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_UPDATE");
+
+  const [dynamicFields, setDynamicFields] = useState<UIFieldDefinition[]>([]);
+
+  const combinedFields = useMemo(() => {
+    return [...INITIAL_TASK_FIELDS, ...dynamicFields];
+  }, [dynamicFields]);
+
+  const { layout, availableFields, loading: configLoading, saveLayout, resetToDefault } = useLocalReportConfig('WORKSPACE_TASKS', combinedFields);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const visibleColumns = useMemo(() => layout.filter(l => l.is_visible).sort((a, b) => a.display_order - b.display_order), [layout]);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const triggerToast = (msg: string) => {
     setSuccessToast(msg);
@@ -68,18 +136,23 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [inlineTask, setInlineTask] = useState<Task | null>(null);
   const [inlineNewStatus, setInlineNewStatus] = useState<string>("");
+  const [departmentModalOpen, setDepartmentModalOpen] = useState(false);
+  const [inlineNewDepartment, setInlineNewDepartment] = useState<string>("");
   const [inlineRemark, setInlineRemark] = useState<string>("");
   const [inlineLoading, setInlineLoading] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false);
+  const [bulkOldStatus, setBulkOldStatus] = useState<string>("");
   const [bulkNewStatus, setBulkNewStatus] = useState<string>("");
+  const [bulkOldDepartment, setBulkOldDepartment] = useState<string>("");
+  const [bulkNewDepartment, setBulkNewDepartment] = useState<string>("");
   const [bulkRemark, setBulkRemark] = useState<string>("");
-  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
-  const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
-  const canUpdate = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_UPDATE");
+  const [departments, setDepartments] = useState<any[]>([]);
 
   useEffect(() => {
     getTaskStatuses().then(setMasterStatuses).catch(console.error);
+    getDepartments().then(setDepartments).catch(console.error);
+    getAllReportCustomFields().then(setDynamicFields).catch(console.error);
   }, []);
 
   const uniqueStatuses = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[], [tasks]);
@@ -155,6 +228,32 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       return true;
     });
   }, [tasks, scope, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const activeCol = layout.find(l => l.field_id === active.id);
+      const overCol = layout.find(l => l.field_id === over.id);
+      
+      if (!activeCol || !overCol) return;
+
+      const newLayout = [...layout];
+      newLayout.sort((a, b) => a.display_order - b.display_order);
+      
+      const oldIndex = newLayout.findIndex(i => i.field_id === active.id);
+      const newIndex = newLayout.findIndex(i => i.field_id === over.id);
+      
+      const reorderedLayout = arrayMove(newLayout, oldIndex, newIndex);
+      reorderedLayout.forEach((item, idx) => item.display_order = idx + 1);
+      
+      await saveLayout(reorderedLayout);
+    }
+  };
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -255,20 +354,64 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   };
 
   const handleBulkStatusSave = async () => {
-    if (!bulkNewStatus) return;
+    if (!bulkNewStatus && !bulkNewDepartment) return;
     try {
       setInlineLoading(true);
-      // NOTE: updateTaskStatusInline requires the user to be the assignee, some might fail if they are not.
-      await Promise.all(Array.from(selectedTaskIds).map(id => updateTaskStatusInline(id, bulkNewStatus, bulkRemark || "Bulk Status Update")));
-      
       const stMaster = masterStatuses.find(s => s.id === bulkNewStatus);
       const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
-      setTasks(prev => prev.map(t => selectedTaskIds.has(t.id) ? { ...t, status_id: bulkNewStatus, status: mappedStatus } : t));
+      const deptMaster = departments.find(d => d.id === bulkNewDepartment);
+
+      await Promise.all(Array.from(selectedTaskIds).map(id => {
+        const t = tasks.find(x => x.id === id);
+        if (!t) return Promise.resolve(null);
+        
+        let newStatus = bulkNewStatus || undefined;
+        let newDept = bulkNewDepartment || undefined;
+
+        if (bulkOldStatus && t.status_id !== bulkOldStatus) {
+           newStatus = undefined;
+        }
+        if (bulkOldDepartment && t.department_id !== bulkOldDepartment) {
+           newDept = undefined;
+        }
+
+        if (!newStatus && !newDept) {
+           return Promise.resolve(null);
+        }
+
+        return executeTaskBatchOperation({
+          taskId: id,
+          statusChanges: newStatus,
+          departmentChange: newDept ? { 
+            old_id: t.department_id, 
+            new_id: newDept,
+            old_name: t.department?.name,
+            new_name: deptMaster?.name
+          } : undefined,
+          remarks: bulkRemark || "Bulk Update"
+        });
+      }));
+      
+      setTasks(prev => prev.map(t => {
+        if (selectedTaskIds.has(t.id)) {
+          let newStatus = bulkNewStatus || undefined;
+          let newDept = bulkNewDepartment || undefined;
+          if (bulkOldStatus && t.status_id !== bulkOldStatus) newStatus = undefined;
+          if (bulkOldDepartment && t.department_id !== bulkOldDepartment) newDept = undefined;
+          
+          return {
+            ...t,
+            ...(newStatus ? { status_id: newStatus, status: mappedStatus } : {}),
+            ...(newDept ? { department_id: newDept, department: deptMaster } : {})
+          };
+        }
+        return t;
+      }));
       setSelectedTaskIds(new Set());
       setBulkStatusModalOpen(false);
       triggerToast(`Successfully updated tasks.`);
     } catch (e: any) {
-      alert("Bulk status update failed: " + e.message);
+      alert("Bulk update failed: " + e.message);
     } finally {
       setInlineLoading(false);
     }
@@ -281,6 +424,15 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     setInlineNewStatus(task.status_id || "");
     setInlineRemark("");
     setStatusModalOpen(true);
+  };
+
+  const handleDepartmentClick = (e: React.MouseEvent, task: any) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setInlineTask(task);
+    setInlineNewDepartment(task.department_id || "");
+    setInlineRemark("");
+    setDepartmentModalOpen(true);
   };
 
   const handleStatusSave = async () => {
@@ -300,11 +452,54 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
     const stMaster = masterStatuses.find(s => s.id === inlineNewStatus);
     const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
-    setTasks(prev => prev.map(t => t.id === inlineTask.id ? { ...t, status_id: inlineNewStatus, status: mappedStatus } : t));
 
-    triggerToast("Task updated successfully!");
-    setInlineLoading(false);
+    setTasks(prev => prev.map(t => t.id === inlineTask.id ? { ...t, status_id: inlineNewStatus, status: mappedStatus || t.status } : t));
     setStatusModalOpen(false);
+    setInlineLoading(false);
+    triggerToast(`Status updated successfully.`);
+  };
+
+  const handleDepartmentSave = async () => {
+    if (!inlineTask) return;
+    if (!inlineRemark || inlineRemark.trim().length === 0) {
+      alert("A remark is required.");
+      return;
+    }
+
+    setInlineLoading(true);
+    try {
+      const deptMaster = departments.find(d => d.id === inlineNewDepartment);
+      
+      let newDept = inlineNewDepartment || undefined;
+      if (inlineNewDepartment === inlineTask.department_id) {
+         newDept = undefined;
+      }
+
+      const res = await executeTaskBatchOperation({
+        taskId: inlineTask.id,
+        departmentChange: newDept ? { 
+          old_id: inlineTask.department_id, 
+          new_id: newDept,
+          old_name: inlineTask.department?.name,
+          new_name: deptMaster?.name
+        } : undefined,
+        remarks: inlineRemark
+      });
+
+      if (res?.error) throw new Error(res.error);
+
+      setTasks(prev => prev.map(t => t.id === inlineTask.id ? { 
+        ...t, 
+        ...(newDept ? { department_id: newDept, department: deptMaster } : {}) 
+      } : t));
+
+      setDepartmentModalOpen(false);
+      triggerToast(`Department updated successfully.`);
+    } catch (error: any) {
+      alert("Failed to update: " + error.message);
+    } finally {
+      setInlineLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -331,19 +526,55 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     fetchTasksData(1, false, wsId);
   }, []);
 
+  const getExportCellValue = (col: any, t: any) => {
+    switch(col.field_key) {
+      case "code": return t.code || `TSK-${t.id.substring(0,4).toUpperCase()}`;
+      case "title_description": return t.title || "—";
+      case "workspace": return t.workspace?.name || t.workspace?.code || "—";
+      case "department": return t.department?.name || "—";
+      case "priority": return t.priority?.name || "—";
+      case "due_date": return t.end_date || "—";
+      case "status": return t.status?.name || "—";
+      case "start_date": return formatDate(t.start_date);
+      case "duration": {
+        if (!t.start_date || !t.end_date) return "—";
+        const diff = Math.ceil((new Date(t.end_date).getTime() - new Date(t.start_date).getTime()) / (1000 * 60 * 60 * 24));
+        return `${diff} day(s)`;
+      }
+      case "progress": return `${t.progress_percentage || 0}%`;
+      case "executors": return t.executors?.map((u: any) => u.full_name).join(", ") || "—";
+      case "reviewers": return t.reviewers?.map((u: any) => u.full_name).join(", ") || "—";
+      case "attachments": return t.attachmentCount ? `${t.attachmentCount} file(s)` : "—";
+      case "comments": return t.commentCount ? `${t.commentCount} remark(s)` : "—";
+      case "external_link": return t.custom_fields?.link_url || "—";
+      case "creator_name": return t.creator_name || "—";
+      case "assignee": 
+        const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
+        return a?.full_name || "Unassigned";
+      case "created_at": return formatDate(t.created_at);
+      case "updated_at": return formatDate(t.updated_at);
+      default: 
+        if (t.custom_fields && t.custom_fields[col.field_key] !== undefined) {
+          const val = t.custom_fields[col.field_key];
+          if (col.data_type === "boolean") return val ? "Yes" : "No";
+          if (col.data_type === "date") return formatDate(val);
+          return val;
+        }
+        return "—";
+    }
+  };
+
   const exportToExcel = async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Tasks");
 
-    worksheet.columns = [
-      { header: "Code", key: "code", width: 15 },
-      { header: "Title", key: "title", width: 40 },
-      { header: "Workspace", key: "workspace", width: 25 },
-      { header: "Priority", key: "priority", width: 15 },
-      { header: "Due Date", key: "due", width: 15 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Created At", key: "created", width: 20 },
-    ];
+    const exportCols = visibleColumns.filter(c => c.field_key !== "actions");
+
+    worksheet.columns = exportCols.map(col => ({
+      header: col.display_name,
+      key: col.field_key,
+      width: col.field_key === "title_description" ? 40 : 20,
+    }));
 
     worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
     worksheet.getRow(1).fill = {
@@ -354,15 +585,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     worksheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
 
     filtered.forEach((t) => {
-      worksheet.addRow({
-        code: t.code || `TSK-${t.id.substring(0,4).toUpperCase()}`,
-        title: t.title || "—",
-        workspace: t.workspace?.name || t.workspace?.code || "—",
-        priority: t.priority?.name || "—",
-        due: t.end_date || "—",
-        status: t.status?.name || "—",
-        created: formatDate(t.created_at),
+      const row: any = {};
+      exportCols.forEach(col => {
+        row[col.field_key] = getExportCellValue(col, t);
       });
+      worksheet.addRow(row);
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -373,21 +600,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     const doc = new jsPDF("landscape");
     doc.text("All Workspace Tasks", 14, 15);
     
-    const tableData = filtered.map(t => [
-      t.code || `TSK-${t.id.substring(0,4).toUpperCase()}`,
-      t.title || "—",
-      t.workspace?.name || t.workspace?.code || "—",
-      t.priority?.name || "—",
-      t.end_date || "—",
-      t.status?.name || "—",
-      formatDate(t.created_at)
-    ]);
+    const exportCols = visibleColumns.filter(c => c.field_key !== "actions");
+    const tableData = filtered.map(t => exportCols.map(col => getExportCellValue(col, t)));
 
     autoTable(doc, {
-      head: [["Code", "Title", "Workspace", "Priority", "Due Date", "Status", "Created At"]],
+      head: [exportCols.map(col => col.display_name)],
       body: tableData,
       startY: 20,
-      styles: { fontSize: 9 },
+      styles: { fontSize: 8 },
       headStyles: { fillColor: [79, 70, 229] },
       alternateRowStyles: { fillColor: [243, 244, 246] }
     });
@@ -440,84 +660,110 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         </header>
 
         {/* Unified Filters Box */}
-        <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3 md:gap-4">
-            {/* Scope Filter */}
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
-              {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
-                <button
-                  key={sc}
-                  onClick={() => setScope(sc)}
-                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${scope === sc ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"}`}
-                >
-                  {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
-                </button>
-              ))}
-            </div>
-
-            {/* Workspace Filter Select */}
-            <div className="flex items-center gap-2 bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 p-1.5 rounded-lg">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider pl-1">Workspace:</span>
-              <select
-                value={selectedWorkspaceId || ""}
-                onChange={(e) => {
-                  const newWsId = e.target.value || null;
-                  setSelectedWorkspaceId(newWsId);
-                  fetchTasksData(1, false, newWsId);
-                }}
-                className="text-[11px] font-medium px-2 py-1 rounded bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0 transition-colors"
+        <div className="bg-gray-50 dark:bg-white/5 p-1.5 rounded-lg border border-gray-200 dark:border-white/10 shadow-sm flex flex-wrap items-center gap-1.5">
+          {/* Scope Filter */}
+          <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
+            {(["ALL","CREATOR","MANAGER"] as const).map(sc => (
+              <button
+                key={sc}
+                onClick={() => setScope(sc)}
+                className={`text-[10px] font-bold px-2 py-1 rounded-md transition-colors ${scope === sc ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"}`}
               >
-                <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
-                {allWorkspaces.map((ws: any) => (
-                  <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
-                    {ws.workspace_code || ws.code} - {ws.workspace_name || ws.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {sc === "ALL" ? "All Operations" : sc === "CREATOR" ? "Created By Me" : "Managed By Me"}
+              </button>
+            ))}
+          </div>
 
-            {/* Advanced Filters */}
-            <div className="flex items-center gap-2">
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-[11px] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                <option value="">All Statuses</option>
-                {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              
-              <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-[11px] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                <option value="">All Priorities</option>
-                {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-              
-              <label className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 dark:text-gray-300 cursor-pointer bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 px-3 py-2 rounded-lg">
-                <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-gray-300 text-rose-500 focus:ring-rose-500" />
-                Escalated Only
-              </label>
-            </div>
+          {/* Workspace Filter Select */}
+          <div className="flex items-center gap-1 bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 p-1 rounded-lg">
+            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider pl-1">Workspace:</span>
+            <select
+              value={selectedWorkspaceId || ""}
+              onChange={(e) => {
+                const newWsId = e.target.value || null;
+                setSelectedWorkspaceId(newWsId);
+                fetchTasksData(1, false, newWsId);
+              }}
+              className="text-[10px] font-bold px-1 py-0.5 rounded bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-0 transition-colors"
+            >
+              <option value="" className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">All Workspaces</option>
+              {allWorkspaces.map((ws: any) => (
+                <option key={ws.id} value={ws.id} className="bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-300">
+                  {ws.workspace_code || ws.code} - {ws.workspace_name || ws.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300 ml-auto bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-lg">
-              <span className="text-gray-500 uppercase tracking-wider text-[9px]">Date:</span>
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-[11px] rounded bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none" />
-              <span className="text-gray-400">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-[11px] rounded bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none" />
-              
-              {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo) && (
-                <>
-                  <div className="w-px h-4 bg-gray-200 dark:bg-white/10 mx-1"></div>
-                  <button onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); }} className="text-[10px] uppercase text-rose-500 hover:text-rose-600 font-bold">
-                    Clear
-                  </button>
-                </>
-              )}
-            </div>
+          {/* Advanced Filters */}
+          <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-[10px] font-bold px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <option value="">All Statuses</option>
+            {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          
+          <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-[10px] font-bold px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <option value="">All Priorities</option>
+            {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          
+          <label className="flex items-center gap-1 text-[10px] font-bold text-gray-700 dark:text-gray-300 cursor-pointer bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 px-2 py-1.5 rounded-lg">
+            <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-gray-300 text-rose-500 focus:ring-rose-500 w-3 h-3" />
+            Escalated
+          </label>
+
+          <div className="flex items-center gap-1.5 bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 px-2 py-1 rounded-lg">
+            <span className="text-gray-500 uppercase tracking-wider text-[9px] font-bold">Date:</span>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-[10px] font-bold rounded bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none" />
+            <span className="text-gray-400 text-[9px] font-bold">to</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-[10px] font-bold rounded bg-transparent text-gray-700 dark:text-gray-300 focus:outline-none" />
+            
+            {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo) && (
+              <>
+                <div className="w-px h-3 bg-gray-200 dark:bg-white/10 mx-0.5"></div>
+                <button onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); }} className="text-[9px] uppercase text-rose-500 hover:text-rose-600 font-bold">
+                  Clear
+                </button>
+              </>
+            )}
           </div>
           
-          <div className="flex items-center justify-between pt-3 mt-1 border-t border-gray-200 dark:border-white/10">
-            <AppInput placeholder="Search tasks, code, workspace..." value={query} onChange={(e:any) => setQuery(e.target.value)} className="w-full max-w-md text-sm bg-white dark:bg-[#0f111a]" />
-            <AppButton variant="outline" size="sm" onClick={refresh} leftIcon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />}>
-              Refresh Data
-            </AppButton>
+          <div className="flex-1 min-w-[150px]">
+            <input 
+              placeholder="Search tasks, code..." 
+              value={query} 
+              onChange={(e:any) => setQuery(e.target.value)} 
+              className="w-full text-[11px] h-8 px-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+            />
           </div>
+
+          <button 
+            onClick={refresh} 
+            disabled={loading}
+            className="h-8 px-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-1.5 text-[10px] font-bold transition-colors ml-auto shrink-0"
+          >
+            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Filter className="h-3 w-3" />}
+            Refresh
+          </button>
+          <button 
+            onClick={() => setIsConfigOpen(true)} 
+            disabled={configLoading}
+            className="h-8 px-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#0f111a] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-1.5 text-[10px] font-bold transition-colors shrink-0"
+          >
+            {configLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Settings2 className="h-3 w-3" />}
+            Columns
+          </button>
         </div>
+
+        {/* Dynamic Report Builder Modal */}
+        <DynamicReportBuilder 
+          isOpen={isConfigOpen} 
+          onClose={() => setIsConfigOpen(false)} 
+          layout={layout} 
+          availableFields={availableFields} 
+          onSave={saveLayout} 
+          onReset={resetToDefault} 
+          reportName="Workspace Tasks"
+        />
 
         {/* Toast Notification */}
         {successToast && (
@@ -527,38 +773,35 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         )}
 
 
-      <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
-        <AppTable className="table-auto w-full">
-          <AppTableHeader className="sticky top-0 z-10">
-            <AppTableRow>
-              <AppTableCell className="text-center p-0">
-                <input 
-                  type="checkbox" 
-                  checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
-                  ref={input => {
-                    if (input) {
-                      input.indeterminate = selectedTaskIds.size > 0 && selectedTaskIds.size < filtered.length;
-                    }
-                  }}
-                  onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-              </AppTableCell>
-              <AppTableHead className="whitespace-nowrap">Code</AppTableHead>
-              <AppTableHead>Title & Description</AppTableHead>
-              <AppTableHead>Workspace</AppTableHead>
-              <AppTableHead>Priority</AppTableHead>
-              <AppTableHead className="whitespace-nowrap">Due</AppTableHead>
-              <AppTableHead className="whitespace-nowrap">Status</AppTableHead>
-              <AppTableHead>Assignee</AppTableHead>
-              <AppTableHead className="text-right whitespace-nowrap">Created</AppTableHead>
-              <AppTableHead className="w-[50px]">Actions</AppTableHead>
-            </AppTableRow>
-          </AppTableHeader>
-          <AppTableBody>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
+          <AppTable className="table-auto w-full">
+            <AppTableHeader className="sticky top-0 z-10">
+              <AppTableRow>
+                <AppTableCell className="text-center p-0 w-10">
+                  <input 
+                    type="checkbox" 
+                    checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
+                    ref={input => {
+                      if (input) {
+                        input.indeterminate = selectedTaskIds.size > 0 && selectedTaskIds.size < filtered.length;
+                      }
+                    }}
+                    onChange={handleSelectAll}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </AppTableCell>
+                <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
+                  {visibleColumns.map(col => (
+                    <DraggableTableHead key={col.field_id} col={col} />
+                  ))}
+                </SortableContext>
+              </AppTableRow>
+            </AppTableHeader>
+            <AppTableBody>
             {virtualizer.getVirtualItems().length > 0 && virtualizer.getVirtualItems()[0].start > 0 && (
               <tr>
-                <td colSpan={10} style={{ height: `${virtualizer.getVirtualItems()[0].start}px` }} />
+                <td colSpan={visibleColumns.length + 1} style={{ height: `${virtualizer.getVirtualItems()[0].start}px` }} />
               </tr>
             )}
             {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -573,119 +816,276 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </AppTableCell>
-                  <AppTableCell className="font-mono text-[11px] text-blue-600 font-bold whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
-                  <AppTableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="font-semibold text-gray-900 dark:text-gray-100">{task.title || '—'}</div>
-                      {task.attachmentCount > 0 && (
-                        <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400" title={`${task.attachmentCount} Attachment(s)`}>
-                          <Paperclip className="h-3 w-3" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-gray-500 line-clamp-1">{task.description}</div>
-                    {task.custom_fields?.progress_percentage !== undefined && (
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-500">{task.custom_fields.progress_percentage}%</span>
-                      </div>
-                    )}
-                  </AppTableCell>
-                  <AppTableCell className="text-xs text-gray-600 dark:text-gray-400">{task.workspace?.name || task.workspace?.code || '—'}</AppTableCell>
-                  <AppTableCell>
-                    <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null}>
-                      {task.priority?.name || '—'}
-                    </AppBadge>
-                  </AppTableCell>
-                  <AppTableCell className="text-gray-600 text-xs whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
-                  <AppTableCell className="whitespace-nowrap">
-                    <button 
-                      onClick={(e) => canUpdate && handleStatusClick(e, task)} 
-                      className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
-                      title={canUpdate ? "Update Status" : "Status"}
-                    >
-                      <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""}>
-                        {task.status?.name || '—'}
-                      </AppBadge>
-                    </button>
-                  </AppTableCell>
-                  <AppTableCell>
-                    {task.assignee ? (
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                           const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
-                           if (!a) return null;
-                           return (
-                             <>
-                               {a.profile_photo ? (
-                                 <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
-                               ) : (
-                                 <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
-                                   {a.full_name?.substring(0, 2).toUpperCase() || "U"}
-                                 </div>
-                               )}
-                               <span className="text-xs font-semibold text-gray-800 break-words">{a.full_name}</span>
-                             </>
-                           );
-                        })()}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400 italic">Unassigned</span>
-                    )}
-                  </AppTableCell>
-                  <AppTableCell className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
-                  <AppTableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Link 
-                        href={`/tasks/${task.id}`}
-                        className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                        title="View Task"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                      {canUpdate && (
-                        <Link 
-                          href={`/tasks/${task.id}`}
-                          className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                          title="Edit Task"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Link>
-                      )}
-                      {canDelete && (
-                        <button 
-                          onClick={(e) => handleDeleteTask(e, task.id)}
-                          disabled={deleteLoadingId === task.id}
-                          className="p-1.5 rounded-md text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-50"
-                          title="Delete Task"
-                        >
-                          {deleteLoadingId === task.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
+                  {visibleColumns.map(col => {
+                    switch(col.field_key) {
+                      case "code": return (
+                        <AppTableCell key={col.field_id} className="font-mono text-[11px] text-blue-600 font-bold whitespace-nowrap">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                      );
+                      case "title_description": return (
+                        <AppTableCell key={col.field_id}>
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">{task.title || '—'}</div>
+                            {task.attachmentCount > 0 && (
+                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400" title={`${task.attachmentCount} Attachment(s)`}>
+                                <Paperclip className="h-3 w-3" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-gray-500 line-clamp-1">{task.description}</div>
+                          {task.custom_fields?.progress_percentage !== undefined && (
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                              </div>
+                              <span className="text-[10px] font-bold text-gray-500">{task.custom_fields.progress_percentage}%</span>
+                            </div>
                           )}
-                        </button>
-                      )}
-                      </div>
-                    </AppTableCell>
-                  </AppTableRow>
-                );
-              })}
-              {virtualizer.getVirtualItems().length > 0 && (
-                <tr>
-                  <td 
-                    colSpan={10} 
-                    style={{ 
-                      height: `${virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end}px` 
-                    }} 
-                  />
-                </tr>
-              )}
-            </AppTableBody>
-          </AppTable>
-        </div>
+                        </AppTableCell>
+                      );
+                      case "workspace": return (
+                        <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400">{task.workspace?.name || task.workspace?.code || '—'}</AppTableCell>
+                      );
+                      case "department": return (
+                        <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          <button 
+                            onClick={(e) => canUpdate && handleDepartmentClick(e, task)} 
+                            className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
+                            title={canUpdate ? "Update Department" : "Department"}
+                          >
+                            <AppBadge variant="neutral" className={canUpdate ? "border-dashed" : ""}>
+                              {task.department?.name || '—'}
+                            </AppBadge>
+                          </button>
+                        </AppTableCell>
+                      );
+                      case "priority": return (
+                        <AppTableCell key={col.field_id}>
+                          <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null}>
+                            {task.priority?.name || '—'}
+                          </AppBadge>
+                        </AppTableCell>
+                      );
+                      case "due_date": return (
+                        <AppTableCell key={col.field_id} className="text-gray-600 text-xs whitespace-nowrap">{task.end_date || '—'}</AppTableCell>
+                      );
+                      case "status": return (
+                        <AppTableCell key={col.field_id} className="whitespace-nowrap">
+                          <button 
+                            onClick={(e) => canUpdate && handleStatusClick(e, task)} 
+                            className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
+                            title={canUpdate ? "Update Status" : "Status"}
+                          >
+                            <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""}>
+                              {task.status?.name || '—'}
+                            </AppBadge>
+                          </button>
+                        </AppTableCell>
+                      );
+                      case "assignee": return (
+                        <AppTableCell key={col.field_id}>
+                          {task.assignee ? (
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                 const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                                 if (!a) return null;
+                                 return (
+                                   <>
+                                     {a.profile_photo ? (
+                                       <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
+                                     ) : (
+                                       <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                         {a.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                       </div>
+                                     )}
+                                     <span className="text-xs font-semibold text-gray-800 break-words">{a.full_name}</span>
+                                   </>
+                                 );
+                              })()}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">Unassigned</span>
+                          )}
+                        </AppTableCell>
+                      );
+                      case "creator_name": return (
+                        <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400">{task.creator_name || '—'}</AppTableCell>
+                      );
+                      case "start_date": return (
+                        <AppTableCell key={col.field_id} className="text-gray-600 text-xs whitespace-nowrap">{formatDate(task.start_date)}</AppTableCell>
+                      );
+                      case "duration": {
+                        let text = "—";
+                        if (task.start_date && task.end_date) {
+                          const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
+                          text = `${diff} day(s)`;
+                        }
+                        return <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400">{text}</AppTableCell>;
+                      }
+                      case "progress": return (
+                        <AppTableCell key={col.field_id} className="w-[120px]">
+                          {task.progress_percentage !== undefined ? (
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
+                              </div>
+                              <span className="text-[10px] font-bold text-gray-500 w-6 text-right">{task.progress_percentage}%</span>
+                            </div>
+                          ) : "—"}
+                        </AppTableCell>
+                      );
+                      case "executors": return (
+                        <AppTableCell key={col.field_id}>
+                          {task.executors && task.executors.length > 0 ? (
+                            <div className="flex -space-x-1.5 overflow-hidden">
+                              {task.executors.slice(0, 3).map((u: any) => (
+                                u.profile_photo ? (
+                                  <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
+                                ) : (
+                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-emerald-100 text-emerald-700 text-[8px] font-bold" title={u.full_name}>
+                                    {u.full_name?.substring(0, 2).toUpperCase() || "E"}
+                                  </div>
+                                )
+                              ))}
+                              {task.executors.length > 3 && (
+                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-gray-100 text-gray-500 text-[8px] font-bold z-10">
+                                  +{task.executors.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          ) : <span className="text-gray-400 text-xs">—</span>}
+                        </AppTableCell>
+                      );
+                      case "reviewers": return (
+                        <AppTableCell key={col.field_id}>
+                          {task.reviewers && task.reviewers.length > 0 ? (
+                            <div className="flex -space-x-1.5 overflow-hidden">
+                              {task.reviewers.slice(0, 3).map((u: any) => (
+                                u.profile_photo ? (
+                                  <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
+                                ) : (
+                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-indigo-100 text-indigo-700 text-[8px] font-bold" title={u.full_name}>
+                                    {u.full_name?.substring(0, 2).toUpperCase() || "W"}
+                                  </div>
+                                )
+                              ))}
+                              {task.reviewers.length > 3 && (
+                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-gray-100 text-gray-500 text-[8px] font-bold z-10">
+                                  +{task.reviewers.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          ) : <span className="text-gray-400 text-xs">—</span>}
+                        </AppTableCell>
+                      );
+                      case "attachments": return (
+                        <AppTableCell key={col.field_id} className="text-center">
+                          {task.attachmentCount > 0 ? (
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 font-medium text-[11px]">
+                              <Paperclip className="h-3 w-3" />
+                              {task.attachmentCount}
+                            </div>
+                          ) : <span className="text-gray-400 text-xs">—</span>}
+                        </AppTableCell>
+                      );
+                      case "comments": return (
+                        <AppTableCell key={col.field_id} className="text-center">
+                          {task.commentCount > 0 ? (
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium text-[11px]">
+                              <MessageSquare className="h-3 w-3" />
+                              {task.commentCount}
+                            </div>
+                          ) : <span className="text-gray-400 text-xs">—</span>}
+                        </AppTableCell>
+                      );
+                      case "external_link": return (
+                        <AppTableCell key={col.field_id} className="text-xs">
+                          {task.custom_fields?.link_url ? (
+                            <a href={task.custom_fields.link_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
+                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{task.custom_fields.link_url}</span>
+                            </a>
+                          ) : <span className="text-gray-400">—</span>}
+                        </AppTableCell>
+                      );
+                      case "created_at": return (
+                        <AppTableCell key={col.field_id} className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                      );
+                      case "updated_at": return (
+                        <AppTableCell key={col.field_id} className="text-right text-gray-500 text-[10px] whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
+                      );
+                      case "actions": return (
+                        <AppTableCell key={col.field_id} className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Link 
+                              href={`/tasks/${task.id}?mode=view`}
+                              className="p-1.5 rounded-md text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                              title="View Task"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                            {canUpdate && (
+                              <Link 
+                                href={`/tasks/${task.id}`}
+                                className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                                title="Edit Task"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Link>
+                            )}
+                            {canDelete && (
+                              <button 
+                                onClick={(e) => handleDeleteTask(e, task.id)}
+                                disabled={deleteLoadingId === task.id}
+                                className="p-1.5 rounded-md text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-50"
+                                title="Delete Task"
+                              >
+                                {deleteLoadingId === task.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </AppTableCell>
+                      );
+                      default: {
+                        let val = task.custom_fields?.[col.field_key];
+                        if (val === undefined || val === null || val === "") val = "—";
+                        else if (col.data_type === "boolean") val = val ? "Yes" : "No";
+                        else if (col.data_type === "date") val = formatDate(val);
+                        
+                        return (
+                          <AppTableCell key={col.field_id} className="text-xs text-gray-600 dark:text-gray-400 break-words">
+                            {col.data_type === "link" && val !== "—" ? (
+                              <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{val}</a>
+                            ) : col.data_type === "badge" && val !== "—" ? (
+                              <AppBadge variant="neutral">{val}</AppBadge>
+                            ) : (
+                              val
+                            )}
+                          </AppTableCell>
+                        );
+                      }
+                    }
+                  })}
+                </AppTableRow>
+              );
+            })}
+            {virtualizer.getVirtualItems().length > 0 && (
+              <tr>
+                <td 
+                  colSpan={visibleColumns.length + 1} 
+                  style={{ 
+                    height: `${virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end}px` 
+                  }} 
+                />
+              </tr>
+            )}
+          </AppTableBody>
+        </AppTable>
+      </div>
+    </DndContext>
 
         {filtered.length === 0 && !loading && (
           <div className="text-center py-10 text-gray-500">No tasks found for this filter.</div>
@@ -727,6 +1127,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.priority?.name || 'N/A'}</div>
                 </div>
                 <div className="space-y-1">
+                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Department</span>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.department?.name || 'N/A'}</div>
+                </div>
+                <div className="space-y-1">
                   <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Status</span>
                   <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.status?.name || 'N/A'}</div>
                 </div>
@@ -759,7 +1163,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="h-6 w-px bg-gray-300 dark:bg-white/20"></div>
           <div className="flex items-center gap-2">
             {canUpdate && (
-              <AppButton variant="outline" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update Status</AppButton>
+              <AppButton variant="outline" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update Tasks</AppButton>
             )}
             {canDelete && (
               <AppButton variant="outline" size="sm" onClick={handleBulkDelete} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10">Delete Tasks</AppButton>
@@ -773,23 +1177,69 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <Dialog open={bulkStatusModalOpen} onOpenChange={setBulkStatusModalOpen}>
         <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-100">Bulk Update Status</DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-gray-100">Bulk Update Tasks</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Updating {selectedTaskIds.size} Tasks</div>
             
-            <div className="grid gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Status</label>
-              <select
-                value={bulkNewStatus}
-                onChange={(e) => setBulkNewStatus(e.target.value)}
-                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="" disabled>Select Status</option>
-                {masterStatuses.map((st) => (
-                  <option key={st.id} value={st.id}>{st.name}</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">From Status (Current)</label>
+                <select
+                  value={bulkOldStatus}
+                  onChange={(e) => setBulkOldStatus(e.target.value)}
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Any Status</option>
+                  {masterStatuses.map((st) => (
+                    <option key={st.id} value={st.id}>{st.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">To Status (New)</label>
+                <select
+                  value={bulkNewStatus}
+                  onChange={(e) => setBulkNewStatus(e.target.value)}
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Leave Unchanged</option>
+                  {masterStatuses.map((st) => (
+                    <option key={st.id} value={st.id}>{st.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">From Department (Current)</label>
+                <select
+                  value={bulkOldDepartment}
+                  onChange={(e) => setBulkOldDepartment(e.target.value)}
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Any Department</option>
+                  {departments.map((dep) => (
+                    <option key={dep.id} value={dep.id}>{dep.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">To Department (New)</label>
+                <select
+                  value={bulkNewDepartment}
+                  onChange={(e) => setBulkNewDepartment(e.target.value)}
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Leave Unchanged</option>
+                  {departments.map((dep) => (
+                    <option key={dep.id} value={dep.id}>{dep.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             <div className="grid gap-2">
@@ -808,7 +1258,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <AppButton 
               variant="primary" 
               onClick={handleBulkStatusSave}
-              disabled={inlineLoading || !bulkNewStatus}
+              disabled={inlineLoading || (!bulkNewStatus && !bulkNewDepartment)}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Update Tasks
@@ -865,6 +1315,59 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {(inlineTask?.assigned_to === currentUserId || hasPermission("WORKSPACES_MANAGE")) && inlineNewStatus !== inlineTask?.status_id ? "Change Status" : "Add Remark"}
+            </AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Inline Department Update Modal */}
+      <Dialog open={departmentModalOpen} onOpenChange={setDepartmentModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900 dark:text-gray-100">Update Department</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
+            
+            {true ? (
+              <div className="grid gap-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Department</label>
+                <select
+                  value={inlineNewDepartment}
+                  onChange={(e) => setInlineNewDepartment(e.target.value)}
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">-- No Department --</option>
+                  {departments.map((dep) => (
+                    <option key={dep.id} value={dep.id}>{dep.name}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                You are not the assignee for this task. You can only leave a remark/comment.
+              </div>
+            )}
+            
+            <div className="grid gap-2">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
+              <textarea
+                value={inlineRemark}
+                onChange={(e) => setInlineRemark(e.target.value)}
+                placeholder="Why are you updating this task?"
+                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <AppButton variant="ghost" onClick={() => setDepartmentModalOpen(false)}>Cancel</AppButton>
+            <AppButton 
+              variant="primary" 
+              onClick={handleDepartmentSave}
+              disabled={inlineLoading || !inlineRemark.trim()}
+            >
+              {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {(inlineTask?.assigned_to === currentUserId || hasPermission("WORKSPACES_MANAGE")) && inlineNewDepartment !== inlineTask?.department_id ? "Change Department" : "Add Remark"}
             </AppButton>
           </DialogFooter>
         </DialogContent>

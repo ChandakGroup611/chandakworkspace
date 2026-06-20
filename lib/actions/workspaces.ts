@@ -684,7 +684,8 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
   const { data: users, error: userError } = await supabaseAdmin
     .from("user_master")
     .select(`id, full_name, user_code`)
-    .in("id", userIds);
+    .in("id", userIds)
+    .eq("is_deleted", false);
     
   if (userError || !users) {
     console.error("[Workspaces] Error fetching users for stakeholders:", userError);
@@ -731,14 +732,16 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
   const startIdx = (page - 1) * limit;
   const endIdx = startIdx + limit - 1;
 
-  const { data: workspaceTasks, error: tasksError } = await supabase
-    .from("tasks")
-    .select(`
-      *,
-      title:subject,
-      status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code)
-    `)
+    const { data: workspaceTasks, error: tasksError } = await supabase
+      .from("tasks")
+      .select(`
+        *,
+        title:subject,
+        status:status_master(name:status_name, code:status_code, status_color),
+        priority:priority_master(name:priority_name, code:priority_code),
+        department:departments(id, name),
+        participants:task_participants(user_id, participation_role)
+      `)
     .in("workspace_id", targetWorkspaceIds)
     .eq("is_deleted", false)
     .order("created_at", { ascending: false })
@@ -753,12 +756,20 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
       const wsIds = Array.from(new Set(workspaceTasks.map((t: any) => t.workspace_id).filter(Boolean)));
       const userIds = Array.from(new Set(workspaceTasks.flatMap((t: any) => [t.created_by, t.assigned_to]).filter(Boolean)));
       
+      const taskIds = workspaceTasks.map((t: any) => t.id);
+      
       const [
         { data: workspaces },
-        { data: users }
+        { data: users },
+        { data: checklists },
+        { data: attachments },
+        { data: comments }
       ] = await Promise.all([
         supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
-        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds)
+        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds),
+        supabaseAdmin.from("task_checklists").select("id, task_id, is_completed").in("task_id", taskIds),
+        supabaseAdmin.from("task_attachments").select("id, task_id").in("task_id", taskIds),
+        supabaseAdmin.from("task_comments").select("id, task_id").in("task_id", taskIds)
       ]);
         
       workspaceTasks.forEach((t: any) => {
@@ -766,6 +777,15 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
         t.creator = users?.find((u: any) => u.id === t.created_by) || null;
         t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
         t.assignees = []; // Implicitly workspace members
+
+        // Extract Extensions
+        t.checklists = checklists?.filter((c: any) => c.task_id === t.id) || [];
+        t.attachmentCount = attachments?.filter((a: any) => a.task_id === t.id).length || 0;
+        t.commentCount = comments?.filter((c: any) => c.task_id === t.id).length || 0;
+
+        // Map Participants
+        t.executors = t.participants?.filter((p: any) => p.participation_role === "EXECUTOR").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
+        t.reviewers = t.participants?.filter((p: any) => p.participation_role === "REVIEWER" || p.participation_role === "WATCHER").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
 
         // Calculate progress percentage
         if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
@@ -829,7 +849,9 @@ export async function fetchAllTasks() {
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code)
+      priority:priority_master(name:priority_name, code:priority_code),
+      department:departments(id, name),
+      participants:task_participants(user_id, participation_role)
     `)
     .eq("is_deleted", false);
 
@@ -854,12 +876,20 @@ export async function fetchAllTasks() {
       const wsIds = Array.from(new Set(allTasks.map((t: any) => t.workspace_id).filter(Boolean)));
       const userIds = Array.from(new Set(allTasks.flatMap((t: any) => [t.created_by, t.assigned_to]).filter(Boolean)));
       
+      const taskIds = allTasks.map((t: any) => t.id);
+      
       const [
         { data: workspaces },
-        { data: users }
+        { data: users },
+        { data: checklists },
+        { data: attachments },
+        { data: comments }
       ] = await Promise.all([
         supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
-        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds)
+        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds),
+        supabaseAdmin.from("task_checklists").select("id, task_id, is_completed").in("task_id", taskIds),
+        supabaseAdmin.from("task_attachments").select("id, task_id").in("task_id", taskIds),
+        supabaseAdmin.from("task_comments").select("id, task_id").in("task_id", taskIds)
       ]);
         
       allTasks.forEach((t: any) => {
@@ -867,6 +897,15 @@ export async function fetchAllTasks() {
         t.creator = users?.find((u: any) => u.id === t.created_by) || null;
         t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
         t.assignees = []; // Implicitly workspace members
+
+        // Extract Extensions
+        t.checklists = checklists?.filter((c: any) => c.task_id === t.id) || [];
+        t.attachmentCount = attachments?.filter((a: any) => a.task_id === t.id).length || 0;
+        t.commentCount = comments?.filter((c: any) => c.task_id === t.id).length || 0;
+
+        // Map Participants
+        t.executors = t.participants?.filter((p: any) => p.participation_role === "EXECUTOR").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
+        t.reviewers = t.participants?.filter((p: any) => p.participation_role === "REVIEWER" || p.participation_role === "WATCHER").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
 
         // Calculate progress percentage
         if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {

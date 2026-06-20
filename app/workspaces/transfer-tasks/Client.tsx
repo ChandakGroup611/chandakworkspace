@@ -1,0 +1,350 @@
+"use client";
+
+import React, { useState, useMemo } from 'react';
+import { AppButton } from '@/components/ui/AppButton';
+import { AppCard } from '@/components/ui/AppCard';
+import { ArrowRightLeft, Search, Users, AlertTriangle } from 'lucide-react';
+import { moveTasksInBulk } from '@/lib/actions/tasks';
+import { useRouter } from 'next/navigation';
+
+export default function TransferTasksClient({ initialTasks, workspaces, allUsers, wsMembers }: any) {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [targetWorkspaceId, setTargetWorkspaceId] = useState('');
+  const [targetSubworkspaceId, setTargetSubworkspaceId] = useState('');
+  const [newOwnerId, setNewOwnerId] = useState('');
+  const [newExecutors, setNewExecutors] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filter tasks based on search
+  const filteredTasks = useMemo(() => {
+    return initialTasks.filter((t: any) => 
+      (t.subject || t.task_code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.workspace?.workspace_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [initialTasks, searchTerm]);
+
+  // Handle task selection
+  const toggleTaskSelection = (id: string) => {
+    const next = new Set(selectedTaskIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedTaskIds(next);
+  };
+
+  const toggleAll = () => {
+    if (selectedTaskIds.size === filteredTasks.length) {
+      setSelectedTaskIds(new Set());
+    } else {
+      setSelectedTaskIds(new Set(filteredTasks.map((t: any) => t.id)));
+    }
+  };
+
+  const [targetStakeholders, setTargetStakeholders] = useState<any[]>([]);
+  const [checkingScope, setCheckingScope] = useState(false);
+
+  // Fetch stakeholders dynamically whenever target changes
+  React.useEffect(() => {
+    const targetId = targetSubworkspaceId || targetWorkspaceId;
+    if (!targetId) {
+      setTargetStakeholders([]);
+      return;
+    }
+    let isMounted = true;
+    setCheckingScope(true);
+    
+    import('@/lib/actions/workspaces').then(m => {
+      m.fetchWorkspaceStakeholders(targetId).then(stakeholders => {
+        if (isMounted) {
+          setTargetStakeholders(stakeholders);
+          setCheckingScope(false);
+        }
+      });
+    }).catch(console.error);
+    
+    return () => { isMounted = false; };
+  }, [targetWorkspaceId, targetSubworkspaceId]);
+
+  // Check if current assignees are valid in the selected target
+  const checkAssigneeValidity = () => {
+    if (!targetWorkspaceId || checkingScope) return { isValid: true, invalidTaskAssignees: [] };
+
+    const validMemberIds = targetStakeholders.map((s: any) => s.id);
+
+    const invalid = [];
+    for (const taskId of Array.from(selectedTaskIds)) {
+      const task = initialTasks.find((t: any) => t.id === taskId);
+      if (task && task.owner_id) { // using owner_id for strict checking of primary assignee
+        if (!validMemberIds.includes(task.owner_id)) {
+          invalid.push(task);
+        }
+      }
+    }
+
+    return {
+      isValid: invalid.length === 0,
+      invalidTaskAssignees: invalid
+    };
+  };
+
+  const validity = useMemo(() => checkAssigneeValidity(), [targetWorkspaceId, targetSubworkspaceId, targetStakeholders, selectedTaskIds, checkingScope]);
+
+  // Get valid users for target dropdown
+  const targetWorkspaceUsers = targetStakeholders;
+
+  const handleTransfer = async () => {
+    if (!targetWorkspaceId) return;
+
+    // Validate that we have a new owner if it's required
+    if (!validity.isValid && !newOwnerId) {
+      alert("Please select a new owner for the tasks since current owners don't have access.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload: any = {
+        taskIds: Array.from(selectedTaskIds),
+        targetWorkspaceId,
+        targetSubWorkspaceId: targetSubworkspaceId,
+      };
+
+      if (!validity.isValid && newOwnerId) {
+        payload.newOwnerId = newOwnerId;
+      }
+      
+      if (newExecutors.length > 0) {
+        payload.newParticipantIds = newExecutors.map(id => ({
+          user_id: id,
+          participation_role: 'EXECUTOR'
+        }));
+      }
+
+      const res = await moveTasksInBulk(payload);
+      if (res.error) {
+        alert("Error transferring tasks: " + res.error);
+      } else {
+        setIsTransferModalOpen(false);
+        setSelectedTaskIds(new Set());
+        setTargetWorkspaceId('');
+        setNewOwnerId('');
+        router.refresh(); // Refresh the page data
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Controls */}
+      <div className="flex items-center justify-between">
+        <div className="relative w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search tasks..."
+            className="w-full pl-9 pr-4 py-2 bg-[#1C1C21] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div>
+          <AppButton 
+            variant="primary" 
+            leftIcon={<ArrowRightLeft className="h-4 w-4" />}
+            disabled={selectedTaskIds.size === 0}
+            onClick={() => setIsTransferModalOpen(true)}
+          >
+            Transfer {selectedTaskIds.size > 0 ? `(${selectedTaskIds.size})` : ''}
+          </AppButton>
+        </div>
+      </div>
+
+      {/* Table */}
+      <AppCard className="overflow-hidden border border-white/10">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-gray-300">
+            <thead className="bg-[#1C1C21] border-b border-white/10 text-xs uppercase text-gray-400">
+              <tr>
+                <th className="px-4 py-3 w-10">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-gray-600 bg-transparent text-indigo-500 focus:ring-indigo-500"
+                    checked={selectedTaskIds.size > 0 && selectedTaskIds.size === filteredTasks.length}
+                    onChange={toggleAll}
+                  />
+                </th>
+                <th className="px-4 py-3">Task Name</th>
+                <th className="px-4 py-3">Workspace</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Assignee</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 bg-[#141419]">
+              {filteredTasks.map((task: any) => (
+                <tr key={task.id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-3">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-600 bg-transparent text-indigo-500 focus:ring-indigo-500"
+                      checked={selectedTaskIds.has(task.id)}
+                      onChange={() => toggleTaskSelection(task.id)}
+                    />
+                  </td>
+                  <td className="px-4 py-3 font-medium text-gray-200">
+                    {task.subject || task.task_code || 'Untitled'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col">
+                      <span>{task.workspace?.workspace_name || 'No Workspace'}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {task.status?.status_name || '-'}
+                  </td>
+                  <td className="px-4 py-3 flex items-center space-x-2">
+                    <Users className="h-4 w-4 text-gray-500" />
+                    <span>
+                      {task.owner_id 
+                        ? allUsers.find((u: any) => u.id === task.owner_id)?.full_name || 'Unknown User' 
+                        : 'Unassigned'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {filteredTasks.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                    No tasks found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </AppCard>
+
+      {/* Transfer Modal */}
+      {isTransferModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#141419] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-white/10 flex-shrink-0">
+              <h2 className="text-xl font-bold text-white">Transfer Tasks</h2>
+              <p className="text-sm text-gray-400 mt-1">Move {selectedTaskIds.size} selected tasks to a new workspace.</p>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Target Workspace (Root)</label>
+                <select
+                  className="w-full bg-[#1C1C21] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  value={targetWorkspaceId}
+                  onChange={(e) => {
+                    setTargetWorkspaceId(e.target.value);
+                    setTargetSubworkspaceId('');
+                    setNewOwnerId(''); 
+                    setNewExecutors([]); // reset on change
+                  }}
+                >
+                  <option value="">Select a workspace...</option>
+                  {workspaces.filter((w: any) => !w.parent_workspace_id).map((ws: any) => (
+                    <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Subworkspace (Optional)</label>
+                <select
+                  className="w-full bg-[#1C1C21] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                  value={targetSubworkspaceId}
+                  onChange={(e) => {
+                    setTargetSubworkspaceId(e.target.value);
+                    setNewOwnerId(''); 
+                    setNewExecutors([]); // reset on change
+                  }}
+                  disabled={!targetWorkspaceId}
+                >
+                  <option value="">-- Root Level (No Subworkspace) --</option>
+                  {workspaces.filter((w: any) => w.parent_workspace_id === targetWorkspaceId).map((ws: any) => (
+                    <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {targetWorkspaceId && !validity.isValid && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mt-4">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-medium text-yellow-500">Assignees Incompatible</h4>
+                      <p className="text-xs text-yellow-500/80 mt-1">
+                        {validity.invalidTaskAssignees.length} tasks have assignees that do not belong to the target workspace. Please select a new assignee.
+                      </p>
+                      
+                      <div className="mt-3">
+                        <label className="block text-xs font-medium text-yellow-500/90 mb-1">New Assignee (Owner)</label>
+                        <select
+                          className="w-full bg-[#1C1C21] border border-yellow-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500"
+                          value={newOwnerId}
+                          onChange={(e) => setNewOwnerId(e.target.value)}
+                        >
+                          <option value="">Select a new user...</option>
+                          {targetWorkspaceUsers.map((u: any) => (
+                            <option key={u.id} value={u.id}>{u.full_name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="mt-3">
+                        <label className="block text-xs font-medium text-yellow-500/90 mb-1">Assign Additional Executives (Optional)</label>
+                        <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin bg-[#1C1C21] border border-yellow-500/20 rounded-lg p-2">
+                          {targetWorkspaceUsers.map((s: any) => (
+                            <label key={s.id} className="flex items-center gap-2 text-xs text-gray-300 p-1 hover:bg-white/5 rounded cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={newExecutors.includes(s.id)}
+                                onChange={e => {
+                                  if(e.target.checked) setNewExecutors([...newExecutors, s.id]);
+                                  else setNewExecutors(newExecutors.filter(id => id !== s.id));
+                                }}
+                                className="accent-yellow-500 rounded h-3 w-3"
+                              />
+                              {s.full_name}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-white/10 bg-[#1C1C21] flex justify-end space-x-3 flex-shrink-0">
+              <AppButton variant="secondary" onClick={() => setIsTransferModalOpen(false)}>
+                Cancel
+              </AppButton>
+              <AppButton 
+                variant="primary" 
+                onClick={handleTransfer}
+                disabled={!targetWorkspaceId || (!validity.isValid && !newOwnerId) || isSubmitting}
+                isLoading={isSubmitting}
+              >
+                Confirm Transfer
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

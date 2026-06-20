@@ -429,7 +429,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     );
   }
 
-  const isEditable = !requirement.approval_status || requirement.approval_status === 'Draft' || requirement.approval_status === 'Pending' || requirement.approval_status === 'On Hold' || requirement.approval_status === 'Rejected' || requirement.approval_status === 'Clarification';
+  const isViewMode = searchParams.get('mode') === 'view';
+  const isEditable = !isViewMode && (!requirement.approval_status || requirement.approval_status === 'Draft' || requirement.approval_status === 'Pending' || requirement.approval_status === 'On Hold' || requirement.approval_status === 'Rejected' || requirement.approval_status === 'Clarification');
   const snap = requirement.intake_snapshot || {};
 
   return (
@@ -458,12 +459,12 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <AppButton variant="outline" size="sm" onClick={() => router.back()} leftIcon={<ArrowLeft className="h-3.5 w-3.5"/>}>
             Back
           </AppButton>
-          {(isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
+          {!isViewMode && (isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
             <AppButton variant="destructive" size="sm" leftIcon={<Trash2 className="h-4 w-4"/>} onClick={handleDelete}>
               Delete
             </AppButton>
           )}
-          {requirement.approval_status === 'Approved' && (
+          {!isViewMode && requirement.approval_status === 'Approved' && (
             <AppButton variant="primary" size="sm" leftIcon={<FilePlus className="h-4 w-4"/>} onClick={() => setShowWorkspaceSelector(true)}>
               Assign Task
             </AppButton>

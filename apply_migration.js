@@ -1,42 +1,41 @@
-require('dotenv').config({path: '.env.local'});
-const fs = require('fs');
 const { Client } = require('pg');
 
-async function applyMigration() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error("No DATABASE_URL found in .env.local");
-    process.exit(1);
-  }
-  
-  // Use direct connection if using transaction pooler
-  let url = connectionString;
-  if (url.includes('pooler.supabase.com')) {
-    // If it's a pooler URL, we usually need ssl
-  }
-  
-  const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
-  
-  try {
-    const sqlPath = process.argv[2];
-    if (!sqlPath) {
-      console.error("Please provide the sql path as an argument");
-      process.exit(1);
+async function testConnection(url) {
+    const client = new Client({ connectionString: url });
+    try {
+        await client.connect();
+        
+        const sql = `
+            UPDATE public.system_permissions
+            SET code = 'TRASH_VIEW',
+                name = 'View Trash Data',
+                module_name = 'Trash Data',
+                group_name = 'Data Retention'
+            WHERE code = 'COMPLIANCE_VIEW';
+        `;
+        
+        await client.query(sql);
+        console.log("Successfully updated IAM system permissions.");
+        await client.end();
+        return true;
+    } catch (e) {
+        return false;
     }
-    const sql = fs.readFileSync(sqlPath, 'utf8');
-    
-    console.log("Connecting to the remote database...");
-    await client.connect();
-    
-    console.log(`Applying migration: ${sqlPath}`);
-    await client.query(sql);
-    
-    console.log("Migration successfully applied!");
-  } catch (err) {
-    console.error("Error applying migration:", err);
-  } finally {
-    await client.end();
-  }
 }
 
-applyMigration();
+async function main() {
+    const urls = [
+        'postgresql://postgres.tkovzymkubxtpcgynkgd:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:6543/postgres',
+        'postgresql://postgres:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:6543/postgres',
+        'postgresql://postgres.tkovzymkubxtpcgynkgd:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:5432/postgres',
+        'postgresql://postgres:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:5432/postgres'
+    ];
+    
+    for (const url of urls) {
+        if (await testConnection(url)) {
+            break;
+        }
+    }
+}
+
+main();

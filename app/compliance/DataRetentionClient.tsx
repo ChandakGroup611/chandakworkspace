@@ -13,43 +13,77 @@ import {
   AppTableHead, 
   AppTableCell 
 } from "@/components/ui/AppTable";
-import { Trash2, AlertOctagon, Archive, ShieldAlert, FolderKanban, Ticket, RefreshCcw, CheckSquare } from "lucide-react";
-import { fetchComplianceWorkspaces, fetchComplianceTasks, hardDeleteEntity, restoreEntity } from "@/lib/actions/compliance";
+import { Trash2, AlertOctagon, Archive, ShieldAlert, FolderKanban, Ticket, RefreshCcw, CheckSquare, FileText, Users, Building, UserCog, Building2 } from "lucide-react";
+import { 
+  fetchComplianceWorkspaces, 
+  fetchComplianceTasks, 
+  fetchComplianceRequirements,
+  fetchComplianceMaster,
+  hardDeleteEntity, 
+  restoreEntity,
+  ComplianceEntity
+} from "@/lib/actions/compliance";
 import { usePermissions } from "@/hooks/usePermissions";
+import { MoveTasksModal } from "@/components/tasks/MoveTasksModal";
 
-type TabType = "workspaces" | "tasks";
 type ViewType = "active" | "deleted";
+
+const TABS = [
+  { id: 'workspaces', label: 'Workspaces', icon: FolderKanban, entity: 'workspaces', nameKey: 'workspace_name', codeKey: 'workspace_code' },
+  { id: 'tasks', label: 'Tasks', icon: Ticket, entity: 'tasks', nameKey: 'subject', codeKey: 'id' },
+  { id: 'requirements', label: 'Requirements', icon: FileText, entity: 'requirements', nameKey: 'title', codeKey: 'code' },
+  { id: 'user_master', label: 'Users', icon: Users, entity: 'user_master', nameKey: 'full_name', codeKey: 'user_code' },
+  { id: 'status_master', label: 'Statuses', icon: CheckSquare, entity: 'status_master', nameKey: 'status_name', codeKey: 'status_code' },
+  { id: 'priority_master', label: 'Priorities', icon: AlertOctagon, entity: 'priority_master', nameKey: 'priority_name', codeKey: 'priority_code' },
+  { id: 'department_master', label: 'Departments', icon: Building, entity: 'department_master', nameKey: 'department_name', codeKey: 'department_code' },
+  { id: 'designation_master', label: 'Designations', icon: UserCog, entity: 'designation_master', nameKey: 'designation_name', codeKey: 'designation_code' },
+  { id: 'company_master', label: 'Companies', icon: Building2, entity: 'company_master', nameKey: 'company_name', codeKey: 'company_code' },
+];
 
 export default function DataRetentionClient() {
   const { roleCode, hasPermission } = usePermissions();
   const isSuperAdmin = roleCode === "SUPER_ADMIN" || hasPermission("SUPER_ADMIN");
-  const canRestore = isSuperAdmin || hasPermission("COMPLIANCE_UPDATE");
-  const canPurge = isSuperAdmin || hasPermission("COMPLIANCE_DELETE");
+  const canRestore = isSuperAdmin || hasPermission("TRASH_UPDATE");
+  const canPurge = isSuperAdmin || hasPermission("TRASH_DELETE");
 
-  const [activeTab, setActiveTab] = useState<TabType>("workspaces");
+  const [activeTab, setActiveTab] = useState<string>("workspaces");
   const [activeView, setActiveView] = useState<ViewType>("active");
   const [isLoading, setIsLoading] = useState(false);
   
-  const [workspaces, setWorkspaces] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [records, setRecords] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Deletion/Restore State
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
+  
+  // Custom Modal for Foreign Key Error
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
+  const [errorDetails, setErrorDetails] = useState<string>("");
+
+  // Move Tasks Modal State
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+
+  const currentTabConfig = TABS.find(t => t.id === activeTab) || TABS[0];
 
   const loadData = async () => {
     setIsLoading(true);
     try {
       const isDeleted = activeView === "deleted";
+      let data = [];
+      
       if (activeTab === "workspaces") {
-        const data = await fetchComplianceWorkspaces(isDeleted);
-        setWorkspaces(data);
+        data = await fetchComplianceWorkspaces(isDeleted);
+      } else if (activeTab === "tasks") {
+        data = await fetchComplianceTasks(isDeleted);
+      } else if (activeTab === "requirements") {
+        data = await fetchComplianceRequirements(isDeleted);
       } else {
-        const data = await fetchComplianceTasks(isDeleted);
-        setTasks(data);
+        data = await fetchComplianceMaster(currentTabConfig.entity, currentTabConfig.nameKey, currentTabConfig.codeKey, isDeleted);
       }
+      
+      setRecords(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -91,36 +125,54 @@ export default function DataRetentionClient() {
     
     try {
       if (actionType === 'restore') {
-        await restoreEntity(activeTab, ids);
+        await restoreEntity(currentTabConfig.entity as ComplianceEntity, ids);
         setSuccessBanner(`Successfully restored ${ids.length} record(s).`);
       } else {
-        await hardDeleteEntity(activeTab, ids);
+        await hardDeleteEntity(currentTabConfig.entity as ComplianceEntity, ids);
         setSuccessBanner(`Successfully purged ${ids.length} record(s).`);
       }
       setSelectedIds(new Set());
       await loadData();
     } catch (e: any) {
-      setErrorBanner(e.message);
+      // Check if it's a foreign key constraint error
+      if (e.message.includes('attached child records') || e.message.includes('foreign_key_violation')) {
+        setErrorDetails(e.message);
+        setShowErrorModal(true);
+      } else {
+        setErrorBanner(e.message);
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const renderWorkspaces = () => (
+  const renderDataGrid = () => (
     <div className="space-y-4">
-      {selectedIds.size > 0 && activeView === "deleted" && (
+      {selectedIds.size > 0 && (
         <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
-          <span className="text-sm font-bold text-gray-300">{selectedIds.size} workspace(s) selected</span>
+          <span className="text-sm font-bold text-gray-300">{selectedIds.size} record(s) selected</span>
           <div className="flex gap-2">
-            {canRestore && (
-              <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
-                Restore Selected
-              </AppButton>
-            )}
-            {canPurge && (
-              <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
-                Purge Selected
-              </AppButton>
+            {activeView === "deleted" ? (
+              <>
+                {canRestore && (
+                  <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
+                    Restore Selected
+                  </AppButton>
+                )}
+                {canPurge && (
+                  <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
+                    Purge Selected
+                  </AppButton>
+                )}
+              </>
+            ) : (
+              <>
+                {activeTab === "tasks" && (
+                  <AppButton variant="primary" size="sm" onClick={() => setIsMoveModalOpen(true)} disabled={isProcessing}>
+                    Move Tasks to Workspace
+                  </AppButton>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -129,38 +181,38 @@ export default function DataRetentionClient() {
         <AppTable>
           <AppTableHeader>
             <tr>
-              {activeView === "deleted" && (
+              {(activeView === "deleted" || activeTab === "tasks") && (
                 <AppTableHead className="w-[40px]">
-                  <input type="checkbox" checked={selectedIds.size === workspaces.length && workspaces.length > 0} onChange={() => toggleAll(workspaces.map(w => w.id))} className="rounded border-gray-600 bg-black/20" />
+                  <input type="checkbox" checked={selectedIds.size === records.length && records.length > 0} onChange={() => toggleAll(records.map(r => r.id))} className="rounded border-gray-600 bg-black/20" />
                 </AppTableHead>
               )}
-              <AppTableHead>Workspace Code</AppTableHead>
-              <AppTableHead>Name</AppTableHead>
+              <AppTableHead>Code / ID</AppTableHead>
+              <AppTableHead>Name / Title</AppTableHead>
               <AppTableHead>Last Updated</AppTableHead>
               <AppTableHead className="text-right">Actions</AppTableHead>
             </tr>
           </AppTableHeader>
         <AppTableBody>
-          {workspaces.map((ws) => (
-            <AppTableRow key={ws.id}>
-              {activeView === "deleted" && (
+          {records.map((record) => (
+            <AppTableRow key={record.id}>
+              {(activeView === "deleted" || activeTab === "tasks") && (
                 <AppTableCell>
-                  <input type="checkbox" checked={selectedIds.has(ws.id)} onChange={() => toggleSelection(ws.id)} className="rounded border-gray-600 bg-black/20" />
+                  <input type="checkbox" checked={selectedIds.has(record.id)} onChange={() => toggleSelection(record.id)} className="rounded border-gray-600 bg-black/20" />
                 </AppTableCell>
               )}
-              <AppTableCell className="font-mono text-xs">{ws.workspace_code}</AppTableCell>
-              <AppTableCell className="font-semibold">{ws.workspace_name}</AppTableCell>
-              <AppTableCell className="text-xs text-gray-500">{new Date(ws.updated_at).toLocaleString()}</AppTableCell>
+              <AppTableCell className="font-mono text-xs">{record[currentTabConfig.codeKey] || record.id.split('-')[0]}</AppTableCell>
+              <AppTableCell className="font-semibold">{record[currentTabConfig.nameKey] || 'N/A'}</AppTableCell>
+              <AppTableCell className="text-xs text-gray-500">{new Date(record.updated_at).toLocaleString()}</AppTableCell>
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
                   <div className="flex justify-end gap-2">
                     {canRestore && (
-                      <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [ws.id])} disabled={isProcessing}>
+                      <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [record.id])} disabled={isProcessing}>
                         Restore
                       </AppButton>
                     )}
                     {canPurge && (
-                      <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [ws.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+                      <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [record.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
                         Purge
                       </AppButton>
                     )}
@@ -171,87 +223,9 @@ export default function DataRetentionClient() {
               </AppTableCell>
             </AppTableRow>
           ))}
-          {workspaces.length === 0 && (
+          {records.length === 0 && (
             <AppTableRow>
-              <AppTableCell colSpan={activeView === "deleted" ? 5 : 4} className="text-center py-8 text-gray-500">
-                {isLoading ? "Loading records..." : "No records found in this view."}
-              </AppTableCell>
-            </AppTableRow>
-          )}
-        </AppTableBody>
-      </AppTable>
-    </AppTableContainer>
-    </div>
-  );
-
-  const renderTasks = () => (
-    <div className="space-y-4">
-      {selectedIds.size > 0 && activeView === "deleted" && (
-        <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
-          <span className="text-sm font-bold text-gray-300">{selectedIds.size} task(s) selected</span>
-          <div className="flex gap-2">
-            {canRestore && (
-              <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<RefreshCcw className="h-4 w-4" />}>
-                Restore Selected
-              </AppButton>
-            )}
-            {canPurge && (
-              <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', Array.from(selectedIds))} disabled={isProcessing} leftIcon={<Trash2 className="h-4 w-4" />}>
-                Purge Selected
-              </AppButton>
-            )}
-          </div>
-        </div>
-      )}
-      <AppTableContainer>
-        <AppTable>
-          <AppTableHeader>
-            <tr>
-              {activeView === "deleted" && (
-                <AppTableHead className="w-[40px]">
-                  <input type="checkbox" checked={selectedIds.size === tasks.length && tasks.length > 0} onChange={() => toggleAll(tasks.map(t => t.id))} className="rounded border-gray-600 bg-black/20" />
-                </AppTableHead>
-              )}
-              <AppTableHead>Task ID</AppTableHead>
-              <AppTableHead>Title/Subject</AppTableHead>
-              <AppTableHead>Last Updated</AppTableHead>
-              <AppTableHead className="text-right">Actions</AppTableHead>
-            </tr>
-          </AppTableHeader>
-        <AppTableBody>
-          {tasks.map((task) => (
-            <AppTableRow key={task.id}>
-              {activeView === "deleted" && (
-                <AppTableCell>
-                  <input type="checkbox" checked={selectedIds.has(task.id)} onChange={() => toggleSelection(task.id)} className="rounded border-gray-600 bg-black/20" />
-                </AppTableCell>
-              )}
-              <AppTableCell className="font-mono text-xs">{task.task_number || task.id.split('-')[0]}</AppTableCell>
-              <AppTableCell className="font-semibold">{task.subject || task.description}</AppTableCell>
-              <AppTableCell className="text-xs text-gray-500">{new Date(task.updated_at).toLocaleString()}</AppTableCell>
-              <AppTableCell className="text-right">
-                {activeView === "deleted" ? (
-                  <div className="flex justify-end gap-2">
-                    {canRestore && (
-                      <AppButton variant="secondary" size="sm" onClick={() => handleAction('restore', [task.id])} disabled={isProcessing}>
-                        Restore
-                      </AppButton>
-                    )}
-                    {canPurge && (
-                      <AppButton variant="destructive" size="sm" onClick={() => handleAction('purge', [task.id])} disabled={isProcessing} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
-                        Purge
-                      </AppButton>
-                    )}
-                  </div>
-                ) : (
-                  <AppBadge variant="success">Active Record</AppBadge>
-                )}
-              </AppTableCell>
-            </AppTableRow>
-          ))}
-          {tasks.length === 0 && (
-            <AppTableRow>
-              <AppTableCell colSpan={activeView === "deleted" ? 5 : 4} className="text-center py-8 text-gray-500">
+              <AppTableCell colSpan={(activeView === "deleted" || activeTab === "tasks") ? 5 : 4} className="text-center py-8 text-gray-500">
                 {isLoading ? "Loading records..." : "No records found in this view."}
               </AppTableCell>
             </AppTableRow>
@@ -265,7 +239,29 @@ export default function DataRetentionClient() {
   return (
     <div className="space-y-6">
       
-      {/* Warning Banner Removed to unblock Purge actions */}
+      {/* Error Popup Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-rose-950 border border-rose-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-rose-900/20">
+            <div className="flex items-center gap-3 text-rose-500 mb-4">
+              <ShieldAlert className="h-8 w-8" />
+              <h3 className="text-xl font-bold">Deletion Blocked</h3>
+            </div>
+            <p className="text-rose-200/80 text-sm mb-6 leading-relaxed">
+              This record cannot be permanently deleted because active transactions or records are currently attached to it. 
+              <br/><br/>
+              <strong>System Message:</strong> {errorDetails}
+              <br/><br/>
+              Please delete or reassign all attached tasks, workspaces, or requirements before purging this master record.
+            </p>
+            <div className="flex justify-end">
+              <AppButton variant="secondary" onClick={() => setShowErrorModal(false)}>
+                Acknowledge
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Banners */}
       {errorBanner && (
@@ -288,30 +284,26 @@ export default function DataRetentionClient() {
         </div>
       )}
 
-      {/* Module Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-4">
-        <button
-          onClick={() => setActiveTab("workspaces")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeTab === "workspaces" 
-              ? "bg-blue-500 text-white shadow-md shadow-blue-500/20" 
-              : "bg-white/5 text-gray-400 hover:bg-white/10"
-          }`}
-        >
-          <FolderKanban className="h-4 w-4" />
-          Workspaces
-        </button>
-        <button
-          onClick={() => setActiveTab("tasks")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeTab === "tasks" 
-              ? "bg-blue-500 text-white shadow-md shadow-blue-500/20" 
-              : "bg-white/5 text-gray-400 hover:bg-white/10"
-          }`}
-        >
-          <Ticket className="h-4 w-4" />
-          Tasks
-        </button>
+      {/* Module Tabs (Scrollable for many tabs) */}
+      <div className="flex items-center gap-2 border-b border-white/10 pb-4 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+                isActive 
+                  ? "bg-blue-500 text-white shadow-md shadow-blue-500/20" 
+                  : "bg-white/5 text-gray-400 hover:bg-white/10"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* View Toggle (Active vs Deleted) */}
@@ -320,7 +312,7 @@ export default function DataRetentionClient() {
           <div className="flex items-center gap-4">
             <AppCardTitle className="flex items-center gap-2 text-white">
               <Archive className="h-4 w-4" />
-              <span>{activeTab === "workspaces" ? "Workspaces" : "Tasks"} Registry</span>
+              <span>{currentTabConfig.label} Registry</span>
             </AppCardTitle>
             
             <div className="flex bg-black/40 rounded-lg p-1 border border-white/10">
@@ -346,10 +338,21 @@ export default function DataRetentionClient() {
         </AppCardHeader>
 
         <div className="p-0">
-          {activeTab === "workspaces" ? renderWorkspaces() : renderTasks()}
+          {renderDataGrid()}
         </div>
       </AppCard>
 
+      <MoveTasksModal
+        open={isMoveModalOpen}
+        onOpenChange={setIsMoveModalOpen}
+        taskIds={Array.from(selectedIds)}
+        tasks={records}
+        onSuccess={() => {
+          setSelectedIds(new Set());
+          loadData();
+          setSuccessBanner("Tasks successfully moved to the new workspace.");
+        }}
+      />
     </div>
   );
 }

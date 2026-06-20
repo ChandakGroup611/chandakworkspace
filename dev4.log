@@ -1,0 +1,11 @@
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.206.93.137:3000
+- Environments: .env.local
+✓ Ready in 1066ms
+
+Fetching Google...
+Fetched Google.
+Fetching Google...
+Fetched Google.
+ GET /login 200 in 4.0s (next.js: 1304ms, proxy.ts: 535ms, application-code: 2.2s)

@@ -90,27 +90,26 @@ interface UnifiedAuthData {
       const user = session?.user;
       if (!user) return { profile: null, permissions: [], roleCode: null };
 
-      // PHASE 5: SAFE WATERFALL FLATTENING
-      // Execute independent profile and permissions queries in parallel
-      const [profileRes, permsRes] = await Promise.all([
+      // PHASE 5: REAL-TIME PERMISSIONS RESOLUTION
+      // We directly query the roles and role_permissions tables to avoid materialized view staleness.
+      const [profileRes, secondaryRolesRes] = await Promise.all([
         supabase
           .from("user_master")
-          .select("id, full_name, email, profile_photo, role:roles(code)")
+          .select("id, full_name, email, profile_photo, role:roles(code, role_permissions(permissions(code)))")
           .eq("id", user.id)
           .single(),
         supabase
-          .from("user_permissions_snapshot")
-          .select("permission_code")
+          .from("user_roles")
+          .select("role:roles(code, role_permissions(permissions(code)))")
           .eq("user_id", user.id)
       ]);
 
       const profileData = profileRes.data;
-      const snapshot = permsRes.data;
-      const error = permsRes.error;
+      const primaryRole = profileData?.role;
 
       let baseRoleCode = user.app_metadata?.role || null;
       if (profileData) {
-        const dbRoleCode = Array.isArray(profileData.role) ? (profileData.role[0] as any)?.code : (profileData.role as any)?.code;
+        const dbRoleCode = Array.isArray(primaryRole) ? (primaryRole[0] as any)?.code : (primaryRole as any)?.code;
         if (dbRoleCode === "SUPER_ADMIN") baseRoleCode = "SUPER_ADMIN";
       }
 
@@ -123,18 +122,39 @@ interface UnifiedAuthData {
       };
 
       let finalRoleCode = baseRoleCode;
-      let perms: string[] = [];
+      const rawPermsSet = new Set<string>();
 
-      if (error) {
-        console.warn("[Permissions] Snapshot lookup failed:", error);
+      // Extract permissions from primary role
+      if (primaryRole) {
+        const roleObj = Array.isArray(primaryRole) ? primaryRole[0] : primaryRole;
+        if (roleObj?.role_permissions) {
+          roleObj.role_permissions.forEach((rp: any) => {
+            if (rp.permissions?.code) rawPermsSet.add(rp.permissions.code);
+          });
+        }
+      }
+
+      // Extract permissions from secondary roles
+      if (secondaryRolesRes.data) {
+        secondaryRolesRes.data.forEach((ur: any) => {
+          const roleObj = Array.isArray(ur.role) ? ur.role[0] : ur.role;
+          if (roleObj?.role_permissions) {
+            roleObj.role_permissions.forEach((rp: any) => {
+              if (rp.permissions?.code) rawPermsSet.add(rp.permissions.code);
+            });
+          }
+        });
+      }
+
+      const rawPerms = Array.from(rawPermsSet);
+      let perms: string[] = expandPermissions(rawPerms);
+
+      // Force SUPER_ADMIN if detected in roles or explicitly mapped
+      if (rawPerms.includes("SUPER_ADMIN")) {
+        finalRoleCode = "SUPER_ADMIN";
+      } else {
         const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
         if (profile.email && adminEmails.includes(profile.email)) {
-          finalRoleCode = "SUPER_ADMIN";
-        }
-      } else {
-        const rawPerms = snapshot ? snapshot.map((r: any) => r.permission_code) : [];
-        perms = expandPermissions(rawPerms);
-        if (rawPerms.includes("SUPER_ADMIN")) {
           finalRoleCode = "SUPER_ADMIN";
         }
       }

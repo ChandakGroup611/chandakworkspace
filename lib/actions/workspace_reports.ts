@@ -26,15 +26,18 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
         code:task_code,
         title:subject,
         description,
+        custom_fields,
         start_date,
         end_date,
         created_at,
+        updated_at,
         created_by,
         owner_id,
         workspace_id,
         parent_task_id,
         status:status_master!tasks_status_id_fkey(name:status_name, color:status_color),
         priority:priority_master(name:priority_name, color:priority_color),
+        department:departments(name),
         workspace:workspaces!workspace_id(name:workspace_name, code:workspace_code),
         assignees:task_participants(user_id, role:participation_role)
       `)
@@ -173,11 +176,55 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
       status_color: item.status?.color || null,
       priority: item.priority?.name || "—",
       priority_color: item.priority?.color || null,
+      department: item.department?.name || "—",
       start_date: item.start_date,
       end_date: item.end_date,
       created_at: item.created_at,
+      updated_at: item.updated_at,
       creator_name: item.creator?.full_name || "Unknown",
-      assigned_to: assignedString
+      assigned_to: assignedString,
+      custom_fields: item.custom_fields || {}
+    };
+  });
+}
+
+export async function getAllReportCustomFields() {
+  const { data, error } = await supabaseAdmin
+    .from('task_custom_fields_master')
+    .select('field_key, field_name, field_type')
+    .eq('is_deleted', false)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error("Failed to fetch custom fields for reports:", error);
+    return [];
+  }
+
+  if (!data) return [];
+
+  // Group by field_key to remove duplicates
+  const uniqueFieldsMap = new Map<string, any>();
+  data.forEach((field: any) => {
+    if (!uniqueFieldsMap.has(field.field_key)) {
+      uniqueFieldsMap.set(field.field_key, field);
+    }
+  });
+
+  return Array.from(uniqueFieldsMap.values()).map(f => {
+    let dt: 'text' | 'date' | 'badge' | 'user' | 'number' | 'boolean' | 'link' | 'custom' = "text";
+    if (f.field_type === "DATE") dt = "date";
+    if (f.field_type === "NUMBER") dt = "number";
+    if (f.field_type === "URL") dt = "link";
+    if (f.field_type === "CHECKBOX") dt = "boolean";
+    if (f.field_type === "SELECT") dt = "badge";
+    if (f.field_type === "USER") dt = "user";
+
+    return {
+      field_key: f.field_key,
+      display_name: f.field_name,
+      data_type: dt,
+      is_default: false,
+      default_width: 150
     };
   });
 }

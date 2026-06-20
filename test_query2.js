@@ -1,23 +1,21 @@
-require('dotenv').config({path: '.env.local'});
 const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+require('dotenv').config({ path: '.env.local' });
+const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-(async () => {
-  const { data, error } = await supabase
-    .from('requirements')
-    .select(`
-      *,
-      status:status_master(name:status_name, status_color, code:status_code),
-      department:departments!requirements_department_id_fkey(name),
-      priority:priority_master!requirements_priority_id_fkey(name:priority_name, priority_color),
-      software_system:software_systems(name),
-      module:software_modules(name),
-      sub_module:software_submodules(name),
-      category:ticket_categories(name),
-      sub_category:ticket_subcategories(name),
-      requester:user_master!requirements_requester_id_fkey(full_name)
-    `)
-    .limit(1);
+async function run() {
+  const { data, error } = await supabaseAdmin.from('tasks').select(`
+      id,
+      assigned_to,
+      owner_id,
+      owner:user_master!owner_id(id, full_name, email),
+      assignee:user_master!tasks_assigned_to_fkey(id, full_name)
+  `).eq('is_deleted', false).limit(1);
 
-  console.log("Error:", error);
-})();
+  if (error) {
+    console.log('Detailed Error:', JSON.stringify(error, null, 2));
+    console.log('Error Message:', error.message);
+  } else {
+    console.log('Success!', data);
+  }
+}
+run();

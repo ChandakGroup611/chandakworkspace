@@ -22,13 +22,13 @@ import { useRouter } from "next/navigation";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 
-export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[] }) {
+export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
   const { theme } = useTheme();
   const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
 
   const router = useRouter();
   const { hasPermission } = usePermissions();
-  const canDelete = hasPermission("TASKS_DELETE");
+  const canDelete = !readOnly && hasPermission("TASKS_DELETE");
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
   const [departments, setDepartments] = useState<any[]>(initialDepartments || []);
@@ -78,6 +78,120 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   
   // Click-outside reference for Executors Edit Panel
   const assigneesRef = useRef<HTMLDivElement>(null);
+  
+  // Transfer Feature & Advanced Scope Checking
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferWorkspaces, setTransferWorkspaces] = useState<any[]>([]);
+  const [selectedTransferWorkspace, setSelectedTransferWorkspace] = useState("");
+  const [selectedTransferSubworkspace, setSelectedTransferSubworkspace] = useState("");
+  const [transferRemarks, setTransferRemarks] = useState("");
+  const [transferLoading, setTransferLoading] = useState(false);
+  
+  const [targetStakeholders, setTargetStakeholders] = useState<any[]>([]);
+  const [checkingScope, setCheckingScope] = useState(false);
+  const [droppedUsers, setDroppedUsers] = useState<any[]>([]);
+  const [isOwnerDropped, setIsOwnerDropped] = useState(false);
+  
+  const [newAssigneeId, setNewAssigneeId] = useState("");
+  const [newExecutors, setNewExecutors] = useState<string[]>([]);
+  
+  const handleOpenTransfer = async () => {
+    setIsTransferModalOpen(true);
+    if (transferWorkspaces.length === 0) {
+      try {
+        const { getTransferableWorkspaces } = await import('@/lib/actions/tasks');
+        const workspaces = await getTransferableWorkspaces();
+        setTransferWorkspaces(workspaces);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    async function checkScope() {
+      const targetId = selectedTransferSubworkspace || selectedTransferWorkspace;
+      if (!targetId || targetId === task?.workspace_id) {
+        setTargetStakeholders([]);
+        setDroppedUsers([]);
+        setIsOwnerDropped(false);
+        return;
+      }
+      setCheckingScope(true);
+      try {
+        const { fetchWorkspaceStakeholders } = await import('@/lib/actions/workspaces');
+        const stakeholders = await fetchWorkspaceStakeholders(targetId);
+        setTargetStakeholders(stakeholders);
+        
+        // Compute delta
+        const currentAssignee = task.assigned_to;
+        const currentExecutors = task.task_assignees || [];
+        const currentWatchers = task.task_watchers || [];
+        
+        const stakeholderIds = new Set(stakeholders.map((s: any) => s.id));
+        
+        const ownerMissing = currentAssignee && !stakeholderIds.has(currentAssignee);
+        setIsOwnerDropped(!!ownerMissing);
+        
+        const dropped: any[] = [];
+        if (ownerMissing && task.assignee) dropped.push(task.assignee);
+        currentExecutors.forEach((e: any) => { if (!stakeholderIds.has(e.id)) dropped.push(e); });
+        currentWatchers.forEach((w: any) => { if (!stakeholderIds.has(w.id)) dropped.push(w); });
+        
+        // Deduplicate dropped users
+        const uniqueDropped = Array.from(new Map(dropped.map(item => [item.id, item])).values());
+        setDroppedUsers(uniqueDropped);
+        
+        // Reset selections
+        setNewAssigneeId("");
+        setNewExecutors([]);
+        
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCheckingScope(false);
+      }
+    }
+    checkScope();
+  }, [selectedTransferWorkspace, selectedTransferSubworkspace, task]);
+
+  const submitTransfer = async () => {
+    if (!selectedTransferWorkspace) {
+      setError("Please select a destination workspace.");
+      return;
+    }
+    if (isOwnerDropped && !newAssigneeId) {
+      setError("The primary assignee does not exist in the new workspace. You must select a new Primary Assignee.");
+      return;
+    }
+    if (!transferRemarks.trim()) {
+      setError("Please provide transfer remarks.");
+      return;
+    }
+    setTransferLoading(true);
+    setError(null);
+    try {
+      const { transferTask } = await import('@/lib/actions/tasks');
+      const payload = {
+        taskId,
+        targetWorkspaceId: selectedTransferWorkspace,
+        targetSubworkspaceId: selectedTransferSubworkspace || undefined,
+        newAssigneeId: newAssigneeId || undefined,
+        newExecutors: newExecutors.length > 0 ? newExecutors : undefined,
+        droppedUsers: droppedUsers.map(u => u.id),
+        remarks: transferRemarks
+      };
+      const res = await transferTask(payload);
+      if (res?.error) throw new Error(res.error);
+      triggerToast("Task transferred successfully!");
+      setIsTransferModalOpen(false);
+      setTimeout(() => router.push(`/workspaces/tasks?workspaceId=${selectedTransferWorkspace}`), 1000);
+    } catch (err: any) {
+      setError(err.message || "Failed to transfer task");
+    } finally {
+      setTransferLoading(false);
+    }
+  };
   
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -502,12 +616,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   
   // Owners and Executors can edit core properties, provided they have TASKS_UPDATE permission
-  const canEditCore = (isOwner || isExecutor) && !isEffectivelyFrozen && hasPermission("TASKS_UPDATE");
+  const canEditCore = !readOnly && (isOwner || isExecutor) && !isEffectivelyFrozen && hasPermission("TASKS_UPDATE");
   const canEditAux = canEditCore;
-  const canDeleteTask = isOwner && canDelete;
+  const canDeleteTask = !readOnly && isOwner && canDelete;
   
   // Reviewers & Watchers
-  const canAddRemark = (canEditAux || isWatcherOrReviewer) && !isEffectivelyFrozen;
+  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer) && !isEffectivelyFrozen);
   // Filter inherited workspace members to remove anyone explicitly assigned
   const explicitExecutors = [...(task.task_assignees || [])];
   
@@ -674,7 +788,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <div className="space-y-1.5 col-span-2 sm:col-span-1">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">Executors</span>
-                { (isExecutor || task.currentUserIsSuperAdmin) && !isEffectivelyFrozen && (
+                { !readOnly && (isExecutor || task.currentUserIsSuperAdmin) && !isEffectivelyFrozen && (
                   <button 
                     onClick={async () => {
                       if (!isEditingAssignees) {
@@ -755,7 +869,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
-              disabled={!canEditCore && !(isOwner || isExecutor)}
+              disabled={readOnly || (!canEditCore && !(isOwner || isExecutor))}
               onChange={(e) => {
                 const newCode = e.target.value;
                 if (newCode === currentStatusCode) {
@@ -766,7 +880,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               }}
               className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow ${
                 isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
-              } ${(!canEditCore && !(isOwner || isExecutor)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
@@ -778,7 +892,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Department Field</label>
             <select
               value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
-              disabled={!canEditCore && !(isOwner || isExecutor)}
+              disabled={readOnly || (!canEditCore && !(isOwner || isExecutor))}
               onChange={(e) => {
                 const newDept = e.target.value;
                 if (newDept === (task.department_id || "")) {
@@ -789,7 +903,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               }}
               className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow ${
                 isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
-              } ${(!canEditCore && !(isOwner || isExecutor)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="">-- No Department --</option>
               {departments.map(dept => (
@@ -829,7 +943,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              {currentStatusCode === "ST_RESOLVED" && task.currentUserCanAct && (
+              {currentStatusCode === "ST_RESOLVED" && !readOnly && task.currentUserCanAct && (
                 <>
                   <AppButton 
                     size="sm" 
@@ -854,7 +968,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </>
               )}
 
-              {task.status?.is_closed && (task.currentUserCanAct || isExecutor) && (
+              { !readOnly && task.status?.is_closed && (task.currentUserCanAct || isExecutor) && (
                 <AppButton 
                   size="sm" 
                   variant="outline" 
@@ -865,20 +979,149 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   Reopen Task
                 </AppButton>
               )}
-
               {canDeleteTask && (
                 <AppButton 
                   variant="outline" 
                   size="sm" 
                   className="text-rose-500 hover:bg-rose-50 border-rose-200 dark:border-rose-500/20 dark:hover:bg-rose-500/10" 
                   onClick={handleDeleteTask} 
-                  disabled={deleteLoading}
+                  disabled={deleteLoading || actionLoading}
                   leftIcon={<Trash2 className="h-4 w-4" />}
                 >
                   Delete Task
                 </AppButton>
               )}
+
+              { !readOnly && (isOwner || isExecutor || task.currentUserIsSuperAdmin) && (
+                <AppButton 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-indigo-600 hover:bg-indigo-50 border-indigo-200 dark:border-indigo-500/20 dark:hover:bg-indigo-500/10" 
+                  onClick={handleOpenTransfer} 
+                  disabled={actionLoading}
+                  leftIcon={<ChevronUp className="h-4 w-4 rotate-90" />}
+                >
+                  Transfer Task
+                </AppButton>
+              )}
             </div>
+            
+            {/* Transfer Modal / Inline Panel */}
+            {isTransferModalOpen && (
+              <div className="mt-4 p-5 border-2 border-indigo-200 bg-indigo-50 dark:bg-indigo-900/10 dark:border-indigo-500/20 rounded-xl animate-in fade-in zoom-in-95 w-full text-left shadow-lg">
+                <h4 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-4 flex items-center gap-2 border-b border-indigo-200 dark:border-indigo-800 pb-2">
+                  <FolderPlus className="w-4 h-4" /> Transfer Task to Another Workspace
+                </h4>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">Root Workspace <span className="text-red-500">*</span></label>
+                      <select
+                        value={selectedTransferWorkspace}
+                        onChange={e => {
+                          setSelectedTransferWorkspace(e.target.value);
+                          setSelectedTransferSubworkspace("");
+                        }}
+                        className="w-full p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
+                      >
+                        <option value="">-- Select Root Workspace --</option>
+                        {transferWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
+                          <option key={w.id} value={w.id} disabled={w.id === task.workspace_id && !task.sub_workspace_id}>
+                            {w.code ? `[${w.code}] ` : ""}{w.name} {w.id === task.workspace_id && !task.sub_workspace_id ? "(Current)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">Subworkspace (Optional)</label>
+                      <select
+                        value={selectedTransferSubworkspace}
+                        onChange={e => setSelectedTransferSubworkspace(e.target.value)}
+                        disabled={!selectedTransferWorkspace}
+                        className="w-full p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#0B0F19] dark:border-white/10 dark:text-white disabled:opacity-50"
+                      >
+                        <option value="">-- Root Level (No Subworkspace) --</option>
+                        {transferWorkspaces.filter(w => w.parent_workspace_id === selectedTransferWorkspace).map(w => (
+                          <option key={w.id} value={w.id} disabled={w.id === task.sub_workspace_id}>
+                            {w.code ? `[${w.code}] ` : ""}{w.name} {w.id === task.sub_workspace_id ? "(Current)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {checkingScope && (
+                    <div className="flex items-center gap-2 text-xs text-indigo-500 font-bold p-2">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking user scope...
+                    </div>
+                  )}
+
+                  {!checkingScope && droppedUsers.length > 0 && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg space-y-3">
+                      <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold leading-relaxed">
+                        <span className="font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Out of Scope Users Detected</span>
+                        The following participants do not have access to the destination and will be removed from this task: 
+                        <strong className="block mt-1">{droppedUsers.map(u => u.full_name).join(", ")}</strong>
+                      </div>
+                      
+                      {isOwnerDropped && (
+                        <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-amber-200 dark:border-amber-500/30">
+                          <label className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1.5 block">Assign New Primary Owner <span className="text-red-500">*</span></label>
+                          <select
+                            value={newAssigneeId}
+                            onChange={e => setNewAssigneeId(e.target.value)}
+                            className="w-full p-2 rounded text-sm border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
+                          >
+                            <option value="">-- Select New Owner --</option>
+                            {targetStakeholders.map(s => (
+                              <option key={s.id} value={s.id}>{s.full_name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      
+                      {true && (
+                        <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-amber-200 dark:border-amber-500/30 mt-2">
+                          <label className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1.5 block">Assign Additional Executives (Optional)</label>
+                          <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
+                            {targetStakeholders.map(s => (
+                              <label key={s.id} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  checked={newExecutors.includes(s.id)}
+                                  onChange={e => {
+                                    if(e.target.checked) setNewExecutors([...newExecutors, s.id]);
+                                    else setNewExecutors(newExecutors.filter(id => id !== s.id));
+                                  }}
+                                  className="accent-amber-500 rounded h-3 w-3"
+                                />
+                                {s.full_name}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 block">Transfer Remarks (Mandatory) <span className="text-red-500">*</span></label>
+                    <textarea 
+                      value={transferRemarks}
+                      onChange={e => setTransferRemarks(e.target.value)}
+                      className="w-full min-h-[60px] p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
+                      placeholder="Why is this task being transferred?"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end pt-2 border-t border-indigo-200 dark:border-indigo-800/50 mt-4">
+                    <AppButton variant="ghost" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }}>Cancel</AppButton>
+                    <AppButton variant="primary" size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={submitTransfer} disabled={transferLoading || checkingScope}>
+                      {transferLoading ? "Transferring..." : "Confirm Transfer"}
+                    </AppButton>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1040,13 +1283,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {Object.entries(localCustomFields).map(([key, val]) => {
                 const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
-                const isReadOnly = false;
+                const isReadOnlyProp = readOnly;
                 return (
                   <div key={key} className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                       {key.replace(/_/g, ' ')}
                     </label>
-                    {isReadOnly || !canEditCore ? (
+                    {isReadOnlyProp || !canEditCore ? (
                       <div className={`w-full p-2.5 rounded-lg text-sm border shadow-sm ${normalizedKey !== 'link_url' && 'cursor-not-allowed'} ${
                         isLightMode ? "bg-gray-50 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
                       }`}>

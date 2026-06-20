@@ -111,8 +111,9 @@ export default function RealtimeNotificationsDrawer() {
   // Realtime subscription active for the badge count
   useEffect(() => {
     if (mounted && currentUserId) {
+      const channelId = `global_notification_buffer_${currentUserId}_${Date.now()}`;
       const channel = supabase
-        .channel("global_notification_buffer")
+        .channel(channelId)
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "notification_queue" },

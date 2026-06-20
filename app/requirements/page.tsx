@@ -380,7 +380,7 @@ export default function RequirementsPage() {
                           className="h-7 w-7 p-0 text-sky-500 hover:text-sky-600 hover:bg-sky-500/10"
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/requirements/${r.dbId}`);
+                            router.push(`/requirements/${r.dbId}?mode=view`);
                           }}
                         >
                           <Eye className="h-4 w-4" />

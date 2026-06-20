@@ -1,0 +1,157 @@
+▲ Next.js 16.2.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://10.206.93.137:3000
+- Environments: .env.local
+✓ Ready in 955ms
+
+Fetching Google...
+Fetched Google.
+Fetching Google...
+Fetched Google.
+○ Compiling /login ...
+ GET /login 200 in 14.1s (next.js: 13.1s, proxy.ts: 481ms, application-code: 519ms)
+Fetching Google...
+Fetched Google.
+Fetching Google...
+Fetched Google.
+ GET /login 200 in 696ms (next.js: 9ms, proxy.ts: 612ms, application-code: 76ms)
+Fetching Google...
+Fetched Google.
+ POST /login 200 in 621ms (next.js: 4ms, proxy.ts: 506ms, application-code: 111ms)
+  └─ ƒ fetchDesignPreferences() in 15ms ..//lib/actions/preferences.ts
+⨯ ./utils/supabase/middleware.ts
+Error:   x Expected a semicolon
+    ,-[D:\adios\utils\supabase\middleware.ts:34:1]
+ 31 |       },
+ 32 | 
+ 33 |   
+ 34 |   const { data: { user } } = await supabase.auth.getUser();
+    :         ^
+ 35 | 
+ 36 |   return { supabaseResponse, user };
+ 37 | }
+    `----
+  x Expected ',', got '{'
+    ,-[D:\adios\utils\supabase\middleware.ts:34:1]
+ 31 |       },
+ 32 | 
+ 33 |   
+ 34 |   const { data: { user } } = await supabase.auth.getUser();
+    :         ^
+ 35 | 
+ 36 |   return { supabaseResponse, user };
+ 37 | }
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./utils/supabase/middleware.ts
+Fetching Google...
+Fetched Google.
+○ Compiling /_error ...
+ GET /login 500 in 10.7s (next.js: 10.0s, proxy.ts: 537ms, application-code: 207ms)
+ GET /login 200 in 1832ms (next.js: 139ms, proxy.ts: 1158ms, application-code: 535ms)
+ GET /login 200 in 537ms (next.js: 13ms, proxy.ts: 25ms, application-code: 499ms)
+ POST /api/heartbeat?event=tab_close 401 in 4.7s (next.js: 4.6s, proxy.ts: 27ms, application-code: 49ms)
+ POST /login 200 in 346ms (next.js: 127ms, proxy.ts: 13ms, application-code: 206ms)
+  └─ ƒ fetchDesignPreferences() in 25ms ..//lib/actions/preferences.ts
+ POST /api/heartbeat 401 in 367ms (next.js: 53ms, proxy.ts: 182ms, application-code: 132ms)
+[browser] [SessionManager] Server returned 401. Session expired. (components\auth\ClientSessionManager.tsx:56:17)
+ POST /api/heartbeat?event=tab_close 401 in 45ms (next.js: 11ms, proxy.ts: 16ms, application-code: 17ms)
+ GET /login 200 in 814ms (next.js: 18ms, proxy.ts: 22ms, application-code: 773ms)
+ POST /login 200 in 121ms (next.js: 14ms, proxy.ts: 49ms, application-code: 59ms)
+  └─ ƒ fetchDesignPreferences() in 19ms ..//lib/actions/preferences.ts
+○ Compiling / ...
+ POST /api/heartbeat?event=tab_close 200 in 16.8s (next.js: 14.3s, proxy.ts: 600ms, application-code: 1918ms)
+ GET / 200 in 18.3s (next.js: 14.6s, proxy.ts: 290ms, application-code: 3.4s)
+[browser] [Profiler] Component <DashboardCommandCenter> took 36.5ms to render during mount. (Base: 23.3ms) (utils\performance\profiler-utils.ts:12:13)
+[browser] [Profiler] Component <DashboardCommandCenter> took 24.8ms to render during update. (Base: 22.8ms) (utils\performance\profiler-utils.ts:12:13)
+ POST / 200 in 1662ms (next.js: 16ms, proxy.ts: 1130ms, application-code: 516ms)
+  └─ ƒ fetchDesignPreferences() in 217ms ..//lib/actions/preferences.ts
+ POST /api/heartbeat 200 in 1033ms (next.js: 16ms, proxy.ts: 483ms, application-code: 534ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] [Profiler] Component <DashboardCommandCenter> took 77.9ms to render during update. (Base: 98.5ms) (utils\performance\profiler-utils.ts:12:13)
+[browser] [Profiler] Component <DashboardCommandCenter> took 17.6ms to render during update. (Base: 111.3ms) (utils\performance\profiler-utils.ts:12:13)
+[browser] [Profiler] Component <DashboardCommandCenter> took 47.9ms to render during nested-update. (Base: 146.5ms) (utils\performance\profiler-utils.ts:12:13)
+[browser] [Profiler] Component <DashboardCommandCenter> took 61.0ms to render during nested-update. (Base: 165.9ms) (utils\performance\profiler-utils.ts:12:13)
+[browser] [Profiler] Component <DashboardCommandCenter> took 27.5ms to render during nested-update. (Base: 155.3ms) (utils\performance\profiler-utils.ts:12:13)
+○ Compiling /workspaces ...
+Error: Route "/workspaces" used `searchParams.workspace`. `searchParams` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at WorkspacesDataFetcher (app\workspaces\page.tsx:18:42)
+  16 |
+  17 | async function WorkspacesDataFetcher({ searchParams }: { searchParams: { task?: string; wo...
+> 18 |   let targetWorkspaceId: string | null = searchParams?.workspace || null;
+     |                                          ^
+  19 |   
+  20 |   if (searchParams?.task) {
+  21 |     try {
+[browser] [Profiler] Component <DashboardCommandCenter> took 40.7ms to render during update. (Base: 73.2ms) (utils\performance\profiler-utils.ts:12:13)
+auth_neugm: 718.664ms
+[PROFILER] getVisibleWorkspaces_TOTAL_e7s1d: 663.897ms
+[PROFILER] fetchHierarchyRoots_TOTAL_qhmt9: 0.168ms
+[PROFILER] fetchWorkspaceDashboardData_TOTAL_neugm: 1.638s
+Error: Route "/workspaces" used `searchParams.task`. `searchParams` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at WorkspacesDataFetcher (app\workspaces\page.tsx:32:71)
+  30 |   const dashboardData = await fetchWorkspaceDashboardData(targetWorkspaceId);
+  31 |
+> 32 |   return <WorkspacesClient initialData={dashboardData} initialTaskId={searchParams?.task} />;
+     |                                                                       ^
+  33 | }
+  34 |
+ GET /workspaces 200 in 7.2s (next.js: 4.9s, proxy.ts: 281ms, application-code: 2.0s)
+ POST / 200 in 634ms (next.js: 46ms, proxy.ts: 103ms, application-code: 485ms)
+  └─ ƒ fetchLiveDashboardMetrics() in 422ms ..//lib/actions/dashboardMetrics.ts
+ POST /workspaces 200 in 1437ms (next.js: 33ms, proxy.ts: 653ms, application-code: 751ms)
+[browser] [Profiler] Component <DashboardCommandCenter> took 52.5ms to render during update. (Base: 84.8ms) (utils\performance\profiler-utils.ts:12:13)
+ POST /workspaces 200 in 227ms (next.js: 10ms, proxy.ts: 132ms, application-code: 85ms)
+  └─ ƒ fetchAssignableUsers() in 55ms ..//lib/actions/workspaces.ts
+ POST /workspaces 200 in 179ms (next.js: 13ms, proxy.ts: 83ms, application-code: 83ms)
+  └─ ƒ fetchAssignableUsers() in 47ms ..//lib/actions/workspaces.ts
+[PROFILER] fetchTasksByWorkspace_TOTAL_68egk: 170.868ms
+ POST /workspaces 200 in 284ms (next.js: 11ms, proxy.ts: 64ms, application-code: 208ms)
+  └─ ƒ fetchTasksByWorkspace("0e879046-fb97-47e5-a561-dce4f92450df") in 172ms ..//lib/actions/workspaces.ts
+ POST /workspaces 200 in 239ms (next.js: 5ms, proxy.ts: 66ms, application-code: 168ms)
+  └─ ƒ fetchWorkspaceStakeholders("0e879046-fb97-47e5-a561-dce4f92450df") in 144ms ..//lib/actions/workspaces.ts
+○ Compiling /workspaces/tasks ...
+[PROFILER] getVisibleWorkspaces_TOTAL_rnmrk: 3.333s
+ POST /api/heartbeat 200 in 3.6s (next.js: 66ms, proxy.ts: 3.0s, application-code: 570ms)
+ GET /workspaces/tasks 200 in 30.2s (next.js: 21.0s, proxy.ts: 354ms, application-code: 8.9s)
+ POST /workspaces/tasks 200 in 509ms (next.js: 17ms, proxy.ts: 277ms, application-code: 215ms)
+  └─ ƒ getTaskStatuses() in 154ms ..//lib/actions/tasks.ts
+ POST /workspaces/tasks 200 in 578ms (next.js: 14ms, proxy.ts: 215ms, application-code: 349ms)
+  └─ ƒ getDepartments() in 289ms ..//lib/actions/tasks.ts
+ POST /workspaces/tasks 200 in 450ms (next.js: 6ms, proxy.ts: 180ms, application-code: 264ms)
+  └─ ƒ getTaskStatuses() in 213ms ..//lib/actions/tasks.ts
+ POST /workspaces/tasks 200 in 618ms (next.js: 17ms, proxy.ts: 298ms, application-code: 303ms)
+  └─ ƒ getDepartments() in 250ms ..//lib/actions/tasks.ts
+[PROFILER] getVisibleWorkspaces_TOTAL_jvsmu: 269.508ms
+ POST /workspaces/tasks 200 in 904ms (next.js: -2612µs, proxy.ts: 261ms, application-code: 645ms)
+  └─ ƒ fetchWorkspaces() in 600ms ..//lib/actions/workspaces.ts
+[PROFILER] getVisibleWorkspaces_TOTAL_h2x1a: 255.873ms
+ POST /workspaces/tasks 200 in 1853ms (next.js: 25ms, proxy.ts: 198ms, application-code: 1630ms)
+  └─ ƒ fetchAllTasks() in 1519ms ..//lib/actions/workspaces.ts
+[PROFILER] getVisibleWorkspaces_TOTAL_fd5s3: 174.758ms
+ POST /workspaces/tasks 200 in 569ms (next.js: 5ms, proxy.ts: 179ms, application-code: 384ms)
+  └─ ƒ fetchWorkspaces() in 334ms ..//lib/actions/workspaces.ts
+[PROFILER] getVisibleWorkspaces_TOTAL_s7s8r: 154.374ms
+ POST /workspaces/tasks 200 in 1522ms (next.js: 10ms, proxy.ts: 290ms, application-code: 1222ms)
+  └─ ƒ fetchAllTasks() in 1180ms ..//lib/actions/workspaces.ts
+ POST /api/heartbeat 200 in 829ms (next.js: 17ms, proxy.ts: 361ms, application-code: 451ms)
+[?25h

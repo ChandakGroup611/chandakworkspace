@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ChevronRight as ChevronRightIcon,
   BookOpen,
-  LineChart
+  LineChart,
+  Trash2
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -72,6 +73,8 @@ const navGroups: NavGroup[] = [
           { label: "Workspace Master", href: "/workspaces", permission: "WORKSPACES_VIEW" },
           { label: "Enrolled Workspaces", href: "/workspaces/enrolled", permission: "ENROLLED_WORKSPACES_VIEW" },
           { label: "Workspace Tasks", href: "/workspaces/tasks", permission: "TASKS_VIEW" },
+          { label: "Transfer Tasks", href: "/workspaces/transfer-tasks", permission: "TASKS_TRANSFER_VIEW" },
+          { label: "Data Migration", href: "/migration", permission: "DATA_MIGRATION_VIEW" },
           { label: "Reports & Analytics", href: "/workspaces/reports", permission: "REPORTS_VIEW" }
         ]
       },
@@ -99,7 +102,7 @@ const navGroups: NavGroup[] = [
           { label: "System Master", href: "/masters", permission: "SYSTEM_MASTERS_VIEW" }
         ]
       },
-      { label: "Compliance Hub", href: "/compliance", icon: Settings, permission: "COMPLIANCE_VIEW" },
+      { label: "Trash Data", href: "/compliance", icon: Trash2, permission: "TRASH_VIEW" },
       { 
         label: "Settings", 
         href: "/settings", 

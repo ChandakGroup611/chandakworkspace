@@ -13,10 +13,13 @@ interface TaskPageProps {
   params: Promise<{
     taskId: string;
   }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function TaskDetailsPage({ params }: TaskPageProps) {
+export default async function TaskDetailsPage({ params, searchParams }: TaskPageProps) {
   const { taskId } = await params;
+  const sp = await searchParams;
+  const isViewMode = sp?.mode === 'view';
   let task;
   let statuses: any[] = [];
   let departments: any[] = [];
@@ -34,7 +37,7 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
   }
 
   return (
-    <div className="space-y-6 py-6">
+    <div className="space-y-6 pb-6 pt-2">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-4">
           <Link
@@ -52,12 +55,11 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
             Back to Workspace List
           </Link>
         </div>
-        {/* Removed redundant floating workspace widget */}
       </div>
 
       <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr] items-stretch">
-          <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/80 h-full flex flex-col">
+          <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/80">
             
             {/* Top row: Tags and Button */}
             <div className="flex items-start justify-between gap-4 w-full">
@@ -76,7 +78,7 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
             </div>
 
             {/* Content row: Title, description, etc. */}
-            <div className="min-w-0 w-full flex-1 mt-1">
+            <div className="min-w-0 w-full mt-1">
                 <div className="mt-3 w-full">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1.5">
                     Subject
@@ -146,13 +148,15 @@ export default async function TaskDetailsPage({ params }: TaskPageProps) {
             </div>
           </div>
           
-          <div className="h-full">
-            <TaskRightPanel taskId={taskId} />
+          <div className="relative w-full h-full xl:h-auto">
+            <div className="xl:absolute xl:inset-0 w-full h-full">
+              <TaskRightPanel taskId={taskId} />
+            </div>
           </div>
         </div>
 
         <div className="w-full">
-          <TaskExecutionController taskId={taskId} initialTask={task} initialStatuses={statuses} initialDepartments={departments} />
+          <TaskExecutionController taskId={taskId} initialTask={task} initialStatuses={statuses} initialDepartments={departments} readOnly={isViewMode} />
         </div>
       </div>
     </div>

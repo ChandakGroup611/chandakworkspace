@@ -2,15 +2,14 @@
 
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { revalidatePath } from 'next/cache';
-import { dispatchNotification } from '@/lib/actions/notifications';
+import { fetchWorkspaceStakeholders } from '@/lib/actions/workspaces';
 import { queueBusinessEvent } from '@/lib/actions/notification-engine';
+import { dispatchNotification } from '@/lib/actions/notifications';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
 export async function getDepartments() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('departments')
     .select('id, name, code')
     .eq('is_deleted', false)
@@ -85,11 +84,12 @@ export async function createTask(payload: {
 
     // Create Task
     const cleanUUID = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
+    const finalWorkspaceId = cleanUUID(payload.sub_workspace_id) || cleanUUID(payload.workspace_id);
     const { data: task, error } = await supabaseAdmin
       .from('tasks')
       .insert([{
-        workspace_id: cleanUUID(payload.workspace_id),
-        sub_workspace_id: cleanUUID(payload.sub_workspace_id),
+        workspace_id: finalWorkspaceId,
+        sub_workspace_id: null,
         parent_task_id: cleanUUID(payload.parent_task_id),
         sprint_id: cleanUUID(payload.sprint_id),
         template_id: cleanUUID(payload.template_id),
@@ -1222,3 +1222,309 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   return { success: true };
 }
 
+export async function moveTasksInBulk(payload: {
+  taskIds: string[];
+  targetWorkspaceId: string;
+  targetSubWorkspaceId?: string;
+  newOwnerId?: string;
+  newParticipantIds?: { user_id: string; participation_role: string }[];
+}) {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthenticated" };
+
+    const { taskIds, targetWorkspaceId, targetSubWorkspaceId, newOwnerId, newParticipantIds } = payload;
+    
+    // Recursive fetch of all task IDs including children
+    let allTaskIdsToMove = new Set<string>(taskIds);
+    let currentBatch = [...taskIds];
+    
+    while (currentBatch.length > 0) {
+      const { data: children, error } = await supabaseAdmin
+        .from('tasks')
+        .select('id')
+        .in('parent_task_id', currentBatch)
+        .eq('is_deleted', false);
+        
+      if (error) throw error;
+      
+      const childIds = (children || []).map(c => c.id).filter(id => !allTaskIdsToMove.has(id));
+      childIds.forEach(id => allTaskIdsToMove.add(id));
+      currentBatch = childIds;
+    }
+    
+    const finalTaskIds = Array.from(allTaskIdsToMove);
+
+    // Update tasks
+    const finalWorkspaceId = targetSubWorkspaceId || targetWorkspaceId;
+    const updatePayload: any = {
+      workspace_id: finalWorkspaceId,
+      sub_workspace_id: null,
+    };
+    if (newOwnerId) {
+      updatePayload.assigned_to = newOwnerId;
+      updatePayload.owner_id = newOwnerId;
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('tasks')
+      .update(updatePayload)
+      .in('id', finalTaskIds);
+
+    if (updateError) throw updateError;
+
+    // Handle participants if provided
+    if (newParticipantIds && newParticipantIds.length > 0) {
+      // Delete old participants
+      await supabaseAdmin
+        .from('task_participants')
+        .delete()
+        .in('task_id', finalTaskIds);
+
+      // Insert new participants for all moved tasks
+      const newParticipantsData = [];
+      for (const tId of finalTaskIds) {
+        for (const p of newParticipantIds) {
+          newParticipantsData.push({
+            task_id: tId,
+            user_id: p.user_id,
+            participation_role: p.participation_role
+          });
+        }
+      }
+      
+      if (newParticipantsData.length > 0) {
+        await supabaseAdmin
+          .from('task_participants')
+          .insert(newParticipantsData);
+      }
+    }
+
+    // --- AUTO-WATCHER LOGIC ---
+    const targetStakeholders = await fetchWorkspaceStakeholders(finalWorkspaceId);
+    
+    // Fetch all current participants for all moved tasks
+    const { data: currentParticipants } = await supabaseAdmin
+      .from('task_participants')
+      .select('task_id, user_id')
+      .in('task_id', finalTaskIds);
+      
+    // Fetch final assignees
+    const { data: currentTasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, assigned_to')
+      .in('id', finalTaskIds);
+
+    const watcherData: any[] = [];
+    
+    for (const tId of finalTaskIds) {
+      const existingUserIds = new Set(
+        currentParticipants?.filter(p => p.task_id === tId).map(p => p.user_id) || []
+      );
+      const t = currentTasks?.find(t => t.id === tId);
+      if (t?.assigned_to) existingUserIds.add(t.assigned_to);
+
+      targetStakeholders.forEach((s: any) => {
+        if (!existingUserIds.has(s.id)) {
+          watcherData.push({
+            task_id: tId,
+            user_id: s.id,
+            participation_role: 'WATCHER'
+          });
+        }
+      });
+    }
+
+    if (watcherData.length > 0) {
+      // Chunk inserts if too large (Supabase limits to ~1000 rows usually)
+      const chunkSize = 1000;
+      for (let i = 0; i < watcherData.length; i += chunkSize) {
+        await supabaseAdmin.from('task_participants').insert(watcherData.slice(i, i + chunkSize));
+      }
+    }
+    // --------------------------
+
+    // Insert Audit Logs
+    const auditLogs = finalTaskIds.map(tId => ({
+      task_id: tId,
+      actor_id: user.id,
+      action: 'WORKSPACE_CHANGE',
+      new_state: { workspace_id: targetWorkspaceId, sub_workspace_id: targetSubWorkspaceId }
+    }));
+    await supabaseAdmin.from('task_activity_logs').insert(auditLogs);
+
+    revalidatePath('/workspaces/transfer-tasks');
+    revalidatePath('/tasks');
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error("Bulk move error:", err);
+    return { error: err.message };
+  }
+}
+
+export async function transferTask(payload: {
+  taskId: string;
+  targetWorkspaceId: string;
+  targetSubworkspaceId?: string;
+  newAssigneeId?: string;
+  newExecutors?: string[];
+  droppedUsers?: string[];
+  remarks: string;
+}) {
+  try {
+    const { taskId, targetWorkspaceId, targetSubworkspaceId, newAssigneeId, newExecutors, droppedUsers, remarks } = payload;
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthenticated" };
+
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(user.id, "WORKSPACES_MANAGE");
+    
+    // Check if user is an executor
+    const { data: participant } = await supabaseAdmin
+      .from('task_participants')
+      .select('id')
+      .eq('task_id', taskId)
+      .eq('user_id', user.id)
+      .eq('participation_role', 'EXECUTOR')
+      .maybeSingle();
+
+    const { data: task } = await supabaseAdmin.from('tasks').select('workspace_id, assigned_to').eq('id', taskId).single();
+    if (!task) return { error: "Task not found" };
+
+    if (task.assigned_to !== user.id && !participant && !isSuperAdmin) {
+      return { error: "Only the Task Owner, an Executive, or a Super Admin can transfer this task." };
+    }
+
+    // Update tasks
+    const finalWorkspaceId = targetSubworkspaceId || targetWorkspaceId;
+    const updatePayload: any = { 
+      workspace_id: finalWorkspaceId,
+      sub_workspace_id: null // Explicitly clear deprecated column
+    };
+    
+    if (newAssigneeId) {
+      updatePayload.assigned_to = newAssigneeId;
+      // also update owner_id if it's the primary assignee
+      updatePayload.owner_id = newAssigneeId;
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('tasks')
+      .update(updatePayload)
+      .eq('id', taskId);
+
+    if (updateError) throw updateError;
+
+    // Handle dropped users
+    if (droppedUsers && droppedUsers.length > 0) {
+      await supabaseAdmin.from('task_participants')
+        .delete()
+        .eq('task_id', taskId)
+        .in('user_id', droppedUsers);
+    }
+
+    // Handle new executors
+    if (newExecutors && newExecutors.length > 0) {
+      const execsData = newExecutors.map(userId => ({
+        task_id: taskId,
+        user_id: userId,
+        participation_role: 'EXECUTOR'
+      }));
+      // Delete any existing matching roles just in case, then insert
+      await supabaseAdmin.from('task_participants')
+        .delete()
+        .eq('task_id', taskId)
+        .in('user_id', newExecutors);
+        
+      await supabaseAdmin.from('task_participants').insert(execsData);
+    }
+
+    // --- AUTO-WATCHER LOGIC ---
+    // Fetch stakeholders for the destination workspace
+    const targetStakeholders = await fetchWorkspaceStakeholders(finalWorkspaceId);
+    
+    // Fetch all current participants (which now includes valid old ones + new executors)
+    const { data: currentParticipants } = await supabaseAdmin
+      .from('task_participants')
+      .select('user_id')
+      .eq('task_id', taskId);
+      
+    // Get the final assignee (either new or existing)
+    const finalAssigneeId = newAssigneeId || task.assigned_to;
+    
+    const existingUserIds = new Set(currentParticipants?.map(p => p.user_id) || []);
+    if (finalAssigneeId) existingUserIds.add(finalAssigneeId);
+
+    const watcherData = targetStakeholders
+      .filter((s: any) => !existingUserIds.has(s.id))
+      .map((s: any) => ({
+        task_id: taskId,
+        user_id: s.id,
+        participation_role: 'WATCHER'
+      }));
+
+    if (watcherData.length > 0) {
+      await supabaseAdmin.from('task_participants').insert(watcherData);
+    }
+    // --------------------------
+
+    // Log activity
+    await supabaseAdmin.from('task_activity_logs').insert([{
+      task_id: taskId,
+      actor_id: user.id,
+      action: 'WORKSPACE_CHANGE',
+      new_state: { 
+        workspace_id: targetWorkspaceId, 
+        sub_workspace_id: targetSubworkspaceId || null,
+        remarks: remarks,
+        dropped_users: droppedUsers,
+        new_assignee: newAssigneeId
+      }
+    }]);
+
+    if (remarks && remarks.trim()) {
+      let commentMsg = `[TRANSFERRED] ${remarks.trim()}`;
+      if (droppedUsers && droppedUsers.length > 0) {
+        commentMsg += `\n\n(System Note: ${droppedUsers.length} out-of-scope users were dropped during transfer.)`;
+      }
+      if (newAssigneeId) {
+        commentMsg += `\n(System Note: Primary Assignee was updated due to scope mismatch.)`;
+      }
+      
+      await supabaseAdmin.from('task_comments').insert([{
+        task_id: taskId,
+        author_id: user.id,
+        content: commentMsg
+      }]);
+    }
+
+    revalidatePath('/workspaces');
+    revalidatePath('/tasks');
+    return { success: true };
+  } catch (err: any) {
+    console.error("Transfer error:", err);
+    return { error: err.message };
+  }
+}
+
+
+export async function getTransferableWorkspaces() {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { getVisibleWorkspaces } = await import('@/lib/repositories/workspaces');
+    const workspaces = await getVisibleWorkspaces(user.id);
+    return workspaces || [];
+  } catch (err) {
+    console.error("Error fetching workspaces for transfer:", err);
+    return [];
+  }
+}
