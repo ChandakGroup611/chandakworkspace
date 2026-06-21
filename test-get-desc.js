@@ -1,0 +1,1 @@
+const { createClient } = require('@supabase/supabase-js'); require('dotenv').config({path: '.env.local'}); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); supabase.rpc('get_workspace_descendants', { root_id: 'c86eb5f7-e23d-4d58-90b1-7a563c31a4d5' }).then(res => console.log(res)).catch(console.error);

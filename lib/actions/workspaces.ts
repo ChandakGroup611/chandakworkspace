@@ -10,6 +10,8 @@ import { getCachedUser } from "@/lib/auth/cached-user";
 import { hasPermission } from "@/lib/permissions";
 import { getVisibleWorkspaces } from "@/lib/repositories/workspaces";
 import { logActivityEvent } from "@/lib/actions/tasks";
+import { LifecycleManager } from "@/lib/services/LifecycleManager";
+import { HierarchyManager } from "@/lib/services/HierarchyManager";
 
 /**
  * Enterprise permission verification helper for server actions
@@ -167,21 +169,19 @@ export async function createWorkspace(formData: any) {
 
     let statusId = formData.status_id || null;
     if (!statusId) {
-      try {
-        const { data: status } = await supabase
-          .from("status_master")
-          .select("id")
-          .eq("status_code", "OPEN")
-          .limit(1)
-          .single();
-        statusId = status?.id;
-        if (!statusId) {
-          const { data: fallback } = await supabaseAdmin.from("status_master").select("id").limit(1);
-          statusId = fallback?.[0]?.id || null;
-        }
-      } catch (e) {
-        const { data: fallback } = await supabaseAdmin.from("status_master").select("id").limit(1);
-        statusId = fallback?.[0]?.id || null;
+      const { data: status } = await supabase
+        .from("status_master")
+        .select("id")
+        .eq("status_code", "OPEN")
+        .eq("scope_type", "WORKSPACE")
+        .eq("is_active", true)
+        .eq("is_deleted", false)
+        .limit(1)
+        .single();
+        
+      statusId = status?.id;
+      if (!statusId) {
+        throw new Error("Validation Error: No valid OPEN status found for workspaces. Please configure workspace statuses in settings.");
       }
     }
 
@@ -524,6 +524,34 @@ export async function updateWorkspace(id: string, formData: any) {
     return { error: "Validation Error: A workspace cannot be assigned as its own parent." };
   }
 
+  // Phase W1: Full descendant validation to prevent cyclical hierarchy loops
+  if (updatePayload.parent_workspace_id) {
+    const { data: allWs } = await supabaseAdmin
+      .from("workspaces")
+      .select("id, parent_workspace_id")
+      .eq("is_deleted", false);
+      
+    if (allWs) {
+      let currentCheckId = updatePayload.parent_workspace_id;
+      let depth = 0;
+      let isCycle = false;
+      
+      while (currentCheckId && depth < 100) {
+        if (currentCheckId === id) {
+          isCycle = true;
+          break;
+        }
+        const parentNode = allWs.find(w => w.id === currentCheckId);
+        currentCheckId = parentNode ? parentNode.parent_workspace_id : null;
+        depth++;
+      }
+      
+      if (isCycle) {
+        return { error: "Validation Error: Cyclical hierarchy detected. A workspace cannot be assigned as a child of its own descendant." };
+      }
+    }
+  }
+
   const { data, error } = await supabaseAdmin
     .from("workspaces")
     .update(updatePayload)
@@ -632,10 +660,14 @@ export async function deleteWorkspace(id: string) {
   try {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
-    
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
-    if (!userId) return { error: "Unauthenticated" };
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Unauthorized");
+    }
+    const userId = user.id;
 
     const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", id).single();
     
@@ -648,21 +680,17 @@ export async function deleteWorkspace(id: string) {
       return { error: "Unauthorized: Missing WORKSPACES_DELETE capability or owner access." };
     }
 
-  const { error } = await supabaseAdmin
-    .from("workspaces")
-    .update({ is_deleted: true })
-    .eq("id", id);
-    
-  if (error) {
-    console.error("[Workspaces] Error deleting workspace:", error);
-    return { error: error.message };
-  }
+    const { success, batchId } = await LifecycleManager.moveToTrash('WORKSPACE', id, userId, "User requested workspace deletion");
 
-  revalidatePath("/workspaces");
-  return { success: true };
+    if (!success) {
+      return { error: "Failed to move workspace to trash" };
+    }
+
+    revalidatePath("/workspaces");
+    return { success: true, batchId };
   } catch (err: any) {
-    console.error("[deleteWorkspace] Error:", err?.message || String(err));
-    return { error: err?.message || "Failed to delete workspace" };
+    console.error("[Workspaces] Delete error:", err);
+    return { error: err.message };
   }
 }
 
@@ -713,21 +741,15 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
     const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   
-  let targetWorkspaceIds = [workspaceId];
-
-  if (includeDescendants) {
-    // 1. Fetch all workspaces to build the descendant tree
-    const { data: allWs } = await supabaseAdmin.from("workspaces").select("id, parent_workspace_id").eq("is_deleted", false);
-    
-    const getDescendants = (id: string, all: any[], visited: Set<string> = new Set()): string[] => {
-      if (visited.has(id)) return [];
-      visited.add(id);
-      const children = all.filter((w: any) => w.parent_workspace_id === id);
-      return [id, ...children.flatMap((c: any) => getDescendants(c.id, all, visited))];
-    };
-    
-    targetWorkspaceIds = getDescendants(workspaceId, allWs || [], new Set());
-  }
+    let targetWorkspaceIds = [workspaceId];
+  
+    if (includeDescendants) {
+      console.log(`[PROFILER] Hierarchy_CTE_Start_${tId}`);
+      console.time(`[PROFILER] Hierarchy_CTE_Duration_${tId}`);
+      targetWorkspaceIds = await HierarchyManager.getDescendants('WORKSPACE', workspaceId);
+      console.timeEnd(`[PROFILER] Hierarchy_CTE_Duration_${tId}`);
+      console.log(`[PROFILER] Hierarchy_CTE_End_${tId}`);
+    }
   
   const startIdx = (page - 1) * limit;
   const endIdx = startIdx + limit - 1;
@@ -738,7 +760,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
         *,
         title:subject,
         status:status_master(name:status_name, code:status_code, status_color),
-        priority:priority_master(name:priority_name, code:priority_code),
+        priority:priority_master(name:priority_name, code:priority_code, priority_color),
         department:departments(id, name),
         participants:task_participants(user_id, participation_role)
       `)
@@ -759,21 +781,36 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
       const taskIds = workspaceTasks.map((t: any) => t.id);
       
       const [
-        { data: workspaces },
+        { data: rawWorkspaces },
         { data: users },
         { data: checklists },
         { data: attachments },
         { data: comments }
       ] = await Promise.all([
-        supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
+        supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", wsIds),
         supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds),
         supabaseAdmin.from("task_checklists").select("id, task_id, is_completed").in("task_id", taskIds),
         supabaseAdmin.from("task_attachments").select("id, task_id").in("task_id", taskIds),
         supabaseAdmin.from("task_comments").select("id, task_id").in("task_id", taskIds)
       ]);
+      
+      let workspaces = rawWorkspaces || [];
+      const parentIds = Array.from(new Set(workspaces.map((w: any) => w.parent_workspace_id).filter(Boolean)));
+      if (parentIds.length > 0) {
+        const { data: parentWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", parentIds);
+        if (parentWs) workspaces = [...workspaces, ...parentWs];
+      }
         
       workspaceTasks.forEach((t: any) => {
-        t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
+        const ws = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
+        if (ws && ws.parent_workspace_id) {
+          const parentWs = workspaces?.find((w: any) => w.id === ws.parent_workspace_id);
+          t.workspace = parentWs || ws;
+          t.sub_workspace = ws;
+        } else {
+          t.workspace = ws;
+          t.sub_workspace = null;
+        }
         t.creator = users?.find((u: any) => u.id === t.created_by) || null;
         t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
         t.assignees = []; // Implicitly workspace members
@@ -849,7 +886,7 @@ export async function fetchAllTasks() {
       *,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
-      priority:priority_master(name:priority_name, code:priority_code),
+      priority:priority_master(name:priority_name, code:priority_code, priority_color),
       department:departments(id, name),
       participants:task_participants(user_id, participation_role)
     `)
@@ -879,21 +916,36 @@ export async function fetchAllTasks() {
       const taskIds = allTasks.map((t: any) => t.id);
       
       const [
-        { data: workspaces },
+        { data: rawWorkspaces },
         { data: users },
         { data: checklists },
         { data: attachments },
         { data: comments }
       ] = await Promise.all([
-        supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds),
+        supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", wsIds),
         supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds),
         supabaseAdmin.from("task_checklists").select("id, task_id, is_completed").in("task_id", taskIds),
         supabaseAdmin.from("task_attachments").select("id, task_id").in("task_id", taskIds),
         supabaseAdmin.from("task_comments").select("id, task_id").in("task_id", taskIds)
       ]);
+      
+      let workspaces = rawWorkspaces || [];
+      const parentIds = Array.from(new Set(workspaces.map((w: any) => w.parent_workspace_id).filter(Boolean)));
+      if (parentIds.length > 0) {
+        const { data: parentWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", parentIds);
+        if (parentWs) workspaces = [...workspaces, ...parentWs];
+      }
         
       allTasks.forEach((t: any) => {
-        t.workspace = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
+        const ws = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
+        if (ws && ws.parent_workspace_id) {
+          const parentWs = workspaces?.find((w: any) => w.id === ws.parent_workspace_id);
+          t.workspace = parentWs || ws;
+          t.sub_workspace = ws;
+        } else {
+          t.workspace = ws;
+          t.sub_workspace = null;
+        }
         t.creator = users?.find((u: any) => u.id === t.created_by) || null;
         t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
         t.assignees = []; // Implicitly workspace members

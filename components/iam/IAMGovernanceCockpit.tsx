@@ -53,7 +53,7 @@ export default function IAMGovernanceCockpit({
 }: IAMGovernanceCockpitProps) {
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const resolvedRoles = initialRoles.length > 0 ? initialRoles : roles;
   const resolvedPermissions = initialPermissions.length > 0 ? initialPermissions : permissions;
@@ -435,7 +435,7 @@ export default function IAMGovernanceCockpit({
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-xl shadow-indigo-500/20">
-              <ShieldCheck className="h-6 w-6 text-white" />
+              <ShieldCheck className="h-6 w-6 text-foreground" />
             </div>
             <div>
               <h1 className={cn("text-2xl font-bold tracking-tight flex items-center gap-3", isLight ? "text-gray-900" : "text-white")}>

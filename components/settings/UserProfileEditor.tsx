@@ -61,7 +61,7 @@ export default function UserProfileEditor() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const isSuperAdmin = roleCode === "SUPER_ADMIN";
 
   // Load user profile on mount

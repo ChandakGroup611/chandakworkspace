@@ -140,18 +140,18 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           {hoveredCell ? (
             <div className="flex items-center gap-2.5 text-gray-300 font-medium animate-in fade-in duration-150">
               <Activity className="h-3 w-3 text-blue-400 shrink-0" />
-              <span><strong className="text-white">{hoveredCell.day} @ {hoveredCell.hour}</strong></span>
+              <span><strong className="text-foreground">{hoveredCell.day} @ {hoveredCell.hour}</strong></span>
               <span className="text-gray-600">|</span>
               <span className="text-xs">
-                Tasks: <strong className="text-white">{hoveredCell.data?.tasksCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.tasksResolved || 0}</strong> res
+                Tasks: <strong className="text-foreground">{hoveredCell.data?.tasksCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.tasksResolved || 0}</strong> res
               </span>
               <span className="text-gray-600">|</span>
               <span className="text-xs">
-                Workspaces: <strong className="text-white">{hoveredCell.data?.workspacesCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.workspacesResolved || 0}</strong> res
+                Workspaces: <strong className="text-foreground">{hoveredCell.data?.workspacesCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.workspacesResolved || 0}</strong> res
               </span>
               <span className="text-gray-600">|</span>
               <span className="text-xs">
-                Tickets: <strong className="text-white">{hoveredCell.data?.ticketsCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.ticketsResolved || 0}</strong> res
+                Tickets: <strong className="text-foreground">{hoveredCell.data?.ticketsCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.ticketsResolved || 0}</strong> res
               </span>
             </div>
           ) : (

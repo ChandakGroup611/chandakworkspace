@@ -148,7 +148,7 @@ export default function Sidebar() {
 
   const { theme } = useTheme();
   const { hasPermission, roleCode } = usePermissions();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   // OPTIMIZATION: Memoize the massive permission evaluation tree
   const visibleNavTree = React.useMemo(() => {
@@ -263,7 +263,7 @@ export default function Sidebar() {
                         
                         {/* Responsive dynamically scaled icon */}
                         <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-110 ${
-                          isCompact ? "h-3.5 w-3.5" : "h-4 w-4"
+                          isCompact ? "h-5 w-5" : "h-5 w-5"
                         } ${
                           isBaseActive ? "text-accent drop-shadow-sm" : "text-accent/70 group-hover:text-accent"
                         }`} />

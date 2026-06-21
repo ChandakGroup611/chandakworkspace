@@ -12,7 +12,7 @@ interface TicketActivityStreamProps {
 export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

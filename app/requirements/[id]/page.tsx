@@ -446,7 +446,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <AppBadge variant="info">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
           <div className="flex items-center gap-2 ml-2 border-l border-gray-300 dark:border-white/10 pl-3 hidden md:flex">
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Priority:</span>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full text-white tracking-wide shadow-sm" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full text-foreground tracking-wide shadow-sm" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
               {requirement.priority?.name || requirement.priority?.priority_name || '-'}
             </span>
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-2">Created:</span>
@@ -879,7 +879,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                 disabled={!(isAdmin && (isEditable || isSuperAdmin))}
                               />
                               <div className={`w-4 h-4 rounded border mr-2 flex items-center justify-center ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-gray-300 dark:border-gray-600'}`}>
-                                {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                {isSelected && <svg className="w-3 h-3 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                               </div>
                               <span className={`text-xs font-medium ${isSelected ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'}`}>{d.name}</span>
                             </label>

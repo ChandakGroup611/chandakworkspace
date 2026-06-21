@@ -97,7 +97,7 @@ export default function ProviderDashboard() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
         <div>
-          <h2 className="text-lg font-bold text-white">Routing Infrastructure</h2>
+          <h2 className="text-lg font-bold text-foreground">Routing Infrastructure</h2>
           <p className="text-xs text-gray-400">Configure Primary and Fallback SMTP/API gateways for high-availability delivery.</p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function ProviderDashboard() {
                   <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-blue-400' : 'text-gray-400'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-blue-400' : 'text-white'}`}>
+                  <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-blue-400' : 'text-foreground'}`}>
                     {prov.priority_level === 1 ? 'PRIMARY DISPATCH' : `FALLBACK LEVEL ${prov.priority_level - 1}`}
                   </h3>
                   <p className="text-xs text-gray-500">

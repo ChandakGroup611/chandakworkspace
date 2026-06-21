@@ -15,7 +15,7 @@ interface TicketFormInfraProps {
 
 export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraProps) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [masters, setMasters] = useState<any>({});

@@ -31,7 +31,7 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     let isLight = false;
     try {
       const { theme } = useTheme();
-      isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+      isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
     } catch (e) {}
 
     const baseStyles = 

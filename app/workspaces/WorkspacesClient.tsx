@@ -18,6 +18,9 @@ import {
   updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData, fetchHierarchyChildren
 } from "@/lib/actions/workspaces";
 import { usePermissions } from "@/hooks/usePermissions";
+import { LifecycleManager } from "@/lib/services/LifecycleManager";
+import { HierarchyManager } from "@/lib/services/HierarchyManager";
+import { HierarchyStateManager } from "@/lib/services/HierarchyStateManager";
 import { usePresence } from "@/hooks/use-presence";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
@@ -35,7 +38,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const router = useRouter();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const [workspaces, setWorkspaces] = useState<any[]>(initialData?.workspaces || []);
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);
@@ -256,13 +259,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       setIsSubmitting(true);
       let finalName = newWS.name;
 
-      if (newWS.parent_workspace_id && parentWorkspace && parentWorkspace.name) {
-        const prefix = `${parentWorkspace.name} - `;
-        if (!finalName.startsWith(prefix)) {
-          finalName = `${parentWorkspace.name} - ${finalName}`;
-        }
-      }
-
       const payload = {
         name: finalName,
         description: newWS.description,
@@ -290,6 +286,18 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         const updatedList = workspaces.map(w => w.id === editWSId ? data : w);
         setWorkspaces(updatedList);
         setActiveWorkspace(data);
+
+        // Optimistically update the tree
+        setMasterHierarchy(curr => {
+          const updateNode = (tree: any[]): any[] => tree.map(node => {
+            if (node.id === editWSId) {
+              return { ...node, ...data, children: node.children };
+            }
+            if (node.children) return { ...node, children: updateNode(node.children) };
+            return node;
+          });
+          return updateNode(curr);
+        });
       } else {
         data = await createWorkspace(payload);
         if (data?.error) throw new Error(data.error);
@@ -348,10 +356,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               return insertChildren(curr);
             });
           });
-        } else {
-          m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => {
-            setMasterHierarchy(hier);
-          });
         }
       });
       
@@ -409,9 +413,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setActiveWorkspace(null);
       }
       
-      // Refresh the execution hierarchy tree to show the deleted workspace
-      import("@/lib/actions/workspaces").then(m => {
-        m.fetchHierarchyRoots(currentUser?.id).then((hier: any) => setMasterHierarchy(hier));
+      // Optimistically remove from tree without resetting it
+      setMasterHierarchy(curr => {
+        const removeNode = (tree: any[]): any[] => {
+          return tree.filter(n => n.id !== id).map(n => {
+            if (n.children) {
+              return { ...n, children: removeNode(n.children) };
+            }
+            return n;
+          });
+        };
+        return removeNode(curr);
       });
     } catch (e: any) {
       console.warn("[Workspace Deletion] Intercepted:", e.message || e);
@@ -469,7 +481,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       const insertChildren = (tree: any[]): any[] => {
         return tree.map(item => {
           if (item.id === node.id) {
-            return { ...item, children, childrenFetched: true };
+            return { 
+              ...item, 
+              children: HierarchyStateManager.mergePrefetchedChildren(item.children, children), 
+              childrenFetched: true 
+            };
           }
           if (item.children && item.children.length > 0) {
             return { ...item, children: insertChildren(item.children) };
@@ -496,7 +512,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       triggerToast("Task created successfully");
       
       // Optimistically insert to list for instant update
-      setTasks(prev => [data, ...prev]);
+      setTasks(prev => [{ ...data, isOptimistic: true }, ...prev]);
 
       // Refetch full data with relations in background silently
       if (activeWorkspace?.id) {
@@ -511,33 +527,24 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           setExpandedNodes(prev => ({ ...prev, [parentId]: true }));
           m.fetchHierarchyChildren(parentId, parentType).then(children => {
             setMasterHierarchy(curr => {
+              // W5.1: Bubble the count recursively via HierarchyStateManager
+              const { nodes: bubbledNodes } = HierarchyStateManager.bubbleTaskCount(curr, parentId, 1);
+              
+              // W5.2: Inject fetched children using intelligent merge
               const insertChildren = (tree: any[]): any[] => tree.map(node => {
                 if (node.id === parentId) {
-                  const isWorkspace = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
                   return { 
                     ...node, 
-                    children, 
-                    childrenFetched: true,
-                    total_hierarchy_task_count: isWorkspace ? (node.total_hierarchy_task_count || 0) + 1 : node.total_hierarchy_task_count,
-                    direct_task_count: isWorkspace ? (node.direct_task_count || 0) + 1 : node.direct_task_count,
-                    child_task_count: (node.type === 'TASK' || node.type === 'SUB_TASK') ? (node.child_task_count || 0) + 1 : node.child_task_count
+                    children: HierarchyStateManager.mergePrefetchedChildren(node.children, children), 
+                    childrenFetched: true
                   };
                 }
                 if (node.children) {
-                  const updatedChildren = insertChildren(node.children);
-                  // If one of the children was updated, increment our total count too
-                  if (updatedChildren !== node.children && (node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE')) {
-                    return {
-                      ...node,
-                      children: updatedChildren,
-                      total_hierarchy_task_count: (node.total_hierarchy_task_count || 0) + 1
-                    };
-                  }
-                  return { ...node, children: updatedChildren };
+                  return { ...node, children: insertChildren(node.children) };
                 }
                 return node;
               });
-              return insertChildren(curr);
+              return insertChildren(bubbledNodes);
             });
           });
         }
@@ -735,7 +742,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     const insertChildren = (tree: any[]): any[] => {
                       return tree.map(item => {
                         if (item.id === node.id) {
-                          return { ...item, children, childrenFetched: true };
+                          return { 
+                            ...item, 
+                            children: HierarchyStateManager.mergePrefetchedChildren(item.children, children), 
+                            childrenFetched: true 
+                          };
                         }
                         if (item.children && item.children.length > 0) {
                           return { ...item, children: insertChildren(item.children) };

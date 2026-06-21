@@ -18,7 +18,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const [requirement, setRequirement] = useState<any>(null);
   const [masters, setMasters] = useState<any>({});

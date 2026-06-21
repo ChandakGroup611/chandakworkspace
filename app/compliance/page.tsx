@@ -23,7 +23,7 @@ export default function CompliancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-white">Trash Data</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Trash Data</h1>
           </div>
           <p className="text-xs text-gray-400">
             Securely manage, recover, or permanently purge soft-deleted records across the platform.

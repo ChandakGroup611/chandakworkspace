@@ -170,7 +170,7 @@ export default function PerformanceCommandCenter() {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-red-600">Soft Governance Budget Violations</h2>
           <div className="overflow-x-auto border rounded-lg border-red-200">
-            <table className="min-w-full divide-y divide-red-200 text-sm">
+            <table className="min-w-full divide-y divide-red-200 text-base">
               <thead className="bg-red-50">
                 <tr>
                   <th className="px-4 py-3 text-left">Route</th>
@@ -197,7 +197,7 @@ export default function PerformanceCommandCenter() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Query Log</h2>
         <div className="overflow-x-auto border rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <table className="min-w-full divide-y divide-gray-200 text-base">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left">Time</th>

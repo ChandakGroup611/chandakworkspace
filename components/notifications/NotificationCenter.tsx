@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function NotificationCenter() {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const supabase = createClient();
   const router = useRouter();
 

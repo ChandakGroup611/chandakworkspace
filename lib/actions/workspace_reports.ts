@@ -5,7 +5,20 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 export type ReportEntityType = "WORKSPACE" | "SUB_WORKSPACE" | "TASK" | "SUB_TASK";
-export type ReportScope = "ALL" | "CREATED_BY_ME" | "ASSIGNED_TO_ME" | "TASK_OWNER";
+export type ReportScope = "ALL" | "ASSIGNED_TO_ME" | "ENROLLED_TASKS";
+
+const APPROVED_TASK_COLUMNS = [
+  "id", "task_code", "subject", "description", "custom_fields",
+  "start_date", "end_date", "created_at", "updated_at",
+  "created_by", "owner_id", "workspace_id", "parent_task_id", 
+  "is_deleted"
+];
+
+const APPROVED_WORKSPACE_COLUMNS = [
+  "id", "workspace_code", "workspace_name", "description", 
+  "start_date", "end_date", "created_at", "updated_at", 
+  "workspace_owner_id", "parent_workspace_id", "is_deleted"
+];
 
 export async function generateWorkspaceReportData(entityType: ReportEntityType, scope: ReportScope) {
   const cookieStore = await cookies();
@@ -19,28 +32,20 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
   let isTask = entityType === "TASK" || entityType === "SUB_TASK";
 
   if (isTask) {
+    const taskSelect = [
+      ...APPROVED_TASK_COLUMNS,
+      "code:task_code",
+      "title:subject",
+      "status:status_master!tasks_status_id_fkey(name:status_name, color:status_color)",
+      "priority:priority_master(name:priority_name, color:priority_color)",
+      "department:departments(name)",
+      "workspace:workspaces!workspace_id(name:workspace_name, code:workspace_code)",
+      "assignees:task_participants(user_id, role:participation_role)"
+    ].join(", ");
+
     query = supabaseAdmin
       .from("tasks")
-      .select(`
-        id,
-        code:task_code,
-        title:subject,
-        description,
-        custom_fields,
-        start_date,
-        end_date,
-        created_at,
-        updated_at,
-        created_by,
-        owner_id,
-        workspace_id,
-        parent_task_id,
-        status:status_master!tasks_status_id_fkey(name:status_name, color:status_color),
-        priority:priority_master(name:priority_name, color:priority_color),
-        department:departments(name),
-        workspace:workspaces!workspace_id(name:workspace_name, code:workspace_code),
-        assignees:task_participants(user_id, role:participation_role)
-      `)
+      .select(taskSelect)
       .eq("is_deleted", false)
       .order('created_at', { ascending: false });
 
@@ -51,22 +56,19 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
     }
 
   } else {
+    const workspaceSelect = [
+      ...APPROVED_WORKSPACE_COLUMNS,
+      "code:workspace_code",
+      "title:workspace_name",
+      "created_by:workspace_owner_id",
+      "company:company_master(name:company_name)",
+      "status:status_master(name:status_name, color:status_color)",
+      "members:workspace_members(user_id, role)"
+    ].join(", ");
+
     query = supabaseAdmin
       .from("workspaces")
-      .select(`
-        id,
-        code:workspace_code,
-        title:workspace_name,
-        description,
-        start_date,
-        end_date,
-        created_at,
-        created_by:workspace_owner_id,
-        parent_workspace_id,
-        company:company_master(name:company_name),
-        status:status_master(name:status_name, color:status_color),
-        members:workspace_members(user_id, role)
-      `)
+      .select(workspaceSelect)
       .eq("is_deleted", false)
       .eq("workspace_members.is_deleted", false)
       .order('created_at', { ascending: false });
@@ -134,20 +136,21 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
   // Post-process filtering based on scope
   let filteredData = enrichedData;
 
-  if (scope === "CREATED_BY_ME") {
-    filteredData = filteredData.filter((item: any) => item.created_by === userId);
-  } else if (scope === "ASSIGNED_TO_ME") {
+  if (scope === "ASSIGNED_TO_ME") {
     filteredData = filteredData.filter((item: any) => {
       if (isTask) {
-        return item.assignees?.some((a: any) => a.user_id === userId);
+        return item.assignees?.some((a: any) => a.user_id === userId && a.role === 'ASSIGNEE');
       } else {
         return item.members?.some((m: any) => m.user_id === userId);
       }
     });
-  } else if (scope === "TASK_OWNER") {
+  } else if (scope === "ENROLLED_TASKS") {
     filteredData = filteredData.filter((item: any) => {
-      if (isTask) return item.owner_id === userId;
-      else return item.created_by === userId; // workspace owner
+      if (isTask) {
+        return item.assignees?.some((a: any) => a.user_id === userId && (a.role === 'EXECUTOR' || a.role === 'WATCHER' || a.role === 'REVIEWER'));
+      } else {
+        return item.members?.some((m: any) => m.user_id === userId);
+      }
     });
   } else if (scope === "ALL") {
     // Standard visibility
@@ -167,6 +170,7 @@ export async function generateWorkspaceReportData(entityType: ReportEntityType, 
     const assignedString = assignedArray?.map((a: any) => a.user?.full_name || "Unknown").join(", ") || "—";
 
     return {
+      ...item, // R2: Spread to preserve dynamic native columns safely
       id: item.id,
       code: item.code,
       title: item.title,

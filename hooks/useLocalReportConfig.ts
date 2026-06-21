@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { getUserReportLayout, saveUserReportLayout, resetUserReportLayout } from "@/lib/actions/user_report_layout";
 
 export interface UIFieldDefinition {
   field_key: string;
@@ -24,46 +25,75 @@ export function useLocalReportConfig(reportCode: string, initialUIFields: UIFiel
   const [layout, setLayout] = useState<UserReportLayout[]>([]);
   const [availableFields, setAvailableFields] = useState<UIFieldDefinition[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetchedRef = useRef(false);
 
-  const fetchLayout = useCallback(() => {
+  const fetchLayout = useCallback(async () => {
     setLoading(true);
-    setAvailableFields(initialUIFields);
-
-    const storageKey = `report_layout_${reportCode}`;
-    const saved = localStorage.getItem(storageKey);
-
-    if (saved) {
-      try {
-        const parsedLayout: UserReportLayout[] = JSON.parse(saved);
-        
-        // Ensure any new fields not in saved layout are added to the end
-        const existingKeys = new Set(parsedLayout.map(l => l.field_key));
-        const newFields = initialUIFields.filter(f => !existingKeys.has(f.field_key));
-        
-        const mergedLayout = [...parsedLayout];
-        newFields.forEach((nf, idx) => {
-          mergedLayout.push({
-            field_id: nf.field_key,
-            field_key: nf.field_key,
-            display_name: nf.display_name,
-            data_type: nf.data_type,
-            display_order: parsedLayout.length + idx + 1,
-            is_visible: false, // New fields are hidden by default
-            column_width: nf.default_width || 150
-          });
-        });
-
-        setLayout(mergedLayout);
-      } catch (e) {
-        console.error("Failed to parse saved layout, resetting to default", e);
-        generateDefaultLayout();
-      }
-    } else {
-      generateDefaultLayout();
-    }
     
-    setLoading(false);
-  }, [reportCode, initialUIFields]);
+    try {
+      const saved = await getUserReportLayout(reportCode);
+      fetchedRef.current = true;
+      
+      const existingKeys = saved ? new Set(saved.map(l => l.field_key)) : new Set();
+      // Use the CURRENT initialUIFields via closure, but it only runs once per reportCode
+      const newFields = initialUIFields.filter(f => !existingKeys.has(f.field_key));
+      
+      let mergedLayout: UserReportLayout[] = saved ? [...saved] : [];
+      
+      newFields.forEach((nf, idx) => {
+        mergedLayout.push({
+          field_id: nf.field_key,
+          field_key: nf.field_key,
+          display_name: nf.display_name,
+          data_type: nf.data_type,
+          display_order: (saved ? saved.length : 0) + idx + 1,
+          is_visible: nf.is_default !== false,
+          column_width: nf.default_width || 150
+        });
+      });
+
+      setLayout(mergedLayout);
+    } catch (e) {
+      console.error("Failed to parse saved layout", e);
+      generateDefaultLayout();
+    } finally {
+      setLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportCode]);
+
+  useEffect(() => {
+    // Only run on mount or when reportCode changes
+    fetchLayout();
+  }, [fetchLayout]);
+
+  useEffect(() => {
+    setAvailableFields(initialUIFields);
+    
+    // Only update layout dynamically if we have already fetched the initial layout
+    if (!fetchedRef.current) return;
+    
+    setLayout(prevLayout => {
+      const existingKeys = new Set(prevLayout.map(l => l.field_key));
+      const newFields = initialUIFields.filter(f => !existingKeys.has(f.field_key));
+      
+      if (newFields.length === 0) return prevLayout;
+      
+      const mergedLayout = [...prevLayout];
+      newFields.forEach((nf, idx) => {
+        mergedLayout.push({
+          field_id: nf.field_key,
+          field_key: nf.field_key,
+          display_name: nf.display_name,
+          data_type: nf.data_type,
+          display_order: prevLayout.length + idx + 1,
+          is_visible: nf.is_default !== false,
+          column_width: nf.default_width || 150
+        });
+      });
+      return mergedLayout;
+    });
+  }, [initialUIFields]);
 
   const generateDefaultLayout = useCallback(() => {
     const defaultLayout: UserReportLayout[] = initialUIFields.map((f, idx) => ({
@@ -76,28 +106,34 @@ export function useLocalReportConfig(reportCode: string, initialUIFields: UIFiel
       column_width: f.default_width || 150
     }));
     setLayout(defaultLayout);
-  }, [initialUIFields]);
-
-  useEffect(() => {
-    // We only want to run this in the browser, so we wait for mount
-    fetchLayout();
-  }, [fetchLayout]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveLayout = async (newLayout: UserReportLayout[]) => {
-    const storageKey = `report_layout_${reportCode}`;
-    localStorage.setItem(storageKey, JSON.stringify(newLayout));
+    // Optimistic UI update
     setLayout(newLayout);
+    // Background persist
+    await saveUserReportLayout(reportCode, newLayout);
   };
 
   const resetToDefault = async () => {
-    const storageKey = `report_layout_${reportCode}`;
-    localStorage.removeItem(storageKey);
-    generateDefaultLayout();
+    // Re-generate default layout based on current availableFields
+    const defaultLayout: UserReportLayout[] = availableFields.map((f, idx) => ({
+      field_id: f.field_key,
+      field_key: f.field_key,
+      display_name: f.display_name,
+      data_type: f.data_type,
+      display_order: idx + 1,
+      is_visible: f.is_default !== false,
+      column_width: f.default_width || 150
+    }));
+    setLayout(defaultLayout);
+    await resetUserReportLayout(reportCode);
   };
 
   return {
     layout,
-    availableFields, // Using UIFieldDefinition as the Available Field
+    availableFields,
     loading,
     error: null,
     saveLayout,

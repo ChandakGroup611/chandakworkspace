@@ -15,7 +15,7 @@ import {
 
 export default function ModuleRenderer({ module }: { module: LearningModule }) {
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   if (!module) return null;
 
@@ -68,7 +68,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
           <h2 className={`text-lg font-bold tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>Field to Field Information</h2>
         </div>
         <div className={`rounded-2xl border overflow-hidden ${isLight ? "bg-white border-gray-200" : "bg-[#0A0D14] border-white/10"}`}>
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-base">
             <thead className={`border-b text-xs uppercase font-semibold ${isLight ? "bg-gray-50 text-gray-500" : "bg-white/5 text-gray-400 border-white/10"}`}>
               <tr>
                 <th className="px-6 py-4">Field Name</th>

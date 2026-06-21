@@ -10,11 +10,14 @@
 @import '../src/styles/themes/material-ocean.css';
 @import '../src/styles/themes/aurora-breeze.css';
 @import '../src/styles/themes/pure-elegance.css';
+@import '../src/styles/themes/pristine-white.css';
 
 /* Force Tailwind v4 to use class-based dark mode instead of media queries */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --font-sans: var(--app-font-family, ui-sans-serif, system-ui, sans-serif);
+  
   --color-background: var(--bg-primary);
   --color-foreground: var(--text-primary);
   --color-surface: var(--bg-surface);
@@ -28,9 +31,17 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+
 }
 
 /* Universal Theme Enhancements */
+@layer base {
+  /* Force inputs, buttons, and tables to inherit the font */
+  input, textarea, select, button, table, th, td {
+    font-family: inherit;
+  }
+}
+
 @layer utilities {
   .bg-surface {
     background-color: var(--color-surface);
@@ -40,7 +51,8 @@
     background-color: var(--color-elevated);
     backdrop-filter: var(--backdrop-blur, blur(0)) var(--backdrop-saturate, saturate(100%));
   }
-  
+
+
   .font-semibold {
     font-weight: var(--ui-weight-semibold, 600) !important;
   }
@@ -49,5 +61,99 @@
   }
   .font-extrabold {
     font-weight: var(--ui-weight-extrabold, 800) !important;
+  }
+
+  /* Universal Light Theme Enforcement */
+  /* Replaces hardcoded dark backgrounds and text colors when a light theme is active */
+  .theme-light .bg-\[\#0A0D14\],
+  .theme-light .bg-\[\#0b0e17\]\/95,
+  .theme-light .bg-\[\#1C1C21\],
+  .theme-light .bg-black\/30,
+  .theme-light .bg-black\/40,
+  .theme-light .bg-black\/50,
+  .theme-light .bg-white\/5,
+  .theme-light .bg-white\/10,
+  .theme-light .bg-white\/20,
+  .theme-light .bg-white\/\[0\.02\],
+  .theme-light .bg-white\/\[0\.05\],
+  .theme-light .bg-white\/\[0\.1\] {
+    background-color: var(--color-surface) !important;
+  }
+
+  .theme-light .border-white\/5,
+  .theme-light .border-white\/10,
+  .theme-light .border-white\/20 {
+    border-color: var(--color-border) !important;
+  }
+
+  .theme-light .text-white {
+    color: var(--color-foreground) !important;
+  }
+  
+  .theme-light .text-gray-200,
+  .theme-light .text-gray-300,
+  .theme-light .text-gray-400 {
+    color: var(--color-subtle) !important;
+  }
+
+  /* Protect buttons and badges that legitimately need white text */
+  .theme-light [class*="bg-blue-"] .text-white,
+  .theme-light [class*="bg-indigo-"] .text-white,
+  .theme-light [class*="bg-purple-"] .text-white,
+  .theme-light [class*="bg-emerald-"] .text-white,
+  .theme-light [class*="bg-rose-"] .text-white,
+  .theme-light [class*="bg-amber-"] .text-white,
+  .theme-light [class*="bg-green-"] .text-white,
+  .theme-light [class*="bg-red-"] .text-white,
+  .theme-light [class*="bg-slate-800"] .text-white,
+  .theme-light [class*="bg-slate-900"] .text-white,
+  .theme-light [class*="from-blue-"] .text-white,
+  .theme-light [class*="from-indigo-"] .text-white,
+  .theme-light [class*="from-purple-"] .text-white,
+  .theme-light [class*="from-emerald-"] .text-white,
+  .theme-light [class*="from-rose-"] .text-white,
+  .theme-light [class*="from-amber-"] .text-white,
+  .theme-light [class*="bg-blue-"].text-white,
+  .theme-light [class*="bg-indigo-"].text-white,
+  .theme-light [class*="bg-purple-"].text-white,
+  .theme-light [class*="bg-emerald-"].text-white,
+  .theme-light [class*="bg-rose-"].text-white,
+  .theme-light [class*="bg-amber-"].text-white,
+  .theme-light [class*="bg-green-"].text-white,
+  .theme-light [class*="bg-red-"].text-white,
+  .theme-light [class*="bg-slate-800"].text-white,
+  .theme-light [class*="bg-slate-900"].text-white,
+  .theme-light [class*="from-blue-"].text-white,
+  .theme-light [class*="from-indigo-"].text-white,
+  .theme-light [class*="from-purple-"].text-white,
+  .theme-light [class*="from-emerald-"].text-white,
+  .theme-light [class*="from-rose-"].text-white,
+  .theme-light [class*="from-amber-"].text-white {
+    color: #ffffff !important;
+  }
+
+  /* Universal Soft Shadow Effect Borders */
+  /* Replaces harsh borders globally across the entire application with soft premium shadows */
+  
+  /* Light Theme / Universal Base */
+  .border:not([class*="border-blue-"]):not([class*="border-indigo-"]):not([class*="border-purple-"]):not([class*="border-emerald-"]):not([class*="border-rose-"]):not([class*="border-amber-"]):not([class*="border-red-"]):not([class*="border-green-"]),
+  .border-black,
+  .border-gray-900,
+  .border-gray-800,
+  .border-slate-900,
+  .border-slate-800 {
+    border-color: rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0,0,0,0.02) !important;
+  }
+
+  /* Dark Theme specifically */
+  .theme-dark .border:not([class*="border-blue-"]):not([class*="border-indigo-"]):not([class*="border-purple-"]):not([class*="border-emerald-"]):not([class*="border-rose-"]):not([class*="border-amber-"]):not([class*="border-red-"]):not([class*="border-green-"]),
+  .theme-dark .border-black,
+  .theme-dark .border-gray-900,
+  .theme-dark .border-gray-800,
+  .theme-dark .border-slate-900,
+  .theme-dark .border-slate-800 {
+    border-color: rgba(255, 255, 255, 0.03) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
   }
 }

@@ -32,7 +32,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
     task = null;
   }
 
-  if (!task) {
+  if (!task || task.error) {
     notFound();
   }
 

@@ -7,7 +7,7 @@ export const AppTableContainer = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-[#0B0D17]", className)}
+    className={cn("w-full overflow-x-auto rounded-2xl border border-border shadow-sm bg-surface", className)}
     {...props}
   />
 ));
@@ -19,7 +19,7 @@ export const AppTable = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <table
     ref={ref}
-    className={cn("w-full caption-bottom text-sm text-left border-collapse", className)}
+    className={cn("w-full caption-bottom text-base text-left border-collapse", className)}
     {...props}
   />
 ));
@@ -31,7 +31,7 @@ export const AppTableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("border-b-2 border-slate-300 dark:border-slate-600 bg-slate-200 dark:bg-slate-800 text-[12px] font-bold text-slate-800 dark:text-slate-100 tracking-wider uppercase shadow-sm", className)}
+    className={cn("border-b border-border bg-surface/95 backdrop-blur text-[11px] font-extrabold text-muted tracking-wider uppercase", className)}
     {...props}
   />
 ));
@@ -43,7 +43,7 @@ export const AppTableBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tbody
     ref={ref}
-    className={cn("divide-y divide-slate-200/60 dark:divide-white/5 font-medium", className)}
+    className={cn("divide-y divide-border font-medium", className)}
     {...props}
   />
 ));
@@ -55,14 +55,13 @@ export const AppTableRow = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tr
     ref={ref}
-    className={cn(
-      "transition-colors duration-150 text-slate-800 dark:text-slate-200",
-      "[tbody_&]:even:bg-white dark:[tbody_&]:even:bg-[#0B0D17] [tbody_&]:even:hover:bg-blue-50/60 dark:[tbody_&]:even:hover:bg-blue-900/20",
-      "[tbody_&]:odd:bg-slate-50 dark:[tbody_&]:odd:bg-[#121620] [tbody_&]:odd:hover:bg-blue-50/60 dark:[tbody_&]:odd:hover:bg-blue-900/20",
-      "data-[state=selected]:bg-blue-100 dark:data-[state=selected]:bg-blue-900/30",
-      "[thead_&]:bg-transparent [thead_&]:hover:bg-transparent", // Ensure header row doesn't have zebra background
-      className
-    )}
+      className={cn(
+        "transition-all duration-200 text-foreground group",
+        "bg-surface",
+        "[tbody_&]:hover:bg-accent/5 [tbody_&]:hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+        "data-[state=selected]:bg-accent/10",
+        className
+      )}
     {...props}
   />
 ));

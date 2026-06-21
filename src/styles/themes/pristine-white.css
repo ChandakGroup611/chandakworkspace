@@ -1,0 +1,29 @@
+/* Pristine White Theme: Pure, sharp, bright backgrounds with high-contrast elements */
+[data-theme="pristine-white"] {
+  /* Core Backgrounds - Extremely Sharp and Bright */
+  --bg-primary: #FFFFFF; /* Pure white background */
+  --bg-surface: #FFFFFF; /* Cards are also pure white, separated by shadows/borders */
+  --bg-elevated: #FFFFFF;
+
+  /* Typography - High Contrast Slate/Black */
+  --text-primary: #0F172A; /* Slate 900 for maximum readability */
+  --text-secondary: #475569; /* Slate 600 */
+  --text-muted: #94A3B8; /* Slate 400 */
+
+  /* Borders & Dividers - Crisp and Clean */
+  --border-subtle: #E2E8F0; /* Slate 200 */
+  --border-active: #CBD5E1; /* Slate 300 */
+
+  /* Accent Colors (Fallback, overridden by theme settings if needed) */
+  --accent-primary: #3B82F6;
+  --accent-secondary: #60A5FA;
+
+  /* State Colors */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+
+  /* Shadows - Crisp, elevated feel suitable for white-on-white */
+  --shadow-ambient: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}

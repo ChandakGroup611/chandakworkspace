@@ -24,6 +24,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportConfig";
 import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
 import { Settings2 } from "lucide-react";
+import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -35,15 +36,16 @@ function DraggableTableHead({ col }: { col: any }) {
     transition, 
     minWidth: col.column_width ? `${col.column_width}px` : undefined,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto',
-    position: 'relative' as any
+    zIndex: isDragging ? 50 : 25,
+    position: 'sticky' as any,
+    top: 0,
   };
   return (
     <AppTableHead 
       ref={setNodeRef} 
-      style={style} 
-      className={`font-bold text-xs uppercase text-gray-500 px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-slate-300/50 dark:hover:bg-slate-700/50 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`}
-      {...attributes} 
+      style={style}
+      className={`bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
+      {...attributes}
       {...listeners}
     >
       {col.display_name}
@@ -82,12 +84,12 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 export default function ReportsClient() {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canExport = roleCode === "SUPER_ADMIN" || hasPermission("REPORTS_EXPORT");
 
   const [entityType, setEntityType] = useState<ReportEntityType>("WORKSPACE");
-  const [scope, setScope] = useState<ReportScope>("CREATED_BY_ME");
+  const [scope, setScope] = useState<ReportScope>("ALL");
   
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -110,7 +112,8 @@ export default function ReportsClient() {
   const visibleColumns = useMemo(() => {
     let cols = layout.filter(l => l.is_visible).sort((a, b) => a.display_order - b.display_order);
     if (entityType === "WORKSPACE" || entityType === "SUB_WORKSPACE") {
-      cols = cols.filter(c => !["department", "priority", "due_date", "status", "start_date"].includes(c.field_key));
+      const dynamicKeys = dynamicFields.map(f => f.field_key);
+      cols = cols.filter(c => !["department", "priority", "due_date", "status", "start_date", ...dynamicKeys].includes(c.field_key));
     }
     return cols;
   }, [layout, entityType]);
@@ -222,14 +225,20 @@ export default function ReportsClient() {
       case "assigned_to": return t.assigned_to || "—";
       case "created_at": return formatDate(t.created_at);
       case "updated_at": return formatDate(t.updated_at);
-      default: 
-        if (t.custom_fields && t.custom_fields[col.field_key] !== undefined) {
-          const val = t.custom_fields[col.field_key];
+      default: {
+        let val = t[col.field_key];
+        if (val === undefined && t.custom_fields) {
+          val = t.custom_fields[col.field_key];
+        }
+        
+        if (val !== undefined && val !== null && val !== "") {
           if (col.data_type === "boolean") return val ? "Yes" : "No";
           if (col.data_type === "date") return formatDate(val);
+          if (typeof val === "object") return JSON.stringify(val);
           return val;
         }
         return "—";
+      }
     }
   };
 
@@ -283,36 +292,36 @@ export default function ReportsClient() {
     <div className="space-y-3">
       
       {/* Top Row: Entity Selection & Scope Toggle */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-gray-200 dark:border-white/10 pb-3">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border pb-3">
         {/* Entity Selection Tabs */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <button onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? (isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+          <button onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <Briefcase className="h-3.5 w-3.5" /> Workspaces
           </button>
-          <button onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? (isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+          <button onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <Layers className="h-3.5 w-3.5" /> Sub-Workspaces
           </button>
-          <button onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? (isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+          <button onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-purple-500/20 text-purple-500" : "text-muted hover:bg-elevated"}`}>
             <LayoutList className="h-3.5 w-3.5" /> Tasks
           </button>
-          <button onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? (isLightMode ? "bg-purple-100 text-purple-700" : "bg-purple-500/20 text-purple-400") : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5"}`}>
+          <button onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-purple-500/20 text-purple-500" : "text-muted hover:bg-elevated"}`}>
             <AlignLeft className="h-3.5 w-3.5" /> Sub-Tasks
           </button>
         </div>
 
         {/* Scope Toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 overflow-x-auto shrink-0">
-          {(["ALL", "CREATED_BY_ME", "ASSIGNED_TO_ME", "TASK_OWNER"] as ReportScope[]).map(sc => (
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-elevated border border-border overflow-x-auto shrink-0">
+          {(["ALL", "ASSIGNED_TO_ME", "ENROLLED_TASKS"] as ReportScope[]).map(sc => (
             <button
               key={sc}
               onClick={() => setScope(sc)}
               className={`whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-md transition-all ${
                 scope === sc 
-                  ? "bg-white dark:bg-[#1C1C28] text-indigo-600 dark:text-indigo-400 shadow-sm border border-gray-200 dark:border-white/10" 
-                  : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                  ? "bg-surface text-accent shadow-sm border border-border" 
+                  : "text-muted hover:text-foreground"
               }`}
             >
-              {sc.replace(/_/g, " ")}
+              {sc === "ALL" ? "All Records" : sc === "ASSIGNED_TO_ME" ? "Assigned To Me" : "Enrolled Tasks"}
             </button>
           ))}
         </div>
@@ -323,11 +332,11 @@ export default function ReportsClient() {
         
         {/* Date Range & Clear Filters */}
         <div className="flex items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/[0.02] p-2 rounded-xl border border-gray-200 dark:border-white/5">
+          <div className="flex items-center gap-2 text-xs font-semibold text-subtle bg-surface p-2 rounded-xl border border-border">
             <span>Date Range:</span>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border ${isLightMode ? "border-gray-300 bg-white" : "border-white/10 bg-[#0f111a]"} focus:outline-none focus:ring-2 focus:ring-indigo-500`} />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent`} />
             <span>to</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border ${isLightMode ? "border-gray-300 bg-white" : "border-white/10 bg-[#0f111a]"} focus:outline-none focus:ring-2 focus:ring-indigo-500`} />
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent`} />
             
             {(selectedStatus || dateFrom || dateTo || query) && (
               <button 
@@ -345,7 +354,7 @@ export default function ReportsClient() {
           </div>
 
           {(entityType === "TASK" || entityType === "SUB_TASK") && (
-            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl border ${isLightMode ? "border-gray-300 bg-gray-50 text-gray-700" : "border-white/5 bg-white/[0.02] text-gray-300"} focus:outline-none focus:ring-2 focus:ring-indigo-500`}>
+            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-accent`}>
               <option value="">All Statuses</option>
               {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -355,7 +364,7 @@ export default function ReportsClient() {
         {/* Exports, Search & Refresh */}
         <div className="flex items-center flex-wrap gap-3">
           {canExport && (
-            <div className="flex items-center gap-2 border-r border-gray-200 dark:border-white/10 pr-3 mr-1">
+            <div className="flex items-center gap-2 border-r border-border pr-3 mr-1">
               <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-500" />}>
                 Export Excel
               </AppButton>
@@ -392,16 +401,17 @@ export default function ReportsClient() {
       </div>
 
       {/* Results Summary */}
-      <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1">
-        Showing {filtered.length} Results
-      </div>
+      <ReportKPIBar kpis={[
+        { label: "Total Records", value: filtered.length },
+        { label: "Entity Type", value: getEntityDisplayName() },
+      ]} className="mb-2" />
 
       {/* Data Table */}
       <AppTableContainer>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="max-h-[600px] overflow-auto relative rounded-xl border border-gray-200 dark:border-white/10">
-            <AppTable className="w-full text-sm">
-              <AppTableHeader className={`sticky top-0 z-10 ${isLightMode ? "bg-gray-100 border-b border-gray-200" : "bg-[#0A0D14] border-b border-white/10"}`}>
+          <div className="max-h-[600px] overflow-auto relative rounded-2xl border border-border">
+            <AppTable className="w-full border-separate border-spacing-0">
+              <AppTableHeader className="sticky top-0 z-40 bg-white dark:bg-[#06080f]">
                 <AppTableRow>
                   <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
                     {visibleColumns.map(col => (
@@ -413,57 +423,57 @@ export default function ReportsClient() {
               <AppTableBody>
               {filtered.length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={visibleColumns.length} className="h-32 text-center text-gray-500">
+                  <AppTableCell colSpan={visibleColumns.length} className="h-32 text-center text-muted">
                     {loading ? "Loading report data..." : "No records found matching the current filters."}
                   </AppTableCell>
                 </AppTableRow>
               ) : (
                 filtered.map((item) => (
-                  <AppTableRow key={item.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-white/5 border-b border-gray-100 dark:border-white/5 last:border-0">
+                  <AppTableRow key={item.id}>
                     {visibleColumns.map(col => {
                       switch(col.field_key) {
                         case "code": return (
-                          <AppTableCell key={col.field_id} className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 px-4 py-3 whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="font-mono text-[13px] font-bold text-accent whitespace-nowrap">
                             {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
                           </AppTableCell>
                         );
                         case "title": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3">
-                            <div className="font-semibold text-gray-900 dark:text-gray-100 break-words" title={item.title}>{item.title}</div>
+                          <AppTableCell key={col.field_id}>
+                            <div className="text-[13px] font-semibold text-foreground whitespace-normal break-words w-full">{item.title}</div>
                           </AppTableCell>
                         );
                         case "description": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 break-words">
-                            {item.description}
+                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle">
+                            <div className="truncate max-w-[300px]" title={item.description}>{item.description}</div>
                           </AppTableCell>
                         );
                         case "workspace": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 break-words" title={item.workspace}>
-                            {item.workspace}
+                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle" title={item.workspace}>
+                            <div className="truncate max-w-[150px]">{item.workspace}</div>
                           </AppTableCell>
                         );
                         case "department": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 break-words">
-                            {item.department}
+                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle">
+                            <div className="truncate max-w-[150px]" title={item.department}>{item.department}</div>
                           </AppTableCell>
                         );
                         case "priority": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="whitespace-nowrap">
                             {item.priority !== "—" ? <AppBadge variant={item.priority_color ? "custom" : "info"} customColor={item.priority_color}>{item.priority}</AppBadge> : "—"}
                           </AppTableCell>
                         );
                         case "due_date": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle whitespace-nowrap">
                             {formatDate(item.end_date)}
                           </AppTableCell>
                         );
                         case "start_date": return (
-                          <AppTableCell key={col.field_id} className="text-right px-4 py-3 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="text-right text-[13px] text-subtle whitespace-nowrap">
                             {formatDate(item.start_date)}
                           </AppTableCell>
                         );
                         case "status": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="whitespace-nowrap">
                             {item.status !== "—" ? (
                               <AppBadge 
                                 variant={item.status_color ? "custom" : (item.status === "Closed" || item.status === "Completed" ? "success" : "neutral")}
@@ -475,35 +485,47 @@ export default function ReportsClient() {
                           </AppTableCell>
                         );
                         case "creator_name": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 text-xs font-medium text-gray-700 dark:text-gray-300 break-words">
+                          <AppTableCell key={col.field_id} className="text-[13px] font-medium text-foreground whitespace-nowrap">
                             {item.creator_name}
                           </AppTableCell>
                         );
                         case "assigned_to": return (
-                          <AppTableCell key={col.field_id} className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 break-words" title={item.assigned_to}>
+                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle whitespace-nowrap" title={item.assigned_to}>
                             {item.assigned_to}
                           </AppTableCell>
                         );
                         case "created_at": return (
-                          <AppTableCell key={col.field_id} className="text-right text-xs text-gray-500 px-4 py-3 whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="text-right text-[13px] text-muted whitespace-nowrap">
                             {formatDate(item.created_at)}
                           </AppTableCell>
                         );
+                        case "updated_at": return (
+                          <AppTableCell key={col.field_id} className="text-right text-[13px] text-muted whitespace-nowrap">
+                            {formatDate(item.updated_at)}
+                          </AppTableCell>
+                        );
                         default: {
-                          let val = item.custom_fields?.[col.field_key];
+                          let val = item[col.field_key];
+                          if (val === undefined && item.custom_fields) {
+                            val = item.custom_fields[col.field_key];
+                          }
+                          
                           if (val === undefined || val === null || val === "") val = "—";
                           else if (col.data_type === "boolean") val = val ? "Yes" : "No";
                           else if (col.data_type === "date") val = formatDate(val);
+                          else if (typeof val === "object") val = JSON.stringify(val);
                           
                           return (
-                            <AppTableCell key={col.field_id} className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 break-words">
-                              {col.data_type === "link" && val !== "—" ? (
-                                <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{val}</a>
-                              ) : col.data_type === "badge" && val !== "—" ? (
-                                <AppBadge variant="neutral">{val}</AppBadge>
-                              ) : (
-                                val
-                              )}
+                            <AppTableCell key={col.field_id} className="text-[13px] text-gray-600 dark:text-gray-400">
+                              <div className="truncate max-w-[200px]" title={String(val)}>
+                                {col.data_type === "link" && val !== "—" ? (
+                                  <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{val}</a>
+                                ) : col.data_type === "badge" && val !== "—" ? (
+                                  <AppBadge variant="neutral">{val}</AppBadge>
+                                ) : (
+                                  val
+                                )}
+                              </div>
                             </AppTableCell>
                           );
                         }

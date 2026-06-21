@@ -24,7 +24,7 @@ interface TicketOpsSidebarProps {
 export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
   const [timeLeft, setTimeLeft] = useState(240); // Initial minutes from priority
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   
   useEffect(() => {
     if (ticket?.priorityObj?.sla_target_minutes) {

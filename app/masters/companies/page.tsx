@@ -14,7 +14,7 @@ export default function CompanyMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,7 +188,7 @@ export default function CompanyMasterPage() {
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Lock className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
         <p className="text-xs text-gray-500">You do not have capabilities to view the Company Master.</p>
       </div>
     );
@@ -313,7 +313,7 @@ export default function CompanyMasterPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
           <AppCard className="w-full max-w-xl p-6 shadow-2xl border-indigo-500/20">
-            <h2 className="text-xl font-bold text-white mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
+            <h2 className="text-xl font-bold text-foreground mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">

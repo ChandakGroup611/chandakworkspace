@@ -14,7 +14,7 @@ export default function IdentitySettingsPage() {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 pb-12">
       <header className="border-b border-white/5 pb-4 animate-in fade-in duration-500">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Identity & Access Management
         </h1>
         <p className="text-sm text-gray-400 mt-2 max-w-2xl">

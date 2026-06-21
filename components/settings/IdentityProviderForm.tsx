@@ -97,7 +97,7 @@ export default function IdentityProviderForm() {
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
         <p className="text-xs text-gray-500">You do not have capabilities to view Identity Settings.</p>
       </div>
     );
@@ -114,7 +114,7 @@ export default function IdentityProviderForm() {
               <Shield className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">Microsoft Entra ID (Azure AD)</h2>
+              <h2 className="text-xl font-semibold text-foreground">Microsoft Entra ID (Azure AD)</h2>
               <p className="text-sm text-gray-400">Configure Microsoft 365 Single Sign-On and auto-provisioning.</p>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function IdentityProviderForm() {
             <Users className="w-6 h-6 text-purple-400" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-white">Auto-Provisioning Settings</h2>
+            <h2 className="text-xl font-semibold text-foreground">Auto-Provisioning Settings</h2>
             <p className="text-sm text-gray-400">Control how users are mapped when they log in via SSO for the first time.</p>
           </div>
         </div>

@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/client';
 
 export function RequirementAuditTrail({ requirementId }: { requirementId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const supabase = createClient();
   
   const [events, setEvents] = useState<any[]>([]);

@@ -28,7 +28,7 @@ export function TicketListSidebar({
   departments
 }: TicketListSidebarProps) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   return (
     <div className={`flex flex-col h-full overflow-hidden border-r transition-colors duration-300 ${

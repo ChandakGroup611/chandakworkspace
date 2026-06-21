@@ -59,7 +59,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
 
                   {/* Checklists Placeholder */}
                   <section className="bg-gray-900/20 rounded-xl p-4 border border-white/5">
-                    <h3 className="text-sm font-semibold text-white mb-3">Checklist</h3>
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Checklist</h3>
                     <div className="text-xs text-gray-500">No checklist items yet.</div>
                   </section>
                 </div>
@@ -70,7 +70,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   {/* Realtime Chat Engine - Lazy Loaded when tab active */}
                   <section className="h-[500px] flex flex-col border border-white/10 rounded-xl overflow-hidden">
                     <div className="bg-gray-900/50 p-3 border-b border-white/5">
-                      <h3 className="text-sm font-semibold text-white">Collaboration & Audit</h3>
+                      <h3 className="text-sm font-semibold text-foreground">Collaboration & Audit</h3>
                     </div>
                     <div className="flex-1 bg-black/20">
                       <RealtimeChat recordId={task.id} moduleType="TASK" />

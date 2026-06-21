@@ -227,7 +227,7 @@ export default function MigrationClient() {
             <FileSpreadsheet className="w-32 h-32" />
           </div>
           
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs">1</span>
             Configure Template
           </h2>
@@ -310,7 +310,7 @@ export default function MigrationClient() {
         {/* Step 2: Upload */}
         <div className={`bg-[#121827] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-opacity ${selectedModule === 'TASK' && !targetWorkspaceId ? 'opacity-50 pointer-events-none' : ''}`}>
           
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs">2</span>
             Upload Data
           </h2>

@@ -24,24 +24,21 @@ export async function fetchLiveDashboardMetrics() {
       // 1. Get workspaces where user is enrolled
       const { data: wsMembers } = await supabase
         .from("workspace_members")
-        .select("workspace_id")
+        .select("workspace_id, workspaces!inner(id)")
         .eq("user_id", userId)
-        .eq("is_deleted", false);
+        .eq("is_deleted", false)
+        .eq("workspaces.is_deleted", false);
       
       workspaceIds = wsMembers?.map(m => m.workspace_id) || [];
       
-      const { data: subWsMembers } = await supabase
-        .from("sub_workspace_members")
-        .select("sub_workspace_id")
-        .eq("user_id", userId);
-        
-      subWorkspaceIds = subWsMembers?.map(m => m.sub_workspace_id) || [];
+      // Removed sub_workspace_members query since sub_workspaces uses parent_workspace_id on workspaces table
 
       // Get tasks where user is a participant
       const { data: taskParticipants } = await supabase
         .from("task_participants")
-        .select("task_id")
-        .eq("user_id", userId);
+        .select("task_id, tasks!inner(id)")
+        .eq("user_id", userId)
+        .eq("tasks.is_deleted", false);
       
       participantTaskIds = taskParticipants?.map(p => p.task_id) || [];
     }
@@ -90,6 +87,30 @@ export async function fetchLiveDashboardMetrics() {
       });
     }
 
+    let subTasksPromise: any;
+    if (isSuperAdmin) {
+      subTasksPromise = supabaseAdmin
+        .from("sub_tasks")
+        .select(`
+          id, created_at, created_by, assigned_to, subject,
+          status
+        `)
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false });
+    } else {
+      const createdSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('created_by', userId).eq("is_deleted", false);
+      const assignedSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('assigned_to', userId).eq("is_deleted", false);
+      
+      subTasksPromise = Promise.all([createdSubPromise, assignedSubPromise]).then(([cRes, aRes]) => {
+        if (cRes.error) return { data: null, error: cRes.error };
+        if (aRes.error) return { data: null, error: aRes.error };
+        const merged = [...(cRes.data || []), ...(aRes.data || [])];
+        const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+        return { data: unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), error: null };
+      });
+    }
+
+
     let ticketsPromise: any;
     if (isSuperAdmin) {
       ticketsPromise = supabaseAdmin
@@ -136,21 +157,22 @@ export async function fetchLiveDashboardMetrics() {
       workspacesPromise = supabaseAdmin
         .from("workspaces")
         .select(`
-          id, created_at, workspace_name,
+          id, created_at, workspace_name, parent_workspace_id,
           status_id, status_master(status_name),
           end_date
         `)
         .eq('is_deleted', false)
         .order("created_at", { ascending: false });
     } else {
-      workspacesPromise = workspaceIds.length > 0 ? supabaseAdmin
+      const idsToFetch = [...workspaceIds];
+      workspacesPromise = idsToFetch.length > 0 ? supabaseAdmin
         .from("workspaces")
         .select(`
-          id, created_at, workspace_name,
+          id, created_at, workspace_name, parent_workspace_id,
           status_id, status_master(status_name),
           end_date
         `)
-        .in('id', workspaceIds)
+        .in('id', idsToFetch)
         .eq('is_deleted', false)
         .order("created_at", { ascending: false }) : Promise.resolve({ data: [], error: null });
     }
@@ -158,11 +180,13 @@ export async function fetchLiveDashboardMetrics() {
     // Execute parallel groups
     const [
       { data: tasksData, error: tasksError },
+      { data: subTasksData, error: subTasksError },
       { data: ticketsData, error: ticketsError },
       { data: requirementsData, error: requirementsError },
       { data: workspacesData, error: workspacesError }
     ] = await Promise.all([
       tasksPromise,
+      subTasksPromise,
       ticketsPromise,
       requirementsPromise,
       workspacesPromise
@@ -173,6 +197,25 @@ export async function fetchLiveDashboardMetrics() {
     // Fetch user details manually to avoid foreign key ambiguity errors
     const userIdsToFetch = new Set<string>();
     tasksData?.forEach((t: any) => { if (t.assigned_to) userIdsToFetch.add(t.assigned_to); if (t.created_by) userIdsToFetch.add(t.created_by); });
+    subTasksData?.forEach((t: any) => { if (t.assigned_to) userIdsToFetch.add(t.assigned_to); if (t.created_by) userIdsToFetch.add(t.created_by); });
+    
+    subTasksData?.forEach((t: any) => {
+      const status = mapStatus(t.status);
+      allItems.push({
+        module: "Sub Tasks",
+        id: t.id,
+        code: null,
+        title: t.subject || "Untitled Sub Task",
+        status: status,
+        rawStatus: t.status || "Unknown",
+        user: userMap[t.assigned_to] || userMap[t.created_by] || "Unassigned",
+        priority: "N/A",
+        createdAt: t.created_at,
+        dueDate: null,
+        isOverdue: false
+      });
+    });
+
     ticketsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); if (t.assignee_id) userIdsToFetch.add(t.assignee_id); });
     requirementsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); });
 
@@ -291,7 +334,7 @@ export async function fetchLiveDashboardMetrics() {
       }
 
       allItems.push({
-        module: "Workspaces",
+        module: w.parent_workspace_id ? "Sub Workspaces" : "Workspaces",
         id: w.id,
         status: status,
         rawStatus: w.status_master?.status_name || "Unknown",
@@ -304,30 +347,12 @@ export async function fetchLiveDashboardMetrics() {
     });
 
     const kpis = {
-      tasks: {
-        total: totalTasks,
-        resolved: resolvedCount,
-        upcoming_due: upcomingTasks,
-      },
-      workspaces: {
-        enrolled_workspaces: isSuperAdmin ? (workspacesData?.length || 0) : workspaceIds.length,
-        enrolled_sub_workspaces: subWorkspaceIds.length
-      },
-      tickets_reqs: {
-        total_tickets: ticketsData?.length || 0,
-        total_requirements: requirementsData?.length || 0
-      },
-      sla: {
-        escalated_or_breached: escalatedCount,
-        healthy: Math.max(0, allItems.length - escalatedCount - upcomingTasks),
-        warning: upcomingTasks,
-        breached: escalatedCount
-      },
-      workload: {
-        active_tasks: totalTasks - resolvedCount,
-        active_tickets: (ticketsData?.length || 0) - (ticketsData?.filter((t: any) => mapStatus(t.status_master?.status_name) === 'Resolved').length || 0),
-        active_requirements: (requirementsData?.length || 0) - (requirementsData?.filter((r: any) => mapStatus(r.status_master?.status_name) === 'Resolved').length || 0)
-      }
+      workspaces: { total: workspacesData?.filter(w => !w.parent_workspace_id).length || 0, resolved: workspacesData?.filter(w => !w.parent_workspace_id && mapStatus(w.status_master?.status_name) === 'Resolved').length || 0 },
+      sub_workspaces: { total: workspacesData?.filter(w => w.parent_workspace_id).length || 0, resolved: workspacesData?.filter(w => w.parent_workspace_id && mapStatus(w.status_master?.status_name) === 'Resolved').length || 0 },
+      tasks: { total: tasksData?.length || 0, resolved: tasksData?.filter(t => mapStatus(t.status_master?.status_name) === 'Resolved').length || 0, upcoming_due: tasksData?.filter(t => t.end_date && mapStatus(t.status_master?.status_name) !== 'Resolved' && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) <= 7).length || 0 },
+      sub_tasks: { total: subTasksData?.length || 0, resolved: subTasksData?.filter(t => mapStatus(t.status) === 'Resolved').length || 0 },
+      requirements: { total: requirementsData?.length || 0, resolved: requirementsData?.filter(t => mapStatus(t.status_master?.status_name) === 'Resolved').length || 0, upcoming_due: requirementsData?.filter(t => t.due_date && mapStatus(t.status_master?.status_name) !== 'Resolved' && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) <= 7).length || 0 },
+      tickets: { total: ticketsData?.length || 0, resolved: ticketsData?.filter(t => mapStatus(t.status_master?.status_name) === 'Resolved').length || 0, upcoming_due: ticketsData?.filter(t => t.due_date && mapStatus(t.status_master?.status_name) !== 'Resolved' && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) <= 7).length || 0 },
     };
 
     return { data: allItems, kpis: kpis };

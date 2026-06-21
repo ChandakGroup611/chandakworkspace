@@ -5,7 +5,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 export function RequirementQueue({ requirements }: { requirements: any[] }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const [filter, setFilter] = useState('ALL');
 
   const filtered = filter === 'ALL' 

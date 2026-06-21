@@ -34,7 +34,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
         <p className="text-xs text-gray-500">You do not have capabilities to view Notification Settings.</p>
       </div>
     );
@@ -44,7 +44,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
 
   return (
     <div className="bg-white/5 border border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
-      <h2 className="text-xl font-bold text-white mb-2">Event Trigger Controls</h2>
+      <h2 className="text-xl font-bold text-foreground mb-2">Event Trigger Controls</h2>
       <p className="text-sm text-gray-400 mb-6">Granular control over which system events trigger notifications. Disabling here bypasses backend processing for maximum performance.</p>
 
       <div className="space-y-8">
@@ -53,13 +53,13 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
           return (
             <div key={mod} className="border border-white/5 rounded-lg overflow-hidden">
               <div className="bg-black/30 px-4 py-3 border-b border-white/5">
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">{mod}</h3>
+                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">{mod}</h3>
               </div>
               <div className="divide-y divide-white/5">
                 {modConfigs.map(config => (
                   <div key={config.id} className="flex items-center justify-between p-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
                     <div>
-                      <p className="text-sm font-medium text-white">{config.event_code}</p>
+                      <p className="text-sm font-medium text-foreground">{config.event_code}</p>
                       <p className="text-xs text-gray-500 mt-1">
                         Allowed Roles: <span className="text-gray-400">{config.allowed_roles?.length ? config.allowed_roles.join(', ') : 'All'}</span> | 
                         Statuses: <span className="text-gray-400">{config.allowed_statuses?.length ? config.allowed_statuses.join(', ') : 'Any'}</span>

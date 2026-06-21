@@ -4,30 +4,30 @@ import React, { useState, useEffect, Profiler, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import './dashboard.css'; // The extracted and scoped CSS
 
-import MetricsRow from "./panels/MetricsRow";
-import HealthGrid from "./panels/HealthGrid";
-import { CentralOperationsDashboard } from "@/components/dashboards/CentralOperationsDashboard";
-
-// Lazy load heavy charts and boards
-const ChartsRow = dynamic(() => import("./panels/ChartsRow"), { 
-  ssr: false, 
-  loading: () => <div className="p-8 text-center text-gray-500 text-xs">Loading Charts...</div> 
-});
-const SprintKanbanBoard = dynamic(() => import("./panels/SprintKanbanBoard"), {
-  ssr: false,
-  loading: () => <div className="p-8 text-center text-gray-500 text-xs">Loading Kanban...</div>
-});
-
-import RecentTicketsTable from "./panels/RecentTicketsTable";
-import ActivityFeed from "./panels/ActivityFeed";
-import UpcomingDeadlines from "./panels/UpcomingDeadlines";
-import TeamPerformance from "./panels/TeamPerformance";
+import { DashboardEngine } from "./engine/DashboardEngine";
 import { useRenderLog } from "@/hooks/use-render-log";
 import { onRenderCallback } from "@/utils/performance/profiler-utils";
 import { performanceGovernor, DegradationStage } from "@/utils/performance/PerformanceGovernanceEngine";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import { AppButton } from "@/components/ui/AppButton";
 import { Download, Plus } from "lucide-react";
+import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
+
+const SCOPE_OPTIONS = [
+  { value: "Tickets", label: "Tickets" },
+  { value: "Tasks", label: "Tasks" },
+  { value: "Sub Tasks", label: "Sub Tasks" },
+  { value: "Requirements", label: "Requirements" },
+  { value: "Workspaces", label: "Workspaces" },
+  { value: "Sub Workspaces", label: "Sub Workspaces" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "Active", label: "Active (Open/Progress)" },
+  { value: "Review", label: "In Review" },
+  { value: "Escalated", label: "Escalated/Blocked" },
+  { value: "Resolved", label: "Resolved/Done" },
+];
 
 interface DashboardCommandCenterProps {
   metrics?: any[];
@@ -39,9 +39,10 @@ interface DashboardCommandCenterProps {
 export default function DashboardCommandCenter({ metrics = [], kpis, dbError, refreshComponent }: DashboardCommandCenterProps) {
   useRenderLog("DashboardCommandCenter", { metricsLength: metrics.length, dbError });
   const [mounted, setMounted] = useState(false);
-  const [globalScope, setGlobalScope] = useState<string>("All");
-  const [globalUser, setGlobalUser] = useState<string>("All");
-  const [globalStatus, setGlobalStatus] = useState<string>("All");
+  const [globalScopes, setGlobalScopes] = useState<string[]>(SCOPE_OPTIONS.map(o => o.value));
+  const [globalStatuses, setGlobalStatuses] = useState<string[]>(STATUS_OPTIONS.map(o => o.value));
+  const [globalUsers, setGlobalUsers] = useState<string[]>([]);
+  const [usersInitialized, setUsersInitialized] = useState(false);
   
   const [degradationStage, setDegradationStage] = useState<DegradationStage>(DegradationStage.STAGE_0_NORMAL);
 
@@ -59,30 +60,53 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
     return Array.from(new Set(metrics.filter(m => m.user && m.user !== 'System').map(m => String(m.user))));
   }, [metrics]);
 
+  const userOptions = useMemo(() => {
+    return uniqueUsers.map(u => ({ value: u, label: u }));
+  }, [uniqueUsers]);
+
+  // Initialize globalUsers when uniqueUsers are first loaded
+  useEffect(() => {
+    if (!usersInitialized && uniqueUsers.length > 0) {
+      setGlobalUsers(uniqueUsers);
+      setUsersInitialized(true);
+    }
+  }, [uniqueUsers, usersInitialized]);
+
   // Filter metrics based on global filters memoized
   const filteredMetrics = useMemo(() => {
+    if (!usersInitialized) return metrics; // Don't filter out everything before users are loaded
+    
     return metrics.filter(m => {
-      const scopeMatch = globalScope === "All" || m.module === globalScope;
-      const userMatch = globalUser === "All" || String(m.user) === globalUser;
+      const scopeMatch = globalScopes.includes(m.module);
+      const userMatch = globalUsers.includes(String(m.user)) || m.user === 'System';
       
-      let statusMatch = true;
-      if (globalStatus !== "All") {
-        const sLower = String(m.status).toLowerCase();
-        if (globalStatus === "Active" && !sLower.includes('resolv') && !sLower.includes('done')) statusMatch = true;
-        else if (globalStatus === "Resolved" && (sLower.includes('resolv') || sLower.includes('done'))) statusMatch = true;
-        else if (globalStatus === "Escalated" && (sLower.includes('escalat') || sLower.includes('block'))) statusMatch = true;
-        else if (globalStatus === "Review" && sLower.includes('review')) statusMatch = true;
-        else statusMatch = false;
-      }
+      let statusMatch = false;
+      const sLower = String(m.status).toLowerCase();
+      const isResolved = sLower.includes('resolv') || sLower.includes('done');
+      const isEscalated = sLower.includes('escalat') || sLower.includes('block');
+      const isReview = sLower.includes('review');
+      const isActive = !isResolved && !isEscalated && !isReview;
+
+      if (globalStatuses.includes("Active") && isActive) statusMatch = true;
+      if (globalStatuses.includes("Resolved") && isResolved) statusMatch = true;
+      if (globalStatuses.includes("Escalated") && isEscalated) statusMatch = true;
+      if (globalStatuses.includes("Review") && isReview) statusMatch = true;
+
+      // Special case: if raw text status matched none of the above cleanly, let's include it if Active is checked as fallback
+      if (!statusMatch && globalStatuses.includes("Active") && !isResolved) statusMatch = true;
 
       return scopeMatch && userMatch && statusMatch;
     });
-  }, [metrics, globalScope, globalUser, globalStatus]);
+  }, [metrics, globalScopes, globalUsers, globalStatuses, usersInitialized]);
 
   // Dynamic KPIs calculated strictly from filteredMetrics for full segregation
   const dynamicKpis = useMemo(() => {
-    let tasksTotal = 0, tasksResolved = 0, tasksUpcoming = 0;
-    let ticketsReqsTotal = 0, reqsTotal = 0;
+    let wsTotal = 0, wsResolved = 0;
+    let subWsTotal = 0, subWsResolved = 0;
+    let tasksTotal = 0, tasksResolved = 0;
+    let subTasksTotal = 0, subTasksResolved = 0;
+    let reqsTotal = 0, reqsResolved = 0;
+    let ticketsTotal = 0, ticketsResolved = 0;
     let healthy = 0, warning = 0, breached = 0;
 
     filteredMetrics.forEach(m => {
@@ -90,44 +114,55 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
       const isResolved = sLower.includes('resolv') || sLower.includes('done');
       const isEscalated = sLower.includes('escalat') || sLower.includes('block');
       
-      // Module specific
-      if (m.module === 'Tasks') {
+      if (m.module === 'Workspaces') {
+        wsTotal++;
+        if (isResolved) wsResolved++;
+      } else if (m.module === 'Sub Workspaces') {
+        subWsTotal++;
+        if (isResolved) subWsResolved++;
+      } else if (m.module === 'Tasks') {
         tasksTotal++;
         if (isResolved) tasksResolved++;
-      }
-      if (m.module === 'Tickets') ticketsReqsTotal++;
-      if (m.module === 'Requirements') reqsTotal++;
-
-      // SLA logic matches dashboardMetrics but ONLY for Tasks as requested
-      if (m.module === 'Tasks') {
+        
+        // SLA logic strictly for Tasks
         if (isResolved) {
-          // Resolved not included in SLA warnings
           healthy++;
         } else {
           if (isEscalated || m.isOverdue) {
             breached++;
           } else if (m.dueDate && new Date(m.dueDate).getTime() - Date.now() <= 7 * 24 * 3600 * 1000) {
             warning++;
-            tasksUpcoming++;
           } else {
             healthy++;
           }
         }
+      } else if (m.module === 'Sub Tasks') {
+        subTasksTotal++;
+        if (isResolved) subTasksResolved++;
+      } else if (m.module === 'Requirements') {
+        reqsTotal++;
+        if (isResolved) reqsResolved++;
+      } else if (m.module === 'Tickets') {
+        ticketsTotal++;
+        if (isResolved) ticketsResolved++;
       }
     });
 
     return {
-      tasks: { total: tasksTotal, resolved: tasksResolved, upcoming_due: tasksUpcoming },
-      workspaces: kpis?.workspaces || { enrolled_workspaces: 0, enrolled_sub_workspaces: 0 },
-      tickets_reqs: { total_tickets: ticketsReqsTotal, total_requirements: reqsTotal },
+      workspaces: { total: wsTotal, resolved: wsResolved },
+      sub_workspaces: { total: subWsTotal, resolved: subWsResolved },
+      tasks: { total: tasksTotal, resolved: tasksResolved },
+      sub_tasks: { total: subTasksTotal, resolved: subTasksResolved },
+      requirements: { total: reqsTotal, resolved: reqsResolved },
+      tickets: { total: ticketsTotal, resolved: ticketsResolved },
       sla: { escalated_or_breached: breached, healthy, warning, breached },
-      workload: { 
-        active_tasks: tasksTotal - tasksResolved, 
-        active_tickets: ticketsReqsTotal, 
-        active_requirements: reqsTotal 
+      workload: {
+        active_tasks: tasksTotal - tasksResolved,
+        active_tickets: ticketsTotal - ticketsResolved,
+        active_requirements: reqsTotal - reqsResolved
       }
     };
-  }, [filteredMetrics, kpis]);
+  }, [filteredMetrics]);
 
   if (!mounted) {
     return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading Exact Match Dashboard...</div>;
@@ -146,43 +181,26 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
             <div className="topbar-sub">Live System Metrics</div>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <select
-              value={globalScope}
-              onChange={(e) => setGlobalScope(e.target.value)}
-              className="tb-btn"
-              style={{ paddingRight: '24px', outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="All">All Scopes</option>
-              <option value="Tickets">Tickets</option>
-              <option value="Tasks">Tasks</option>
-              <option value="Sub Tasks">Sub Tasks</option>
-              <option value="Requirements">Requirements</option>
-              <option value="Workspaces">Workspaces</option>
-              <option value="Sub Workspaces">Sub Workspaces</option>
-            </select>
+            <MultiSelectFilter
+              options={SCOPE_OPTIONS}
+              selectedValues={globalScopes}
+              onChange={setGlobalScopes}
+              placeholder="Scopes"
+            />
 
-            <select
-              value={globalStatus}
-              onChange={(e) => setGlobalStatus(e.target.value)}
-              className="tb-btn"
-              style={{ paddingRight: '24px', outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active (Open/Progress)</option>
-              <option value="Review">In Review</option>
-              <option value="Escalated">Escalated/Blocked</option>
-              <option value="Resolved">Resolved/Done</option>
-            </select>
+            <MultiSelectFilter
+              options={STATUS_OPTIONS}
+              selectedValues={globalStatuses}
+              onChange={setGlobalStatuses}
+              placeholder="Statuses"
+            />
 
-            <select
-              value={globalUser}
-              onChange={(e) => setGlobalUser(e.target.value)}
-              className="tb-btn"
-              style={{ paddingRight: '24px', outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="All">All Users</option>
-              {uniqueUsers.map(u => <option key={u} value={u}>{u}</option>)}
-            </select>
+            <MultiSelectFilter
+              options={userOptions}
+              selectedValues={globalUsers}
+              onChange={setGlobalUsers}
+              placeholder="Users"
+            />
 
             <AppButton variant="outline" size="sm" leftIcon={<Download className="h-3.5 w-3.5" />}>
               Export
@@ -209,26 +227,8 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
 
           {dynamicKpis && (
             <div className="mb-6">
-              <CentralOperationsDashboard analytics={dynamicKpis} preferences={{ widget_layout: { sla: 'top', workload: 'bottom' } }} />
+              <DashboardEngine metrics={filteredMetrics} kpis={dynamicKpis} />
             </div>
-          )}
-          
-          {degradationStage < DegradationStage.STAGE_3_SEVERE && (
-            <>
-              <ChartsRow metrics={filteredMetrics} />
-              
-              <SprintKanbanBoard metrics={filteredMetrics} />
-
-              <div className="grid-3">
-                <RecentTicketsTable metrics={filteredMetrics} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <ActivityFeed metrics={filteredMetrics} />
-                  <UpcomingDeadlines metrics={filteredMetrics} />
-                </div>
-              </div>
-
-              <TeamPerformance metrics={filteredMetrics} />
-            </>
           )}
 
           {degradationStage >= DegradationStage.STAGE_3_SEVERE && (

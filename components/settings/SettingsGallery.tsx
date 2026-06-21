@@ -133,6 +133,17 @@ export default function SettingsGallery() {
       previewBorder: "border-[#D6D3D1]",
       accentColor: "bg-[#D4AF37]",
     },
+    {
+      id: "pristine-white",
+      name: "Pristine White",
+      tagline: "Ultra Sharp Crystal Clear",
+      benefit: "Maximum clarity and brightness",
+      sentiment: "Pristine & Perfect",
+      icon: Sun,
+      previewBg: "bg-[#FFFFFF] text-[#0F172A]",
+      previewBorder: "border-[#E2E8F0]",
+      accentColor: "bg-[#3B82F6]",
+    },
   ];
 
   const densitiesList: {
@@ -169,10 +180,18 @@ export default function SettingsGallery() {
     },
   ];
 
-  const fontsList: { id: FontFamilyType; name: string; sample: string; css: string }[] = [
-    { id: "inter", name: "Inter UI", sample: "Crisp geometric neo-grotesque precision.", css: "font-sans" },
-    { id: "outfit", name: "Outfit Premium", sample: "Warm modern corporate rounded humanist.", css: "font-sans tracking-wide" },
-    { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible structural forms.", css: "font-sans" }
+  const fontsList: { id: FontFamilyType; name: string; sample: string; css: string; familyValue: string }[] = [
+    { id: "inter", name: "Inter UI", sample: "Crisp geometric precision.", css: "font-sans", familyValue: "var(--font-inter), 'Inter', sans-serif" },
+    { id: "outfit", name: "Outfit Premium", sample: "Warm modern corporate.", css: "font-sans tracking-wide", familyValue: "var(--font-outfit), 'Outfit', sans-serif" },
+    { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible.", css: "font-sans", familyValue: "var(--font-roboto), 'Roboto', sans-serif" },
+    { id: "arial", name: "Arial", sample: "Standard classic system font.", css: "font-sans", familyValue: "Arial, Helvetica, sans-serif" },
+    { id: "times", name: "Times New Roman", sample: "Traditional serif reading.", css: "font-sans", familyValue: "'Times New Roman', Times, serif" },
+    { id: "verdana", name: "Verdana", sample: "Wide readable geometry.", css: "font-sans", familyValue: "Verdana, Geneva, sans-serif" },
+    { id: "courier", name: "Courier New", sample: "Monospaced technical feel.", css: "font-mono", familyValue: "'Courier New', Courier, monospace" },
+    { id: "georgia", name: "Georgia", sample: "Elegant and classy serif.", css: "font-sans", familyValue: "Georgia, serif" },
+    { id: "trebuchet", name: "Trebuchet MS", sample: "Sharp sans-serif style.", css: "font-sans", familyValue: "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif" },
+    { id: "comic-sans", name: "Comic Sans MS", sample: "Casual handwritten style.", css: "font-sans", familyValue: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif" },
+    { id: "impact", name: "Impact", sample: "Heavy condensed titling.", css: "font-sans", familyValue: "Impact, Charcoal, sans-serif" }
   ];
 
   const weightProfilesList: { id: FontWeightProfileType; name: string; desc: string }[] = [
@@ -191,7 +210,7 @@ export default function SettingsGallery() {
   ];
 
 
-  const isLightMode = theme === "executive-light" || theme === "material-ocean" || theme === "aurora-breeze" || theme === "pure-elegance";
+  const isLightMode = theme === "executive-light" || theme === "material-ocean" || theme === "aurora-breeze" || theme === "pure-elegance" || theme === "pristine-white";
 
   return (
     <div className="space-y-8 pb-12">
@@ -355,76 +374,10 @@ export default function SettingsGallery() {
                 className="absolute inset-[-10px] w-12 h-12 cursor-pointer opacity-0"
                 title="Select Custom Color"
               />
-              {!accentColor.startsWith("#") && <span className="absolute text-[14px] font-black mix-blend-difference text-white pointer-events-none">+</span>}
+              {!accentColor.startsWith("#") && <span className="absolute text-[14px] font-black mix-blend-difference text-foreground pointer-events-none">+</span>}
             </div>
             <span className="text-[0.65rem] font-bold uppercase tracking-wider text-center">Custom</span>
           </div>
-        </div>
-      </section>
-
-      {/* Row 2: Layout Density & Bento Grid Controls */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Grid className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
-          <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
-            2. Grid Rhythm & Data Density
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {densitiesList.map((d) => {
-            const IconComponent = d.icon;
-            const isSelected = density === d.id;
-
-            return (
-              <AppCard 
-                key={d.id}
-                id={`density-select-card-${d.id}`}
-                onClick={() => {
-                  setDensity(d.id);
-                  triggerToast(`Density applied: ${d.name}`);
-                }}
-                className={`p-5 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                  isSelected 
-                    ? `border-blue-500 bg-blue-500/[0.03] ring-1 ring-blue-500` 
-                    : `hover:border-white/10 ${isLightMode ? "bg-white/50 border-gray-200" : ""}`
-                }`}
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1.5 rounded-lg ${isSelected ? "bg-blue-500 text-white" : "bg-white/5 text-gray-400"}`}>
-                        <IconComponent className="h-4 w-4" />
-                      </div>
-                      <span className={`font-bold text-xs tracking-tight ${"text-foreground"}`}>{d.name}</span>
-                    </div>
-                    {isSelected && <AppBadge variant="success">Active</AppBadge>}
-                  </div>
-
-                  {/* Simulated spacing diagram */}
-                  <div className={`rounded-xl border ${isLightMode ? "border-gray-200 bg-gray-50" : "border-white/5 bg-black/20"} flex ${d.gapClass} transition-all`}>
-                    <div className="flex-1 h-8 rounded bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-                      <span className="text-[0.7rem] font-mono opacity-60">Track</span>
-                    </div>
-                    <div className="w-8 h-8 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                      <span className="text-[0.7rem] font-mono opacity-60">KPI</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${"border-border"}`}>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400 font-medium">Primary Benefit:</span>
-                    <span className={`font-semibold ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{d.benefit}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400 font-medium">User Sentiment:</span>
-                    <span className="text-emerald-400 font-semibold">{d.sentiment}</span>
-                  </div>
-                </div>
-              </AppCard>
-            );
-          })}
         </div>
       </section>
 
@@ -442,35 +395,37 @@ export default function SettingsGallery() {
 
         {/* Sub-grid A: Font Families Selection */}
         <div className="space-y-2">
-          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Matrix</span>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {fontsList.map((f) => {
-              const isSelected = fontFamily === f.id;
-              return (
-                <div
-                  key={f.id}
-                  onClick={() => {
-                    setFontFamily(f.id);
-                    triggerToast(`Typeface active: ${f.name}`);
-                  }}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                    isSelected 
-                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] ${isLightMode ? "border-blue-500" : "border-blue-500/40"}` 
-                      : `hover:border-white/10 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-bold ${"text-foreground"}`}>{f.name}</span>
-                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
-                    </div>
-                    <p className={`text-[0.8rem] italic ${"text-muted"} ${f.css}`}>
-                      "{f.sample}"
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Selector</span>
+          <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
+            <label className={`block text-xs font-bold mb-2 ${"text-foreground"}`}>System Font Style</label>
+            <div className="relative">
+              <select
+                value={fontFamily}
+                onChange={(e) => {
+                  const selected = e.target.value as FontFamilyType;
+                  setFontFamily(selected);
+                  triggerToast(`Typeface active: ${fontsList.find(f => f.id === selected)?.name}`);
+                }}
+                className={`w-full appearance-none p-3 pl-4 pr-10 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer text-base ${
+                  isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0f111a] border-white/10 text-white"
+                }`}
+                style={{ fontFamily: fontsList.find(f => f.id === fontFamily)?.familyValue || 'inherit' }}
+              >
+                {fontsList.map((f) => (
+                  <option 
+                    key={f.id} 
+                    value={f.id} 
+                    style={{ fontFamily: f.familyValue, fontSize: '16px' }}
+                  >
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <Type className={`h-4 w-4 ${isLightMode ? "text-gray-400" : "text-gray-500"}`} />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3 font-medium">Choose a font family from standard system styles or loaded web fonts, just like in a word processor.</p>
           </div>
         </div>
 
@@ -565,117 +520,6 @@ export default function SettingsGallery() {
                 </div>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* Row 4: Interaction Mechanics (Tactile Utility) */}
-      <section className="space-y-4 pt-2">
-        <div className="flex items-center gap-2">
-          <MousePointerClick className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
-          <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
-            4. Tactile Interaction Protocol
-          </h2>
-        </div>
-
-        <AppCard className={`p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isLightMode ? "bg-white/80 border-gray-200" : ""}`}>
-          <div className="space-y-1 max-w-xl">
-            <div className="flex items-center gap-2">
-              <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
-                Tactile Utility Layer
-              </h3>
-              <AppBadge variant="info">Preset Enabled</AppBadge>
-            </div>
-            <p className={`text-xs ${"text-muted"}`}>
-              Applies hardware-accelerated subtle lifts (`translateY`), targeted micro-animations, and visible focus boundaries across table elements and interactive buttons.
-            </p>
-            <div className={`flex gap-4 pt-1 text-[0.8rem] font-medium ${"text-foreground"}`}>
-              <span><strong className="text-gray-400">Primary Benefit:</strong> Interactive feedback</span>
-              <span>•</span>
-              <span><strong className="text-gray-400">User Sentiment:</strong> <span className="text-blue-500 font-semibold">Satisfying & Reliable</span></span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <AppButton 
-              id="tactile-utility-toggle-btn"
-              variant={tactileFeedback ? "primary" : "secondary"} 
-              size="sm"
-              onClick={() => {
-                setTactileFeedback(!tactileFeedback);
-                triggerToast(tactileFeedback ? "Tactile Feedback Disabled" : "Tactile Feedback Enabled");
-              }}
-            >
-              <Zap className="h-3.5 w-3.5 mr-1" />
-              <span>{tactileFeedback ? "Tactile Mode Active" : "Tactile Mode Paused"}</span>
-            </AppButton>
-          </div>
-        </AppCard>
-      </section>
-
-      {/* Live Operational State Reflection Sandbox */}
-      <section className="space-y-3 pt-4 border-t border-white/5">
-        <div className="flex items-center justify-between">
-          <span className={`text-xs font-semibold uppercase tracking-wider ${"text-muted"}`}>
-            Live Workspace Preview Sandbox
-          </span>
-          <span className="text-[0.8rem] text-gray-500 italic">Interacting reflects your active state instant mappings</span>
-        </div>
-
-        {/* Live dynamic card demonstrating padding, gaps, border colors, lift animations */}
-        <div className={`p-6 rounded-2xl border transition-all duration-300 ${
-          isLightMode 
-            ? "bg-white border-gray-200 shadow-sm text-gray-900" 
-            : "bg-white/[0.02] border-white/10 shadow-2xl text-white"
-        }`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-inherit/10">
-            <div>
-              <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 uppercase tracking-wider">
-                Live Rendering Frame
-              </span>
-              <h4 className="text-sm font-bold tracking-tight mt-1">Simulated Component Primitive Response</h4>
-            </div>
-            <div className="flex items-center gap-2">
-              <AppBadge variant="success">Theme: {theme}</AppBadge>
-              <AppBadge variant="warning">Density: {density}</AppBadge>
-            </div>
-          </div>
-
-          <div className={`mt-4 grid grid-cols-1 sm:grid-cols-3 ${
-            density === "dense" ? "gap-2" : density === "compact" ? "gap-3" : "gap-4"
-          }`}>
-            <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
-              isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
-            }`}>
-              <span className="text-xs text-gray-400 font-semibold block">Component Density Pad</span>
-              <span className="text-lg font-bold tracking-tight block mt-1">{density === "dense" ? "12px base" : density === "compact" ? "16px base" : "24px base"}</span>
-              <span className="text-[0.7rem] text-emerald-400 font-mono mt-1 block">var(--bento-gap)</span>
-            </div>
-
-            <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
-              isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
-            }`}>
-              <span className="text-xs text-gray-400 font-semibold block">Active Visual Depth</span>
-              <span className="text-lg font-bold tracking-tight block mt-1">{theme === "midnight-operations" ? "Graphite Layer" : "Executive Warm"}</span>
-              <span className="text-[0.7rem] text-blue-400 font-mono mt-1 block">var(--backdrop-blur)</span>
-            </div>
-
-            <div className={`p-4 rounded-xl border transition-all duration-200 ${tactileFeedback ? "tactile-lift cursor-pointer hover:border-blue-500/40" : ""} ${
-              isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"
-            }`}>
-              <span className="text-xs text-gray-400 font-semibold block">Tactile Feed Response</span>
-              <span className="text-lg font-bold tracking-tight block mt-1">{tactileFeedback ? "Active Lifts" : "Fixed Plane"}</span>
-              <span className="text-[0.7rem] text-purple-400 font-mono mt-1 block">hover:translateY(-1.5px)</span>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-inherit/10 flex justify-end gap-2">
-            <AppButton variant="secondary" size="sm" id="sandbox-demo-btn-1" onClick={() => triggerToast("Interactive trigger test successful")}>
-              Test Button Trigger
-            </AppButton>
-            <AppButton variant="primary" size="sm" id="sandbox-demo-btn-2" onClick={() => triggerToast("Bento settings fully synchronized")}>
-              Confirm Config Binding
-            </AppButton>
           </div>
         </div>
       </section>

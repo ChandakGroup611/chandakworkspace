@@ -11,7 +11,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
         <div key={ws.id} className="bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:shadow-xl transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h3 className="font-semibold text-lg text-white group-hover:text-indigo-400 transition-colors">{ws.workspace_name}</h3>
+              <h3 className="font-semibold text-lg text-foreground group-hover:text-indigo-400 transition-colors">{ws.workspace_name}</h3>
               <p className="text-xs text-gray-400 mt-1">{ws.workspace_code}</p>
             </div>
             {ws.status && (
@@ -49,7 +49,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
     <div className="flex flex-col h-full bg-[#0a0a0b] text-gray-200">
       <header className="p-6 border-b border-white/5 flex justify-between items-center bg-gray-900/20">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">{workspace.workspace_name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{workspace.workspace_name}</h1>
           <p className="text-sm text-gray-500 mt-1">Workspace operations and execution center</p>
         </div>
         <div className="flex gap-4">
@@ -67,7 +67,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
         <div className="p-6">
           <div className="bg-gray-900/40 border border-white/5 rounded-2xl p-6 mb-6 flex justify-around">
             <div className="text-center">
-              <p className="text-3xl font-bold text-white">{tasks.length}</p>
+              <p className="text-3xl font-bold text-foreground">{tasks.length}</p>
               <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Total Tasks</p>
             </div>
             <div className="text-center">
@@ -80,7 +80,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
             </div>
           </div>
           
-          <h2 className="text-lg font-semibold mb-4 text-white">Active Tasks Kanban</h2>
+          <h2 className="text-lg font-semibold mb-4 text-foreground">Active Tasks Kanban</h2>
           {/* <TaskBoard initialTasks={tasks} statuses={[]} /> */}
         </div>
       </div>

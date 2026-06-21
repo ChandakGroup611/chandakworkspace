@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const supabase = createClient();
   
   const [logs, setLogs] = useState<any[]>([]);
@@ -87,7 +87,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   };
 
   return (
-    <AppCard className={`p-5 space-y-4 border ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0c16] border-white/10"}`}>
+    <AppCard className={`p-5 space-y-4 border-smooth ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}>
       <div className="flex items-center gap-2 border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
         <Clock className={`h-4 w-4 ${isLightMode ? "text-purple-600" : "text-purple-400"}`} />
         <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>

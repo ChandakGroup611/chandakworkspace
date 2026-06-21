@@ -299,7 +299,7 @@ export default function RequirementsPage() {
                     <AppTableCell>
                       {r.priority !== '-' ? (
                         <span 
-                          className="px-2 py-1 rounded text-[10px] font-bold text-white shadow-sm"
+                          className="px-2 py-1 rounded text-[10px] font-bold text-foreground shadow-sm"
                           style={{ backgroundColor: r.priorityColor || '#6B7280' }}
                         >
                           {r.priority}

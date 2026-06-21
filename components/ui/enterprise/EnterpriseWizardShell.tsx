@@ -50,7 +50,7 @@ export function EnterpriseWizardShell({
   headerAccent = "purple"
 }: EnterpriseWizardShellProps) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";

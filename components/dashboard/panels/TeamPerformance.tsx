@@ -77,7 +77,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                 <AppTableRow key={i}>
                   <AppTableCell>
                     <div className="flex items-center gap-3">
-                      <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold text-white ${color}`}>
+                      <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold text-foreground ${color}`}>
                         {u.initials}
                       </div>
                       <div>

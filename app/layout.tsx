@@ -35,21 +35,35 @@ export default function RootLayout({
               document.documentElement.setAttribute("data-theme", theme);
               document.documentElement.setAttribute("data-density", density);
               
-              const lightThemes = ["executive-light", "material-ocean", "aurora-breeze"];
+              const lightThemes = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"];
               if (lightThemes.includes(theme)) {
                 document.documentElement.classList.add("theme-light");
               } else {
                 document.documentElement.classList.add("theme-dark");
               }
               
-              document.documentElement.style.setProperty("--base-font-size", baseSize + "px");
+              const fontFam = localStorage.getItem("app_font") || "inter";
+              
+              if (fontFam === "outfit") document.documentElement.style.setProperty("--app-font-family", "var(--font-outfit), 'Outfit', system-ui, sans-serif");
+              else if (fontFam === "roboto") document.documentElement.style.setProperty("--app-font-family", "var(--font-roboto), 'Roboto', system-ui, sans-serif");
+              else if (fontFam === "arial") document.documentElement.style.setProperty("--app-font-family", "Arial, Helvetica, sans-serif");
+              else if (fontFam === "times") document.documentElement.style.setProperty("--app-font-family", "'Times New Roman', Times, serif");
+              else if (fontFam === "verdana") document.documentElement.style.setProperty("--app-font-family", "Verdana, Geneva, sans-serif");
+              else if (fontFam === "courier") document.documentElement.style.setProperty("--app-font-family", "'Courier New', Courier, monospace");
+              else if (fontFam === "georgia") document.documentElement.style.setProperty("--app-font-family", "Georgia, serif");
+              else if (fontFam === "trebuchet") document.documentElement.style.setProperty("--app-font-family", "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif");
+              else if (fontFam === "comic-sans") document.documentElement.style.setProperty("--app-font-family", "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif");
+              else if (fontFam === "impact") document.documentElement.style.setProperty("--app-font-family", "Impact, Charcoal, sans-serif");
+              else document.documentElement.style.setProperty("--app-font-family", "var(--font-inter), 'Inter', system-ui, sans-serif");
+
+              const textScaleRatio = Number(baseSize) / 16;
+              document.documentElement.style.setProperty("--text-scale-ratio", String(textScaleRatio));
               document.documentElement.style.setProperty("--subtext-font-size", subtextSize + "px");
-              document.documentElement.style.setProperty("font-size", baseSize + "px", "important");
             } catch (e) {}
           `
         }} />
       </head>
-      <body className="bg-background text-foreground min-h-screen antialiased font-sans" suppressHydrationWarning>
+      <body className="bg-background text-foreground min-h-screen subpixel-antialiased font-sans text-base" suppressHydrationWarning>
         <QueryProvider>
           <PermissionsProvider>
             <ThemeProvider>

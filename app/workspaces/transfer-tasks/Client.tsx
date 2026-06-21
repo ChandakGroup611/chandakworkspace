@@ -171,7 +171,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
       {/* Table */}
       <AppCard className="overflow-hidden border border-white/10">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-300">
+          <table className="w-full text-left text-base text-gray-300">
             <thead className="bg-[#1C1C21] border-b border-white/10 text-xs uppercase text-gray-400">
               <tr>
                 <th className="px-4 py-3 w-10">
@@ -237,7 +237,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[#141419] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
             <div className="p-6 border-b border-white/10 flex-shrink-0">
-              <h2 className="text-xl font-bold text-white">Transfer Tasks</h2>
+              <h2 className="text-xl font-bold text-foreground">Transfer Tasks</h2>
               <p className="text-sm text-gray-400 mt-1">Move {selectedTaskIds.size} selected tasks to a new workspace.</p>
             </div>
             

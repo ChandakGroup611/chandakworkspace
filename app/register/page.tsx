@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -338,7 +338,7 @@ export default function RegisterPage() {
                       <img src={url} alt={`Avatar ${idx}`} className="h-full w-full rounded-full object-cover" />
                       {photo === url && !uploadFile && (
                         <div className="absolute -right-1 -top-1 bg-purple-500 rounded-full p-0.5 shadow-sm">
-                          <CheckCircle2 className="h-2 w-2 text-white" />
+                          <CheckCircle2 className="h-2 w-2 text-foreground" />
                         </div>
                       )}
                     </div>

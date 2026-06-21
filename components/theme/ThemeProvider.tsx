@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "executive-light" | "midnight-operations" | "material-ocean" | "aurora-breeze" | "pure-elegance" | "glass-intelligence" | "enterprise-bento" | "tactical-utility";
+export type ThemeType = "executive-light" | "midnight-operations" | "material-ocean" | "aurora-breeze" | "pure-elegance" | "glass-intelligence" | "enterprise-bento" | "tactical-utility" | "pristine-white";
 export type DensityType = "comfortable" | "compact" | "dense";
-export type FontFamilyType = "inter" | "outfit" | "roboto";
+export type FontFamilyType = "inter" | "outfit" | "roboto" | "arial" | "times" | "verdana" | "courier" | "georgia" | "trebuchet" | "comic-sans" | "impact";
 export type FontWeightProfileType = "heavy" | "standard" | "light";
 export type AccentColorType = "blue" | "emerald" | "rose" | "amber" | "purple" | "slate" | string;
 
@@ -53,7 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const storedSubtextSize = localStorage.getItem("app_subtext_font_size");
 
       const applyState = (state: any) => {
-        if (state.theme && ["executive-light", "midnight-operations", "material-ocean", "aurora-breeze", "pure-elegance", "glass-intelligence", "enterprise-bento", "tactical-utility"].includes(state.theme)) {
+        if (state.theme && ["executive-light", "midnight-operations", "material-ocean", "aurora-breeze", "pure-elegance", "glass-intelligence", "enterprise-bento", "tactical-utility", "pristine-white"].includes(state.theme)) {
           setThemeState(state.theme);
         }
         if (state.density && ["comfortable", "compact", "dense"].includes(state.density)) {
@@ -62,7 +62,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (state.tactile !== undefined) {
           setTactileFeedbackState(state.tactile === "true" || state.tactile === true);
         }
-        if (state.fontFamily && ["inter", "outfit", "roboto"].includes(state.fontFamily)) {
+        if (state.fontFamily && ["inter", "outfit", "roboto", "arial", "times", "verdana", "courier", "georgia", "trebuchet", "comic-sans", "impact"].includes(state.fontFamily)) {
           setFontFamilyState(state.fontFamily);
         }
         if (state.fontWeightProfile && ["heavy", "standard", "light"].includes(state.fontWeightProfile)) {
@@ -121,7 +121,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     activeSubtextSize?: number
   ) => {
     if (typeof document === "undefined") return;
-    const isLight = activeTheme === "executive-light" || activeTheme === "material-ocean" || activeTheme === "aurora-breeze" || activeTheme === "pure-elegance";
+    const isLight = activeTheme === "executive-light" || activeTheme === "material-ocean" || activeTheme === "aurora-breeze" || activeTheme === "pure-elegance" || activeTheme === "pristine-white";
     
     // Inject dynamic root classes to gracefully steer hardcoded container defaults
     if (isLight) {
@@ -138,19 +138,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const fontTarget = activeFont || fontFamily;
     document.documentElement.setAttribute("data-font", fontTarget);
     if (fontTarget === "outfit") {
-      document.body.style.setProperty("font-family", "'Outfit', system-ui, sans-serif", "important");
+      document.documentElement.style.setProperty("--app-font-family", "var(--font-outfit), 'Outfit', system-ui, sans-serif");
     } else if (fontTarget === "roboto") {
-      document.body.style.setProperty("font-family", "'Roboto', system-ui, sans-serif", "important");
+      document.documentElement.style.setProperty("--app-font-family", "var(--font-roboto), 'Roboto', system-ui, sans-serif");
+    } else if (fontTarget === "arial") {
+      document.documentElement.style.setProperty("--app-font-family", "Arial, Helvetica, sans-serif");
+    } else if (fontTarget === "times") {
+      document.documentElement.style.setProperty("--app-font-family", "'Times New Roman', Times, serif");
+    } else if (fontTarget === "verdana") {
+      document.documentElement.style.setProperty("--app-font-family", "Verdana, Geneva, sans-serif");
+    } else if (fontTarget === "courier") {
+      document.documentElement.style.setProperty("--app-font-family", "'Courier New', Courier, monospace");
+    } else if (fontTarget === "georgia") {
+      document.documentElement.style.setProperty("--app-font-family", "Georgia, serif");
+    } else if (fontTarget === "trebuchet") {
+      document.documentElement.style.setProperty("--app-font-family", "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif");
+    } else if (fontTarget === "comic-sans") {
+      document.documentElement.style.setProperty("--app-font-family", "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif");
+    } else if (fontTarget === "impact") {
+      document.documentElement.style.setProperty("--app-font-family", "Impact, Charcoal, sans-serif");
     } else {
-      document.body.style.setProperty("font-family", "'Inter', system-ui, sans-serif", "important");
+      document.documentElement.style.setProperty("--app-font-family", "var(--font-inter), 'Inter', system-ui, sans-serif");
     }
 
     const bSize = activeBaseSize || baseFontSize;
     const sSize = activeSubtextSize || subtextFontSize;
-    
-    document.documentElement.style.setProperty("--base-font-size", `${bSize}px`);
-    document.documentElement.style.setProperty("--subtext-font-size", `${sSize}px`);
-    document.documentElement.style.setProperty("font-size", `${bSize}px`, "important");
 
     const wProfile = activeWeightProfile || fontWeightProfile;
     if (wProfile === "heavy") {

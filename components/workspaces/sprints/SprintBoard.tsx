@@ -12,7 +12,7 @@ import { Filter } from "lucide-react";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const [sprints, setSprints] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -181,7 +181,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 key={t.id} 
                 draggable 
                 onDragStart={(e) => handleDragStart(e, t.id)}
-                className={`p-3 rounded-lg border cursor-grab active:cursor-grabbing flex gap-2 ${isLightMode ? "bg-white border-gray-200 shadow-sm" : "bg-white/5 border-white/10"}`}
+                className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}
               >
                 <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                 <div>
@@ -271,7 +271,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   key={t.id} 
                   draggable 
                   onDragStart={(e) => handleDragStart(e, t.id)}
-                  className={`p-3 rounded-lg border cursor-grab active:cursor-grabbing flex gap-2 ${isLightMode ? "bg-white border-gray-200 shadow-sm" : "bg-[#11131f] border-white/10"}`}
+                  className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}
                 >
                   <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                   <div>

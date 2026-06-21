@@ -502,6 +502,21 @@ export async function deleteUserAction(userId: string) {
     return { success: false, error: "CRITICAL: Cannot modify user in authentication backend. SUPABASE_SERVICE_ROLE_KEY is missing in your environment variables. Please add it to your deployment." };
   }
 
+  // Check for any activities associated with the user
+  const [taskRes, partRes, eventRes] = await Promise.all([
+    supabase.from("tasks").select("*", { count: "exact", head: true }).or(`assigned_to.eq.${userId},created_by.eq.${userId}`),
+    supabase.from("task_participants").select("*", { count: "exact", head: true }).eq("user_id", userId),
+    supabase.from("activity_events").select("*", { count: "exact", head: true }).eq("performed_by", userId)
+  ]);
+
+  if (taskRes.error) return { success: false, error: `Error checking tasks: ${taskRes.error.message}` };
+  if (partRes.error) return { success: false, error: `Error checking participation: ${partRes.error.message}` };
+  if (eventRes.error) return { success: false, error: `Error checking activity events: ${eventRes.error.message}` };
+
+  if ((taskRes.count && taskRes.count > 0) || (partRes.count && partRes.count > 0) || (eventRes.count && eventRes.count > 0)) {
+    return { success: false, error: "Cannot delete user because they have associated activities in the system. Please deactivate the user instead." };
+  }
+
   const adminClient = getAdminClient();
   
   // Scramble email to free it up for future registrations

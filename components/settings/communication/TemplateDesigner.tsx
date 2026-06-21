@@ -126,7 +126,7 @@ export default function TemplateDesigner() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
         <div>
-          <h2 className="text-lg font-bold text-white">Dynamic Template Designer</h2>
+          <h2 className="text-lg font-bold text-foreground">Dynamic Template Designer</h2>
           <p className="text-xs text-gray-400">Construct HTML payloads with runtime merge tag hydration.</p>
         </div>
         <button

@@ -23,7 +23,7 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

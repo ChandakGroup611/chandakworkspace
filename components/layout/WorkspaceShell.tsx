@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const pathname = usePathname();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const isAuthRoute = pathname === "/login" || pathname === "/register";
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
 

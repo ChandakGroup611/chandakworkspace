@@ -24,7 +24,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const router = useRouter();
   const { hasPermission } = usePermissions();
@@ -204,6 +204,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   }, [isEditingAssignees]);
 
   const loadTaskDetails = async (forceUpdate = false) => {
+    if (taskId === "new") return;
     if (!forceUpdate && initialTask && task) return;
     const t0 = performance.now();
     setLoading(true);
@@ -240,6 +241,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   // Lazy loaders for tabs
   const loadChecklists = async (force = false) => {
+    if (taskId === "new") return;
     if (isChecklistsLoaded && !force) return;
     setIsLoadingTab(true);
     try {
@@ -264,6 +266,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   };
 
   const loadComments = async (force = false) => {
+    if (taskId === "new") return;
     if (isCommentsLoaded && !force) return;
     setRemarksHistoryLoading(true);
     try {

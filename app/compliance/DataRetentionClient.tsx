@@ -315,7 +315,7 @@ export default function DataRetentionClient() {
       <AppCard className="overflow-hidden">
         <AppCardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
           <div className="flex items-center gap-4">
-            <AppCardTitle className="flex items-center gap-2 text-white">
+            <AppCardTitle className="flex items-center gap-2 text-foreground">
               <Archive className="h-4 w-4" />
               <span>{currentTabConfig.label} Registry</span>
             </AppCardTitle>

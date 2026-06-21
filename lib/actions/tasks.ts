@@ -694,6 +694,17 @@ export async function updateTask(taskId: string, payload: any) {
       return { error: "You do not have permission to delete this task. Only users with specific IAM permissions can delete." };
     }
 
+    // Check for dependencies before deleting
+    const { count: depCount, error: depError } = await supabaseAdmin
+      .from('task_dependencies')
+      .select('*', { count: 'exact', head: true })
+      .or(`predecessor_task_id.eq.${taskId},successor_task_id.eq.${taskId}`);
+
+    if (depError) return { error: depError.message };
+    if (depCount && depCount > 0) {
+      return { error: "Cannot delete task because it has existing dependencies. Please remove dependencies first." };
+    }
+
     // Soft delete the task instead of hard deleting it and its related records
     const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
     if (error) return { error: error.message };

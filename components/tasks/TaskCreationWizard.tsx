@@ -14,7 +14,7 @@ import TemplateManager from "@/components/tasks/TemplateManager";
 
 export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const [departmentId, setDepartmentId] = useState("");
   const [departments, setDepartments] = useState<any[]>([]);

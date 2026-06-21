@@ -6,10 +6,11 @@ import WorkspacesLoading from "./loading";
 
 export const dynamic = 'force-dynamic';
 
-export default function WorkspacesPage({ searchParams }: { searchParams: { task?: string; workspace?: string } }) {
+export default async function WorkspacesPage({ searchParams }: { searchParams: Promise<{ task?: string; workspace?: string }> }) {
+  const sp = await searchParams;
   return (
     <Suspense fallback={<WorkspacesLoading />}>
-      <WorkspacesDataFetcher searchParams={searchParams} />
+      <WorkspacesDataFetcher searchParams={sp} />
     </Suspense>
   );
 }

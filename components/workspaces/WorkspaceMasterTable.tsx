@@ -241,9 +241,7 @@ export function WorkspaceMasterTable({
           }
         }}
         onClick={(e) => {
-          if (isWorkspaceType) {
-            router.push(`/workspaces/tasks?workspaceId=${node.id}`);
-          } else if (node.type === 'TASK' || node.type === 'SUB_TASK') {
+          if (node.type === 'TASK' || node.type === 'SUB_TASK') {
             // Open full task page on single click for tasks
             router.push(`/tasks/${node.id}`);
           }
@@ -378,7 +376,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Created By */}
-          <div className="py-1 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 break-words">
+          <div className="py-1 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
             {creatorId ? getUserName(creatorId) : "System"}
           </div>
 
@@ -460,7 +458,7 @@ export function WorkspaceMasterTable({
               <AppButton 
                 variant="ghost"
                 size="sm"
-                onClick={() => onShareNode(node)}
+                onClick={(e) => { e.stopPropagation(); onShareNode(node); }}
                 className={`h-7 w-7 p-0 ${isLightMode ? 'text-emerald-600 hover:bg-emerald-50' : 'text-emerald-400 hover:bg-emerald-500/20'}`}
                 title="Share Workspace"
               >
@@ -472,7 +470,7 @@ export function WorkspaceMasterTable({
               <AppButton 
                 variant="ghost"
                 size="sm"
-                onClick={() => onDeleteNode(node)}
+                onClick={(e) => { e.stopPropagation(); onDeleteNode(node); }}
                 className={`h-7 w-7 p-0 ${isLightMode ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/20'}`}
                 title="Delete"
               >

@@ -47,7 +47,7 @@ export default function SLAPage() {
   const canView = roleCode === "SUPER_ADMIN" || hasPermission("SLA_VIEW");
 
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   
   const [slas, setSlas] = useState<SLATracker[]>([]);
   const [loading, setLoading] = useState(true);

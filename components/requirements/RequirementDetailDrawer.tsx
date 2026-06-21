@@ -77,7 +77,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="text-sm font-semibold text-white">Technical Description & Scope</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Technical Description & Scope</h3>
                     <div className="text-gray-400 text-sm whitespace-pre-wrap leading-relaxed bg-black/20 rounded-xl p-4 border border-white/5">
                       {requirement.description}
                     </div>
@@ -86,7 +86,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   {/* Implementation Progress */}
                   <section className="bg-gray-900/40 rounded-2xl p-6 border border-white/5">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-sm font-bold text-white">Implementation Progress</h3>
+                      <h3 className="text-sm font-bold text-foreground">Implementation Progress</h3>
                       <span className="text-2xl font-bold text-indigo-400">{requirement.completion_percentage}%</span>
                     </div>
                     <div className="h-2 w-full bg-black rounded-full overflow-hidden mb-6">
@@ -147,7 +147,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   {/* Realtime Chat Engine */}
                   <section className="h-[500px] flex flex-col border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                     <div className="bg-gray-900/80 p-4 border-b border-white/5 backdrop-blur-xl">
-                      <h3 className="text-sm font-bold text-white">Execution Collaboration</h3>
+                      <h3 className="text-sm font-bold text-foreground">Execution Collaboration</h3>
                     </div>
                     <div className="flex-1 bg-black/20">
                       <RealtimeChat recordId={requirement.id} moduleType="REQUIREMENT" />

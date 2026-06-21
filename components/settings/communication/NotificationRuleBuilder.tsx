@@ -139,7 +139,7 @@ export default function NotificationRuleBuilder() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
         <div>
-          <h2 className="text-lg font-bold text-white">Rule Engine</h2>
+          <h2 className="text-lg font-bold text-foreground">Rule Engine</h2>
           <p className="text-xs text-gray-400">Configure declarative IF-THEN routing constraints.</p>
         </div>
         <button

@@ -12,7 +12,7 @@ import { onRenderCallback } from "@/utils/performance/profiler-utils";
 export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
   useRenderLog("TaskRealtimeChat", { taskId });
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   // Create client once with useRef so it's stable across renders
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
@@ -268,7 +268,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
   return (
     <Profiler id={`TaskRealtimeChat-${taskId}`} onRender={onRenderCallback}>
-    <AppCard className={`flex flex-col border ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0c16] border-white/10"}`}>
+    <AppCard className={`flex flex-col border-smooth ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}>
 
       {/* Header */}
       <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>

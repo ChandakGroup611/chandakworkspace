@@ -170,7 +170,7 @@ export default function CustomFieldsConfigurator() {
 
           {/* New field definition append form */}
           <AppCard className="p-5 space-y-4 border-blue-500/20 bg-gradient-to-b from-blue-950/10 via-transparent to-transparent">
-            <span className="text-xs font-semibold text-white block pb-2 border-b border-white/5">
+            <span className="text-xs font-semibold text-foreground block pb-2 border-b border-white/5">
               Append Schema Definition
             </span>
 
@@ -254,7 +254,7 @@ export default function CustomFieldsConfigurator() {
           <AppCard className="flex-1 flex flex-col justify-between overflow-hidden">
             <AppCardHeader className="flex flex-row items-center justify-between pb-3 border-b border-white/5">
               <div className="space-y-0.5">
-                <AppCardTitle className="text-white">
+                <AppCardTitle className="text-foreground">
                   Active Dictionaries: <strong className="text-blue-400 capitalize">{activeModule}</strong>
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-gray-400">Values ingest seamlessly via runtime custom form mutators.</p>
@@ -281,7 +281,7 @@ export default function CustomFieldsConfigurator() {
                       <AppTableRow key={fItem.id}>
                         <AppTableCell>
                           <div className="space-y-0.5">
-                            <span className="font-bold text-xs text-white block">{fItem.field_label}</span>
+                            <span className="font-bold text-xs text-foreground block">{fItem.field_label}</span>
                             {fItem.field_type === "select" && fItem.options.length > 0 && (
                               <span className="text-xs text-gray-500 italic block truncate max-w-[180px]">
                                 Ops: {fItem.options.join(", ")}

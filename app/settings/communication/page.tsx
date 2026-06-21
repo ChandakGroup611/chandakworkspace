@@ -61,7 +61,7 @@ export default function CommunicationCenterHub() {
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Shield className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-bold text-white">Access Denied</h2>
+        <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
         <p className="text-xs text-gray-500">You do not have capabilities to view Communication Settings.</p>
       </div>
     );
@@ -70,7 +70,7 @@ export default function CommunicationCenterHub() {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <header className="border-b border-white/5 pb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Communication Center
         </h1>
         <p className="text-sm text-gray-400 mt-2 max-w-2xl">
@@ -87,7 +87,7 @@ export default function CommunicationCenterHub() {
                   <mod.icon className={`w-6 h-6 ${mod.color}`} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">{mod.title}</h2>
+                  <h2 className="text-lg font-semibold text-foreground group-hover:text-blue-400 transition-colors">{mod.title}</h2>
                   <p className="text-sm text-gray-400 mt-1 leading-relaxed">{mod.description}</p>
                 </div>
               </div>

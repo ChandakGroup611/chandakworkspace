@@ -18,7 +18,7 @@ interface MetricsRowProps {
 
 export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const stats = useMemo(() => {
     const total = metrics.length;

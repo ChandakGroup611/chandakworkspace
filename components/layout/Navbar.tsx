@@ -35,7 +35,7 @@ export default function Navbar() {
   const router = useRouter();
   const supabase = createClient();
   const { theme, setTheme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme);
+  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   const [mounted, setMounted] = useState(false);
 
   // Session Security States
@@ -162,9 +162,7 @@ export default function Navbar() {
   };
 
   const toggleQuickTheme = () => {
-    if (theme === "executive-light") {
-      setTheme("glass-intelligence");
-    } else if (theme === "glass-intelligence") {
+    if (isLight) {
       setTheme("midnight-operations");
     } else {
       setTheme("executive-light");
@@ -222,15 +220,13 @@ export default function Navbar() {
 
           <div className={`h-4 w-[1px] ${isLight ? "bg-gray-200" : "bg-white/10"}`} />
 
-
-
           <AppButton 
             variant="outline"
             size="icon"
             onClick={toggleQuickTheme}
             className="!h-10 !w-10 rounded-xl bg-surface border-border text-muted hover:bg-muted hover:text-foreground"
           >
-            {isLight ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+            {isLight ? <Moon className="h-4 w-4 text-indigo-400" /> : <Sun className="h-4 w-4 text-amber-500" />}
           </AppButton>
 
           <Link 
@@ -332,7 +328,7 @@ export default function Navbar() {
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-white uppercase tracking-wider">Session Time-Out Impending</h3>
+              <h3 className="text-base font-bold text-foreground uppercase tracking-wider">Session Time-Out Impending</h3>
               <p className="text-xs text-gray-300 leading-relaxed">
                 To guard regulated enterprise records against unattended workstation exposures, active identity leases are constrained to activity timers.
               </p>
