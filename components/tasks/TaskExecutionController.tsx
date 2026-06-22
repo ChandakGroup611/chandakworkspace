@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -95,6 +95,43 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [newAssigneeId, setNewAssigneeId] = useState("");
   const [newExecutors, setNewExecutors] = useState<string[]>([]);
   
+  const flattenedWorkspaces = useMemo(() => {
+    const map = new Map(transferWorkspaces.map(w => [w.id, w]));
+    const paths: any[] = [];
+    
+    const getPath = (w: any): { pathName: string, rootId: string } => {
+      let current = w;
+      let pathName = w.code ? `[${w.code}] ${w.name}` : w.name;
+      let rootId = w.id;
+      const visited = new Set([w.id]);
+      
+      while (current.parent_workspace_id && map.has(current.parent_workspace_id)) {
+        current = map.get(current.parent_workspace_id);
+        if (visited.has(current.id)) break;
+        visited.add(current.id);
+        
+        const currentName = current.code ? `[${current.code}] ${current.name}` : current.name;
+        pathName = `${currentName} > ${pathName}`;
+        rootId = current.id;
+      }
+      return { pathName, rootId };
+    };
+
+    transferWorkspaces.forEach(w => {
+      const { pathName, rootId } = getPath(w);
+      paths.push({
+        id: w.id,
+        pathName,
+        rootId,
+        isSub: !!w.parent_workspace_id,
+        original: w
+      });
+    });
+    
+    paths.sort((a, b) => a.pathName.localeCompare(b.pathName));
+    return paths;
+  }, [transferWorkspaces]);
+
   const handleOpenTransfer = async () => {
     setIsTransferModalOpen(true);
     if (transferWorkspaces.length === 0) {
@@ -1016,37 +1053,39 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <FolderPlus className="w-4 h-4" /> Transfer Task to Another Workspace
                 </h4>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">Root Workspace <span className="text-red-500">*</span></label>
+                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">Destination Workspace <span className="text-red-500">*</span></label>
                       <select
-                        value={selectedTransferWorkspace}
+                        value={selectedTransferSubworkspace || selectedTransferWorkspace}
                         onChange={e => {
-                          setSelectedTransferWorkspace(e.target.value);
-                          setSelectedTransferSubworkspace("");
+                          const val = e.target.value;
+                          if (!val) {
+                            setSelectedTransferWorkspace("");
+                            setSelectedTransferSubworkspace("");
+                            return;
+                          }
+                          const selectedObj = flattenedWorkspaces.find(w => w.id === val);
+                          if (selectedObj) {
+                            if (selectedObj.isSub) {
+                              setSelectedTransferWorkspace(selectedObj.rootId);
+                              setSelectedTransferSubworkspace(val);
+                            } else {
+                              setSelectedTransferWorkspace(val);
+                              setSelectedTransferSubworkspace("");
+                            }
+                          }
                         }}
                         className="w-full p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
                       >
-                        <option value="">-- Select Root Workspace --</option>
-                        {transferWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
-                          <option key={w.id} value={w.id} disabled={w.id === task.workspace_id && !task.sub_workspace_id}>
-                            {w.code ? `[${w.code}] ` : ""}{w.name} {w.id === task.workspace_id && !task.sub_workspace_id ? "(Current)" : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">Subworkspace (Optional)</label>
-                      <select
-                        value={selectedTransferSubworkspace}
-                        onChange={e => setSelectedTransferSubworkspace(e.target.value)}
-                        disabled={!selectedTransferWorkspace}
-                        className="w-full p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#0B0F19] dark:border-white/10 dark:text-white disabled:opacity-50"
-                      >
-                        <option value="">-- Root Level (No Subworkspace) --</option>
-                        {transferWorkspaces.filter(w => w.parent_workspace_id === selectedTransferWorkspace).map(w => (
-                          <option key={w.id} value={w.id} disabled={w.id === task.sub_workspace_id}>
-                            {w.code ? `[${w.code}] ` : ""}{w.name} {w.id === task.sub_workspace_id ? "(Current)" : ""}
+                        <option value="">-- Select Destination Workspace --</option>
+                        {flattenedWorkspaces.map(w => (
+                          <option 
+                            key={w.id} 
+                            value={w.id} 
+                            disabled={w.id === (task.sub_workspace_id || task.workspace_id)}
+                          >
+                            {w.pathName} {w.id === (task.sub_workspace_id || task.workspace_id) ? "(Current)" : ""}
                           </option>
                         ))}
                       </select>
