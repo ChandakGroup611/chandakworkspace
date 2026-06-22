@@ -16,15 +16,29 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
   const [targetSubworkspaceId, setTargetSubworkspaceId] = useState('');
   const [newOwnerId, setNewOwnerId] = useState('');
   const [newExecutors, setNewExecutors] = useState<string[]>([]);
+  const [newWatchers, setNewWatchers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter tasks based on search
+  const [filterWorkspaceId, setFilterWorkspaceId] = useState('');
+  const [filterSubworkspaceId, setFilterSubworkspaceId] = useState('');
+
+  // Filter tasks based on search and workspace filters
   const filteredTasks = useMemo(() => {
-    return initialTasks.filter((t: any) => 
-      (t.subject || t.task_code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.workspace?.workspace_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [initialTasks, searchTerm]);
+    return initialTasks.filter((t: any) => {
+      const matchesSearch = (t.subject || t.task_code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (t.workspace?.workspace_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+      
+      let matchesWs = true;
+      if (filterSubworkspaceId) {
+         matchesWs = t.workspace_id === filterSubworkspaceId;
+      } else if (filterWorkspaceId) {
+         const validWsIds = workspaces.filter((w: any) => w.id === filterWorkspaceId || w.parent_workspace_id === filterWorkspaceId).map((w: any) => w.id);
+         matchesWs = validWsIds.includes(t.workspace_id);
+      }
+      
+      return matchesSearch && matchesWs;
+    });
+  }, [initialTasks, searchTerm, filterWorkspaceId, filterSubworkspaceId, workspaces]);
 
   // Handle task selection
   const toggleTaskSelection = (id: string) => {
@@ -118,11 +132,11 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
         payload.newOwnerId = newOwnerId;
       }
       
-      if (newExecutors.length > 0) {
-        payload.newParticipantIds = newExecutors.map(id => ({
-          user_id: id,
-          participation_role: 'EXECUTOR'
-        }));
+      if (newExecutors.length > 0 || newWatchers.length > 0) {
+        payload.newParticipantIds = [
+          ...newExecutors.map(id => ({ user_id: id, participation_role: 'EXECUTOR' })),
+          ...newWatchers.map(id => ({ user_id: id, participation_role: 'WATCHER' }))
+        ];
       }
 
       const res = await moveTasksInBulk(payload);
@@ -146,17 +160,45 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
     <div className="space-y-4">
       {/* Controls */}
       <div className="flex items-center justify-between">
-        <div className="relative w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            className="w-full pl-9 pr-4 py-2 bg-[#1C1C21] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center gap-3 flex-1 flex-wrap">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              className="w-full pl-9 pr-4 py-2 bg-background border border-input rounded-xl text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <select 
+            className="bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary w-48"
+            value={filterWorkspaceId}
+            onChange={(e) => {
+              setFilterWorkspaceId(e.target.value);
+              setFilterSubworkspaceId('');
+            }}
+          >
+            <option value="">All Workspaces</option>
+            {workspaces.filter((w: any) => !w.parent_workspace_id).map((ws: any) => (
+              <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
+            ))}
+          </select>
+
+          <select 
+            className="bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50 w-48"
+            value={filterSubworkspaceId}
+            onChange={(e) => setFilterSubworkspaceId(e.target.value)}
+            disabled={!filterWorkspaceId}
+          >
+            <option value="">All Subworkspaces</option>
+            {workspaces.filter((w: any) => w.parent_workspace_id === filterWorkspaceId).map((ws: any) => (
+              <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
+            ))}
+          </select>
         </div>
-        <div>
+        <div className="ml-4 shrink-0">
           <AppButton 
             variant="primary" 
             leftIcon={<ArrowRightLeft className="h-4 w-4" />}
@@ -169,15 +211,15 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
       </div>
 
       {/* Table */}
-      <AppCard className="overflow-hidden border border-white/10">
+      <AppCard className="overflow-hidden border border-border">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-base text-gray-300">
-            <thead className="bg-[#1C1C21] border-b border-white/10 text-xs uppercase text-gray-400">
+          <table className="w-full text-left text-base text-muted-foreground">
+            <thead className="bg-muted border-b border-border text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 w-10">
                   <input 
                     type="checkbox" 
-                    className="rounded border-gray-600 bg-transparent text-indigo-500 focus:ring-indigo-500"
+                    className="rounded border-input bg-transparent text-primary focus:ring-primary"
                     checked={selectedTaskIds.size > 0 && selectedTaskIds.size === filteredTasks.length}
                     onChange={toggleAll}
                   />
@@ -188,18 +230,18 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                 <th className="px-4 py-3">Assignee</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 bg-[#141419]">
+            <tbody className="divide-y divide-border bg-card">
               {filteredTasks.map((task: any) => (
-                <tr key={task.id} className="hover:bg-white/5 transition-colors">
+                <tr key={task.id} className="hover:bg-muted/50 transition-colors">
                   <td className="px-4 py-3">
                     <input 
                       type="checkbox" 
-                      className="rounded border-gray-600 bg-transparent text-indigo-500 focus:ring-indigo-500"
+                      className="rounded border-input bg-transparent text-primary focus:ring-primary"
                       checked={selectedTaskIds.has(task.id)}
                       onChange={() => toggleTaskSelection(task.id)}
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-200">
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {task.subject || task.task_code || 'Untitled'}
                   </td>
                   <td className="px-4 py-3">
@@ -211,7 +253,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     {task.status?.status_name || '-'}
                   </td>
                   <td className="px-4 py-3 flex items-center space-x-2">
-                    <Users className="h-4 w-4 text-gray-500" />
+                    <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {task.owner_id 
                         ? allUsers.find((u: any) => u.id === task.owner_id)?.full_name || 'Unknown User' 
@@ -222,7 +264,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
               ))}
               {filteredTasks.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     No tasks found.
                   </td>
                 </tr>
@@ -235,23 +277,24 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
       {/* Transfer Modal */}
       {isTransferModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#141419] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-6 border-b border-white/10 flex-shrink-0">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-border flex-shrink-0">
               <h2 className="text-xl font-bold text-foreground">Transfer Tasks</h2>
-              <p className="text-sm text-gray-400 mt-1">Move {selectedTaskIds.size} selected tasks to a new workspace.</p>
+              <p className="text-sm text-muted-foreground mt-1">Move {selectedTaskIds.size} selected tasks to a new workspace.</p>
             </div>
             
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Target Workspace (Root)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Target Workspace (Root)</label>
                 <select
-                  className="w-full bg-[#1C1C21] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                   value={targetWorkspaceId}
                   onChange={(e) => {
                     setTargetWorkspaceId(e.target.value);
                     setTargetSubworkspaceId('');
                     setNewOwnerId(''); 
-                    setNewExecutors([]); // reset on change
+                    setNewExecutors([]); 
+                    setNewWatchers([]);
                   }}
                 >
                   <option value="">Select a workspace...</option>
@@ -262,14 +305,15 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Subworkspace (Optional)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Subworkspace (Optional)</label>
                 <select
-                  className="w-full bg-[#1C1C21] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                  className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary disabled:opacity-50"
                   value={targetSubworkspaceId}
                   onChange={(e) => {
                     setTargetSubworkspaceId(e.target.value);
                     setNewOwnerId(''); 
-                    setNewExecutors([]); // reset on change
+                    setNewExecutors([]); 
+                    setNewWatchers([]);
                   }}
                   disabled={!targetWorkspaceId}
                 >
@@ -291,9 +335,9 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                       </p>
                       
                       <div className="mt-3">
-                        <label className="block text-xs font-medium text-yellow-500/90 mb-1">New Assignee (Owner)</label>
+                        <label className="block text-xs font-medium text-amber-600 dark:text-amber-500/90 mb-1">New Assignee (Owner)</label>
                         <select
-                          className="w-full bg-[#1C1C21] border border-yellow-500/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500"
+                          className="w-full bg-background border border-amber-500/20 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-amber-500"
                           value={newOwnerId}
                           onChange={(e) => setNewOwnerId(e.target.value)}
                         >
@@ -304,24 +348,76 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                         </select>
                       </div>
 
-                      <div className="mt-3">
-                        <label className="block text-xs font-medium text-yellow-500/90 mb-1">Assign Additional Executives (Optional)</label>
-                        <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin bg-[#1C1C21] border border-yellow-500/20 rounded-lg p-2">
-                          {targetWorkspaceUsers.map((s: any) => (
-                            <label key={s.id} className="flex items-center gap-2 text-xs text-gray-300 p-1 hover:bg-white/5 rounded cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                checked={newExecutors.includes(s.id)}
-                                onChange={e => {
-                                  if(e.target.checked) setNewExecutors([...newExecutors, s.id]);
-                                  else setNewExecutors(newExecutors.filter(id => id !== s.id));
-                                }}
-                                className="accent-yellow-500 rounded h-3 w-3"
-                              />
-                              {s.full_name}
-                            </label>
-                          ))}
-                        </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {targetWorkspaceId && (
+                <div className="pt-4 mt-4 border-t border-border">
+                  <h3 className="text-sm font-medium text-foreground mb-3">Reassign Participants (Optional)</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Executives Column */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-medium text-muted-foreground">Executives</label>
+                        <button 
+                          className="text-[10px] text-primary hover:underline"
+                          onClick={() => {
+                            if (newExecutors.length === targetWorkspaceUsers.length) setNewExecutors([]);
+                            else setNewExecutors(targetWorkspaceUsers.map((u: any) => u.id));
+                          }}
+                        >
+                          {newExecutors.length === targetWorkspaceUsers.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
+                      <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
+                        {targetWorkspaceUsers.map((s: any) => (
+                          <label key={s.id} className="flex items-center gap-2 text-xs text-foreground p-1 hover:bg-muted rounded cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newExecutors.includes(s.id)}
+                              onChange={e => {
+                                if(e.target.checked) setNewExecutors([...newExecutors, s.id]);
+                                else setNewExecutors(newExecutors.filter(id => id !== s.id));
+                              }}
+                              className="accent-primary rounded h-3 w-3"
+                            />
+                            {s.full_name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Watchers Column */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-medium text-muted-foreground">Watchers</label>
+                        <button 
+                          className="text-[10px] text-primary hover:underline"
+                          onClick={() => {
+                            if (newWatchers.length === targetWorkspaceUsers.length) setNewWatchers([]);
+                            else setNewWatchers(targetWorkspaceUsers.map((u: any) => u.id));
+                          }}
+                        >
+                          {newWatchers.length === targetWorkspaceUsers.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
+                      <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
+                        {targetWorkspaceUsers.map((s: any) => (
+                          <label key={s.id} className="flex items-center gap-2 text-xs text-foreground p-1 hover:bg-muted rounded cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={newWatchers.includes(s.id)}
+                              onChange={e => {
+                                if(e.target.checked) setNewWatchers([...newWatchers, s.id]);
+                                else setNewWatchers(newWatchers.filter(id => id !== s.id));
+                              }}
+                              className="accent-primary rounded h-3 w-3"
+                            />
+                            {s.full_name}
+                          </label>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -329,7 +425,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
               )}
             </div>
 
-            <div className="p-4 border-t border-white/10 bg-[#1C1C21] flex justify-end space-x-3 flex-shrink-0">
+            <div className="p-4 border-t border-border bg-muted/30 flex justify-end space-x-3 flex-shrink-0">
               <AppButton variant="secondary" onClick={() => setIsTransferModalOpen(false)}>
                 Cancel
               </AppButton>

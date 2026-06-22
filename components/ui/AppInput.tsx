@@ -58,6 +58,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             ref={ref}
             id={inputId}
             disabled={disabled}
+            suppressHydrationWarning={true}
             className={cn(
               "h-8 w-full rounded-[var(--radius-input,4px)] border text-[13px] focus:outline-none transition-all duration-150",
               "bg-surface border-border text-foreground placeholder-muted focus:border-accent focus:ring-1 focus:ring-accent",

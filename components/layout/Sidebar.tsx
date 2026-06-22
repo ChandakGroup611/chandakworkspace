@@ -61,7 +61,8 @@ const navGroups: NavGroup[] = [
         permission: "REQUIREMENTS_VIEW",
         subItems: [
           { label: "Requirements Master", href: "/requirements", permission: "REQUIREMENTS_VIEW" },
-          { label: "Requirement Approvals", href: "/requirements/approvals", permission: "REQUIREMENTS_APPROVALS_VIEW" }
+          { label: "Requirement Approvals", href: "/requirements/approvals", permission: "REQUIREMENTS_APPROVALS_VIEW" },
+          { label: "Reports & Analytics", href: "/requirements/reports", permission: "REQUIREMENTS_REPORTS_VIEW" }
         ]
       },
       { 
@@ -321,7 +322,7 @@ export default function Sidebar() {
 
                     {/* RENDER EXPANDED SUB-ITEMS TREE CONTAINER */}
                     {!isCompact && item.subItems && isTreeExpanded && (
-                      <div className="pl-7 pr-1 py-1 space-y-1 relative border-l ml-5 transition-all animate-in fade-in-50 slide-in-from-top-1 duration-200 border-white/5">
+                      <div className="pl-2 pr-1 py-1 space-y-1 relative border-l ml-5 transition-all animate-in fade-in-50 slide-in-from-top-1 duration-200 border-white/5">
                         {item.subItems.map((sub) => {
                           
                           let isSubActive = pathname === sub.href;

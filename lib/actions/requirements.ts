@@ -320,7 +320,7 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
      return { success: true };
   }
 
-  const { data: currentReq } = await supabaseAdmin.from('requirements').select('custom_fields').eq('id', reqId).single();
+  const { data: currentReq } = await supabaseAdmin.from('requirements').select('custom_fields, code, title').eq('id', reqId).single();
   const existingCustomFields = currentReq?.custom_fields || {};
 
   const updatePayload: any = {
@@ -381,6 +381,12 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
       
       const { error: reqErr } = await supabaseAdmin.from('requirements').update(updatePayload).eq('id', reqId);
       if (reqErr) throw new Error("Failed to update requirement details: " + reqErr.message);
+
+      const { dispatchNotification } = await import('@/lib/actions/notifications');
+      const l1Approvers = flowInserts.filter((f: any) => f.level === 1);
+      for (const approver of l1Approvers) {
+        await dispatchNotification(approver.approver_id, 'Requirement Approval Pending', `Requirement ${currentReq?.code || reqId} ("${currentReq?.title || 'Untitled'}") is awaiting your approval.`, `/requirements/${reqId}?tab=approval`, 'REQUIREMENT', 'APPROVAL_PENDING').catch((e: any) => console.error("Failed to notify approver", e));
+      }
     } else {
       throw new Error("Please select at least one approver for the impacted departments.");
     }
@@ -472,6 +478,114 @@ export async function fetchRequirementAuditLogs(reqId: string) {
   return logs.map(l => ({ ...l, user: usersMap[l.performed_by] || { full_name: 'System' } }));
 }
 
+export async function fetchRequirementAnalyticsData() {
+  const { unstable_noStore: noStore } = await import('next/cache');
+  noStore();
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: userRole } = await supabaseAdmin.from('user_roles').select('roles(code)').eq('user_id', user.id).single();
+  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
+  const isSuperAdminEmail = adminEmails.includes(user.email || '');
+  const isAdmin = isSuperAdminEmail || (userRole?.roles as any)?.code === 'SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ROLE_SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ADMIN_ROLE' || (userRole?.roles as any)?.code === 'ROLE_ADMIN';
+
+  const { data, error } = await supabaseAdmin.from('requirements').select(`
+    id, code, title, scope, approval_status, current_assignee_id, created_at, updated_at, due_date, start_date, creator_id, requester_id, custom_fields,
+    status:status_master(name:status_name, status_color, code:status_code),
+    department:departments!requirements_department_id_fkey(name),
+    priority:priority_master!requirements_priority_id_fkey(name:priority_name, priority_color),
+    software_system:software_systems(name),
+    module:software_modules(name),
+    sub_module:software_submodules(name),
+    requester:user_master!requirements_requester_id_fkey(full_name),
+    assignee:user_master!requirements_current_assignee_id_fkey(full_name),
+    requirement_approval_flow(approver_id)
+  `).order('created_at', { ascending: false });
+
+  if (error) {
+    console.error("fetchRequirementAnalyticsData Error:", error);
+    return [];
+  }
+
+  let filteredData = data || [];
+  if (!isAdmin) {
+    filteredData = filteredData.filter((r: any) => {
+      if (r.creator_id === user.id) return true;
+      if (r.requester_id === user.id) return true;
+      if (r.current_assignee_id === user.id) return true;
+      if (r.requirement_approval_flow && r.requirement_approval_flow.some((flow: any) => flow.approver_id === user.id)) return true;
+      return false;
+    });
+  }
+
+  // Fetch linked tasks separately to avoid complex join errors
+  const reqIds = filteredData.map(r => r.id);
+  let tasksMap: Record<string, any[]> = {};
+  
+  if (reqIds.length > 0) {
+    const { data: links } = await supabaseAdmin.from('requirement_tasks').select('requirement_id, task_id').in('requirement_id', reqIds);
+    if (links && links.length > 0) {
+      const taskIds = links.map(l => l.task_id);
+      const { data: tasksData } = await supabaseAdmin.from('tasks').select('id, status_master(is_closed)').in('id', taskIds).eq('is_deleted', false);
+      
+      if (tasksData) {
+        const taskObjMap: Record<string, any> = {};
+        tasksData.forEach(t => taskObjMap[t.id] = t);
+        
+        links.forEach(l => {
+          if (!tasksMap[l.requirement_id]) tasksMap[l.requirement_id] = [];
+          if (taskObjMap[l.task_id]) {
+            tasksMap[l.requirement_id].push(taskObjMap[l.task_id]);
+          }
+        });
+      }
+    }
+  }
+
+  return filteredData.map((d: any) => {
+    const tasks = tasksMap[d.id] || [];
+    const taskCount = tasks.length;
+    const closedTasks = tasks.filter((t: any) => t.status_master?.is_closed).length;
+    const openTasks = taskCount - closedTasks;
+    
+    let dueDays = "—";
+    if (d.due_date) {
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      const due = new Date(d.due_date);
+      due.setHours(0,0,0,0);
+      const diffTime = due.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        dueDays = `Overdue by ${Math.abs(diffDays)} days`;
+      } else if (diffDays === 0) {
+        dueDays = "Due Today";
+      } else {
+        dueDays = `${diffDays} days remaining`;
+      }
+    }
+
+    return {
+      ...d,
+      task_count: taskCount,
+      task_summary: taskCount > 0 ? `${openTasks} Open, ${closedTasks} Closed` : "No Tasks",
+      due_days: dueDays,
+      status_name: d.approval_status || 'Draft',
+      department_name: d.department?.name || "—",
+      priority_name: d.priority?.name || "—",
+      system_name: d.software_system?.name || "—",
+      module_name: d.module?.name || "—",
+      sub_module_name: d.sub_module?.name || "—",
+      requester_name: d.requester?.full_name || "—",
+      assignee_name: d.assignee?.full_name || "—",
+    };
+  });
+}
+
 export async function fetchRequirement(reqId: string) {
   const { unstable_noStore: noStore } = await import('next/cache');
   noStore();
@@ -508,6 +622,12 @@ export async function processApprovalAction(reqId: string, action: string, remar
      if (req.requester_id && req.requester_id !== performedBy) {
        await dispatchNotification(req.requester_id, 'Requirement Signed Off', `Requirement ${req.code} has been completely Signed Off.`, `/requirements/${finalReqId}`, 'REQUIREMENT', 'STATUS_SIGNOFF').catch((e: any) => console.error(e));
      }
+
+     const { data: reqCheck } = await supabaseAdmin.from('requirements').select('amendment_version').eq('id', finalReqId).single();
+     if (reqCheck && reqCheck.amendment_version > 0) {
+       await syncAmendmentToTasks(finalReqId, performedBy);
+     }
+
      revalidatePath(`/requirements/${finalReqId}`);
      return { success: true };
   }
@@ -552,6 +672,11 @@ export async function processApprovalAction(reqId: string, action: string, remar
     if (nextFlows && nextFlows.length > 0) {
       await supabaseAdmin.from('requirement_approval_flow').update({ status: 'Pending' }).eq('requirement_id', finalReqId).eq('level', nextLevel);
       await supabaseAdmin.from('requirements').update({ current_assignee_id: nextFlows[0].approver_id }).eq('id', finalReqId);
+
+      const { dispatchNotification } = await import('@/lib/actions/notifications');
+      for (const flow of nextFlows) {
+        await dispatchNotification(flow.approver_id, 'Requirement Approval Pending', `Requirement ${req.code} ("${req.title}") has reached level ${nextLevel} and is awaiting your approval.`, `/requirements/${finalReqId}?tab=approval`, 'REQUIREMENT', 'APPROVAL_PENDING').catch((e: any) => console.error("Failed to notify approver", e));
+      }
     } else {
       await supabaseAdmin.from('requirements').update({ approval_status: 'Pending SignOff', current_assignee_id: null }).eq('id', finalReqId);
       await logActivityEvent('REQUIREMENT', finalReqId, 'APPROVAL_COMPLETED', null, { message: 'All approval levels completed. Awaiting final SignOff.' }, performedBy);
@@ -582,6 +707,7 @@ export async function fetchRequirementApprovalFlow(reqId: string) {
     console.error("Error fetching approval flow:", error);
     return [];
   }
+  
   return data || [];
 }
 
@@ -669,7 +795,8 @@ export async function fetchLinkedTasks(reqId: string) {
         subject,
         status:status_master(name:status_name, status_color),
         assigned_to,
-        end_date
+        end_date,
+        is_deleted
       )
     `)
     .eq('requirement_id', reqId)
@@ -680,10 +807,12 @@ export async function fetchLinkedTasks(reqId: string) {
     return [];
   }
   
-  if (!data || data.length === 0) return [];
+  if (!data) return [];
+  const filteredData = data.filter((d: any) => d.task && !d.task.is_deleted);
+  if (filteredData.length === 0) return [];
   
   // Extract all assignee IDs to fetch names
-  const anyData = data as any[];
+  const anyData = filteredData as any[];
   const assigneeIds = anyData.map(r => r.task?.assigned_to).filter(Boolean);
   
   if (assigneeIds.length > 0) {
@@ -703,4 +832,122 @@ export async function fetchLinkedTasks(reqId: string) {
   }
 
   return anyData;
+}
+
+export async function evaluateRequirementReadyToUse(taskId: string) {
+  try {
+    const { data: links } = await supabaseAdmin.from('requirement_tasks').select('requirement_id').eq('task_id', taskId);
+    if (!links || links.length === 0) return;
+
+    for (const link of links) {
+      const reqId = link.requirement_id;
+      const { data: allLinkedTasks } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
+      if (!allLinkedTasks) continue;
+
+      const taskIds = allLinkedTasks.map(t => t.task_id);
+      const { data: tasks } = await supabaseAdmin.from('tasks').select('status_id').in('id', taskIds).eq('is_deleted', false);
+      if (!tasks) continue;
+
+      const statusIds = tasks.map(t => t.status_id).filter(Boolean);
+      if (statusIds.length === 0) continue;
+
+      const { data: statuses } = await supabaseAdmin.from('status_master').select('id, is_closed').in('id', statusIds);
+      const isAllClosed = statuses && statuses.every(s => s.is_closed === true);
+
+      if (isAllClosed) {
+        const { data: req } = await supabaseAdmin.from('requirements').select('approval_status').eq('id', reqId).single();
+        if (req && req.approval_status !== 'Ready to Put to Use' && req.approval_status !== 'Closed') {
+          await supabaseAdmin.from('requirements').update({ approval_status: 'Ready to Put to Use' }).eq('id', reqId);
+          await logActivityEvent('REQUIREMENT', reqId, 'STATUS_UPDATE', { status: req.approval_status }, { status: 'Ready to Put to Use' }, 'SYSTEM');
+        }
+      }
+    }
+  } catch (err) {
+    console.error('evaluateRequirementReadyToUse error:', err);
+  }
+}
+
+export async function markRequirementPutToUse(reqId: string, putToUseDate: string) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) return { error: 'Unauthenticated' };
+
+  const { data: req } = await supabaseAdmin.from('requirements').select('approval_status').eq('id', reqId).single();
+  if (!req) return { error: 'Requirement not found' };
+
+  const { error } = await supabaseAdmin.from('requirements').update({
+    approval_status: 'Closed',
+    put_to_use_date: putToUseDate
+  }).eq('id', reqId);
+
+  if (error) return { error: error.message };
+
+  await logActivityEvent('REQUIREMENT', reqId, 'PUT_TO_USE', { status: req.approval_status }, { status: 'Closed', put_to_use_date: putToUseDate }, user.id);
+  revalidatePath(`/requirements/${reqId}`);
+  return { success: true };
+}
+
+export async function syncAmendmentToTasks(reqId: string, performedBy: string) {
+  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, revised_details').eq('id', reqId).single();
+  if (!req || req.amendment_version === 0 || !req.revised_details) return;
+
+  const { data: linkedTasks } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
+  if (!linkedTasks || linkedTasks.length === 0) return;
+  const taskIds = linkedTasks.map((t: any) => t.task_id);
+
+  // Filter out closed tasks
+  const { data: activeTasks } = await supabaseAdmin.from('tasks')
+    .select('id, description, assigned_to')
+    .in('id', taskIds)
+    .not('status_id', 'in', (
+       await supabaseAdmin.from('status_master').select('id').in('status_code', ['CLOSED', 'RESOLVED']).then(res => res.data?.map(s => s.id) || [])
+    ));
+    
+  if (!activeTasks || activeTasks.length === 0) return;
+
+  const { dispatchNotification } = await import('@/lib/actions/notifications');
+
+  for (const task of activeTasks) {
+    const newDescription = (task.description || '') + `\n\n**Amendment Version ${req.amendment_version}**: ${req.revised_details}`;
+    
+    await supabaseAdmin.from('tasks').update({ description: newDescription }).eq('id', task.id);
+    
+    await logActivityEvent('TASK', task.id, 'REQUIREMENT_AMENDED', null, { 
+       message: `Requirement amended to version ${req.amendment_version}.`,
+       revised_details: req.revised_details 
+    }, performedBy);
+
+    if (task.assigned_to) {
+       await dispatchNotification(task.assigned_to, 'Requirement Revised', `The requirement for your task has been revised. Please check the updated details.`, `/tasks/${task.id}`, 'TASK', 'REQUIREMENT_AMENDED').catch(() => {});
+    }
+  }
+}
+
+export async function amendRequirement(reqId: string, revisedDetails: string, needsReapproval: boolean) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  if (!user) return { error: 'Unauthenticated' };
+  
+  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, code').eq('id', reqId).single();
+  if (!req) return { error: 'Requirement not found' };
+
+  const newVersion = (req.amendment_version || 0) + 1;
+  
+  await supabaseAdmin.from('requirements').update({
+     amendment_version: newVersion,
+     revised_details: revisedDetails
+  }).eq('id', reqId);
+
+  await logActivityEvent('REQUIREMENT', reqId, 'AMENDMENT_CREATED', null, { version: newVersion, revised_details: revisedDetails, needsReapproval }, user.id);
+
+  if (needsReapproval) {
+     await supabaseAdmin.from('requirements').update({ approval_status: 'Pending' }).eq('id', reqId);
+     await generateApprovalFlow(reqId, user.id);
+  } else {
+     // If no re-approval needed, auto-approve and immediately sync tasks
+     await syncAmendmentToTasks(reqId, user.id);
+  }
+
+  revalidatePath(`/requirements/${reqId}`);
+  return { success: true };
 }

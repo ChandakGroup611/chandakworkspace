@@ -5,6 +5,7 @@ import { RealtimeChat } from '../collaboration/RealtimeChat';
 import { handleRequirementUAT } from '@/lib/actions/requirements';
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { ListTodo, MessageSquare } from 'lucide-react';
+import { AppButton } from "@/components/ui/AppButton";
 
 export function RequirementDetailDrawer({ requirement, onClose }: { requirement: any, onClose: () => void }) {
   const [isPending, startTransition] = useTransition();
@@ -122,20 +123,20 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                         onChange={e => setUatComment(e.target.value)}
                       />
                       <div className="flex gap-3">
-                        <button 
+                        <AppButton 
                           onClick={() => handleUAT('PASS')}
                           disabled={isPending}
-                          className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-colors"
+                          className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           Approve & Close
-                        </button>
-                        <button 
+                        </AppButton>
+                        <AppButton 
                           onClick={() => handleUAT('FAIL')}
                           disabled={isPending}
-                          className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors"
+                          variant="destructive"
                         >
                           Fail & Reopen
-                        </button>
+                        </AppButton>
                       </div>
                     </section>
                   )}
@@ -197,7 +198,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               <div className="bg-gray-900/40 rounded-2xl p-5 border border-white/5">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex justify-between items-center mb-4">
                   Attachments
-                  <button className="text-indigo-400 hover:text-indigo-300 p-1 bg-indigo-500/10 rounded-md">+</button>
+                  <AppButton size="sm" variant="ghost" className="text-indigo-400 hover:text-indigo-300 p-1 bg-indigo-500/10">+</AppButton>
                 </h3>
                 <div className="space-y-3">
                   <div className="text-sm text-gray-400 flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/5">

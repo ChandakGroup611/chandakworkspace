@@ -803,6 +803,51 @@ const PERMS_TO_SEED: any[] = [
     "submodule": "Enrolled Workspaces",
     "action": "UPDATE",
     "resource_type": "PAGE"
+  },
+  {
+    "id": "e8e12a45-6a7b-4c89-9a1b-3f4a1c5d6e8b",
+    "code": "REQUIREMENTS_REPORTS_VIEW",
+    "name": "View Requirements Reports",
+    "module": "Requirements",
+    "submodule": "Requirement Analytics",
+    "action": "VIEW",
+    "resource_type": "PAGE"
+  },
+  {
+    "id": "2d1a3b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "code": "REQUIREMENTS_REPORTS_CREATE",
+    "name": "Create Requirements Reports",
+    "module": "Requirements",
+    "submodule": "Requirement Analytics",
+    "action": "CREATE",
+    "resource_type": "PAGE"
+  },
+  {
+    "id": "f5e6d7c8-b9a0-1c2d-3e4f-5a6b7c8d9e0f",
+    "code": "REQUIREMENTS_REPORTS_UPDATE",
+    "name": "Update Requirements Reports",
+    "module": "Requirements",
+    "submodule": "Requirement Analytics",
+    "action": "UPDATE",
+    "resource_type": "PAGE"
+  },
+  {
+    "id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "code": "REQUIREMENTS_REPORTS_DELETE",
+    "name": "Delete Requirements Reports",
+    "module": "Requirements",
+    "submodule": "Requirement Analytics",
+    "action": "DELETE",
+    "resource_type": "PAGE"
+  },
+  {
+    "id": "7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b",
+    "code": "REQUIREMENTS_REPORTS_MANAGE",
+    "name": "Manage Requirements Reports",
+    "module": "Requirements",
+    "submodule": "Requirement Analytics",
+    "action": "MANAGE",
+    "resource_type": "PAGE"
   }
 ];
 

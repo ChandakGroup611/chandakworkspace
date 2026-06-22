@@ -71,6 +71,7 @@ export async function createTask(payload: {
           .select('id')
           .eq('scope_type', 'TASK')
           .eq('is_deleted', false)
+          .order('status_order', { ascending: true })
           .limit(1);
 
         if (fallbackStatus && fallbackStatus.length > 0) {
@@ -235,6 +236,18 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
 
   if (!task) return { error: "Task not found" };
 
+  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins and Executives can transition it.
+  if (task.status_id) {
+    const { data: currentStatus } = await supabaseAdmin.from('status_master').select('is_closed, is_terminal').eq('id', task.status_id).single();
+    if (currentStatus && (currentStatus.is_closed || currentStatus.is_terminal)) {
+      const { hasPermission } = await import('@/lib/permissions');
+      const isExecutive = await hasPermission(userId, "WORKSPACES_MANAGE") || await hasPermission(userId, "REQUIREMENTS_MANAGE");
+      if (!isExecutive) {
+        return { error: "This task is strictly frozen because it is Closed. Only Super Admins and Executives can reopen it." };
+      }
+    }
+  }
+
   if (task.assigned_to !== userId) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
@@ -310,6 +323,14 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     assigned_to: task.assigned_to,
     link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
   }).catch(e => console.error("[NotificationEngine] Status change queue push failed", e));
+
+  // Trigger requirement evaluation
+  try {
+    const { evaluateRequirementReadyToUse } = await import('@/lib/actions/requirements');
+    await evaluateRequirementReadyToUse(taskId);
+  } catch (err) {
+    console.error('Failed to trigger requirement evaluation', err);
+  }
 
   return { success: true };
 }
@@ -672,8 +693,19 @@ export async function updateTask(taskId: string, payload: any) {
     });
   }
 
+  if (payload.status_id) {
+    try {
+      const { evaluateRequirementReadyToUse } = await import('@/lib/actions/requirements');
+      await evaluateRequirementReadyToUse(taskId);
+    } catch (err) {
+      console.error('Failed to trigger requirement evaluation', err);
+    }
+  }
+
   return { success: true };
-}export async function deleteTask(taskId: string) {
+}
+
+export async function deleteTask(taskId: string) {
   try {
     const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
     if (!task) return { error: "Task not found" };

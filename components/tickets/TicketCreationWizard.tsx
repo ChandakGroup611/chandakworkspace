@@ -8,6 +8,7 @@ import { TicketFormERP } from "./TicketFormERP";
 import { TicketFormOthers } from "./TicketFormOthers";
 import { X, ChevronLeft } from "lucide-react";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
+import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "../theme/ThemeProvider";
 
 
@@ -176,14 +177,16 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
       title={
         <div className="flex items-center gap-3">
           {step === "FORM" && (
-            <button 
+            <AppButton 
+              size="sm"
+              variant="ghost"
               onClick={handleBack}
-              className={`p-1.5 -ml-2 rounded-full transition-colors ${
-                isLightMode ? "hover:bg-gray-100 text-gray-500 hover:text-gray-900" : "hover:bg-white/5 text-gray-400 hover:text-white"
+              className={`p-1.5 -ml-2 rounded-full ${
+                isLightMode ? "text-gray-500" : "text-gray-400"
               }`}
             >
               <ChevronLeft className="h-6 w-6" />
-            </button>
+            </AppButton>
           )}
           <span>Initialize Operational Ticket</span>
         </div>

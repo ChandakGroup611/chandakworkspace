@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { AppButton } from "@/components/ui/AppButton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { X, Save } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -84,14 +85,11 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Update Requirement</h3>
-          <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+          <DialogTitle>Update Requirement</DialogTitle>
+        </DialogHeader>
 
         <div className="p-6 space-y-4 flex-1 overflow-y-auto">
           {error && (
@@ -157,14 +155,14 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] flex justify-end gap-3">
+        <DialogFooter className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] flex justify-end gap-3">
           <AppButton variant="outline" onClick={onClose} disabled={saving}>Cancel</AppButton>
           <AppButton variant="primary" onClick={handleSubmit} disabled={saving || loading}>
             {saving ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" /> : <Save className="w-4 h-4 mr-2" />}
             Update Requirement
           </AppButton>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

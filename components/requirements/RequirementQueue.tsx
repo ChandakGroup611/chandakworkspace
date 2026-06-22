@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { AppButton } from "@/components/ui/AppButton";
 
 export function RequirementQueue({ requirements }: { requirements: any[] }) {
   const { theme } = useTheme();
@@ -21,17 +22,15 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {['ALL', 'Requirement Registration', 'Planning', 'Pending', 'Approved', 'Rejected'].map(f => (
-            <button 
+            <AppButton 
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${
-                filter === f 
-                  ? 'bg-indigo-600 text-white' 
-                  : isLightMode ? 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50' : 'bg-gray-900/50 text-gray-400 hover:text-white border border-white/5'
-              }`}
+              variant={filter === f ? 'primary' : 'outline'}
+              size="sm"
+              className="rounded-xl text-xs font-bold"
             >
               {f.replace('_', ' ')}
-            </button>
+            </AppButton>
           ))}
         </div>
       </header>

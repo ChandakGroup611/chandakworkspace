@@ -36,6 +36,20 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
     notFound();
   }
 
+  const { hasPermission } = await import("@/lib/permissions");
+  const { cookies } = await import("next/headers");
+  const { createClient } = await import("@/utils/supabase/server");
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const isExecutive = user ? (await hasPermission(user.id, "WORKSPACES_MANAGE") || await hasPermission(user.id, "REQUIREMENTS_MANAGE")) : false;
+
+  const isClosed = task.status?.is_closed === true;
+  const isFrozen = isClosed && !isExecutive;
+  const effectiveReadOnly = isViewMode || isFrozen;
+
   return (
     <div className="space-y-6 pb-6 pt-2">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -156,7 +170,16 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
         </div>
 
         <div className="w-full">
-          <TaskExecutionController taskId={taskId} initialTask={task} initialStatuses={statuses} initialDepartments={departments} readOnly={isViewMode} />
+          {isFrozen && (
+            <div className="mb-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-4 shadow-sm flex items-start gap-3">
+              <span className="text-xl shrink-0">🧊</span>
+              <div>
+                <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Task is Frozen</h4>
+                <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">This task is strictly frozen because its status is Closed. Only Super Admins and Executives can edit or reopen it.</p>
+              </div>
+            </div>
+          )}
+          <TaskExecutionController taskId={taskId} initialTask={task} initialStatuses={statuses} initialDepartments={departments} readOnly={effectiveReadOnly} />
         </div>
       </div>
     </div>

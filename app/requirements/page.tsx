@@ -186,6 +186,16 @@ export default function RequirementsPage() {
             >
               Go to Approvals
             </AppButton>
+            {hasPermission("REQUIREMENTS_REPORTS_VIEW") && (
+              <AppButton 
+                variant="outline" 
+                size="sm" 
+                onClick={() => router.push('/requirements/reports')}
+                className="border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-100 dark:border-indigo-800/50"
+              >
+                Analysis & Reports
+              </AppButton>
+            )}
             <AppButton 
               variant="primary" 
               size="sm" 

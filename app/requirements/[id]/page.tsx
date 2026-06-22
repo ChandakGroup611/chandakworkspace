@@ -46,7 +46,15 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const [showWorkspaceSelector, setShowWorkspaceSelector] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>("");
   const [selectedSubWorkspaceId, setSelectedSubWorkspaceId] = useState<string>("");
-  
+
+  const [showPutToUseDialog, setShowPutToUseDialog] = useState(false);
+  const [putToUseDate, setPutToUseDate] = useState("");
+  const [submittingPutToUse, setSubmittingPutToUse] = useState(false);
+
+  const [showAmendmentDialog, setShowAmendmentDialog] = useState(false);
+  const [amendmentDetails, setAmendmentDetails] = useState("");
+  const [needsReapproval, setNeedsReapproval] = useState(false);
+  const [submittingAmendment, setSubmittingAmendment] = useState(false);
   const [formData, setFormData] = useState({
     objective: "",
     business_impact: "",
@@ -239,6 +247,40 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       loadData();
     }
   }, [reqId]);
+
+  const handlePutToUse = async () => {
+    if (!putToUseDate) return alert("Please select a put to use date");
+    setSubmittingPutToUse(true);
+    try {
+      const { markRequirementPutToUse } = await import("@/lib/actions/requirements");
+      const res = await markRequirementPutToUse(reqId, putToUseDate);
+      if (res.error) throw new Error(res.error);
+      setShowPutToUseDialog(false);
+      loadData();
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setSubmittingPutToUse(false);
+    }
+  };
+
+  const handleAmendment = async () => {
+    if (!amendmentDetails.trim()) return alert("Please enter the revised details.");
+    setSubmittingAmendment(true);
+    try {
+      const { amendRequirement } = await import("@/lib/actions/requirements");
+      const res = await amendRequirement(reqId, amendmentDetails, needsReapproval);
+      if (res.error) throw new Error(res.error);
+      setShowAmendmentDialog(false);
+      setAmendmentDetails("");
+      setNeedsReapproval(false);
+      loadData();
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setSubmittingAmendment(false);
+    }
+  };
 
   const handleEffortChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -464,13 +506,82 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               Delete
             </AppButton>
           )}
-          {!isViewMode && requirement.approval_status === 'Approved' && (
+          {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (
             <AppButton variant="primary" size="sm" leftIcon={<FilePlus className="h-4 w-4"/>} onClick={() => setShowWorkspaceSelector(true)}>
               Assign Task
             </AppButton>
           )}
+          {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (isSuperAdmin || requirement.creator_id === currentUserId) && (
+            <AppButton variant="secondary" size="sm" leftIcon={<Edit2 className="h-4 w-4"/>} onClick={() => setShowAmendmentDialog(true)}>
+              Change Requirement
+            </AppButton>
+          )}
+          {!isViewMode && (requirement.approval_status === 'Ready to Put to Use') && (
+            <AppButton variant="primary" size="sm" leftIcon={<CheckCircle className="h-4 w-4"/>} onClick={() => setShowPutToUseDialog(true)}>
+              Put to Use
+            </AppButton>
+          )}
         </div>
       </div>
+
+      <Dialog open={showAmendmentDialog} onOpenChange={setShowAmendmentDialog}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
+            <DialogTitle>Amend Requirement</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Revised Details of Requirement</label>
+              <textarea 
+                className="w-full flex min-h-[100px] rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:focus-visible:ring-gray-300" 
+                placeholder="Describe what has changed in the requirement..."
+                value={amendmentDetails}
+                onChange={(e) => setAmendmentDetails(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                id="needsReapproval" 
+                checked={needsReapproval}
+                onChange={(e) => setNeedsReapproval(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:ring-offset-gray-900"
+              />
+              <label htmlFor="needsReapproval" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 dark:text-gray-300">
+                Needs Re-Approval Flow?
+              </label>
+            </div>
+            <p className="text-[11px] text-gray-500">
+              If checked, the requirement will go back to Pending and a new approval flow will be triggered. If unchecked, the changes are auto-approved and will instantly push notifications to any active tasks linked to this requirement.
+            </p>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-gray-50 border-t border-gray-100 dark:bg-slate-950 dark:border-white/5">
+            <AppButton variant="outline" onClick={() => setShowAmendmentDialog(false)}>Cancel</AppButton>
+            <AppButton variant="primary" onClick={handleAmendment} isLoading={submittingAmendment} disabled={!amendmentDetails.trim()}>Submit Amendment</AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPutToUseDialog} onOpenChange={setShowPutToUseDialog}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
+            <DialogTitle>Put Requirement to Use</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Select Put to Use Date</label>
+              <AppInput type="date" value={putToUseDate} onChange={(e) => setPutToUseDate(e.target.value)} />
+            </div>
+            <p className="text-xs text-gray-500">
+              Setting this date will officially mark the requirement as Closed.
+            </p>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-gray-50 border-t border-gray-100 dark:bg-slate-950 dark:border-white/5">
+            <AppButton variant="outline" onClick={() => setShowPutToUseDialog(false)}>Cancel</AppButton>
+            <AppButton variant="primary" onClick={handlePutToUse} isLoading={submittingPutToUse} disabled={!putToUseDate}>Confirm</AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showWorkspaceSelector} onOpenChange={setShowWorkspaceSelector}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
@@ -524,7 +635,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
       {showTaskWizard && (
         <TaskCreationWizard 
-           workspaceId={selectedWorkspaceId}
+           workspaceId={selectedSubWorkspaceId || selectedWorkspaceId}
            initialTaskName={requirement.title || requirement.code}
            initialAttachments={attachments.map(att => ({
              file_name: att.original_file_name || att.file_name,
@@ -679,20 +790,22 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]" title={att.file_name}>{att.file_name}</span>
                         <span className="text-xs text-gray-400 mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
                         <div className="flex items-center gap-1 border-l border-gray-200 dark:border-white/10 pl-2">
-                          <button 
+                          <AppButton 
+                            variant="ghost" size="sm"
                             onClick={() => handleAttachmentAction(att.id, 'view')}
                             className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded transition-colors"
                             title="View Attachment"
                           >
                             <Eye className="h-4 w-4" />
-                          </button>
-                          <button 
+                          </AppButton>
+                          <AppButton 
+                            variant="ghost" size="sm"
                             onClick={() => handleAttachmentAction(att.id, 'download')}
                             className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded transition-colors"
                             title="Download Attachment"
                           >
                             <Download className="h-4 w-4" />
-                          </button>
+                          </AppButton>
                         </div>
                       </div>
                     ))}
@@ -906,7 +1019,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                 const orderIndex = selectedApprovers.indexOf(u.id) + 1;
                                 
                                 return (
-                                  <button
+                                  <AppButton
                                     type="button"
                                     key={u.id}
                                     onClick={() => {
@@ -919,7 +1032,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                         }
                                       });
                                     }}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
+                                    variant={isUserSelected ? "primary" : "outline"}
+                                    size="sm"
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-2 ${
                                       isUserSelected 
                                         ? "bg-indigo-600 border-indigo-600 text-white" 
                                         : "bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
@@ -928,7 +1043,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                   >
                                     {isUserSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
                                     {u.full_name}
-                                  </button>
+                                  </AppButton>
                                 );
                               })}
                               {deptUsers.length === 0 && <span className="text-xs text-gray-500">No users found in this department.</span>}
@@ -968,13 +1083,15 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                           Remarks History
                         </label>
-                        <button 
+                        <AppButton 
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setShowRemarksHistory(!showRemarksHistory)}
                           className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-2 py-1 rounded transition-colors"
                         >
                           {showRemarksHistory ? 'Hide History ▲' : 'Show History ▼'}
-                        </button>
+                        </AppButton>
                       </div>
                       
                       {showRemarksHistory && (
