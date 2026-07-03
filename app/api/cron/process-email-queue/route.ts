@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     // Mark as processing
-    const queueIds = queueItems.map(q => q.id);
+    const queueIds = queueItems.map((q: any) => q.id);
     await supabaseAdmin
       .from("email_queue")
       .update({ status: "PROCESSING" })

@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
         if (members && members.length > 0) {
           // Exclude the actor who triggered the event
-          const targets = members.filter(m => m.user_id !== event.actor_id);
+          const targets = members.filter((m: any) => m.user_id !== event.actor_id);
 
           if (targets.length > 0) {
             // Bulk insert into notification_queue (this triggers realtime for individuals)
