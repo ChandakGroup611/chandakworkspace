@@ -34,7 +34,6 @@ jobs:
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
-          cp server.js .next/standalone/server.js
 
       # Upload the compiled standalone files to Hostinger via FTP
       - name: Sync files via FTP
