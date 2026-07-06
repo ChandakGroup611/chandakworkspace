@@ -1316,7 +1316,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </AppTableHeader>
                   <AppTableBody>
                     {linkedTasks.map((link: any) => (
-                      <AppTableRow key={link.task_id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer" onClick={() => router.push(`/workspaces?task=${link.task_id}`)}>
+                      <AppTableRow key={link.task_id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer" onClick={() => router.push(`/tasks/${link.task_id}`)}>
                         <AppTableCell className="font-medium text-gray-900 dark:text-white">
                           {link.task?.subject || 'Untitled Task'}
                         </AppTableCell>

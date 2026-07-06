@@ -41,6 +41,8 @@ ALTER TABLE public.sprints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task_templates ENABLE ROW LEVEL SECURITY;
 
 -- 5. RLS Policies for Sprints
+DROP POLICY IF EXISTS "Users can view sprints in their workspaces" ON public.sprints;
+DROP POLICY IF EXISTS "Users can view sprints in their workspaces" ON public.sprints;
 CREATE POLICY "Users can view sprints in their workspaces" ON public.sprints
     FOR SELECT USING (
         workspace_id IN (
@@ -51,6 +53,8 @@ CREATE POLICY "Users can view sprints in their workspaces" ON public.sprints
         )
     );
 
+DROP POLICY IF EXISTS "Users can manage sprints in their workspaces" ON public.sprints;
+DROP POLICY IF EXISTS "Users can manage sprints in their workspaces" ON public.sprints;
 CREATE POLICY "Users can manage sprints in their workspaces" ON public.sprints
     FOR ALL USING (
         workspace_id IN (
@@ -62,6 +66,8 @@ CREATE POLICY "Users can manage sprints in their workspaces" ON public.sprints
     );
 
 -- 6. RLS Policies for Task Templates
+DROP POLICY IF EXISTS "Users can view templates in their workspaces" ON public.task_templates;
+DROP POLICY IF EXISTS "Users can view templates in their workspaces" ON public.task_templates;
 CREATE POLICY "Users can view templates in their workspaces" ON public.task_templates
     FOR SELECT USING (
         workspace_id IS NULL OR -- global templates
@@ -73,6 +79,8 @@ CREATE POLICY "Users can view templates in their workspaces" ON public.task_temp
         )
     );
 
+DROP POLICY IF EXISTS "Users can manage templates in their workspaces" ON public.task_templates;
+DROP POLICY IF EXISTS "Users can manage templates in their workspaces" ON public.task_templates;
 CREATE POLICY "Users can manage templates in their workspaces" ON public.task_templates
     FOR ALL USING (
         workspace_id IN (

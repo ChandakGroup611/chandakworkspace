@@ -119,32 +119,48 @@ CREATE TABLE IF NOT EXISTS public.task_comments (
 -- 6. Apply Minimal RLS globally
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "tasks Access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks Access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks Access" ON public.tasks;
 CREATE POLICY "tasks Access" ON public.tasks FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.task_assignees ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "task_assignees Access" ON public.task_assignees;
+DROP POLICY IF EXISTS "task_assignees Access" ON public.task_assignees;
 DROP POLICY IF EXISTS "task_assignees Access" ON public.task_assignees;
 CREATE POLICY "task_assignees Access" ON public.task_assignees FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.task_teams ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "task_teams Access" ON public.task_teams;
+DROP POLICY IF EXISTS "task_teams Access" ON public.task_teams;
+DROP POLICY IF EXISTS "task_teams Access" ON public.task_teams;
 CREATE POLICY "task_teams Access" ON public.task_teams FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.task_checklists ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "task_checklists Access" ON public.task_checklists;
+DROP POLICY IF EXISTS "task_checklists Access" ON public.task_checklists;
 DROP POLICY IF EXISTS "task_checklists Access" ON public.task_checklists;
 CREATE POLICY "task_checklists Access" ON public.task_checklists FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.task_watchers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "task_watchers Access" ON public.task_watchers;
+DROP POLICY IF EXISTS "task_watchers Access" ON public.task_watchers;
+DROP POLICY IF EXISTS "task_watchers Access" ON public.task_watchers;
 CREATE POLICY "task_watchers Access" ON public.task_watchers FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.task_dependencies ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "task_dependencies Access" ON public.task_dependencies;
+DROP POLICY IF EXISTS "task_dependencies Access" ON public.task_dependencies;
 DROP POLICY IF EXISTS "task_dependencies Access" ON public.task_dependencies;
 CREATE POLICY "task_dependencies Access" ON public.task_dependencies FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.task_custom_fields_master ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "task_custom_fields_master Access" ON public.task_custom_fields_master;
+DROP POLICY IF EXISTS "task_custom_fields_master Access" ON public.task_custom_fields_master;
+DROP POLICY IF EXISTS "task_custom_fields_master Access" ON public.task_custom_fields_master;
 CREATE POLICY "task_custom_fields_master Access" ON public.task_custom_fields_master FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.task_comments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "task_comments Access" ON public.task_comments;
+DROP POLICY IF EXISTS "task_comments Access" ON public.task_comments;
 DROP POLICY IF EXISTS "task_comments Access" ON public.task_comments;
 CREATE POLICY "task_comments Access" ON public.task_comments FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);

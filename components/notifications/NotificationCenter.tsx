@@ -6,6 +6,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { fetchUnreadNotifications, markNotificationAsRead } from "@/lib/actions/notifications";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { AppButton } from "@/components/ui/AppButton";
 
 export default function NotificationCenter() {
   const { theme } = useTheme();
@@ -105,9 +106,15 @@ export default function NotificationCenter() {
                 </span>
               </div>
               {unreadCount > 0 && (
-                <button onClick={handleMarkAllRead} className="text-xs text-indigo-500 hover:text-indigo-600 font-semibold flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" /> Mark all read
-                </button>
+                <AppButton 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleMarkAllRead} 
+                  leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
+                  className="h-7 px-2 text-[10px] text-indigo-500 hover:text-indigo-600 border-none bg-transparent"
+                >
+                  Mark all read
+                </AppButton>
               )}
             </div>
 

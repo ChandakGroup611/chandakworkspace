@@ -16,8 +16,9 @@ CREATE TABLE IF NOT EXISTS public.user_dashboard_preferences (
 ALTER TABLE public.user_dashboard_preferences ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can manage their own dashboard preferences" ON public.user_dashboard_preferences;
-CREATE POLICY "Users can manage their own dashboard preferences"
-    ON public.user_dashboard_preferences
+DROP POLICY IF EXISTS "Users can manage their own dashboard preferences" ON public.user_dashboard_preferences;
+DROP POLICY IF EXISTS "Users can manage their own dashboard preferences" ON public.user_dashboard_preferences;
+CREATE POLICY "Users can manage their own dashboard preferences" ON public.user_dashboard_preferences
     FOR ALL
     TO authenticated
     USING (auth.uid() = user_id)

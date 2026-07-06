@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { RealtimeChat } from '../collaboration/RealtimeChat';
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { CheckSquare, MessageSquare, ListTodo } from 'lucide-react';
+import { AppButton } from "@/components/ui/AppButton";
 
 export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<"details" | "collaboration">("details");
@@ -118,7 +119,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
               <div className="bg-gray-900/40 rounded-xl p-4 border border-white/5">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between">
                   Custom Fields
-                  <button className="text-indigo-400 hover:text-indigo-300">+</button>
+                  <AppButton size="sm" variant="ghost" className="h-6 w-6 p-0 text-indigo-400 hover:text-indigo-300 bg-indigo-500/10">+</AppButton>
                 </h3>
                 <div className="mt-4 space-y-3">
                   {Object.entries(task.custom_fields || {}).map(([key, val]: any) => (

@@ -101,6 +101,8 @@ $$;
 -- ----------------------------------------------------------------------------
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "policy_unified_tickets" ON public.tickets;
+DROP POLICY IF EXISTS "policy_unified_tickets" ON public.tickets;
+DROP POLICY IF EXISTS "policy_unified_tickets" ON public.tickets;
 CREATE POLICY "policy_unified_tickets" ON public.tickets 
     FOR ALL TO authenticated 
     USING (public.can_access_ticket(creator_id, assignee_id));

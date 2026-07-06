@@ -47,5 +47,6 @@ $$;
 
 -- Update WORKSPACES RLS Policy to use the new unified function
 DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
+DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
 CREATE POLICY policy_workspaces_select ON public.workspaces FOR SELECT TO authenticated
 USING (public.can_see_workspace(id, owner_id));

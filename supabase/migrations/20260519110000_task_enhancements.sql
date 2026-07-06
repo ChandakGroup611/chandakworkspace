@@ -10,10 +10,14 @@ ALTER TABLE public.workspace_tasks ADD COLUMN IF NOT EXISTS remarks TEXT;
 -- 2. Ensure RLS policies allow for UPDATE and DELETE by authorized personnel
 -- Assuming the creator or assignee can update
 DROP POLICY IF EXISTS "Enable UPDATE for task creators or assignees" ON public.workspace_tasks;
+DROP POLICY IF EXISTS "Enable UPDATE for task creators or assignees" ON public.workspace_tasks;
+DROP POLICY IF EXISTS "Enable UPDATE for task creators or assignees" ON public.workspace_tasks;
 CREATE POLICY "Enable UPDATE for task creators or assignees" ON public.workspace_tasks
     FOR UPDATE
     USING (auth.uid() = creator_id OR auth.uid() = assignee_id OR true); -- For demo purpose, allowing all authenticated to update, restrict as per enterprise policy.
 
+DROP POLICY IF EXISTS "Enable DELETE for task creators" ON public.workspace_tasks;
+DROP POLICY IF EXISTS "Enable DELETE for task creators" ON public.workspace_tasks;
 DROP POLICY IF EXISTS "Enable DELETE for task creators" ON public.workspace_tasks;
 CREATE POLICY "Enable DELETE for task creators" ON public.workspace_tasks
     FOR DELETE
@@ -21,6 +25,8 @@ CREATE POLICY "Enable DELETE for task creators" ON public.workspace_tasks
 
 -- 3. Ensure task attachments size column allows larger sizes if needed (it's INT, so fine)
 -- 4. Enable insert on task attachments for all authenticated (if not already)
+DROP POLICY IF EXISTS "Enable INSERT for task attachments" ON public.task_attachments;
+DROP POLICY IF EXISTS "Enable INSERT for task attachments" ON public.task_attachments;
 DROP POLICY IF EXISTS "Enable INSERT for task attachments" ON public.task_attachments;
 CREATE POLICY "Enable INSERT for task attachments" ON public.task_attachments
     FOR INSERT
@@ -52,6 +58,7 @@ DROP POLICY IF EXISTS policy_tasks_all ON public.workspace_tasks;
 DROP POLICY IF EXISTS policy_unified_tasks ON public.workspace_tasks;
 
 -- Step 2: Establish highly optimized, recursion-free SELECT/ALL policies for workspace_tasks
+DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
 CREATE POLICY policy_tasks_select ON public.workspace_tasks 
     FOR SELECT TO authenticated 
     USING (
@@ -61,6 +68,7 @@ CREATE POLICY policy_tasks_select ON public.workspace_tasks
         OR public.has_permission_snapshot('WORKSPACES_MANAGE')
     );
 
+DROP POLICY IF EXISTS policy_tasks_all ON public.workspace_tasks;
 CREATE POLICY policy_tasks_all ON public.workspace_tasks 
     FOR ALL TO authenticated 
     USING (
@@ -85,12 +93,15 @@ DROP POLICY IF EXISTS policy_task_teams_insert ON public.task_teams;
 DROP POLICY IF EXISTS policy_task_teams_delete ON public.task_teams;
 DROP POLICY IF EXISTS policy_task_teams_all ON public.task_teams;
 
+DROP POLICY IF EXISTS policy_task_teams_select ON public.task_teams;
 CREATE POLICY policy_task_teams_select ON public.task_teams FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_teams_insert ON public.task_teams;
 CREATE POLICY policy_task_teams_insert ON public.task_teams FOR INSERT TO authenticated 
     WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_teams_delete ON public.task_teams;
 CREATE POLICY policy_task_teams_delete ON public.task_teams FOR DELETE TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
@@ -99,9 +110,11 @@ ALTER TABLE public.task_attachments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS policy_task_attachments_select ON public.task_attachments;
 DROP POLICY IF EXISTS policy_task_attachments_insert ON public.task_attachments;
 
+DROP POLICY IF EXISTS policy_task_attachments_select ON public.task_attachments;
 CREATE POLICY policy_task_attachments_select ON public.task_attachments FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_attachments_insert ON public.task_attachments;
 CREATE POLICY policy_task_attachments_insert ON public.task_attachments FOR INSERT TO authenticated 
     WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
@@ -110,9 +123,11 @@ ALTER TABLE public.task_chat_messages ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS policy_task_chat_select ON public.task_chat_messages;
 DROP POLICY IF EXISTS policy_task_chat_insert ON public.task_chat_messages;
 
+DROP POLICY IF EXISTS policy_task_chat_select ON public.task_chat_messages;
 CREATE POLICY policy_task_chat_select ON public.task_chat_messages FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_chat_insert ON public.task_chat_messages;
 CREATE POLICY policy_task_chat_insert ON public.task_chat_messages FOR INSERT TO authenticated 
     WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
@@ -121,16 +136,20 @@ ALTER TABLE public.task_assignees ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS policy_task_assignees_select ON public.task_assignees;
 DROP POLICY IF EXISTS policy_task_assignees_all ON public.task_assignees;
 
+DROP POLICY IF EXISTS policy_task_assignees_select ON public.task_assignees;
 CREATE POLICY policy_task_assignees_select ON public.task_assignees FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_assignees_all ON public.task_assignees;
 CREATE POLICY policy_task_assignees_all ON public.task_assignees FOR ALL TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
 -- Ensure teams and team members tables are readable by all authenticated
 DROP POLICY IF EXISTS policy_teams_select ON public.teams;
+DROP POLICY IF EXISTS policy_teams_select ON public.teams;
 CREATE POLICY policy_teams_select ON public.teams FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS policy_team_members_select ON public.team_members;
 DROP POLICY IF EXISTS policy_team_members_select ON public.team_members;
 CREATE POLICY policy_team_members_select ON public.team_members FOR SELECT TO authenticated USING (true);
 
@@ -277,16 +296,19 @@ FOR EACH ROW EXECUTE FUNCTION public.handle_task_audit_and_notification();
 -- Secure audit log and notifications tables with RLS policies
 ALTER TABLE public.task_activity_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS policy_task_activity_logs_select ON public.task_activity_logs;
+DROP POLICY IF EXISTS policy_task_activity_logs_select ON public.task_activity_logs;
 CREATE POLICY policy_task_activity_logs_select ON public.task_activity_logs 
     FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_activity_logs_insert ON public.task_activity_logs;
 DROP POLICY IF EXISTS policy_task_activity_logs_insert ON public.task_activity_logs;
 CREATE POLICY policy_task_activity_logs_insert ON public.task_activity_logs 
     FOR INSERT TO authenticated 
     WITH CHECK (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
 ALTER TABLE public.task_notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS policy_task_notifications_select ON public.task_notifications;
 DROP POLICY IF EXISTS policy_task_notifications_select ON public.task_notifications;
 CREATE POLICY policy_task_notifications_select ON public.task_notifications 
     FOR SELECT TO authenticated 
@@ -295,10 +317,12 @@ CREATE POLICY policy_task_notifications_select ON public.task_notifications
 -- Secure task_audit_logs
 ALTER TABLE public.task_audit_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS policy_task_audit_logs_select ON public.task_audit_logs;
+DROP POLICY IF EXISTS policy_task_audit_logs_select ON public.task_audit_logs;
 CREATE POLICY policy_task_audit_logs_select ON public.task_audit_logs 
     FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.workspace_tasks wt WHERE wt.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_audit_logs_insert ON public.task_audit_logs;
 DROP POLICY IF EXISTS policy_task_audit_logs_insert ON public.task_audit_logs;
 CREATE POLICY policy_task_audit_logs_insert ON public.task_audit_logs 
     FOR INSERT TO authenticated 

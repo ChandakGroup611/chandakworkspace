@@ -44,45 +44,52 @@ ALTER TABLE public.report_field_master ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_report_layout ENABLE ROW LEVEL SECURITY;
 
 -- Report Master is readable by authenticated users
-CREATE POLICY "Report Master is readable by all authenticated users"
-    ON public.report_master FOR SELECT
+DROP POLICY IF EXISTS "Report Master is readable by all authenticated users" ON public.report_master;
+DROP POLICY IF EXISTS "Report Master is readable by all authenticated users" ON public.report_master;
+CREATE POLICY "Report Master is readable by all authenticated users" ON public.report_master FOR SELECT
     TO authenticated
     USING (true);
 
 -- Report Field Master is readable by authenticated users
-CREATE POLICY "Report Field Master is readable by all authenticated users"
-    ON public.report_field_master FOR SELECT
+DROP POLICY IF EXISTS "Report Field Master is readable by all authenticated users" ON public.report_field_master;
+DROP POLICY IF EXISTS "Report Field Master is readable by all authenticated users" ON public.report_field_master;
+CREATE POLICY "Report Field Master is readable by all authenticated users" ON public.report_field_master FOR SELECT
     TO authenticated
     USING (true);
 
 -- Users can read their own report layouts
-CREATE POLICY "Users can read their own report layouts"
-    ON public.user_report_layout FOR SELECT
+DROP POLICY IF EXISTS "Users can read their own report layouts" ON public.user_report_layout;
+DROP POLICY IF EXISTS "Users can read their own report layouts" ON public.user_report_layout;
+CREATE POLICY "Users can read their own report layouts" ON public.user_report_layout FOR SELECT
     TO authenticated
     USING (auth.uid() = user_id);
 
 -- Users can insert their own report layouts
-CREATE POLICY "Users can insert their own report layouts"
-    ON public.user_report_layout FOR INSERT
+DROP POLICY IF EXISTS "Users can insert their own report layouts" ON public.user_report_layout;
+DROP POLICY IF EXISTS "Users can insert their own report layouts" ON public.user_report_layout;
+CREATE POLICY "Users can insert their own report layouts" ON public.user_report_layout FOR INSERT
     TO authenticated
     WITH CHECK (auth.uid() = user_id);
 
 -- Users can update their own report layouts
-CREATE POLICY "Users can update their own report layouts"
-    ON public.user_report_layout FOR UPDATE
+DROP POLICY IF EXISTS "Users can update their own report layouts" ON public.user_report_layout;
+DROP POLICY IF EXISTS "Users can update their own report layouts" ON public.user_report_layout;
+CREATE POLICY "Users can update their own report layouts" ON public.user_report_layout FOR UPDATE
     TO authenticated
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
 -- Users can delete their own report layouts
-CREATE POLICY "Users can delete their own report layouts"
-    ON public.user_report_layout FOR DELETE
+DROP POLICY IF EXISTS "Users can delete their own report layouts" ON public.user_report_layout;
+DROP POLICY IF EXISTS "Users can delete their own report layouts" ON public.user_report_layout;
+CREATE POLICY "Users can delete their own report layouts" ON public.user_report_layout FOR DELETE
     TO authenticated
     USING (auth.uid() = user_id);
 
 -- Allow super admins to manage master tables
-CREATE POLICY "Super admins can manage report master"
-    ON public.report_master FOR ALL
+DROP POLICY IF EXISTS "Super admins can manage report master" ON public.report_master;
+DROP POLICY IF EXISTS "Super admins can manage report master" ON public.report_master;
+CREATE POLICY "Super admins can manage report master" ON public.report_master FOR ALL
     TO authenticated
     USING (EXISTS (
         SELECT 1 FROM user_roles ur
@@ -90,8 +97,9 @@ CREATE POLICY "Super admins can manage report master"
         WHERE ur.user_id = auth.uid() AND r.code IN ('SUPER_ADMIN', 'ROLE_SUPER_ADMIN')
     ));
 
-CREATE POLICY "Super admins can manage report fields"
-    ON public.report_field_master FOR ALL
+DROP POLICY IF EXISTS "Super admins can manage report fields" ON public.report_field_master;
+DROP POLICY IF EXISTS "Super admins can manage report fields" ON public.report_field_master;
+CREATE POLICY "Super admins can manage report fields" ON public.report_field_master FOR ALL
     TO authenticated
     USING (EXISTS (
         SELECT 1 FROM user_roles ur

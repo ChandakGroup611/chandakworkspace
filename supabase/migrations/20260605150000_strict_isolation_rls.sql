@@ -5,8 +5,9 @@
 -- 1. STRICT TASK POLICIES
 -- ------------------------------------------------------------------------------
 DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
-CREATE POLICY "tasks_strict_select"
-ON public.tasks FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
+CREATE POLICY "tasks_strict_select" ON public.tasks FOR SELECT TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid() OR
@@ -15,8 +16,9 @@ USING (
 );
 
 DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
-CREATE POLICY "tasks_strict_update"
-ON public.tasks FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+CREATE POLICY "tasks_strict_update" ON public.tasks FOR UPDATE TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid() OR
@@ -25,8 +27,9 @@ USING (
 );
 
 DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
-CREATE POLICY "tasks_strict_delete"
-ON public.tasks FOR DELETE TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
+CREATE POLICY "tasks_strict_delete" ON public.tasks FOR DELETE TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid()
@@ -36,8 +39,9 @@ USING (
 -- 2. STRICT TASK PARTICIPANTS POLICIES
 -- ------------------------------------------------------------------------------
 DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
-CREATE POLICY "task_participants_select"
-ON public.task_participants FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
+CREATE POLICY "task_participants_select" ON public.task_participants FOR SELECT TO authenticated
 USING (
   public.is_super_admin() OR
   user_id = auth.uid() OR

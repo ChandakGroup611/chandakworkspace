@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Briefcase, ListTodo, Layers, ArrowUpRight } from "lucide-react";
+import { AppButton } from "@/components/ui/AppButton";
 
 export function WorkloadIntelligence({ workload }: { workload: any }) {
   return (
@@ -49,9 +50,13 @@ export function WorkloadIntelligence({ workload }: { workload: any }) {
         </div>
       </div>
       
-      <button className="w-full mt-6 flex items-center justify-center gap-2 text-xs font-bold text-indigo-500 hover:text-indigo-600 transition-colors py-2 bg-indigo-500/5 hover:bg-indigo-500/10 rounded-xl">
-        View Assignment Queue <ArrowUpRight className="w-3 h-3" />
-      </button>
+      <AppButton 
+        variant="secondary" 
+        className="w-full mt-6 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-500 hover:text-indigo-600 border-none rounded-xl"
+        rightIcon={<ArrowUpRight className="w-3 h-3" />}
+      >
+        View Assignment Queue
+      </AppButton>
     </div>
   );
 }

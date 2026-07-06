@@ -54,6 +54,7 @@ CREATE TABLE public.user_permissions_snapshot (
 
 ALTER TABLE public.user_permissions_snapshot ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS policy_ups_select ON public.user_permissions_snapshot;
+DROP POLICY IF EXISTS policy_ups_select ON public.user_permissions_snapshot;
 CREATE POLICY policy_ups_select ON public.user_permissions_snapshot FOR SELECT TO authenticated USING (true);
 
 -- Rebuild any known helper functions after table re-creation.
@@ -422,12 +423,14 @@ DROP POLICY IF EXISTS policy_ups_all ON public.user_permissions_snapshot;
 
 -- Recreate policy_ups_select to allow reading permissions snapshot
 DROP POLICY IF EXISTS policy_ups_select ON public.user_permissions_snapshot;
+DROP POLICY IF EXISTS policy_ups_select ON public.user_permissions_snapshot;
 CREATE POLICY policy_ups_select ON public.user_permissions_snapshot FOR SELECT TO authenticated USING (true);
 
 -- Ensure RLS is enabled on user_master
 ALTER TABLE public.user_master ENABLE ROW LEVEL SECURITY;
 
 -- Reinstate SELECT policy
+DROP POLICY IF EXISTS policy_users_select ON public.user_master;
 CREATE POLICY policy_users_select ON public.user_master FOR SELECT TO authenticated
 USING (
     id = auth.uid()
@@ -441,6 +444,7 @@ USING (
 --       Staff with USERS_UPDATE permission may update OTHER users' records
 --       (subject to can_access_record scope), but CANNOT escalate or override
 --       their own profile beyond the self-edit branch.
+DROP POLICY IF EXISTS policy_users_update ON public.user_master;
 CREATE POLICY policy_users_update ON public.user_master FOR UPDATE TO authenticated
 USING (
     -- Branch 1: Self — any authenticated user may edit their own record
@@ -467,6 +471,7 @@ WITH CHECK (
 );
 
 -- Reinstate INSERT policy for administrative user provisioning
+DROP POLICY IF EXISTS policy_users_insert ON public.user_master;
 CREATE POLICY policy_users_insert ON public.user_master FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
@@ -474,6 +479,7 @@ WITH CHECK (
 );
 
 -- Reinstate DELETE policy
+DROP POLICY IF EXISTS policy_users_delete ON public.user_master;
 CREATE POLICY policy_users_delete ON public.user_master FOR DELETE TO authenticated
 USING (
     public.is_super_admin()

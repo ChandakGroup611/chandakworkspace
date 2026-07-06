@@ -169,6 +169,8 @@ ALTER TABLE public.sub_tasks ENABLE ROW LEVEL SECURITY;
 
 -- Sub Workspaces Visibility: Only if workspace member
 DROP POLICY IF EXISTS "sub_workspaces_visibility" ON public.sub_workspaces;
+DROP POLICY IF EXISTS "sub_workspaces_visibility" ON public.sub_workspaces;
+DROP POLICY IF EXISTS "sub_workspaces_visibility" ON public.sub_workspaces;
 CREATE POLICY "sub_workspaces_visibility" ON public.sub_workspaces FOR SELECT TO authenticated USING (
     EXISTS (
         SELECT 1 FROM public.workspace_members 
@@ -178,6 +180,8 @@ CREATE POLICY "sub_workspaces_visibility" ON public.sub_workspaces FOR SELECT TO
 );
 
 -- Sub Workspace Members Visibility
+DROP POLICY IF EXISTS "sub_workspace_members_visibility" ON public.sub_workspace_members;
+DROP POLICY IF EXISTS "sub_workspace_members_visibility" ON public.sub_workspace_members;
 DROP POLICY IF EXISTS "sub_workspace_members_visibility" ON public.sub_workspace_members;
 CREATE POLICY "sub_workspace_members_visibility" ON public.sub_workspace_members FOR SELECT TO authenticated USING (
     EXISTS (
@@ -189,6 +193,8 @@ CREATE POLICY "sub_workspace_members_visibility" ON public.sub_workspace_members
 
 -- Tasks Visibility Enhancements (Workspace + Sub Workspace)
 DROP POLICY IF EXISTS "tasks_select" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_select" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_select" ON public.tasks;
 CREATE POLICY "tasks_select" ON public.tasks FOR SELECT TO authenticated USING (
     EXISTS (
         SELECT 1 FROM public.workspace_members 
@@ -198,6 +204,8 @@ CREATE POLICY "tasks_select" ON public.tasks FOR SELECT TO authenticated USING (
 );
 
 -- Sub Tasks Visibility
+DROP POLICY IF EXISTS "sub_tasks_select" ON public.sub_tasks;
+DROP POLICY IF EXISTS "sub_tasks_select" ON public.sub_tasks;
 DROP POLICY IF EXISTS "sub_tasks_select" ON public.sub_tasks;
 CREATE POLICY "sub_tasks_select" ON public.sub_tasks FOR SELECT TO authenticated USING (
     EXISTS (

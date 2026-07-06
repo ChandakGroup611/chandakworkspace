@@ -12,6 +12,7 @@ import {
   Database, 
   FolderKanban, 
   ChevronLeft, 
+  ShieldCheck,
   ChevronRight,
   Sparkles,
   UserCheck,
@@ -85,6 +86,7 @@ const navGroups: NavGroup[] = [
     label: "Governance & Analysis",
     items: [
       { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert, permission: "SLA_VIEW" },
+      { label: "AMC & Subscriptions", href: "/amc", icon: ShieldCheck, permission: "AMC_VIEW" },
       { label: "User Master", href: "/users", icon: Users, permission: "USERS_VIEW" },
       { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
       { label: "Learning Hub", href: "/learning", icon: BookOpen, permission: "LEARNING_VIEW" },

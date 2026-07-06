@@ -50,6 +50,7 @@ $$;
 -- 3. Make sure ALL users can read basic user_master details so UI doesn't break
 -- We restore basic visibility of user_master for authenticated users so "creator" and "assignee" relationships don't come back null
 DROP POLICY IF EXISTS policy_user_master_basic_select ON public.user_master;
+DROP POLICY IF EXISTS policy_user_master_basic_select ON public.user_master;
 CREATE POLICY policy_user_master_basic_select ON public.user_master
 FOR SELECT TO authenticated
 USING (true);

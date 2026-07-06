@@ -28,10 +28,12 @@ ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
 -- evaluate visibility and generate signed URLs, or implement generic RLS mirroring `tickets` visibility.
 -- For now, we allow SELECT if the user is the uploader, or via backend bypass.
 DROP POLICY IF EXISTS policy_attachments_select ON public.attachments;
+DROP POLICY IF EXISTS policy_attachments_select ON public.attachments;
 CREATE POLICY policy_attachments_select ON public.attachments
     FOR SELECT TO authenticated
     USING (uploaded_by = auth.uid() OR public.has_permission_snapshot('ATTACHMENTS_VIEW'));
 
+DROP POLICY IF EXISTS policy_attachments_insert ON public.attachments;
 DROP POLICY IF EXISTS policy_attachments_insert ON public.attachments;
 CREATE POLICY policy_attachments_insert ON public.attachments
     FOR INSERT TO authenticated

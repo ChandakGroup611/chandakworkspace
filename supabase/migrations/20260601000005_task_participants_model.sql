@@ -17,14 +17,22 @@ ALTER TABLE public.task_participants ENABLE ROW LEVEL SECURITY;
 -- A user can see task participants if they can see the task.
 -- To avoid recursion, we just let authenticated users select from it.
 DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
 CREATE POLICY "task_participants_select" ON public.task_participants FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
 
+DROP POLICY IF EXISTS "task_participants_insert" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_insert" ON public.task_participants;
 DROP POLICY IF EXISTS "task_participants_insert" ON public.task_participants;
 CREATE POLICY "task_participants_insert" ON public.task_participants FOR INSERT TO authenticated WITH CHECK (auth.uid() IS NOT NULL);
 
 DROP POLICY IF EXISTS "task_participants_update" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_update" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_update" ON public.task_participants;
 CREATE POLICY "task_participants_update" ON public.task_participants FOR UPDATE TO authenticated USING (auth.uid() IS NOT NULL);
 
+DROP POLICY IF EXISTS "task_participants_delete" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_delete" ON public.task_participants;
 DROP POLICY IF EXISTS "task_participants_delete" ON public.task_participants;
 CREATE POLICY "task_participants_delete" ON public.task_participants FOR DELETE TO authenticated USING (auth.uid() IS NOT NULL);
 
@@ -51,6 +59,8 @@ FOR EACH ROW EXECUTE FUNCTION public.sync_task_owner_to_participants();
 
 -- 4. Overwrite Task RLS to be strictly scope-bound (No recursion)
 DROP POLICY IF EXISTS "tasks_member_access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_member_access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_member_access" ON public.tasks;
 CREATE POLICY "tasks_member_access" ON public.tasks FOR SELECT TO authenticated USING (
     -- Super Admin Bypass
     COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('SUPER_ADMIN', 'ROLE_ADMIN') OR
@@ -64,6 +74,8 @@ CREATE POLICY "tasks_member_access" ON public.tasks FOR SELECT TO authenticated 
 );
 
 DROP POLICY IF EXISTS "tasks_insert_access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_insert_access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_insert_access" ON public.tasks;
 CREATE POLICY "tasks_insert_access" ON public.tasks FOR INSERT TO authenticated WITH CHECK (
     -- Super Admin Bypass
     COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') IN ('SUPER_ADMIN', 'ROLE_ADMIN') OR
@@ -71,6 +83,8 @@ CREATE POLICY "tasks_insert_access" ON public.tasks FOR INSERT TO authenticated 
     EXISTS (SELECT 1 FROM public.workspace_members wm WHERE wm.workspace_id = workspace_id AND wm.user_id = auth.uid() AND wm.is_deleted = false)
 );
 
+DROP POLICY IF EXISTS "tasks_update_access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_update_access" ON public.tasks;
 DROP POLICY IF EXISTS "tasks_update_access" ON public.tasks;
 CREATE POLICY "tasks_update_access" ON public.tasks FOR UPDATE TO authenticated USING (
     -- Super Admin Bypass
@@ -81,6 +95,8 @@ CREATE POLICY "tasks_update_access" ON public.tasks FOR UPDATE TO authenticated 
     EXISTS (SELECT 1 FROM public.workspace_members wm WHERE wm.workspace_id = tasks.workspace_id AND wm.user_id = auth.uid() AND wm.is_deleted = false)
 );
 
+DROP POLICY IF EXISTS "tasks_delete_access" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_delete_access" ON public.tasks;
 DROP POLICY IF EXISTS "tasks_delete_access" ON public.tasks;
 CREATE POLICY "tasks_delete_access" ON public.tasks FOR DELETE TO authenticated USING (
     -- Super Admin Bypass

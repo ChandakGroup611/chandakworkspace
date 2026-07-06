@@ -175,8 +175,8 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <AppCard className={`shadow-2xl backdrop-blur-xl transition-all ${
-          isLight ? "bg-white/95 border-gray-200 shadow-gray-200/50" : "bg-[#0A0D14]/90 border-white/10"
+        <AppCard className={`shadow-2xl backdrop-blur-2xl transition-all duration-300 border hover:shadow-3xl hover:-translate-y-1 ${
+          isLight ? "bg-white/80 border-gray-200 shadow-blue-900/5 hover:border-gray-300" : "bg-[#0A0D14]/70 border-white/10 shadow-black/50 hover:border-white/20"
         }`}>
           <AppCardHeader className={`pb-3 border-b text-center ${isLight ? "border-gray-100" : "border-white/5"}`}>
             <AppCardTitle className={`text-base font-bold flex items-center justify-center gap-2 ${isLight ? "text-gray-900" : "text-white"}`}>

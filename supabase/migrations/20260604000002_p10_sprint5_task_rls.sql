@@ -10,8 +10,9 @@ DROP POLICY IF EXISTS "Task Owner Full Access" ON public.tasks;
 DROP POLICY IF EXISTS "Execution Team View Access" ON public.tasks;
 
 -- 2. Super Admin Access: Full Control
-CREATE POLICY "Super Admin Full Access to Tasks" 
-ON public.tasks 
+DROP POLICY IF EXISTS "Super Admin Full Access to Tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Super Admin Full Access to Tasks" ON public.tasks;
+CREATE POLICY "Super Admin Full Access to Tasks" ON public.tasks 
 FOR ALL 
 TO authenticated 
 USING (
@@ -30,8 +31,9 @@ WITH CHECK (
 );
 
 -- 3. Task Owner Access: Full Control (Edit, Delete, Status Change, Reassign)
-CREATE POLICY "Task Owner Full Access" 
-ON public.tasks 
+DROP POLICY IF EXISTS "Task Owner Full Access" ON public.tasks;
+DROP POLICY IF EXISTS "Task Owner Full Access" ON public.tasks;
+CREATE POLICY "Task Owner Full Access" ON public.tasks 
 FOR ALL 
 TO authenticated 
 USING (
@@ -42,8 +44,9 @@ WITH CHECK (
 );
 
 -- 4. Execution Team Access: View Only (Comments, Attachments, Remarks handled in their own tables)
-CREATE POLICY "Execution Team View Access" 
-ON public.tasks 
+DROP POLICY IF EXISTS "Execution Team View Access" ON public.tasks;
+DROP POLICY IF EXISTS "Execution Team View Access" ON public.tasks;
+CREATE POLICY "Execution Team View Access" ON public.tasks 
 FOR SELECT 
 TO authenticated 
 USING (
@@ -61,8 +64,9 @@ DROP POLICY IF EXISTS "Task Participants Can Add Comments" ON public.task_commen
 DROP POLICY IF EXISTS "Task Owners Can Add Comments" ON public.task_comments;
 DROP POLICY IF EXISTS "Super Admin Can Add Comments" ON public.task_comments;
 
-CREATE POLICY "Task Participants Can Add Comments"
-ON public.task_comments
+DROP POLICY IF EXISTS "Task Participants Can Add Comments" ON public.task_comments;
+DROP POLICY IF EXISTS "Task Participants Can Add Comments" ON public.task_comments;
+CREATE POLICY "Task Participants Can Add Comments" ON public.task_comments
 FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -73,8 +77,9 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Task Owners Can Add Comments"
-ON public.task_comments
+DROP POLICY IF EXISTS "Task Owners Can Add Comments" ON public.task_comments;
+DROP POLICY IF EXISTS "Task Owners Can Add Comments" ON public.task_comments;
+CREATE POLICY "Task Owners Can Add Comments" ON public.task_comments
 FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -85,8 +90,9 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Super Admin Can Add Comments"
-ON public.task_comments
+DROP POLICY IF EXISTS "Super Admin Can Add Comments" ON public.task_comments;
+DROP POLICY IF EXISTS "Super Admin Can Add Comments" ON public.task_comments;
+CREATE POLICY "Super Admin Can Add Comments" ON public.task_comments
 FOR ALL
 TO authenticated
 USING (

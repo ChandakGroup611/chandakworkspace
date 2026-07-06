@@ -12,6 +12,8 @@ DROP POLICY IF EXISTS "policy_user_master_governance" ON public.user_master;
 
 -- 2. REINSTATE ONLY THE STABLE, NON-RECURSIVE UNIFIED POLICY
 DROP POLICY IF EXISTS "policy_unified_personnel" ON public.user_master;
+DROP POLICY IF EXISTS "policy_unified_personnel" ON public.user_master;
+DROP POLICY IF EXISTS "policy_unified_personnel" ON public.user_master;
 CREATE POLICY "policy_unified_personnel" ON public.user_master FOR ALL TO authenticated USING (
     public.can_access_record(id, manager_id, department_id)
 );

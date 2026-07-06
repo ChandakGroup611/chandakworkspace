@@ -7,8 +7,9 @@
 -- was checking for 'WORKSPACE_MANAGER' or 'WORKSPACE_OWNER'.
 
 DROP POLICY IF EXISTS "workspaces_strict_update" ON public.workspaces;
-CREATE POLICY "workspaces_strict_update"
-ON public.workspaces FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "workspaces_strict_update" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces_strict_update" ON public.workspaces;
+CREATE POLICY "workspaces_strict_update" ON public.workspaces FOR UPDATE TO authenticated
 USING (
   public.is_super_admin() OR
   workspace_owner_id = auth.uid() OR
@@ -21,16 +22,18 @@ USING (
 );
 
 DROP POLICY IF EXISTS "workspaces_strict_delete" ON public.workspaces;
-CREATE POLICY "workspaces_strict_delete"
-ON public.workspaces FOR DELETE TO authenticated
+DROP POLICY IF EXISTS "workspaces_strict_delete" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces_strict_delete" ON public.workspaces;
+CREATE POLICY "workspaces_strict_delete" ON public.workspaces FOR DELETE TO authenticated
 USING (public.is_super_admin() OR workspace_owner_id = auth.uid());
 
 
 -- 2. FIX TASKS POLICIES (Role name mismatch)
 
 DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
-CREATE POLICY "tasks_strict_update"
-ON public.tasks FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+CREATE POLICY "tasks_strict_update" ON public.tasks FOR UPDATE TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid() OR
@@ -40,8 +43,9 @@ USING (
 );
 
 DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
-CREATE POLICY "tasks_strict_delete"
-ON public.tasks FOR DELETE TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
+CREATE POLICY "tasks_strict_delete" ON public.tasks FOR DELETE TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid() OR
@@ -64,8 +68,9 @@ DROP POLICY IF EXISTS "policy_unified_requirements" ON public.requirements;
 
 -- SELECT POLICY: Users can see requirements if they created them, are assigned analysts, 
 -- are approvers/watchers, manage the department, or have global permissions.
-CREATE POLICY "requirements_strict_select"
-ON public.requirements FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "requirements_strict_select" ON public.requirements;
+DROP POLICY IF EXISTS "requirements_strict_select" ON public.requirements;
+CREATE POLICY "requirements_strict_select" ON public.requirements FOR SELECT TO authenticated
 USING (
   public.is_super_admin() OR
   created_by = auth.uid() OR
@@ -76,13 +81,15 @@ USING (
 );
 
 -- INSERT POLICY: Restricted by application logic (Server Actions), but at DB level we require auth.
-CREATE POLICY "requirements_strict_insert"
-ON public.requirements FOR INSERT TO authenticated
+DROP POLICY IF EXISTS "requirements_strict_insert" ON public.requirements;
+DROP POLICY IF EXISTS "requirements_strict_insert" ON public.requirements;
+CREATE POLICY "requirements_strict_insert" ON public.requirements FOR INSERT TO authenticated
 WITH CHECK (auth.uid() IS NOT NULL);
 
 -- UPDATE POLICY: Only Creator, Analyst, Approver, or Admin can update.
-CREATE POLICY "requirements_strict_update"
-ON public.requirements FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "requirements_strict_update" ON public.requirements;
+DROP POLICY IF EXISTS "requirements_strict_update" ON public.requirements;
+CREATE POLICY "requirements_strict_update" ON public.requirements FOR UPDATE TO authenticated
 USING (
   public.is_super_admin() OR
   created_by = auth.uid() OR
@@ -91,8 +98,9 @@ USING (
 );
 
 -- DELETE POLICY: Only Super Admin can delete requirements.
-CREATE POLICY "requirements_strict_delete"
-ON public.requirements FOR DELETE TO authenticated
+DROP POLICY IF EXISTS "requirements_strict_delete" ON public.requirements;
+DROP POLICY IF EXISTS "requirements_strict_delete" ON public.requirements;
+CREATE POLICY "requirements_strict_delete" ON public.requirements FOR DELETE TO authenticated
 USING (
   public.is_super_admin()
 );

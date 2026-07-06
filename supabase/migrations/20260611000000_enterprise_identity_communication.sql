@@ -104,20 +104,32 @@ ALTER TABLE public.email_delivery_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.communication_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Create basic RLS policies for Super Admins
+DROP POLICY IF EXISTS policy_identity_provider_select ON public.identity_provider_config;
 CREATE POLICY policy_identity_provider_select ON public.identity_provider_config FOR SELECT TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_VIEW'));
+DROP POLICY IF EXISTS policy_identity_provider_modify ON public.identity_provider_config;
 CREATE POLICY policy_identity_provider_modify ON public.identity_provider_config FOR ALL TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_MANAGE'));
 
+DROP POLICY IF EXISTS policy_email_providers_select ON public.email_providers;
 CREATE POLICY policy_email_providers_select ON public.email_providers FOR SELECT TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_VIEW'));
+DROP POLICY IF EXISTS policy_email_providers_modify ON public.email_providers;
 CREATE POLICY policy_email_providers_modify ON public.email_providers FOR ALL TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_MANAGE'));
 
+DROP POLICY IF EXISTS policy_email_templates_select ON public.email_templates;
 CREATE POLICY policy_email_templates_select ON public.email_templates FOR SELECT TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_VIEW'));
+DROP POLICY IF EXISTS policy_email_templates_modify ON public.email_templates;
 CREATE POLICY policy_email_templates_modify ON public.email_templates FOR ALL TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_MANAGE'));
 
+DROP POLICY IF EXISTS policy_notification_rules_select ON public.notification_rules;
 CREATE POLICY policy_notification_rules_select ON public.notification_rules FOR SELECT TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_VIEW'));
+DROP POLICY IF EXISTS policy_notification_rules_modify ON public.notification_rules;
 CREATE POLICY policy_notification_rules_modify ON public.notification_rules FOR ALL TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_MANAGE'));
 
+DROP POLICY IF EXISTS policy_email_queue_select ON public.email_queue;
 CREATE POLICY policy_email_queue_select ON public.email_queue FOR SELECT TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_VIEW'));
+DROP POLICY IF EXISTS policy_email_queue_modify ON public.email_queue;
 CREATE POLICY policy_email_queue_modify ON public.email_queue FOR ALL TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_MANAGE'));
 
+DROP POLICY IF EXISTS policy_delivery_logs_select ON public.email_delivery_logs;
 CREATE POLICY policy_delivery_logs_select ON public.email_delivery_logs FOR SELECT TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_VIEW'));
+DROP POLICY IF EXISTS policy_audit_logs_select ON public.communication_audit_logs;
 CREATE POLICY policy_audit_logs_select ON public.communication_audit_logs FOR SELECT TO authenticated USING (public.is_super_admin() OR public.check_user_permission('SYSTEM_SETTINGS_VIEW'));

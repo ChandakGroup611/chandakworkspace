@@ -13,8 +13,9 @@ CREATE TABLE IF NOT EXISTS public.task_time_logs (
 ALTER TABLE public.task_time_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policies for task_time_logs
-CREATE POLICY "Users can view time logs for tasks they can access"
-    ON public.task_time_logs FOR SELECT
+DROP POLICY IF EXISTS "Users can view time logs for tasks they can access" ON public.task_time_logs;
+DROP POLICY IF EXISTS "Users can view time logs for tasks they can access" ON public.task_time_logs;
+CREATE POLICY "Users can view time logs for tasks they can access" ON public.task_time_logs FOR SELECT
     USING (
         task_id IN (
             SELECT id FROM public.tasks WHERE workspace_id IN (
@@ -28,8 +29,9 @@ CREATE POLICY "Users can view time logs for tasks they can access"
         )
     );
 
-CREATE POLICY "Users can insert time logs for tasks they can access"
-    ON public.task_time_logs FOR INSERT
+DROP POLICY IF EXISTS "Users can insert time logs for tasks they can access" ON public.task_time_logs;
+DROP POLICY IF EXISTS "Users can insert time logs for tasks they can access" ON public.task_time_logs;
+CREATE POLICY "Users can insert time logs for tasks they can access" ON public.task_time_logs FOR INSERT
     WITH CHECK (
         task_id IN (
             SELECT id FROM public.tasks WHERE workspace_id IN (
@@ -43,8 +45,9 @@ CREATE POLICY "Users can insert time logs for tasks they can access"
         )
     );
 
-CREATE POLICY "Users can edit their own time logs"
-    ON public.task_time_logs FOR UPDATE
+DROP POLICY IF EXISTS "Users can edit their own time logs" ON public.task_time_logs;
+DROP POLICY IF EXISTS "Users can edit their own time logs" ON public.task_time_logs;
+CREATE POLICY "Users can edit their own time logs" ON public.task_time_logs FOR UPDATE
     USING (
         user_id = auth.uid()
         OR 
@@ -54,8 +57,9 @@ CREATE POLICY "Users can edit their own time logs"
         )
     );
 
-CREATE POLICY "Users can delete their own time logs"
-    ON public.task_time_logs FOR DELETE
+DROP POLICY IF EXISTS "Users can delete their own time logs" ON public.task_time_logs;
+DROP POLICY IF EXISTS "Users can delete their own time logs" ON public.task_time_logs;
+CREATE POLICY "Users can delete their own time logs" ON public.task_time_logs FOR DELETE
     USING (
         user_id = auth.uid()
         OR 

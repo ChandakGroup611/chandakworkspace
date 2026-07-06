@@ -35,6 +35,8 @@ $$;
 -- ----------------------------------------------------------------------------
 ALTER TABLE public.user_master ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "policy_user_master_governance" ON public.user_master;
+DROP POLICY IF EXISTS "policy_user_master_governance" ON public.user_master;
+DROP POLICY IF EXISTS "policy_user_master_governance" ON public.user_master;
 CREATE POLICY "policy_user_master_governance" ON public.user_master
 FOR ALL TO authenticated
 USING (auth.uid() = id OR public.is_super_admin())

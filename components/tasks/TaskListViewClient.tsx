@@ -699,16 +699,16 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   return (
     <ExperienceProvider mode="operational">
       <div className="space-y-6">
-        <header className="flex items-start justify-between">
-          <div className="flex flex-col gap-1.5">
+        <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1.5 shrink-0">
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Workspace Tasks</h1>
             <p className="text-sm font-medium text-muted">
               Internal Audit • {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected Workspace' : 'All Workspaces'} • {filtered.length} total tasks
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />
-            <div className="h-6 w-px bg-border mx-1"></div>
+          <div className="flex flex-wrap items-center gap-3">
+            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0" />
+            <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
             <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-4 font-semibold border-border shadow-sm">
               Export
             </AppButton>

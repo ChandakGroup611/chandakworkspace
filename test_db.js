@@ -1,26 +1,21 @@
-const fs = require('fs');
-const { createClient } = require('@supabase/supabase-js');
+const { Client } = require('pg');
 
-const envFile = fs.readFileSync('.env.local', 'utf8');
-envFile.split('\n').forEach(line => {
-  const match = line.match(/^([^=]+)=(.*)$/);
-  if (match) {
-    process.env[match[1]] = match[2].replace(/['"]/g, '').trim();
-  }
+const client = new Client({
+  connectionString: 'postgresql://postgres.cffmgqdypmilwxkwhhve:Avinash%40ADIOS@aws-1-ap-south-1.pooler.supabase.com:5432/postgres',
+  ssl: { rejectUnauthorized: false }
 });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  process.exit(1);
+async function main() {
+  try {
+    await client.connect();
+    console.log("Connected successfully!");
+    const res = await client.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public';");
+    console.log("Tables:", res.rows.map(r => r.tablename));
+  } catch (err) {
+    console.error("Connection failed:", err);
+  } finally {
+    await client.end();
+  }
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-async function checkLogs() {
-  const res1 = await supabase.from('task_activity_logs').select('*, actor:user_master!actor_id(full_name)').limit(5);
-  console.log("With Join:", res1.data, res1.error);
-}
-
-checkLogs();
+main();

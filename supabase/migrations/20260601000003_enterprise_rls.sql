@@ -16,6 +16,8 @@ DROP POLICY IF EXISTS "sub_tasks_select" ON public.sub_tasks;
 
 -- 3. Workspace Visibility
 -- A user can see a workspace if they are a member, OR if they are a SUPER_ADMIN
+DROP POLICY IF EXISTS "workspaces_visibility" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces_visibility" ON public.workspaces;
 CREATE POLICY "workspaces_visibility" ON public.workspaces FOR SELECT TO authenticated USING (
     EXISTS (
         SELECT 1 FROM public.workspace_members 
@@ -27,6 +29,8 @@ CREATE POLICY "workspaces_visibility" ON public.workspaces FOR SELECT TO authent
 
 -- 4. Workspace Members Visibility
 -- A user can see the members of a workspace if they are ALSO a member of that workspace, OR a SUPER_ADMIN
+DROP POLICY IF EXISTS "workspace_members_visibility" ON public.workspace_members;
+DROP POLICY IF EXISTS "workspace_members_visibility" ON public.workspace_members;
 CREATE POLICY "workspace_members_visibility" ON public.workspace_members FOR SELECT TO authenticated USING (
     EXISTS (
         SELECT 1 FROM public.workspace_members my_membership
@@ -38,6 +42,8 @@ CREATE POLICY "workspace_members_visibility" ON public.workspace_members FOR SEL
 
 -- 5. Tasks Visibility
 -- A user can see a task if they are a member of its workspace, OR if they are the task assignee/owner, OR a SUPER_ADMIN
+DROP POLICY IF EXISTS "tasks_visibility" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_visibility" ON public.tasks;
 CREATE POLICY "tasks_visibility" ON public.tasks FOR SELECT TO authenticated USING (
     owner_id = auth.uid() OR
     assigned_to = auth.uid() OR
@@ -51,6 +57,8 @@ CREATE POLICY "tasks_visibility" ON public.tasks FOR SELECT TO authenticated USI
 
 -- 6. Sub Tasks Visibility
 -- A user can see a sub_task if they are a member of the parent task's workspace, OR if they are the sub-task owner, OR a SUPER_ADMIN
+DROP POLICY IF EXISTS "sub_tasks_visibility" ON public.sub_tasks;
+DROP POLICY IF EXISTS "sub_tasks_visibility" ON public.sub_tasks;
 CREATE POLICY "sub_tasks_visibility" ON public.sub_tasks FOR SELECT TO authenticated USING (
     owner_id = auth.uid() OR
     assigned_to = auth.uid() OR

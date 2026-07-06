@@ -10,6 +10,7 @@
 DROP POLICY IF EXISTS policy_users_update ON public.user_master;
 
 -- 2. Create simplified policy with separate paths for self vs. admin updates
+DROP POLICY IF EXISTS policy_users_update ON public.user_master;
 CREATE POLICY policy_users_update ON public.user_master FOR UPDATE TO authenticated
 USING (
     -- Allow users to read their own records or records they can access

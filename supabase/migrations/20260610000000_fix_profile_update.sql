@@ -4,8 +4,9 @@
 
 -- 1. Fix User Master Update Policy (Added WITH CHECK clause)
 DROP POLICY IF EXISTS "user_master_super_admin_update" ON public.user_master;
-CREATE POLICY "user_master_super_admin_update"
-ON public.user_master FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "user_master_super_admin_update" ON public.user_master;
+DROP POLICY IF EXISTS "user_master_super_admin_update" ON public.user_master;
+CREATE POLICY "user_master_super_admin_update" ON public.user_master FOR UPDATE TO authenticated
 USING (public.is_super_admin() OR id = auth.uid())
 WITH CHECK (public.is_super_admin() OR id = auth.uid());
 

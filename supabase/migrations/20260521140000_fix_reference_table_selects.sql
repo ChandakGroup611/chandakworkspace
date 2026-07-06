@@ -2,15 +2,19 @@
 -- Ensure authenticated users can SELECT from reference tables 
 -- without needing super admin bypass, which allows tasks queries to fully populate.
 
+DROP POLICY IF EXISTS policy_teams_basic_select ON public.teams;
 CREATE POLICY policy_teams_basic_select ON public.teams
 FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS policy_task_teams_basic_select ON public.task_teams;
 CREATE POLICY policy_task_teams_basic_select ON public.task_teams
 FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS policy_team_members_basic_select ON public.team_members;
 CREATE POLICY policy_team_members_basic_select ON public.team_members
 FOR SELECT TO authenticated USING (true);
 
+DROP POLICY IF EXISTS policy_task_assignees_basic_select ON public.task_assignees;
 CREATE POLICY policy_task_assignees_basic_select ON public.task_assignees
 FOR SELECT TO authenticated USING (true);
 

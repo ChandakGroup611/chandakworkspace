@@ -58,6 +58,7 @@ $$;
 
 -- Replace the workspace_tasks SELECT policy with the single, recursion-free function call
 DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
+DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
 CREATE POLICY policy_tasks_select ON public.workspace_tasks FOR SELECT TO authenticated
 USING (public.can_see_task(id, creator_id, assignee_id));
 

@@ -50,12 +50,16 @@ BEGIN
         EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON public.user_master';
     END LOOP;
 END $$;
+DROP POLICY IF EXISTS "policy_unified_personnel" ON public.user_master;
+DROP POLICY IF EXISTS "policy_unified_personnel" ON public.user_master;
 CREATE POLICY "policy_unified_personnel" ON public.user_master FOR ALL TO authenticated USING (
     public.can_access_record(id, manager_id, department_id)
 );
 
 -- Tickets
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "policy_unified_tickets" ON public.tickets;
+DROP POLICY IF EXISTS "policy_unified_tickets" ON public.tickets;
 DROP POLICY IF EXISTS "policy_unified_tickets" ON public.tickets;
 CREATE POLICY "policy_unified_tickets" ON public.tickets FOR ALL TO authenticated USING (
     public.can_access_record(creator_id, assignee_id, department_id)
@@ -64,12 +68,16 @@ CREATE POLICY "policy_unified_tickets" ON public.tickets FOR ALL TO authenticate
 -- Tasks
 ALTER TABLE public.workspace_tasks ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "policy_unified_tasks" ON public.workspace_tasks;
+DROP POLICY IF EXISTS "policy_unified_tasks" ON public.workspace_tasks;
+DROP POLICY IF EXISTS "policy_unified_tasks" ON public.workspace_tasks;
 CREATE POLICY "policy_unified_tasks" ON public.workspace_tasks FOR ALL TO authenticated USING (
     public.can_access_record(creator_id, assignee_id, department_id)
 );
 
 -- Requirements
 ALTER TABLE public.requirements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "policy_unified_requirements" ON public.requirements;
+DROP POLICY IF EXISTS "policy_unified_requirements" ON public.requirements;
 DROP POLICY IF EXISTS "policy_unified_requirements" ON public.requirements;
 CREATE POLICY "policy_unified_requirements" ON public.requirements FOR ALL TO authenticated USING (
     public.can_access_record(creator_id, NULL, department_id)

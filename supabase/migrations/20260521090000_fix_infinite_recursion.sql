@@ -8,21 +8,25 @@ DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_roles;
 DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_permissions_snapshot;
 
 -- Recreate them using ONLY the JWT claim check to completely avoid recursion
+DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_master;
 CREATE POLICY policy_super_admin_bypass_all ON public.user_master
 FOR ALL TO authenticated
 USING (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'SUPER_ADMIN')
 WITH CHECK (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'SUPER_ADMIN');
 
+DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.roles;
 CREATE POLICY policy_super_admin_bypass_all ON public.roles
 FOR ALL TO authenticated
 USING (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'SUPER_ADMIN')
 WITH CHECK (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'SUPER_ADMIN');
 
+DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_roles;
 CREATE POLICY policy_super_admin_bypass_all ON public.user_roles
 FOR ALL TO authenticated
 USING (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'SUPER_ADMIN')
 WITH CHECK (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'SUPER_ADMIN');
 
+DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_permissions_snapshot;
 CREATE POLICY policy_super_admin_bypass_all ON public.user_permissions_snapshot
 FOR ALL TO authenticated
 USING (COALESCE(auth.jwt() -> 'app_metadata' ->> 'role', '') = 'SUPER_ADMIN')

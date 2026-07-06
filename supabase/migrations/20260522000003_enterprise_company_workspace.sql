@@ -95,24 +95,36 @@ CREATE TABLE IF NOT EXISTS public.workspace_teams (
 -- 4. Apply Minimal RLS globally for these modules
 ALTER TABLE public.company_master ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "company_master Access" ON public.company_master;
+DROP POLICY IF EXISTS "company_master Access" ON public.company_master;
+DROP POLICY IF EXISTS "company_master Access" ON public.company_master;
 CREATE POLICY "company_master Access" ON public.company_master FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.workspaces ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "workspaces Access" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces Access" ON public.workspaces;
 DROP POLICY IF EXISTS "workspaces Access" ON public.workspaces;
 CREATE POLICY "workspaces Access" ON public.workspaces FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.workspace_members ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "workspace_members Access" ON public.workspace_members;
+DROP POLICY IF EXISTS "workspace_members Access" ON public.workspace_members;
+DROP POLICY IF EXISTS "workspace_members Access" ON public.workspace_members;
 CREATE POLICY "workspace_members Access" ON public.workspace_members FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "teams Access" ON public.teams;
+DROP POLICY IF EXISTS "teams Access" ON public.teams;
 DROP POLICY IF EXISTS "teams Access" ON public.teams;
 CREATE POLICY "teams Access" ON public.teams FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "team_members Access" ON public.team_members;
+DROP POLICY IF EXISTS "team_members Access" ON public.team_members;
+DROP POLICY IF EXISTS "team_members Access" ON public.team_members;
 CREATE POLICY "team_members Access" ON public.team_members FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.workspace_teams ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "workspace_teams Access" ON public.workspace_teams;
+DROP POLICY IF EXISTS "workspace_teams Access" ON public.workspace_teams;
 DROP POLICY IF EXISTS "workspace_teams Access" ON public.workspace_teams;
 CREATE POLICY "workspace_teams Access" ON public.workspace_teams FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);

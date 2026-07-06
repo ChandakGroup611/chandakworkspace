@@ -40,6 +40,40 @@
   input, textarea, select, button, table, th, td {
     font-family: inherit;
   }
+
+  /* Universal Field Styling (Inputs, Selects, Textareas) */
+  input:not([type="checkbox"]):not([type="radio"]):not(:focus),
+  select:not(:focus),
+  textarea:not(:focus) {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .theme-dark input:not([type="checkbox"]):not([type="radio"]):not(:focus),
+  .theme-dark select:not(:focus),
+  .theme-dark textarea:not(:focus) {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
+  select:not(:focus):hover,
+  textarea:not(:focus):hover {
+    border-color: rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-1px);
+  }
+
+  .theme-dark input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
+  .theme-dark select:not(:focus):hover,
+  .theme-dark textarea:not(:focus):hover {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+    transform: translateY(-1px);
+  }
 }
 
 @layer utilities {
@@ -51,7 +85,6 @@
     background-color: var(--color-elevated);
     backdrop-filter: var(--backdrop-blur, blur(0)) var(--backdrop-saturate, saturate(100%));
   }
-
 
   .font-semibold {
     font-weight: var(--ui-weight-semibold, 600) !important;
@@ -130,30 +163,5 @@
   .theme-light [class*="from-rose-"].text-white,
   .theme-light [class*="from-amber-"].text-white {
     color: #ffffff !important;
-  }
-
-  /* Universal Soft Shadow Effect Borders */
-  /* Replaces harsh borders globally across the entire application with soft premium shadows */
-  
-  /* Light Theme / Universal Base */
-  .border:not([class*="border-blue-"]):not([class*="border-indigo-"]):not([class*="border-purple-"]):not([class*="border-emerald-"]):not([class*="border-rose-"]):not([class*="border-amber-"]):not([class*="border-red-"]):not([class*="border-green-"]),
-  .border-black,
-  .border-gray-900,
-  .border-gray-800,
-  .border-slate-900,
-  .border-slate-800 {
-    border-color: rgba(0, 0, 0, 0.03) !important;
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0,0,0,0.02) !important;
-  }
-
-  /* Dark Theme specifically */
-  .theme-dark .border:not([class*="border-blue-"]):not([class*="border-indigo-"]):not([class*="border-purple-"]):not([class*="border-emerald-"]):not([class*="border-rose-"]):not([class*="border-amber-"]):not([class*="border-red-"]):not([class*="border-green-"]),
-  .theme-dark .border-black,
-  .theme-dark .border-gray-900,
-  .theme-dark .border-gray-800,
-  .theme-dark .border-slate-900,
-  .theme-dark .border-slate-800 {
-    border-color: rgba(255, 255, 255, 0.03) !important;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
   }
 }

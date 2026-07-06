@@ -59,8 +59,11 @@ DROP POLICY IF EXISTS policy_task_comments_select ON public.task_comments;
 DROP POLICY IF EXISTS policy_task_comments_insert ON public.task_comments;
 DROP POLICY IF EXISTS policy_task_comments_all ON public.task_comments;
 
+DROP POLICY IF EXISTS policy_task_comments_select ON public.task_comments;
 CREATE POLICY policy_task_comments_select ON public.task_comments FOR SELECT TO authenticated USING (public.is_task_member(task_id));
+DROP POLICY IF EXISTS policy_task_comments_insert ON public.task_comments;
 CREATE POLICY policy_task_comments_insert ON public.task_comments FOR INSERT TO authenticated WITH CHECK (public.is_task_member(task_id));
+DROP POLICY IF EXISTS policy_task_comments_all ON public.task_comments;
 CREATE POLICY policy_task_comments_all ON public.task_comments FOR ALL TO authenticated USING (public.is_task_member(task_id));
 
 -- 4. Establish RLS policies for task_teams (team enrollment)
@@ -70,9 +73,13 @@ DROP POLICY IF EXISTS policy_task_teams_insert ON public.task_teams;
 DROP POLICY IF EXISTS policy_task_teams_delete ON public.task_teams;
 DROP POLICY IF EXISTS policy_task_teams_all ON public.task_teams;
 
+DROP POLICY IF EXISTS policy_task_teams_select ON public.task_teams;
 CREATE POLICY policy_task_teams_select ON public.task_teams FOR SELECT TO authenticated USING (public.is_task_member(task_id));
+DROP POLICY IF EXISTS policy_task_teams_insert ON public.task_teams;
 CREATE POLICY policy_task_teams_insert ON public.task_teams FOR INSERT TO authenticated WITH CHECK (public.is_task_member(task_id));
+DROP POLICY IF EXISTS policy_task_teams_delete ON public.task_teams;
 CREATE POLICY policy_task_teams_delete ON public.task_teams FOR DELETE TO authenticated USING (public.is_task_member(task_id));
+DROP POLICY IF EXISTS policy_task_teams_all ON public.task_teams;
 CREATE POLICY policy_task_teams_all ON public.task_teams FOR ALL TO authenticated USING (public.is_task_member(task_id));
 
 -- 5. Add task_comments and task_teams to supabase_realtime publication

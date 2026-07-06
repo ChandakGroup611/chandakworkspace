@@ -10,15 +10,19 @@ CREATE TABLE IF NOT EXISTS public.active_sessions (
 ALTER TABLE public.active_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (only users can access their own session tracking)
+DROP POLICY IF EXISTS policy_active_sessions_select ON public.active_sessions;
 CREATE POLICY policy_active_sessions_select ON public.active_sessions 
     FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS policy_active_sessions_insert ON public.active_sessions;
 CREATE POLICY policy_active_sessions_insert ON public.active_sessions 
     FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS policy_active_sessions_update ON public.active_sessions;
 CREATE POLICY policy_active_sessions_update ON public.active_sessions 
     FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS policy_active_sessions_delete ON public.active_sessions;
 CREATE POLICY policy_active_sessions_delete ON public.active_sessions 
     FOR DELETE TO authenticated USING (auth.uid() = user_id);
 

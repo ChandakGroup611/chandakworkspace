@@ -193,13 +193,16 @@
     ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
     DROP POLICY IF EXISTS policy_companies_select ON public.companies;
     DROP POLICY IF EXISTS policy_companies_all ON public.companies;
-    CREATE POLICY policy_companies_select ON public.companies FOR SELECT TO authenticated USING (true);
-    CREATE POLICY policy_companies_all ON public.companies FOR ALL TO authenticated USING (has_permission_snapshot('COMPANIES_MANAGE') OR true);
+    DROP POLICY IF EXISTS policy_companies_select ON public.companies;
+CREATE POLICY policy_companies_select ON public.companies FOR SELECT TO authenticated USING (true);
+    DROP POLICY IF EXISTS policy_companies_all ON public.companies;
+CREATE POLICY policy_companies_all ON public.companies FOR ALL TO authenticated USING (has_permission_snapshot('COMPANIES_MANAGE') OR true);
 
     -- Workspaces
     ALTER TABLE public.workspaces ENABLE ROW LEVEL SECURITY;
     DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
-    CREATE POLICY policy_workspaces_select ON public.workspaces FOR SELECT TO authenticated USING (
+    DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
+CREATE POLICY policy_workspaces_select ON public.workspaces FOR SELECT TO authenticated USING (
         public.is_workspace_member(id) OR has_permission_snapshot('WORKSPACES_MANAGE')
     );
 
@@ -211,10 +214,12 @@
     DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
     DROP POLICY IF EXISTS policy_tasks_all ON public.workspace_tasks;
 
-    CREATE POLICY policy_tasks_select ON public.workspace_tasks FOR SELECT TO authenticated USING (
+    DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
+CREATE POLICY policy_tasks_select ON public.workspace_tasks FOR SELECT TO authenticated USING (
         public.is_task_member(id) OR has_permission_snapshot('WORKSPACES_MANAGE')
     );
-    CREATE POLICY policy_tasks_all ON public.workspace_tasks FOR ALL TO authenticated USING (
+    DROP POLICY IF EXISTS policy_tasks_all ON public.workspace_tasks;
+CREATE POLICY policy_tasks_all ON public.workspace_tasks FOR ALL TO authenticated USING (
         public.is_task_member(id) OR has_permission_snapshot('WORKSPACES_MANAGE')
     ) WITH CHECK (
         creator_id = auth.uid() OR assignee_id = auth.uid() OR public.is_workspace_member(workspace_id) OR has_permission_snapshot('WORKSPACES_MANAGE')
@@ -224,14 +229,18 @@
     ALTER TABLE public.task_chat_messages ENABLE ROW LEVEL SECURITY;
     DROP POLICY IF EXISTS policy_task_chat_select ON public.task_chat_messages;
     DROP POLICY IF EXISTS policy_task_chat_insert ON public.task_chat_messages;
-    CREATE POLICY policy_task_chat_select ON public.task_chat_messages FOR SELECT TO authenticated USING (public.is_task_member(task_id));
-    CREATE POLICY policy_task_chat_insert ON public.task_chat_messages FOR INSERT TO authenticated WITH CHECK (public.is_task_member(task_id));
+    DROP POLICY IF EXISTS policy_task_chat_select ON public.task_chat_messages;
+CREATE POLICY policy_task_chat_select ON public.task_chat_messages FOR SELECT TO authenticated USING (public.is_task_member(task_id));
+    DROP POLICY IF EXISTS policy_task_chat_insert ON public.task_chat_messages;
+CREATE POLICY policy_task_chat_insert ON public.task_chat_messages FOR INSERT TO authenticated WITH CHECK (public.is_task_member(task_id));
 
     ALTER TABLE public.task_attachments ENABLE ROW LEVEL SECURITY;
     DROP POLICY IF EXISTS policy_task_attachments_select ON public.task_attachments;
     DROP POLICY IF EXISTS policy_task_attachments_insert ON public.task_attachments;
-    CREATE POLICY policy_task_attachments_select ON public.task_attachments FOR SELECT TO authenticated USING (public.is_task_member(task_id));
-    CREATE POLICY policy_task_attachments_insert ON public.task_attachments FOR INSERT TO authenticated WITH CHECK (public.is_task_member(task_id));
+    DROP POLICY IF EXISTS policy_task_attachments_select ON public.task_attachments;
+CREATE POLICY policy_task_attachments_select ON public.task_attachments FOR SELECT TO authenticated USING (public.is_task_member(task_id));
+    DROP POLICY IF EXISTS policy_task_attachments_insert ON public.task_attachments;
+CREATE POLICY policy_task_attachments_insert ON public.task_attachments FOR INSERT TO authenticated WITH CHECK (public.is_task_member(task_id));
 
     -- Realtime Setup
     DO $$

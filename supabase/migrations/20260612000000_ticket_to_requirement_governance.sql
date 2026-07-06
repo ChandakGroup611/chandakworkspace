@@ -75,6 +75,7 @@ ALTER TABLE public.requirement_approval_flow ENABLE ROW LEVEL SECURITY;
 
 -- 1. Policies for requirement_impacted_departments (inherit from requirements)
 DROP POLICY IF EXISTS policy_impacted_deps_select ON public.requirement_impacted_departments;
+DROP POLICY IF EXISTS policy_impacted_deps_select ON public.requirement_impacted_departments;
 CREATE POLICY policy_impacted_deps_select ON public.requirement_impacted_departments FOR SELECT TO authenticated
 USING (
     EXISTS (
@@ -90,6 +91,7 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_impacted_deps_insert ON public.requirement_impacted_departments;
 DROP POLICY IF EXISTS policy_impacted_deps_insert ON public.requirement_impacted_departments;
 CREATE POLICY policy_impacted_deps_insert ON public.requirement_impacted_departments FOR INSERT TO authenticated
 WITH CHECK (
@@ -107,6 +109,7 @@ WITH CHECK (
 );
 
 DROP POLICY IF EXISTS policy_impacted_deps_update ON public.requirement_impacted_departments;
+DROP POLICY IF EXISTS policy_impacted_deps_update ON public.requirement_impacted_departments;
 CREATE POLICY policy_impacted_deps_update ON public.requirement_impacted_departments FOR UPDATE TO authenticated
 USING (
     EXISTS (
@@ -122,6 +125,7 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_impacted_deps_delete ON public.requirement_impacted_departments;
 DROP POLICY IF EXISTS policy_impacted_deps_delete ON public.requirement_impacted_departments;
 CREATE POLICY policy_impacted_deps_delete ON public.requirement_impacted_departments FOR DELETE TO authenticated
 USING (
@@ -140,6 +144,7 @@ USING (
 
 -- 2. Policies for requirement_approval_flow (inherit from requirements)
 DROP POLICY IF EXISTS policy_flow_select ON public.requirement_approval_flow;
+DROP POLICY IF EXISTS policy_flow_select ON public.requirement_approval_flow;
 CREATE POLICY policy_flow_select ON public.requirement_approval_flow FOR SELECT TO authenticated
 USING (
     EXISTS (
@@ -155,6 +160,7 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_flow_insert ON public.requirement_approval_flow;
 DROP POLICY IF EXISTS policy_flow_insert ON public.requirement_approval_flow;
 CREATE POLICY policy_flow_insert ON public.requirement_approval_flow FOR INSERT TO authenticated
 WITH CHECK (
@@ -172,6 +178,7 @@ WITH CHECK (
 );
 
 DROP POLICY IF EXISTS policy_flow_update ON public.requirement_approval_flow;
+DROP POLICY IF EXISTS policy_flow_update ON public.requirement_approval_flow;
 CREATE POLICY policy_flow_update ON public.requirement_approval_flow FOR UPDATE TO authenticated
 USING (
     EXISTS (
@@ -187,6 +194,7 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_flow_delete ON public.requirement_approval_flow;
 DROP POLICY IF EXISTS policy_flow_delete ON public.requirement_approval_flow;
 CREATE POLICY policy_flow_delete ON public.requirement_approval_flow FOR DELETE TO authenticated
 USING (
@@ -205,6 +213,7 @@ USING (
 
 -- 3. Policies for requirement_approval_matrix (Master config governed by MASTERS_MANAGE)
 DROP POLICY IF EXISTS policy_matrix_select ON public.requirement_approval_matrix;
+DROP POLICY IF EXISTS policy_matrix_select ON public.requirement_approval_matrix;
 CREATE POLICY policy_matrix_select ON public.requirement_approval_matrix FOR SELECT TO authenticated
 USING (
     public.is_super_admin()
@@ -213,6 +222,7 @@ USING (
 );
 
 DROP POLICY IF EXISTS policy_matrix_insert ON public.requirement_approval_matrix;
+DROP POLICY IF EXISTS policy_matrix_insert ON public.requirement_approval_matrix;
 CREATE POLICY policy_matrix_insert ON public.requirement_approval_matrix FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
@@ -220,12 +230,14 @@ WITH CHECK (
 );
 
 DROP POLICY IF EXISTS policy_matrix_update ON public.requirement_approval_matrix;
+DROP POLICY IF EXISTS policy_matrix_update ON public.requirement_approval_matrix;
 CREATE POLICY policy_matrix_update ON public.requirement_approval_matrix FOR UPDATE TO authenticated
 USING (
     public.is_super_admin()
     OR public.check_user_permission('MASTERS_MANAGE')
 );
 
+DROP POLICY IF EXISTS policy_matrix_delete ON public.requirement_approval_matrix;
 DROP POLICY IF EXISTS policy_matrix_delete ON public.requirement_approval_matrix;
 CREATE POLICY policy_matrix_delete ON public.requirement_approval_matrix FOR DELETE TO authenticated
 USING (

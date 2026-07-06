@@ -59,6 +59,7 @@ $$;
 
 -- 3. Update WORKSPACES RLS Policy to pass visibility_settings
 DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
+DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
 CREATE POLICY policy_workspaces_select ON public.workspaces FOR SELECT TO authenticated
 USING (public.can_see_workspace(id, workspace_owner_id, visibility_settings));
 

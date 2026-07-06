@@ -60,12 +60,18 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             disabled={disabled}
             suppressHydrationWarning={true}
             className={cn(
-              "h-8 w-full rounded-[var(--radius-input,4px)] border text-[13px] focus:outline-none transition-all duration-150",
-              "bg-surface border-border text-foreground placeholder-muted focus:border-accent focus:ring-1 focus:ring-accent",
+              "h-8 w-full rounded-[var(--radius-input,4px)] text-[13px] focus:outline-none transition-all duration-300",
+              "bg-surface text-foreground placeholder-muted",
+              // Light/Dark standard border + soft shadow
+              "border border-black/10 dark:border-white/10 shadow-sm",
+              // Hover effect
+              "hover:border-black/30 dark:hover:border-white/30 hover:shadow-md hover:-translate-y-[1px]",
+              // Focus effect overrides
+              "focus:border-accent focus:ring-1 focus:ring-accent focus:shadow-md focus:-translate-y-[1px]",
               leftIcon ? "pl-10" : "pl-3",
               rightIcon ? "pr-10" : "pr-3.5",
               error ? "border-danger focus:border-danger bg-danger/[0.02]" : "",
-              disabled ? "opacity-50 cursor-not-allowed" : "",
+              disabled ? "opacity-50 cursor-not-allowed hover:transform-none hover:shadow-sm" : "",
               className
             )}
             {...props}

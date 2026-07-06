@@ -48,7 +48,7 @@ function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
     opacity: isDragging ? 0.5 : 1,
     position: 'sticky' as any,
     top: 0,
-    left: isFirst ? '40px' : undefined,
+    left: isFirst ? '0px' : undefined,
     zIndex: isDragging ? 50 : (isFirst ? 30 : 25),
   };
   return (
@@ -347,16 +347,16 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   return (
     <ExperienceProvider mode="operational">
       <div className="space-y-6">
-        <header className="flex items-start justify-between">
-          <div className="flex flex-col gap-1.5">
+        <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1.5 shrink-0">
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Requirement Analysis & Report</h1>
             <p className="text-sm font-medium text-muted">
               Deep dive analytics and reporting for all requirements
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />
-            <div className="h-6 w-px bg-border mx-1"></div>
+          <div className="flex flex-wrap items-center gap-3">
+            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0" />
+            <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
             <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-4 font-semibold border-border shadow-sm">
               Export Excel
             </AppButton>
@@ -455,7 +455,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                               className={cn(
                                 !["title", "task_summary"].includes(col.field_key) && "text-center",
                                 "text-[13px]",
-                                i === 0 && "sticky left-[40px] bg-white dark:bg-[#06080f] z-20"
+                                i === 0 && "sticky left-0 bg-white dark:bg-[#06080f] z-20"
                               )}
                             >
                               {col.field_key === "actions" ? (

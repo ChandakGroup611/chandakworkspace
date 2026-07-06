@@ -26,6 +26,7 @@ CREATE TABLE public.user_permissions_snapshot (
 -- Enable RLS on Snapshot
 ALTER TABLE public.user_permissions_snapshot ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS policy_ups_select ON public.user_permissions_snapshot;
+DROP POLICY IF EXISTS policy_ups_select ON public.user_permissions_snapshot;
 CREATE POLICY policy_ups_select ON public.user_permissions_snapshot FOR SELECT TO authenticated
 USING (
     user_id = auth.uid()
@@ -412,6 +413,7 @@ DROP POLICY IF EXISTS policy_tickets_insert ON public.tickets;
 DROP POLICY IF EXISTS policy_tickets_update ON public.tickets;
 DROP POLICY IF EXISTS policy_tickets_delete ON public.tickets;
 
+DROP POLICY IF EXISTS policy_tickets_select ON public.tickets;
 CREATE POLICY policy_tickets_select ON public.tickets FOR SELECT TO authenticated
 USING (
     public.is_super_admin()
@@ -421,12 +423,14 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_tickets_insert ON public.tickets;
 CREATE POLICY policy_tickets_insert ON public.tickets FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
     OR public.check_user_permission('TICKETS_CREATE')
 );
 
+DROP POLICY IF EXISTS policy_tickets_update ON public.tickets;
 CREATE POLICY policy_tickets_update ON public.tickets FOR UPDATE TO authenticated
 USING (
     public.is_super_admin()
@@ -440,6 +444,7 @@ WITH CHECK (
     OR public.check_user_permission('TICKETS_UPDATE')
 );
 
+DROP POLICY IF EXISTS policy_tickets_delete ON public.tickets;
 CREATE POLICY policy_tickets_delete ON public.tickets FOR DELETE TO authenticated
 USING (
     public.is_super_admin()
@@ -452,6 +457,7 @@ DROP POLICY IF EXISTS policy_workspaces_insert ON public.workspaces;
 DROP POLICY IF EXISTS policy_workspaces_update ON public.workspaces;
 DROP POLICY IF EXISTS policy_workspaces_delete ON public.workspaces;
 
+DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
 CREATE POLICY policy_workspaces_select ON public.workspaces FOR SELECT TO authenticated
 USING (
     public.is_super_admin()
@@ -461,12 +467,14 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_workspaces_insert ON public.workspaces;
 CREATE POLICY policy_workspaces_insert ON public.workspaces FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
     OR public.check_user_permission('WORKSPACES_CREATE')
 );
 
+DROP POLICY IF EXISTS policy_workspaces_update ON public.workspaces;
 CREATE POLICY policy_workspaces_update ON public.workspaces FOR UPDATE TO authenticated
 USING (
     public.is_super_admin()
@@ -480,6 +488,7 @@ WITH CHECK (
     OR public.check_user_permission('WORKSPACES_UPDATE')
 );
 
+DROP POLICY IF EXISTS policy_workspaces_delete ON public.workspaces;
 CREATE POLICY policy_workspaces_delete ON public.workspaces FOR DELETE TO authenticated
 USING (
     public.is_super_admin()
@@ -493,6 +502,7 @@ DROP POLICY IF EXISTS policy_tasks_insert ON public.workspace_tasks;
 DROP POLICY IF EXISTS policy_tasks_update ON public.workspace_tasks;
 DROP POLICY IF EXISTS policy_tasks_delete ON public.workspace_tasks;
 
+DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
 CREATE POLICY policy_tasks_select ON public.workspace_tasks FOR SELECT TO authenticated
 USING (
     public.is_super_admin()
@@ -502,6 +512,7 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_tasks_insert ON public.workspace_tasks;
 CREATE POLICY policy_tasks_insert ON public.workspace_tasks FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
@@ -511,6 +522,7 @@ WITH CHECK (
     )
 );
 
+DROP POLICY IF EXISTS policy_tasks_update ON public.workspace_tasks;
 CREATE POLICY policy_tasks_update ON public.workspace_tasks FOR UPDATE TO authenticated
 USING (
     public.is_super_admin()
@@ -524,6 +536,7 @@ WITH CHECK (
     OR public.check_user_permission('TASKS_UPDATE')
 );
 
+DROP POLICY IF EXISTS policy_tasks_delete ON public.workspace_tasks;
 CREATE POLICY policy_tasks_delete ON public.workspace_tasks FOR DELETE TO authenticated
 USING (
     public.is_super_admin()
@@ -538,6 +551,7 @@ DROP POLICY IF EXISTS policy_users_insert ON public.user_master;
 DROP POLICY IF EXISTS policy_users_update ON public.user_master;
 DROP POLICY IF EXISTS policy_users_delete ON public.user_master;
 
+DROP POLICY IF EXISTS policy_users_select ON public.user_master;
 CREATE POLICY policy_users_select ON public.user_master FOR SELECT TO authenticated
 USING (
     id = auth.uid()
@@ -548,12 +562,14 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_users_insert ON public.user_master;
 CREATE POLICY policy_users_insert ON public.user_master FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
     OR public.check_user_permission('USERS_CREATE')
 );
 
+DROP POLICY IF EXISTS policy_users_update ON public.user_master;
 CREATE POLICY policy_users_update ON public.user_master FOR UPDATE TO authenticated
 USING (
     id = auth.uid() 
@@ -569,6 +585,7 @@ WITH CHECK (
     OR public.check_user_permission('USERS_UPDATE')
 );
 
+DROP POLICY IF EXISTS policy_users_delete ON public.user_master;
 CREATE POLICY policy_users_delete ON public.user_master FOR DELETE TO authenticated
 USING (
     public.is_super_admin()
@@ -582,6 +599,7 @@ DROP POLICY IF EXISTS policy_requirements_insert ON public.requirements;
 DROP POLICY IF EXISTS policy_requirements_update ON public.requirements;
 DROP POLICY IF EXISTS policy_requirements_delete ON public.requirements;
 
+DROP POLICY IF EXISTS policy_requirements_select ON public.requirements;
 CREATE POLICY policy_requirements_select ON public.requirements FOR SELECT TO authenticated
 USING (
     public.is_super_admin()
@@ -591,12 +609,14 @@ USING (
     )
 );
 
+DROP POLICY IF EXISTS policy_requirements_insert ON public.requirements;
 CREATE POLICY policy_requirements_insert ON public.requirements FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
     OR public.check_user_permission('REQUIREMENTS_CREATE')
 );
 
+DROP POLICY IF EXISTS policy_requirements_update ON public.requirements;
 CREATE POLICY policy_requirements_update ON public.requirements FOR UPDATE TO authenticated
 USING (
     public.is_super_admin()
@@ -610,6 +630,7 @@ WITH CHECK (
     OR public.check_user_permission('REQUIREMENTS_UPDATE')
 );
 
+DROP POLICY IF EXISTS policy_requirements_delete ON public.requirements;
 CREATE POLICY policy_requirements_delete ON public.requirements FOR DELETE TO authenticated
 USING (
     public.is_super_admin()
@@ -622,9 +643,11 @@ DROP POLICY IF EXISTS policy_cfd_insert ON public.custom_field_definitions;
 DROP POLICY IF EXISTS policy_cfd_update ON public.custom_field_definitions;
 DROP POLICY IF EXISTS policy_cfd_delete ON public.custom_field_definitions;
 
+DROP POLICY IF EXISTS policy_cfd_select ON public.custom_field_definitions;
 CREATE POLICY policy_cfd_select ON public.custom_field_definitions FOR SELECT TO authenticated
 USING (NOT is_deleted);
 
+DROP POLICY IF EXISTS policy_cfd_insert ON public.custom_field_definitions;
 CREATE POLICY policy_cfd_insert ON public.custom_field_definitions FOR INSERT TO authenticated
 WITH CHECK (
     public.is_super_admin()
@@ -632,6 +655,7 @@ WITH CHECK (
     OR public.check_user_permission('CUSTOM_FIELDS_CREATE')
 );
 
+DROP POLICY IF EXISTS policy_cfd_update ON public.custom_field_definitions;
 CREATE POLICY policy_cfd_update ON public.custom_field_definitions FOR UPDATE TO authenticated
 USING (
     public.is_super_admin()

@@ -49,6 +49,7 @@ $$;
 
 -- 2. Update user_master policy to allow ROLE_ADMIN to bypass globally
 DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_master;
+DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_master;
 CREATE POLICY policy_super_admin_bypass_all ON public.user_master
 FOR ALL TO authenticated
 USING (

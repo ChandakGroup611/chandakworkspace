@@ -30,8 +30,9 @@ END $$;
 -- ------------------------------------------------------------------------------
 -- 2. REBUILD USER_MASTER POLICIES (STRICT SCOPING)
 -- ------------------------------------------------------------------------------
-CREATE POLICY "user_master_strict_select"
-ON public.user_master FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "user_master_strict_select" ON public.user_master;
+DROP POLICY IF EXISTS "user_master_strict_select" ON public.user_master;
+CREATE POLICY "user_master_strict_select" ON public.user_master FOR SELECT TO authenticated
 USING (
   id = auth.uid() OR
   public.is_super_admin() OR
@@ -43,15 +44,17 @@ USING (
   )
 );
 
-CREATE POLICY "user_master_super_admin_update"
-ON public.user_master FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "user_master_super_admin_update" ON public.user_master;
+DROP POLICY IF EXISTS "user_master_super_admin_update" ON public.user_master;
+CREATE POLICY "user_master_super_admin_update" ON public.user_master FOR UPDATE TO authenticated
 USING (public.is_super_admin() OR id = auth.uid());
 
 -- ------------------------------------------------------------------------------
 -- 3. REBUILD WORKSPACES POLICIES (STRICT SCOPING)
 -- ------------------------------------------------------------------------------
-CREATE POLICY "workspaces_strict_select"
-ON public.workspaces FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "workspaces_strict_select" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces_strict_select" ON public.workspaces;
+CREATE POLICY "workspaces_strict_select" ON public.workspaces FOR SELECT TO authenticated
 USING (
   public.is_super_admin() OR
   workspace_owner_id = auth.uid() OR
@@ -61,12 +64,14 @@ USING (
   )
 );
 
-CREATE POLICY "workspaces_strict_insert"
-ON public.workspaces FOR INSERT TO authenticated
+DROP POLICY IF EXISTS "workspaces_strict_insert" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces_strict_insert" ON public.workspaces;
+CREATE POLICY "workspaces_strict_insert" ON public.workspaces FOR INSERT TO authenticated
 WITH CHECK (public.is_super_admin());
 
-CREATE POLICY "workspaces_strict_update"
-ON public.workspaces FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "workspaces_strict_update" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces_strict_update" ON public.workspaces;
+CREATE POLICY "workspaces_strict_update" ON public.workspaces FOR UPDATE TO authenticated
 USING (
   public.is_super_admin() OR
   workspace_owner_id = auth.uid() OR
@@ -76,15 +81,17 @@ USING (
   )
 );
 
-CREATE POLICY "workspaces_strict_delete"
-ON public.workspaces FOR DELETE TO authenticated
+DROP POLICY IF EXISTS "workspaces_strict_delete" ON public.workspaces;
+DROP POLICY IF EXISTS "workspaces_strict_delete" ON public.workspaces;
+CREATE POLICY "workspaces_strict_delete" ON public.workspaces FOR DELETE TO authenticated
 USING (public.is_super_admin() OR workspace_owner_id = auth.uid());
 
 -- ------------------------------------------------------------------------------
 -- 4. REBUILD TASKS POLICIES (OWNERS + EXECUTION TEAM + WORKSPACE PEERS)
 -- ------------------------------------------------------------------------------
-CREATE POLICY "tasks_strict_select"
-ON public.tasks FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
+CREATE POLICY "tasks_strict_select" ON public.tasks FOR SELECT TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid() OR
@@ -93,15 +100,17 @@ USING (
   EXISTS (SELECT 1 FROM public.workspace_members wm WHERE wm.workspace_id = tasks.workspace_id AND wm.user_id = auth.uid() AND wm.is_deleted = false)
 );
 
-CREATE POLICY "tasks_strict_insert"
-ON public.tasks FOR INSERT TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_insert" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_insert" ON public.tasks;
+CREATE POLICY "tasks_strict_insert" ON public.tasks FOR INSERT TO authenticated
 WITH CHECK (
   public.is_super_admin() OR
   EXISTS (SELECT 1 FROM public.workspace_members wm WHERE wm.workspace_id = workspace_id AND wm.user_id = auth.uid() AND wm.is_deleted = false)
 );
 
-CREATE POLICY "tasks_strict_update"
-ON public.tasks FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+CREATE POLICY "tasks_strict_update" ON public.tasks FOR UPDATE TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid() OR
@@ -110,8 +119,9 @@ USING (
   EXISTS (SELECT 1 FROM public.workspace_members wm WHERE wm.workspace_id = tasks.workspace_id AND wm.user_id = auth.uid() AND wm.role IN ('WORKSPACE_OWNER', 'WORKSPACE_MANAGER') AND wm.is_deleted = false)
 );
 
-CREATE POLICY "tasks_strict_delete"
-ON public.tasks FOR DELETE TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_delete" ON public.tasks;
+CREATE POLICY "tasks_strict_delete" ON public.tasks FOR DELETE TO authenticated
 USING (
   public.is_super_admin() OR
   owner_id = auth.uid() OR

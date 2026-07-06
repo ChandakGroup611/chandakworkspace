@@ -81,21 +81,31 @@ CREATE TABLE IF NOT EXISTS public.requirement_approvals (
 -- 7. RLS Enforcement (Minimal)
 ALTER TABLE public.requirements ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "requirements Access" ON public.requirements;
+DROP POLICY IF EXISTS "requirements Access" ON public.requirements;
+DROP POLICY IF EXISTS "requirements Access" ON public.requirements;
 CREATE POLICY "requirements Access" ON public.requirements FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.ticket_requirements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "ticket_requirements Access" ON public.ticket_requirements;
+DROP POLICY IF EXISTS "ticket_requirements Access" ON public.ticket_requirements;
 DROP POLICY IF EXISTS "ticket_requirements Access" ON public.ticket_requirements;
 CREATE POLICY "ticket_requirements Access" ON public.ticket_requirements FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.requirement_tasks ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "requirement_tasks Access" ON public.requirement_tasks;
+DROP POLICY IF EXISTS "requirement_tasks Access" ON public.requirement_tasks;
+DROP POLICY IF EXISTS "requirement_tasks Access" ON public.requirement_tasks;
 CREATE POLICY "requirement_tasks Access" ON public.requirement_tasks FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.requirement_watchers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "requirement_watchers Access" ON public.requirement_watchers;
+DROP POLICY IF EXISTS "requirement_watchers Access" ON public.requirement_watchers;
+DROP POLICY IF EXISTS "requirement_watchers Access" ON public.requirement_watchers;
 CREATE POLICY "requirement_watchers Access" ON public.requirement_watchers FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.requirement_approvals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "requirement_approvals Access" ON public.requirement_approvals;
+DROP POLICY IF EXISTS "requirement_approvals Access" ON public.requirement_approvals;
 DROP POLICY IF EXISTS "requirement_approvals Access" ON public.requirement_approvals;
 CREATE POLICY "requirement_approvals Access" ON public.requirement_approvals FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 

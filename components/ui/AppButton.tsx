@@ -44,8 +44,8 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
         ? "bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 shadow-sm"
         : "bg-white/10 text-white hover:bg-white/15 border border-white/10 shadow-sm",
       ghost: isLight
-        ? "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-        : "bg-transparent text-gray-400 hover:bg-white/5 hover:text-white",
+        ? "bg-transparent border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        : "bg-transparent border border-white/5 text-gray-400 hover:bg-white/5 hover:text-white",
       destructive: 
         "bg-rose-600 text-white hover:bg-rose-700 border border-rose-500/30",
       outline: isLight

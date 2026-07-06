@@ -4,6 +4,7 @@
 
 -- 1. Redefine WORKSPACES Select Policy (Scope-Aware)
 DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
+DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
 CREATE POLICY policy_workspaces_select ON public.workspaces FOR SELECT TO authenticated
 USING (
     public.is_super_admin()
@@ -24,6 +25,7 @@ USING (
 
 -- 2. Redefine TASKS (workspace_tasks) Select Policy (Linked to Workspace Visibility)
 DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
+DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
 CREATE POLICY policy_tasks_select ON public.workspace_tasks FOR SELECT TO authenticated
 USING (
     public.is_super_admin()
@@ -38,6 +40,7 @@ USING (
 );
 
 -- 3. Redefine TICKETS Select Policy (Scope-Aware)
+DROP POLICY IF EXISTS policy_tickets_select ON public.tickets;
 DROP POLICY IF EXISTS policy_tickets_select ON public.tickets;
 CREATE POLICY policy_tickets_select ON public.tickets FOR SELECT TO authenticated
 USING (
@@ -54,6 +57,7 @@ USING (
 );
 
 -- 4. Redefine REQUIREMENTS Select Policy (Scope-Aware)
+DROP POLICY IF EXISTS policy_requirements_select ON public.requirements;
 DROP POLICY IF EXISTS policy_requirements_select ON public.requirements;
 CREATE POLICY policy_requirements_select ON public.requirements FOR SELECT TO authenticated
 USING (

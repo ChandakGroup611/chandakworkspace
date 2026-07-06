@@ -1,8 +1,9 @@
 -- Fix the requirements select policy to use only valid columns
 DROP POLICY IF EXISTS "requirements_strict_select" ON public.requirements;
 
-CREATE POLICY "requirements_strict_select"
-ON public.requirements FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "requirements_strict_select" ON public.requirements;
+DROP POLICY IF EXISTS "requirements_strict_select" ON public.requirements;
+CREATE POLICY "requirements_strict_select" ON public.requirements FOR SELECT TO authenticated
 USING (
   public.is_super_admin() OR
   public.has_permission_snapshot('REQUIREMENTS_MANAGE') OR

@@ -18,6 +18,7 @@ import {
   generateTeamsMeetingLink 
 } from "@/lib/actions/tickets";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
+import { AppButton } from "@/components/ui/AppButton";
 
 interface TicketWorkspaceConsoleProps {
   ticket: any;
@@ -422,9 +423,16 @@ export function TicketWorkspaceConsole({
                   ))}
                   
                   {hasMoreRemarks && (
-                    <button onClick={loadMoreRemarks} className="text-xs text-indigo-500 font-bold self-center py-4 hover:underline">
-                      {loadingRemarks ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load Older Comments"}
-                    </button>
+                    <div className="flex justify-center py-4">
+                      <AppButton 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={loadMoreRemarks} 
+                        isLoading={loadingRemarks}
+                      >
+                        Load Older Comments
+                      </AppButton>
+                    </div>
                   )}
                   
                   {comments.length === 0 && !loadingRemarks && (

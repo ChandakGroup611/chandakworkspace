@@ -33,23 +33,26 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 2. Update task_participants policy to use the function
 DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
-CREATE POLICY "task_participants_select"
-ON public.task_participants FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
+DROP POLICY IF EXISTS "task_participants_select" ON public.task_participants;
+CREATE POLICY "task_participants_select" ON public.task_participants FOR SELECT TO authenticated
 USING (
   public.check_task_access(task_id, auth.uid())
 );
 
 -- 3. Update tasks policy to use the function to ensure consistency and avoid any other loops
 DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
-CREATE POLICY "tasks_strict_select"
-ON public.tasks FOR SELECT TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_select" ON public.tasks;
+CREATE POLICY "tasks_strict_select" ON public.tasks FOR SELECT TO authenticated
 USING (
   public.check_task_access(id, auth.uid())
 );
 
 DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
-CREATE POLICY "tasks_strict_update"
-ON public.tasks FOR UPDATE TO authenticated
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_strict_update" ON public.tasks;
+CREATE POLICY "tasks_strict_update" ON public.tasks FOR UPDATE TO authenticated
 USING (
   public.check_task_access(id, auth.uid())
 );

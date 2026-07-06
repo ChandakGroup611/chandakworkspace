@@ -151,11 +151,6 @@ export default function LoginPage() {
     <div className={`min-h-[100dvh] w-full flex flex-col items-center justify-center relative font-sans p-4 sm:p-8 transition-colors duration-300 overflow-y-auto ${
       isLight ? "bg-gray-50 text-gray-900" : "bg-[#05070D] text-white"
     }`}>
-      {/* Dynamic Glow Accents */}
-      <div className={`absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none fixed`}>
-        <div className="absolute -top-[10%] -left-[10%] w-[60vw] h-[60vw] rounded-full blur-[120px] opacity-40 animate-pulse duration-[3000ms] bg-accent" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[60vw] h-[60vw] rounded-full blur-[120px] opacity-40 animate-pulse duration-[4000ms] bg-accent" />
-      </div>
 
       {/* Central Login Authentication Form Container */}
       <div className="w-full max-w-[400px] relative z-10 animate-in fade-in-50 zoom-in-95 duration-500 my-auto">
@@ -172,8 +167,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <AppCard className={`shadow-2xl backdrop-blur-2xl transition-all border ${
-          isLight ? "bg-white/80 border-white shadow-blue-900/5" : "bg-[#0A0D14]/70 border-white/10 shadow-black/50"
+        <AppCard className={`shadow-2xl backdrop-blur-2xl transition-all duration-300 border hover:shadow-3xl hover:-translate-y-1 ${
+          isLight ? "bg-white/80 border-gray-200 shadow-blue-900/5 hover:border-gray-300" : "bg-[#0A0D14]/70 border-white/10 shadow-black/50 hover:border-white/20"
         }`}>
           <AppCardHeader className={`pb-1 border-b text-center ${isLight ? "border-gray-100/50" : "border-white/5"}`}>
             <AppCardTitle className={`text-lg font-bold flex items-center justify-center gap-2 ${isLight ? "text-gray-900" : "text-white"}`}>

@@ -10,10 +10,12 @@
 -- 1. task_activity_logs
 -- ==========================================
 DROP POLICY IF EXISTS policy_task_activity_logs_select ON public.task_activity_logs;
+DROP POLICY IF EXISTS policy_task_activity_logs_select ON public.task_activity_logs;
 CREATE POLICY policy_task_activity_logs_select ON public.task_activity_logs 
     FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.tasks t WHERE t.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_activity_logs_insert ON public.task_activity_logs;
 DROP POLICY IF EXISTS policy_task_activity_logs_insert ON public.task_activity_logs;
 CREATE POLICY policy_task_activity_logs_insert ON public.task_activity_logs 
     FOR INSERT TO authenticated 
@@ -23,10 +25,12 @@ CREATE POLICY policy_task_activity_logs_insert ON public.task_activity_logs
 -- 2. task_audit_logs
 -- ==========================================
 DROP POLICY IF EXISTS policy_task_audit_logs_select ON public.task_audit_logs;
+DROP POLICY IF EXISTS policy_task_audit_logs_select ON public.task_audit_logs;
 CREATE POLICY policy_task_audit_logs_select ON public.task_audit_logs 
     FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.tasks t WHERE t.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_audit_logs_insert ON public.task_audit_logs;
 DROP POLICY IF EXISTS policy_task_audit_logs_insert ON public.task_audit_logs;
 CREATE POLICY policy_task_audit_logs_insert ON public.task_audit_logs 
     FOR INSERT TO authenticated 
@@ -36,10 +40,12 @@ CREATE POLICY policy_task_audit_logs_insert ON public.task_audit_logs
 -- 3. task_chat_messages
 -- ==========================================
 DROP POLICY IF EXISTS policy_task_chat_select ON public.task_chat_messages;
+DROP POLICY IF EXISTS policy_task_chat_select ON public.task_chat_messages;
 CREATE POLICY policy_task_chat_select ON public.task_chat_messages 
     FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.tasks t WHERE t.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_chat_insert ON public.task_chat_messages;
 DROP POLICY IF EXISTS policy_task_chat_insert ON public.task_chat_messages;
 CREATE POLICY policy_task_chat_insert ON public.task_chat_messages 
     FOR INSERT TO authenticated 
@@ -49,10 +55,12 @@ CREATE POLICY policy_task_chat_insert ON public.task_chat_messages
 -- 4. task_attachments
 -- ==========================================
 DROP POLICY IF EXISTS policy_task_attachments_select ON public.task_attachments;
+DROP POLICY IF EXISTS policy_task_attachments_select ON public.task_attachments;
 CREATE POLICY policy_task_attachments_select ON public.task_attachments 
     FOR SELECT TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.tasks t WHERE t.id = task_id));
 
+DROP POLICY IF EXISTS policy_task_attachments_insert ON public.task_attachments;
 DROP POLICY IF EXISTS policy_task_attachments_insert ON public.task_attachments;
 CREATE POLICY policy_task_attachments_insert ON public.task_attachments 
     FOR INSERT TO authenticated 

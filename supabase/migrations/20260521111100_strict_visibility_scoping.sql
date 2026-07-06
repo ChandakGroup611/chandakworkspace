@@ -43,15 +43,18 @@ $$;
 
 -- TICKETS
 DROP POLICY IF EXISTS policy_tickets_select ON public.tickets;
+DROP POLICY IF EXISTS policy_tickets_select ON public.tickets;
 CREATE POLICY policy_tickets_select ON public.tickets FOR SELECT TO authenticated
 USING (public.can_see_record(creator_id, assignee_id));
 
 -- REQUIREMENTS
 DROP POLICY IF EXISTS policy_requirements_select ON public.requirements;
+DROP POLICY IF EXISTS policy_requirements_select ON public.requirements;
 CREATE POLICY policy_requirements_select ON public.requirements FOR SELECT TO authenticated
 USING (public.can_see_record(creator_id, NULL));
 
 -- WORKSPACE TASKS
+DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
 DROP POLICY IF EXISTS policy_tasks_select ON public.workspace_tasks;
 CREATE POLICY policy_tasks_select ON public.workspace_tasks FOR SELECT TO authenticated
 USING (
@@ -71,6 +74,7 @@ USING (
 
 -- WORKSPACES
 DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
+DROP POLICY IF EXISTS policy_workspaces_select ON public.workspaces;
 CREATE POLICY policy_workspaces_select ON public.workspaces FOR SELECT TO authenticated
 USING (
     public.can_see_record(owner_id, NULL)
@@ -83,6 +87,7 @@ USING (
 
 -- 3. Explicit SUPER_ADMIN global CRUD for user_master
 -- Re-apply a robust FOR ALL policy ensuring Super Admins can update any user's profile
+DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_master;
 DROP POLICY IF EXISTS policy_super_admin_bypass_all ON public.user_master;
 CREATE POLICY policy_super_admin_bypass_all ON public.user_master
 FOR ALL TO authenticated

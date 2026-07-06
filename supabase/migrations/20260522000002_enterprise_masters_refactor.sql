@@ -105,6 +105,8 @@ END $$;
 -- Enable simple auth-based RLS on tickets
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Tickets Authenticated Access" ON public.tickets;
+DROP POLICY IF EXISTS "Tickets Authenticated Access" ON public.tickets;
+DROP POLICY IF EXISTS "Tickets Authenticated Access" ON public.tickets;
 CREATE POLICY "Tickets Authenticated Access" ON public.tickets
     FOR ALL
     TO authenticated
@@ -113,16 +115,24 @@ CREATE POLICY "Tickets Authenticated Access" ON public.tickets
 -- Apply basic Auth RLS to Masters and Audits
 ALTER TABLE public.status_master ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "status_master Access" ON public.status_master;
+DROP POLICY IF EXISTS "status_master Access" ON public.status_master;
+DROP POLICY IF EXISTS "status_master Access" ON public.status_master;
 CREATE POLICY "status_master Access" ON public.status_master FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.priority_master ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "priority_master Access" ON public.priority_master;
+DROP POLICY IF EXISTS "priority_master Access" ON public.priority_master;
 DROP POLICY IF EXISTS "priority_master Access" ON public.priority_master;
 CREATE POLICY "priority_master Access" ON public.priority_master FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.workflow_transition_master ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "workflow_transition_master Access" ON public.workflow_transition_master;
+DROP POLICY IF EXISTS "workflow_transition_master Access" ON public.workflow_transition_master;
+DROP POLICY IF EXISTS "workflow_transition_master Access" ON public.workflow_transition_master;
 CREATE POLICY "workflow_transition_master Access" ON public.workflow_transition_master FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.activity_events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "activity_events Access" ON public.activity_events;
+DROP POLICY IF EXISTS "activity_events Access" ON public.activity_events;
 DROP POLICY IF EXISTS "activity_events Access" ON public.activity_events;
 CREATE POLICY "activity_events Access" ON public.activity_events FOR ALL TO authenticated USING (auth.uid() IS NOT NULL);
