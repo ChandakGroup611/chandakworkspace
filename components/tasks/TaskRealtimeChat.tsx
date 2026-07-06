@@ -307,7 +307,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
   return (
     <Profiler id={`TaskRealtimeChat-${taskId}`} onRender={onRenderCallback}>
-    <AppCard className={`flex flex-col border-smooth ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}>
+    <AppCard className={`flex flex-col h-full overflow-hidden border-smooth ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}>
 
       {/* Header */}
       <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>
@@ -339,7 +339,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[0.8rem] font-medium flex items-center justify-between animate-in slide-in-from-top-1">
+        <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[0.8rem] shrink-0 font-medium flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-1">
             Dismiss
@@ -350,7 +350,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
       {/* Message Stream */}
       <div 
         ref={scrollContainerRef}
-        className="p-4 space-y-4 min-h-[200px] max-h-[380px] overflow-y-auto"
+        className="p-4 space-y-4 flex-1 overflow-y-auto"
       >
         {loading ? (
           <div className="flex items-center justify-center py-10 gap-2 text-gray-500">
@@ -448,7 +448,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
       </div>
 
       {/* Chat Input Area */}
-      <div className={`p-3 border-t relative ${isLightMode ? "border-gray-200 bg-gray-50/50" : "border-white/5 bg-black/20"}`}>
+      <div className={`p-3 border-t shrink-0 relative ${isLightMode ? "border-gray-200 bg-gray-50/50" : "border-white/5 bg-black/20"}`}>
         
         {/* Mentions Dropdown */}
         {showMentions && (
