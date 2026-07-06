@@ -255,10 +255,22 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             .upload(filePath, file);
             
           if (!uploadError && uploadData) {
-            const { data: { publicUrl } } = supabase.storage.from('task_attachments').getPublicUrl(filePath);
+            // Create database record to enable secure proxy access
+            const { data: dbData } = await supabase.from('task_attachments').insert([{
+               task_id: taskId,
+               file_name: file.name,
+               file_url: `storage:task_attachments:${filePath}`,
+               file_type: file.type,
+               size: file.size,
+               uploaded_by: userId
+            }]).select().single();
+
+            const fileUrl = dbData?.id ? `/api/proxy-attachment/${dbData.id}` : supabase.storage.from('task_attachments').getPublicUrl(filePath).data.publicUrl;
+
             uploadedAttachments.push({
+              id: dbData?.id,
               name: file.name,
-              url: publicUrl,
+              url: fileUrl,
               size: file.size,
               type: file.type
             });
