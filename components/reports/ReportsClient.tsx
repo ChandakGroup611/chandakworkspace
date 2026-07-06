@@ -29,7 +29,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-function DraggableTableHead({ col }: { col: any }) {
+function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; filterValue?: string; onFilterChange?: (v: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
   const style = { 
     transform: CSS.Translate.toString(transform), 
@@ -44,11 +44,25 @@ function DraggableTableHead({ col }: { col: any }) {
     <AppTableHead 
       ref={setNodeRef} 
       style={style}
-      className={`bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
-      {...attributes}
-      {...listeners}
+      className={`bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:bg-accent/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
     >
-      {col.display_name}
+      <div className="flex flex-col gap-2">
+        <div className="cursor-grab active:cursor-grabbing select-none" {...attributes} {...listeners}>
+          {col.display_name}
+        </div>
+        {onFilterChange && (
+          <input 
+            type="text" 
+            value={filterValue || ""} 
+            onChange={(e) => onFilterChange(e.target.value)} 
+            placeholder={`Filter ${col.display_name}...`}
+            className="w-full text-[10px] font-normal px-2 py-1 rounded bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-indigo-500 placeholder:text-gray-400"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        )}
+      </div>
     </AppTableHead>
   );
 }
@@ -99,6 +113,8 @@ export default function ReportsClient() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+
   const [dynamicFields, setDynamicFields] = useState<UIFieldDefinition[]>([]);
 
   const combinedFields = useMemo(() => {
@@ -141,6 +157,7 @@ export default function ReportsClient() {
     setSelectedStatus("");
     setDateFrom("");
     setDateTo("");
+    setColumnFilters({});
   }, [entityType, scope]);
 
   const uniqueStatuses = useMemo(() => Array.from(new Set(data.map(d => d.status).filter(s => s !== "—"))) as string[], [data]);
@@ -171,9 +188,25 @@ export default function ReportsClient() {
         )) return false;
       }
 
+      // Column-specific filters
+      for (const key of Object.keys(columnFilters)) {
+        const filterVal = columnFilters[key]?.toLowerCase();
+        if (!filterVal) continue;
+        
+        let itemVal = item[key];
+        if (itemVal === undefined && item.custom_fields) {
+          itemVal = item.custom_fields[key];
+        }
+        
+        if (itemVal === undefined || itemVal === null) return false;
+        
+        const itemStr = String(itemVal).toLowerCase();
+        if (!itemStr.includes(filterVal)) return false;
+      }
+
       return true;
     });
-  }, [data, query, selectedStatus, dateFrom, dateTo]);
+  }, [data, query, selectedStatus, dateFrom, dateTo, columnFilters]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -338,13 +371,14 @@ export default function ReportsClient() {
             <span>to</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent`} />
             
-            {(selectedStatus || dateFrom || dateTo || query) && (
+            {(selectedStatus || dateFrom || dateTo || query || Object.keys(columnFilters).some(k => columnFilters[k])) && (
               <button 
                 onClick={() => {
                   setSelectedStatus("");
                   setDateFrom("");
                   setDateTo("");
                   setQuery("");
+                  setColumnFilters({});
                 }}
                 className="ml-2 px-2 py-1 text-[10px] uppercase font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
               >
@@ -415,7 +449,12 @@ export default function ReportsClient() {
                 <AppTableRow>
                   <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
                     {visibleColumns.map(col => (
-                      <DraggableTableHead key={col.field_id} col={col} />
+                      <DraggableTableHead 
+                        key={col.field_id} 
+                        col={col} 
+                        filterValue={columnFilters[col.field_key]}
+                        onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, [col.field_key]: v }))}
+                      />
                     ))}
                   </SortableContext>
                 </AppTableRow>

@@ -6,19 +6,16 @@ async function testConnection(url) {
         await client.connect();
         
         const sql = `
-            UPDATE public.system_permissions
-            SET code = 'TRASH_VIEW',
-                name = 'View Trash Data',
-                module_name = 'Trash Data',
-                group_name = 'Data Retention'
-            WHERE code = 'COMPLIANCE_VIEW';
+            ALTER TABLE public.task_chat_messages 
+            ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]'::jsonb;
         `;
         
         await client.query(sql);
-        console.log("Successfully updated IAM system permissions.");
+        console.log("Successfully added attachments column to task_chat_messages.");
         await client.end();
         return true;
     } catch (e) {
+        console.error("Connection failed for url: ", url, e.message);
         return false;
     }
 }

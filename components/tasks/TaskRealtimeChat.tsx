@@ -32,6 +32,8 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
   const [isAllMentioned, setIsAllMentioned] = useState(false);
 
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -187,10 +189,20 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
     setShowMentions(false);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newMessage.trim();
-    if (!trimmed || sending) return;
+    if ((!trimmed && selectedFiles.length === 0) || sending) return;
 
     setSending(true);
     setError(null);
@@ -227,14 +239,41 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         }
       });
     }
-
     setNewMessage(""); // Optimistic clear
     setShowMentions(false);
 
     try {
+      let uploadedAttachments: any[] = [];
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+          const filePath = `${taskId}/${fileName}`;
+          
+          const { error: uploadError, data: uploadData } = await supabase.storage
+            .from('task_attachments')
+            .upload(filePath, file);
+            
+          if (!uploadError && uploadData) {
+            const { data: { publicUrl } } = supabase.storage.from('task_attachments').getPublicUrl(filePath);
+            uploadedAttachments.push({
+              name: file.name,
+              url: publicUrl,
+              size: file.size,
+              type: file.type
+            });
+          }
+        }
+      }
+      setSelectedFiles([]);
+
+      let finalMessage = trimmed;
+      if (uploadedAttachments.length > 0) {
+        finalMessage += "|||ATTACHMENTS|||" + JSON.stringify(uploadedAttachments);
+      }
       const { data, error: insertErr } = await supabase
         .from("task_chat_messages")
-        .insert([{ task_id: taskId, user_id: userId, message: trimmed }])
+        .insert([{ task_id: taskId, user_id: userId, message: finalMessage }])
         .select()
         .single();
 
@@ -367,7 +406,39 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                         ? (isLightMode ? "bg-indigo-50 border border-indigo-100 text-indigo-900 rounded-tl-sm" : "bg-indigo-900/30 border border-indigo-500/20 text-indigo-100 rounded-tl-sm")
                         : (isLightMode ? "bg-gray-100 text-gray-800 rounded-tl-sm" : "bg-[#1f2233] text-gray-200 rounded-tl-sm")
                   }`}>
-                    {m.message}
+                    {(() => {
+                      const parts = m.message.split("|||ATTACHMENTS|||");
+                      let text = parts[0];
+                      let attachments: any[] = [];
+                      if (parts.length > 1) {
+                        try { attachments = JSON.parse(parts[1]); } catch(e) {}
+                      }
+                      return (
+                        <div className="flex flex-col gap-2">
+                          {text && <div>{text}</div>}
+                          {attachments.length > 0 && (
+                            <div className="flex flex-col gap-1.5 mt-1 border-t border-white/20 pt-2">
+                              {attachments.map((att, i) => (
+                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-black/10' : 'bg-black/5 dark:bg-white/5'}`}>
+                                  <div className="flex items-center gap-2 overflow-hidden">
+                                    <Paperclip className="h-3 w-3 shrink-0 opacity-70" />
+                                    <span className="truncate max-w-[150px]" title={att.name}>{att.name}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0 ml-2">
+                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-white/20 rounded cursor-pointer transition-colors" title="View">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </a>
+                                    <a href={att.url} download={att.name} className="p-1 hover:bg-white/20 rounded cursor-pointer transition-colors" title="Download">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                    </a>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -428,13 +499,27 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
           </div>
         )}
 
+        {selectedFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 dark:bg-white/5 rounded-lg">
+            {selectedFiles.map((file, idx) => (
+              <div key={idx} className="flex items-center gap-1 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 px-2 py-1 rounded text-xs">
+                <span className="truncate max-w-[120px]">{file.name}</span>
+                <button type="button" onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500 ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <form
           onSubmit={handleSend}
           className={`flex items-center gap-2 p-2 rounded-xl border focus-within:ring-2 focus-within:ring-blue-500 transition-all ${
             isLightMode ? "bg-white border-gray-300" : "bg-[#0a0c16] border-white/10"
           }`}
         >
-          <button type="button" className="p-2 text-gray-400 hover:text-blue-500 transition-colors" tabIndex={-1}>
+          <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-blue-500 transition-colors" tabIndex={-1}>
             <Paperclip className="h-4 w-4" />
           </button>
           <input
@@ -453,7 +538,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             variant="primary"
             size="sm"
             className="h-8 w-8 p-0 rounded-lg shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700"
-            disabled={sending || !newMessage.trim()}
+            disabled={sending || (!newMessage.trim() && selectedFiles.length === 0)}
           >
             {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           </AppButton>

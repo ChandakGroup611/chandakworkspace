@@ -48,7 +48,7 @@ export default function RequirementsPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserDepartmentId, setCurrentUserDepartmentId] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [filter, setFilter] = useState({ search: "", system: "", priority: "", department: "", status: "Pending Approval" });
+  const [filter, setFilter] = useState({ search: "", system: "", priority: "", department: "", status: "" });
 
   useEffect(() => {
     setMounted(true);

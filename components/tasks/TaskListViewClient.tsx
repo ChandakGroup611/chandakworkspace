@@ -147,6 +147,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
+  const [viewState, setViewState] = useState<any>(null);
+  
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
+
   const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [inlineTask, setInlineTask] = useState<Task | null>(null);
@@ -956,16 +960,46 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
                       );
                       case "status": return (
-                        <AppTableCell className="whitespace-nowrap text-center">
+                        <AppTableCell className="whitespace-nowrap text-center relative">
                           <button 
-                            onClick={(e) => canUpdate && handleStatusClick(e, task)} 
+                            onClick={(e) => {
+                               e.stopPropagation();
+                               if (canUpdate) setOpenMenuTaskId(openMenuTaskId === task.id ? null : task.id);
+                            }} 
                             className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
-                            title={canUpdate ? "Update Status" : "Status"}
+                            title={canUpdate ? "Options" : "Status"}
                           >
                             <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""} isOutline={true}>
                               {task.status?.name || '—'}
                             </AppBadge>
                           </button>
+                          {openMenuTaskId === task.id && (
+                             <>
+                               <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpenMenuTaskId(null); }} />
+                               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl z-50 flex flex-col py-1 min-w-[150px]">
+                                  <Link 
+                                    href={`/tasks/${task.id}`}
+                                    className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       setOpenMenuTaskId(null);
+                                    }}
+                                  >
+                                    <Eye className="w-3.5 h-3.5" /> View Task
+                                  </Link>
+                                  <button 
+                                    className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       setOpenMenuTaskId(null);
+                                       handleStatusClick(e, task);
+                                    }}
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" /> Change Status
+                                  </button>
+                               </div>
+                             </>
+                          )}
                         </AppTableCell>
                       );
                       case "assignee": return (
