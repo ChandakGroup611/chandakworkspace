@@ -72,6 +72,7 @@ export default function AMCPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [editRecordId, setEditRecordId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   
   // Phase 1 Fields
   const [formSoftwareName, setFormSoftwareName] = useState("");
