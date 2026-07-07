@@ -442,36 +442,36 @@ export function TicketWorkspaceConsole({
             {/* Metadata Section */}
             <div className="mb-10 p-6 rounded-2xl border bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/10 shadow-sm">
               <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Ticket Metadata</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 gap-y-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 gap-y-8">
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Created By</div>
                   <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     {ticket.creator?.profile_photo ? (
-                      <img src={ticket.creator.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover" />
+                      <img src={ticket.creator.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
                     ) : (
-                      <User className="h-4 w-4 text-gray-400" />
+                      <User className="h-4 w-4 text-gray-400 shrink-0" />
                     )}
-                    <span className="truncate">{ticket.creator?.full_name || "Unknown"}</span>
+                    <span className="truncate" title={ticket.creator?.full_name || "Unknown"}>{ticket.creator?.full_name || "Unknown"}</span>
                   </div>
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Date</div>
                   <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    {new Date(ticket.created_at || ticket.createdAt).toLocaleDateString()}
+                    <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
+                    <span className="whitespace-nowrap">{new Date(ticket.created_at || ticket.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Department</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 truncate">
-                    <Workflow className="h-4 w-4 text-gray-400" />
-                    <span className="truncate">{ticket.departmentObj?.name || "Unassigned"}</span>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Workflow className="h-4 w-4 text-gray-400 shrink-0" />
+                    <span className="truncate" title={ticket.departmentObj?.name || "Unassigned"}>{ticket.departmentObj?.name || "Unassigned"}</span>
                   </div>
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Current Status</div>
                   <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
-                    <span className="px-2 py-0.5 rounded-md border bg-white dark:bg-black font-semibold text-xs border-gray-200 dark:border-white/10 truncate inline-block max-w-[120px]">
+                    <span className="px-2 py-0.5 rounded-md border bg-white dark:bg-black font-semibold text-xs border-gray-200 dark:border-white/10 whitespace-nowrap inline-block">
                       {ticket.statusObj?.name || "Unknown"}
                     </span>
                   </div>
@@ -479,7 +479,7 @@ export function TicketWorkspaceConsole({
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Priority</div>
                   <div className={`text-[13px] font-medium flex items-center`}>
-                    <span className={`px-2 py-0.5 rounded-md font-semibold text-xs ${getPriorityColor()}`}>
+                    <span className={`px-2 py-0.5 rounded-md font-semibold text-xs whitespace-nowrap ${getPriorityColor()}`}>
                       {ticket.priorityObj?.name || "STANDARD"}
                     </span>
                   </div>
@@ -488,21 +488,21 @@ export function TicketWorkspaceConsole({
                 {/* Extended Enterprise Fields */}
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Category</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate" title={categories.find(c => c.id === ticket.category_id || c.id === ticket.custom_fields?.category_id)?.name || "N/A"}>
                     {categories.find(c => c.id === ticket.category_id || c.id === ticket.custom_fields?.category_id)?.name || "N/A"}
                   </div>
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Subcategory</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate" title={subcategories.find(s => s.id === ticket.sub_category_id || s.id === ticket.custom_fields?.subcategory_id)?.name || "N/A"}>
                     {subcategories.find(s => s.id === ticket.sub_category_id || s.id === ticket.custom_fields?.subcategory_id)?.name || "N/A"}
                   </div>
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Target Due Date</div>
                   <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    {ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"}
+                    <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+                    <span className="whitespace-nowrap">{ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"}</span>
                   </div>
                 </div>
                 <div>

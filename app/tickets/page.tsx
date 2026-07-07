@@ -411,14 +411,8 @@ export default function TicketsPage() {
           <div 
             className={`fixed inset-y-0 right-0 z-50 w-full md:w-[90vw] lg:w-[1100px] bg-background shadow-2xl border-l border-border flex flex-col transition-transform duration-300 ease-in-out ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
           >
-            <div className="p-4 border-b border-border flex items-center justify-between bg-surface shrink-0">
-              <div>
-                <h2 className="text-[14px] font-bold text-foreground truncate pr-4">{activeTicketData.title}</h2>
-                <div className="text-[11px] font-mono text-muted-foreground mt-1">
-                  {activeTicketData.id} • {activeTicketData.departmentObj?.name || 'No Department'}
-                </div>
-              </div>
-              <AppButton variant="ghost" size="sm" onClick={closeDrawer} className="h-8 w-8 p-0 shrink-0">✕</AppButton>
+            <div className="absolute top-4 right-4 z-50">
+              <AppButton variant="ghost" size="sm" onClick={closeDrawer} className="h-8 w-8 p-0 shrink-0 bg-background/50 backdrop-blur-sm border border-border shadow-sm rounded-full hover:bg-background/80">✕</AppButton>
             </div>
             
             <div className="flex-1 overflow-y-auto bg-background p-0 relative">
