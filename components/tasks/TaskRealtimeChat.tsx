@@ -526,25 +526,29 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
         <form
           onSubmit={handleSend}
-          className={`flex items-center gap-2 p-2 rounded-xl border focus-within:ring-2 focus-within:ring-blue-500 transition-all ${
+          className={`flex items-center gap-2 p-1.5 rounded-xl border focus-within:ring-2 focus-within:ring-blue-500 transition-all ${
             isLightMode ? "bg-white border-gray-300" : "bg-[#0a0c16] border-white/10"
           }`}
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-blue-500 transition-colors" tabIndex={-1}>
+          
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-blue-500 transition-colors shrink-0" tabIndex={-1}>
             <Paperclip className="h-4 w-4" />
           </button>
+          
           <input
             type="text"
-            className="flex-1 bg-transparent border-none text-sm focus:outline-none focus:ring-0 placeholder-gray-500 dark:text-white"
+            className="flex-1 min-w-0 bg-transparent border-0 border-transparent shadow-none text-sm focus:outline-none focus:ring-0 focus:border-transparent placeholder-gray-500 dark:text-white px-0 m-0"
             placeholder="Type a message or use @ to mention someone..."
             value={newMessage}
             onChange={handleInputChange}
             disabled={sending}
           />
-          <button type="button" className="p-2 text-gray-400 hover:text-amber-500 transition-colors" tabIndex={-1}>
+          
+          <button type="button" className="p-2 text-gray-400 hover:text-amber-500 transition-colors shrink-0" tabIndex={-1}>
             <Smile className="h-4 w-4" />
           </button>
+          
           <AppButton
             type="submit"
             variant="primary"

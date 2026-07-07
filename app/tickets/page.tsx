@@ -2,17 +2,18 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { TicketListSidebar } from "@/components/tickets/TicketListSidebar";
 import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Plus, RefreshCw, CheckCircle2, Database, Loader2, ArrowLeft } from "lucide-react";
+import { Plus, RefreshCw, CheckCircle2, Database, Loader2, ArrowLeft, Search, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchTicketDashboardData } from "@/lib/actions/tickets";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppTable, AppTableBody, AppTableCell, AppTableContainer, AppTableHead, AppTableHeader, AppTableRow } from "@/components/ui/AppTable";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export default function TicketsPage() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function TicketsPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -98,16 +100,11 @@ export default function TicketsPage() {
 
       setTickets(mappedTickets);
 
-      // Preserve currently selected ticket or default to the first one in list
-      if (mappedTickets.length > 0) {
-        if (selectedTicket) {
-          const updated = mappedTickets.find(t => t.dbId === selectedTicket.dbId);
-          setSelectedTicket(updated || mappedTickets[0]);
-        } else {
-          setSelectedTicket(mappedTickets[0]);
+      if (selectedTicket) {
+        const updated = mappedTickets.find((t: any) => t.dbId === selectedTicket.dbId);
+        if (updated) {
+          setSelectedTicket(updated);
         }
-      } else {
-        setSelectedTicket(null);
       }
     } catch (err) {
       console.error("Critical recovery during ticket hydration:", err);
@@ -118,9 +115,20 @@ export default function TicketsPage() {
 
   useEffect(() => {
     fetchData();
-
-    // Realtime listener removed per P4 Polling Governance.
   }, []);
+
+  const handleTicketClick = (ticket: any) => {
+    setSelectedTicket(ticket);
+    setIsModalOpen(true);
+  };
+
+  const getPriorityColor = (code: string | undefined) => {
+    if (!code) return "bg-gray-500";
+    if (code.includes("CRITICAL") || code === "PRIO_CRIT_P1" || code === "P1") return "bg-red-500 text-white";
+    if (code.includes("HIGH") || code === "PRIO_HIGH_P2" || code === "P2") return "bg-amber-500 text-white";
+    if (code.includes("MEDIUM") || code === "PRIO_MED_P3" || code === "P3") return "bg-blue-500 text-white";
+    return "bg-green-500 text-white";
+  };
 
   // Filter tickets by search queries and role-based visibility isolation
   const filteredTickets = tickets.filter(t => {
@@ -128,6 +136,9 @@ export default function TicketsPage() {
       (t.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
       (t.id || "").toLowerCase().includes(searchQuery.toLowerCase());
       
+    // Dept filter using selectedScope (which maps to scopesList)
+    const matchesScope = selectedScope === "ALL" || t.department_id === selectedScope || t.departmentObj?.id === selectedScope;
+
     // End User Role Visibility: Can only see their own created or assigned tickets
     if (roleCode === "END_USER") {
       const isCreator = t.creator_id === userId;
@@ -137,14 +148,12 @@ export default function TicketsPage() {
       }
     }
       
-    return matchesSearch;
+    return matchesSearch && matchesScope;
   });
 
   if (!mounted || permissionsLoading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-surface text-foreground"
-      }`}>
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
         <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
         <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
           Verifying Capabilities...
@@ -155,9 +164,7 @@ export default function TicketsPage() {
 
   if (!hasPermission("TICKETS_VIEW")) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-surface text-foreground"
-      }`}>
+      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Database className="h-10 w-10" />
         </div>
@@ -176,7 +183,7 @@ export default function TicketsPage() {
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className={`text-[0.65rem] font-bold uppercase tracking-widest ${"text-muted"}`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
+              <span className={`text-[0.65rem] font-bold uppercase tracking-widest text-muted`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
             </div>
             <div className={`h-4 w-px ${isLightMode ? "bg-gray-300" : "bg-white/10"}`} />
             <div className="flex items-center gap-4 text-xs">
@@ -221,32 +228,134 @@ export default function TicketsPage() {
         }
       />
 
-      {/* Main Two-Column Layout */}
-      <div className="flex-1 flex min-h-0 overflow-hidden gap-6">
-        {/* Left Column: Scope filtering sidebar */}
-        <div className={`w-[380px] shrink-0 border-r ${"border-border"}`}>
-          <TicketListSidebar 
-            tickets={filteredTickets}
-            selectedTicketId={selectedTicket?.dbId || selectedTicket?.id}
-            onSelect={setSelectedTicket}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedDept={selectedScope}
-            onDeptChange={setSelectedScope}
-            departments={scopesList} // Pass scopes list in place of departments
-          />
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-6 p-6">
+        {/* Filters Top Bar */}
+        <div className={`p-4 space-y-4 rounded-xl border ${
+          isLightMode ? "border-gray-100 bg-white shadow-sm" : "border-white/5 bg-white/[0.01]"
+        }`}>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <input 
+                type="text"
+                placeholder="Search tickets by ID or title..."
+                className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                  isLightMode 
+                    ? "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400" 
+                    : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                }`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full sm:w-auto">
+              <AppButton 
+                onClick={() => setSelectedScope("ALL")}
+                variant={selectedScope === "ALL" ? "primary" : "ghost"}
+                size="sm"
+                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
+                  selectedScope === "ALL" 
+                    ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                    : ""
+                }`}
+              >
+                All Departments
+              </AppButton>
+              {scopesList.map(scope => (
+                <AppButton 
+                  key={scope.id}
+                  onClick={() => setSelectedScope(scope.id)}
+                  variant={selectedScope === scope.id ? "primary" : "ghost"}
+                  size="sm"
+                  className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
+                    selectedScope === scope.id 
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                      : ""
+                  }`}
+                >
+                  {scope.name}
+                </AppButton>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Right/Center Column: Consolidated Ticket Workspace Console */}
-        <div className="flex-1 min-w-0 bg-transparent flex flex-col">
+        {/* Data Table */}
+        <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border shadow-sm">
           {loading && tickets.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 h-64 flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
             </div>
           ) : (
-            <div className={`flex-1 border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 ${
-              isLightMode ? "bg-white border-gray-200" : "bg-[#090f1e]/40 border-white/5"
-            }`}>
+            <AppTableContainer>
+              <AppTable>
+                <AppTableHeader>
+                  <AppTableRow>
+                    <AppTableHead>Ticket ID</AppTableHead>
+                    <AppTableHead>Title</AppTableHead>
+                    <AppTableHead>Priority</AppTableHead>
+                    <AppTableHead>Status</AppTableHead>
+                    <AppTableHead>Department</AppTableHead>
+                    <AppTableHead>Assignee</AppTableHead>
+                    <AppTableHead>Created At</AppTableHead>
+                  </AppTableRow>
+                </AppTableHeader>
+                <AppTableBody>
+                  {filteredTickets.length > 0 ? (
+                    filteredTickets.map(ticket => (
+                      <AppTableRow 
+                        key={ticket.dbId} 
+                        onClick={() => handleTicketClick(ticket)}
+                        className="cursor-pointer"
+                      >
+                        <AppTableCell className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                          {ticket.id}
+                        </AppTableCell>
+                        <AppTableCell className="font-semibold max-w-xs truncate">
+                          {ticket.title}
+                        </AppTableCell>
+                        <AppTableCell>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${getPriorityColor(ticket.priorityObj?.code)}`}>
+                            {ticket.priorityObj?.name || "STANDARD"}
+                          </span>
+                        </AppTableCell>
+                        <AppTableCell>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border border-border bg-surface text-foreground whitespace-nowrap">
+                            {ticket.statusObj?.name || "Unknown"}
+                          </span>
+                        </AppTableCell>
+                        <AppTableCell className="text-xs text-muted-foreground">
+                          {ticket.departmentObj?.name || "-"}
+                        </AppTableCell>
+                        <AppTableCell className="text-xs">
+                          {ticket.assignedTo}
+                        </AppTableCell>
+                        <AppTableCell className="text-xs text-muted-foreground">
+                          {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </AppTableCell>
+                      </AppTableRow>
+                    ))
+                  ) : (
+                    <AppTableRow>
+                      <AppTableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                        No tickets found matching your criteria.
+                      </AppTableCell>
+                    </AppTableRow>
+                  )}
+                </AppTableBody>
+              </AppTable>
+            </AppTableContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Detail Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-[95vw] h-[95vh] p-0 flex flex-col gap-0 border-none bg-transparent shadow-none overflow-hidden sm:rounded-2xl">
+          <DialogTitle className="sr-only">Ticket Details Console</DialogTitle>
+          <div className="flex-1 w-full h-full rounded-2xl overflow-hidden bg-background border border-border shadow-2xl">
+            {selectedTicket && (
               <TicketWorkspaceConsole 
                 ticket={selectedTicket}
                 onUpdate={fetchData}
@@ -258,10 +367,10 @@ export default function TicketsPage() {
                 issueTypes={issueTypes}
                 currentUserId={userId}
               />
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Creation Wizard */}
       {showWizard && (
