@@ -339,6 +339,7 @@ export default function TicketsPage() {
                     <AppTableHead>Department</AppTableHead>
                     <AppTableHead>Assignee</AppTableHead>
                     <AppTableHead>Created At</AppTableHead>
+                    <AppTableHead className="text-right">Actions</AppTableHead>
                   </AppTableRow>
                 </AppTableHeader>
                 <AppTableBody>
@@ -374,11 +375,41 @@ export default function TicketsPage() {
                         <AppTableCell className="text-xs text-muted-foreground">
                           {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                         </AppTableCell>
+                        <AppTableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <AppButton 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 px-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTicketClick(ticket);
+                              }}
+                              title="View Details"
+                            >
+                              <Search className="h-4 w-4" />
+                            </AppButton>
+                            {ticket.statusObj?.code !== "ST_RESOLVED" && ticket.statusObj?.name !== "Resolved" && (
+                              <AppButton 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 px-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleTicketClick(ticket);
+                                }}
+                                title="Resolve Ticket"
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                              </AppButton>
+                            )}
+                          </div>
+                        </AppTableCell>
                       </AppTableRow>
                     ))
                   ) : (
                     <AppTableRow>
-                      <AppTableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                      <AppTableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                         No tickets found matching your criteria.
                       </AppTableCell>
                     </AppTableRow>
