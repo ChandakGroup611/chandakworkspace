@@ -299,11 +299,10 @@ export default function Navbar() {
                       variant="destructive"
                       onClick={handleExecuteSignOut}
                       disabled={loggingOut}
-                      className="w-full justify-between rounded-lg text-xs font-bold cursor-pointer group mt-2"
+                      className="w-full justify-center rounded-lg text-xs font-bold cursor-pointer group mt-2"
                       leftIcon={<LogOut className="h-3.5 w-3.5 group-hover:rotate-12 transition-transform" />}
                     >
                       <span>{loggingOut ? "Terminating Auth..." : "Log Out Securely"}</span>
-                      <span className={`text-[0.7rem] font-mono px-1.5 py-0.5 rounded ${isLight ? 'bg-red-100 text-red-700' : 'bg-rose-500/20 text-rose-400'}`}>FLUSH</span>
                     </AppButton>
                   </div>
                 </div>

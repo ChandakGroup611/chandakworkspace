@@ -82,6 +82,19 @@ export function TicketWorkspaceConsole({
   // Load state and action loading
   const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
 
+  // Mandatory Remark Modal States
+  const [showRemarkModal, setShowRemarkModal] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<any>(null);
+  const [updateRemarkText, setUpdateRemarkText] = useState("");
+  const [isUpdatingField, setIsUpdatingField] = useState(false);
+
+  // Additional Enterprise States
+  const [subTasks, setSubTasks] = useState<{ id: string; text: string; completed: boolean }[]>(ticket?.custom_fields?.sub_tasks || []);
+  const [newSubTask, setNewSubTask] = useState("");
+  const [timeLogged, setTimeLogged] = useState<number>(ticket?.custom_fields?.time_logged_minutes || 0);
+  const [newTimeLog, setNewTimeLog] = useState("");
+  const [isLoggingTime, setIsLoggingTime] = useState(false);
+
   // Allow any user with access to the console to edit fields (TICKETS_UPDATE checked by server)
   const isAssignee = currentUserId === ticket?.assignee_id;
   const isSuperAdmin = roleCode === "SUPER_ADMIN";
@@ -163,7 +176,7 @@ export function TicketWorkspaceConsole({
     return () => clearInterval(interval);
   }, [ticket, ticket?.priorityObj]);
 
-  const handleFieldUpdate = async (fields: any) => {
+  const executeFieldUpdate = async (fields: any) => {
     if (!ticket?.dbId) return;
     if (!canEditFields) {
       alert("Permission Denied: Only the Assignee can modify ticket attributes.");
@@ -182,16 +195,96 @@ export function TicketWorkspaceConsole({
       }
     } catch (err: any) {
       alert(`Update failed: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const handleFieldUpdate = (fields: any) => {
+    // Intercept to show mandatory remark modal
+    setPendingUpdate(fields);
+    setUpdateRemarkText("");
+    setShowRemarkModal(true);
+  };
+
+  const confirmUpdateWithRemark = async () => {
+    if (!updateRemarkText.trim() || !pendingUpdate) return;
+    
+    setIsUpdatingField(true);
+    try {
+      await executeFieldUpdate(pendingUpdate);
+      await addTicketRemark(ticket.dbId, `[System Update]: ${updateRemarkText.trim()}`);
+      
+      // Refresh remarks
+      setRemarksOffset(0);
+      const commentsData = await fetchTicketComments(ticket.dbId, 20, 0);
+      setComments(commentsData);
+      setHasMoreRemarks(commentsData.length === 20);
+      
+      setShowRemarkModal(false);
+      setPendingUpdate(null);
+      setUpdateRemarkText("");
+    } catch (err: any) {
+      // Error handled by executeFieldUpdate / addTicketRemark
+    } finally {
+      setIsUpdatingField(false);
     }
   };
 
   const saveTitleDesc = async () => {
     setSavingDetails(true);
     try {
-      await handleFieldUpdate({ title, description });
+      await executeFieldUpdate({ title, description });
       setIsEditingDetails(false);
     } finally {
       setSavingDetails(false);
+    }
+  };
+
+  const handleAddSubTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubTask.trim() || !ticket?.dbId) return;
+    
+    const newTask = { id: Date.now().toString(), text: newSubTask.trim(), completed: false };
+    const updatedTasks = [...subTasks, newTask];
+    setSubTasks(updatedTasks);
+    setNewSubTask("");
+    
+    const currentCustomFields = ticket.custom_fields || {};
+    await executeFieldUpdate({ custom_fields: { ...currentCustomFields, sub_tasks: updatedTasks } });
+  };
+
+  const toggleSubTask = async (taskId: string) => {
+    if (!ticket?.dbId) return;
+    const updatedTasks = subTasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
+    setSubTasks(updatedTasks);
+    
+    const currentCustomFields = ticket.custom_fields || {};
+    await executeFieldUpdate({ custom_fields: { ...currentCustomFields, sub_tasks: updatedTasks } });
+  };
+
+  const handleLogTime = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const minutes = parseInt(newTimeLog, 10);
+    if (isNaN(minutes) || minutes <= 0 || !ticket?.dbId) return;
+
+    setIsLoggingTime(true);
+    try {
+      const newTotal = timeLogged + minutes;
+      setTimeLogged(newTotal);
+      setNewTimeLog("");
+      
+      const currentCustomFields = ticket.custom_fields || {};
+      await executeFieldUpdate({ custom_fields: { ...currentCustomFields, time_logged_minutes: newTotal } });
+      await addTicketRemark(ticket.dbId, `[System Update]: Logged ${minutes} minutes of work. Total time logged: ${newTotal} minutes.`);
+      
+      setRemarksOffset(0);
+      const commentsData = await fetchTicketComments(ticket.dbId, 20, 0);
+      setComments(commentsData);
+      setHasMoreRemarks(commentsData.length === 20);
+    } catch (err: any) {
+      alert(`Failed to log time: ${err.message}`);
+    } finally {
+      setIsLoggingTime(false);
     }
   };
 
@@ -308,7 +401,30 @@ export function TicketWorkspaceConsole({
           </h2>
         </div>
 
-        {!canEditFields && (
+        {canEditFields ? (
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={generateTeamsMeeting}
+              disabled={isGeneratingTeams}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+            >
+              {isGeneratingTeams ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+              Start War Room
+            </button>
+            <button 
+              onClick={() => {
+                const resolvedStatus = states.find(s => s.code === "ST_RESOLVED" || s.name === "Resolved") || states[0];
+                if (resolvedStatus) {
+                  handleFieldUpdate({ status_id: resolvedStatus.id });
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-green-500 hover:bg-green-600 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-colors"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Quick Resolve
+            </button>
+          </div>
+        ) : (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold">
             <ShieldCheck className="h-4 w-4" />
             READ-ONLY MODE (NON-ASSIGNEE)
@@ -323,6 +439,87 @@ export function TicketWorkspaceConsole({
           {/* LEFT: Main Content Area */}
           <div className={`flex-1 p-6 lg:p-10 lg:pr-12 ${isLightMode ? "bg-white" : "bg-[#0A0A0A]"}`}>
             
+            {/* Metadata Section */}
+            <div className="mb-10 p-6 rounded-2xl border bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/10 shadow-sm">
+              <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Ticket Metadata</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 gap-y-8">
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Created By</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    {ticket.creator?.profile_photo ? (
+                      <img src={ticket.creator.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <User className="h-4 w-4 text-gray-400" />
+                    )}
+                    <span className="truncate">{ticket.creator?.full_name || "Unknown"}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Date</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    {new Date(ticket.created_at || ticket.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Department</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 truncate">
+                    <Workflow className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">{ticket.departmentObj?.name || "Unassigned"}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Current Status</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                    <span className="px-2 py-0.5 rounded-md border bg-white dark:bg-black font-semibold text-xs border-gray-200 dark:border-white/10 truncate inline-block max-w-[120px]">
+                      {ticket.statusObj?.name || "Unknown"}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Priority</div>
+                  <div className={`text-[13px] font-medium flex items-center`}>
+                    <span className={`px-2 py-0.5 rounded-md font-semibold text-xs ${getPriorityColor()}`}>
+                      {ticket.priorityObj?.name || "STANDARD"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Extended Enterprise Fields */}
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Category</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                    {categories.find(c => c.id === ticket.category_id || c.id === ticket.custom_fields?.category_id)?.name || "N/A"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Subcategory</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                    {subcategories.find(s => s.id === ticket.sub_category_id || s.id === ticket.custom_fields?.subcategory_id)?.name || "N/A"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Target Due Date</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    {ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Impact</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                    {ticket.custom_fields?.impact || "Moderate"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Urgency</div>
+                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                    {ticket.custom_fields?.urgency || "Moderate"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Title & Description Section */}
             <div className="mb-10">
               <div className="flex items-center justify-between mb-6">
@@ -375,8 +572,68 @@ export function TicketWorkspaceConsole({
                       {ticket.description || "No description provided."}
                     </p>
                   </div>
+                  
+                  {ticket.custom_fields?.teams_meeting?.url && (
+                    <div className="mt-6 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-500 rounded-lg text-white">
+                          <Video className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-indigo-700 dark:text-indigo-400">Active Incident War Room</div>
+                          <div className="text-xs text-indigo-600/70 dark:text-indigo-400/70">Join the live Teams bridge to troubleshoot.</div>
+                        </div>
+                      </div>
+                      <a 
+                        href={ticket.custom_fields.teams_meeting.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg shadow-md transition-all"
+                      >
+                        Join Call
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+
+            {/* Sub-Tasks Section */}
+            <div className="mb-10">
+              <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest border-b border-gray-200 dark:border-white/10 pb-2 mb-4 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" /> Checklist / Sub-Tasks
+              </h3>
+              <div className="space-y-2">
+                {subTasks.map((st) => (
+                  <div key={st.id} className="flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      checked={st.completed}
+                      onChange={() => toggleSubTask(st.id)}
+                      disabled={!canEditFields}
+                      className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className={`text-sm ${st.completed ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-200'}`}>
+                      {st.text}
+                    </span>
+                  </div>
+                ))}
+                
+                {canEditFields && (
+                  <form onSubmit={handleAddSubTask} className="flex items-center gap-2 mt-4 pt-2">
+                    <input 
+                      type="text"
+                      value={newSubTask}
+                      onChange={(e) => setNewSubTask(e.target.value)}
+                      placeholder="Add a new sub-task..."
+                      className={`flex-1 border rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10 text-white"}`}
+                    />
+                    <AppButton type="submit" variant="primary" disabled={!newSubTask.trim()}>
+                      Add
+                    </AppButton>
+                  </form>
+                )}
+              </div>
             </div>
 
             {/* Attachments Section */}
@@ -397,7 +654,7 @@ export function TicketWorkspaceConsole({
             {/* Collaboration Timeline Section */}
             <div>
               <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest border-b border-gray-200 dark:border-white/10 pb-2 mb-6 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" /> Collaboration Timeline
+                <MessageSquare className="h-4 w-4" /> Remark History & Collaboration
               </h3>
               
               <div className={`rounded-2xl border flex flex-col h-[600px] shadow-sm ${
@@ -417,7 +674,18 @@ export function TicketWorkspaceConsole({
                           <span className="text-sm font-bold">{comment.author?.full_name || "System"}</span>
                           <span className="text-xs text-gray-500 font-medium">{new Date(comment.created_at).toLocaleString()}</span>
                         </div>
-                        <p className="text-sm leading-relaxed">{comment.content}</p>
+                        <p 
+                          className="text-sm leading-relaxed whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{
+                            __html: comment.content
+                              // Very basic markdown parser for safety
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                              .replace(/`(.*?)`/g, '<code class="px-1.5 py-0.5 rounded-md bg-black/10 dark:bg-white/10 text-xs font-mono">$1</code>')
+                              .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-indigo-500 hover:underline">$1</a>')
+                              .replace(/@([a-zA-Z0-9_]+)/g, '<span class="text-blue-500 font-bold bg-blue-500/10 px-1 rounded-sm">@$1</span>')
+                          }}
+                        />
                       </div>
                     </div>
                   ))}
@@ -506,6 +774,35 @@ export function TicketWorkspaceConsole({
               </div>
             </div>
 
+            {/* Time Tracking Widget */}
+            <div>
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Time Tracking
+              </h4>
+              <div className={`p-5 rounded-xl border ${isLightMode ? "bg-white border-gray-200 shadow-sm" : "bg-[#1f1f1f] border-white/10"}`}>
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-medium text-gray-500">Total Logged Time</span>
+                  <span className="text-lg font-black text-indigo-500">{Math.floor(timeLogged / 60)}h {timeLogged % 60}m</span>
+                </div>
+                
+                {canEditFields && (
+                  <form onSubmit={handleLogTime} className="flex items-center gap-2">
+                    <input 
+                      type="number"
+                      min="1"
+                      value={newTimeLog}
+                      onChange={(e) => setNewTimeLog(e.target.value)}
+                      placeholder="Minutes..."
+                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10 text-white"}`}
+                    />
+                    <AppButton type="submit" variant="outline" size="sm" disabled={!newTimeLog || isLoggingTime}>
+                      {isLoggingTime ? <Loader2 className="h-4 w-4 animate-spin" /> : "Log Time"}
+                    </AppButton>
+                  </form>
+                )}
+              </div>
+            </div>
+
             {/* Routing & Assignment */}
             <div className="space-y-5">
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-2">
@@ -567,6 +864,57 @@ export function TicketWorkspaceConsole({
           </div>
         </div>
       </div>
+
+      {/* Mandatory Remark Modal */}
+      {showRemarkModal && (
+        <>
+          <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity" />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className={`w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200 ${
+              isLightMode ? "bg-white border border-gray-200" : "bg-[#141414] border border-white/10"
+            }`}>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Update Requires Remark
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Please provide a mandatory remark explaining this change for the audit history.
+              </p>
+              
+              <textarea
+                value={updateRemarkText}
+                onChange={(e) => setUpdateRemarkText(e.target.value)}
+                placeholder="Reason for update..."
+                rows={4}
+                className={`w-full border rounded-xl p-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-y mb-4 ${
+                  isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+                }`}
+              />
+              
+              <div className="flex justify-end gap-3">
+                <AppButton 
+                  variant="ghost" 
+                  onClick={() => {
+                    setShowRemarkModal(false);
+                    setPendingUpdate(null);
+                    setUpdateRemarkText("");
+                  }}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton 
+                  variant="primary"
+                  onClick={confirmUpdateWithRemark}
+                  disabled={!updateRemarkText.trim() || isUpdatingField}
+                >
+                  {isUpdatingField ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  Confirm Update
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

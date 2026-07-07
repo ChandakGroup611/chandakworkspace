@@ -37,10 +37,15 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedScope, setSelectedScope] = useState("ALL");
+  const [selectedStatus, setSelectedStatus] = useState("ALL");
+  const [selectedPriority, setSelectedPriority] = useState("ALL");
   const [showWizard, setShowWizard] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Transition States for Drawer
+  const [activeTicketData, setActiveTicketData] = useState<any>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -100,10 +105,10 @@ export default function TicketsPage() {
 
       setTickets(mappedTickets);
 
-      if (selectedTicket) {
-        const updated = mappedTickets.find((t: any) => t.dbId === selectedTicket.dbId);
+      if (activeTicketData) {
+        const updated = mappedTickets.find((t: any) => t.dbId === activeTicketData.dbId);
         if (updated) {
-          setSelectedTicket(updated);
+          setActiveTicketData(updated);
         }
       }
     } catch (err) {
@@ -118,8 +123,15 @@ export default function TicketsPage() {
   }, []);
 
   const handleTicketClick = (ticket: any) => {
-    setSelectedTicket(ticket);
-    setIsModalOpen(true);
+    setActiveTicketData(ticket);
+    setIsDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    setTimeout(() => {
+      setActiveTicketData(null);
+    }, 300); // Wait for CSS transition
   };
 
   const getPriorityColor = (code: string | undefined) => {
@@ -139,6 +151,10 @@ export default function TicketsPage() {
     // Dept filter using selectedScope (which maps to scopesList)
     const matchesScope = selectedScope === "ALL" || t.department_id === selectedScope || t.departmentObj?.id === selectedScope;
 
+    const matchesStatus = selectedStatus === "ALL" || t.status_id === selectedStatus;
+    const matchesPriority = selectedPriority === "ALL" || t.priority_id === selectedPriority;
+
+
     // End User Role Visibility: Can only see their own created or assigned tickets
     if (roleCode === "END_USER") {
       const isCreator = t.creator_id === userId;
@@ -148,7 +164,7 @@ export default function TicketsPage() {
       }
     }
       
-    return matchesSearch && matchesScope;
+    return matchesSearch && matchesScope && matchesStatus && matchesPriority;
   });
 
   if (!mounted || permissionsLoading) {
@@ -249,35 +265,67 @@ export default function TicketsPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar w-full sm:w-auto">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 hidden md:inline">Status:</span>
+              </div>
+              <select 
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                className={`h-9 pl-3 pr-8 rounded-lg text-sm border outline-none cursor-pointer ${
+                  isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10 text-white"
+                }`}
+              >
+                <option value="ALL">All Statuses</option>
+                {states.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+
+              <select 
+                value={selectedPriority}
+                onChange={e => setSelectedPriority(e.target.value)}
+                className={`h-9 pl-3 pr-8 rounded-lg text-sm border outline-none cursor-pointer ${
+                  isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10 text-white"
+                }`}
+              >
+                <option value="ALL">All Priorities</option>
+                {priorities.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-border no-scrollbar w-full">
+            <AppButton 
+              onClick={() => setSelectedScope("ALL")}
+              variant={selectedScope === "ALL" ? "primary" : "ghost"}
+              size="sm"
+              className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
+                selectedScope === "ALL" 
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                  : ""
+              }`}
+            >
+              All Departments
+            </AppButton>
+            {scopesList.map(scope => (
               <AppButton 
-                onClick={() => setSelectedScope("ALL")}
-                variant={selectedScope === "ALL" ? "primary" : "ghost"}
+                key={scope.id}
+                onClick={() => setSelectedScope(scope.id)}
+                variant={selectedScope === scope.id ? "primary" : "ghost"}
                 size="sm"
                 className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
-                  selectedScope === "ALL" 
+                  selectedScope === scope.id 
                     ? "bg-indigo-600 text-white hover:bg-indigo-700" 
                     : ""
                 }`}
               >
-                All Departments
+                {scope.name}
               </AppButton>
-              {scopesList.map(scope => (
-                <AppButton 
-                  key={scope.id}
-                  onClick={() => setSelectedScope(scope.id)}
-                  variant={selectedScope === scope.id ? "primary" : "ghost"}
-                  size="sm"
-                  className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
-                    selectedScope === scope.id 
-                      ? "bg-indigo-600 text-white hover:bg-indigo-700" 
-                      : ""
-                  }`}
-                >
-                  {scope.name}
-                </AppButton>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
 
@@ -350,14 +398,32 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      {/* Detail Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-[95vw] h-[95vh] p-0 flex flex-col gap-0 border-none bg-transparent shadow-none overflow-hidden sm:rounded-2xl">
-          <DialogTitle className="sr-only">Ticket Details Console</DialogTitle>
-          <div className="flex-1 w-full h-full rounded-2xl overflow-hidden bg-background border border-border shadow-2xl">
-            {selectedTicket && (
+      {/* Side Drawer Component for Ticket Details */}
+      {activeTicketData && (
+        <>
+          {/* Backdrop with transition */}
+          <div 
+            className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+            onClick={closeDrawer} 
+          />
+          
+          {/* Drawer Panel with translate transition */}
+          <div 
+            className={`fixed inset-y-0 right-0 z-50 w-full md:w-[90vw] lg:w-[1100px] bg-background shadow-2xl border-l border-border flex flex-col transition-transform duration-300 ease-in-out ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            <div className="p-4 border-b border-border flex items-center justify-between bg-surface shrink-0">
+              <div>
+                <h2 className="text-[14px] font-bold text-foreground truncate pr-4">{activeTicketData.title}</h2>
+                <div className="text-[11px] font-mono text-muted-foreground mt-1">
+                  {activeTicketData.id} • {activeTicketData.departmentObj?.name || 'No Department'}
+                </div>
+              </div>
+              <AppButton variant="ghost" size="sm" onClick={closeDrawer} className="h-8 w-8 p-0 shrink-0">✕</AppButton>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto bg-background p-0 relative">
               <TicketWorkspaceConsole 
-                ticket={selectedTicket}
+                ticket={activeTicketData}
                 onUpdate={fetchData}
                 departments={departments}
                 priorities={priorities}
@@ -367,10 +433,10 @@ export default function TicketsPage() {
                 issueTypes={issueTypes}
                 currentUserId={userId}
               />
-            )}
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
 
       {/* Creation Wizard */}
       {showWizard && (
