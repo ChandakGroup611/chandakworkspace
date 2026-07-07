@@ -385,13 +385,9 @@ export function TicketWorkspaceConsole({
     });
 
   return (
-    <div className={`flex flex-col h-full overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 ${
-      isLightMode ? "bg-gray-50/50 text-gray-900" : "bg-black text-gray-100"
-    }`}>
+    <div className="flex flex-col h-full overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 bg-background text-foreground">
       {/* ── BENTO HEADER ── */}
-      <header className={`flex items-center justify-between p-5 border-b backdrop-blur-xl z-10 ${
-        isLightMode ? "bg-white/80 border-gray-200" : "bg-white/5 border-white/5"
-      }`}>
+      <header className="flex items-center justify-between p-5 border-b border-border backdrop-blur-xl z-10 bg-surface/50">
         <div className="flex items-center gap-4">
           <div className={`px-4 py-1.5 text-xs font-bold rounded-lg border uppercase tracking-wider ${getPriorityColor()}`}>
             {ticket.priorityObj?.name || "STANDARD"}
@@ -437,83 +433,86 @@ export function TicketWorkspaceConsole({
         <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto min-h-full">
           
           {/* LEFT: Main Content Area */}
-          <div className={`flex-1 p-6 lg:p-10 lg:pr-12 ${isLightMode ? "bg-white" : "bg-[#0A0A0A]"}`}>
+          <div className="flex-1 p-6 lg:p-10 lg:pr-12 bg-background">
             
             {/* Metadata Section */}
-            <div className="mb-10 p-6 rounded-2xl border bg-gray-50/50 dark:bg-white/[0.02] border-gray-200 dark:border-white/10 shadow-sm">
-              <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Ticket Metadata</h3>
+            <div className="mb-10 p-6 rounded-2xl border bg-surface/50 border-border shadow-sm">
+              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">Ticket Metadata</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 gap-y-8">
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Created By</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Created By</div>
+                  <div className="text-xs font-medium text-foreground flex items-center gap-2">
                     {ticket.creator?.profile_photo ? (
                       <img src={ticket.creator.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
                     ) : (
-                      <User className="h-4 w-4 text-gray-400 shrink-0" />
+                      <User className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
                     <span className="truncate" title={ticket.creator?.full_name || "Unknown"}>{ticket.creator?.full_name || "Unknown"}</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Date</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Date</div>
+                  <div className="text-xs font-medium text-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="whitespace-nowrap">{new Date(ticket.created_at || ticket.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Department</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Workflow className="h-4 w-4 text-gray-400 shrink-0" />
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Department</div>
+                  <div className="text-xs font-medium text-foreground flex items-center gap-2">
+                    <Workflow className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate" title={ticket.departmentObj?.name || "Unassigned"}>{ticket.departmentObj?.name || "Unassigned"}</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Current Status</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
-                    <span className="px-2 py-0.5 rounded-md border bg-white dark:bg-black font-semibold text-xs border-gray-200 dark:border-white/10 whitespace-nowrap inline-block">
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Current Status</div>
+                  <div className="text-xs font-medium text-foreground">
+                    <span className="px-2 py-0.5 rounded-md border border-border bg-surface font-semibold text-[10px] whitespace-nowrap inline-block">
                       {ticket.statusObj?.name || "Unknown"}
                     </span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Priority</div>
-                  <div className={`text-[13px] font-medium flex items-center`}>
-                    <span className={`px-2 py-0.5 rounded-md font-semibold text-xs whitespace-nowrap ${getPriorityColor()}`}>
-                      {ticket.priorityObj?.name || "STANDARD"}
-                    </span>
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Priority</div>
+                  <div className={`text-xs font-medium flex items-center`}>
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border bg-surface">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      <span className="text-[10px] font-semibold text-foreground whitespace-nowrap">
+                        {ticket.priorityObj?.name || "STANDARD"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Extended Enterprise Fields */}
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Category</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate" title={categories.find(c => c.id === ticket.category_id || c.id === ticket.custom_fields?.category_id)?.name || "N/A"}>
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Category</div>
+                  <div className="text-xs font-medium text-foreground truncate" title={categories.find(c => c.id === ticket.category_id || c.id === ticket.custom_fields?.category_id)?.name || "N/A"}>
                     {categories.find(c => c.id === ticket.category_id || c.id === ticket.custom_fields?.category_id)?.name || "N/A"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Subcategory</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 truncate" title={subcategories.find(s => s.id === ticket.sub_category_id || s.id === ticket.custom_fields?.subcategory_id)?.name || "N/A"}>
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Subcategory</div>
+                  <div className="text-xs font-medium text-foreground truncate" title={subcategories.find(s => s.id === ticket.sub_category_id || s.id === ticket.custom_fields?.subcategory_id)?.name || "N/A"}>
                     {subcategories.find(s => s.id === ticket.sub_category_id || s.id === ticket.custom_fields?.subcategory_id)?.name || "N/A"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Target Due Date</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Target Due Date</div>
+                  <div className="text-xs font-medium text-foreground flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="whitespace-nowrap">{ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"}</span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Impact</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Impact</div>
+                  <div className="text-xs font-medium text-foreground">
                     {ticket.custom_fields?.impact || "Moderate"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Urgency</div>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Urgency</div>
+                  <div className="text-xs font-medium text-foreground">
                     {ticket.custom_fields?.urgency || "Moderate"}
                   </div>
                 </div>
@@ -523,7 +522,7 @@ export function TicketWorkspaceConsole({
             {/* Title & Description Section */}
             <div className="mb-10">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest border-b border-gray-200 dark:border-white/10 pb-2 w-full">
+                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border pb-2 w-full">
                   Incident Details
                 </h3>
               </div>
@@ -534,13 +533,13 @@ export function TicketWorkspaceConsole({
                     type="text"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
-                    className={`w-full border rounded-xl p-4 text-lg font-bold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"}`}
+                    className="w-full border rounded-xl p-4 text-lg font-bold focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all bg-surface border-border text-foreground"
                   />
                   <textarea 
                     rows={6}
                     value={description}
                     onChange={e => setDescription(e.target.value)}
-                    className={`w-full border rounded-xl p-4 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-y ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"}`}
+                    className="w-full border rounded-xl p-4 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-y bg-surface border-border text-foreground"
                   />
                   <div className="flex justify-end">
                     <button 
@@ -554,13 +553,13 @@ export function TicketWorkspaceConsole({
               ) : (
                 <div className="space-y-6 group">
                   <div className="flex justify-between items-start gap-4">
-                    <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-foreground leading-tight">
                       {ticket.title}
                     </h1>
                     {canEditFields && (
                       <button 
                         onClick={() => setIsEditingDetails(true)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-2 text-indigo-500 hover:bg-surface rounded-lg transition-all"
                         title="Edit Details"
                       >
                         <Edit3 className="h-5 w-5" />
@@ -568,7 +567,7 @@ export function TicketWorkspaceConsole({
                     )}
                   </div>
                   <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                    <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-line">
                       {ticket.description || "No description provided."}
                     </p>
                   </div>
@@ -744,13 +743,11 @@ export function TicketWorkspaceConsole({
             
             {/* SLA Status Widget */}
             <div>
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Clock className="h-4 w-4" /> Service Level Agreement
               </h4>
-              <div className={`p-5 rounded-xl border relative overflow-hidden ${
-                isLightMode ? "bg-white border-gray-200 shadow-sm" : "bg-[#1f1f1f] border-white/10 shadow-xl"
-              }`}>
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-gray-100 dark:bg-white/5">
+              <div className="relative overflow-hidden rounded-xl border bg-background border-border shadow-sm p-6 flex flex-col justify-center items-center h-32">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-border">
                   <div 
                     className={`h-full transition-all duration-1000 ${
                       slaStatus === "MET" ? "bg-green-500" : 
@@ -779,7 +776,7 @@ export function TicketWorkspaceConsole({
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Clock className="h-4 w-4" /> Time Tracking
               </h4>
-              <div className={`p-5 rounded-xl border ${isLightMode ? "bg-white border-gray-200 shadow-sm" : "bg-[#1f1f1f] border-white/10"}`}>
+              <div className="p-5 rounded-xl border bg-surface border-border shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-sm font-medium text-gray-500">Total Logged Time</span>
                   <span className="text-lg font-black text-indigo-500">{Math.floor(timeLogged / 60)}h {timeLogged % 60}m</span>
@@ -793,7 +790,7 @@ export function TicketWorkspaceConsole({
                       value={newTimeLog}
                       onChange={(e) => setNewTimeLog(e.target.value)}
                       placeholder="Minutes..."
-                      className={`w-full border rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10 text-white"}`}
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all bg-background border-border text-foreground"
                     />
                     <AppButton type="submit" variant="outline" size="sm" disabled={!newTimeLog || isLoggingTime}>
                       {isLoggingTime ? <Loader2 className="h-4 w-4 animate-spin" /> : "Log Time"}
@@ -805,7 +802,7 @@ export function TicketWorkspaceConsole({
 
             {/* Routing & Assignment */}
             <div className="space-y-5">
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-2">
+              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border pb-2">
                 <Users className="h-4 w-4" /> Routing & Assignment
               </h4>
               
@@ -815,9 +812,7 @@ export function TicketWorkspaceConsole({
                   value={ticket.assignee_id || ""}
                   onChange={(e) => handleFieldUpdate({ assignee_id: e.target.value })}
                   disabled={!canEditFields}
-                  className={`w-full border rounded-lg p-3 text-sm font-medium outline-none disabled:opacity-60 transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 ${
-                    isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/40 border-white/20 text-white"
-                  }`}
+                  className="w-full border rounded-lg p-3 text-sm font-medium outline-none disabled:opacity-60 transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-background border-border text-foreground"
                 >
                   <option value="">Unassigned</option>
                   {assigneesList.map(a => (
@@ -832,9 +827,7 @@ export function TicketWorkspaceConsole({
                   value={ticket.status_id}
                   onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
                   disabled={!canEditFields}
-                  className={`w-full border rounded-lg p-3 text-sm font-medium outline-none disabled:opacity-60 transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 ${
-                    isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-black/40 border-white/20 text-white"
-                  }`}
+                  className="w-full border rounded-lg p-3 text-sm font-medium outline-none disabled:opacity-60 transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-background border-border text-foreground"
                 >
                   {states.map(s => (
                     <option key={s.id} value={s.id}>{s.name}</option>
@@ -846,7 +839,7 @@ export function TicketWorkspaceConsole({
             {/* Assignee History Timeline */}
             {assigneeHistory.length > 0 && (
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2 border-b border-gray-200 dark:border-white/10 pb-2">
+                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border pb-2">
                   <History className="h-4 w-4" /> Assignment Trail
                 </h4>
                 <div className="relative pl-3 border-l border-gray-300 dark:border-white/20 space-y-6">

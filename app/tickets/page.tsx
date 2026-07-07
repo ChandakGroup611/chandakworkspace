@@ -123,15 +123,7 @@ export default function TicketsPage() {
   }, []);
 
   const handleTicketClick = (ticket: any) => {
-    setActiveTicketData(ticket);
-    setIsDrawerOpen(true);
-  };
-
-  const closeDrawer = () => {
-    setIsDrawerOpen(false);
-    setTimeout(() => {
-      setActiveTicketData(null);
-    }, 300); // Wait for CSS transition
+    router.push(`/tickets/${ticket.dbId}`);
   };
 
   const getPriorityColor = (code: string | undefined) => {
@@ -398,39 +390,7 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      {/* Side Drawer Component for Ticket Details */}
-      {activeTicketData && (
-        <>
-          {/* Backdrop with transition */}
-          <div 
-            className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
-            onClick={closeDrawer} 
-          />
-          
-          {/* Drawer Panel with translate transition */}
-          <div 
-            className={`fixed inset-y-0 right-0 z-50 w-full md:w-[90vw] lg:w-[1100px] bg-background shadow-2xl border-l border-border flex flex-col transition-transform duration-300 ease-in-out ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
-          >
-            <div className="absolute top-4 right-4 z-50">
-              <AppButton variant="ghost" size="sm" onClick={closeDrawer} className="h-8 w-8 p-0 shrink-0 bg-background/50 backdrop-blur-sm border border-border shadow-sm rounded-full hover:bg-background/80">✕</AppButton>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto bg-background p-0 relative">
-              <TicketWorkspaceConsole 
-                ticket={activeTicketData}
-                onUpdate={fetchData}
-                departments={departments}
-                priorities={priorities}
-                states={states}
-                categories={categories}
-                subcategories={subcategories}
-                issueTypes={issueTypes}
-                currentUserId={userId}
-              />
-            </div>
-          </div>
-        </>
-      )}
+      {/* Drawer removed in favor of full page routing */}
 
       {/* Creation Wizard */}
       {showWizard && (
