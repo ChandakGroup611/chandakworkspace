@@ -1,0 +1,415 @@
+﻿diff --git a/components/tickets/TicketWorkspaceConsole.tsx b/components/tickets/TicketWorkspaceConsole.tsx
+index 3b661b2..5a0c539 100644
+--- a/components/tickets/TicketWorkspaceConsole.tsx
++++ b/components/tickets/TicketWorkspaceConsole.tsx
+@@ -2,11 +2,11 @@
+ 
+ import React, { useState, useEffect } from "react";
+ import { 
+-  Clock, Users, Save, Paperclip, CheckCircle2, Video
++  Clock, Users, Save, Paperclip, CheckCircle2, Video, MessageSquare, ChevronDown, ChevronUp, Loader2
+ } from "lucide-react";
+ import { usePermissions } from "@/hooks/usePermissions";
+ import { fetchAssignees } from "@/lib/actions/users";
+-import { updateTicketDetails } from "@/lib/actions/tickets";
++import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, fetchTicketComments } from "@/lib/actions/tickets";
+ import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
+ import { AppButton } from "@/components/ui/AppButton";
+ 
+@@ -25,6 +25,23 @@ export function TicketWorkspaceConsole({
+ 
+   const [assigneesList, setAssigneesList] = useState<any[]>([]);
+ 
++  // Pending Changes & Remarks
++  const [pendingChanges, setPendingChanges] = useState<any>({});
++  const [updateRemark, setUpdateRemark] = useState("");
++  const [isSaving, setIsSaving] = useState(false);
++  const [remarksHistory, setRemarksHistory] = useState<any[]>([]);
++  const [loadingRemarksHistory, setLoadingRemarksHistory] = useState(true);
++  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(true);
++
++  // Relations State
++  const [relations, setRelations] = useState<any[]>([]);
++  const [newRelationCode, setNewRelationCode] = useState("");
++  const [newRelationType, setNewRelationType] = useState<'DUPLICATE' | 'RELATED' | 'BLOCKS' | 'BLOCKED_BY'>('RELATED');
++  const [isLinking, setIsLinking] = useState(false);
++  const [searchResults, setSearchResults] = useState<any[]>([]);
++  const [showSuggestions, setShowSuggestions] = useState(false);
++  const [isSearching, setIsSearching] = useState(false);
++
+   // SLA State
+   const [slaTimeRemaining, setSlaTimeRemaining] = useState("");
+   const [slaStatus, setSlaStatus] = useState<"MET" | "BREACHED" | "ACTIVE">("ACTIVE");
+@@ -44,112 +61,30 @@ export function TicketWorkspaceConsole({
+       if (!ticket?.dbId) return;
+       const activeAssignees = await fetchAssignees();
+       setAssigneesList(activeAssignees);
++      // Load Relations
++      fetchTicketRelations(ticket.dbId).then(setRelations);
+     }
+     loadInitialData();
+-  }, [ticket]);
++  }, [ticket?.dbId]);
+ 
+   useEffect(() => {
+-    if (!ticket?.created_at) return;
+-    const interval = setInterval(() => {
+-      const statusCode = ticket.statusObj?.code || "";
+-      if (statusCode === "ST_RESOLVED" || statusCode === "ST_CLOSED") {
+-        setSlaStatus("MET");
+-        setSlaTimeRemaining("SLA MET");
+-        setSlaPercent(100);
+-        return;
+-      }
+-      let slaHours = 24; 
+-      const prioCode = ticket.priorityObj?.code;
+-      if (prioCode === "PR_CRITICAL") slaHours = 4;
+-      else if (prioCode === "PR_HIGH") slaHours = 8;
+-      else if (prioCode === "PR_MEDIUM") slaHours = 24;
+-      else slaHours = 48;
+-
+-      const createdTime = new Date(ticket.created_at).getTime();
+-      const targetTime = createdTime + (slaHours * 60 * 60 * 1000);
+-      const currentTime = Date.now();
+-      const diffMs = targetTime - currentTime;
+-
+-      if (diffMs <= 0) {
+-        setSlaStatus("BREACHED");
+-        setSlaTimeRemaining("SLA BREACHED");
+-        setSlaPercent(0);
+-      } else {
+-        setSlaStatus("ACTIVE");
+-        const totalDuration = slaHours * 60 * 60 * 1000;
+-        const percent = Math.max(0, Math.min(100, (diffMs / totalDuration) * 100));
+-        setSlaPercent(percent);
+-
+-        const diffHrs = Math.floor(diffMs / (60 * 60 * 1000));
+-        const diffMins = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+-        if (diffHrs > 0) {
+-          setSlaTimeRemaining(`${diffHrs}h ${diffMins}m remaining`);
+-        } else {
+-          setSlaTimeRemaining(`${diffMins}m remaining`);
++    // Only search if actively typing or if empty (to show recent tickets)
++    const delayDebounceFn = setTimeout(async () => {
++      setIsSearching(true);
++      try {
++        const results = await searchTickets(newRelationCode);
++        setSearchResults(results);
++        if (newRelationCode.trim().length === 0 && showSuggestions) {
++          setShowSuggestions(true);
+         }
++      } catch (err) {
++        console.error(err);
++      } finally {
++        setIsSearching(false);
+       }
+-    }, 1000);
+-    return () => clearInterval(interval);
+-  }, [ticket, ticket?.priorityObj]);
+-
+-  const executeFieldUpdate = async (fields: any) => {
+-    if (!ticket?.dbId) return;
+-    if (!canEditFields) {
+-      alert("Permission Denied: Only the Assignee can modify ticket attributes.");
+-      return;
+-    }
+-    try {
+-      await updateTicketDetails(ticket.dbId, fields);
+-      onUpdate();
+-    } catch (err: any) {
+-      alert(`Update failed: ${err.message}`);
+-    }
+-  };
+-
+-  const handleFieldUpdate = (fields: any) => {
+-    executeFieldUpdate(fields);
+-  };
+-
+-  const handleLogTime = async (e: React.FormEvent) => {
+-    e.preventDefault();
+-    if (!newTimeLog) return;
+-    setIsLoggingTime(true);
+-    const addedTime = parseInt(newTimeLog);
+-    const totalTime = timeLogged + addedTime;
+-    const newCustomFields = { ...ticket.custom_fields, time_logged_minutes: totalTime };
+-    await executeFieldUpdate({ custom_fields: newCustomFields });
+-    setTimeLogged(totalTime);
+-    setNewTimeLog("");
+-    setIsLoggingTime(false);
+-  };
+-
+-  const handleAddSubTask = async (e: React.FormEvent) => {
+-    e.preventDefault();
+-    if (!newSubTask.trim()) return;
+-    const newTask = { id: crypto.randomUUID(), text: newSubTask, completed: false };
+-    const updatedTasks = [...subTasks, newTask];
+-    const newCustomFields = { ...ticket.custom_fields, sub_tasks: updatedTasks };
+-    await executeFieldUpdate({ custom_fields: newCustomFields });
+-    setSubTasks(updatedTasks);
+-    setNewSubTask("");
+-  };
++    }, 400);
+ 
+-  const toggleSubTask = async (id: string) => {
+-    const updatedTasks = subTasks.map(st => st.id === id ? { ...st, completed: !st.completed } : st);
+-    const newCustomFields = { ...ticket.custom_fields, sub_tasks: updatedTasks };
+-    await executeFieldUpdate({ custom_fields: newCustomFields });
+-    setSubTasks(updatedTasks);
+-  };
+-
+-  const getPriorityColor = () => {
+-    const code = ticket.priorityObj?.code;
+-    if (code === "PR_CRITICAL") return "bg-red-500/10 text-red-500 border-red-500/20";
+-    if (code === "PR_HIGH") return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+-    if (code === "PR_MEDIUM") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+-    return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+-  };
+-
+-  return (
++    return (
+     <div className="flex flex-col h-full overflow-hidden transition-all duration-500">
+       
+       {/* ΓöÇΓöÇ EXECUTION CONTROLLER LAYOUT (Identical to Task details structure) ΓöÇΓöÇ */}
+@@ -170,8 +105,19 @@ export function TicketWorkspaceConsole({
+             <div className="p-6 grid grid-cols-2 gap-4">
+                <div>
+                   <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Target Due Date</div>
+-                  <div className="text-xs font-semibold text-foreground">
+-                    {ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"}
++                  <div className="text-xs font-semibold text-foreground flex items-center">
++                    {canEditFields ? (
++                      <input 
++                        type="date" 
++                        value={pendingChanges.due_date !== undefined 
++                          ? (pendingChanges.due_date ? new Date(pendingChanges.due_date).toISOString().split('T')[0] : "") 
++                          : (ticket.due_date ? new Date(ticket.due_date).toISOString().split('T')[0] : "")}
++                        onChange={(e) => handleFieldUpdate({ due_date: e.target.value })}
++                        className="bg-transparent border-b border-border/50 text-foreground outline-none focus:border-purple-500 py-0.5 w-full cursor-pointer"
++                      />
++                    ) : (
++                      ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"
++                    )}
+                   </div>
+                </div>
+                <div>
+@@ -205,6 +151,7 @@ export function TicketWorkspaceConsole({
+           </div>
+           
+           {/* Checklists / Subtasks */}
++
+           <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+             <div className="bg-background border-b border-border p-4">
+                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+@@ -260,7 +207,7 @@ export function TicketWorkspaceConsole({
+                <div>
+                 <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Current Assignee</label>
+                 <select 
+-                  value={ticket.assignee_id || ""}
++                  value={pendingChanges.assignee_id !== undefined ? pendingChanges.assignee_id : (ticket.assignee_id || "")}
+                   onChange={(e) => handleFieldUpdate({ assignee_id: e.target.value })}
+                   disabled={!canEditFields}
+                   className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-background border-border text-foreground"
+@@ -280,7 +227,7 @@ export function TicketWorkspaceConsole({
+                   disabled={!canEditFields}
+                   className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-background border-border text-foreground"
+                 >
+-                  {states.map(s => (
++                  {states.map((s: any) => (
+                     <option key={s.id} value={s.id}>{s.name}</option>
+                   ))}
+                 </select>
+@@ -306,8 +253,14 @@ export function TicketWorkspaceConsole({
+                )}
+             </div>
+           </div>
+-          
+-          {/* Attachments Section */}
++        </div>
++      </div>
++
++      {/* LOWER SECTION: Remarks and Attachments */}
++      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full mt-6">
++
++        {/* LEFT: ATTACHMENTS */}
++        <div className="space-y-6">
+           <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+             <div className="bg-background border-b border-border p-4">
+                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+@@ -323,9 +276,175 @@ export function TicketWorkspaceConsole({
+               />
+             </div>
+           </div>
++        </div>
++
++        {/* RIGHT: TICKET REMARKS */}
++        <div className="space-y-3">
++        {(Object.keys(pendingChanges).length > 0) && (
++          <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mb-4">
++            <span>Ticket updates are pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
++            <button onClick={cancelChanges} className="text-xs text-amber-500/60 hover:text-amber-500 font-bold px-2 underline hover:no-underline">Cancel Change</button>
++          </div>
++        )}
++
++        <div className="flex items-center justify-between">
++          <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Ticket Remarks <span className="text-red-500">*</span></label>
+           
++          {/* Quick Actions */}
++          {canEditFields && (
++            <div className="flex gap-2">
++              <button 
++                type="button"
++                onClick={() => {
++                  const inProgressStatus = states.find((s: any) => s.name.includes("Progress") || s.name.includes("Doing"));
++                  if (inProgressStatus) {
++                    handleFieldUpdate({ status_id: inProgressStatus.id, assignee_id: currentUserId });
++                    setUpdateRemark("Acknowledged and actively investigating.");
++                  }
++                }}
++                className="text-[10px] font-bold px-2 py-1 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors border border-blue-500/20"
++              >
++                Acknowledge
++              </button>
++              <button 
++                type="button"
++                onClick={() => {
++                  const resolvedStatus = states.find((s: any) => s.name.includes("Resolv") || s.code === "ST_RESOLVED");
++                  if (resolvedStatus) {
++                    handleFieldUpdate({ status_id: resolvedStatus.id });
++                    setUpdateRemark("Issue has been resolved successfully.");
++                  }
++                }}
++                className="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors border border-emerald-500/20"
++              >
++                Mark Resolved
++              </button>
++            </div>
++          )}
++        </div>
++        <textarea
++          value={updateRemark}
++          onChange={e => setUpdateRemark(e.target.value)}
++          disabled={!canEditFields}
++          className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors bg-background border-border text-foreground ${!canEditFields ? 'opacity-50 cursor-not-allowed' : ''}`}
++          placeholder={!canEditFields ? "Ticket is frozen/read-only." : "Add update notes or operational remarks..."}
++        />
++        <div className="flex items-center justify-between gap-3">
++          <span className="text-xs text-gray-500">Last updated: {ticket.updated_at ? new Date(ticket.updated_at).toLocaleString() : "Not yet"}</span>
++          {canEditFields && (
++            <AppButton type="button" variant="primary" size="sm" onClick={commitChanges} disabled={isSaving || (Object.keys(pendingChanges).length > 0 && !updateRemark.trim())}>
++              {isSaving ? "Saving..." : (Object.keys(pendingChanges).length > 0) ? "Commit Updates & Save Remark" : "Save Remarks"}
++            </AppButton>
++          )}
+         </div>
++
++        {/* Remarks History Queue */}
++        <div className="mt-3 rounded-md border p-3 transition-all duration-150 bg-surface border-border text-foreground">
++          {/* Header with toggle */}
++          <div 
++            onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)} 
++            className="flex items-center justify-between cursor-pointer select-none group"
++          >
++            <div className="flex items-center gap-2">
++              <MessageSquare className="h-4 w-4 text-blue-500" />
++              <span className="text-[11px] font-bold uppercase tracking-wider transition-colors text-muted-foreground group-hover:text-blue-500">
++                Remarks History Queue
++              </span>
++              {remarksHistory.length > 0 && (
++                <span className="text-xs py-0.5 px-2 font-extrabold rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
++                  {remarksHistory.length}
++                </span>
++              )}
++            </div>
++            
++            <button 
++              type="button"
++              className="p-1 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/10 text-muted-foreground"
++            >
++              {isHistoryCollapsed ? (
++                <ChevronDown className="h-4 w-4" />
++              ) : (
++                <ChevronUp className="h-4 w-4" />
++              )}
++            </button>
++          </div>
++
++          {/* Collapsible Content */}
++          {!isHistoryCollapsed && (
++            <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
++              {loadingRemarksHistory ? (
++                <div className="flex items-center justify-center py-6 gap-2">
++                  <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
++                  <span className="text-xs text-muted-foreground">Loading history queue...</span>
++                </div>
++              ) : remarksHistory.length === 0 ? (
++                <div className="text-center py-6 text-xs text-muted-foreground italic">
++                  No remark history entries. Create a new remark above to start the queue.
++                </div>
++              ) : (
++                <div className="relative pl-4 border-l border-purple-500/20 space-y-5">
++                  {remarksHistory.map((item: any) => {
++                    const initials = (item.author?.full_name || item.user?.full_name || "Unknown")
++                      .split(" ")
++                      .map((n: string) => n[0])
++                      .join("")
++                      .toUpperCase()
++                      .slice(0, 2);
++                    
++                    return (
++                      <div key={item.id} className="relative group/item">
++                        {/* Timeline Node Point */}
++                        <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-purple-500 border-2 border-background group-hover/item:scale-125 transition-transform" />
++                        
++                        <div className="flex items-start gap-3">
++                          {/* Avatar */}
++                          {item.user?.profile_photo ? (
++                            <img 
++                              src={item.user.profile_photo} 
++                              alt={item.user.full_name} 
++                              className="h-7 w-7 rounded-full border border-purple-500/20 object-cover"
++                            />
++                          ) : (
++                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-purple-500/20 shadow-md">
++                              {initials}
++                            </div>
++                          )}
++
++                          {/* Content Block */}
++                          <div className="flex-1 min-w-0">
++                            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
++                              <span className="text-xs font-bold transition-colors text-foreground group-hover/item:text-purple-500">
++                                {item.author?.full_name || item.user?.full_name || "System Actor"}
++                              </span>
++                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
++                                <Clock className="h-3 w-3" />
++                                <span>{new Date(item.created_at).toLocaleString()}</span>
++                              </div>
++                            </div>
++                            
++                            <div 
++                              className="text-xs rounded-lg p-2.5 leading-relaxed break-words whitespace-pre-wrap border bg-background/50 border-border text-foreground"
++                              dangerouslySetInnerHTML={{
++                                __html: (item.content || "")
++                                  .replace(/[&<>'"]/g, (tag: string) => (({'&': '&amp;','<': '&lt;','>': '&gt;',"'": '&#39;','"': '&quot;'} as any)[tag] || tag))
++                                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
++                                  .replace(/\*(.*?)\*/g, '<em>$1</em>')
++                              }}
++                            />
++                          </div>
++                        </div>
++                      </div>
++                    );
++                  })}
++                </div>
++              )}
++            </div>
++          )}
++        </div>
++        </div>
++
+       </div>
++
+     </div>
+   );
+-}
++}
+\ No newline at end of file

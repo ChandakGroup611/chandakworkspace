@@ -1,0 +1,131 @@
+diff a/components/tickets/TicketWorkspaceConsole.tsx b/components/tickets/TicketWorkspaceConsole.tsx	(rejected hunks)
+@@ -44,112 +61,30 @@ export function TicketWorkspaceConsole({
+       if (!ticket?.dbId) return;
+       const activeAssignees = await fetchAssignees();
+       setAssigneesList(activeAssignees);
++      // Load Relations
++      fetchTicketRelations(ticket.dbId).then(setRelations);
+     }
+     loadInitialData();
+-  }, [ticket]);
++  }, [ticket?.dbId]);
+ 
+   useEffect(() => {
+-    if (!ticket?.created_at) return;
+-    const interval = setInterval(() => {
+-      const statusCode = ticket.statusObj?.code || "";
+-      if (statusCode === "ST_RESOLVED" || statusCode === "ST_CLOSED") {
+-        setSlaStatus("MET");
+-        setSlaTimeRemaining("SLA MET");
+-        setSlaPercent(100);
+-        return;
+-      }
+-      let slaHours = 24; 
+-      const prioCode = ticket.priorityObj?.code;
+-      if (prioCode === "PR_CRITICAL") slaHours = 4;
+-      else if (prioCode === "PR_HIGH") slaHours = 8;
+-      else if (prioCode === "PR_MEDIUM") slaHours = 24;
+-      else slaHours = 48;
+-
+-      const createdTime = new Date(ticket.created_at).getTime();
+-      const targetTime = createdTime + (slaHours * 60 * 60 * 1000);
+-      const currentTime = Date.now();
+-      const diffMs = targetTime - currentTime;
+-
+-      if (diffMs <= 0) {
+-        setSlaStatus("BREACHED");
+-        setSlaTimeRemaining("SLA BREACHED");
+-        setSlaPercent(0);
+-      } else {
+-        setSlaStatus("ACTIVE");
+-        const totalDuration = slaHours * 60 * 60 * 1000;
+-        const percent = Math.max(0, Math.min(100, (diffMs / totalDuration) * 100));
+-        setSlaPercent(percent);
+-
+-        const diffHrs = Math.floor(diffMs / (60 * 60 * 1000));
+-        const diffMins = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+-        if (diffHrs > 0) {
+-          setSlaTimeRemaining(`${diffHrs}h ${diffMins}m remaining`);
+-        } else {
+-          setSlaTimeRemaining(`${diffMins}m remaining`);
++    // Only search if actively typing or if empty (to show recent tickets)
++    const delayDebounceFn = setTimeout(async () => {
++      setIsSearching(true);
++      try {
++        const results = await searchTickets(newRelationCode);
++        setSearchResults(results);
++        if (newRelationCode.trim().length === 0 && showSuggestions) {
++          setShowSuggestions(true);
+         }
++      } catch (err) {
++        console.error(err);
++      } finally {
++        setIsSearching(false);
+       }
+-    }, 1000);
+-    return () => clearInterval(interval);
+-  }, [ticket, ticket?.priorityObj]);
+-
+-  const executeFieldUpdate = async (fields: any) => {
+-    if (!ticket?.dbId) return;
+-    if (!canEditFields) {
+-      alert("Permission Denied: Only the Assignee can modify ticket attributes.");
+-      return;
+-    }
+-    try {
+-      await updateTicketDetails(ticket.dbId, fields);
+-      onUpdate();
+-    } catch (err: any) {
+-      alert(`Update failed: ${err.message}`);
+-    }
+-  };
+-
+-  const handleFieldUpdate = (fields: any) => {
+-    executeFieldUpdate(fields);
+-  };
+-
+-  const handleLogTime = async (e: React.FormEvent) => {
+-    e.preventDefault();
+-    if (!newTimeLog) return;
+-    setIsLoggingTime(true);
+-    const addedTime = parseInt(newTimeLog);
+-    const totalTime = timeLogged + addedTime;
+-    const newCustomFields = { ...ticket.custom_fields, time_logged_minutes: totalTime };
+-    await executeFieldUpdate({ custom_fields: newCustomFields });
+-    setTimeLogged(totalTime);
+-    setNewTimeLog("");
+-    setIsLoggingTime(false);
+-  };
+-
+-  const handleAddSubTask = async (e: React.FormEvent) => {
+-    e.preventDefault();
+-    if (!newSubTask.trim()) return;
+-    const newTask = { id: crypto.randomUUID(), text: newSubTask, completed: false };
+-    const updatedTasks = [...subTasks, newTask];
+-    const newCustomFields = { ...ticket.custom_fields, sub_tasks: updatedTasks };
+-    await executeFieldUpdate({ custom_fields: newCustomFields });
+-    setSubTasks(updatedTasks);
+-    setNewSubTask("");
+-  };
++    }, 400);
+ 
+-  const toggleSubTask = async (id: string) => {
+-    const updatedTasks = subTasks.map(st => st.id === id ? { ...st, completed: !st.completed } : st);
+-    const newCustomFields = { ...ticket.custom_fields, sub_tasks: updatedTasks };
+-    await executeFieldUpdate({ custom_fields: newCustomFields });
+-    setSubTasks(updatedTasks);
+-  };
+-
+-  const getPriorityColor = () => {
+-    const code = ticket.priorityObj?.code;
+-    if (code === "PR_CRITICAL") return "bg-red-500/10 text-red-500 border-red-500/20";
+-    if (code === "PR_HIGH") return "bg-orange-500/10 text-orange-500 border-orange-500/20";
+-    if (code === "PR_MEDIUM") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+-    return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+-  };
+-
+-  return (
++    return (
+     <div className="flex flex-col h-full overflow-hidden transition-all duration-500">
+       
+       {/* ΓöÇΓöÇ EXECUTION CONTROLLER LAYOUT (Identical to Task details structure) ΓöÇΓöÇ */}

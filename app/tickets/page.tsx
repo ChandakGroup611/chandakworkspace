@@ -43,9 +43,7 @@ export default function TicketsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   
-  // Transition States for Drawer
-  const [activeTicketData, setActiveTicketData] = useState<any>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Transition States for Drawer (Removed)
 
   useEffect(() => {
     setMounted(true);
@@ -61,7 +59,12 @@ export default function TicketsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await fetchTicketDashboardData();
+      const data = await fetchTicketDashboardData({
+        searchQuery: searchQuery || undefined,
+        status_id: selectedStatus,
+        priority_id: selectedPriority,
+        scope_id: selectedScope
+      });
 
       const finalTicketData = data.tickets || [];
       const activeDepts = data.departments || [];
@@ -105,12 +108,6 @@ export default function TicketsPage() {
 
       setTickets(mappedTickets);
 
-      if (activeTicketData) {
-        const updated = mappedTickets.find((t: any) => t.dbId === activeTicketData.dbId);
-        if (updated) {
-          setActiveTicketData(updated);
-        }
-      }
     } catch (err) {
       console.error("Critical recovery during ticket hydration:", err);
     } finally {
@@ -119,8 +116,11 @@ export default function TicketsPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const handler = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery, selectedScope, selectedStatus, selectedPriority]);
 
   const handleTicketClick = (ticket: any) => {
     router.push(`/tickets/${ticket.dbId}`);
@@ -134,30 +134,8 @@ export default function TicketsPage() {
     return "bg-green-500 text-white";
   };
 
-  // Filter tickets by search queries and role-based visibility isolation
-  const filteredTickets = tickets.filter(t => {
-    const matchesSearch = 
-      (t.title || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (t.id || "").toLowerCase().includes(searchQuery.toLowerCase());
-      
-    // Dept filter using selectedScope (which maps to scopesList)
-    const matchesScope = selectedScope === "ALL" || t.department_id === selectedScope || t.departmentObj?.id === selectedScope;
-
-    const matchesStatus = selectedStatus === "ALL" || t.status_id === selectedStatus;
-    const matchesPriority = selectedPriority === "ALL" || t.priority_id === selectedPriority;
-
-
-    // End User Role Visibility: Can only see their own created or assigned tickets
-    if (roleCode === "END_USER") {
-      const isCreator = t.creator_id === userId;
-      const isAssignee = t.assignee_id === userId;
-      if (!isCreator && !isAssignee) {
-        return false;
-      }
-    }
-      
-    return matchesSearch && matchesScope && matchesStatus && matchesPriority;
-  });
+  // End User Role Visibility: Can only see their own created or assigned tickets is handled on the server side using the existing getVisibleTickets logic, but we still apply it here just in case, though the DB already enforces it. Actually, wait. The DB filters for ends users as well? Yes, getVisibleTickets handles user isolation. So we can just use tickets directly.
+  const filteredTickets = tickets;
 
   if (!mounted || permissionsLoading) {
     return (
@@ -301,7 +279,7 @@ export default function TicketsPage() {
                   : ""
               }`}
             >
-              All Departments
+              All Scopes
             </AppButton>
             {scopesList.map(scope => (
               <AppButton 

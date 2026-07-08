@@ -17,6 +17,10 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   const [loading, setLoading] = useState(true);
   const [ticketData, setTicketData] = useState<any>(null);
   
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  
   // Master Data
   const [departments, setDepartments] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
@@ -37,9 +41,9 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       setSubcategories(data.subcategories || []);
       setIssueTypes(data.issueTypes || []);
 
-      const foundTicket = (data.tickets || []).find((t: any) => t.id === ticketId || t.dbId === ticketId);
+      const foundTicket: any = (data.tickets as any[] || []).find((t: any) => t.id === ticketId || t.dbId === ticketId);
       
-      if (foundTicket) {
+      if (foundTicket && typeof foundTicket === 'object') {
         const custom = foundTicket.custom_fields || {};
         const mappedTicket = {
           ...foundTicket,
@@ -55,6 +59,10 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
           createdAt: foundTicket.created_at
         };
         setTicketData(mappedTicket);
+        if (!isEditing) {
+          setEditTitle(mappedTicket.title || "");
+          setEditDescription(mappedTicket.description || "");
+        }
       } else {
         setTicketData(null);
       }
@@ -68,6 +76,20 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   useEffect(() => {
     fetchData();
   }, [ticketId]);
+
+  const handleSaveDetails = async () => {
+    try {
+      const { updateTicketDetails } = await import("@/lib/actions/tickets");
+      await updateTicketDetails(ticketData.dbId, {
+        title: editTitle,
+        description: editDescription
+      });
+      setIsEditing(false);
+      fetchData();
+    } catch (err: any) {
+      alert("Failed to save: " + err.message);
+    }
+  };
 
   if (loading || permissionsLoading) {
     return (
@@ -124,25 +146,59 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
             {/* Content row: Title, description, etc. */}
             <div className="min-w-0 w-full mt-1">
               <div className="mt-3 w-full">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 flex items-center gap-1.5">
-                  Subject
-                </span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                    Subject
+                  </span>
+                  {!isEditing ? (
+                    <button onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 hover:text-indigo-600">
+                      Edit
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button onClick={() => {
+                        setIsEditing(false);
+                        setEditTitle(ticketData.title || "");
+                        setEditDescription(ticketData.description || "");
+                      }} className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-600">
+                        Cancel
+                      </button>
+                      <button onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-green-500 hover:text-green-600">
+                        Save
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-3 min-w-0 w-full">
-                  <h1 className="text-lg font-bold text-purple-700 dark:text-purple-400 break-words whitespace-normal w-full">{ticketData.title}</h1>
+                  {!isEditing ? (
+                    <h1 className="text-lg font-bold text-purple-700 dark:text-purple-400 break-words whitespace-normal w-full">{ticketData.title}</h1>
+                  ) : (
+                    <input 
+                      className="text-lg font-bold w-full border border-indigo-500/30 rounded px-2 py-1 bg-background"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                    />
+                  )}
                 </div>
               </div>
               
-              {ticketData.description && (
-                <div className="mt-6 w-full">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
-                    Description
-                  </span>
+              <div className="mt-6 w-full">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                  Description
+                </span>
+                {!isEditing ? (
                   <div 
                     className="text-[13px] sm:text-sm text-foreground w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-background/50 p-4 rounded-xl border border-border shadow-sm"
-                    dangerouslySetInnerHTML={{ __html: ticketData.description }} 
+                    dangerouslySetInnerHTML={{ __html: ticketData.description || "No description provided." }} 
                   />
-                </div>
-              )}
+                ) : (
+                  <textarea 
+                    className="w-full text-[13px] sm:text-sm border border-indigo-500/30 rounded-xl p-4 bg-background min-h-[120px] resize-y"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                  />
+                )}
+              </div>
             </div>
             
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-border pt-4">

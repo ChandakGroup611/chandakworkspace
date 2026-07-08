@@ -21,7 +21,8 @@ import {
   ChevronRight as ChevronRightIcon,
   BookOpen,
   LineChart,
-  Trash2
+  Trash2,
+  LifeBuoy
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -54,6 +55,7 @@ const navGroups: NavGroup[] = [
     label: "Core Operations",
     items: [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
+      { label: "My Support Portal", href: "/support", icon: LifeBuoy },
       { label: "ITSM Tickets", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
       { 
         label: "Requirements", 

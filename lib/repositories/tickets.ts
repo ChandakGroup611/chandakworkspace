@@ -8,7 +8,7 @@ import { hasPermission } from '@/lib/permissions';
 // Filtering MUST happen inside the DB query using explicit backend scopes.
 // =========================================================================
 
-export async function getVisibleTickets(userId: string, customSelect?: string) {
+export async function getVisibleTickets(userId: string, customSelect?: string, filters?: { searchQuery?: string, status_id?: string, priority_id?: string, scope_id?: string }) {
   const canViewAll = await hasPermission(userId, 'TICKETS_MANAGE');
   
   const defaultSelect = `
@@ -50,6 +50,25 @@ export async function getVisibleTickets(userId: string, customSelect?: string) {
 
     // Apply strict boundaries via OR
     query = query.or(explicitOrFilters.join(','));
+  }
+
+  if (filters) {
+    if (filters.status_id && filters.status_id !== "ALL") {
+      query = query.eq('status_id', filters.status_id);
+    }
+    if (filters.priority_id && filters.priority_id !== "ALL") {
+      query = query.eq('priority_id', filters.priority_id);
+    }
+    if (filters.scope_id && filters.scope_id !== "ALL") {
+      const { data: scope } = await supabaseAdmin.from('ticket_scopes').select('code').eq('id', filters.scope_id).single();
+      if (scope) {
+        const typeStr = scope.code === 'ERP' ? 'ERP/SOFTWARE' : scope.code;
+        query = query.or(`scope_type.eq.${typeStr},scope_type.eq.${scope.code}`);
+      }
+    }
+    if (filters.searchQuery) {
+      query = query.or(`title.ilike.%${filters.searchQuery}%,code.ilike.%${filters.searchQuery}%`);
+    }
   }
 
   const { data, error } = await query;
