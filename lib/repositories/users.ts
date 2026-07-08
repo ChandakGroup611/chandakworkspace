@@ -24,7 +24,7 @@ export async function getVisibleUsers(userId: string) {
         designation_id,
         role_id,
         department:departments(name),
-        designation:designations(name),
+        designation:designations!fk_user_master_designation(name),
         role:roles(name)
       `)
       .eq('is_deleted', false)
@@ -69,7 +69,7 @@ export async function getVisibleUsers(userId: string) {
   if (usersRes.error) throw usersRes.error;
 
   // In-memory governance routing is 100x faster than secondary database roundtrips
-  if (isSuperAdmin) {
+  if (isSuperAdmin || hasUsersViewPerm) {
     return usersRes.data || [];
   }
 
