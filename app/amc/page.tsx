@@ -571,7 +571,7 @@ export default function AMCPage() {
       setShowModal(false);
       fetchRecords();
     } catch (err: any) {
-      alert("Error: " + err.message);
+      setErrorAlert("Failed to save record: " + err.message);
     } finally {
       setUploading(false);
     }
@@ -1133,7 +1133,7 @@ export default function AMCPage() {
                     <AppInput value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} placeholder="e.g., MG Road Branch" className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">State</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">State <span className="text-red-500">*</span></label>
                     <select value={bankState} onChange={(e) => {
                       setBankState(e.target.value);
                       setBankCity(""); // Reset city
@@ -1144,7 +1144,7 @@ export default function AMCPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
-                      <span>City</span>
+                      <span>City <span className="text-red-500">*</span></span>
                       <button type="button" onClick={() => handleAddCity(bankState, setBankCity)} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors" title="Add New City">
                         <Plus className="h-4 w-4" />
                       </button>
@@ -1251,17 +1251,39 @@ export default function AMCPage() {
             </div>
 
             <div className={`fixed bottom-0 left-0 w-full p-4 border-t shadow-2xl flex items-center justify-end gap-4 z-50 ${isLightMode ? 'bg-white/90 border-gray-200 backdrop-blur-md' : 'bg-[#0A0D14]/90 border-white/10 backdrop-blur-md'}`}>
-              <div className="w-full max-w-[98%] mx-auto flex justify-end gap-4">
-                <AppButton type="button" variant="outline" size="lg" onClick={() => setShowModal(false)} disabled={uploading}>
-                  Cancel
-                </AppButton>
-                <AppButton type="submit" variant="primary" size="lg" disabled={uploading} leftIcon={uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : undefined} className="min-w-[200px]">
-                  {uploading ? 'Saving Data...' : 'Save Subscription Record'}
-                </AppButton>
+              <div className="w-full max-w-[98%] mx-auto flex justify-end items-center gap-4">
+                <div className="flex justify-end gap-4 shrink-0">
+                  <AppButton type="button" variant="outline" size="lg" onClick={() => setShowModal(false)} disabled={uploading}>
+                    Cancel
+                  </AppButton>
+                  <AppButton type="submit" variant="primary" size="lg" disabled={uploading} leftIcon={uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : undefined} className="min-w-[200px]">
+                    {uploading ? 'Saving Data...' : 'Save Subscription Record'}
+                  </AppButton>
+                </div>
               </div>
             </div>
             
           </form>
+        </div>
+      )}
+
+      {/* Validation Error Popup */}
+      {errorAlert && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className={`p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200 ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14] border-white/10'}`}>
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="h-14 w-14 rounded-full bg-rose-500/10 flex items-center justify-center">
+                <AlertTriangle className="h-7 w-7 text-rose-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-rose-500">Validation Error</h3>
+                <p className={`text-sm mt-2 ${isLightMode ? 'text-gray-600' : 'text-gray-300'}`}>{errorAlert}</p>
+              </div>
+              <AppButton variant="primary" className="w-full mt-4 bg-rose-500 hover:bg-rose-600 border-none text-white" onClick={() => setErrorAlert(null)}>
+                Okay, got it
+              </AppButton>
+            </div>
+          </div>
         </div>
       )}
     </PageContainer>
