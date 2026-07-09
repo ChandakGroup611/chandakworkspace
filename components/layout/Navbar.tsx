@@ -27,107 +27,12 @@ import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 import { useProfile } from "@/hooks/usePermissions";
 import { AppButton } from "@/components/ui/AppButton";
 
-// Configured Session Idle Constants
-const SESSION_TIMEOUT_SECONDS = 300; // 5 Minutes total idle budget
-const WARNING_THRESHOLD_SECONDS = 30; // Show pop-up when 30s remaining
-
-export default function Navbar() {
-  const router = useRouter();
-  const supabase = createClient();
-  const { theme, setTheme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
-  const [mounted, setMounted] = useState(false);
-
-  // Session Security States
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-
   const { data: profileData } = useProfile();
   const userData = profileData || null;
-
-  // Time-out countdown counter state — uses timestamp-based calculation
-  const lastActivityTimestampRef = useRef<number>(Date.now());
-  const lastActivityEventRef = useRef<number>(Date.now());
-  const [secondsRemaining, setSecondsRemaining] = useState(SESSION_TIMEOUT_SECONDS);
-  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Activity listeners to reset Idle Clock
-  const handleUserActivity = useCallback(() => {
-    if (loggingOut) return;
-    const now = Date.now();
-    if (now - lastActivityEventRef.current < 1000) return; // Throttle to 1 second
-    
-    lastActivityEventRef.current = now;
-    lastActivityTimestampRef.current = now;
-    
-    if (showTimeoutWarning) {
-      setShowTimeoutWarning(false);
-    }
-  }, [loggingOut, showTimeoutWarning]);
-
-  // Recalculate remaining time from the stored timestamp
-  // This works correctly even when the tab is hidden/minimized because
-  // it computes elapsed time from a timestamp rather than relying on
-  // setInterval ticks (which browsers throttle in hidden tabs).
-  const recalculateRemaining = useCallback(() => {
-    const elapsed = Math.floor((Date.now() - lastActivityTimestampRef.current) / 1000);
-    const remaining = Math.max(0, SESSION_TIMEOUT_SECONDS - elapsed);
-    return remaining;
-  }, []);
-
-  useEffect(() => {
-    const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
-    const onActivity = () => handleUserActivity();
-    
-    activityEvents.forEach(evt => {
-      window.addEventListener(evt, onActivity, { passive: true });
-    });
-
-    // Use timestamp-based countdown instead of simple decrement
-    const timerInterval = setInterval(() => {
-      const remaining = recalculateRemaining();
-      setSecondsRemaining(remaining);
-
-      if (remaining <= 0) {
-        clearInterval(timerInterval);
-        executeAutomatedTimeout();
-        return;
-      }
-
-      if (remaining <= WARNING_THRESHOLD_SECONDS && remaining > 0) {
-        setShowTimeoutWarning(true);
-      }
-    }, 1000);
-
-    // When the tab becomes visible again, immediately recalculate
-    // This catches up on all the time that passed while the tab was hidden
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        const remaining = recalculateRemaining();
-        setSecondsRemaining(remaining);
-
-        if (remaining <= 0) {
-          executeAutomatedTimeout();
-        } else if (remaining <= WARNING_THRESHOLD_SECONDS) {
-          setShowTimeoutWarning(true);
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      activityEvents.forEach(evt => {
-        window.removeEventListener(evt, onActivity);
-      });
-      clearInterval(timerInterval);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [handleUserActivity, recalculateRemaining]);
 
   const handleExecuteSignOut = async () => {
     setLoggingOut(true);
@@ -144,35 +49,12 @@ export default function Navbar() {
     }, 600);
   };
 
-  const executeAutomatedTimeout = async () => {
-    setLoggingOut(true);
-    setShowTimeoutWarning(false);
-    try {
-      if (userData?.id) {
-        await supabase.from("active_sessions").delete().eq("user_id", userData.id);
-      }
-      await supabase.auth.signOut();
-    } catch (_) {}
-
-    if (mounted) {
-      router.push("/login?reason=timeout");
-    } else {
-      window.location.href = "/login?reason=timeout";
-    }
-  };
-
   const toggleQuickTheme = () => {
     if (isLight) {
       setTheme("midnight-operations");
     } else {
       setTheme("executive-light");
     }
-  };
-
-  const formatTime = (totalSeconds: number) => {
-    const m = Math.floor(totalSeconds / 60);
-    const s = totalSeconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -202,24 +84,6 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-3 relative">
-          <div 
-            onClick={() => handleUserActivity()} 
-            title="Session Activity Keep-Alive Timer. Click to manually refresh lease."
-            className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[0.8rem] font-mono select-none cursor-pointer transition-all ${
-              secondsRemaining <= WARNING_THRESHOLD_SECONDS 
-                ? "bg-rose-500/20 border-rose-500/40 text-rose-400 animate-pulse" 
-                : isLight 
-                  ? "bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200" 
-                  : "bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10"
-            }`}
-          >
-            <Clock className={`h-3 w-3 ${secondsRemaining <= WARNING_THRESHOLD_SECONDS ? "text-rose-400 animate-spin" : "text-gray-500"}`} />
-            <span>Idle:</span>
-            <strong className="font-bold">{formatTime(secondsRemaining)}</strong>
-          </div>
-
-          <div className={`h-4 w-[1px] ${isLight ? "bg-gray-200" : "bg-white/10"}`} />
-
           <AppButton 
             variant="outline"
             size="icon"
