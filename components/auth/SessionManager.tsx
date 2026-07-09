@@ -37,14 +37,7 @@ export function SessionManager() {
   // Reset inactivity timer on user interaction
   const resetInactivityTimer = () => {
     lastActivityRef.current = Date.now();
-    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-    
-    inactivityTimerRef.current = setTimeout(() => {
-      const now = Date.now();
-      if (now - lastActivityRef.current >= INACTIVITY_TIMEOUT) {
-        handleInactivityLogout();
-      }
-    }, INACTIVITY_TIMEOUT);
+    // Inactivity timeout functionality has been removed per user request.
   };
 
   // Check auth state and initialize session token

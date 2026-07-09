@@ -202,24 +202,7 @@ export default function ClientSessionManager() {
     // (inactivityTimerRef is declared at the top of the component)
 
     const resetInactivityTimer = () => {
-      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      inactivityTimerRef.current = setTimeout(async () => {
-        // Force logout due to inactivity
-        console.warn("[SessionManager] 5 minutes of inactivity reached. Forcing logout.");
-        try {
-          const supabase = createClient();
-          await supabase.auth.signOut();
-        } catch (err) {
-          console.error("Signout error:", err);
-        } finally {
-          if (isMountedRef.current) {
-            const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
-            if (!isAuthPage) {
-              window.location.href = "/login?reason=timeout";
-            }
-          }
-        }
-      }, SESSION_IDLE_LIMIT_MS);
+      // Inactivity timeout functionality has been removed per user request.
     };
 
     const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];

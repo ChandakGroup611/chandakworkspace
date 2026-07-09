@@ -1,17 +1,16 @@
 const { Client } = require('pg');
+const fs = require('fs');
 
 async function testConnection(url) {
     const client = new Client({ connectionString: url });
     try {
         await client.connect();
         
-        const sql = `
-            ALTER TABLE public.task_chat_messages 
-            ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]'::jsonb;
-        `;
+        const sqlPath = "d:\\adios\\supabase\\migrations\\20260624000005_amc_enterprise_fields.sql";
+        const sql = fs.readFileSync(sqlPath, 'utf8');
         
         await client.query(sql);
-        console.log("Successfully added attachments column to task_chat_messages.");
+        console.log("Successfully executed migration.");
         await client.end();
         return true;
     } catch (e) {
@@ -22,10 +21,7 @@ async function testConnection(url) {
 
 async function main() {
     const urls = [
-        'postgresql://postgres.tkovzymkubxtpcgynkgd:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:6543/postgres',
-        'postgresql://postgres:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:6543/postgres',
-        'postgresql://postgres.tkovzymkubxtpcgynkgd:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:5432/postgres',
-        'postgresql://postgres:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:5432/postgres'
+        'postgresql://postgres.cffmgqdypmilwxkwhhve:Avinash%40ADIOS@aws-1-ap-south-1.pooler.supabase.com:5432/postgres'
     ];
     
     for (const url of urls) {

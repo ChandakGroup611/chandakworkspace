@@ -10,7 +10,12 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AMCHistoryModal } from "@/components/amc/AMCHistoryModal";
+import { AMCTransactionsTab } from "@/components/amc/AMCTransactionsTab";
+import { AMCRenewalsTab } from "@/components/amc/AMCRenewalsTab";
+import { AMCAllocationsTab } from "@/components/amc/AMCAllocationsTab";
+import { AMCPaymentsTab } from "@/components/amc/AMCPaymentsTab";
 import { createClient } from "@/utils/supabase/client";
+import Link from "next/link";
 import { 
   ShieldCheck, 
   Plus, 
@@ -24,10 +29,15 @@ import {
   Calendar,
   DollarSign,
   User,
+  Users,
   Paperclip,
   Download,
   Loader2,
-  Clock
+  Clock,
+  Eye,
+  EyeOff,
+  BarChart2,
+  PieChart
 } from "lucide-react";
 
 interface AttachmentEntry {
@@ -50,6 +60,8 @@ interface SolutionLineItem {
   igstAmount: number;
   discount: number;
   netAmount: number;
+  renewalPeriodType?: string;
+  customRenewalDate?: string;
 }
 
 export default function AMCPage() {
@@ -64,19 +76,23 @@ export default function AMCPage() {
   const [records, setRecords] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
   const [successAlert, setSuccessAlert] = useState<string | null>(null);
   const [amcData, setAmcData] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [editRecordId, setEditRecordId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("Master");
   const [mounted, setMounted] = useState(false);
   
   // Phase 1 Fields
   const [formSoftwareName, setFormSoftwareName] = useState("");
-  const [formProviderName, setFormProviderName] = useState("");
+  const [formVendorId, setFormVendorId] = useState("");
   const [formContractType, setFormContractType] = useState("AMC");
   const [formPurchaseDate, setFormPurchaseDate] = useState("");
   const [formExpiryDate, setFormExpiryDate] = useState("");
@@ -85,6 +101,36 @@ export default function AMCPage() {
   const [formDepartmentId, setFormDepartmentId] = useState("");
   const [formStatus, setFormStatus] = useState("Active");
   const [formNotes, setFormNotes] = useState("");
+
+  const [formCurrency, setFormCurrency] = useState("INR");
+  const [formTotalLicenses, setFormTotalLicenses] = useState("");
+  const [formUsedLicenses, setFormUsedLicenses] = useState("");
+  const [formCostPerLicense, setFormCostPerLicense] = useState("");
+  const [formLicenseKey, setFormLicenseKey] = useState("");
+  const [formPaymentTerms, setFormPaymentTerms] = useState("");
+  const [formSupportTier, setFormSupportTier] = useState("");
+  const [formSlaUptime, setFormSlaUptime] = useState("");
+  const [formSlaTat, setFormSlaTat] = useState("");
+  const [formCostCenterId, setFormCostCenterId] = useState("");
+  const [formNotifyBeforeDays, setFormNotifyBeforeDays] = useState("30");
+  const [showLicenseKey, setShowLicenseKey] = useState(false);
+
+  const handleRevealLicenseKey = async () => {
+    if (confirm("Are you sure you want to reveal the license key? This action will be logged.")) {
+       setShowLicenseKey(true);
+       if (editRecordId) {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+               await supabase.from('amc_license_views').insert([{
+                 amc_id: editRecordId,
+                 user_id: user.id
+               }]);
+            }
+          } catch(e) { console.error("Failed to log view", e); }
+       }
+    }
+  };
 
   // Phase 2 Fields - Structured
   const [solutionLineItems, setSolutionLineItems] = useState<SolutionLineItem[]>([]);
@@ -95,6 +141,16 @@ export default function AMCPage() {
       setFormCost(total ? total.toFixed(2) : "");
     }
   }, [solutionLineItems]);
+
+  useEffect(() => {
+    if (formTotalLicenses && formCost) {
+      const total = parseFloat(formCost);
+      const licenses = parseInt(formTotalLicenses);
+      if (licenses > 0 && !isNaN(total)) {
+        setFormCostPerLicense((total / licenses).toFixed(2));
+      }
+    }
+  }, [formTotalLicenses, formCost]);
 
   
   const [formPoNumber, setFormPoNumber] = useState("");
@@ -208,14 +264,16 @@ export default function AMCPage() {
 
   const fetchDependencies = async () => {
     try {
-      const [{ data: usersData }, { data: deptsData }, { data: citiesData }] = await Promise.all([
+      const [{ data: usersData }, { data: deptsData }, { data: citiesData }, { data: vendorsData }] = await Promise.all([
         supabase.from("user_master").select("id, full_name, email").eq("is_active", true),
         supabase.from("departments").select("id, name").eq("is_active", true),
-        supabase.from("master_cities").select("*").order("city_name")
+        supabase.from("master_cities").select("*").order("city_name"),
+        supabase.from("vendor_master").select("id, name").order("name")
       ]);
       if (usersData) setUsers(usersData);
       if (deptsData) setDepartments(deptsData);
       if (citiesData) setMasterCities(citiesData);
+      if (vendorsData) setVendors(vendorsData);
     } catch (e) {
       console.error("Failed to load dependencies", e);
     }
@@ -230,7 +288,8 @@ export default function AMCPage() {
         .select(`
           *,
           user_master:assigned_to (id, full_name, email),
-          departments:department_id (id, name)
+          departments:department_id (id, name),
+          vendor_master:vendor_id (id, name)
         `)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
@@ -270,7 +329,7 @@ export default function AMCPage() {
   const resetForm = () => {
     setEditRecordId(null);
     setFormSoftwareName("");
-    setFormProviderName("");
+    setFormVendorId("");
     setFormContractType("AMC");
     setFormPurchaseDate("");
     setFormExpiryDate("");
@@ -279,6 +338,19 @@ export default function AMCPage() {
     setFormDepartmentId("");
     setFormStatus("Active");
     setFormNotes("");
+    
+    setFormCurrency("INR");
+    setFormTotalLicenses("");
+    setFormUsedLicenses("");
+    setFormCostPerLicense("");
+    setFormLicenseKey("");
+    setFormPaymentTerms("");
+    setFormSupportTier("");
+    setFormSlaUptime("");
+    setFormSlaTat("");
+    setFormCostCenterId("");
+    setFormNotifyBeforeDays("30");
+    setShowLicenseKey(false);
     
     setSolutionLineItems([]);
     setFormPoNumber("");
@@ -325,7 +397,7 @@ export default function AMCPage() {
     resetForm();
     setEditRecordId(rec.id);
     setFormSoftwareName(rec.software_name || "");
-    setFormProviderName(rec.provider_name || "");
+    setFormVendorId(rec.vendor_id || "");
     setFormContractType(rec.contract_type || "AMC");
     setFormPurchaseDate(rec.purchase_date || "");
     setFormExpiryDate(rec.expiry_date || "");
@@ -334,6 +406,19 @@ export default function AMCPage() {
     setFormDepartmentId(rec.department_id || "");
     setFormStatus(rec.status || "Active");
     setFormNotes(rec.notes || "");
+
+    setFormCurrency(rec.currency || "INR");
+    setFormTotalLicenses(rec.total_licenses?.toString() || "");
+    setFormUsedLicenses(rec.used_licenses?.toString() || "");
+    setFormCostPerLicense(rec.cost_per_license?.toString() || "");
+    setFormLicenseKey(rec.license_key || "");
+    setFormPaymentTerms(rec.payment_terms || "");
+    setFormSupportTier(rec.support_tier || "");
+    setFormSlaUptime(rec.sla_uptime?.toString() || "");
+    setFormSlaTat(rec.sla_tat || "");
+    setFormCostCenterId(rec.cost_center_id || "");
+    setFormNotifyBeforeDays(rec.notify_before_days?.toString() || "30");
+    setShowLicenseKey(false);
 
     setSolutionLineItems(rec.solution_line_items || []);
     setFormPoNumber(rec.po_number || "");
@@ -412,7 +497,9 @@ export default function AMCPage() {
         igstPercent: 0,
         igstAmount: 0,
         discount: 0,
-        netAmount: 0
+        netAmount: 0,
+        renewalPeriodType: "",
+        customRenewalDate: ""
       }
     ]);
   };
@@ -423,7 +510,7 @@ export default function AMCPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formProviderName.trim()) {
+    if (!formVendorId.trim()) {
       setErrorAlert("Provider / Vendor Name is mandatory.");
       return;
     }
@@ -437,14 +524,10 @@ export default function AMCPage() {
     if (!formPurchaseDate) { setErrorAlert("Purchase Date is mandatory."); return; }
     if (!formAssignedTo) { setErrorAlert("Assigned To (Owner) is mandatory."); return; }
     if (!formDepartmentId) { setErrorAlert("Department is mandatory."); return; }
-    if (!formIndustryType) { setErrorAlert("Industry Type is mandatory."); return; }
-    if (!formVendorType) { setErrorAlert("Vendor Type is mandatory."); return; }
-    if (!bankName.trim()) { setErrorAlert("Bank Name is mandatory."); return; }
-    if (!bankAccountNo.trim()) { setErrorAlert("Bank Account Number is mandatory."); return; }
-    if (!bankIfsc.trim()) { setErrorAlert("Bank IFSC Code is mandatory."); return; }
-    if (!bankBranch.trim()) { setErrorAlert("Bank Branch Name is mandatory."); return; }
-    if (!bankState) { setErrorAlert("Bank State is mandatory."); return; }
-    if (!bankCity) { setErrorAlert("Bank City is mandatory."); return; }
+
+    if (!vendorContactName.trim()) { setErrorAlert("Contact Name is mandatory."); return; }
+    if (!vendorContactEmail.trim()) { setErrorAlert("Contact Email is mandatory."); return; }
+    if (!vendorContactPhone.trim()) { setErrorAlert("Contact Phone / Ext is mandatory."); return; }
 
     // Input Validations
     if (vendorContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vendorContactEmail)) {
@@ -490,7 +573,7 @@ export default function AMCPage() {
     const payload = {
       software_name: formSoftwareName,
       solution_name: solutionLineItems.map(item => item.resolutionName).filter(Boolean).join(", ") || null,
-      provider_name: formProviderName,
+      vendor_id: formVendorId,
       contract_type: formContractType,
       purchase_date: formPurchaseDate || null,
       expiry_date: formExpiryDate || null,
@@ -507,6 +590,18 @@ export default function AMCPage() {
       msme_number: formMsmeNumber || null,
       specifications: formSpecifications || null,
       notes: formNotes,
+      
+      currency: formCurrency,
+      total_licenses: formTotalLicenses ? parseInt(formTotalLicenses) : null,
+      used_licenses: formUsedLicenses ? parseInt(formUsedLicenses) : null,
+      cost_per_license: formCostPerLicense ? parseFloat(formCostPerLicense) : null,
+      license_key: formLicenseKey || null,
+      payment_terms: formPaymentTerms || null,
+      support_tier: formSupportTier || null,
+      sla_uptime: formSlaUptime ? parseFloat(formSlaUptime) : null,
+      sla_tat: formSlaTat || null,
+      cost_center_id: formCostCenterId || null,
+      notify_before_days: formNotifyBeforeDays ? parseInt(formNotifyBeforeDays) : 30,
       
       // JSON fields
       solution_line_items: solutionLineItems,
@@ -577,6 +672,20 @@ export default function AMCPage() {
     }
   };
 
+  const handleApprove = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('software_amc')
+        .update({ approval_status: status })
+        .eq('id', id);
+      if (error) throw error;
+      setSuccessAlert(`AMC marked as ${status}`);
+      await fetchRecords();
+    } catch (err: any) {
+      setErrorAlert(`Failed to update status: ${err.message}`);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this record?")) return;
     try {
@@ -605,7 +714,7 @@ export default function AMCPage() {
 
   const filteredDataset = records.filter(r => 
     r.software_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.provider_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    r.vendor_master?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.solution_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -636,6 +745,16 @@ export default function AMCPage() {
         badge={<AppBadge variant="info">IT Management</AppBadge>}
         actions={
           <>
+            <Link href="/amc/reports">
+              <AppButton variant="outline" size="sm" leftIcon={<PieChart className="h-3.5 w-3.5" />}>
+                Reports
+              </AppButton>
+            </Link>
+            <Link href="/amc/analytics">
+              <AppButton variant="outline" size="sm" leftIcon={<BarChart2 className="h-3.5 w-3.5" />}>
+                Analytics
+              </AppButton>
+            </Link>
             <AppButton variant="outline" size="sm" onClick={fetchRecords} leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />}>
               Refresh
             </AppButton>
@@ -683,10 +802,11 @@ export default function AMCPage() {
               <tr>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Software Name</th>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Solution Name</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Provider</th>
+                <th className="p-3 font-medium text-gray-500 border-b border-border">Vendor</th>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Type</th>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Owner</th>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Expiry Date</th>
+                <th className="p-3 font-medium text-gray-500 border-b border-border">Approval</th>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Status</th>
                 <th className="p-3 font-medium text-gray-500 border-b border-border text-right">Actions</th>
               </tr>
@@ -703,7 +823,7 @@ export default function AMCPage() {
                   <tr key={rec.id} className={`border-b border-border transition-colors ${isLightMode ? 'hover:bg-gray-50' : 'hover:bg-white/5'}`}>
                     <td className="p-3 font-medium">{rec.software_name}</td>
                     <td className="p-3">{rec.solution_name || '-'}</td>
-                    <td className="p-3">{rec.provider_name || '-'}</td>
+                    <td className="p-3">{rec.vendor_master?.name || '-'}</td>
                     <td className="p-3">
                       <AppBadge variant={rec.contract_type === 'AMC' ? 'accent' : rec.contract_type === 'Subscription' ? 'warning' : 'neutral'}>
                         {rec.contract_type}
@@ -724,14 +844,27 @@ export default function AMCPage() {
                       ) : '-'}
                     </td>
                     <td className="p-3">
+                      <AppBadge variant={rec.approval_status === 'Active' ? 'success' : rec.approval_status === 'Pending Approval' ? 'warning' : 'neutral'}>{rec.approval_status || 'Pending Approval'}</AppBadge>
+                    </td>
+                    <td className="p-3">
                       <AppBadge variant={rec.status === 'Active' ? 'success' : 'danger'}>{rec.status}</AppBadge>
                     </td>
                     <td className="p-3 text-right space-x-2">
+                      {rec.approval_status === 'Pending Approval' && hasPermission("SUPER_ADMIN") && (
+                        <>
+                          <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Active')} className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10">
+                            Approve
+                          </AppButton>
+                          <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Rejected')} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
+                            Reject
+                          </AppButton>
+                        </>
+                      )}
                       <AppButton variant="ghost" size="sm" onClick={() => setSelectedHistoryId(rec.id)} title="View Audit History">
                         <Clock className="h-3.5 w-3.5 text-blue-500" />
                       </AppButton>
                       {hasPermission("AMC_EDIT") && (
-                        <AppButton variant="ghost" size="sm" onClick={() => openEditModal(rec)}>
+                        <AppButton variant="ghost" size="sm" onClick={() => openEditModal(rec)} title="Edit Record & Log Transactions">
                           <Edit className="h-3.5 w-3.5" />
                         </AppButton>
                       )}
@@ -758,20 +891,39 @@ export default function AMCPage() {
         />
       )}
 
+
+
       {/* Full-Screen Page View for Add/Edit */}
       {showModal && (
         <div className={`fixed inset-0 z-[100] flex flex-col animate-in slide-in-from-bottom-4 duration-300 ${isLightMode ? 'bg-gray-50' : 'bg-[#05070D]'}`}>
           <div className={`flex items-center justify-between p-6 border-b shrink-0 ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14] border-white/5 shadow-md'}`}>
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold text-accent">{editRecordId ? "Edit Subscription Record" : "Add New Subscription"}</h2>
-              <p className="text-sm text-gray-500">Provide comprehensive details for the subscription, vendor, financials, and line items.</p>
+              <h2 className="text-2xl font-bold text-accent">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
+              <p className="text-sm text-gray-500">Manage the core software record, mid-year transactions, and renewals.</p>
             </div>
             <button onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
               <X className="h-6 w-6" />
             </button>
           </div>
+
+          {editRecordId && (
+            <div className={`flex items-center gap-6 px-6 border-b shrink-0 ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-[#0A0D14] border-white/5'}`}>
+              {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
+                <button 
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`py-4 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === tab ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          )}
           
-          <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 md:p-8 w-full max-w-[98%] mx-auto space-y-12 pb-32">
+          <div className="flex-1 overflow-y-auto w-full max-w-[98%] mx-auto pb-32">
+            <div className={activeTab === 'Master' ? 'block' : 'hidden'}>
+              <form onSubmit={handleSave} className="p-6 md:p-8 space-y-12">
             
             {/* SECTION: GENERAL & CONTRACT DETAILS */}
             <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
@@ -781,8 +933,13 @@ export default function AMCPage() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Provider / Vendor Name <span className="text-red-500">*</span></label>
-                  <AppInput value={formProviderName} onChange={(e) => setFormProviderName(e.target.value)} required placeholder="e.g., Adobe Inc." className="h-11" />
+                  <label className="text-xs font-bold text-gray-500 uppercase">Provider / Vendor <span className="text-red-500">*</span></label>
+                  <select value={formVendorId} onChange={(e) => setFormVendorId(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <option value="">-- Select Vendor --</option>
+                    {vendors.map(v => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Software Name <span className="text-red-500">*</span></label>
@@ -849,6 +1006,99 @@ export default function AMCPage() {
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Cost Center</label>
+                  <select value={formCostCenterId} onChange={(e) => setFormCostCenterId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <option value="">-- Select Cost Center --</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Remind Before (Days)</label>
+                  <AppInput type="number" value={formNotifyBeforeDays} onChange={(e) => setFormNotifyBeforeDays(e.target.value)} min="1" max="365" className="h-11" />
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION: LICENSE & USAGE TRACKING */}
+            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+              <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
+                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">2</span>
+                License & Usage Tracking
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Total Licenses Purchased</label>
+                  <AppInput type="number" value={formTotalLicenses} onChange={(e) => setFormTotalLicenses(e.target.value)} placeholder="e.g., 50" min="0" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Licenses In-Use</label>
+                  <AppInput type="number" value={formUsedLicenses} onChange={(e) => setFormUsedLicenses(e.target.value)} placeholder="e.g., 42" min="0" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Cost Per License</label>
+                  <AppInput type="number" value={formCostPerLicense} onChange={(e) => setFormCostPerLicense(e.target.value)} placeholder="Auto-calculated" readOnly className="h-11 opacity-70" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">License Key</label>
+                  <div className="relative">
+                    <AppInput type={showLicenseKey ? "text" : "password"} value={formLicenseKey} onChange={(e) => setFormLicenseKey(e.target.value)} placeholder="Enter License Key" className="h-11 pr-10" />
+                    {formLicenseKey && (
+                      <button type="button" onClick={showLicenseKey ? () => setShowLicenseKey(false) : handleRevealLicenseKey} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                        {showLicenseKey ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION: SLA & PAYMENT TERMS */}
+            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+              <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
+                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">3</span>
+                SLA & Payment Terms
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Currency</label>
+                  <select value={formCurrency} onChange={(e) => setFormCurrency(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Payment Terms</label>
+                  <select value={formPaymentTerms} onChange={(e) => setFormPaymentTerms(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <option value="">-- Select --</option>
+                    <option value="100% Advance">100% Advance</option>
+                    <option value="Net 15">Net 15</option>
+                    <option value="Net 30">Net 30</option>
+                    <option value="Net 45">Net 45</option>
+                    <option value="Net 60">Net 60</option>
+                    <option value="Quarterly">Quarterly Installments</option>
+                    <option value="50% Advance, 50% Post-Deployment">50% Advance, 50% Post-Deployment</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Support Tier</label>
+                  <select value={formSupportTier} onChange={(e) => setFormSupportTier(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <option value="">-- Select --</option>
+                    <option value="Standard Business Hours">Standard Business Hours</option>
+                    <option value="Premium 24x5">Premium 24x5</option>
+                    <option value="Enterprise 24x7">Enterprise 24x7</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Guaranteed Uptime (%)</label>
+                  <AppInput type="number" step="0.01" value={formSlaUptime} onChange={(e) => setFormSlaUptime(e.target.value)} placeholder="e.g., 99.9" min="0" max="100" className="h-11" />
+                </div>
+                <div className="space-y-2 lg:col-span-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Resolution TAT (Turnaround Time)</label>
+                  <AppInput value={formSlaTat} onChange={(e) => setFormSlaTat(e.target.value)} placeholder="e.g., 4 Hours for P1, 24 Hours for P2" className="h-11" />
+                </div>
               </div>
             </div>
 
@@ -856,7 +1106,7 @@ export default function AMCPage() {
             <div className={`p-6 rounded-2xl border overflow-hidden ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
                 <h4 className="text-base font-bold flex items-center gap-2">
-                  <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">2</span>
+                  <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">4</span>
                   Solution Name & Line Items
                 </h4>
                 <AppButton type="button" variant="outline" size="sm" onClick={addLineItem} leftIcon={<Plus className="h-4 w-4" />}>
@@ -870,6 +1120,8 @@ export default function AMCPage() {
                     <tr className="text-xs text-gray-500 uppercase tracking-wider border-b border-border">
                       <th className="pb-3 px-2 font-bold w-64">Resolution Name</th>
                       <th className="pb-3 px-2 font-bold w-48">Remark</th>
+                      <th className="pb-3 px-2 font-bold w-32">Renewal Period</th>
+                      <th className="pb-3 px-2 font-bold w-32">Renewal Date</th>
                       <th className="pb-3 px-2 font-bold w-20">Qty</th>
                       <th className="pb-3 px-2 font-bold w-28">Rate</th>
                       <th className="pb-3 px-2 font-bold w-32">CGST (%)</th>
@@ -893,6 +1145,23 @@ export default function AMCPage() {
                           </td>
                           <td className="py-2 px-1">
                             <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark" className="h-9 text-xs" />
+                          </td>
+                          <td className="py-2 px-1">
+                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                              <option value="">-- Select --</option>
+                              <option value="Yearly">Yearly</option>
+                              <option value="Half-Yearly">Half-Yearly</option>
+                              <option value="Quarterly">Quarterly</option>
+                              <option value="Monthly">Monthly</option>
+                              <option value="Custom">Custom</option>
+                            </select>
+                          </td>
+                          <td className="py-2 px-1">
+                            {item.renewalPeriodType === "Custom" ? (
+                              <AppInput type="date" value={item.customRenewalDate || ""} onChange={(e) => handleLineItemChange(item.id, "customRenewalDate", e.target.value)} className="h-9 text-xs" />
+                            ) : (
+                              <span className="text-gray-500 text-xs">-</span>
+                            )}
                           </td>
                           <td className="py-2 px-1">
                             <AppInput type="number" value={item.qty} onChange={(e) => handleLineItemChange(item.id, "qty", e.target.value)} className="h-9 text-xs" min={1} />
@@ -951,7 +1220,7 @@ export default function AMCPage() {
             {/* SECTION: VENDOR DETAILS */}
             <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">3</span>
+                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">5</span>
                 Vendor & Contact Details
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -960,7 +1229,7 @@ export default function AMCPage() {
                 <div className="space-y-4 col-span-1 md:col-span-3">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2 col-span-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Industry Type <span className="text-red-500">*</span></label>
+                      <label className="text-xs font-bold text-gray-500 uppercase">Industry Type</label>
                       <select value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
                         <option value="">Select Industry Type</option>
                         <option value="IT Software">IT Software</option>
@@ -978,7 +1247,7 @@ export default function AMCPage() {
                       </select>
                     </div>
                     <div className="space-y-2 col-span-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type <span className="text-red-500">*</span></label>
+                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type</label>
                       <select value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
                         <option value="">Select Vendor Type</option>
                         <option value="OEM (Original Equipment Manufacturer)">OEM (Original Equipment Manufacturer)</option>
@@ -1000,11 +1269,11 @@ export default function AMCPage() {
                   <h5 className="text-sm font-semibold text-accent">Contact Person & Address</h5>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">Contact Name</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Contact Name <span className="text-red-500">*</span></label>
                       <AppInput value={vendorContactName} onChange={(e) => setVendorContactName(e.target.value)} placeholder="Full Name" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">Contact Email</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Contact Email <span className="text-red-500">*</span></label>
                       <AppInput type="email" value={vendorContactEmail} onChange={(e) => setVendorContactEmail(e.target.value)} placeholder="Email Address" />
                     </div>
                     <div className="space-y-2">
@@ -1017,11 +1286,11 @@ export default function AMCPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">Phone / Ext</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">Phone / Ext <span className="text-red-500">*</span></label>
                       <AppInput value={vendorContactPhone} onChange={(e) => setVendorContactPhone(e.target.value)} placeholder="Contact Number" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase">State <span className="text-red-500">*</span></label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase">State</label>
                       <select value={vendorAddrState} onChange={(e) => {
                         setVendorAddrState(e.target.value);
                         setVendorAddrCity(""); // Reset city when state changes
@@ -1032,7 +1301,7 @@ export default function AMCPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
-                        <span>City <span className="text-red-500">*</span></span>
+                        <span>City</span>
                         <button type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors" title="Add New City">
                           <Plus className="h-4 w-4" />
                         </button>
@@ -1055,7 +1324,7 @@ export default function AMCPage() {
             {/* SECTION: FINANCIALS */}
             <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">4</span>
+                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">6</span>
                 Financial & Taxation Details
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1117,23 +1386,23 @@ export default function AMCPage() {
                 <h5 className="text-sm font-semibold text-accent">Bank Details</h5>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Bank Name <span className="text-red-500">*</span></label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Bank Name</label>
                     <AppInput value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank Name" className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Account Number <span className="text-red-500">*</span></label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Account Number</label>
                     <AppInput value={bankAccountNo} onChange={(e) => setBankAccountNo(e.target.value)} placeholder="Account No" className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">IFSC Code <span className="text-red-500">*</span></label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">IFSC Code</label>
                     <AppInput value={bankIfsc} onChange={(e) => setBankIfsc(e.target.value)} placeholder="IFSC" className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">Branch Name <span className="text-red-500">*</span></label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">Branch Name</label>
                     <AppInput value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} placeholder="e.g., MG Road Branch" className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase">State <span className="text-red-500">*</span></label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase">State</label>
                     <select value={bankState} onChange={(e) => {
                       setBankState(e.target.value);
                       setBankCity(""); // Reset city
@@ -1144,7 +1413,7 @@ export default function AMCPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
-                      <span>City <span className="text-red-500">*</span></span>
+                      <span>City</span>
                       <button type="button" onClick={() => handleAddCity(bankState, setBankCity)} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors" title="Add New City">
                         <Plus className="h-4 w-4" />
                       </button>
@@ -1161,7 +1430,7 @@ export default function AMCPage() {
             {/* SECTION: ATTACHMENTS & MISC */}
             <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">5</span>
+                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">7</span>
                 Attachments & Notes
               </h4>
               
@@ -1264,6 +1533,38 @@ export default function AMCPage() {
             </div>
             
           </form>
+            </div>
+
+            {activeTab === 'Payments' && editRecordId && (
+              <div className="p-6 md:p-8">
+                <AMCPaymentsTab amcId={editRecordId} isLightMode={isLightMode} />
+              </div>
+            )}
+
+            {activeTab === 'Transactions' && editRecordId && (
+              <div className="p-6 md:p-8">
+                <AMCTransactionsTab amcId={editRecordId} isLightMode={isLightMode} onUpdate={fetchRecords} />
+              </div>
+            )}
+
+            {activeTab === 'Renewals' && editRecordId && (
+              <div className="p-6 md:p-8">
+                <AMCRenewalsTab 
+                  amcId={editRecordId} 
+                  isLightMode={isLightMode} 
+                  onUpdate={fetchRecords} 
+                  currentExpiryDate={formExpiryDate}
+                />
+              </div>
+            )}
+
+            {activeTab === 'Allocations' && editRecordId && (
+              <div className="p-6 md:p-8">
+                <AMCAllocationsTab amcId={editRecordId} isLightMode={isLightMode} onUpdate={fetchRecords} />
+              </div>
+            )}
+
+          </div>
         </div>
       )}
 
