@@ -281,7 +281,7 @@ export default function UserFormPage() {
         <div className="xl:col-span-8 space-y-8">
           
           {/* SECTION 1: Personal Identity */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all ${isLightMode ? "border-slate-200" : "border-white/10"}`}>
+          <AppCard className={`overflow-hidden transition-all ${isLightMode ? "border-slate-200" : "border-slate-800"}`}>
             <AppCardHeader className={isLightMode ? "bg-slate-50/50 pb-4" : "bg-white/[0.02] pb-4"}>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-indigo-500" />
@@ -364,7 +364,7 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 2: Organization Alignment */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all ${isLightMode ? "border-slate-200" : "border-white/10"}`}>
+          <AppCard className={`overflow-hidden transition-all ${isLightMode ? "border-slate-200" : "border-slate-800"}`}>
             <AppCardHeader className={isLightMode ? "bg-slate-50/50 pb-4" : "bg-white/[0.02] pb-4"}>
               <div className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-amber-500" />
@@ -438,7 +438,7 @@ export default function UserFormPage() {
         <div className="xl:col-span-4 space-y-8">
 
           {/* User Status & Code (Highlights) */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all ${isLightMode ? "border-slate-200" : "border-white/10"}`}>
+          <AppCard className={`overflow-hidden transition-all ${isLightMode ? "border-slate-200" : "border-slate-800"}`}>
             <AppCardContent className="p-6 space-y-6">
               <div>
                 <label className={labelStyle}>Account Status</label>

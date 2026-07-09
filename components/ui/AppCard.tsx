@@ -11,7 +11,7 @@ export const AppCard = React.forwardRef<
     ref={ref}
     className={cn(
       "rounded-[var(--radius-card,8px)] relative transition-all duration-150",
-      "bg-surface border-smooth shadow-[var(--shadow-ambient)]",
+      "bg-surface border border-slate-200 dark:border-slate-800 shadow-sm",
       className
     )}
     {...props}

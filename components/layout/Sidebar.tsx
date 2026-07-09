@@ -199,11 +199,11 @@ export default function Sidebar() {
       <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
         {!isCompact ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-12 shrink-0 items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain drop-shadow-md" />
+            <div className="flex h-10 shrink-0 items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
-              <span className={`text-[14px] font-black tracking-tight truncate bg-clip-text text-transparent bg-gradient-to-r drop-shadow-sm ${isLight ? "from-blue-700 via-indigo-600 to-purple-700" : "from-blue-400 via-indigo-300 to-purple-400"}`}>
+              <span className={`text-[15px] font-bold tracking-tight truncate ${isLight ? "text-slate-900" : "text-white"}`}>
                 Chandak Workspace
               </span>
             </div>
@@ -254,23 +254,23 @@ export default function Sidebar() {
                     <div className="relative flex items-center">
                       <Link
                         href={item.href}
-                        className={`group relative flex-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200 ${
+                        className={`group relative flex-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
                           isBaseActive 
-                            ? "bg-accent/10 text-accent font-semibold shadow-sm" 
-                            : (isLight ? "text-gray-600 hover:bg-gray-100 hover:text-gray-900" : "text-gray-400 hover:bg-white/10 hover:text-gray-200")
+                            ? (isLight ? "bg-slate-100 text-slate-900" : "bg-white/10 text-white")
+                            : (isLight ? "text-slate-600 hover:bg-slate-50 hover:text-slate-900" : "text-slate-400 hover:bg-white/5 hover:text-slate-200")
                         } ${isCompact ? "justify-center" : ""}`}
                       >
                         {/* Text wrapper with z-10 so it's above the background */}
                         <div className="relative z-10 flex items-center gap-3 w-full">
                         {isBaseActive && (
-                          <div className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 bg-accent" />
+                          <div className={`absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 ${isLight ? "bg-slate-900" : "bg-white"}`} />
                         )}
                         
                         {/* Responsive dynamically scaled icon */}
-                        <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-110 ${
-                          isCompact ? "h-5 w-5" : "h-5 w-5"
-                        } ${
-                          isBaseActive ? "text-accent drop-shadow-sm" : "text-accent/70 group-hover:text-accent"
+                        <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-105 h-4 w-4 ${
+                          isBaseActive 
+                            ? (isLight ? "text-slate-900" : "text-white") 
+                            : (isLight ? "text-slate-500 group-hover:text-slate-900" : "text-slate-400 group-hover:text-slate-200")
                         }`} />
                         
                         {!isCompact && (
@@ -303,30 +303,17 @@ export default function Sidebar() {
 
                       {/* Premium Interactive Module Popover Tooltip with Open Action Indicator button when minimized */}
                       {isCompact && (
-                        <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50 flex items-center gap-2 rounded-xl px-3 py-2 shadow-2xl border backdrop-blur-xl shrink-0 ${
-                          isLight ? "bg-white border-gray-200 text-gray-800 shadow-gray-200/50" : "bg-[#0f172a] border-white/10 text-white shadow-black/80"
+                        <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-md border shrink-0 ${
+                          isLight ? "bg-white border-slate-200 text-slate-800" : "bg-slate-900 border-slate-800 text-white"
                         }`}>
-                          <span className="font-semibold whitespace-nowrap text-xs">{item.label}</span>
-                          {dynamicBadge && (
-                            <span className={`text-[0.7rem] px-1 py-0.2 rounded font-bold uppercase border ${
-                              isLight ? "bg-blue-50 text-blue-600 border-blue-200" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                            }`}>
-                              {dynamicBadge}
-                            </span>
-                          )}
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-bold ml-1 transition-all flex items-center gap-0.5 ${
-                            isLight ? "bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-600" : "bg-white/5 hover:bg-blue-500 hover:text-white text-gray-300"
-                          }`}>
-                            <span>Link</span>
-                            <span>→</span>
-                          </span>
+                          <span className="font-medium whitespace-nowrap text-xs">{item.label}</span>
                         </div>
                       )}
                     </div>
 
                     {/* RENDER EXPANDED SUB-ITEMS TREE CONTAINER */}
                     {!isCompact && item.subItems && isTreeExpanded && (
-                      <div className="pl-2 pr-1 py-1 space-y-1 relative border-l ml-5 transition-all animate-in fade-in-50 slide-in-from-top-1 duration-200 border-white/5">
+                      <div className="pl-2 pr-1 py-1 space-y-1 relative border-l ml-5 border-slate-200 dark:border-slate-800">
                         {item.subItems.map((sub) => {
                           
                           let isSubActive = pathname === sub.href;
@@ -341,17 +328,13 @@ export default function Sidebar() {
                               key={sub.href}
                               href={sub.href}
                               onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
-                              className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-lg text-[0.8rem] font-medium transition-all overflow-hidden ${
+                              className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-[0.8rem] transition-all overflow-hidden ${
                                 isSubActive 
-                                  ? (isLight ? "text-blue-700 font-bold" : "text-blue-400 font-bold") 
-                                  : (isLight ? "text-gray-500 hover:text-gray-900 hover:bg-gray-100" : "text-gray-400 hover:text-white hover:bg-white/10")
+                                  ? (isLight ? "text-slate-900 font-medium" : "text-white font-medium") 
+                                  : (isLight ? "text-slate-500 hover:text-slate-900" : "text-slate-400 hover:text-white")
                               }`}
-                              style={isSubActive ? { color: "var(--accent-primary)" } : {}}
                             >
-                              {isSubActive && (
-                                <div className="absolute inset-0 opacity-10" style={{ backgroundColor: "var(--accent-primary)" }} />
-                              )}
-                              <span className={`text-[0.65rem] relative z-10 ${isSubActive ? "" : "opacity-40"}`} style={isSubActive ? { color: "var(--accent-primary)" } : {}}>▪</span>
+                              <span className={`text-[0.65rem] relative z-10 ${isSubActive ? "opacity-100" : "opacity-40"}`}>▪</span>
                               <span className="truncate relative z-10">{sub.label}</span>
                             </Link>
                           );

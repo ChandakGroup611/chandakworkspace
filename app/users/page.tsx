@@ -652,10 +652,10 @@ export default function UserMasterPage() {
             <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
-                  <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                     Personnel Registry
                   </h2>
-                  <span className="text-[10px] text-gray-500 font-mono font-bold tracking-wider uppercase">
+                  <span className="text-[11px] text-gray-500">
                     {filteredUsers.length} Users Found
                   </span>
                 </div>
@@ -736,16 +736,16 @@ export default function UserMasterPage() {
                             }`}
                           >
                             <AppTableCell className="w-14 px-2">
-                              <div className="relative w-9 h-9 mx-auto">
-                                <div className={`absolute inset-0 flex items-center justify-center rounded-full text-xs font-bold uppercase ${
-                                  isLightMode ? "bg-indigo-100 text-indigo-700" : "bg-indigo-500/20 text-indigo-300"
+                              <div className="relative w-8 h-8 mx-auto">
+                                <div className={`absolute inset-0 flex items-center justify-center rounded-full text-[10px] font-medium uppercase ${
+                                  isLightMode ? "bg-slate-100 text-slate-700" : "bg-white/10 text-white"
                                 }`}>
                                   {usr.full_name?.substring(0, 2) || "NA"}
                                 </div>
                                 <img 
                                   src={usr.profile_photo || PRESET_AVATARS[0]} 
                                   alt={usr.full_name}
-                                  className="absolute inset-0 w-9 h-9 rounded-full object-cover shadow-sm ring-2 ring-transparent group-hover:ring-indigo-500/30 transition-all z-10"
+                                  className="absolute inset-0 w-8 h-8 rounded-full object-cover shadow-none ring-1 ring-transparent group-hover:ring-slate-200 transition-all z-10"
                                   onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
                                 />
                               </div>

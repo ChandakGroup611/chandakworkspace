@@ -119,7 +119,7 @@ export default function Navbar() {
           <div className="relative">
             <div 
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-xs font-bold text-white shadow-inner cursor-pointer border border-white/10 hover:ring-2 hover:ring-purple-400 transition-all active:scale-95 overflow-hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-white cursor-pointer border border-transparent hover:border-slate-400 transition-all overflow-hidden"
             >
               {userData?.profile_photo ? (
                 <img src={userData.profile_photo} alt="Profile" className="h-full w-full object-cover" />
@@ -131,14 +131,10 @@ export default function Navbar() {
             {profileOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                <div className={`absolute right-0 top-12 mt-2 w-64 rounded-xl border p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 ${isLight ? 'bg-white border-gray-200 text-gray-800' : 'bg-[#0A0D14] border-white/10 text-white'}`}>
-                  <div className={`px-2 py-2 border-b space-y-1 ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Active Identity Bound</span>
-                    <span className="text-sm font-bold block truncate">{userData?.full_name}</span>
-                    <span className="text-xs font-medium text-blue-500 block truncate">{userData?.email}</span>
-                    <span className="text-[0.7rem] font-mono text-emerald-500 flex items-center gap-1 mt-1">
-                      <ShieldCheck className="h-3 w-3" /> Session Signature Active
-                    </span>
+                <div className={`absolute right-0 top-12 mt-2 w-56 rounded-xl border p-1.5 shadow-md z-50 animate-in fade-in zoom-in-95 duration-150 ${isLight ? 'bg-white border-gray-200 text-gray-800' : 'bg-[#0A0D14] border-white/10 text-white'}`}>
+                  <div className={`px-2 py-2 border-b space-y-0.5 ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
+                    <span className="text-sm font-medium block truncate">{userData?.full_name || 'System Operator'}</span>
+                    <span className="text-xs text-gray-500 block truncate">{userData?.email}</span>
                   </div>
 
                   <div className="py-2 space-y-1">

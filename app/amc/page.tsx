@@ -742,7 +742,6 @@ export default function AMCPage() {
         title="Annual Maintenance Contracts"
         description="Manage Software AMCs, Subscriptions, and Ownership Assignments."
         icon={<ShieldCheck className="h-6 w-6" />}
-        badge={<AppBadge variant="info">IT Management</AppBadge>}
         actions={
           <>
             <Link href="/amc/reports">

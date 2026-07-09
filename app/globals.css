@@ -47,32 +47,28 @@
   textarea:not(:focus) {
     border-width: 1px !important;
     border-style: solid !important;
-    border-color: rgba(0, 0, 0, 0.15) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
   }
 
   .theme-dark input:not([type="checkbox"]):not([type="radio"]):not(:focus),
   .theme-dark select:not(:focus),
   .theme-dark textarea:not(:focus) {
-    border-color: rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
   select:not(:focus):hover,
   textarea:not(:focus):hover {
-    border-color: rgba(0, 0, 0, 0.3) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-    transform: translateY(-1px);
+    border-color: rgba(0, 0, 0, 0.2) !important;
   }
 
   .theme-dark input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
   .theme-dark select:not(:focus):hover,
   .theme-dark textarea:not(:focus):hover {
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
-    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.2) !important;
   }
 }
 
