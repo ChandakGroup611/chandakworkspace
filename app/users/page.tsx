@@ -2,6 +2,7 @@
 
 // Live Production deployment check
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -98,6 +99,7 @@ const PRESET_AVATARS = [
 ];
 
 export default function UserMasterPage() {
+  const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
@@ -134,29 +136,6 @@ export default function UserMasterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
-  // Interactive Form & Modals States
-  const [showModal, setShowModal] = useState(false);
-  const [isEditingMode, setIsEditingMode] = useState(false);
-  const [editUserId, setEditUserId] = useState<string | null>(null);
-
-  // Form bound models
-  const [formFullName, setFormFullName] = useState("");
-  const [formUserCode, setFormUserCode] = useState("");
-  const [formEmail, setFormEmail] = useState("");
-  const [formDeptId, setFormDeptId] = useState("");
-  const [formDesigId, setFormDesigId] = useState("");
-  const [formRoleId, setFormRoleId] = useState("");
-  const [formManagerId, setFormManagerId] = useState("");
-  const [formPassword, setFormPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [formConfirmPassword, setFormConfirmPassword] = useState("");
-  const [formPhoto, setFormPhoto] = useState(PRESET_AVATARS[0]);
-  const [formAssignedAssets, setFormAssignedAssets] = useState("");
-  const [formIsActive, setFormIsActive] = useState(true);
-  const [isAssetDropdownOpen, setIsAssetDropdownOpen] = useState(false);
-  const [isViewingPhoto, setIsViewingPhoto] = useState(false);
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Smart delete/deactivate states
   const [deleteInspectUser, setDeleteInspectUser] = useState<AppUserItem | null>(null);
@@ -361,88 +340,6 @@ export default function UserMasterPage() {
     fetchUserAudits(usr.id);
   };
 
-  // Prepare standard create/register form trigger
-  const openProvisionForm = () => {
-    setIsEditingMode(false);
-    setEditUserId(null);
-    setFormFullName("");
-    setFormUserCode(`USR-${Math.floor(1000 + Math.random() * 9000)}`);
-    setFormEmail("");
-    setFormDeptId(departments.length > 0 ? departments[0].id : "");
-    setFormDesigId(designations.length > 0 ? designations[0].id : "");
-    setFormRoleId(roles.length > 0 ? roles[0].id : "");
-    setFormManagerId("");
-    setFormPassword("");
-    setFormConfirmPassword("");
-    setFormPhoto(PRESET_AVATARS[Math.floor(Math.random() * PRESET_AVATARS.length)]);
-    setFormIsActive(true);
-    setFormAssignedAssets("");
-    setIsViewingPhoto(false);
-    setPhotoUploading(false);
-    setShowModal(true);
-  };
-
-  // Prepare standard update form trigger
-  const openModifyForm = (usr: AppUserItem) => {
-    setIsEditingMode(true);
-    setEditUserId(usr.id);
-    setFormFullName(usr.full_name || "");
-    setFormUserCode(usr.user_code || "");
-    setFormEmail(usr.email || "");
-    setFormDeptId(usr.department_id || "");
-    setFormDesigId(usr.designation_id || "");
-    setFormRoleId(usr.role_id || "");
-    setFormManagerId(usr.manager_id || "");
-    setFormPassword(""); // Leave empty to keep unchanged
-    setFormConfirmPassword("");
-    setFormPhoto(usr.profile_photo || PRESET_AVATARS[0]);
-    setFormIsActive(usr.is_active ?? true);
-    setFormAssignedAssets((usr.assigned_assets || []).join(", "));
-    setIsViewingPhoto(false);
-    setPhotoUploading(false);
-    setShowModal(true);
-  };
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      triggerToast("Only image file formats are allowed.", true);
-      return;
-    }
-
-    setPhotoUploading(true);
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error("Unauthenticated request. Please sign in.");
-
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${authUser.id}/${Date.now()}.${fileExt}`;
-
-      const { data, error: uploadError } = await supabase.storage
-        .from("profiles")
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("profiles")
-        .getPublicUrl(fileName);
-
-      setFormPhoto(publicUrl);
-      triggerToast("Profile picture uploaded successfully!");
-    } catch (err: any) {
-      console.error("Upload error:", err);
-      triggerToast(`Upload failed: ${err.message || err}`, true);
-    } finally {
-      setPhotoUploading(false);
-    }
-  };
-
   // Append robust local log helper
   const appendLocalAudit = (usrId: string, op: string, pl: any) => {
     const usr = users.find(u => u.id === usrId) || selectedUser;
@@ -456,12 +353,10 @@ export default function UserMasterPage() {
     if (selectedUser?.id === usrId) {
       setAuditLogs(prev => [newLog, ...prev]);
     }
-    // Also push to supabase asynchronously
     supabase.from("user_master_audit_logs").insert([
       { user_id: usrId, operation: op, payload: pl }
     ]).then(() => {}, () => {});
 
-    // Broadcast CUD triggers globally to application notification channels
     const priorityMap: Record<string, string> = {
       CREATE: "HIGH",
       UPDATE: "MEDIUM",
@@ -485,82 +380,6 @@ export default function UserMasterPage() {
       priority_level: priorityMap[op] || "MEDIUM",
       is_read: false
     }]).then(() => {}, () => {});
-  };
-
-  const handleSubmitForm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formFullName.trim() || !formUserCode.trim() || !formEmail.trim()) {
-      triggerToast("Full Name, User Code, and Registered Email fields are mandatory.", true);
-      return;
-    }
-
-    // Client password confirmation feedback verification
-    if (!isEditingMode || formPassword.trim()) {
-      if (!formPassword.trim()) {
-        triggerToast("Password is required for newly provisioned user accounts.", true);
-        return;
-      }
-      if (formPassword !== formConfirmPassword) {
-        triggerToast("Password and Confirm Password input values do not match.", true);
-        return;
-      }
-      if (formPassword.length < 6) {
-        triggerToast("Password constraint requires at least 6 characters.", true);
-        return;
-      }
-    }
-
-    const payload: any = {
-      full_name: formFullName,
-      email: formEmail,
-      user_code: formUserCode,
-      profile_photo: formPhoto,
-      is_active: formIsActive,
-      role_id: formRoleId || null,
-      department_id: formDeptId || null,
-      designation_id: formDesigId || null,
-      manager_id: formManagerId || null,
-      assigned_assets: formAssignedAssets.split(",").map(a => a.trim()).filter(Boolean)
-    };
-
-    setLoading(true);
-
-    try {
-      const result = await saveUserAction(isEditingMode ? editUserId : null, payload, formPassword);
-      
-      if (result && !result.success) {
-        throw new Error(result.error || "An unknown error occurred during save.");
-      }
-
-      if (isEditingMode && editUserId) {
-        const updatedItem = {
-          ...users.find(u => u.id === editUserId),
-          ...payload,
-          departmentObj: departments.find(d => d.id === formDeptId) || undefined,
-          designationObj: designations.find(dg => dg.id === formDesigId) || undefined,
-          roleObj: roles.find(r => r.id === formRoleId) || undefined,
-          managerObj: users.find(u => u.id === formManagerId) || undefined
-        };
-
-        setUsers(prev => prev.map(u => u.id === editUserId ? updatedItem : u));
-        if (selectedUser?.id === editUserId) {
-          setSelectedUser(updatedItem);
-        }
-        appendLocalAudit(editUserId, "UPDATE", { fieldsModified: Object.keys(payload), email: payload.email });
-        triggerToast(`Success: Profile for '${payload.full_name}' updated.`);
-      } else {
-        triggerToast(`Success: Record for '${payload.full_name}' provisioned.`);
-      }
-
-      fetchUsersDirectory();
-      setShowModal(false);
-    } catch (err: any) {
-      console.error("Failed to save user:", err);
-      setErrorAlert(err.message || "Failed to save user record.");
-      triggerToast(err.message || "Failed to save user record.", true);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const initiateDeleteCheck = async (usr: AppUserItem) => {
@@ -740,8 +559,6 @@ export default function UserMasterPage() {
     return matchQuery;
   });
 
-  // Filter out the selected user from available managers selection to prevent cyclical hierarchy loops
-  const availableManagers = users.filter(u => !isEditingMode || u.id !== editUserId);
 
   if (!mounted || permsLoading || loading) {
     return (
@@ -786,7 +603,7 @@ export default function UserMasterPage() {
             variant="primary" 
             size="sm" 
             leftIcon={<UserPlus className="h-3.5 w-3.5" />}
-            onClick={openProvisionForm}
+            onClick={() => router.push("/users/new")}
             disabled={!(hasPermission("USERS_CREATE") || isSuperAdmin)}
           >
             Register User Account
@@ -994,7 +811,7 @@ export default function UserMasterPage() {
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
                                   <button
                                     type="button"
-                                    onClick={() => openModifyForm(usr)}
+                                    onClick={() => router.push("/users/" + usr.id)}
                                     className={`p-1.5 rounded transition-all ${
                                       isLightMode ? "text-slate-400 hover:text-indigo-600 hover:bg-indigo-50" : "text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10"
                                     }`}
@@ -1042,7 +859,7 @@ export default function UserMasterPage() {
                 {hasPermission("USERS_UPDATE") && (
                   <button
                     type="button"
-                    onClick={() => openModifyForm(selectedUser)}
+                    onClick={() => router.push("/users/" + selectedUser.id)}
                     className={`absolute top-4 right-4 p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all ${
                       isLightMode ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/5 border-white/10 text-gray-300 hover:text-white"
                     }`}
@@ -1307,297 +1124,6 @@ export default function UserMasterPage() {
         </div>
       </div>
 
-      {/* ── Dynamic Personnel Register & Update Overlay Modal ── */}
-      {showModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-2 animate-in fade-in-0 duration-200"
-          style={{ backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(8px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
-        >
-          <div className={`relative w-full max-w-3xl max-h-[100dvh] rounded-[24px] border shadow-2xl overflow-hidden flex flex-col ${
-            isLightMode ? "bg-white/95 backdrop-blur-xl border-slate-200/50 text-slate-800 shadow-[0_12px_40px_rgba(0,0,0,0.08)]" : "bg-[#0A0D14]/90 backdrop-blur-xl border-white/10 text-slate-100 shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
-          }`}>
-            <form onSubmit={handleSubmitForm} className="flex flex-col h-full overflow-hidden">
-              {/* Modal Header */}
-              <div className={`flex items-center justify-between px-6 py-3 shrink-0 border-b ${
-                isLightMode ? "border-slate-100" : "border-white/5"
-              }`}>
-                <div className="space-y-1">
-                  <h3 className="text-xl font-semibold tracking-tight">
-                    {isEditingMode ? "Update Identity Record" : "Register User Account"}
-                  </h3>
-                </div>
-                <button 
-                  type="button" 
-                  onClick={() => setShowModal(false)}
-                  className={`p-2 rounded-full transition-colors ${
-                    isLightMode ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100" : "text-slate-500 hover:text-slate-200 hover:bg-white/10"
-                  }`}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Scrollable Form parameters view */}
-              <div className="px-6 py-1 space-y-1 overflow-y-auto overflow-x-hidden flex-1 scrollbar-thin min-h-0 bg-white">
-                {/* Profile Photo selector */}
-                <div className="flex items-center gap-2">
-                  <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                    <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-slate-200/50 text-slate-400">
-                      {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
-                        <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />
-                      ) : (
-                        <Image className="w-8 h-8 opacity-50" />
-                      )}
-                    </div>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#3B2D6C] text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                      <Camera className="w-4 h-4" />
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-start gap-1.5">
-                    <h2 className="text-xl font-bold text-slate-900">{formFullName || 'New User'}</h2>
-                    <div className="flex items-center gap-3">
-                      <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={photoUploading}
-                        className="px-4 py-1.5 rounded-lg bg-[#3B2D6C] hover:bg-[#32255e] text-white text-sm font-medium flex items-center gap-2 transition-all shadow-sm shrink-0"
-                      >
-                        {photoUploading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                        <span>{photoUploading ? 'Uploading...' : 'Upload'}</span>
-                      </button>
-                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none max-w-[250px] sm:max-w-[400px]">
-                        {PRESET_AVATARS.map((avatar, idx) => (
-                          <img 
-                            key={idx} src={avatar} alt="Preset" 
-                            className="w-8 h-8 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-[#3B2D6C] transition-all" 
-                            onClick={() => setFormPhoto(avatar)} 
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1.5">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Full Name</label>
-                    <input 
-                      placeholder="e.g. Sarah Chen" value={formFullName} onChange={(e) => setFormFullName(e.target.value)} required disabled={!isSuperAdmin}
-                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">User Code</label>
-                    <input 
-                      placeholder="e.g. SC8839" value={formUserCode} onChange={(e) => setFormUserCode(e.target.value)} required disabled={!isSuperAdmin}
-                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Email</label>
-                    <input 
-                      type="email" placeholder="e.g. sarah.chen@innovate.co" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} required disabled={!isSuperAdmin}
-                      className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Department</label>
-                    <div className="relative">
-                      <select 
-                        value={formDeptId} 
-                        onChange={(e) => {
-                          setFormDeptId(e.target.value);
-                          setFormDesigId("");
-                        }} 
-                        disabled={!isSuperAdmin}
-                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
-                      >
-                        <option value="">Select Department...</option>
-                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Designation</label>
-                    <div className="relative">
-                      <select 
-                        value={formDesigId} onChange={(e) => setFormDesigId(e.target.value)} disabled={!isSuperAdmin || !formDeptId}
-                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
-                      >
-                        <option value="">{formDeptId ? "Select Designation..." : "Select Department First"}</option>
-                        {designations
-                          .filter(d => !formDeptId || d.department_id === formDeptId)
-                          .map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Role</label>
-                    <div className="relative">
-                      <select 
-                        value={formRoleId} onChange={(e) => setFormRoleId(e.target.value)} disabled={!isSuperAdmin}
-                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
-                      >
-                        <option value="">Select Role...</option>
-                        {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-800">Manager</label>
-                    <div className="relative">
-                      <select 
-                        value={formManagerId} onChange={(e) => setFormManagerId(e.target.value)} disabled={!isSuperAdmin}
-                        className="w-full h-8 px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
-                      >
-                        <option value="">Michael Thompson</option>
-                        {availableManagers.map(mgr => <option key={mgr.id} value={mgr.id}>{mgr.full_name}</option>)}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-2 h-4 w-4 pointer-events-none text-slate-400" />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-sm font-medium text-slate-800">Assigned Hardware Assets</label>
-                    <div className="min-h-[32px] p-1 rounded-lg border border-slate-300 bg-white shadow-sm flex flex-wrap items-center gap-1.5 relative">
-                      {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
-                        <span key={idx} className="text-sm px-2 py-0.5 flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-md">
-                          [{tag}] <X className="h-3 w-3 cursor-pointer opacity-50 hover:opacity-100" onClick={() => {
-                            const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
-                            setFormAssignedAssets(currentArr.filter(x => x !== tag).join(', '));
-                          }}/>
-                        </span>
-                      ))}
-                      <div className="flex-1 min-w-[100px] relative">
-                        <select 
-                          className="w-full bg-transparent border-none outline-none text-sm px-2 text-slate-800 placeholder-slate-400 appearance-none"
-                          value=""
-                          onChange={(e) => {
-                            if (!e.target.value) return;
-                            const currentArr = formAssignedAssets.split(',').map(x => x.trim()).filter(Boolean);
-                            if (!currentArr.includes(e.target.value)) {
-                              setFormAssignedAssets(currentArr.concat(e.target.value).join(', '));
-                            }
-                          }}
-                          disabled={!isSuperAdmin && !!editUserId}
-                        >
-                          <option value="" disabled hidden>{!formAssignedAssets ? "Select an asset..." : "Add another asset..."}</option>
-                          {availableAssets.map(a => (
-                            <option key={a.id} value={a.asset_tag || a.code}>{a.asset_tag || a.code} - {a.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <ChevronDown className="absolute right-2 top-2 h-4 w-4 pointer-events-none text-slate-400" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-0">
-                  <h4 className="text-base font-bold text-slate-900">Authentication & Status</h4>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-800">Password {editUserId && <span className="text-slate-400 font-normal text-xs">(Leave blank to keep unchanged)</span>}</label>
-                      <div className="relative flex items-center">
-                        <div className="relative flex-1">
-                          <input 
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} disabled={!isSuperAdmin && !!editUserId}
-                            className="w-full h-8 pl-3.5 pr-10 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                          />
-                          <div className="absolute right-2.5 top-2 cursor-pointer text-slate-400 hover:text-slate-600" onClick={() => setShowPassword(!showPassword)}>
-                            {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-800">Confirm Password</label>
-                      <div className="relative flex items-center">
-                        <div className="relative flex-1">
-                          <input 
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••" value={formConfirmPassword} onChange={(e) => setFormConfirmPassword(e.target.value)} disabled={!isSuperAdmin && !!editUserId}
-                            className="w-full h-8 pl-3.5 pr-10 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                          />
-                          <div className="absolute right-2.5 top-2 cursor-pointer text-slate-400 hover:text-slate-600" onClick={() => setShowPassword(!showPassword)}>
-                            {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-end justify-between pt-1 pb-4">
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-800">Account Access Status</label>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-sm text-slate-700">{formIsActive ? 'Active' : 'Disabled'}</span>
-                        <button
-                          type="button"
-                          onClick={() => setFormIsActive(!formIsActive)}
-                          disabled={!isSuperAdmin}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B2D6C] focus:ring-offset-2 ${formIsActive ? 'bg-[#3B2D6C]' : 'bg-slate-300'}`}
-                        >
-                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${formIsActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-3 pb-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setShowModal(false)}
-                        className="px-5 py-1.5 rounded-lg text-sm font-semibold transition-all bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-6 py-1.5 rounded-lg text-sm font-semibold text-white bg-[#3B2D6C] hover:bg-[#32255e] transition-all flex items-center gap-2"
-                      >
-                        {isEditingMode ? "Save Changes" : "Save Changes"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            
-</form>
-
-            {isViewingPhoto && (
-              <div 
-                className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200"
-                style={{ backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
-                onClick={() => setIsViewingPhoto(false)}
-              >
-                <div className="relative max-w-sm w-full flex flex-col items-center gap-6" onClick={(e) => e.stopPropagation()}>
-                  <img 
-                    src={formPhoto || PRESET_AVATARS[0]} 
-                    alt="Profile" 
-                    className="w-64 h-64 sm:w-80 sm:h-80 rounded-[2rem] object-cover border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
-                    onError={(e) => { (e.target as any).src = PRESET_AVATARS[0]; }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIsViewingPhoto(false)}
-                    className="px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all border border-white/20 backdrop-blur-sm"
-                  >
-                    Close View
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── Dynamic Premium Smart Delete & Deactivate User Warning Modal ── */}
       {deleteInspectUser && deleteWarningData && (
