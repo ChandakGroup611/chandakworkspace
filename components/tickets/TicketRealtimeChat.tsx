@@ -489,7 +489,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                                     <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
                                   </div>
                                   <div className="flex items-center gap-1.5 shrink-0">
-                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 text-foreground'}`} title="View Document">
+                                    <a href={att.name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(att.url.startsWith('http') ? att.url : `https://chandakgroup.tech${att.url}`)}` : att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 text-foreground'}`} title="View Document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                       <span>VIEW</span>
                                     </a>
