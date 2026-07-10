@@ -465,14 +465,14 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                             <div className="flex flex-col gap-1.5 mt-1 border-t border-white/20 pt-2">
                               {attachments.map((att, i) => (
                                 att.type?.startsWith('image/') ? (
-                                  <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
-                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-black/5 dark:bg-white/5" />
+                                  <a key={i} href={att.url} download={att.name} className="mt-1 block relative group rounded-lg overflow-hidden border border-black/10 dark:border-white/10 cursor-pointer">
+                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-black/5 dark:bg-white/5 transition-transform duration-300 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="View Full Image">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
-                                      </a>
+                                      <div className="p-3 bg-white/20 rounded-full text-white backdrop-blur-sm shadow-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                      </div>
                                     </div>
-                                  </div>
+                                  </a>
                                 ) : (
                                 <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-black/10' : 'bg-black/5 dark:bg-white/5'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden">
