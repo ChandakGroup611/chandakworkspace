@@ -531,7 +531,7 @@ export default function SettingsGallery() {
 
       {/* Row 5: Persistent Saving */}
       <section className="space-y-4 pt-6 border-t border-white/5">
-        <AppCard className={`p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isLightMode ? "bg-white/80 border-gray-200" : ""}`}>
+        <AppCard className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1 max-w-xl">
             <div className="flex items-center gap-2">
               <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>

@@ -794,22 +794,18 @@ export default function MastersPage() {
                             setSearchQuery("");
                           }}
                           className={`w-full p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-3 ${
-                            isLightMode
-                              ? (isActive ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50")
-                              : (isActive ? "bg-white/[0.06] border-accent/40 shadow-md" : "bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]")
+                            (isActive ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50")
                           }`}
                         >
                           <div className={`p-2 rounded-lg mt-0.5 ${
-                            isLightMode
-                              ? (isActive ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-500")
-                              : (isActive ? "bg-accent/10 text-accent" : "bg-white/5 text-gray-400")
+                            (isActive ? "bg-accent/10 text-accent" : "bg-gray-100 text-muted")
                           }`}>
                             <IconComponent className="h-4 w-4 shrink-0" />
                           </div>
                           <div className="space-y-0.5 flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
                               <span className={`text-xs font-bold truncate block ${
-                                isLightMode ? (isActive ? "text-gray-900" : "text-gray-700") : (isActive ? "text-white" : "text-gray-300")
+                                (isActive ? "text-foreground" : "text-muted")
                               }`}>
                                 {tab.label}
                               </span>

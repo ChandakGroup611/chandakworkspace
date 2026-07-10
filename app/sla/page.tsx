@@ -170,7 +170,7 @@ export default function SLAPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Span 2: Active Timers & Escalation Targets Matrix */}
         <div className="lg:col-span-2 space-y-6 flex flex-col">
-          <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden ${isLightMode ? "bg-white border-gray-200" : ""}`}>
+          <AppCard className="flex-1 flex flex-col justify-between overflow-hidden">
             <AppCardHeader className={`flex flex-row items-center justify-between pb-3 border-b border-border bg-elevated/50`}>
               <div className="space-y-0.5">
                 <AppCardTitle className={`flex items-center gap-2 text-rose-600`}>
@@ -199,7 +199,7 @@ export default function SLAPage() {
                   </AppTableHeader>
                   <AppTableBody>
                     {filteredSlas.map((item) => (
-                      <AppTableRow key={item.id} className={isLightMode ? "hover:bg-gray-50" : ""}>
+                      <AppTableRow key={item.id} className="hover:bg-elevated">
                         <AppTableCell>
                           <div className="space-y-0.5">
                             <span className={`font-mono text-xs font-bold block text-accent`}>{item.displayId || item.id}</span>
@@ -257,7 +257,7 @@ export default function SLAPage() {
 
         {/* Right Span 1: Multi-Level Escalation Routing Architecture */}
         <div className="space-y-6">
-          <AppCard className={`p-5 space-y-4 ${isLightMode ? "bg-white border-gray-200" : ""}`}>
+          <AppCard className="p-5 space-y-4">
             <div className={`pb-2 border-b ${"border-border"}`}>
               <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-2 ${"text-muted"}`}>
                 <BellRing className={`h-3.5 w-3.5 text-amber-500`} />
