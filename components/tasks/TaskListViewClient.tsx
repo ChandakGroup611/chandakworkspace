@@ -31,6 +31,7 @@ import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportC
 import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
 import { Settings2, MessageSquare, ExternalLink, Plus, Upload, RotateCcw, LayoutList, Layers, CheckCircle2 } from "lucide-react";
 import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
+import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
 
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -40,7 +41,19 @@ import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 
 type Task = any;
 
-function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
+function DraggableTableHead({ 
+  col, 
+  isFirst, 
+  filterValues, 
+  onFilterChange,
+  options 
+}: { 
+  col: any, 
+  isFirst?: boolean, 
+  filterValues?: string[], 
+  onFilterChange?: (vals: string[]) => void,
+  options?: {label: string, value: string}[]
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
   const w = col.column_width || col.default_width || 150;
   const isTitle = col.field_key === "title_description";
@@ -60,7 +73,7 @@ function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
       ref={setNodeRef} 
       style={style} 
       className={cn(
-        "select-none bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors", 
+        "select-none bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors align-middle group/header relative", 
         col.field_key === "actions" ? "w-[50px]" : "", 
         !isTitle ? "text-center" : "text-left",
         ["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""
@@ -68,7 +81,19 @@ function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
       {...attributes} 
       {...listeners}
     >
-      {isTitle ? "Title" : col.display_name}
+      <div className={cn("flex items-center gap-2 w-full", isTitle ? "justify-between" : "justify-center")}>
+        <span className="truncate flex-1">{isTitle ? "Title" : col.display_name}</span>
+        {col.field_key !== "actions" && options && onFilterChange && (
+          <div className="flex-shrink-0 opacity-0 group-hover/header:opacity-100 data-[active=true]:opacity-100 transition-opacity" data-active={filterValues && filterValues.length > 0} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+            <MultiSelectFilter 
+              options={options} 
+              selectedValues={filterValues || []} 
+              onChange={onFilterChange} 
+              iconOnly={true}
+            />
+          </div>
+        )}
+      </div>
     </AppTableHead>
   );
 }
@@ -139,6 +164,50 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   };
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
+  const handleColumnFilterChange = (fieldId: string, values: string[]) => {
+    setColumnFilters(prev => ({ ...prev, [fieldId]: values }));
+  };
+
+  const columnOptions = useMemo(() => {
+    const optionsMap: Record<string, {label: string, value: string}[]> = {};
+    
+    visibleColumns.forEach(col => {
+      const key = col.field_key;
+      const fieldId = col.field_id || key;
+      if (key === "actions") return;
+
+      const uniqueVals = new Set<string>();
+
+      tasks.forEach(t => {
+        let val = undefined;
+        if (key === "department") val = t.department?.name;
+        else if (key === "priority") val = t.priority?.name;
+        else if (key === "status") val = t.status?.name;
+        else if (key === "workspace") val = t.workspace?.name || t.workspace?.code;
+        else if (key === "sub_workspace") val = t.sub_workspace?.name || t.sub_workspace?.code;
+        else if (key === "assignee") {
+            const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
+            val = a?.full_name;
+        }
+        else if (key === "creator_name") val = t.creator?.full_name;
+        else if (key === "title_description") val = t.title;
+        else if (key === "code") val = t.code;
+        else if (t.custom_fields && t.custom_fields[key] !== undefined) val = t.custom_fields[key];
+        else val = t[key];
+
+        if (val !== undefined && val !== null && val !== "") {
+          uniqueVals.add(String(val));
+        }
+      });
+
+      optionsMap[fieldId] = Array.from(uniqueVals)
+        .sort((a, b) => a.localeCompare(b))
+        .map(v => ({ label: v, value: v }));
+    });
+
+    return optionsMap;
+  }, [tasks, visibleColumns]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
@@ -250,9 +319,37 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         )) return false;
       }
 
+      for (const [fieldId, filterVals] of Object.entries(columnFilters)) {
+        if (!filterVals || filterVals.length === 0) continue;
+        const col = combinedFields.find(c => (c as any).field_id === fieldId) || combinedFields.find(c => c.field_key === fieldId);
+        if (!col) continue;
+
+        const key = col.field_key;
+        let val = undefined;
+        
+        if (key === "department") val = t.department?.name;
+        else if (key === "priority") val = t.priority?.name;
+        else if (key === "status") val = t.status?.name;
+        else if (key === "workspace") val = t.workspace?.name || t.workspace?.code;
+        else if (key === "sub_workspace") val = t.sub_workspace?.name || t.sub_workspace?.code;
+        else if (key === "assignee") {
+            const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
+            val = a?.full_name;
+        }
+        else if (key === "creator_name") val = t.creator?.full_name;
+        else if (key === "title_description") val = t.title;
+        else if (t.custom_fields && t.custom_fields[key] !== undefined) val = t.custom_fields[key];
+        else val = t[key];
+
+        if (val === undefined || val === null) return false;
+        
+        const stringVal = String(val);
+        if (!filterVals.includes(stringVal)) return false;
+      }
+
       return true;
     });
-  }, [tasks, scope, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo]);
+  }, [tasks, scope, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo, columnFilters, combinedFields]);
 
   const kpis = useMemo(() => {
     const total = filtered.length;
@@ -806,7 +903,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             <AppButton 
               variant="outline"
-              onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setQuery(""); }}
+              onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setQuery(""); setColumnFilters({}); }}
               className="h-9 px-3 font-medium text-muted border-border hover:bg-surface hover:text-foreground shadow-sm"
               leftIcon={<RotateCcw className="h-4 w-4" />}
             >
@@ -859,7 +956,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </AppTableHead>
                 <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
                   {visibleColumns.map((col, index) => (
-                    <DraggableTableHead key={col.field_id} col={col} isFirst={index === 0} />
+                    <DraggableTableHead 
+                      key={col.field_id} 
+                      col={col} 
+                      isFirst={index === 0} 
+                      filterValues={columnFilters[col.field_id || col.field_key] || []}
+                      onFilterChange={(vals) => handleColumnFilterChange(col.field_id || col.field_key, vals)}
+                      options={columnOptions[col.field_id || col.field_key]}
+                    />
                   ))}
                 </SortableContext>
               </AppTableRow>
@@ -876,6 +980,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <AppTableRow 
                   key={task.id} 
                   data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}
+                  onClick={() => router.push(`/tasks/${task.id}`)}
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
                   <AppTableCell className="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-surface group-hover:bg-surface transition-colors" onClick={(e) => e.stopPropagation()}>
                     <input 

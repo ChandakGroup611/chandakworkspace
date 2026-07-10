@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Option {
@@ -14,9 +14,10 @@ interface MultiSelectFilterProps {
   selectedValues: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
+  iconOnly?: boolean;
 }
 
-export function MultiSelectFilter({ options, selectedValues, onChange, placeholder = "Select..." }: MultiSelectFilterProps) {
+export function MultiSelectFilter({ options, selectedValues, onChange, placeholder = "Select...", iconOnly = false }: MultiSelectFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -57,15 +58,27 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
     <div className="relative inline-block text-left" ref={containerRef}>
       <button
         type="button"
-        className="tb-btn flex items-center justify-between gap-2 px-3 py-1.5 min-w-[140px] text-sm bg-surface hover:bg-elevated border border-border rounded-md transition-colors"
+        className={cn(
+          iconOnly 
+            ? "flex items-center justify-center p-1 rounded-sm hover:bg-accent/10 text-gray-400 hover:text-accent data-[active=true]:text-accent data-[active=true]:bg-accent/10 transition-colors" 
+            : "tb-btn flex items-center justify-between gap-2 px-3 py-1.5 min-w-[140px] text-sm bg-surface hover:bg-elevated border border-border rounded-md transition-colors"
+        )}
+        data-active={selectedValues.length > 0}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="truncate max-w-[120px]">{displayValue}</span>
-        <ChevronDown className="w-4 h-4 opacity-50" />
+        {!iconOnly && <span className="truncate max-w-[120px]">{displayValue}</span>}
+        {iconOnly && selectedValues.length > 0 ? (
+          <Filter className="w-3.5 h-3.5 fill-current" />
+        ) : (
+          <ChevronDown className={cn("w-4 h-4", !iconOnly && "opacity-50")} />
+        )}
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-56 mt-1 bg-surface border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className={cn(
+          "absolute z-50 mt-1 bg-surface border border-border rounded-md shadow-xl max-h-60 overflow-auto",
+          iconOnly ? "w-48 right-0" : "w-56 left-0"
+        )}>
           <div className="p-1">
             <button
               className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
