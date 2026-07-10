@@ -209,6 +209,18 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error: delErr } = await supabase.from('ticket_chat_messages').delete().eq('id', messageId);
+      if (delErr) throw delErr;
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+    } catch (err: any) {
+      console.error("Failed to delete message:", err);
+      setError("Failed to delete message.");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newMessage.trim();
@@ -416,7 +428,16 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                     </div>
                   )}
                   {isSender && (
-                    <div className="px-1">
+                    <div className="px-1 flex items-center gap-2">
+                      {Date.now() - new Date(m.created_at).getTime() < 5 * 60 * 1000 && (
+                        <button 
+                          onClick={() => handleDeleteMessage(m.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          title="Delete message"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        </button>
+                      )}
                       <span className="text-[0.7rem] text-gray-500">
                         {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
