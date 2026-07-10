@@ -215,9 +215,7 @@ export default function RealtimeNotificationsDrawer() {
               key={toast.id}
               onClick={() => handleConsumeNotification(toast)}
               className={`pointer-events-auto flex items-start gap-3 rounded-2xl p-4 shadow-2xl border backdrop-blur-xl transform transition-all duration-300 cursor-pointer hover:scale-[1.02] active:scale-95 group ${
-                isLightMode 
-                  ? "bg-white/95 border-gray-200/80 text-gray-900 shadow-indigo-500/10 animate-in slide-in-from-right-12 duration-300" 
-                  : "bg-[#0b0e17]/95 border-white/10 text-white shadow-black/50 animate-in slide-in-from-right-12 duration-300"
+                "bg-surface/95 border-border/80 text-foreground shadow-indigo-500/10 animate-in slide-in-from-right-12 duration-300"
               }`}
             >
               <div className="shrink-0 mt-0.5">
@@ -286,7 +284,7 @@ export default function RealtimeNotificationsDrawer() {
         >
           <div className="flex flex-col h-full space-y-4">
             <div className="flex items-center justify-between">
-              <div className={`p-1.5 rounded-xl flex items-center gap-1 ${isLightMode ? "bg-gray-100" : "bg-white/5"}`}>
+              <div className={`p-1.5 rounded-xl flex items-center gap-1 bg-elevated`}>
                 <AppButton
                   size="sm"
                   variant={activeFilter === "UNREAD" ? "primary" : "ghost"}
@@ -330,7 +328,7 @@ export default function RealtimeNotificationsDrawer() {
               {loading ? (
                 <div className="space-y-2 py-8">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className={`h-14 rounded-xl animate-pulse border ${isLightMode ? "bg-gray-100 border-gray-200" : "bg-white/5 border-white/5"}`} />
+                    <div key={i} className={`h-14 rounded-xl animate-pulse border bg-elevated border-border`} />
                   ))}
                 </div>
               ) : filteredItems.length === 0 ? (
@@ -350,9 +348,9 @@ export default function RealtimeNotificationsDrawer() {
                       className={`p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer relative group flex gap-2.5 ${
                         !item.is_read 
                           ? isCritical 
-                            ? isLightMode ? "bg-rose-50/80 border-rose-200" : "bg-gradient-to-r from-rose-950/40 to-transparent border-rose-500/50" 
-                            : isLightMode ? "bg-cyan-50/50 border-cyan-200" : "bg-gradient-to-r from-cyan-950/20 to-transparent border-cyan-500/30"
-                          : isLightMode ? "bg-white border-gray-100 opacity-60" : "bg-white/[0.005] border-white/5 opacity-70"
+                            ? "bg-rose-50/80 border-rose-200" 
+                            : "bg-cyan-50/50 border-cyan-200"
+                          : "bg-white border-border opacity-60"
                       }`}
                     >
                       <div className="shrink-0 mt-0.5">
@@ -376,10 +374,10 @@ export default function RealtimeNotificationsDrawer() {
                             <Trash2 className="h-3 w-3" />
                           </AppButton>
                         </div>
-                        <p className={`text-[0.8rem] leading-snug break-words ${!item.is_read ? (isLightMode ? "text-gray-900 font-medium" : "text-gray-100 font-medium") : "text-gray-500"}`}>
+                        <p className={`text-[0.8rem] leading-snug break-words ${!item.is_read ? ("text-foreground font-medium") : "text-gray-500"}`}>
                           {displayMessage}
                         </p>
-                        <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 ${isLightMode ? "border-gray-100 text-gray-400" : "border-white/5 text-gray-500"}`}>
+                        <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 border-border text-gray-400`}>
                           <span>Actor: <strong className={"text-muted"}>{item.actor_name || item.actor}</strong></span>
                           <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>

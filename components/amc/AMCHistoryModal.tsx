@@ -73,14 +73,14 @@ export function AMCHistoryModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden ${
-        isLightMode ? "bg-white border-gray-200" : "bg-[#0A0D14] border-white/10"
+        "bg-surface border-border"
       } border`}>
         
         {/* Header */}
-        <div className={`flex items-center justify-between p-5 border-b shrink-0 ${isLightMode ? 'border-gray-200 bg-gray-50' : 'border-white/10 bg-white/5'}`}>
+        <div className={`flex items-center justify-between p-5 border-b shrink-0 border-border bg-elevated`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${isLightMode ? 'bg-white shadow-sm' : 'bg-white/10'}`}>
-              <Clock className={`h-5 w-5 ${isLightMode ? 'text-accent' : 'text-white'}`} />
+            <div className={`p-2 rounded-lg bg-white shadow-sm`}>
+              <Clock className={`h-5 w-5 text-accent`} />
             </div>
             <div>
               <h2 className="text-lg font-bold">Audit History</h2>
@@ -109,9 +109,9 @@ export function AMCHistoryModal({
               {logs.map((log) => (
                 <div key={log.id} className="relative pl-6">
                   {/* Timeline Node */}
-                  <div className={`absolute -left-[11px] top-1 h-5 w-5 rounded-full border-4 ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14] border-gray-800'}`} />
+                  <div className={`absolute -left-[11px] top-1 h-5 w-5 rounded-full border-4 bg-surface border-border`} />
                   
-                  <div className={`p-4 rounded-xl border ${isLightMode ? 'bg-white shadow-sm border-gray-100' : 'bg-white/5 border-white/5'}`}>
+                  <div className={`p-4 rounded-xl border bg-white shadow-sm border-border`}>
                     
                     <div className="flex items-center justify-between mb-3 border-b border-gray-200/20 pb-3">
                       <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export function AMCHistoryModal({
                             if (typeof after === 'object') return null; // Simplify object diffs
 
                             return (
-                              <div key={key} className={`flex items-center gap-3 p-2.5 rounded-lg text-sm border ${isLightMode ? 'bg-gray-50 border-gray-100' : 'bg-black/20 border-white/5'}`}>
+                              <div key={key} className={`flex items-center gap-3 p-2.5 rounded-lg text-sm border bg-gray-50 border-border`}>
                                 <span className="font-mono text-xs w-1/3 truncate text-gray-500">{key}</span>
                                 <div className="flex-1 flex items-center gap-3 truncate">
                                   <span className="truncate text-red-500/80 line-through opacity-80 max-w-[40%]">{String(before || 'null')}</span>

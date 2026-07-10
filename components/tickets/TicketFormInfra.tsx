@@ -115,10 +115,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             
             {/* Issue Type & Subtype */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Issue Type</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Type</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+                  "bg-white border-border text-foreground"
                 }`}
                 value={formData.issueTypeId}
                 onChange={(e) => setFormData({ ...formData, issueTypeId: e.target.value, issueSubtypeId: "" })}
@@ -132,7 +132,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Issue Subtype</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Subtype</label>
               <select 
                 className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.issueSubtypeId}
@@ -149,10 +149,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
 
             {/* Category & Subcategory */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Asset Category</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Asset Category</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+                  "bg-white border-border text-foreground"
                 }`}
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value, subcategoryId: "" })}
@@ -166,7 +166,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Sub-Category</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Sub-Category</label>
               <select 
                 className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.subcategoryId}
@@ -183,10 +183,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
 
             {/* Asset Selection & Priority */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Affected Asset</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Affected Asset</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+                  "bg-white border-border text-foreground"
                 }`}
                 value={formData.assetId}
                 onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
@@ -200,10 +200,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Operational Priority</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+                  "bg-white border-border text-foreground"
                 }`}
                 value={formData.priorityId}
                 onChange={(e) => handlePriorityChange(e.target.value)}
@@ -217,7 +217,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="md:col-span-2 lg:col-span-3 space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Subject</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Subject</label>
               <AppInput 
                 placeholder="Summarize the infrastructure fault..."
                 value={formData.subject}
@@ -229,10 +229,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
           </div>
 
           <div className="space-y-2">
-            <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Incident Description & Technical Details</label>
+            <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Incident Description & Technical Details</label>
             <textarea 
               className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
-                isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                "bg-white border-border text-foreground placeholder:text-gray-400"
               }`}
               placeholder="Describe the hardware fault, server impact, or network outage in detail..."
               value={formData.remark}
@@ -246,10 +246,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <h4 className="text-sm font-bold text-accent mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Reason <span className="text-red-500">*</span></label>
+                <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                    "bg-white border-border text-foreground placeholder:text-gray-400"
                   }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
                   value={formData.business_reason}
@@ -259,10 +259,10 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               </div>
 
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Details <span className="text-red-500">*</span></label>
+                <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                    "bg-white border-border text-foreground placeholder:text-gray-400"
                   }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
                   value={formData.requirement_description}
@@ -275,9 +275,9 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
             <div className="flex-1 space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Operational Attachments (Log Files / Screenshots)</label>
+              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Operational Attachments (Log Files / Screenshots)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
-                isLightMode ? "border-gray-100 hover:border-accent/30 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
+                "border-border hover:border-accent/30 bg-elevated/50"
               }`}>
                 <input 
                   type="file" 
@@ -286,8 +286,8 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                 />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}>
-                      <Paperclip className={`h-4 w-4 ${isLightMode ? "text-accent" : "text-gray-400"}`} />
+                    <div className={`p-2 rounded-lg bg-white shadow-sm`}>
+                      <Paperclip className={`h-4 w-4 text-accent`} />
                     </div>
                     <div>
                       <p className={`text-xs font-medium ${"text-foreground"}`}>
@@ -310,7 +310,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="flex items-center gap-3 shrink-0 pb-1">
-              <AppButton variant="ghost" type="button" onClick={onCancel} className={isLightMode ? "text-gray-500" : "text-gray-400 hover:text-white"}>
+              <AppButton variant="ghost" type="button" onClick={onCancel} className={"text-muted"}>
                 Cancel
               </AppButton>
               <AppButton variant="primary" type="submit" className="bg-accent hover:bg-accent text-white min-w-[140px]">

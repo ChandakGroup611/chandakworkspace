@@ -319,12 +319,12 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
   return (
     <Profiler id={`TaskRealtimeChat-${taskId}`} onRender={onRenderCallback}>
-    <AppCard className={`flex flex-col h-full overflow-hidden border-smooth ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}>
+    <AppCard className={`flex flex-col h-full overflow-hidden border-smooth bg-white shadow-sm`}>
 
       {/* Header */}
       <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>
         <div className="flex items-center gap-2">
-          <MessageSquare className={`h-4 w-4 ${isLightMode ? "text-accent" : "text-accent"}`} />
+          <MessageSquare className={`h-4 w-4 text-accent`} />
           <h3 className={`text-sm font-bold ${"text-foreground"}`}>
             Realtime Collaboration
           </h3>
@@ -395,7 +395,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                 <div className={`flex flex-col space-y-1 max-w-[85%] ${isSender ? "items-end" : "items-start"}`}>
                   {!isSender && (
                     <div className="flex items-center gap-2 px-1">
-                      <span className={`text-xs font-bold ${isLightMode ? "text-gray-900" : "text-gray-300"}`}>
+                      <span className={`text-xs font-bold text-foreground`}>
                         {m.user?.full_name || "..."}
                       </span>
                       <span className="text-[0.7rem] text-gray-500">
@@ -415,8 +415,8 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                     isSender 
                       ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border border-accent/30"
                       : isMention
-                        ? (isLightMode ? "bg-accent/10 border border-indigo-100 text-accent-secondary rounded-tl-sm" : "bg-indigo-900/30 border border-accent/20 text-indigo-100 rounded-tl-sm")
-                        : (isLightMode ? "bg-gray-100 text-gray-800 rounded-tl-sm" : "bg-[#1f2233] text-gray-200 rounded-tl-sm")
+                        ? ("bg-accent/10 border border-indigo-100 text-accent-secondary rounded-tl-sm")
+                        : ("bg-gray-100 text-foreground rounded-tl-sm")
                   }`}>
                     {(() => {
                       const parts = m.message.split("|||ATTACHMENTS|||");
@@ -460,12 +460,12 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
       </div>
 
       {/* Chat Input Area */}
-      <div className={`p-3 border-t shrink-0 relative ${isLightMode ? "border-gray-200 bg-gray-50/50" : "border-white/5 bg-black/20"}`}>
+      <div className={`p-3 border-t shrink-0 relative border-border bg-gray-50/50`}>
         
         {/* Mentions Dropdown */}
         {showMentions && (
           <div className={`absolute bottom-full mb-2 left-4 right-16 rounded-xl shadow-xl border overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${
-            isLightMode ? "bg-white border-gray-200" : "bg-[#1f2233] border-white/10"
+            "bg-surface border-border"
           }`}>
             <div className="max-h-48 overflow-y-auto py-1">
               {/* @All Option */}
@@ -474,7 +474,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                   type="button"
                   onClick={() => insertMention('ALL')}
                   className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-colors ${
-                    isLightMode ? "hover:bg-accent/10 text-accent font-bold" : "hover:bg-accent/20 text-accent font-bold"
+                    "hover:bg-accent/10 text-accent font-bold"
                   }`}
                 >
                   <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center">
@@ -493,7 +493,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                     type="button"
                     onClick={() => insertMention(u)}
                     className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-colors ${
-                      isLightMode ? "hover:bg-gray-50 text-gray-700" : "hover:bg-white/5 text-gray-300"
+                      "hover:bg-elevated text-muted"
                     }`}
                   >
                     <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden">
@@ -527,7 +527,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         <form
           onSubmit={handleSend}
           className={`flex items-center gap-2 p-1.5 rounded-xl border focus-within:ring-2 focus-within:ring-accent transition-all ${
-            isLightMode ? "bg-white border-gray-300" : "bg-[#0a0c16] border-white/10"
+            "bg-surface border-border"
           }`}
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />

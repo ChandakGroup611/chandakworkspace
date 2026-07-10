@@ -126,7 +126,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
   return (
     <div className="space-y-8">
       {/* Add Manual Invoice */}
-      <AppCard className={`p-6 border ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14]/80 border-white/5'}`}>
+      <AppCard className={`p-6 border bg-surface border-border`}>
         <h3 className="text-lg font-bold text-accent mb-4">Add Custom Invoice</h3>
         <form onSubmit={handleAddInvoice} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -164,13 +164,13 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
         {loading ? (
           <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
         ) : invoices.length === 0 ? (
-          <div className={`p-8 text-center text-gray-500 italic rounded-xl border ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+          <div className={`p-8 text-center text-gray-500 italic rounded-xl border bg-elevated border-border`}>
             No invoices scheduled for this subscription.
           </div>
         ) : (
           <div className="space-y-3">
             {invoices.map(inv => (
-              <AppCard key={inv.id} className={`p-4 flex items-center justify-between border ${isLightMode ? 'bg-white border-gray-100' : 'bg-white/5 border-white/10'}`}>
+              <AppCard key={inv.id} className={`p-4 flex items-center justify-between border bg-white border-border`}>
                 <div>
                   <div className="flex items-center gap-3">
                     {getStatusBadge(inv.status, inv.due_date)}

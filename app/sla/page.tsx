@@ -171,16 +171,16 @@ export default function SLAPage() {
         {/* Left Span 2: Active Timers & Escalation Targets Matrix */}
         <div className="lg:col-span-2 space-y-6 flex flex-col">
           <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden ${isLightMode ? "bg-white border-gray-200" : ""}`}>
-            <AppCardHeader className={`flex flex-row items-center justify-between pb-3 border-b ${isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-white/[0.01]"}`}>
+            <AppCardHeader className={`flex flex-row items-center justify-between pb-3 border-b border-border bg-elevated/50`}>
               <div className="space-y-0.5">
-                <AppCardTitle className={`flex items-center gap-2 ${isLightMode ? "text-rose-600" : "text-rose-400"}`}>
+                <AppCardTitle className={`flex items-center gap-2 text-rose-600`}>
                   <ShieldAlert className="h-4 w-4" />
                   <span>Monitored Operational Timeouts</span>
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-gray-500">Reactive task timers updating background worker task queue parameters.</p>
               </div>
               <span className={`text-xs px-2 py-0.5 rounded font-mono font-bold uppercase border ${
-                isLightMode ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                "bg-rose-50 text-rose-700 border-rose-200"
               }`}>
                 Breach Count: {escalatedRecords}
               </span>
@@ -202,15 +202,15 @@ export default function SLAPage() {
                       <AppTableRow key={item.id} className={isLightMode ? "hover:bg-gray-50" : ""}>
                         <AppTableCell>
                           <div className="space-y-0.5">
-                            <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-accent" : "text-white"}`}>{item.displayId || item.id}</span>
+                            <span className={`font-mono text-xs font-bold block text-accent`}>{item.displayId || item.id}</span>
                             <span className="text-[0.8rem] text-gray-500 block truncate max-w-[150px]">{item.targetEntity}</span>
-                            <span className={`text-xs font-semibold ${isLightMode ? "text-accent" : "text-accent"}`}>{item.type}</span>
+                            <span className={`text-xs font-semibold text-accent`}>{item.type}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell>
                           <div className="space-y-0.5 text-xs">
                             <span className={`${"text-foreground"} font-medium block`}>{item.allocatedWindow}</span>
-                            <span className={`text-[0.8rem] font-mono block ${isLightMode ? "text-amber-600" : "text-amber-400"}`}>{item.elapsedTime}</span>
+                            <span className={`text-[0.8rem] font-mono block text-amber-600`}>{item.elapsedTime}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell>
@@ -248,9 +248,9 @@ export default function SLAPage() {
               </AppTableContainer>
             </div>
 
-            <div className={`p-4 border-t text-[0.8rem] text-gray-500 flex items-center justify-between ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.01] border-white/5"}`}>
+            <div className={`p-4 border-t text-[0.8rem] text-gray-500 flex items-center justify-between bg-elevated border-border`}>
               <span>Async worker loop interval syncs timeout status keys continuously.</span>
-              <span className={`cursor-pointer hover:underline ${isLightMode ? "text-rose-600" : "text-rose-400"}`}>Flush breach cache</span>
+              <span className={`cursor-pointer hover:underline text-rose-600`}>Flush breach cache</span>
             </div>
           </AppCard>
         </div>
@@ -260,7 +260,7 @@ export default function SLAPage() {
           <AppCard className={`p-5 space-y-4 ${isLightMode ? "bg-white border-gray-200" : ""}`}>
             <div className={`pb-2 border-b ${"border-border"}`}>
               <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-2 ${"text-muted"}`}>
-                <BellRing className={`h-3.5 w-3.5 ${isLightMode ? "text-amber-500" : "text-amber-400"}`} />
+                <BellRing className={`h-3.5 w-3.5 text-amber-500`} />
                 <span>Escalation Level Routing Matrix</span>
               </span>
             </div>
@@ -268,13 +268,13 @@ export default function SLAPage() {
             <div className="space-y-3">
               {levels.map((lvl, idx) => (
                 <div key={idx} className={`p-3 rounded-xl border space-y-1 relative overflow-hidden ${
-                  isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.01] border-white/5"
+                  "bg-elevated border-border"
                 }`}>
                   <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-amber-500 to-rose-500 opacity-60" />
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-bold uppercase tracking-wider ${"text-foreground"}`}>{lvl.level}</span>
                     <span className={`text-[0.7rem] px-1.5 py-0.2 rounded font-bold uppercase border ${
-                      isLightMode ? "bg-white text-gray-500 border-gray-200" : "bg-white/5 text-gray-400 border-white/10"
+                      "bg-white text-muted border-border"
                     }`}>
                       {lvl.scope}
                     </span>
@@ -293,9 +293,9 @@ export default function SLAPage() {
 
           {/* Operational Trust Advisory Card */}
           <AppCard className={`p-5 space-y-2 border ${
-            isLightMode ? "bg-emerald-50 border-emerald-100" : "border-emerald-500/10 bg-emerald-500/[0.01]"
+            "bg-emerald-50 border-emerald-100"
           }`}>
-            <span className={`text-xs font-bold uppercase tracking-wider block ${isLightMode ? "text-emerald-700" : "text-emerald-400"}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider block text-emerald-700`}>
               SLA Trust Assurance
             </span>
             <p className="text-xs text-gray-500 leading-relaxed">

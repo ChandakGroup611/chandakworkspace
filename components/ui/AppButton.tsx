@@ -40,17 +40,11 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     const variants = {
       primary: 
         "bg-accent text-white hover:opacity-90 shadow-sm border border-black/10 dark:border-white/10",
-      secondary: isLight
-        ? "bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 shadow-sm"
-        : "bg-white/10 text-white hover:bg-white/15 border border-white/10 shadow-sm",
-      ghost: isLight
-        ? "bg-transparent border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-        : "bg-transparent border border-white/5 text-gray-400 hover:bg-white/5 hover:text-white",
+      secondary: "bg-white border border-border text-foreground hover:bg-elevated shadow-sm",
+      ghost: "bg-transparent border border-border text-muted hover:bg-elevated hover:text-foreground",
       destructive: 
         "bg-rose-600 text-white hover:bg-rose-700 border border-rose-500/30",
-      outline: isLight
-        ? "bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-        : "bg-transparent border border-white/20 text-gray-300 hover:bg-white/5 hover:text-white hover:border-white/30",
+      outline: "bg-transparent border border-border text-muted hover:bg-elevated hover:text-foreground",
     };
 
     const sizes = {

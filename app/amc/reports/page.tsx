@@ -180,19 +180,19 @@ export default function AMCReportsPage() {
             Global Executive Summary
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <AppCard className={`p-6 border-l-4 border-l-blue-500 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
+            <AppCard className={`p-6 border-l-4 border-l-blue-500 bg-surface`}>
               <p className="text-sm font-semibold text-gray-500">Total Contract Value</p>
               <h4 className="text-2xl font-black mt-1">{formatCurrency(globalMetrics.totalContractValue)}</h4>
             </AppCard>
-            <AppCard className={`p-6 border-l-4 border-l-emerald-500 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
+            <AppCard className={`p-6 border-l-4 border-l-emerald-500 bg-surface`}>
               <p className="text-sm font-semibold text-gray-500">Total Cash Paid</p>
               <h4 className="text-2xl font-black mt-1 text-emerald-500">{formatCurrency(globalMetrics.totalPaid)}</h4>
             </AppCard>
-            <AppCard className={`p-6 border-l-4 border-l-amber-500 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
+            <AppCard className={`p-6 border-l-4 border-l-amber-500 bg-surface`}>
               <p className="text-sm font-semibold text-gray-500">Upcoming / Pending</p>
               <h4 className="text-2xl font-black mt-1 text-amber-500">{formatCurrency(globalMetrics.totalPending - globalMetrics.totalOverdue)}</h4>
             </AppCard>
-            <AppCard className={`p-6 border-l-4 border-l-rose-500 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
+            <AppCard className={`p-6 border-l-4 border-l-rose-500 bg-surface`}>
               <p className="text-sm font-semibold text-gray-500">Overdue Payments</p>
               <h4 className="text-2xl font-black mt-1 text-rose-500">{formatCurrency(globalMetrics.totalOverdue)}</h4>
             </AppCard>
@@ -207,7 +207,7 @@ export default function AMCReportsPage() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {deptMetrics.map((dept, idx) => (
-              <AppCard key={idx} className={`p-6 flex flex-col ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14]/80 border-white/5'}`}>
+              <AppCard key={idx} className={`p-6 flex flex-col bg-surface border-border`}>
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="font-bold text-accent">{dept.name}</h4>
                   <div className="text-sm font-black">{formatCurrency(dept.contracted)}</div>
@@ -229,11 +229,11 @@ export default function AMCReportsPage() {
             <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">L3</span>
             Detailed Cashflow / Payment Forecast
           </h3>
-          <AppCard className={`overflow-hidden border ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14] border-white/5'}`}>
+          <AppCard className={`overflow-hidden border bg-surface border-border`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className={`text-xs uppercase tracking-wider text-gray-500 border-b ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+                  <tr className={`text-xs uppercase tracking-wider text-gray-500 border-b bg-elevated border-border`}>
                     <th className="p-4 font-bold">Status</th>
                     <th className="p-4 font-bold">Due Date</th>
                     <th className="p-4 font-bold">Software</th>

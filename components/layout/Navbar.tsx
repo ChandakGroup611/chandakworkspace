@@ -79,13 +79,11 @@ export default function Navbar() {
               type="text" 
               placeholder="Search tickets, documentation, quick masters..." 
               className={`h-10 w-full rounded-xl border pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${
-                isLight 
-                  ? "bg-gray-100/80 border-gray-200 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-accent" 
-                  : "bg-white/5 border-white/5 text-white placeholder-gray-500 focus:border-accent/50 focus:bg-white/10"
+                "bg-elevated/80 border-border text-foreground placeholder-gray-400 focus:bg-white focus:border-accent"
               }`}
             />
             <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold pointer-events-none ${
-              isLight ? "bg-gray-200/60 text-gray-500" : "bg-white/10 text-gray-400"
+              "bg-gray-200/60 text-muted"
             }`}>
               <Command className="h-2.5 w-2.5" />
               <span>K</span>
@@ -106,9 +104,7 @@ export default function Navbar() {
           <Link 
             href="/settings"
             className={`relative flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${
-              isLight 
-                ? "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900" 
-                : "bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+              "bg-elevated border-border text-muted hover:bg-elevated hover:text-foreground"
             }`}
           >
             <Palette className="h-4 w-4 text-accent" />
@@ -131,8 +127,8 @@ export default function Navbar() {
             {profileOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                <div className={`absolute right-0 top-12 mt-2 w-56 rounded-xl border p-1.5 shadow-md z-50 animate-in fade-in zoom-in-95 duration-150 ${isLight ? 'bg-white border-gray-200 text-gray-800' : 'bg-[#0A0D14] border-white/10 text-white'}`}>
-                  <div className={`px-2 py-2 border-b space-y-0.5 ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
+                <div className={`absolute right-0 top-12 mt-2 w-56 rounded-xl border p-1.5 shadow-md z-50 animate-in fade-in zoom-in-95 duration-150 bg-surface border-border text-foreground`}>
+                  <div className={`px-2 py-2 border-b space-y-0.5 border-border`}>
                     <span className="text-sm font-medium block truncate">{userData?.full_name || 'System Operator'}</span>
                     <span className="text-xs text-gray-500 block truncate">{userData?.email}</span>
                   </div>
@@ -142,7 +138,7 @@ export default function Navbar() {
                       href="/profile"
                       onClick={() => setProfileOpen(false)}
                       className={`w-full text-left px-2 py-2 rounded-lg text-xs transition-colors flex items-center gap-2 font-medium ${
-                        isLight ? "hover:bg-gray-100 text-gray-700" : "hover:bg-white/5 text-gray-300"
+                        "hover:bg-elevated text-muted"
                       }`}
                     >
                       <User className="h-3.5 w-3.5 text-accent" />
@@ -150,7 +146,7 @@ export default function Navbar() {
                     </Link>
                   </div>
 
-                  <div className={`pt-2 border-t ${isLight ? 'border-gray-100' : 'border-white/5'}`}>
+                  <div className={`pt-2 border-t border-border`}>
                     <AppButton 
                       variant="destructive"
                       onClick={handleExecuteSignOut}

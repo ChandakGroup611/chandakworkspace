@@ -102,13 +102,13 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
   return (
     <div className="space-y-8">
       {/* Add New Transaction */}
-      <AppCard className={`p-6 border ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14]/80 border-white/5'}`}>
+      <AppCard className={`p-6 border bg-surface border-border`}>
         <h3 className="text-lg font-bold text-accent mb-4">Log New Transaction</h3>
         <form onSubmit={handleAddTransaction} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase">Transaction Type *</label>
-              <select value={type} onChange={(e) => setType(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none border ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+              <select value={type} onChange={(e) => setType(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none border bg-elevated border-border`}>
                 <option value="Add-on Licenses">Add-on Licenses</option>
                 <option value="Customization">Customization (OTC)</option>
                 <option value="Support Services">Support Services</option>
@@ -155,13 +155,13 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
         {loading ? (
           <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
         ) : transactions.length === 0 ? (
-          <div className={`p-8 text-center text-gray-500 italic rounded-xl border ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+          <div className={`p-8 text-center text-gray-500 italic rounded-xl border bg-elevated border-border`}>
             No post-purchase transactions logged yet.
           </div>
         ) : (
           <div className="space-y-3">
             {transactions.map(tx => (
-              <AppCard key={tx.id} className={`p-4 flex items-center justify-between border ${isLightMode ? 'bg-white border-gray-100' : 'bg-white/5 border-white/10'}`}>
+              <AppCard key={tx.id} className={`p-4 flex items-center justify-between border bg-white border-border`}>
                 <div>
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-bold ${tx.transaction_type === 'Add-on Licenses' ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>

@@ -52,23 +52,23 @@ export default function ApprovalActionPanel({
   };
 
   const actions = [
-    { id: "Approve", label: "Approve", icon: CheckCircle, color: isLightMode ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100" : "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" },
-    { id: "Reject", label: "Reject", icon: XCircle, color: isLightMode ? "text-red-600 bg-red-50 hover:bg-red-100" : "text-red-400 bg-red-500/10 hover:bg-red-500/20" },
-    { id: "Hold", label: "Hold", icon: PauseCircle, color: isLightMode ? "text-amber-600 bg-amber-50 hover:bg-amber-100" : "text-amber-400 bg-amber-500/10 hover:bg-amber-500/20" },
-    { id: "Clarification", label: "Need Clarification", icon: MessageSquareWarning, color: isLightMode ? "text-accent bg-accent/10 hover:bg-accent/10" : "text-accent bg-accent/10 hover:bg-accent/20" }
+    { id: "Approve", label: "Approve", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50 hover:bg-emerald-100" },
+    { id: "Reject", label: "Reject", icon: XCircle, color: "text-red-600 bg-red-50 hover:bg-red-100" },
+    { id: "Hold", label: "Hold", icon: PauseCircle, color: "text-amber-600 bg-amber-50 hover:bg-amber-100" },
+    { id: "Clarification", label: "Need Clarification", icon: MessageSquareWarning, color: "text-accent bg-accent/10 hover:bg-accent/10" }
   ];
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <AppCard className={`w-full overflow-hidden ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0d14] border-white/10"}`}>
-        <div className={`px-4 py-3 border-b flex items-center justify-between ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
+      <AppCard className={`w-full overflow-hidden bg-surface border-border`}>
+        <div className={`px-4 py-3 border-b flex items-center justify-between bg-elevated border-border`}>
           <div className="flex items-center gap-3">
-            <div className={`p-1.5 rounded-full ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
+            <div className={`p-1.5 rounded-full bg-accent/10 text-accent`}>
               <ArrowRight className="h-4 w-4" />
             </div>
             <div>
-              <h4 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-white"}`}>Workflow Action Required</h4>
-              <p className={`text-[10px] uppercase tracking-wider ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+              <h4 className={`text-sm font-bold text-foreground`}>Workflow Action Required</h4>
+              <p className={`text-[10px] uppercase tracking-wider text-muted`}>
                 Level {currentLevel} • {departmentName}
                 {isSuperAdmin && <span className="ml-2 text-accent font-bold">(Super Admin Override)</span>}
               </p>
@@ -110,7 +110,7 @@ export default function ApprovalActionPanel({
                 </span>
                 <button 
                   onClick={() => setActiveAction(null)}
-                  className={`text-[10px] font-bold uppercase hover:underline ${isLightMode ? "text-gray-500" : "text-gray-400"}`}
+                  className={`text-[10px] font-bold uppercase hover:underline text-muted`}
                 >
                   Change Action
                 </button>
@@ -119,7 +119,7 @@ export default function ApprovalActionPanel({
               <div>
                 <textarea
                   className={`w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[80px] resize-none ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                    "bg-white border-border text-foreground placeholder:text-gray-400"
                   }`}
                   placeholder="Enter mandatory justification or remarks..."
                   value={remarks}

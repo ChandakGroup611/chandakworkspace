@@ -720,7 +720,7 @@ export default function MastersPage() {
               "border-border"
             }`}>
               <span className={`text-[0.8rem] font-bold tracking-wider uppercase select-none ${
-                isLightMode ? "text-gray-700" : "text-gray-400"
+                "text-muted"
               }`}>
                 Configuration Groups
               </span>
@@ -729,7 +729,7 @@ export default function MastersPage() {
 
             {/* Category Tier Selector Tabs */}
             <div className={`p-1.5 rounded-xl grid grid-cols-2 gap-1 text-xs font-bold tracking-tight ${
-              isLightMode ? "bg-gray-100/80 text-gray-600" : "bg-white/[0.02] border border-white/5 text-gray-400"
+              "bg-elevated/80 text-muted"
             }`}>
               {[
                 { id: "ALL", label: "All Tiers" },
@@ -753,8 +753,8 @@ export default function MastersPage() {
                     }}
                     className={`py-1 px-2 rounded-lg text-center transition-all truncate ${tier.id === "ALL" ? "col-span-2" : ""} ${
                       isSelected
-                        ? (isLightMode ? "bg-white text-accent shadow-sm" : "bg-white/10 text-white shadow")
-                        : (isLightMode ? "hover:text-gray-900 hover:bg-white/50" : "hover:text-gray-200 hover:bg-white/5")
+                        ? ("bg-white text-accent shadow-sm")
+                        : ("hover:text-foreground hover:bg-white/50")
                     }`}
                   >
                     {tier.label}
@@ -775,11 +775,11 @@ export default function MastersPage() {
                   <div key={groupCategory} className="space-y-1.5">
                     <div className="flex items-center gap-2 px-1 pt-1">
                       <span className={`text-[0.7rem] font-bold tracking-widest uppercase font-mono ${
-                        isLightMode ? "text-accent" : "text-accent"
+                        "text-accent"
                       }`}>
                         ■ {groupCategory} CATEGORY
                       </span>
-                      <div className={`h-[1px] flex-1 ${isLightMode ? "bg-gray-200" : "bg-white/5"}`} />
+                      <div className={`h-[1px] flex-1 bg-gray-200`} />
                     </div>
 
                     {groupItems.map((tab) => {
@@ -818,7 +818,7 @@ export default function MastersPage() {
                             <p className="text-xs text-gray-500 font-medium line-clamp-1">{tab.desc}</p>
                             {tab.parentTable && (
                               <span className={`text-[0.65rem] font-mono px-1 py-0.2 rounded border inline-block mt-1 ${
-                                isLightMode ? "text-accent bg-accent/10 border-accent/30" : "text-accent/80 bg-accent/10 border-accent/20"
+                                "text-accent bg-accent/10 border-accent/30"
                               }`}>
                                 ↳ Dependent on {tab.parentTable}
                               </span>
@@ -881,7 +881,7 @@ export default function MastersPage() {
                 <>
                   {records.length === 0 ? (
                     <div className={`py-16 px-4 text-center space-y-3 border border-dashed rounded-2xl ${
-                      isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.005] border-white/5"
+                      "bg-elevated border-border"
                     }`}>
                       <div className="h-10 w-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400 font-bold">
                         !
@@ -930,7 +930,7 @@ export default function MastersPage() {
                             <AppTableRow key={rec.id}>
                               <AppTableCell>
                                 <div className="space-y-0.5">
-                                  <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-accent" : "text-accent"}`}>{rec.code}</span>
+                                  <span className={`font-mono text-xs font-bold block text-accent`}>{rec.code}</span>
                                   <span className="text-[0.7rem] text-gray-500 font-mono block truncate max-w-[120px]">{rec.id}</span>
                                 </div>
                               </AppTableCell>
@@ -962,7 +962,7 @@ export default function MastersPage() {
                               {currentConfig.parentTable && (
                                 <AppTableCell>
                                   <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block truncate max-w-[120px] ${
-                                    isLightMode ? "text-accent bg-accent/10 border-accent/30" : "text-accent bg-accent/10 border-accent/20"
+                                    "text-accent bg-accent/10 border-accent/30"
                                   }`}>
                                     {rec[currentConfig.parentKey!] || "Unmapped"}
                                   </span>
@@ -973,7 +973,7 @@ export default function MastersPage() {
                                 <AppTableCell>
                                   {rec.max_sla_hours !== undefined ? (
                                     <div className="flex items-center gap-2">
-                                      <div className={`p-1 rounded-md ${isLightMode ? "bg-amber-100" : "bg-amber-500/10"}`}>
+                                      <div className={`p-1 rounded-md bg-amber-100`}>
                                         <Clock className="h-3 w-3 text-amber-500" />
                                       </div>
                                       <span className="font-semibold">{rec.max_sla_hours * 60}m Target</span>
@@ -990,7 +990,7 @@ export default function MastersPage() {
 
                               {activeTab === "assets" && (
                                 <AppTableCell>
-                                  <span className={`text-xs font-mono font-bold ${isLightMode ? "text-emerald-700" : "text-emerald-400"}`}>
+                                  <span className={`text-xs font-mono font-bold text-emerald-700`}>
                                     {rec.asset_tag}
                                   </span>
                                 </AppTableCell>
@@ -999,7 +999,7 @@ export default function MastersPage() {
                               {activeTab === "workflow_states" && (
                                 <AppTableCell>
                                   <span className={`text-xs font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                                    isLightMode ? "text-accent bg-accent/10 border-accent/30" : "text-accent bg-accent/10 border-accent/20"
+                                    "text-accent bg-accent/10 border-accent/30"
                                   }`}>
                                     {(rec.module || "Universal").replace(/_/g, ' ')}
                                   </span>
@@ -1013,8 +1013,8 @@ export default function MastersPage() {
                                   disabled={!hasPermission("MASTERS_UPDATE")}
                                   className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
-                                      ? (isLightMode ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20")
-                                      : (isLightMode ? "bg-gray-50 border-gray-200 text-gray-400 line-through hover:bg-gray-100" : "bg-white/[0.01] border-white/5 text-gray-600 line-through hover:bg-white/[0.03]")
+                                      ? ("bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100")
+                                      : ("bg-elevated border-border text-gray-400 line-through hover:bg-elevated")
                                   }`}
                                 >
                                   {rec.is_active ? "Active" : "Disabled"}
@@ -1028,7 +1028,7 @@ export default function MastersPage() {
                                     onClick={() => openEditModal(rec)}
                                     disabled={!hasPermission("MASTERS_UPDATE")}
                                     className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      isLightMode ? "bg-white border-gray-200 text-gray-500 hover:text-accent hover:border-accent/30" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-accent hover:border-accent/30"
+                                      "bg-white border-border text-muted hover:text-accent hover:border-accent/30"
                                     }`}
                                     title="Edit Record Details"
                                   >
@@ -1039,7 +1039,7 @@ export default function MastersPage() {
                                     onClick={() => handleDelete(rec)}
                                     disabled={!hasPermission("MASTERS_DELETE")}
                                     className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      isLightMode ? "bg-white border-gray-200 text-gray-400 hover:text-rose-600 hover:border-rose-300" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-rose-400 hover:border-rose-500/30"
+                                      "bg-white border-border text-gray-400 hover:text-rose-600 hover:border-rose-300"
                                     }`}
                                     title="Delete Record"
                                   >
@@ -1077,11 +1077,11 @@ export default function MastersPage() {
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
           <div className={`relative w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200 ${
-            isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0A0D14] border-white/10 text-white"
+            "bg-surface border-border text-foreground"
           }`}>
             {/* Header */}
             <div className={`flex items-center justify-between px-6 py-4 border-b ${
-              isLightMode ? "border-gray-100 bg-gray-50" : "border-white/10 bg-white/[0.01]"
+              "border-border bg-elevated"
             }`}>
               <div className="space-y-0.5">
                 <h3 className={`text-sm font-bold ${"text-foreground"}`}>
@@ -1142,7 +1142,7 @@ export default function MastersPage() {
                   onChange={(e) => setFormDesc(e.target.value)}
                   rows={2}
                   className={`w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-accent/50 resize-none transition-all ${
-                    isLightMode ? "bg-white border-gray-300 text-gray-900 placeholder-gray-400" : "bg-white/5 border-white/10 text-gray-200 placeholder-gray-500"
+                    "bg-white border-border text-foreground placeholder-gray-400"
                   }`}
                 />
               </div>
@@ -1180,16 +1180,16 @@ export default function MastersPage() {
                     value={formParentId}
                     onChange={(e) => setFormParentId(e.target.value)}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-accent/50 cursor-pointer ${
-                      isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-purple-300"
+                      "bg-white border-border text-foreground"
                     }`}
                     required={currentConfig.parentRequired}
                   >
-                    {!currentConfig.parentRequired && <option value="" className={isLightMode ? "bg-white text-gray-500" : "bg-[#0A0D14] text-gray-500"}>-- Optional (Global Scope) --</option>}
+                    {!currentConfig.parentRequired && <option value="" className={"bg-surface text-muted"}>-- Optional (Global Scope) --</option>}
                     {parentOptions.length === 0 ? (
                       currentConfig.parentRequired && <option value="" className="bg-[#0A0D14] text-gray-500">-- No available parent records --</option>
                     ) : (
                       parentOptions.map(p => (
-                        <option key={p.id} value={p.id} className={isLightMode ? "bg-white text-gray-900" : "bg-[#0A0D14]"}>
+                        <option key={p.id} value={p.id} className={"bg-surface text-foreground"}>
                           {p.code} — {p.name}
                         </option>
                       ))
@@ -1249,14 +1249,14 @@ export default function MastersPage() {
                   value={formScopeId || ""}
                   onChange={(e) => setFormScopeId(e.target.value || null)}
                   className={`w-full h-9 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:border-accent/50 cursor-pointer ${
-                    isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-accent"
+                    "bg-white border-border text-foreground"
                   }`}
                   required
                 >
-                  <option value="e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 1] IT INFRASTRUCTURE</option>
-                  <option value="e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 2] ERP / SOFTWARE</option>
-                  <option value="e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 3] OTHERS / GENERAL</option>
-                  <option value="" className={isLightMode ? "bg-white" : "bg-[#0A0D14]"}>[Flag 0] UNIVERSAL / SHARED</option>
+                  <option value="e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1" className={"bg-surface"}>[Flag 1] IT INFRASTRUCTURE</option>
+                  <option value="e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2" className={"bg-surface"}>[Flag 2] ERP / SOFTWARE</option>
+                  <option value="e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3" className={"bg-surface"}>[Flag 3] OTHERS / GENERAL</option>
+                  <option value="" className={"bg-surface"}>[Flag 0] UNIVERSAL / SHARED</option>
                 </select>
                 <span className="text-[0.7rem] text-gray-500 block">Determines which operational flow this master record appears in.</span>
               </div>

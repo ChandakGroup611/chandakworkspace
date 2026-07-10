@@ -171,7 +171,7 @@ export default function TicketsPage() {
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className={`text-[0.65rem] font-bold uppercase tracking-widest text-muted`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
             </div>
-            <div className={`h-4 w-px ${isLightMode ? "bg-gray-300" : "bg-white/10"}`} />
+            <div className={`h-4 w-px bg-gray-300`} />
             <div className="flex items-center gap-4 text-xs">
               <span className="font-semibold text-gray-500 uppercase tracking-wide">Active: <span className="text-gray-900 dark:text-white">{tickets.length}</span></span>
               <span className="font-semibold text-emerald-500 uppercase tracking-wide">SLA Stability: 98.4%</span>
@@ -217,7 +217,7 @@ export default function TicketsPage() {
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-6 p-6">
         {/* Filters Top Bar */}
         <div className={`p-4 space-y-4 rounded-xl border ${
-          isLightMode ? "border-gray-100 bg-white shadow-sm" : "border-white/5 bg-white/[0.01]"
+          "border-border bg-white shadow-sm"
         }`}>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="relative w-full sm:max-w-md">
@@ -226,9 +226,7 @@ export default function TicketsPage() {
                 type="text"
                 placeholder="Search tickets by ID or title..."
                 className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  isLightMode 
-                    ? "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400" 
-                    : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                  "bg-elevated border-border text-foreground placeholder:text-gray-400"
                 }`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -244,7 +242,7 @@ export default function TicketsPage() {
                 value={selectedStatus}
                 onChange={e => setSelectedStatus(e.target.value)}
                 className={`h-9 pl-3 pr-8 rounded-lg text-sm border outline-none cursor-pointer ${
-                  isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10 text-white"
+                  "bg-surface border-border"
                 }`}
               >
                 <option value="ALL">All Statuses</option>
@@ -257,7 +255,7 @@ export default function TicketsPage() {
                 value={selectedPriority}
                 onChange={e => setSelectedPriority(e.target.value)}
                 className={`h-9 pl-3 pr-8 rounded-lg text-sm border outline-none cursor-pointer ${
-                  isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10 text-white"
+                  "bg-surface border-border"
                 }`}
               >
                 <option value="ALL">All Priorities</option>

@@ -167,7 +167,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
 
   return (
     <div className="space-y-6">
-      <div className={`p-4 rounded-xl border flex items-center justify-between ${isLightMode ? 'bg-accent/10 border-accent/30 text-accent-secondary' : 'bg-accent/10 border-accent/20 text-accent'}`}>
+      <div className={`p-4 rounded-xl border flex items-center justify-between bg-accent/10 border-accent/30 text-accent-secondary`}>
         <div>
           <h4 className="font-bold">License Utilization</h4>
           <p className="text-sm mt-1">Assign available licenses to users. The master record will automatically track usage.</p>
@@ -180,8 +180,8 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
 
       <div className="flex flex-col md:flex-row gap-6 h-[500px]">
         {/* Active Allocations Panel */}
-        <AppCard className={`flex-1 flex flex-col border ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14]/80 border-white/5'}`}>
-          <div className={`p-4 border-b font-semibold ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+        <AppCard className={`flex-1 flex flex-col border bg-surface border-border`}>
+          <div className={`p-4 border-b font-semibold bg-elevated border-border`}>
             Currently Assigned Users
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -191,7 +191,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
               <div className="text-center p-8 text-gray-500 italic">No licenses allocated yet.</div>
             ) : (
               allocations.map(a => (
-                <div key={a.id} className={`p-3 rounded-lg border flex items-center justify-between ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14] border-white/10'}`}>
+                <div key={a.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border`}>
                   <div>
                     <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
                     <div className="text-xs text-gray-500">{a.user_master?.email}</div>
@@ -201,7 +201,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                     {transferringId === a.id ? (
                       <div className="flex items-center gap-2">
                         <select 
-                          className={`text-xs p-1.5 rounded border ${isLightMode ? 'bg-white border-gray-300' : 'bg-[#0A0D14] border-white/20'}`}
+                          className={`text-xs p-1.5 rounded border bg-surface border-border`}
                           onChange={(e) => handleTransfer(a.id, e.target.value)}
                         >
                           <option value="">Select user...</option>
@@ -241,8 +241,8 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
         </AppCard>
 
         {/* Unassigned Users Panel */}
-        <AppCard className={`flex-1 flex flex-col border ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14]/80 border-white/5'}`}>
-          <div className={`p-4 border-b ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+        <AppCard className={`flex-1 flex flex-col border bg-surface border-border`}>
+          <div className={`p-4 border-b bg-elevated border-border`}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input 
@@ -250,7 +250,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                 placeholder="Search users to allocate..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 transition-all ${isLightMode ? 'bg-white border-gray-200 text-gray-900' : 'bg-[#0A0D14] border-white/10 text-white'}`}
+                className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 transition-all bg-surface border-border text-foreground`}
               />
             </div>
           </div>
@@ -261,7 +261,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
               <div className="text-center p-8 text-gray-500 italic">No unassigned users found.</div>
             ) : (
               filteredUsers.map(u => (
-                <div key={u.id} className={`p-3 rounded-lg border flex items-center justify-between ${isLightMode ? 'bg-white border-gray-200 hover:border-accent/50' : 'bg-[#0A0D14] border-white/10 hover:border-accent/50'} transition-colors`}>
+                <div key={u.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border hover:border-accent/50 transition-colors`}>
                   <div>
                     <div className="font-semibold text-sm">{u.full_name}</div>
                     <div className="text-xs text-gray-500">{u.email}</div>

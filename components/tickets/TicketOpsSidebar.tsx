@@ -32,14 +32,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
     }
   }, [ticket]);
 
-  if (!ticket) return <div className={`w-80 border-l ${isLightMode ? "bg-white border-gray-200" : "bg-[#0f172a]/20 border-white/5"}`} />;
+  if (!ticket) return <div className={`w-80 border-l bg-surface border-border`} />;
 
   const slaPercentage = Math.max(0, Math.min(100, (timeLeft / (ticket.priorityObj?.sla_target_minutes || 240)) * 100));
   const isStable = slaPercentage > 30;
 
   return (
     <div className={`w-80 flex flex-col h-full border-l overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500 transition-colors duration-300 ${
-      isLightMode ? "bg-white border-gray-200" : "bg-[#0f172a]/20 border-white/5"
+      "bg-surface border-border"
     }`}>
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
         
@@ -50,19 +50,19 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <AppBadge variant={isStable ? "success" : "warning"} className="text-[0.65rem] py-0">STABLE</AppBadge>
           </div>
           <div className={`p-5 border rounded-2xl space-y-4 ${
-            isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.03] border-white/5"
+            "bg-elevated border-border"
           }`}>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <span className={`text-2xl font-bold tabular-nums ${"text-foreground"}`}>{timeLeft}m</span>
                 <p className="text-xs text-gray-500 font-medium">Until Resolution Breach</p>
               </div>
-              <div className={`p-3 rounded-xl ${isLightMode ? "bg-accent/10" : "bg-accent/10"}`}>
-                <Clock className={`h-5 w-5 ${isLightMode ? "text-accent" : "text-accent"}`} />
+              <div className={`p-3 rounded-xl bg-accent/10`}>
+                <Clock className={`h-5 w-5 text-accent`} />
               </div>
             </div>
             <div className="space-y-2">
-              <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLightMode ? "bg-gray-200" : "bg-white/5"}`}>
+              <div className={`h-1.5 w-full rounded-full overflow-hidden bg-gray-200`}>
                 <div 
                   className={`h-full transition-all duration-1000 ${isStable ? "bg-accent" : "bg-amber-500"}`}
                   style={{ width: `${slaPercentage}%` }}
@@ -82,9 +82,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           <div className="grid grid-cols-1 gap-2">
             <AppButton 
               className={`w-full justify-start text-xs py-5 border ${
-                isLightMode 
-                  ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/10" 
-                  : "bg-accent/10 border border-accent/20 text-indigo-300 hover:bg-accent/20"
+                "bg-accent/10 border-accent/30 text-accent hover:bg-accent/10"
               }`}
               onClick={() => onAction("ASSIGN")}
             >
@@ -93,9 +91,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <AppButton 
               variant="secondary"
               className={`w-full justify-start text-xs py-5 border ${
-                isLightMode 
-                  ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm" 
-                  : "bg-white/5 border-white/5 text-gray-300 hover:bg-white/10"
+                "bg-white border-border text-muted hover:bg-elevated shadow-sm"
               }`}
               onClick={() => onAction("RESOLVE")}
             >
@@ -104,14 +100,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <div className="grid grid-cols-2 gap-2">
               <AppButton 
                 variant="ghost" 
-                className={`text-xs h-10 border ${isLightMode ? "bg-gray-50 border-gray-100 text-gray-600" : "bg-white/5 border-white/5 text-gray-400"}`}
+                className={`text-xs h-10 border bg-elevated border-border text-muted`}
                 onClick={() => onAction("HOLD")}
               >
                 <Pause className="h-3 w-3 mr-2" /> Put on Hold
               </AppButton>
               <AppButton 
                 variant="ghost" 
-                className={`text-xs h-10 border ${isLightMode ? "bg-gray-50 border-gray-100 text-gray-600" : "bg-white/5 border-white/5 text-gray-400"}`}
+                className={`text-xs h-10 border bg-elevated border-border text-muted`}
                 onClick={() => onAction("ESCALATE")}
               >
                 <AlertTriangle className="h-3 w-3 mr-2" /> Escalate
@@ -120,7 +116,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <AppButton 
               variant="ghost" 
               className={`w-full justify-start text-red-500/80 hover:text-red-600 hover:bg-red-50 text-xs h-10 mt-2 border ${
-                isLightMode ? "border-red-100" : "border-red-500/10 text-red-400/50 hover:bg-red-500/10"
+                "border-red-100"
               }`}
               onClick={() => {
                 if(confirm("Confirm permanent removal from active operations?")) {
@@ -142,13 +138,13 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           <div className="flex -space-x-2">
             {[1, 2, 3].map(i => (
               <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-accent ${
-                isLightMode ? "border-white" : "border-[#070913]"
+                "border-white"
               }`}>
                 JD
               </div>
             ))}
             <button className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
-              isLightMode ? "border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100" : "border-white/20 bg-white/5 text-gray-500 hover:text-white"
+              "border-border bg-elevated text-gray-400 hover:bg-elevated"
             }`}>
               <UserPlus className="h-3 w-3" />
             </button>
@@ -159,10 +155,10 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         <section className="space-y-4">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Quick Attachments</h3>
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
-            isLightMode ? "border-gray-200 bg-gray-50/50 hover:bg-gray-100/50" : "border-white/10 bg-transparent hover:bg-white/5"
+            "border-border bg-elevated/50 hover:bg-elevated/50"
           }`}>
-            <div className={`p-2 rounded-lg ${isLightMode ? "bg-white" : "bg-white/5"} group-hover:bg-accent/10`}>
-              <Eye className={`h-4 w-4 ${isLightMode ? "text-gray-400" : "text-gray-600"} group-hover:text-accent`} />
+            <div className={`p-2 rounded-lg bg-white group-hover:bg-accent/10`}>
+              <Eye className={`h-4 w-4 text-gray-400 group-hover:text-accent`} />
             </div>
             <p className="text-[0.7rem] text-gray-500">Drop files to link</p>
           </div>
@@ -171,9 +167,9 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
       {/* Sticky Bottom Actions */}
       <div className={`p-4 border-t flex items-center justify-between ${
-        isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"
+        "bg-elevated border-border"
       }`}>
-        <button className={`p-2 rounded-lg transition-colors ${isLightMode ? "hover:bg-gray-200 text-gray-400" : "hover:bg-white/5 text-gray-500"}`}>
+        <button className={`p-2 rounded-lg transition-colors hover:bg-gray-200 text-gray-400`}>
           <Workflow className="h-4 w-4" />
         </button>
         <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Governance ID: 9910-E</span>

@@ -158,12 +158,12 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   };
 
   const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+    "bg-white border-border text-foreground"
   }`;
   const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none min-h-[80px] ${
-    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
+    "bg-white border-border text-foreground"
   }`;
-  const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 ${isLightMode ? "text-gray-500" : "text-gray-400"}`;
+  const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
 
   if (loadingConfig) {
     return (
@@ -189,7 +189,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       />
 
       <div className="flex-1 overflow-y-auto mt-4 custom-scrollbar">
-        <AppCard className={`p-6 shadow-xl border ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0d14] border-white/10"}`}>
+        <AppCard className={`p-6 shadow-xl border bg-surface border-border`}>
           <form onSubmit={handleSubmit} className="space-y-8">
             {error && (
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm flex items-start gap-2">
@@ -200,7 +200,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* Business Section */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b ${isLightMode ? "text-accent border-gray-200" : "text-accent border-white/10"}`}>
+              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-accent border-border`}>
                 <Briefcase className="h-4 w-4" /> Business Classification
               </h3>
               
@@ -243,7 +243,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* Technical Section */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b ${isLightMode ? "text-emerald-700 border-gray-200" : "text-emerald-400 border-white/10"}`}>
+              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-emerald-700 border-border`}>
                 <Server className="h-4 w-4" /> Technical & Execution Scope
               </h3>
               
@@ -284,7 +284,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* Governance & Dependency */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b ${isLightMode ? "text-amber-700 border-gray-200" : "text-amber-400 border-white/10"}`}>
+              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-amber-700 border-border`}>
                 <Shield className="h-4 w-4" /> Governance & Dependencies
               </h3>
 
@@ -301,7 +301,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
               <div className="space-y-2">
                 <label className={labelClass}>Impacted Departments (Approval Sequence) *</label>
-                <div className={`p-4 rounded-xl border flex flex-wrap gap-2 ${isLightMode ? "bg-white border-gray-200" : "bg-white/5 border-white/10"}`}>
+                <div className={`p-4 rounded-xl border flex flex-wrap gap-2 bg-white border-border`}>
                   {(masters?.departments || []).map((d: any) => {
                     const isSelected = formData.impacted_departments.includes(d.id);
                     const index = formData.impacted_departments.indexOf(d.id);
@@ -313,7 +313,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
                           isSelected 
                             ? "bg-accent border-accent text-white" 
-                            : isLightMode ? "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100" : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
+                            : "bg-elevated border-border text-muted hover:bg-elevated"
                         }`}
                       >
                         {isSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
@@ -322,13 +322,13 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     );
                   })}
                 </div>
-                <p className={`text-[10px] ${isLightMode ? "text-gray-500" : "text-gray-500"}`}>Select departments in the order they should approve this requirement.</p>
+                <p className={`text-[10px] text-muted`}>Select departments in the order they should approve this requirement.</p>
               </div>
             </div>
 
             {/* Timelines */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b ${isLightMode ? "text-pink-700 border-gray-200" : "text-pink-400 border-white/10"}`}>
+              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-pink-700 border-border`}>
                 <Calendar className="h-4 w-4" /> Schedule & Timelines
               </h3>
 
@@ -348,8 +348,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
             </div>
 
-            <div className={`flex justify-end gap-3 pt-6 border-t ${isLightMode ? "border-gray-200" : "border-white/10"}`}>
-              <AppButton type="button" variant="ghost" onClick={() => router.push("/requirements")} disabled={loading} className={isLightMode ? "text-gray-600" : "text-gray-400"}>
+            <div className={`flex justify-end gap-3 pt-6 border-t border-border`}>
+              <AppButton type="button" variant="ghost" onClick={() => router.push("/requirements")} disabled={loading} className={"text-muted"}>
                 Cancel
               </AppButton>
               <AppButton type="submit" variant="primary" disabled={loading} className="bg-accent hover:bg-accent text-white min-w-[140px]">

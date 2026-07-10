@@ -134,7 +134,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
           <div className="flex items-center gap-2">
-            {depth > 0 && <span className={isLightMode ? "text-gray-400" : "text-gray-600"}>↳</span>}
+            {depth > 0 && <span className={"text-gray-400"}>↳</span>}
             <div className={`font-bold ${"text-foreground"}`}>{w.code}</div>
           </div>
           <div className={`text-[10px] text-gray-500 truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
@@ -597,7 +597,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-accent w-48 transition-all ${
-                  isLightMode ? 'bg-white border-gray-300 text-gray-900 focus:w-64' : 'bg-black/30 border-white/10 text-white focus:w-64'
+                  "bg-surface border-border text-foreground focus:w-64"
                 }`}
               />
             </div>
@@ -640,7 +640,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => setActiveView('HIERARCHY')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? (isLightMode ? "border-accent text-accent" : "border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? ("border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <GitMerge className="h-4 w-4" />
@@ -648,7 +648,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   </button>
                   <button 
                     onClick={() => setActiveView('SPRINTS')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? (isLightMode ? "border-accent text-accent" : "border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? ("border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <Calendar className="h-4 w-4" />
@@ -660,12 +660,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               {activeView === 'HIERARCHY' ? (
                 <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin pr-1">
                   <div className="flex justify-end mb-3 mr-2">
-                    <label className={`flex items-center gap-2 text-xs font-medium cursor-pointer ${isLightMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <label className={`flex items-center gap-2 text-xs font-medium cursor-pointer text-muted`}>
                       <input 
                         type="checkbox" 
                         checked={autoCollapse} 
                         onChange={e => setAutoCollapse(e.target.checked)} 
-                        className={`rounded ${isLightMode ? 'border-gray-300 text-accent focus:ring-accent' : 'border-white/10 bg-black/50 text-accent focus:ring-accent/50'}`}
+                        className={`rounded border-border text-accent focus:ring-accent`}
                       />
                       Auto-Minimize Others
                     </label>
@@ -799,7 +799,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             {/* Section 1: Workspace Identity */}
             <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
-                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
+                <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
                   <Building2 className="h-4 w-4" />
                 </div>
                 <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Workspace Identity</h3>
@@ -810,7 +810,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Company / Entity Link *</label>
                   <select 
                     className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${
-                      isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                      "bg-surface border-border text-foreground"
                     }`}
                     value={newWS.company_id}
                     onChange={e => setNewWS({...newWS, company_id: e.target.value})}
@@ -828,7 +828,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
-                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? (newWS.code || "") : "[Auto-Generated]"} className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
+                  <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? (newWS.code || "") : "[Auto-Generated]"} className={"bg-elevated"} />
                 </div>
               </div>
 
@@ -838,7 +838,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Link</label>
                     <select 
                       className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${
-                        isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                        "bg-surface border-border text-foreground"
                       }`}
                       value={newWS.parent_workspace_id}
                       onChange={e => {
@@ -863,7 +863,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             {/* Section 2: Timeline & Objectives */}
             <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
-                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
+                <div className={`p-1.5 rounded-lg bg-amber-100 text-amber-600`}>
                   <Target className="h-4 w-4" />
                 </div>
                 <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Timeline & Objectives</h3>
@@ -884,7 +884,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
                 <textarea 
                   className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-none ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    "bg-surface border-border text-foreground"
                   }`}
                   placeholder="Detailed project requirements, goals, and constraints..."
                   value={newWS.description}
@@ -896,7 +896,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             {/* Section 3: Access & Security */}
             <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
-                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+                <div className={`p-1.5 rounded-lg bg-emerald-100 text-emerald-600`}>
                   <ShieldCheck className="h-4 w-4" />
                 </div>
                 <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Access & Stakeholders</h3>
@@ -916,7 +916,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         setNewWS({...newWS, assigneeIds: allIds});
                       }
                     }}
-                    className={`text-[9px] font-bold uppercase tracking-wider ${isLightMode ? "text-accent hover:text-accent" : "text-accent hover:text-indigo-300"}`}
+                    className={`text-[9px] font-bold uppercase tracking-wider text-accent hover:text-accent`}
                   >
                     {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
                   </button>
@@ -936,15 +936,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       }
                     }}
                     className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-accent ${
-                      isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                      "bg-surface border-border text-foreground"
                     }`}
                   />
                 </div>
 
-                <div className={`max-h-[160px] overflow-y-auto space-y-1 pr-1 rounded-xl p-2 border ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10"} scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent`}>
+                <div className={`max-h-[160px] overflow-y-auto space-y-1 pr-1 rounded-xl p-2 border bg-elevated border-border scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent`}>
                   {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
                     <label key={u.id} className={`flex items-center gap-3 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
-                      isLightMode ? "hover:bg-accent/10/50" : "hover:bg-white/10"
+                      "hover:bg-accent/10/50"
                     }`}>
                       <input 
                         type="checkbox" 
@@ -956,7 +956,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         className="rounded border-gray-300 text-accent focus:ring-accent h-4 w-4" 
                       />
                       <div className="flex flex-col">
-                        <span className={isLightMode ? "text-gray-900 font-medium" : "text-gray-200 font-medium"}>{u.full_name}</span>
+                        <span className={"text-foreground font-medium"}>{u.full_name}</span>
                         <span className="opacity-50 text-[10px]">{u.user_code}</span>
                       </div>
                     </label>
@@ -967,8 +967,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className={`p-4 rounded-xl border flex items-center gap-3 transition-colors ${
                 newWS.is_public 
-                  ? (isLightMode ? "bg-accent/10/50 border-accent/30" : "bg-accent/10 border-accent/30") 
-                  : (isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10")
+                  ? ("bg-accent/10/50 border-accent/30") 
+                  : ("bg-elevated border-border")
               }`}>
                 <input 
                   type="checkbox" 

@@ -135,8 +135,8 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
         onClick={() => fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
           isDragging 
-            ? isLightMode ? "border-accent bg-accent/10" : "border-accent bg-accent/10"
-            : isLightMode ? "border-gray-300 hover:border-accent bg-gray-50" : "border-white/10 hover:border-white/30 bg-white/5"
+            ? "border-accent bg-accent/10"
+            : "border-border hover:border-accent bg-elevated"
         }`}
       >
         <input 
@@ -146,8 +146,8 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
           className="hidden" 
           onChange={handleFileSelect} 
         />
-        <div className={`p-3 rounded-xl mb-3 ${isLightMode ? "bg-white shadow-sm" : "bg-white/10"}`}>
-          <UploadCloud className={`h-6 w-6 ${isLightMode ? "text-accent" : "text-gray-300"}`} />
+        <div className={`p-3 rounded-xl mb-3 bg-white shadow-sm`}>
+          <UploadCloud className={`h-6 w-6 text-accent`} />
         </div>
         <h4 className={`text-sm font-bold mb-1 ${"text-foreground"}`}>
           Click or drag files to upload

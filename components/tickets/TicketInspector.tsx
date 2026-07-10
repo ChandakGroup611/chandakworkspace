@@ -33,10 +33,10 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
   if (!ticket) {
     return (
       <div className={`h-full flex flex-col items-center justify-center text-center p-8 space-y-4 ${
-        isLightMode ? "bg-gray-50/50" : "bg-transparent"
+        "bg-elevated/50"
       }`}>
-        <div className={`p-4 rounded-3xl ${isLightMode ? "bg-gray-100" : "bg-white/5"}`}>
-          <Activity className={`h-10 w-10 ${isLightMode ? "text-gray-400" : "text-gray-700"}`} />
+        <div className={`p-4 rounded-3xl bg-elevated`}>
+          <Activity className={`h-10 w-10 text-gray-400`} />
         </div>
         <div className="space-y-1">
           <h3 className={`text-xl font-bold ${"text-foreground"}`}>Select a Ticket to Inspect</h3>
@@ -52,19 +52,19 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
 
   return (
     <div className={`h-full flex flex-col animate-in fade-in duration-500 transition-colors duration-300 ${
-      isLightMode ? "bg-white" : "bg-[#070913]"
+      "bg-surface"
     }`}>
       {/* Header Banner */}
-      <div className={`p-8 border-b space-y-6 ${isLightMode ? "border-gray-100 bg-white" : "border-white/5 bg-transparent"}`}>
+      <div className={`p-8 border-b space-y-6 border-border bg-white`}>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded uppercase tracking-widest ${
-                isLightMode ? "text-accent bg-accent/10" : "text-accent bg-accent/10"
+                "text-accent bg-accent/10"
               }`}>
                 {ticket.id}
               </span>
-              <div className={`h-4 w-px ${isLightMode ? "bg-gray-200" : "bg-white/10"}`} />
+              <div className={`h-4 w-px bg-gray-200`} />
               <AppBadge variant={status?.code === "ST_OPEN" ? "info" : "success"} className="rounded-full">
                 {status?.name || "Active"}
               </AppBadge>
@@ -75,33 +75,33 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
 
         {/* Bento Metadata Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
+          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <ShieldCheck className="h-3 w-3" /> Priority
             </div>
             <div className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full ${
-                priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : (isLightMode ? "bg-accent" : "bg-accent")
+                priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : ("bg-accent")
               }`} />
               <span className={`text-sm font-semibold ${"text-foreground"}`}>{priority?.name || "Medium"}</span>
             </div>
           </div>
 
-          <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
+          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <Building className="h-3 w-3" /> Department
             </div>
             <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{dept?.name || "General"}</span>
           </div>
 
-          <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
+          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <User className="h-3 w-3" /> Assignee
             </div>
             <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{ticket.assignedTo || "Unassigned"}</span>
           </div>
 
-          <div className={`p-4 border rounded-2xl space-y-2 ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.02] border-white/5"}`}>
+          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
             <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
               <Clock className="h-3 w-3" /> Created
             </div>
@@ -113,14 +113,14 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
       </div>
 
       {/* Navigation Tabs */}
-      <div className={`px-8 border-b flex items-center gap-8 ${isLightMode ? "border-gray-100 bg-white" : "border-white/5 bg-transparent"}`}>
+      <div className={`px-8 border-b flex items-center gap-8 border-border bg-white`}>
         {(["DETAILS", "COLLAB", "TIMELINE"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`py-4 text-[0.8rem] font-bold uppercase tracking-widest transition-all relative ${
               activeTab === tab 
-                ? (isLightMode ? "text-accent" : "text-white") 
+                ? ("text-accent") 
                 : "text-gray-500 hover:text-gray-400"
             }`}
           >
@@ -138,8 +138,8 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <section className="space-y-4">
               <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Subject Overview</h3>
-              <div className={`p-6 border rounded-2xl ${isLightMode ? "bg-gray-50 border-gray-100" : "bg-white/[0.03] border-white/5"}`}>
-                <p className={`leading-relaxed whitespace-pre-wrap ${isLightMode ? "text-gray-700 font-medium" : "text-gray-300"}`}>{ticket.description}</p>
+              <div className={`p-6 border rounded-2xl bg-elevated border-border`}>
+                <p className={`leading-relaxed whitespace-pre-wrap text-muted font-medium`}>{ticket.description}</p>
               </div>
             </section>
 

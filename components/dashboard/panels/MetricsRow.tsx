@@ -88,7 +88,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
           <AppCard 
             key={card.id}
             className={`relative overflow-hidden group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${
-              isLight ? "shadow-md bg-white border-gray-200" : "shadow-black/60 bg-[#111827] border-white/10"
+              "shadow-md bg-surface border-border"
             }`}
           >
             {/* 3D Gradient Overlay matching theme & status color */}
@@ -106,13 +106,13 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
                 <span className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground mix-blend-luminosity opacity-80">
                   {card.label}
                 </span>
-                <div className={`p-2 rounded-xl bg-surface/50 backdrop-blur-sm shadow-sm ring-1 ring-inset ${isLight ? "ring-black/5" : "ring-white/10"} ${card.textColor}`}>
+                <div className={`p-2 rounded-xl bg-surface/50 backdrop-blur-sm shadow-sm ring-1 ring-inset ring-black/5 ${card.textColor}`}>
                   <Icon className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
-                <div className={`text-3xl font-black tracking-tight mb-2 ${isLight ? "text-gray-900" : "text-white"}`}>
+                <div className={`text-3xl font-black tracking-tight mb-2 text-foreground`}>
                   {card.value}
                 </div>
                 

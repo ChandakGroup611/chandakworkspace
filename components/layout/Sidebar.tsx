@@ -203,7 +203,7 @@ export default function Sidebar() {
               <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
-              <span className={`text-[15px] font-bold tracking-tight truncate ${isLight ? "text-slate-900" : "text-white"}`}>
+              <span className={`text-[15px] font-bold tracking-tight truncate text-slate-900`}>
                 Chandak Workspace
               </span>
             </div>
@@ -256,21 +256,21 @@ export default function Sidebar() {
                         href={item.href}
                         className={`group relative flex-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
                           isBaseActive 
-                            ? (isLight ? "bg-slate-100 text-black font-bold" : "bg-white/10 text-white font-bold")
-                            : (isLight ? "text-slate-900 font-semibold hover:bg-slate-50 hover:text-black" : "text-slate-300 hover:bg-white/5 hover:text-white")
+                            ? ("bg-slate-100 text-foreground font-bold")
+                            : ("text-slate-900 font-semibold hover:bg-slate-50 hover:text-foreground")
                         } ${isCompact ? "justify-center" : ""}`}
                       >
                         {/* Text wrapper with z-10 so it's above the background */}
                         <div className="relative z-10 flex items-center gap-3 w-full">
                         {isBaseActive && (
-                          <div className={`absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 ${isLight ? "bg-slate-900" : "bg-white"}`} />
+                          <div className={`absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 bg-slate-900`} />
                         )}
                         
                         {/* Responsive dynamically scaled icon */}
                         <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-105 h-4 w-4 ${
                           isBaseActive 
-                            ? (isLight ? "text-black" : "text-white") 
-                            : (isLight ? "text-slate-800 group-hover:text-black" : "text-slate-300 group-hover:text-white")
+                            ? ("text-foreground") 
+                            : ("text-slate-800 group-hover:text-foreground")
                         }`} />
                         
                         {!isCompact && (
@@ -304,7 +304,7 @@ export default function Sidebar() {
                       {/* Premium Interactive Module Popover Tooltip with Open Action Indicator button when minimized */}
                       {isCompact && (
                         <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-md border shrink-0 ${
-                          isLight ? "bg-white border-slate-200 text-slate-800" : "bg-slate-900 border-slate-800 text-white"
+                          "bg-white border-slate-200 text-slate-800"
                         }`}>
                           <span className="font-medium whitespace-nowrap text-xs">{item.label}</span>
                         </div>
@@ -330,8 +330,8 @@ export default function Sidebar() {
                               onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
                               className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-[0.8rem] transition-all overflow-hidden ${
                                 isSubActive 
-                                  ? (isLight ? "text-black font-bold" : "text-white font-bold") 
-                                  : (isLight ? "text-slate-800 font-semibold hover:text-black" : "text-slate-300 hover:text-white")
+                                  ? ("text-foreground font-bold") 
+                                  : ("text-slate-800 font-semibold hover:text-foreground")
                               }`}
                             >
                               <span className={`text-[0.65rem] relative z-10 ${isSubActive ? "opacity-100" : "opacity-40"}`}>▪</span>

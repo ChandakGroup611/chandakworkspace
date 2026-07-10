@@ -173,7 +173,7 @@ export default function CompanyMasterPage() {
   if (permsLoading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50" : "bg-[#070913]"
+        "bg-gray-50"
       }`}>
         <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
@@ -183,7 +183,7 @@ export default function CompanyMasterPage() {
   if (!hasPermission("COMPANIES_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        isLightMode ? "bg-gray-50" : "bg-[#070913]"
+        "bg-gray-50"
       }`}>
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Lock className="h-10 w-10" />
@@ -196,12 +196,12 @@ export default function CompanyMasterPage() {
 
   return (
     <div className={`h-screen overflow-y-auto flex flex-col font-sans p-6 space-y-6 ${
-      isLightMode ? "bg-gray-50" : "bg-[#070913]"
+      "bg-gray-50"
     }`}>
       <div className="flex items-center justify-between pb-4 border-b border-white/5">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Building2 className={`h-6 w-6 ${isLightMode ? "text-accent" : "text-accent"}`} />
+            <Building2 className={`h-6 w-6 text-accent`} />
             <h1 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Company Master</h1>
             <AppBadge variant="info">Global Enterprise</AppBadge>
           </div>
@@ -252,7 +252,7 @@ export default function CompanyMasterPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className={`border-b text-xs uppercase tracking-wider ${isLightMode ? "border-gray-200 text-gray-500" : "border-white/10 text-gray-400"}`}>
+              <tr className={`border-b text-xs uppercase tracking-wider border-border text-muted`}>
                 <th className="pb-3 px-4 font-semibold">Code</th>
                 <th className="pb-3 px-4 font-semibold">Company Name</th>
                 <th className="pb-3 px-4 font-semibold">Contact</th>
@@ -263,7 +263,7 @@ export default function CompanyMasterPage() {
             <tbody>
               {filteredData.map(c => (
                 <tr key={c.id} className={`border-b last:border-0 transition-colors ${
-                  isLightMode ? "border-gray-100 hover:bg-gray-50" : "border-white/5 hover:bg-white/[0.02]"
+                  "border-border hover:bg-elevated"
                 }`}>
                   <td className="py-3 px-4 font-mono text-xs font-bold text-accent">{c.code}</td>
                   <td className="py-3 px-4">

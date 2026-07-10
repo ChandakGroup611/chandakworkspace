@@ -76,9 +76,9 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <AppCard className={`relative w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
+      <AppCard className={`relative w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
         
-        <div className={`flex items-center justify-between p-6 border-b ${isLightMode ? 'border-gray-200' : 'border-white/10'}`}>
+        <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
             <h3 className="text-xl font-bold text-accent">Renew Subscription</h3>
             <p className="text-sm text-gray-500 mt-1">
@@ -91,7 +91,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
         </div>
 
         <form onSubmit={handleRenew} className="p-6 space-y-6">
-          <div className={`p-4 rounded-xl border ${isLightMode ? 'bg-orange-50 border-orange-200 text-orange-800' : 'bg-orange-500/10 border-orange-500/20 text-orange-400'}`}>
+          <div className={`p-4 rounded-xl border bg-orange-50 border-orange-200 text-orange-800`}>
             <p className="text-sm">
               Renewing will archive the current active contract as <strong>"Renewed"</strong> and create a fresh <strong>"Active"</strong> record with the new dates and financials.
             </p>

@@ -80,8 +80,8 @@ export default function NotificationCenter() {
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2 rounded-xl transition-all ${
           isOpen 
-            ? (isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent") 
-            : (isLightMode ? "text-gray-500 hover:bg-gray-100" : "text-gray-400 hover:bg-white/10")
+            ? ("bg-accent/10 text-accent") 
+            : ("text-muted hover:bg-elevated")
         }`}
       >
         <Bell className="h-5 w-5" />
@@ -94,9 +94,9 @@ export default function NotificationCenter() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className={`absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl border z-50 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200 ${
-            isLightMode ? "bg-white border-gray-200" : "bg-[#0f111a] border-white/10"
+            "bg-surface border-border"
           }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${isLightMode ? "border-gray-100 bg-gray-50/50" : "border-white/5 bg-black/20"}`}>
+            <div className={`p-4 border-b flex items-center justify-between border-border bg-gray-50/50`}>
               <div className="flex items-center gap-2">
                 <h3 className={`font-bold ${"text-foreground"}`}>Notifications</h3>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
@@ -124,9 +124,7 @@ export default function NotificationCenter() {
                   key={n.id} 
                   onClick={() => handleRead(n.id, n.link)}
                   className={`p-4 border-b cursor-pointer transition-colors group ${
-                    isLightMode 
-                      ? "border-gray-100 hover:bg-accent/10/50" 
-                      : "border-white/5 hover:bg-accent/10"
+                    "border-border hover:bg-accent/10/50"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">

@@ -87,9 +87,9 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   };
 
   return (
-    <AppCard className={`p-5 space-y-4 border-smooth ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}>
+    <AppCard className={`p-5 space-y-4 border-smooth bg-white shadow-sm`}>
       <div className="flex items-center gap-2 border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
-        <Clock className={`h-4 w-4 ${isLightMode ? "text-accent" : "text-accent"}`} />
+        <Clock className={`h-4 w-4 text-accent`} />
         <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>
       </div>
 
@@ -100,21 +100,21 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
           {logs.map((log, idx) => (
             <div key={log.id || idx} className="relative pl-6 animate-in fade-in slide-in-from-bottom-2">
               <span className={`absolute -left-3.5 top-0.5 h-7 w-7 rounded-full border-4 flex items-center justify-center ${
-                isLightMode ? "bg-white border-white shadow-sm" : "bg-[#0a0c16] border-[#0a0c16]"
+                "bg-surface border-white shadow-[var(--shadow-ambient)]"
               }`}>
                 {getActionIcon(log.action)}
               </span>
               <div className={`p-3 rounded-xl border ${
-                isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-white/[0.02] border-white/5"
+                "bg-elevated/50 border-border"
               }`}>
-                <p className={`text-xs ${isLightMode ? "text-gray-800" : "text-gray-300"}`}>
-                  <strong className={isLightMode ? "text-accent" : "text-accent"}>
+                <p className={`text-xs text-foreground`}>
+                  <strong className={"text-accent"}>
                     {log.actor?.full_name || 'System Administrator'}
                   </strong> {getActionText(log)}
                 </p>
                 {log.action === 'COMMENT' && log.new_state?.message && (
                   <div className={`mt-2 p-2 rounded-md border text-xs whitespace-pre-wrap ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-600" : "bg-black/50 border-white/5 text-gray-400"
+                    "bg-surface border-border text-muted"
                   }`}>
                     {log.new_state.message}
                   </div>

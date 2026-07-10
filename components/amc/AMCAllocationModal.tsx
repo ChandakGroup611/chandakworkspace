@@ -135,9 +135,9 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <AppCard className={`relative w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
+      <AppCard className={`relative w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
         
-        <div className={`flex items-center justify-between p-6 border-b ${isLightMode ? 'border-gray-200' : 'border-white/10'}`}>
+        <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
             <h3 className="text-xl font-bold text-accent">License Allocation</h3>
             <p className="text-sm text-gray-500 mt-1">
@@ -151,8 +151,8 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
 
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
           {/* Active Allocations Panel */}
-          <div className={`flex-1 border-r flex flex-col ${isLightMode ? 'border-gray-200' : 'border-white/10'}`}>
-            <div className={`p-4 border-b font-semibold ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+          <div className={`flex-1 border-r flex flex-col border-border`}>
+            <div className={`p-4 border-b font-semibold bg-elevated border-border`}>
               Currently Assigned Users
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -162,7 +162,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                 <div className="text-center p-8 text-gray-500 italic">No licenses allocated yet.</div>
               ) : (
                 allocations.map(a => (
-                  <div key={a.id} className={`p-3 rounded-lg border flex items-center justify-between ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14] border-white/10'}`}>
+                  <div key={a.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border`}>
                     <div>
                       <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
                       <div className="text-xs text-gray-500">{a.user_master?.email}</div>
@@ -185,7 +185,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
 
           {/* Unassigned Users Panel */}
           <div className="flex-1 flex flex-col">
-            <div className={`p-4 border-b ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+            <div className={`p-4 border-b bg-elevated border-border`}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input 
@@ -193,7 +193,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                   placeholder="Search users to allocate..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 transition-all ${isLightMode ? 'bg-white border-gray-200 text-gray-900' : 'bg-white/5 border-white/10 text-white'}`}
+                  className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 transition-all bg-white border-border text-foreground`}
                 />
               </div>
             </div>
@@ -204,7 +204,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                 <div className="text-center p-8 text-gray-500 italic">No unassigned users found.</div>
               ) : (
                 filteredUsers.map(u => (
-                  <div key={u.id} className={`p-3 rounded-lg border flex items-center justify-between ${isLightMode ? 'bg-white border-gray-200 hover:border-accent/50' : 'bg-[#0A0D14] border-white/10 hover:border-accent/50'} transition-colors`}>
+                  <div key={u.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border hover:border-accent/50 transition-colors`}>
                     <div>
                       <div className="font-semibold text-sm">{u.full_name}</div>
                       <div className="text-xs text-gray-500">{u.email}</div>

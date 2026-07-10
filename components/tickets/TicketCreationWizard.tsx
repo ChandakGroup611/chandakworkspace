@@ -182,7 +182,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
               variant="ghost"
               onClick={handleBack}
               className={`p-1.5 -ml-2 rounded-full ${
-                isLightMode ? "text-gray-500" : "text-gray-400"
+                "text-muted"
               }`}
             >
               <ChevronLeft className="h-6 w-6" />

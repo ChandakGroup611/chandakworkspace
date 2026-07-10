@@ -47,7 +47,7 @@ export function EnterpriseModalShell({
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm animate-in fade-in duration-300 ${
-          isLightMode ? "bg-gray-900/40" : "bg-[#070913]/80"
+          "bg-gray-900/40"
         }`} 
         onClick={onClose} 
       />
@@ -55,9 +55,7 @@ export function EnterpriseModalShell({
       {/* Modal Container */}
       <div 
         className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl shadow-2xl overflow-hidden border ${
-          isLightMode 
-            ? "bg-white border-gray-200 shadow-xl" 
-            : "bg-[#0B0F19] border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+          "bg-surface border-border shadow-xl"
         } ${className}`}
         style={{
           maxHeight: "calc(100vh - 48px)" // Safe spacing
@@ -66,7 +64,7 @@ export function EnterpriseModalShell({
         {/* Header */}
         {(title || subtitle) && (
           <div className={`shrink-0 p-5 border-b flex items-start justify-between gap-4 ${
-            isLightMode ? "border-gray-200 bg-gray-50/50" : "border-white/10 bg-white/[0.02]"
+            "border-border bg-elevated/50"
           }`}>
             <div>
               {title && <h2 className={`text-lg font-bold tracking-tight ${"text-foreground"}`}>{title}</h2>}
@@ -76,7 +74,7 @@ export function EnterpriseModalShell({
               onClick={onClose}
               type="button"
               className={`p-2 rounded-xl transition-colors ${
-                isLightMode ? "hover:bg-gray-200 text-gray-500 hover:text-gray-900" : "hover:bg-white/10 text-gray-400 hover:text-white"
+                "hover:bg-gray-200 text-muted hover:text-foreground"
               }`}
             >
               <X className="h-5 w-5" />
@@ -92,7 +90,7 @@ export function EnterpriseModalShell({
         {/* Footer */}
         {footer && (
           <div className={`shrink-0 p-5 border-t flex items-center justify-end gap-3 ${
-            isLightMode ? "border-gray-200 bg-gray-50" : "border-white/10 bg-[#070913]/50"
+            "border-border bg-gray-50"
           }`}>
             {footer}
           </div>

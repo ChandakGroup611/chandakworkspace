@@ -71,21 +71,19 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
               className="group relative text-left transition-all duration-300 hover:scale-[1.02] focus:outline-none"
             >
               <AppCard className={`h-full transition-all overflow-hidden relative ${
-                isLightMode 
-                  ? "bg-white border-gray-100 shadow-xl shadow-gray-200/50 group-hover:border-accent/30 group-hover:bg-gray-50/50" 
-                  : "bg-white/[0.03] border-white/5 backdrop-blur-xl group-hover:border-white/20 group-hover:bg-white/[0.05]"
+                "bg-white border-border shadow-xl shadow-gray-200/50 group-hover:border-accent/30 group-hover:bg-elevated/50"
               }`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-100 transition-opacity`} />
                 <AppCardContent className="p-6 relative z-10 space-y-4">
                   <div className={`h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 border ${
-                    isLightMode ? "bg-white border-gray-100" : "bg-white/5 border-white/10"
+                    "bg-white border-border"
                   }`}>
-                    <Icon className={`h-6 w-6 ${isLightMode ? "text-accent" : "text-white"}`} />
+                    <Icon className={`h-6 w-6 text-accent`} />
                   </div>
                   
                   <div className="space-y-1">
                     <h3 className={`text-lg font-semibold transition-colors ${
-                      isLightMode ? "text-gray-900 group-hover:text-accent" : "text-white group-hover:text-indigo-300"
+                      "text-foreground group-hover:text-accent"
                     }`}>
                       {scope.name}
                     </h3>
@@ -95,7 +93,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                   </div>
 
                   <div className={`flex items-center text-xs font-bold uppercase tracking-widest transition-colors pt-2 ${
-                    isLightMode ? "text-accent" : "text-accent group-hover:text-indigo-300"
+                    "text-accent"
                   }`}>
                     <span>Initialize Flow</span>
                     <ChevronRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform" />

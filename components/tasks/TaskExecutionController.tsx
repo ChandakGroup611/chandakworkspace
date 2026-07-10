@@ -702,7 +702,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4">
         
         {/* Timeline & Meta Block */}
-        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 ${isLightMode ? "bg-white border-gray-200/80 shadow-sm" : "bg-[#111827]/40 border-white/5"} space-y-4`}>
+        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 bg-surface border-border/80 shadow-[var(--shadow-ambient)] space-y-4`}>
           <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Timeline & Meta</h4>
           
           <div className="grid grid-cols-2 gap-4">
@@ -711,7 +711,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border dark:border-white/10" style={{ backgroundColor: isLightMode ? `${task.priority?.color}15` || '#f1f5f9' : `${task.priority?.color}25` || '#1e293b' }}>
                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
-                  <span className="text-xs font-semibold" style={{ color: task.priority?.color || (isLightMode ? '#64748b' : '#cbd5e1') }}>{task.priority?.name || "Standard"}</span>
+                  <span className="text-xs font-semibold" style={{ color: task.priority?.color || ("#64748b") }}>{task.priority?.name || "Standard"}</span>
                 </div>
               </div>
             </div>
@@ -761,7 +761,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     }}
                   />
                 ) : (
-                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ${isLightMode ? "bg-gray-100 text-gray-700" : "bg-white/5 text-gray-300"}`}>
+                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold bg-elevated text-muted`}>
                     {task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"}
                   </div>
                 )}
@@ -784,7 +784,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   />
                 ) : (
                   <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ${
-                    task.end_date && new Date(task.end_date) < new Date() ? "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400" : isLightMode ? "bg-gray-100 text-gray-700" : "bg-white/5 text-gray-300"
+                    task.end_date && new Date(task.end_date) < new Date() ? "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400" : "bg-elevated text-muted"
                   }`}>
                     {task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"}
                   </div>
@@ -795,7 +795,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         </div>
 
         {/* Execution Team Block */}
-        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 ${isLightMode ? "bg-accent/10/50 border-blue-100/50" : "bg-blue-900/10 border-accent/10"} space-y-4`}>
+        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 bg-accent/10/50 border-blue-100/50 space-y-4`}>
           <h4 className="text-[10px] font-bold uppercase tracking-widest text-accent mb-1 border-b border-blue-100 dark:border-accent/10 pb-2 flex items-center gap-2"><Users2 className="w-3.5 h-3.5" /> Execution Team</h4>
           
           <div className="grid grid-cols-2 gap-4">
@@ -853,7 +853,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
               
               {isEditingAssignees ? (
-                <div ref={assigneesRef} className={`p-2 rounded-xl border max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 ${isLightMode ? "bg-white border-emerald-200" : "bg-black/30 border-emerald-500/30"}`}>
+                <div ref={assigneesRef} className={`p-2 rounded-xl border max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 bg-surface border-emerald-200`}>
                   <div className="flex flex-col gap-1">
                     {stakeholders.map(s => (
                       <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-md transition-colors">
@@ -902,7 +902,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* Interactive Lifecycle State Transition Panel (MOVED TO TOP) */}
       <div className={`p-4 rounded-xl border shadow-sm space-y-3 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:border-accent/30 dark:hover:shadow-purple-500/20 dark:hover:border-accent/40 ${
-        isLightMode ? "bg-white border-gray-200/80" : "bg-[#111827]/40 border-white/10"
+        "bg-surface border-border/80"
       }`}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-1.5">
@@ -919,7 +919,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 }
               }}
               className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-shadow ${
-                isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
+                "bg-gray-50 border-border text-foreground"
               } ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
@@ -942,7 +942,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 }
               }}
               className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-shadow ${
-                isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
+                "bg-gray-50 border-border text-foreground"
               } ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="">-- No Department --</option>
@@ -1196,7 +1196,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             onChange={e => setRemarksDraft(e.target.value)}
             disabled={!canAddRemark}
             className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-accent transition-colors ${
-              isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0B0F19] border-white/10 text-white"
+              "bg-surface border-border text-foreground"
             } ${!canAddRemark ? 'opacity-50 cursor-not-allowed' : ''}`}
             placeholder={!canAddRemark ? "Task is frozen/read-only." : "Add update notes or handoff remarks..."}
           />
@@ -1211,7 +1211,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
           {/* Remarks History Queue */}
           <div className={`mt-3 rounded-md border p-3 transition-all duration-150 ${
-            isLightMode ? "bg-gray-50 border-gray-200 text-gray-900" : "bg-white/[0.02] border-white/5 text-white"
+            "bg-elevated border-border text-foreground"
           }`}>
             {/* Header with toggle */}
             <div 
@@ -1221,7 +1221,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-accent" />
                 <span className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${
-                  isLightMode ? "text-gray-700 group-hover:text-accent" : "text-gray-400 group-hover:text-accent"
+                  "text-muted group-hover:text-accent"
                 }`}>
                   Remarks History Queue
                 </span>
@@ -1235,7 +1235,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <button 
                 type="button"
                 className={`p-1 rounded-lg transition-colors ${
-                  isLightMode ? "hover:bg-gray-200 text-gray-500 hover:text-gray-900" : "hover:bg-white/10 text-gray-400 hover:text-white"
+                  "hover:bg-gray-200 text-muted hover:text-foreground"
                 }`}
               >
                 {isHistoryCollapsed ? (
@@ -1291,7 +1291,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
                                 <span className={`text-xs font-bold transition-colors ${
-                                  isLightMode ? "text-gray-800 group-hover/item:text-accent" : "text-gray-200 group-hover/item:text-purple-300"
+                                  "text-foreground group-hover/item:text-accent"
                                 }`}>
                                   {item.user?.full_name || "System Actor"}
                                 </span>
@@ -1302,7 +1302,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               </div>
                               
                               <p className={`text-xs rounded-lg p-2.5 leading-relaxed break-words whitespace-pre-wrap border ${
-                                isLightMode ? "bg-gray-100 border-gray-200/50 text-gray-700" : "bg-black/30 border-white/5 text-gray-300"
+                                "bg-elevated border-border/50 text-muted"
                               }`}>
                                 {item.message || item.content}
                               </p>
@@ -1333,7 +1333,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     </label>
                     {isReadOnlyProp || !canEditCore ? (
                       <div className={`w-full p-2.5 rounded-lg text-sm border shadow-sm ${normalizedKey !== 'link_url' && 'cursor-not-allowed'} ${
-                        isLightMode ? "bg-gray-50 border-gray-200 text-gray-700" : "bg-[#0B0F19]/50 border-white/5 text-gray-400"
+                        "bg-gray-50 border-border text-muted"
                       }`}>
                         {normalizedKey === 'link_url' && val && val !== "null" ? (
                           <a href={String(val).startsWith('http') ? String(val) : `https://${val}`} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{String(val)}</a>
@@ -1428,8 +1428,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   onClick={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
                   className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${canEditAux ? 'cursor-pointer' : 'cursor-default opacity-80'} ${
                     item.is_completed
-                      ? (isLightMode ? "bg-emerald-50/40 border-emerald-100 opacity-60" : "bg-emerald-500/5 border-emerald-500/10 opacity-70")
-                      : (isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5")
+                      ? ("bg-emerald-50/40 border-emerald-100 opacity-60")
+                      : ("bg-white border-border")
                   }`}
                 >
                   <input 
@@ -1482,9 +1482,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <div 
                     onClick={triggerFileSelect}
                     className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                      isLightMode 
-                        ? "border-gray-200 bg-gray-50 hover:bg-gray-100/50" 
-                        : "border-white/10 bg-white/[0.01] hover:bg-white/[0.02]"
+                      "border-border bg-elevated hover:bg-elevated/50"
                     }`}
                   >
                     {uploadingFile ? (
@@ -1518,7 +1516,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <div 
                       key={item.id} 
                       className={`flex items-center justify-between p-3 rounded-xl border ${
-                        isLightMode ? "bg-white border-gray-200" : "bg-white/[0.01] border-white/5"
+                        "bg-white border-border"
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">

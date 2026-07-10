@@ -72,7 +72,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
       <AppCard className="w-full max-w-2xl mt-10 mb-10 overflow-hidden flex flex-col max-h-[90vh]">
-        <div className={`p-4 border-b flex justify-between items-center ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/10"}`}>
+        <div className={`p-4 border-b flex justify-between items-center bg-elevated border-border`}>
           <div className="flex items-center gap-2">
             <LayoutTemplate className="h-5 w-5 text-accent" />
             <h2 className="font-bold text-lg">Task Templates Manager</h2>
@@ -93,7 +93,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
           )}
 
           {isCreating && (
-            <form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 ${isLightMode ? "bg-accent/10/50 border-indigo-100" : "bg-accent/10 border-accent/20"}`}>
+            <form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 bg-accent/10/50 border-indigo-100`}>
               <h3 className="font-semibold text-sm">Create New Template</h3>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Template Name</label>
@@ -110,7 +110,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Steps to execute..."
                   className={`w-full min-h-[80px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-y ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    "bg-surface border-border text-foreground"
                   }`}
                 />
               </div>

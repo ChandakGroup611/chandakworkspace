@@ -51,7 +51,7 @@ export function EnterpriseDrawerShell({
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm animate-in fade-in duration-300 ${
-          isLightMode ? "bg-gray-900/40" : "bg-[#070913]/80"
+          "bg-gray-900/40"
         }`} 
         onClick={onClose} 
       />
@@ -59,14 +59,12 @@ export function EnterpriseDrawerShell({
       {/* Drawer Container */}
       <div 
         className={`relative w-full ${SIZE_MAP[size]} h-full flex flex-col shadow-2xl border-l animate-in slide-in-from-right duration-300 ${
-          isLightMode 
-            ? "bg-white border-gray-200" 
-            : "bg-[#0B0F19] border-white/10 shadow-[-20px_0_50px_rgba(0,0,0,0.5)]"
+          "bg-surface border-border"
         } ${className}`}
       >
         {/* Header */}
         <div className={`shrink-0 p-6 border-b flex items-start justify-between gap-4 ${
-          isLightMode ? "border-gray-200 bg-white" : "border-white/10 bg-[#0B0F19]"
+          "border-border bg-surface"
         }`}>
           <div>
             {title && <h2 className={`text-xl font-extrabold tracking-tight ${"text-foreground"}`}>{title}</h2>}
@@ -76,7 +74,7 @@ export function EnterpriseDrawerShell({
             onClick={onClose}
             type="button"
             className={`p-2 rounded-xl transition-colors shrink-0 ${
-              isLightMode ? "hover:bg-gray-200 text-gray-500 hover:text-gray-900" : "hover:bg-white/10 text-gray-400 hover:text-white"
+              "hover:bg-gray-200 text-muted hover:text-foreground"
             }`}
           >
             <X className="h-6 w-6" />
@@ -91,7 +89,7 @@ export function EnterpriseDrawerShell({
         {/* Footer */}
         {footer && (
           <div className={`shrink-0 p-6 border-t flex items-center justify-end gap-3 ${
-            isLightMode ? "border-gray-200 bg-gray-50" : "border-white/10 bg-[#070913]/50"
+            "border-border bg-gray-50"
           }`}>
             {footer}
           </div>

@@ -614,7 +614,7 @@ export default function UserMasterPage() {
       {/* Dismissable Informational Alerts */}
       {successAlert && (
         <div className={`p-4 rounded-xl border flex items-center justify-between text-xs animate-in fade-in-20 ${
-          isLightMode ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+          "bg-emerald-50 border-emerald-200 text-emerald-800"
         }`}>
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -628,7 +628,7 @@ export default function UserMasterPage() {
 
       {errorAlert && (
         <div className={`p-4 rounded-xl border flex items-start gap-2.5 text-xs animate-in fade-in-20 ${
-          isLightMode ? "bg-rose-50 border-rose-200 text-rose-800" : "bg-rose-500/10 border-rose-500/20 text-rose-300"
+          "bg-rose-50 border-rose-200 text-rose-800"
         }`}>
           <ShieldAlert className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -703,7 +703,7 @@ export default function UserMasterPage() {
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-16 px-4 space-y-2">
                   <Users className="h-8 w-8 text-gray-400 mx-auto stroke-1" />
-                  <p className={`text-xs font-medium ${isLightMode ? "text-gray-700" : "text-gray-400"}`}>
+                  <p className={`text-xs font-medium text-muted`}>
                     No active staff personnel correspond to selected keyword tags.
                   </p>
                   <p className="text-xs text-gray-500">
@@ -731,14 +731,14 @@ export default function UserMasterPage() {
                             onClick={() => handleInspectUser(usr)}
                             className={`cursor-pointer group transition-all duration-200 ${
                               isSelected 
-                                ? (isLightMode ? "bg-accent/10/50 shadow-inner" : "bg-white/[0.04] shadow-inner") 
-                                : (isLightMode ? "hover:bg-gray-50/80" : "hover:bg-white/[0.02]")
+                                ? ("bg-accent/10/50 shadow-inner") 
+                                : ("hover:bg-elevated/80")
                             }`}
                           >
                             <AppTableCell className="w-14 px-2">
                               <div className="relative w-8 h-8 mx-auto">
                                 <div className={`absolute inset-0 flex items-center justify-center rounded-full text-[10px] font-medium uppercase ${
-                                  isLightMode ? "bg-slate-100 text-slate-700" : "bg-white/10 text-white"
+                                  "bg-slate-100 text-slate-700"
                                 }`}>
                                   {usr.full_name?.substring(0, 2) || "NA"}
                                 </div>
@@ -754,24 +754,24 @@ export default function UserMasterPage() {
                             <AppTableCell>
                               <div className="flex flex-col justify-center gap-1.5 py-2">
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-sm font-bold truncate max-w-[180px] sm:max-w-[220px] ${isLightMode ? "text-slate-900" : "text-white"}`}>
+                                  <span className={`text-sm font-bold truncate max-w-[180px] sm:max-w-[220px] text-slate-900`}>
                                     {usr.full_name}
                                   </span>
                                   {usr.user_code && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap shrink-0 ${isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/10 text-slate-300"}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap shrink-0 bg-slate-100 text-slate-500`}>
                                       {usr.user_code}
                                     </span>
                                   )}
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap shrink-0 ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-indigo-300"}`}>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap shrink-0 bg-accent/10 text-accent`}>
                                     {usr.designationObj?.name || "General Assignee"}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs">
-                                  <span className={`truncate max-w-[200px] ${isLightMode ? "text-slate-500" : "text-slate-400"}`}>
+                                  <span className={`truncate max-w-[200px] text-slate-500`}>
                                     {usr.email}
                                   </span>
                                   <span className="text-slate-300 dark:text-slate-600">•</span>
-                                  <span className={`flex items-center gap-1 shrink-0 ${isLightMode ? "text-slate-600 font-medium" : "text-slate-300 font-medium"}`}>
+                                  <span className={`flex items-center gap-1 shrink-0 text-slate-600 font-medium`}>
                                     <Layers className="h-3 w-3 opacity-70" />
                                     <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
                                   </span>
@@ -784,7 +784,7 @@ export default function UserMasterPage() {
                                 {usr.assigned_assets && usr.assigned_assets.length > 0 ? (
                                   usr.assigned_assets.map((ast, aIdx) => (
                                     <span key={aIdx} className={`text-[10px] px-2 py-1 rounded-md flex items-center gap-1 border ${
-                                      isLightMode ? "bg-white border-amber-200 text-amber-700 shadow-sm" : "bg-amber-500/5 border-amber-500/20 text-amber-400"
+                                      "bg-white border-amber-200 text-amber-700 shadow-sm"
                                     }`} title={ast}>
                                       <span className="opacity-70 text-[9px]">💻</span>
                                       <span className="font-mono tracking-tight">{ast}</span>
@@ -799,8 +799,8 @@ export default function UserMasterPage() {
                             <AppTableCell className="w-24 text-center">
                               <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase inline-block ${
                                 usr.is_active 
-                                  ? (isLightMode ? "bg-emerald-50 text-emerald-600" : "bg-emerald-500/10 text-emerald-400") 
-                                  : (isLightMode ? "bg-slate-100 text-slate-500" : "bg-white/5 text-slate-400")
+                                  ? ("bg-emerald-50 text-emerald-600") 
+                                  : ("bg-slate-100 text-slate-500")
                               }`}>
                                 {usr.is_active ? "Active" : "Disabled"}
                               </span>
@@ -813,7 +813,7 @@ export default function UserMasterPage() {
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
                                     className={`p-1.5 rounded transition-all ${
-                                      isLightMode ? "text-slate-400 hover:text-accent hover:bg-accent/10" : "text-slate-500 hover:text-accent hover:bg-accent/10"
+                                      "text-slate-400 hover:text-accent hover:bg-accent/10"
                                     }`}
                                     title="Edit User Profile"
                                   >
@@ -825,7 +825,7 @@ export default function UserMasterPage() {
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
                                     className={`p-1.5 rounded transition-all ${
-                                      isLightMode ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50" : "text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
+                                      "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                                     }`}
                                     title="Remove User"
                                   >
@@ -853,7 +853,7 @@ export default function UserMasterPage() {
             }`}>
               {/* Card Profile Overview Header */}
               <AppCardHeader className={`flex flex-col items-center p-6 text-center border-b relative ${
-                isLightMode ? "border-gray-100 bg-gradient-to-b from-blue-50/40 to-transparent" : "border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent"
+                "border-border bg-gradient-to-b from-blue-50/40 to-transparent"
               }`}>
                 {/* Embedded quick edit icon icon overlay */}
                 {hasPermission("USERS_UPDATE") && (
@@ -861,7 +861,7 @@ export default function UserMasterPage() {
                     type="button"
                     onClick={() => router.push("/users/" + selectedUser.id)}
                     className={`absolute top-4 right-4 p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all ${
-                      isLightMode ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50" : "bg-white/5 border-white/10 text-gray-300 hover:text-white"
+                      "bg-white border-border text-muted hover:bg-elevated"
                     }`}
                   >
                     <Edit3 className="h-3.5 w-3.5" />
@@ -882,7 +882,7 @@ export default function UserMasterPage() {
                       {selectedUser.full_name}
                     </AppCardTitle>
                     <span className={`text-xs font-mono font-bold px-1.5 py-0.2 rounded border ${
-                      isLightMode ? "text-accent bg-accent/10 border-accent/30" : "text-accent bg-accent/10 border-accent/20"
+                      "text-accent bg-accent/10 border-accent/30"
                     }`}>
                       {selectedUser.user_code}
                     </span>
@@ -894,7 +894,7 @@ export default function UserMasterPage() {
 
                   <div className="pt-2 flex items-center justify-center gap-2">
                     <span className={`text-[0.8rem] font-semibold px-2 py-0.5 rounded-full ${
-                      isLightMode ? "bg-accent/10 text-accent border border-accent/30" : "bg-accent/10 text-purple-300 border border-accent/20"
+                      "bg-accent/10 text-accent border border-accent/30"
                     }`}>
                       {selectedUser.roleObj?.name || "Standard Scope Profile"}
                     </span>
@@ -913,14 +913,14 @@ export default function UserMasterPage() {
                   </span>
                   
                   <div className={`p-3 rounded-xl border space-y-2 text-xs ${
-                    isLightMode ? "bg-white border-gray-100" : "bg-white/[0.01] border-white/5"
+                    "bg-white border-border"
                   }`}>
                     <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
                       <span className="text-gray-500 flex items-center gap-1.5">
                         <Briefcase className="h-3 w-3" />
                         <span>Job Designation:</span>
                       </span>
-                      <strong className={`font-semibold ${isLightMode ? "text-gray-900" : "text-gray-200"}`}>
+                      <strong className={`font-semibold text-foreground`}>
                         {selectedUser.designationObj?.name || "Not Designated"}
                       </strong>
                     </div>
@@ -930,7 +930,7 @@ export default function UserMasterPage() {
                         <Layers className="h-3 w-3" />
                         <span>Department Scope:</span>
                       </span>
-                      <strong className={`font-semibold ${isLightMode ? "text-gray-900" : "text-gray-200"}`}>
+                      <strong className={`font-semibold text-foreground`}>
                         {selectedUser.departmentObj?.name || "Global Tier"}
                       </strong>
                     </div>
@@ -940,7 +940,7 @@ export default function UserMasterPage() {
                         <UserCheck className="h-3 w-3" />
                         <span>Line Manager:</span>
                       </span>
-                      <strong className={`font-semibold ${selectedUser.managerObj ? (isLightMode ? "text-accent" : "text-accent") : "text-gray-500"}`}>
+                      <strong className={`font-semibold ${selectedUser.managerObj ? ("text-accent") : "text-gray-500"}`}>
                         {selectedUser.managerObj ? `${selectedUser.managerObj.full_name} (${selectedUser.managerObj.user_code})` : "Self Directed (Root)"}
                       </strong>
                     </div>
@@ -954,7 +954,7 @@ export default function UserMasterPage() {
                         {selectedUser.assigned_assets && selectedUser.assigned_assets.length > 0 ? (
                           selectedUser.assigned_assets.map((ast, aIdx) => (
                             <span key={aIdx} className={`text-[0.7rem] font-mono px-1 py-0.2 rounded border ${
-                              isLightMode ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                              "bg-amber-50 text-amber-800 border-amber-200"
                             }`}>
                               🏷️ {ast}
                             </span>
@@ -979,7 +979,7 @@ export default function UserMasterPage() {
                   </div>
 
                   <div className={`p-3 rounded-xl border space-y-3 ${
-                    isLightMode ? "bg-white border-gray-100" : "bg-white/[0.01] border-white/5"
+                    "bg-white border-border"
                   }`}>
                     {/* Last Login element */}
                     <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-white/5">
@@ -1046,9 +1046,7 @@ export default function UserMasterPage() {
                     onClick={() => handleTriggerPasswordReset(selectedUser)}
                     disabled={!hasPermission("USERS_UPDATE")}
                     className={`w-full p-2.5 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isLightMode 
-                        ? "bg-white border-accent/30 text-accent hover:bg-accent/10 shadow-2xs" 
-                        : "bg-white/[0.02] border-accent/20 text-accent hover:bg-accent/10 hover:border-accent/30"
+                      "bg-white border-accent/30 text-accent hover:bg-accent/10 shadow-2xs"
                     }`}
                   >
                     <Mail className="h-3.5 w-3.5 shrink-0" />
@@ -1079,7 +1077,7 @@ export default function UserMasterPage() {
                     ) : (
                       auditLogs.map((lg) => (
                         <div key={lg.id} className={`p-2.5 rounded-lg border text-[0.8rem] space-y-1 ${
-                          isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-black/20 border-white/5"
+                          "bg-gray-50/50 border-border"
                         }`}>
                           <div className="flex items-center justify-between gap-2">
                             <span className={`font-mono text-[0.7rem] font-bold px-1 py-0.2 rounded ${
@@ -1110,10 +1108,10 @@ export default function UserMasterPage() {
             </AppCard>
           ) : (
             <AppCard className={`flex-1 flex flex-col items-center justify-center p-8 text-center border-dashed ${
-              isLightMode ? "bg-gray-50/50 border-gray-200" : "bg-white/[0.005] border-white/5"
+              "bg-elevated/50 border-border"
             }`}>
               <Users className="h-10 w-10 text-gray-600 stroke-1 mb-2" />
-              <strong className={`text-sm font-bold block ${isLightMode ? "text-gray-800" : "text-gray-300"}`}>
+              <strong className={`text-sm font-bold block text-foreground`}>
                 No User Record Selected
               </strong>
               <p className="text-xs text-gray-500 max-w-xs mt-1">
@@ -1133,7 +1131,7 @@ export default function UserMasterPage() {
           onClick={() => { if (!deleteWarningData.loading) { setDeleteInspectUser(null); setDeleteWarningData(null); } }}
         >
           <div className={`relative w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col p-6 space-y-6 ${
-            isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-[#0A0D14] border-white/10 text-white"
+            "bg-surface border-border text-foreground"
           }`} onClick={(e) => e.stopPropagation()}>
             
             {deleteWarningData.loading ? (
@@ -1164,7 +1162,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className={`p-4 rounded-xl border space-y-2.5 text-xs ${
-                  isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-white/[0.02] border-white/5"
+                  "bg-elevated/50 border-border"
                 }`}>
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
                     Active Reference Summary
@@ -1213,7 +1211,7 @@ export default function UserMasterPage() {
                 </div>
 
                 <div className={`p-3 rounded-lg border text-[0.8rem] leading-relaxed ${
-                  isLightMode ? "bg-rose-50/50 border-rose-200 text-rose-900" : "bg-rose-500/5 border-rose-500/10 text-rose-300"
+                  "bg-rose-50/50 border-rose-200 text-rose-900"
                 }`}>
                   <strong>Warning:</strong> Deleting this user will archive their account and remove them from active views. Relational historic logs will be preserved as soft-deleted. Are you sure you want to proceed?
                 </div>

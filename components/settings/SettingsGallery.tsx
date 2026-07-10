@@ -226,7 +226,7 @@ export default function SettingsGallery() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sliders className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+            <Sliders className={`h-4 w-4 text-blue-600`} />
             <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
               1. Aesthetic Palette System
             </h2>
@@ -249,8 +249,8 @@ export default function SettingsGallery() {
                 }}
                 className={`group relative flex flex-col justify-between rounded-2xl border p-5 cursor-pointer transition-all duration-300 tactile-lift ${
                   isSelected 
-                    ? `ring-2 ring-blue-500 shadow-xl ${isLightMode ? "bg-white border-blue-500" : "bg-white/[0.04] border-blue-500/50"}` 
-                    : `${isLightMode ? "bg-white/50 border-gray-200 hover:bg-white" : "bg-white/[0.01] border-white/5 hover:border-white/10"}`
+                    ? `ring-2 ring-blue-500 shadow-xl bg-white border-blue-500` 
+                    : `bg-white/50 border-border hover:bg-white`
                 }`}
               >
                 {/* Active Check Indicator */}
@@ -303,7 +303,7 @@ export default function SettingsGallery() {
                 <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${"border-border"}`}>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-medium">Primary Benefit:</span>
-                    <span className={`font-semibold text-right ${isLightMode ? "text-gray-800" : "text-gray-200"}`}>{t.benefit}</span>
+                    <span className={`font-semibold text-right text-foreground`}>{t.benefit}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-medium">User Sentiment:</span>
@@ -320,7 +320,7 @@ export default function SettingsGallery() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Palette className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+            <Palette className={`h-4 w-4 text-blue-600`} />
             <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
               1B. Aesthetic Color Combinations
             </h2>
@@ -340,8 +340,8 @@ export default function SettingsGallery() {
                 }}
                 className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
                   isSelected 
-                    ? `ring-2 ring-blue-500 ${isLightMode ? "bg-white border-blue-500 shadow-md" : "bg-white/5 border-blue-500"}`
-                    : `${isLightMode ? "bg-white/50 border-gray-200 hover:bg-white" : "bg-white/[0.01] border-white/5 hover:border-white/10"}`
+                    ? `ring-2 ring-blue-500 bg-white border-blue-500 shadow-md`
+                    : `bg-white/50 border-border hover:bg-white`
                 }`}
               >
                 <div className={`w-8 h-8 rounded-full ${a.hex} ${isSelected ? "ring-2 ring-offset-2 ring-offset-background ring-current" : ""}`} />
@@ -354,15 +354,15 @@ export default function SettingsGallery() {
           <div
             className={`p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 ${
               accentColor.startsWith("#") 
-                ? `ring-2 ring-blue-500 ${isLightMode ? "bg-white border-blue-500 shadow-md" : "bg-white/5 border-blue-500"}`
-                : `${isLightMode ? "bg-white/50 border-gray-200 hover:bg-white" : "bg-white/[0.01] border-white/5 hover:border-white/10"}`
+                ? `ring-2 ring-blue-500 bg-white border-blue-500 shadow-md`
+                : `bg-white/50 border-border hover:bg-white`
             }`}
           >
             <div 
               className={`w-8 h-8 rounded-full flex items-center justify-center relative overflow-hidden ${
                 accentColor.startsWith("#") ? "ring-2 ring-offset-2 ring-offset-background ring-current" : ""
               }`} 
-              style={{ backgroundColor: accentColor.startsWith("#") ? accentColor : (isLightMode ? "#e5e7eb" : "#374151") }}
+              style={{ backgroundColor: accentColor.startsWith("#") ? accentColor : ("#e5e7eb") }}
             >
               <input
                 type="color"
@@ -385,7 +385,7 @@ export default function SettingsGallery() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Type className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+            <Type className={`h-4 w-4 text-blue-600`} />
             <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
               3. Typography Engine & Font Scale
             </h2>
@@ -396,7 +396,7 @@ export default function SettingsGallery() {
         {/* Sub-grid A: Font Families Selection */}
         <div className="space-y-2">
           <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Selector</span>
-          <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
+          <div className={`p-4 rounded-xl border transition-all duration-200 bg-white/60 border-border`}>
             <label className={`block text-xs font-bold mb-2 ${"text-foreground"}`}>System Font Style</label>
             <div className="relative">
               <select
@@ -407,7 +407,7 @@ export default function SettingsGallery() {
                   triggerToast(`Typeface active: ${fontsList.find(f => f.id === selected)?.name}`);
                 }}
                 className={`w-full appearance-none p-3 pl-4 pr-10 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer text-base ${
-                  isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-[#0f111a] border-white/10 text-white"
+                  "bg-surface border-border text-foreground"
                 }`}
                 style={{ fontFamily: fontsList.find(f => f.id === fontFamily)?.familyValue || 'inherit' }}
               >
@@ -422,7 +422,7 @@ export default function SettingsGallery() {
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <Type className={`h-4 w-4 ${isLightMode ? "text-gray-400" : "text-gray-500"}`} />
+                <Type className={`h-4 w-4 text-gray-400`} />
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-3 font-medium">Choose a font family from standard system styles or loaded web fonts, just like in a word processor.</p>
@@ -434,7 +434,7 @@ export default function SettingsGallery() {
           <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">B. Custom Numeric Sizing</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
+            <div className={`p-4 rounded-xl border transition-all duration-200 bg-white/60 border-border`}>
               <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
                 <span className={`text-xs font-bold ${"text-foreground"}`}>Base Text Size</span>
                 <AppBadge variant="info">{baseFontSize}px</AppBadge>
@@ -454,13 +454,13 @@ export default function SettingsGallery() {
                   max="24"
                   value={baseFontSize}
                   onChange={(e) => setBaseFontSize(Number(e.target.value))}
-                  className={`w-14 px-2 py-1 text-xs rounded border text-center ${isLightMode ? "bg-white border-gray-300" : "bg-black/20 border-white/10"}`}
+                  className={`w-14 px-2 py-1 text-xs rounded border text-center bg-surface border-border`}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2 font-medium">Controls the root scaling of the entire application.</p>
             </div>
 
-            <div className={`p-4 rounded-xl border transition-all duration-200 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`}>
+            <div className={`p-4 rounded-xl border transition-all duration-200 bg-white/60 border-border`}>
               <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
                 <span className={`text-xs font-bold ${"text-foreground"}`}>Subtext / UI Size</span>
                 <AppBadge variant="info">{subtextFontSize}px</AppBadge>
@@ -480,7 +480,7 @@ export default function SettingsGallery() {
                   max="18"
                   value={subtextFontSize}
                   onChange={(e) => setSubtextFontSize(Number(e.target.value))}
-                  className={`w-14 px-2 py-1 text-xs rounded border text-center ${isLightMode ? "bg-white border-gray-300" : "bg-black/20 border-white/10"}`}
+                  className={`w-14 px-2 py-1 text-xs rounded border text-center bg-surface border-border`}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2 font-medium">Controls the sizes of secondary labels and badges.</p>
@@ -504,8 +504,8 @@ export default function SettingsGallery() {
                   }}
                   className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                     isSelected 
-                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] ${isLightMode ? "border-blue-500" : "border-blue-500/40"}` 
-                      : `hover:border-white/10 ${isLightMode ? "bg-white/60 border-gray-200" : "bg-white/[0.01] border-white/5"}`
+                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] border-blue-500` 
+                      : `hover:border-white/10 bg-white/60 border-border`
                   }`}
                 >
                   <div className="space-y-1">

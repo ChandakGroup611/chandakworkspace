@@ -138,8 +138,8 @@ export default function AMCAnalyticsPage() {
       <div className="space-y-6">
         {/* KPI Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <AppCard className={`p-6 flex items-center gap-4 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>
+          <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
+            <div className={`p-4 rounded-xl bg-accent/10 text-accent`}>
               <DollarSign className="h-6 w-6" />
             </div>
             <div>
@@ -150,8 +150,8 @@ export default function AMCAnalyticsPage() {
             </div>
           </AppCard>
 
-          <AppCard className={`p-6 flex items-center gap-4 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-emerald-50 text-emerald-600' : 'bg-emerald-500/10 text-emerald-400'}`}>
+          <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
+            <div className={`p-4 rounded-xl bg-emerald-50 text-emerald-600`}>
               <Calendar className="h-6 w-6" />
             </div>
             <div>
@@ -160,8 +160,8 @@ export default function AMCAnalyticsPage() {
             </div>
           </AppCard>
 
-          <AppCard className={`p-6 flex items-center gap-4 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>
+          <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
+            <div className={`p-4 rounded-xl bg-accent/10 text-accent`}>
               <Users className="h-6 w-6" />
             </div>
             <div>
@@ -170,8 +170,8 @@ export default function AMCAnalyticsPage() {
             </div>
           </AppCard>
 
-          <AppCard className={`p-6 flex items-center gap-4 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-amber-50 text-amber-600' : 'bg-amber-500/10 text-amber-400'}`}>
+          <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
+            <div className={`p-4 rounded-xl bg-amber-50 text-amber-600`}>
               <BarChart2 className="h-6 w-6" />
             </div>
             <div>
@@ -186,8 +186,8 @@ export default function AMCAnalyticsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Upcoming Renewals */}
-          <AppCard className={`flex flex-col ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-6 border-b flex items-center gap-2 ${isLightMode ? 'border-gray-100' : 'border-white/5'}`}>
+          <AppCard className={`flex flex-col bg-surface`}>
+            <div className={`p-6 border-b flex items-center gap-2 border-border`}>
               <AlertCircle className="h-5 w-5 text-rose-500" />
               <h3 className="font-bold text-accent">Renewals in Next 60 Days</h3>
             </div>
@@ -199,7 +199,7 @@ export default function AMCAnalyticsPage() {
                   {upcomingRenewals.map(rec => {
                     const daysLeft = Math.ceil((new Date(rec.expiry_date).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
                     return (
-                      <div key={rec.id} className={`p-4 rounded-xl border flex items-center justify-between ${isLightMode ? 'border-gray-200 bg-gray-50' : 'border-white/10 bg-white/5'}`}>
+                      <div key={rec.id} className={`p-4 rounded-xl border flex items-center justify-between border-border bg-elevated`}>
                         <div>
                           <div className="font-bold text-sm">{rec.software_name}</div>
                           <div className="text-xs text-gray-500 mt-1">{rec.provider_name}</div>
@@ -219,8 +219,8 @@ export default function AMCAnalyticsPage() {
           </AppCard>
 
           {/* Spend by Cost Center */}
-          <AppCard className={`flex flex-col ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-6 border-b flex items-center gap-2 ${isLightMode ? 'border-gray-100' : 'border-white/5'}`}>
+          <AppCard className={`flex flex-col bg-surface`}>
+            <div className={`p-6 border-b flex items-center gap-2 border-border`}>
               <DollarSign className="h-5 w-5 text-emerald-500" />
               <h3 className="font-bold text-accent">Spend by Cost Center</h3>
             </div>

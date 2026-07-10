@@ -21,22 +21,22 @@ export function PageHeader({ title, description, icon, badge, actions, children 
 
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-6 border-b shrink-0 ${
-      isLight ? "border-gray-200" : "border-white/5"
+      "border-border"
     }`}>
       <div className="space-y-1.5 flex-1 min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
           {icon && (
-            <div className={`shrink-0 ${isLight ? "text-accent" : "text-accent"}`}>
+            <div className={`shrink-0 text-accent`}>
               {icon}
             </div>
           )}
-          <h1 className={`text-2xl font-bold tracking-tight truncate ${isLight ? "text-gray-900" : "text-white"}`}>
+          <h1 className={`text-2xl font-bold tracking-tight truncate text-foreground`}>
             {title}
           </h1>
           {badge && <div className="shrink-0">{badge}</div>}
         </div>
         {description && (
-          <p className={`text-[0.85rem] leading-relaxed truncate ${isLight ? "text-gray-600" : "text-gray-400"}`}>
+          <p className={`text-[0.85rem] leading-relaxed truncate text-muted`}>
             {description}
           </p>
         )}

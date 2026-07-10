@@ -211,10 +211,10 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
         <div className="space-y-2">
           
           {/* Section 1: Core Details */}
-          <div className={`w-full p-4 rounded-xl border mb-2 ${isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10"} flex flex-col gap-2`}>
+          <div className={`w-full p-4 rounded-xl border mb-2 bg-surface border-border flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5 justify-between">
               <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
+                <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
                   <LayoutTemplate className="h-4 w-4" />
                 </div>
                 <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Core Details</h3>
@@ -228,7 +228,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
-                <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
+                <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={"bg-elevated"} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
@@ -236,7 +236,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Link</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    "bg-surface border-border text-foreground"
                   }`}
                   value={parentTaskId}
                   onChange={e => setParentTaskId(e.target.value)}
@@ -252,7 +252,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assign to Sprint</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    "bg-surface border-border text-foreground"
                   }`}
                   value={sprintId}
                   onChange={e => setSprintId(e.target.value)}
@@ -274,9 +274,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detailed execution instructions, context, or constraints..."
                 className={`w-full min-h-[120px] p-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-y ${
-                  isLightMode 
-                    ? "bg-[#f8fafc] border-[#e2e8f0] text-gray-900" 
-                    : "bg-white/[0.05] border-white/10 text-white placeholder-gray-500"
+                  "bg-[#f8fafc] border-[#e2e8f0] text-foreground"
                 }`}
               />
             </div>
@@ -286,9 +284,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 2: Timeline & Priority */}
-          <div className={`w-full p-4 rounded-xl border mb-2 ${isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10"} flex flex-col gap-2`}>
+          <div className={`w-full p-4 rounded-xl border mb-2 bg-surface border-border flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5">
-              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
+              <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
                 <CalendarDays className="h-4 w-4" />
               </div>
               <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Timeline & Classification</h3>
@@ -326,7 +324,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    "bg-surface border-border text-foreground"
                   }`}
                   value={priorityId}
                   onChange={e => setPriorityId(e.target.value)}
@@ -341,7 +339,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Department</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    "bg-surface border-border text-foreground"
                   }`}
                   value={departmentId}
                   onChange={e => setDepartmentId(e.target.value)}
@@ -356,7 +354,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
+                    "bg-surface border-border text-foreground"
                   }`}
                   value={statusId}
                   onChange={e => setStatusId(e.target.value)}
@@ -372,9 +370,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 3: Assignment & Execution */}
-          <div className={`w-full p-4 rounded-xl border mb-1 ${isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10"} flex flex-col gap-2`}>
+          <div className={`w-full p-4 rounded-xl border mb-1 bg-surface border-border flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5">
-              <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-emerald-100 text-emerald-600" : "bg-emerald-500/20 text-emerald-400"}`}>
+              <div className={`p-1.5 rounded-lg bg-emerald-100 text-emerald-600`}>
                 <Users className="h-4 w-4" />
               </div>
               <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Assignment & Execution</h3>
@@ -384,12 +382,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assignees (Task Owners) *</label>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-colors ${isLightMode ? "bg-white border-gray-200 focus-within:border-emerald-500" : "bg-black/30 border-white/10 focus-within:border-emerald-500/50"}`}>
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-colors bg-surface border-border focus-within:border-emerald-500`}>
                     <Search className="h-3 w-3 text-gray-400" />
                     <input 
                       type="text" 
                       placeholder="Search users..." 
-                      className={`bg-transparent text-[11px] focus:outline-none w-32 ${isLightMode ? "text-gray-900 placeholder:text-gray-400" : "text-white placeholder:text-gray-500"}`}
+                      className={`bg-transparent text-[11px] focus:outline-none w-32 text-foreground placeholder:text-gray-400`}
                       value={assigneeSearchTerm}
                       onChange={e => setAssigneeSearchTerm(e.target.value)}
                     />
@@ -402,7 +400,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   {assignees.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </button>
               </div>
-              <div className={`p-2 rounded-xl border max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}>
+              <div className={`p-2 rounded-xl border max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent bg-surface border-border`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders.filter(s => s.full_name?.toLowerCase().includes(assigneeSearchTerm.toLowerCase())).map(s => (
                     <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
@@ -422,12 +420,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Watchers (Observers)</label>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-colors ${isLightMode ? "bg-white border-gray-200 focus-within:border-emerald-500" : "bg-black/30 border-white/10 focus-within:border-emerald-500/50"}`}>
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-colors bg-surface border-border focus-within:border-emerald-500`}>
                     <Search className="h-3 w-3 text-gray-400" />
                     <input 
                       type="text" 
                       placeholder="Search users..." 
-                      className={`bg-transparent text-[11px] focus:outline-none w-32 ${isLightMode ? "text-gray-900 placeholder:text-gray-400" : "text-white placeholder:text-gray-500"}`}
+                      className={`bg-transparent text-[11px] focus:outline-none w-32 text-foreground placeholder:text-gray-400`}
                       value={watcherSearchTerm}
                       onChange={e => setWatcherSearchTerm(e.target.value)}
                     />
@@ -440,7 +438,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   {watchers.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </button>
               </div>
-              <div className={`p-2 rounded-xl border max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}>
+              <div className={`p-2 rounded-xl border max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent bg-surface border-border`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders
                     .filter(s => !assignees.includes(s.id))
@@ -465,7 +463,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* 2x2 Grid for Tags, Checklist, Attachments, Extended Properties */}
-          <div className={`w-full p-3 rounded-xl border mb-1 ${isLightMode ? "bg-white border-gray-200" : "bg-black/20 border-white/10"}`}>
+          <div className={`w-full p-3 rounded-xl border mb-1 bg-surface border-border`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 w-full">
               {/* Top Left: Tags & Labels */}
               <div className="w-full flex flex-col gap-2">
@@ -499,7 +497,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag, idx) => (
-                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
+                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent`}>
                       {tag}
                       <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-rose-500"><X className="h-3 w-3" /></button>
                     </span>
@@ -511,7 +509,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
+                    <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
                       <LayoutList className="h-4 w-4" />
                     </div>
                     <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Checklist</h3>
@@ -545,9 +543,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="space-y-2">
                   {checklistItems.map((item, index) => (
-                    <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${isLightMode ? "border-gray-200 bg-white hover:border-accent/30 shadow-sm" : "border-white/10 bg-black/20 hover:border-accent/50"}`}>
+                    <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all border-border bg-surface hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
-                        <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center ${isLightMode ? "border-gray-300 bg-gray-50" : "border-gray-600 bg-black/40"}`} />
+                        <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-gray-50`} />
                         <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
                       </div>
                       <button
@@ -589,9 +587,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <label 
                       htmlFor="task-attachment"
                       className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold border border-dashed cursor-pointer transition-all ${
-                        isLightMode 
-                          ? "bg-gray-50/50 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-accent hover:text-accent" 
-                          : "bg-black/20 border-white/10 text-gray-400 hover:bg-black/40 hover:border-accent/50 hover:text-accent"
+                        "bg-gray-50/50 border-border text-muted hover:bg-gray-50 hover:border-accent hover:text-accent"
                       }`}
                     >
                       <Paperclip className="h-3 w-3" />
@@ -604,9 +600,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="grid grid-cols-1 gap-3">
                   {attachments.map((item, index) => (
-                    <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${isLightMode ? "border-gray-200 bg-white hover:border-accent/30 shadow-sm" : "border-white/10 bg-black/20 hover:border-accent/50"}`}>
+                    <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all border-border bg-surface hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
-                        <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
+                        <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold bg-accent/10 text-accent`}>
                           {item.file_type.substring(0,3).toUpperCase()}
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -630,7 +626,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-amber-100 text-amber-600" : "bg-amber-500/20 text-amber-400"}`}>
+                    <div className={`p-1.5 rounded-lg bg-amber-100 text-amber-600`}>
                       <Activity className="h-4 w-4" />
                     </div>
                     <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Extended Properties</h3>
@@ -638,14 +634,14 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   <button 
                     type="button" 
                     onClick={() => setIsAddingField(!isAddingField)}
-                    className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${isLightMode ? "bg-amber-100 text-amber-700 hover:bg-amber-200" : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"}`}
+                    className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-700 hover:bg-amber-200`}
                   >
                     <Plus className="h-3 w-3" /> New Field
                   </button>
                 </div>
 
                 {isAddingField && (
-                  <div className={`p-3 rounded-lg border flex flex-col sm:flex-row items-end gap-3 ${isLightMode ? "bg-amber-50/50 border-amber-200" : "bg-amber-500/[0.05] border-amber-500/20"}`}>
+                  <div className={`p-3 rounded-lg border flex flex-col sm:flex-row items-end gap-3 bg-amber-50/50 border-amber-200`}>
                     <div className="w-full sm:flex-1 space-y-1.5">
                       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Field Name</label>
                       <AppInput 
@@ -664,7 +660,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <div className="w-full sm:flex-1 space-y-1.5">
                       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Data Type</label>
                       <select 
-                        className={`w-full h-10 px-3 rounded-xl text-sm border focus:outline-none cursor-pointer ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10 text-white"}`}
+                        className={`w-full h-10 px-3 rounded-xl text-sm border focus:outline-none cursor-pointer bg-surface border-border`}
                         value={newFieldType}
                         onChange={e => setNewFieldType(e.target.value)}
                       >

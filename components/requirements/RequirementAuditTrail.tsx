@@ -41,18 +41,18 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
   };
 
   return (
-    <AppCard className={`h-full ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0a0b] border-white/5"}`}>
-      <AppCardHeader className={`border-b ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
+    <AppCard className={`h-full bg-surface border-border`}>
+      <AppCardHeader className={`border-b bg-elevated border-border`}>
         <div className="flex items-center gap-2">
-          <Clock className={`w-4 h-4 ${isLightMode ? "text-accent" : "text-accent"}`} />
-          <AppCardTitle className={isLightMode ? "text-gray-900" : "text-white"}>Governance Audit Trail</AppCardTitle>
+          <Clock className={`w-4 h-4 text-accent`} />
+          <AppCardTitle className={"text-foreground"}>Governance Audit Trail</AppCardTitle>
         </div>
       </AppCardHeader>
       
       <AppCardContent className="p-0">
         <div className="max-h-[400px] overflow-y-auto p-4 custom-scrollbar">
           {events.length === 0 ? (
-            <div className={`text-center py-8 text-sm ${isLightMode ? "text-gray-500" : "text-gray-400"}`}>
+            <div className={`text-center py-8 text-sm text-muted`}>
               No activity recorded yet.
             </div>
           ) : (
@@ -61,28 +61,28 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
                 <div key={ev.id} className="relative pl-6 group">
                   {/* Timeline Dot */}
                   <div className={`absolute -left-[9px] top-1 rounded-full border-2 ${
-                    isLightMode ? "bg-white border-indigo-100" : "bg-gray-900 border-indigo-900/50"
+                    "bg-surface border-indigo-100"
                   } p-0.5 group-hover:scale-110 transition-transform`}>
                     {getEventIcon(ev.event_type)}
                   </div>
 
                   <div className="flex flex-col gap-1">
                     <div className="flex justify-between items-start">
-                      <h4 className={`text-sm font-bold ${isLightMode ? "text-gray-900" : "text-gray-100"}`}>
+                      <h4 className={`text-sm font-bold text-foreground`}>
                         {ev.event_type.replace(/_/g, ' ')}
                       </h4>
-                      <span className={`text-[10px] font-medium ${isLightMode ? "text-gray-500" : "text-gray-500"}`}>
+                      <span className={`text-[10px] font-medium text-muted`}>
                         {new Date(ev.created_at).toLocaleString()}
                       </span>
                     </div>
 
-                    <p className={`text-xs ${isLightMode ? "text-gray-600" : "text-gray-400"}`}>
+                    <p className={`text-xs text-muted`}>
                       {ev.new_value?.message || ev.new_value?.remarks || `Action performed by ${ev.user_master?.full_name || 'System'}`}
                     </p>
 
                     {ev.new_value?.level && (
                       <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold w-fit ${
-                        isLightMode ? "bg-accent/10 text-accent" : "bg-accent/10 text-accent"
+                        "bg-accent/10 text-accent"
                       }`}>
                         Level {ev.new_value.level}
                       </div>

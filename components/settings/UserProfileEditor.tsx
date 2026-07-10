@@ -325,9 +325,7 @@ export default function UserProfileEditor() {
                 type="button"
                 onClick={() => setIsViewingPhoto(true)}
                 className={`px-4 py-2 rounded-lg border text-sm font-semibold flex items-center gap-2 transition-all ${
-                  isLightMode 
-                    ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-accent" 
-                    : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-accent"
+                  "bg-white border-border text-muted hover:bg-elevated hover:text-accent"
                 }`}
               >
                 <Eye className="h-4 w-4" />
@@ -341,9 +339,7 @@ export default function UserProfileEditor() {
                 className={`px-4 py-2 rounded-lg border text-sm font-semibold flex items-center gap-2 transition-all ${
                   photoUploading
                     ? "opacity-50 cursor-not-allowed"
-                    : (isLightMode 
-                      ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-accent" 
-                      : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-accent")
+                    : ("bg-white border-border text-muted hover:bg-elevated hover:text-accent")
                 }`}
               >
                 {photoUploading ? (
@@ -366,9 +362,7 @@ export default function UserProfileEditor() {
 
             {/* Info Badge */}
             <div className={`p-3 rounded-lg border text-xs ${
-              isLightMode 
-                ? "bg-accent/10 border-accent/30 text-accent" 
-                : "bg-accent/10 border-accent/30 text-blue-300"
+              "bg-accent/10 border-accent/30 text-accent"
             }`}>
               <p>✓ All users can view and change their profile picture</p>
             </div>
@@ -442,9 +436,7 @@ export default function UserProfileEditor() {
 
             {/* Status Info */}
             <div className={`p-3 rounded-lg border text-xs space-y-2 ${
-              isLightMode 
-                ? "bg-gray-50 border-gray-200" 
-                : "bg-white/5 border-white/10"
+              "bg-elevated border-border"
             }`}>
               <p><strong>Active:</strong> {profile?.is_active ? "✓ Yes" : "✗ No"}</p>
               <p><strong>Role:</strong> {isSuperAdmin ? "Super Admin" : "Standard User"}</p>
@@ -514,9 +506,7 @@ export default function UserProfileEditor() {
 
             {/* Password Requirements */}
             <div className={`p-3 rounded-lg border text-xs space-y-1 ${
-              isLightMode 
-                ? "bg-amber-50 border-amber-200 text-amber-700" 
-                : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              "bg-amber-50 border-amber-200 text-amber-700"
             }`}>
               <p>Password requirements:</p>
               <ul className="list-disc list-inside space-y-0.5">

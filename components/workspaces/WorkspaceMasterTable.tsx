@@ -112,7 +112,7 @@ export function WorkspaceMasterTable({
   };
 
   const getStatusColor = (node: any) => {
-    return node.status?.status_color || (isLightMode ? "#6b7280" : "#9ca3af");
+    return node.status?.status_color || ("#6b7280");
   };
 
   const getStatusName = (node: any) => {
@@ -150,22 +150,22 @@ export function WorkspaceMasterTable({
             const isOnline = onlineUsers.has(uid);
             return (
               <div key={idx} className="relative">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17] bg-accent'}`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : '#4f46e5' }}>
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-white`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : '#4f46e5' }}>
                   {uInfo?.profile_photo ? <img src={uInfo.profile_photo} className="h-full w-full rounded-full" alt="" /> : (uInfo?.full_name?.substring(0,2).toUpperCase() || "U")}
                 </div>
-                <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17]'} ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
               </div>
             );
           })}
           {extraCount > 0 && (
-            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-gray-600 bg-gray-200 border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17]'}`}>
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-gray-600 bg-gray-200 border-2 border-white`}>
               +{extraCount}
             </div>
           )}
         </div>
 
         {/* Hover Tooltip */}
-        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] ${isLightMode ? 'bg-white border border-gray-200' : 'bg-gray-900 border border-white/10'}`}>
+        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] bg-surface border border-border`}>
           <div className="text-[10px] font-bold uppercase text-gray-500 mb-2 px-1 border-b pb-1 border-gray-200 dark:border-white/10">Assigned Users ({members.length})</div>
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {
@@ -175,7 +175,7 @@ export function WorkspaceMasterTable({
               return (
                 <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-white/5">
                   <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
-                  <span className={`text-[11px] truncate ${isOnline ? (isLightMode ? 'text-gray-800' : 'text-gray-200') : 'text-red-500 font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
+                  <span className={`text-[11px] truncate ${isOnline ? ("text-foreground") : 'text-red-500 font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
                 </div>
               );
             })}
@@ -250,24 +250,24 @@ export function WorkspaceMasterTable({
           if (onPrefetchNode) onPrefetchNode(node);
         }}
         className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${rowBg} ${hoverBg} ${
-        isLightMode ? 'border-gray-200' : 'border-white/5'
+        "border-border"
       }`} style={{ gridTemplateColumns: gridCols }}>
 
           {/* VS Code Style Guide Lines for Nested Items */}
           {depth > 0 && Array.from({ length: depth }).map((_, i) => {
             const isLast = i === depth - 1;
-            let guideLineColor = isLightMode ? 'border-gray-300' : 'border-white/20';
+            let guideLineColor = "border-border";
             
             if (isLast) {
-              if (node.type === 'SUB_WORKSPACE') guideLineColor = isLightMode ? 'border-accent' : 'border-accent/80';
-              else if (node.type === 'TASK') guideLineColor = isLightMode ? 'border-emerald-400' : 'border-emerald-500/80';
-              else if (node.type === 'SUB_TASK') guideLineColor = isLightMode ? 'border-amber-400' : 'border-amber-500/80';
+              if (node.type === 'SUB_WORKSPACE') guideLineColor = "border-accent";
+              else if (node.type === 'TASK') guideLineColor = "border-emerald-400";
+              else if (node.type === 'SUB_TASK') guideLineColor = "border-amber-400";
             }
 
             return (
               <React.Fragment key={i}>
                 <div 
-                  className={`absolute top-0 bottom-0 border-l-[2px] ${isLast ? guideLineColor : (isLightMode ? 'border-gray-200 border-dashed opacity-70' : 'border-white/10 border-dashed opacity-50')}`}
+                  className={`absolute top-0 bottom-0 border-l-[2px] ${isLast ? guideLineColor : ("border-border border-dashed opacity-70")}`}
                   style={{ left: `${i * 2.5 + 1.95}rem` }}
                 />
                 {isLast && (
@@ -292,7 +292,7 @@ export function WorkspaceMasterTable({
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
                     className={`p-1 rounded-md transition-colors relative z-20 ${
-                      isLightMode ? 'hover:bg-gray-200 text-gray-500 bg-white' : 'hover:bg-white/10 text-gray-400 bg-[#1C1C28]'
+                      "hover:bg-gray-200 text-muted bg-surface"
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
@@ -330,7 +330,7 @@ export function WorkspaceMasterTable({
                           : (node.workspace_name || node.name || node.subject || node.title)}
                       </span>
                       {node.attachmentCount > 0 && (
-                        <div className={`flex items-center justify-center p-0.5 px-1 rounded-md ml-1 ${isLightMode ? 'bg-accent/10 text-accent' : 'bg-accent/20 text-accent'}`} title={`${node.attachmentCount} Attachment(s)`}>
+                        <div className={`flex items-center justify-center p-0.5 px-1 rounded-md ml-1 bg-accent/10 text-accent`} title={`${node.attachmentCount} Attachment(s)`}>
                           <Paperclip className="h-3 w-3" />
                         </div>
                       )}
@@ -345,7 +345,7 @@ export function WorkspaceMasterTable({
                         e.stopPropagation();
                         router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                       }}
-                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-orange-500 bg-white hover:bg-orange-50 border border-orange-400' : 'text-orange-500 bg-[#1C1C28] hover:bg-orange-900/20 border border-orange-500/50'}`} 
+                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 text-orange-500 bg-surface hover:bg-orange-50 border border-orange-400`} 
                       title={`${directTaskCount} Direct, ${childTaskCount} Child (Double-click to open)`}
                     >
                       {totalTaskCount} Tasks <span className="opacity-75 font-medium">({directTaskCount} Direct)</span>
@@ -359,7 +359,7 @@ export function WorkspaceMasterTable({
                         e.stopPropagation();
                         router.push(`/tasks/${node.id}`);
                       }}
-                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 ${isLightMode ? 'text-amber-500 bg-white hover:bg-amber-50 border border-amber-400' : 'text-amber-500 bg-[#1C1C28] hover:bg-amber-900/20 border border-amber-500/50'}`} 
+                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 text-amber-500 bg-surface hover:bg-amber-50 border border-amber-400`} 
                       title={`${childTaskCount} Sub-Tasks (Double-click to open)`}
                     >
                       {childTaskCount} Sub-Task{childTaskCount !== 1 ? 's' : ''}
@@ -394,9 +394,7 @@ export function WorkspaceMasterTable({
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
                   className={`h-6 px-2 text-[10px] font-medium uppercase ${
-                    isLightMode 
-                      ? 'border-accent/30 text-accent hover:bg-accent/10' 
-                      : 'border-accent/30 text-accent hover:bg-accent/10'
+                    "border-accent/30 text-accent hover:bg-accent/10"
                   }`}
                 >
                   + Sub WS
@@ -408,9 +406,7 @@ export function WorkspaceMasterTable({
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
                   className={`h-6 px-2 text-[10px] font-medium uppercase ${
-                    isLightMode 
-                      ? 'border-accent/30 text-accent hover:bg-accent/10' 
-                      : 'border-accent/30 text-accent hover:bg-accent/10'
+                    "border-accent/30 text-accent hover:bg-accent/10"
                   }`}
                 >
                   {isWorkspaceType ? '+ Task' : '+ Sub Task'}
@@ -428,7 +424,7 @@ export function WorkspaceMasterTable({
                   e.stopPropagation();
                   router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                 }}
-                className={`h-7 w-7 p-0 ${isLightMode ? 'text-gray-500 hover:bg-gray-200' : 'text-gray-400 hover:bg-white/10'}`}
+                className={`h-7 w-7 p-0 text-muted hover:bg-gray-200`}
                 title="Open Task List"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -447,7 +443,7 @@ export function WorkspaceMasterTable({
                     router.push(`/tasks/${node.id}`);
                   }
                 }}
-                className={`h-7 w-7 p-0 ${isLightMode ? 'text-accent hover:bg-accent/10' : 'text-accent hover:bg-accent/20'}`}
+                className={`h-7 w-7 p-0 text-accent hover:bg-accent/10`}
                 title="Edit"
               >
                 <Edit2 className="h-3.5 w-3.5" />
@@ -459,7 +455,7 @@ export function WorkspaceMasterTable({
                 variant="ghost"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); onShareNode(node); }}
-                className={`h-7 w-7 p-0 ${isLightMode ? 'text-emerald-600 hover:bg-emerald-50' : 'text-emerald-400 hover:bg-emerald-500/20'}`}
+                className={`h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50`}
                 title="Share Workspace"
               >
                 <Share2 className="h-3.5 w-3.5" />
@@ -471,7 +467,7 @@ export function WorkspaceMasterTable({
                 variant="ghost"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); onDeleteNode(node); }}
-                className={`h-7 w-7 p-0 ${isLightMode ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/20'}`}
+                className={`h-7 w-7 p-0 text-rose-600 hover:bg-rose-50`}
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -499,7 +495,7 @@ export function WorkspaceMasterTable({
       <div className="w-full flex flex-col">
         {/* Header */}
         <div className={`grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
-          isLightMode ? 'bg-slate-100 text-black border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700'
+          "bg-slate-100 text-foreground border-slate-200"
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>
           <div className="py-2 px-2">Created Date</div>

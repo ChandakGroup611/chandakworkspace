@@ -149,7 +149,7 @@ export default function LoginPage() {
 
   return (
     <div className={`min-h-[100dvh] w-full flex font-sans transition-colors duration-300 ${
-      isLight ? "bg-white text-slate-900" : "bg-[#0A0D14] text-white"
+      "bg-surface text-slate-900"
     }`}>
       
       {/* LEFT SIDE - Branding & Premium Abstract Graphic */}
@@ -187,7 +187,7 @@ export default function LoginPage() {
 
       {/* RIGHT SIDE - Authentication Form */}
       <div className={`w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 lg:p-24 ${
-        isLight ? "bg-white" : "bg-[#0A0D14]"
+        "bg-surface"
       }`}>
         <div className="w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-700">
           
@@ -202,7 +202,7 @@ export default function LoginPage() {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
               Sign in
             </h1>
-            <p className={`text-sm ${isLight ? "text-slate-500" : "text-slate-400"}`}>
+            <p className={`text-sm text-slate-500`}>
               Enter your credentials to access your secure workspace.
             </p>
           </div>
@@ -228,7 +228,7 @@ export default function LoginPage() {
           {/* Standard Credentials Submission Form */}
           <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
             <div className="space-y-2">
-              <label className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>
+              <label className={`text-sm font-semibold text-slate-900`}>
                 Email Address
               </label>
               <AppInput 
@@ -244,7 +244,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-semibold ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>
+              <label className={`text-sm font-semibold text-slate-900`}>
                 Password
               </label>
               <AppInput 
@@ -281,10 +281,10 @@ export default function LoginPage() {
 
           <div className="relative py-6">
             <div className="absolute inset-0 flex items-center">
-              <span className={`w-full border-t ${isLight ? 'border-slate-200' : 'border-white/10'}`}></span>
+              <span className={`w-full border-t border-slate-200`}></span>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className={`px-4 font-semibold tracking-wider ${isLight ? 'bg-white text-slate-400' : 'bg-[#0A0D14] text-slate-500'}`}>
+              <span className={`px-4 font-semibold tracking-wider bg-surface text-slate-400`}>
                 Or continue with
               </span>
             </div>
@@ -307,7 +307,7 @@ export default function LoginPage() {
 
           {/* Navigation link to Registration screen */}
           <div className="pt-8 text-center text-sm">
-            <span className={isLight ? "text-slate-500" : "text-slate-400"}>
+            <span className={"text-slate-500"}>
               Don't have an account?{" "}
             </span>
             <Link href="/register" className="font-semibold text-accent dark:text-accent hover:text-accent dark:hover:text-blue-300 transition-colors">

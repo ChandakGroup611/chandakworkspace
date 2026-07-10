@@ -146,7 +146,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       </div>
 
       {isCreatingSprint && (
-        <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end ${isLightMode ? "bg-accent/10/50 border-indigo-100" : "bg-accent/10 border-accent/20"}`}>
+        <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-accent/10/50 border-indigo-100`}>
           <div className="space-y-1.5 flex-1">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Sprint Name</label>
             <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent ${"bg-surface border-border"}`} />
@@ -170,7 +170,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         
         {/* Backlog */}
         <div 
-          className={`flex-shrink-0 w-80 rounded-xl border flex flex-col ${isLightMode ? "bg-gray-100/50 border-gray-200" : "bg-black/20 border-white/10"}`}
+          className={`flex-shrink-0 w-80 rounded-xl border flex flex-col bg-elevated/50 border-border`}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => handleDrop(e, null)}
         >
@@ -181,7 +181,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 key={t.id} 
                 draggable 
                 onDragStart={(e) => handleDragStart(e, t.id)}
-                className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}
+                className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 bg-white shadow-sm`}
               >
                 <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                 <div>
@@ -209,7 +209,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         {activeSprints.map(sprint => (
           <div 
             key={sprint.id}
-            className={`flex-shrink-0 w-80 rounded-xl border flex flex-col ${isLightMode ? "bg-accent/10/30 border-indigo-100" : "bg-indigo-900/10 border-accent/20"}`}
+            className={`flex-shrink-0 w-80 rounded-xl border flex flex-col bg-accent/10/30 border-indigo-100`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, sprint.id)}
           >
@@ -220,7 +220,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                     type="text" 
                     value={editSprintName} 
                     onChange={e => setEditSprintName(e.target.value)} 
-                    className={`w-full text-sm font-bold p-1 rounded border focus:outline-none focus:ring-1 focus:ring-accent ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
+                    className={`w-full text-sm font-bold p-1 rounded border focus:outline-none focus:ring-1 focus:ring-accent bg-surface border-border`}
                     placeholder="Sprint Name"
                   />
                   <div className="flex gap-2">
@@ -228,13 +228,13 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                       type="date" 
                       value={editSprintStart} 
                       onChange={e => setEditSprintStart(e.target.value)} 
-                      className={`w-full text-[10px] p-1 rounded border focus:outline-none ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
+                      className={`w-full text-[10px] p-1 rounded border focus:outline-none bg-surface border-border`}
                     />
                     <input 
                       type="date" 
                       value={editSprintEnd} 
                       onChange={e => setEditSprintEnd(e.target.value)} 
-                      className={`w-full text-[10px] p-1 rounded border focus:outline-none ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
+                      className={`w-full text-[10px] p-1 rounded border focus:outline-none bg-surface border-border`}
                     />
                   </div>
                   <div className="flex justify-end gap-1">
@@ -253,7 +253,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                         setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
                         setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
                       }} 
-                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${isLightMode ? 'text-gray-400 hover:bg-white hover:text-accent' : 'text-gray-500 hover:bg-black/30 hover:text-accent'}`}
+                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-gray-400 hover:bg-surface hover:text-accent`}
                       title="Edit Sprint"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
@@ -271,7 +271,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   key={t.id} 
                   draggable 
                   onDragStart={(e) => handleDragStart(e, t.id)}
-                  className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}
+                  className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 bg-white shadow-sm`}
                 >
                   <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                   <div>

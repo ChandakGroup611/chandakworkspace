@@ -102,7 +102,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
   return (
     <div className="space-y-8">
       {/* Add New Renewal */}
-      <AppCard className={`p-6 border ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14]/80 border-white/5'}`}>
+      <AppCard className={`p-6 border bg-surface border-border`}>
         <h3 className="text-lg font-bold text-emerald-500 mb-4 flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Log AMC Renewal
@@ -147,13 +147,13 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
         {loading ? (
           <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
         ) : renewals.length === 0 ? (
-          <div className={`p-8 text-center text-gray-500 italic rounded-xl border ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+          <div className={`p-8 text-center text-gray-500 italic rounded-xl border bg-elevated border-border`}>
             No renewals logged for this subscription yet.
           </div>
         ) : (
           <div className="space-y-3">
             {renewals.map(rn => (
-              <AppCard key={rn.id} className={`p-4 flex items-center justify-between border ${isLightMode ? 'bg-white border-gray-100' : 'bg-white/5 border-white/10'}`}>
+              <AppCard key={rn.id} className={`p-4 flex items-center justify-between border bg-white border-border`}>
                 <div>
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-500">

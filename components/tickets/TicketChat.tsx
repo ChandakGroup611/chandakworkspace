@@ -96,14 +96,14 @@ export function TicketChat({ ticket }: TicketChatProps) {
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-            <MessageSquare className={`h-10 w-10 mb-4 ${isLightMode ? "text-gray-400" : "text-gray-700"}`} />
+            <MessageSquare className={`h-10 w-10 mb-4 text-gray-400`} />
             <p className={`text-sm font-medium ${"text-muted"}`}>No collaboration history yet.</p>
           </div>
         ) : (
           messages.map((msg) => (
             <div key={msg.id} className={`flex gap-4 group animate-in fade-in slide-in-from-bottom-1`}>
               <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 uppercase text-xs font-bold border ${
-                isLightMode ? "bg-gray-100 border-gray-200 text-gray-500" : "bg-white/5 border-white/10 text-gray-500"
+                "bg-elevated border-border text-muted"
               }`}>
                 {msg.author.slice(0, 2)}
               </div>
@@ -112,13 +112,13 @@ export function TicketChat({ ticket }: TicketChatProps) {
                   <span className={`text-xs font-bold tracking-wide ${"text-foreground"}`}>{msg.author}</span>
                   {msg.is_private ? (
                     <span className={`flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
-                      isLightMode ? "text-amber-700 bg-amber-50" : "text-amber-500 bg-amber-500/10"
+                      "text-amber-700 bg-amber-50"
                     }`}>
                       <Lock className="h-2.5 w-2.5" /> Private
                     </span>
                   ) : (
                     <span className={`flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
-                      isLightMode ? "text-emerald-700 bg-emerald-50" : "text-emerald-500 bg-emerald-500/10"
+                      "text-emerald-700 bg-emerald-50"
                     }`}>
                       <Globe className="h-2.5 w-2.5" /> Public
                     </span>
@@ -129,8 +129,8 @@ export function TicketChat({ ticket }: TicketChatProps) {
                 </div>
                 <div className={`p-4 rounded-2xl text-sm leading-relaxed border ${
                   msg.is_private 
-                    ? (isLightMode ? "bg-amber-50/50 border-amber-100 text-gray-700" : "bg-amber-500/5 border-amber-500/10 text-amber-100/70") 
-                    : (isLightMode ? "bg-gray-50/50 border-gray-100 text-gray-700" : "bg-white/[0.03] border-white/5 text-gray-300")
+                    ? ("bg-amber-50/50 border-amber-100 text-muted") 
+                    : ("bg-elevated/50 border-border text-muted")
                 }`}>
                   {msg.content}
                 </div>
@@ -150,7 +150,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
               onClick={() => setIsPrivate(true)}
               className={`h-8 px-3 text-[10px] font-bold uppercase tracking-widest ${
                 isPrivate 
-                  ? (isLightMode ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-amber-500/20 text-amber-400 border-amber-500/50") 
+                  ? ("bg-amber-100 text-amber-700 border-amber-200") 
                   : ""
               }`}
               leftIcon={<Lock className="h-3 w-3" />}
@@ -163,7 +163,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
               onClick={() => setIsPrivate(false)}
               className={`h-8 px-3 text-[10px] font-bold uppercase tracking-widest ${
                 !isPrivate 
-                  ? (isLightMode ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-emerald-500/20 text-emerald-400 border-emerald-500/50") 
+                  ? ("bg-emerald-100 text-emerald-700 border-emerald-200") 
                   : ""
               }`}
               leftIcon={<Globe className="h-3 w-3" />}
@@ -175,9 +175,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
           <div className="relative">
             <textarea 
               className={`w-full h-24 p-4 pr-12 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none transition-all ${
-                isLightMode 
-                  ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" 
-                  : "bg-white/[0.02] border-white/10 text-white placeholder:text-gray-600"
+                "bg-white border-border text-foreground placeholder:text-gray-400"
               }`}
               placeholder={isPrivate ? "Type a private internal message..." : "Type a reply to the customer..."}
               value={newMessage}

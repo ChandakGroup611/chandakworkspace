@@ -142,21 +142,21 @@ export default function RegisterPage() {
 
   return (
     <div className={`min-h-screen w-full flex flex-col items-center justify-center relative font-sans p-4 sm:p-12 transition-colors duration-300 ${
-      isLight ? "bg-gray-50 text-gray-900" : "bg-[#05070D] text-white"
+      "bg-gray-50 text-foreground"
     }`}>
       {/* Dynamic Glow Accents */}
       <div className={`absolute top-1/3 right-1/4 w-[550px] h-[550px] rounded-full blur-[130px] pointer-events-none animate-pulse duration-1000 ${
-        isLight ? "bg-accent/10" : "bg-accent/10"
+        "bg-accent/10"
       }`} />
       <div className={`absolute bottom-1/3 left-1/4 w-[550px] h-[550px] rounded-full blur-[130px] pointer-events-none animate-pulse duration-1000 ${
-        isLight ? "bg-cyan-500/10" : "bg-cyan-600/10"
+        "bg-cyan-500/10"
       }`} />
 
       {/* Grid Pattern Decorative Layer */}
       <div 
-        className={`absolute inset-0 pointer-events-none ${isLight ? "opacity-5" : "opacity-10"}`} 
+        className={`absolute inset-0 pointer-events-none opacity-5`} 
         style={{
-          backgroundImage: `linear-gradient(to right, ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)'} 1px, transparent 1px), linear-gradient(to bottom, ${isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)'} 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px)`,
           backgroundSize: "40px 40px"
         }}
       />
@@ -164,22 +164,22 @@ export default function RegisterPage() {
       {/* Central Identity Registration Card Container */}
       <div className="w-full max-w-md relative z-10 animate-in fade-in-50 zoom-in-95 duration-400">
         <div className="text-center mb-6 space-y-2">
-          <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight ${isLight ? "text-gray-900" : "text-white"}`}>
+          <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight text-foreground`}>
             <div className="p-2 rounded-xl bg-gradient-to-tr from-purple-600 to-cyan-500 shadow-lg text-white">
               <UserPlus className="h-5 w-5" />
             </div>
             <span>Staff Registration</span>
           </div>
-          <p className={`text-xs max-w-xs mx-auto ${isLight ? "text-gray-500" : "text-gray-400"}`}>
+          <p className={`text-xs max-w-xs mx-auto text-muted`}>
             Register new personnel records to enable authenticated platform access.
           </p>
         </div>
 
         <AppCard className={`shadow-2xl backdrop-blur-2xl transition-all duration-300 border hover:shadow-3xl hover:-translate-y-1 ${
-          isLight ? "bg-white/80 border-gray-200 shadow-blue-900/5 hover:border-gray-300" : "bg-[#0A0D14]/70 border-white/10 shadow-black/50 hover:border-white/20"
+          "bg-surface/80 border-border shadow-blue-900/5 hover:border-border"
         }`}>
-          <AppCardHeader className={`pb-3 border-b text-center ${isLight ? "border-gray-100" : "border-white/5"}`}>
-            <AppCardTitle className={`text-base font-bold flex items-center justify-center gap-2 ${isLight ? "text-gray-900" : "text-white"}`}>
+          <AppCardHeader className={`pb-3 border-b text-center border-border`}>
+            <AppCardTitle className={`text-base font-bold flex items-center justify-center gap-2 text-foreground`}>
               <ShieldCheck className="h-4 w-4 text-accent" />
               <span>Registration Form</span>
             </AppCardTitle>
@@ -250,9 +250,7 @@ export default function RegisterPage() {
                       value={department}
                       onChange={(e) => { setDepartment(e.target.value); setDesignation(""); }}
                       className={`w-full h-10 pl-9 pr-3 rounded-xl border text-xs focus:outline-none cursor-pointer transition-colors ${
-                        isLight 
-                          ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:bg-white" 
-                          : "bg-white/5 border-white/10 text-gray-200 focus:border-accent/50"
+                        "bg-elevated border-border text-foreground focus:border-accent focus:bg-white"
                       }`}
                       required
                     >
@@ -279,9 +277,7 @@ export default function RegisterPage() {
                       onChange={(e) => setDesignation(e.target.value)}
                       disabled={!department}
                       className={`w-full h-10 pl-9 pr-3 rounded-xl border text-xs focus:outline-none cursor-pointer transition-colors ${
-                        isLight 
-                          ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:bg-white" 
-                          : "bg-white/5 border-white/10 text-gray-200 focus:border-accent/50"
+                        "bg-elevated border-border text-foreground focus:border-accent focus:bg-white"
                       } ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
                       required
                     >
@@ -402,7 +398,7 @@ export default function RegisterPage() {
             </form>
 
             {/* Back navigation context */}
-            <div className={`pt-3 text-center border-t text-xs text-gray-500 ${isLight ? "border-gray-100" : "border-white/5"}`}>
+            <div className={`pt-3 text-center border-t text-xs text-gray-500 border-border`}>
               <span>Already have an account? </span>
               <Link href="/login" className="text-accent font-bold hover:underline">
                 Sign In

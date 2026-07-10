@@ -210,12 +210,10 @@ export default function UserFormPage() {
   };
 
   const inputStyle = `w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent ${
-    isLightMode 
-      ? "bg-slate-50 border-slate-200 text-slate-800 disabled:bg-slate-100 disabled:text-slate-400" 
-      : "bg-black/20 border-white/10 text-white disabled:bg-white/5 disabled:text-gray-500"
+    "bg-slate-50 border-slate-200 text-slate-800 disabled:bg-slate-100 disabled:text-slate-400"
   }`;
 
-  const labelStyle = `text-sm font-semibold mb-2 block ${isLightMode ? "text-slate-700" : "text-gray-300"}`;
+  const labelStyle = `text-sm font-semibold mb-2 block text-slate-700`;
 
   if (loading) {
     return (
@@ -281,8 +279,8 @@ export default function UserFormPage() {
         <div className="xl:col-span-8 space-y-8">
           
           {/* SECTION 1: Personal Identity */}
-          <AppCard className={`overflow-hidden transition-all ${isLightMode ? "border-slate-200" : "border-slate-800"}`}>
-            <AppCardHeader className={isLightMode ? "bg-slate-50/50 pb-4" : "bg-white/[0.02] pb-4"}>
+          <AppCard className={`overflow-hidden transition-all border-slate-200`}>
+            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-accent" />
                 <AppCardTitle className="text-lg">Personal Identity</AppCardTitle>
@@ -292,7 +290,7 @@ export default function UserFormPage() {
               {/* Photo Upload Row */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-border">
                 <div className="relative shrink-0 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 ${isLightMode ? "bg-slate-200 text-slate-400 ring-slate-100 ring-offset-white" : "bg-white/10 text-gray-500 ring-white/5 ring-offset-[#0A0D14]"}`}>
+                  <div className={`w-28 h-28 rounded-full overflow-hidden flex items-center justify-center ring-4 ring-offset-2 bg-slate-200 text-slate-400 ring-slate-100 ring-offset-white`}>
                     {formPhoto && formPhoto !== PRESET_AVATARS[0] ? (
                       <img src={formPhoto} alt="Profile" className="w-full h-full object-cover" onError={(e) => { (e.target as any).src = '' }} />
                     ) : (
@@ -364,8 +362,8 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 2: Organization Alignment */}
-          <AppCard className={`overflow-hidden transition-all ${isLightMode ? "border-slate-200" : "border-slate-800"}`}>
-            <AppCardHeader className={isLightMode ? "bg-slate-50/50 pb-4" : "bg-white/[0.02] pb-4"}>
+          <AppCard className={`overflow-hidden transition-all border-slate-200`}>
+            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-amber-500" />
                 <AppCardTitle className="text-lg">Organization Alignment</AppCardTitle>
@@ -438,11 +436,11 @@ export default function UserFormPage() {
         <div className="xl:col-span-4 space-y-8">
 
           {/* User Status & Code (Highlights) */}
-          <AppCard className={`overflow-hidden transition-all ${isLightMode ? "border-slate-200" : "border-slate-800"}`}>
+          <AppCard className={`overflow-hidden transition-all border-slate-200`}>
             <AppCardContent className="p-6 space-y-6">
               <div>
                 <label className={labelStyle}>Account Status</label>
-                <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${formIsActive ? (isLightMode ? "bg-emerald-50 border-emerald-200" : "bg-emerald-500/10 border-emerald-500/20") : (isLightMode ? "bg-rose-50 border-rose-200" : "bg-rose-500/10 border-rose-500/20")}`}>
+                <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${formIsActive ? ("bg-emerald-50 border-emerald-200") : ("bg-rose-50 border-rose-200")}`}>
                   <span className={`font-semibold ${formIsActive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                     {formIsActive ? "Active Participant" : "Suspended"}
                   </span>
@@ -468,8 +466,8 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 3: Security Credentials */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all ${isLightMode ? "border-slate-200" : "border-white/10"}`}>
-            <AppCardHeader className={isLightMode ? "bg-slate-50/50 pb-4" : "bg-white/[0.02] pb-4"}>
+          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-slate-200`}>
+            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-rose-500" />
                 <AppCardTitle className="text-lg">Security Settings</AppCardTitle>
@@ -526,8 +524,8 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 4: Hardware Assets */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all ${isLightMode ? "border-slate-200" : "border-white/10"}`}>
-            <AppCardHeader className={isLightMode ? "bg-slate-50/50 pb-4" : "bg-white/[0.02] pb-4"}>
+          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-slate-200`}>
+            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <MonitorSmartphone className="h-5 w-5 text-cyan-500" />
                 <AppCardTitle className="text-lg">Assigned Assets</AppCardTitle>
@@ -535,7 +533,7 @@ export default function UserFormPage() {
             </AppCardHeader>
             <AppCardContent className="p-6">
               <label className={labelStyle}>Linked IT Hardware Tags</label>
-              <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative ${isLightMode ? "bg-slate-50 border-slate-200" : "bg-black/20 border-white/10"}`}>
+              <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative bg-slate-50 border-slate-200`}>
                 <div className="flex flex-wrap items-center gap-2">
                   {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
                     <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-accent/10 text-accent-secondary border border-accent/30 rounded-lg dark:bg-accent/20 dark:text-indigo-300 dark:border-accent/30 shadow-sm">

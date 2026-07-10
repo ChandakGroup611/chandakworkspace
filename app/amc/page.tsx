@@ -797,7 +797,7 @@ export default function AMCPage() {
         
         <div className="flex-1 overflow-auto">
           <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
-            <thead className={`sticky top-0 z-10 ${isLightMode ? 'bg-gray-50' : 'bg-black/40'}`}>
+            <thead className={`sticky top-0 z-10 bg-gray-50`}>
               <tr>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Software Name</th>
                 <th className="p-3 font-medium text-gray-500 border-b border-border">Solution Name</th>
@@ -819,7 +819,7 @@ export default function AMCPage() {
                 </tr>
               ) : (
                 filteredDataset.map((rec) => (
-                  <tr key={rec.id} className={`border-b border-border transition-colors ${isLightMode ? 'hover:bg-gray-50' : 'hover:bg-white/5'}`}>
+                  <tr key={rec.id} className={`border-b border-border transition-colors hover:bg-elevated`}>
                     <td className="p-3 font-medium">{rec.software_name}</td>
                     <td className="p-3">{rec.solution_name || '-'}</td>
                     <td className="p-3">{rec.vendor_master?.name || '-'}</td>
@@ -894,8 +894,8 @@ export default function AMCPage() {
 
       {/* Full-Screen Page View for Add/Edit */}
       {showModal && (
-        <div className={`fixed inset-0 z-[100] flex flex-col animate-in slide-in-from-bottom-4 duration-300 ${isLightMode ? 'bg-gray-50' : 'bg-[#05070D]'}`}>
-          <div className={`flex items-center justify-between p-6 border-b shrink-0 ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14] border-white/5 shadow-md'}`}>
+        <div className={`fixed inset-0 z-[100] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-gray-50`}>
+          <div className={`flex items-center justify-between p-6 border-b shrink-0 bg-surface border-border shadow-[var(--shadow-ambient)]`}>
             <div className="space-y-1">
               <h2 className="text-2xl font-bold text-accent">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
               <p className="text-sm text-gray-500">Manage the core software record, mid-year transactions, and renewals.</p>
@@ -906,7 +906,7 @@ export default function AMCPage() {
           </div>
 
           {editRecordId && (
-            <div className={`flex items-center gap-6 px-6 border-b shrink-0 ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-[#0A0D14] border-white/5'}`}>
+            <div className={`flex items-center gap-6 px-6 border-b shrink-0 bg-gray-50 border-border`}>
               {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
                 <button 
                   key={tab}
@@ -925,7 +925,7 @@ export default function AMCPage() {
               <form onSubmit={handleSave} className="p-6 md:p-8 space-y-12">
             
             {/* SECTION: GENERAL & CONTRACT DETAILS */}
-            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+            <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
                 <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">1</span>
                 General & Contract Details
@@ -933,7 +933,7 @@ export default function AMCPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Provider / Vendor <span className="text-red-500">*</span></label>
-                  <select value={formVendorId} onChange={(e) => setFormVendorId(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formVendorId} onChange={(e) => setFormVendorId(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select Vendor --</option>
                     {vendors.map(v => (
                       <option key={v.id} value={v.id}>{v.name}</option>
@@ -947,7 +947,7 @@ export default function AMCPage() {
                 <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase">Contract Type <span className="text-red-500">*</span></label>
-                    <select value={formContractType} onChange={(e) => setFormContractType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <select value={formContractType} onChange={(e) => setFormContractType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="AMC">Annual Maintenance Contract (AMC)</option>
                       <option value="Subscription">SaaS Subscription</option>
                       <option value="Perpetual License">Perpetual License</option>
@@ -956,7 +956,7 @@ export default function AMCPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase">Status <span className="text-red-500">*</span></label>
-                    <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="Active">Active</option>
                       <option value="Expired">Expired</option>
                       <option value="Renewed">Renewed</option>
@@ -978,7 +978,7 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Renewal Period</label>
-                  <select value={formRenewalPeriodType} onChange={(e) => setFormRenewalPeriodType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formRenewalPeriodType} onChange={(e) => setFormRenewalPeriodType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select --</option>
                     <option value="Yearly">Yearly</option>
                     <option value="Half-Yearly">Half-Yearly</option>
@@ -993,21 +993,21 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Assigned To (Owner) <span className="text-red-500">*</span></label>
-                  <select value={formAssignedTo} onChange={(e) => setFormAssignedTo(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formAssignedTo} onChange={(e) => setFormAssignedTo(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select Owner --</option>
                     {users.map(u => <option key={u.id} value={u.id}>{u.full_name} ({u.email})</option>)}
                   </select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Department <span className="text-red-500">*</span></label>
-                  <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select Department --</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Cost Center</label>
-                  <select value={formCostCenterId} onChange={(e) => setFormCostCenterId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formCostCenterId} onChange={(e) => setFormCostCenterId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select Cost Center --</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
@@ -1020,7 +1020,7 @@ export default function AMCPage() {
             </div>
 
             {/* SECTION: LICENSE & USAGE TRACKING */}
-            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+            <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
                 <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">2</span>
                 License & Usage Tracking
@@ -1053,7 +1053,7 @@ export default function AMCPage() {
             </div>
 
             {/* SECTION: SLA & PAYMENT TERMS */}
-            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+            <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
                 <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">3</span>
                 SLA & Payment Terms
@@ -1061,7 +1061,7 @@ export default function AMCPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Currency</label>
-                  <select value={formCurrency} onChange={(e) => setFormCurrency(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formCurrency} onChange={(e) => setFormCurrency(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
@@ -1070,7 +1070,7 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Payment Terms</label>
-                  <select value={formPaymentTerms} onChange={(e) => setFormPaymentTerms(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formPaymentTerms} onChange={(e) => setFormPaymentTerms(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select --</option>
                     <option value="100% Advance">100% Advance</option>
                     <option value="Net 15">Net 15</option>
@@ -1083,7 +1083,7 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Support Tier</label>
-                  <select value={formSupportTier} onChange={(e) => setFormSupportTier(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                  <select value={formSupportTier} onChange={(e) => setFormSupportTier(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select --</option>
                     <option value="Standard Business Hours">Standard Business Hours</option>
                     <option value="Premium 24x5">Premium 24x5</option>
@@ -1102,7 +1102,7 @@ export default function AMCPage() {
             </div>
 
             {/* SECTION: SOLUTION LINE ITEMS */}
-            <div className={`p-6 rounded-2xl border overflow-hidden ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+            <div className={`p-6 rounded-2xl border overflow-hidden bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
                 <h4 className="text-base font-bold flex items-center gap-2">
                   <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">4</span>
@@ -1146,7 +1146,7 @@ export default function AMCPage() {
                             <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark" className="h-9 text-xs" />
                           </td>
                           <td className="py-2 px-1">
-                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                               <option value="">-- Select --</option>
                               <option value="Yearly">Yearly</option>
                               <option value="Half-Yearly">Half-Yearly</option>
@@ -1217,7 +1217,7 @@ export default function AMCPage() {
             </div>
 
             {/* SECTION: VENDOR DETAILS */}
-            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+            <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
                 <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">5</span>
                 Vendor & Contact Details
@@ -1229,7 +1229,7 @@ export default function AMCPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2 col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Industry Type</label>
-                      <select value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                      <select value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select Industry Type</option>
                         <option value="IT Software">IT Software</option>
                         <option value="IT Hardware / Electronics">IT Hardware / Electronics</option>
@@ -1247,7 +1247,7 @@ export default function AMCPage() {
                     </div>
                     <div className="space-y-2 col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type</label>
-                      <select value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                      <select value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select Vendor Type</option>
                         <option value="OEM (Original Equipment Manufacturer)">OEM (Original Equipment Manufacturer)</option>
                         <option value="Authorized Distributor">Authorized Distributor</option>
@@ -1293,7 +1293,7 @@ export default function AMCPage() {
                       <select value={vendorAddrState} onChange={(e) => {
                         setVendorAddrState(e.target.value);
                         setVendorAddrCity(""); // Reset city when state changes
-                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select State</option>
                         {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -1305,7 +1305,7 @@ export default function AMCPage() {
                           <Plus className="h-4 w-4" />
                         </button>
                       </label>
-                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select City</option>
                         {masterCities.filter(c => c.state_name === vendorAddrState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                       </select>
@@ -1321,7 +1321,7 @@ export default function AMCPage() {
             </div>
 
             {/* SECTION: FINANCIALS */}
-            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+            <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
                 <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">6</span>
                 Financial & Taxation Details
@@ -1405,7 +1405,7 @@ export default function AMCPage() {
                     <select value={bankState} onChange={(e) => {
                       setBankState(e.target.value);
                       setBankCity(""); // Reset city
-                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="">Select State</option>
                       {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -1417,7 +1417,7 @@ export default function AMCPage() {
                         <Plus className="h-4 w-4" />
                       </button>
                     </label>
-                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${isLightMode ? "bg-white border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`}>
+                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="">Select City</option>
                       {masterCities.filter(c => c.state_name === bankState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                     </select>
@@ -1427,7 +1427,7 @@ export default function AMCPage() {
             </div>
 
             {/* SECTION: ATTACHMENTS & MISC */}
-            <div className={`p-6 rounded-2xl border ${isLightMode ? 'bg-white border-gray-200 shadow-sm' : 'bg-[#0A0D14]/80 border-white/5 shadow-lg'}`}>
+            <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
                 <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">7</span>
                 Attachments & Notes
@@ -1447,11 +1447,11 @@ export default function AMCPage() {
                     
                     <div className="space-y-3">
                       {attachments.map(entry => (
-                        <div key={entry.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl border ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+                        <div key={entry.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl border bg-elevated border-border`}>
                           <select 
                             value={entry.docName} 
                             onChange={(e) => setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, docName: e.target.value } : a))}
-                            className={`w-full sm:w-48 h-10 px-3 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 ${isLightMode ? 'bg-white border-gray-200 text-gray-900' : 'bg-[#0A0D14] border-white/10 text-white'}`}
+                            className={`w-full sm:w-48 h-10 px-3 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 bg-surface border-border text-foreground`}
                           >
                             <option value="">Select Type</option>
                             <option value="SOP Document">SOP Document</option>
@@ -1472,7 +1472,7 @@ export default function AMCPage() {
                         </div>
                       ))}
                       {attachments.length === 0 && (
-                        <div className={`text-sm text-gray-500 italic p-6 text-center border-2 border-dashed rounded-xl ${isLightMode ? 'border-gray-300' : 'border-white/20'}`}>
+                        <div className={`text-sm text-gray-500 italic p-6 text-center border-2 border-dashed rounded-xl border-border`}>
                           No documents staged for upload. Click "Add Document" to begin.
                         </div>
                       )}
@@ -1484,7 +1484,7 @@ export default function AMCPage() {
                       <label className="text-xs font-bold text-gray-500 uppercase">Existing Attachments</label>
                       <div className="flex flex-col gap-2">
                         {existingAttachments.map((file, idx) => (
-                          <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
+                          <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border bg-elevated border-border`}>
                             <div className="flex items-center gap-3 text-sm overflow-hidden">
                               <div className="p-2 bg-accent/10 text-accent rounded shrink-0">
                                 <Paperclip className="h-4 w-4" />
@@ -1513,12 +1513,12 @@ export default function AMCPage() {
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Additional Notes</label>
-                  <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className={`w-full p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none resize-none h-full min-h-[150px] ${isLightMode ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:ring-accent/20 border" : "bg-white/5 border-white/10 text-white focus:border-accent focus:ring-accent/20 border"}`} placeholder="Any additional details, terms and conditions, or internal comments..." />
+                  <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className={`w-full p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none resize-none h-full min-h-[150px] bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`} placeholder="Any additional details, terms and conditions, or internal comments..." />
                 </div>
               </div>
             </div>
 
-            <div className={`fixed bottom-0 left-0 w-full p-4 border-t shadow-2xl flex items-center justify-end gap-4 z-50 ${isLightMode ? 'bg-white/90 border-gray-200 backdrop-blur-md' : 'bg-[#0A0D14]/90 border-white/10 backdrop-blur-md'}`}>
+            <div className={`fixed bottom-0 left-0 w-full p-4 border-t shadow-2xl flex items-center justify-end gap-4 z-50 bg-surface/90 border-border backdrop-blur-md`}>
               <div className="w-full max-w-[98%] mx-auto flex justify-end items-center gap-4">
                 <div className="flex justify-end gap-4 shrink-0">
                   <AppButton type="button" variant="outline" size="lg" onClick={() => setShowModal(false)} disabled={uploading}>
@@ -1570,14 +1570,14 @@ export default function AMCPage() {
       {/* Validation Error Popup */}
       {errorAlert && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className={`p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200 ${isLightMode ? 'bg-white border-gray-200' : 'bg-[#0A0D14] border-white/10'}`}>
+          <div className={`p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200 bg-surface border-border`}>
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="h-14 w-14 rounded-full bg-rose-500/10 flex items-center justify-center">
                 <AlertTriangle className="h-7 w-7 text-rose-500" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-rose-500">Validation Error</h3>
-                <p className={`text-sm mt-2 ${isLightMode ? 'text-gray-600' : 'text-gray-300'}`}>{errorAlert}</p>
+                <p className={`text-sm mt-2 text-muted`}>{errorAlert}</p>
               </div>
               <AppButton variant="primary" className="w-full mt-4 bg-rose-500 hover:bg-rose-600 border-none text-white" onClick={() => setErrorAlert(null)}>
                 Okay, got it

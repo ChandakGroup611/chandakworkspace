@@ -64,7 +64,7 @@ export function EnterpriseWizardShell({
       {/* Standard Solid Backdrop */}
       <div 
         className={`absolute inset-0 animate-in fade-in duration-300 ${
-          isLightMode ? "bg-gray-900/50" : "bg-black/70"
+          "bg-gray-900/50"
         }`} 
         onClick={onClose}
       />
