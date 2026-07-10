@@ -300,7 +300,7 @@ export default function DataRetentionClient() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
                 isActive 
-                  ? "bg-blue-500 text-white shadow-md shadow-blue-500/20" 
+                  ? "bg-accent text-white shadow-md shadow-blue-500/20" 
                   : "bg-white/5 text-gray-400 hover:bg-white/10"
               }`}
             >

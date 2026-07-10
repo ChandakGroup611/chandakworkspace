@@ -21,7 +21,7 @@ export default function LearningHubClient() {
       {/* Hero / Selection Header */}
       <div className={`w-full max-w-3xl mx-auto text-center space-y-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-500`}>
         <div className="flex justify-center">
-          <div className={`p-4 rounded-3xl ${isLight ? "bg-gradient-to-tr from-blue-100 to-indigo-100 text-blue-600 shadow-xl shadow-blue-500/10" : "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-500/20"}`}>
+          <div className={`p-4 rounded-3xl ${isLight ? "bg-gradient-to-tr from-blue-100 to-indigo-100 text-accent shadow-xl shadow-blue-500/10" : "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-500/20"}`}>
             <GraduationCap className="h-12 w-12" />
           </div>
         </div>
@@ -41,14 +41,14 @@ export default function LearningHubClient() {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl border-2 text-left transition-all ${
               isLight 
-                ? "bg-white border-blue-100 hover:border-blue-300 shadow-lg text-gray-900" 
-                : "bg-[#0A0D14] border-white/10 hover:border-blue-500/50 shadow-2xl text-white"
-            } ${isDropdownOpen ? (isLight ? "border-blue-500 ring-4 ring-blue-500/10" : "border-blue-500 ring-4 ring-blue-500/20") : ""}`}
+                ? "bg-white border-blue-100 hover:border-accent/30 shadow-lg text-gray-900" 
+                : "bg-[#0A0D14] border-white/10 hover:border-accent/50 shadow-2xl text-white"
+            } ${isDropdownOpen ? (isLight ? "border-accent ring-4 ring-accent/10" : "border-accent ring-4 ring-accent/20") : ""}`}
           >
             <div className="flex items-center gap-3">
               {selectedModule ? (
                 <>
-                  <selectedModule.icon className={`h-6 w-6 ${isLight ? "text-blue-600" : "text-blue-400"}`} />
+                  <selectedModule.icon className={`h-6 w-6 ${isLight ? "text-accent" : "text-accent"}`} />
                   <span className="font-bold text-lg">{selectedModule.title}</span>
                 </>
               ) : (
@@ -72,13 +72,13 @@ export default function LearningHubClient() {
                     }}
                     className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
                       selectedModuleId === module.id
-                        ? (isLight ? "bg-blue-50 text-blue-700 font-bold" : "bg-blue-500/20 text-blue-400 font-bold")
+                        ? (isLight ? "bg-accent/10 text-accent font-bold" : "bg-accent/20 text-accent font-bold")
                         : (isLight ? "hover:bg-gray-100 text-gray-700" : "hover:bg-white/5 text-gray-300")
                     }`}
                   >
                     <div className={`p-2 rounded-lg ${
                       selectedModuleId === module.id 
-                        ? (isLight ? "bg-blue-100 text-blue-700" : "bg-blue-500/30 text-blue-400")
+                        ? (isLight ? "bg-accent/10 text-accent" : "bg-accent/30 text-accent")
                         : (isLight ? "bg-gray-100 text-gray-500" : "bg-white/5 text-gray-400")
                     }`}>
                       <module.icon className="h-5 w-5" />

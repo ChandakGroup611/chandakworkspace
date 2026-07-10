@@ -36,14 +36,14 @@ export default function LargeDesignMockupPage() {
           
           {/* SECTION 1 */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold flex items-center gap-2 pb-2 border-b text-indigo-500 dark:text-indigo-400 border-gray-200 dark:border-white/10">
+            <h3 className="text-sm font-bold flex items-center gap-2 pb-2 border-b text-accent dark:text-accent border-gray-200 dark:border-white/10">
               <Briefcase className="h-4 w-4" /> Strategic & Business Design
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Design Category <span className="text-red-500">*</span></label>
-                <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
+                <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
                   <option>Select Category</option>
                   <option>Architecture</option>
                   <option>UI / UX</option>
@@ -52,7 +52,7 @@ export default function LargeDesignMockupPage() {
               </div>
               <div>
                 <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Priority Level <span className="text-red-500">*</span></label>
-                <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
+                <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
                   <option>High</option>
                   <option>Medium</option>
                   <option>Low</option>
@@ -60,7 +60,7 @@ export default function LargeDesignMockupPage() {
               </div>
               <div>
                 <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Target Value</label>
-                <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
+                <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
                   <option>Customer Experience</option>
                   <option>Operational Efficiency</option>
                 </select>
@@ -71,21 +71,21 @@ export default function LargeDesignMockupPage() {
               <div className="space-y-2">
                 <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Executive Summary</label>
                 <textarea 
-                  className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[100px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
+                  className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
                   placeholder="Provide a high-level summary of the design..."
                 />
               </div>
               <div className="space-y-2">
                 <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Key Constraints</label>
                 <textarea 
-                  className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[100px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
+                  className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
                   placeholder="Outline any budget, time, or technical constraints..."
                 />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Design Rationale & Notes <span className="text-red-500">*</span></label>
                 <textarea 
-                   className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[120px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                   className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
                    placeholder="Detailed justification and extra notes..."
                 />
               </div>

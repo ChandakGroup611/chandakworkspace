@@ -26,7 +26,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
       <div className="space-y-1.5 flex-1 min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
           {icon && (
-            <div className={`shrink-0 ${isLight ? "text-indigo-600" : "text-indigo-400"}`}>
+            <div className={`shrink-0 ${isLight ? "text-accent" : "text-accent"}`}>
               {icon}
             </div>
           )}

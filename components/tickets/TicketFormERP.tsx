@@ -105,7 +105,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
         <p className="text-sm text-gray-500 font-medium tracking-widest uppercase">Fetching Software Matrix...</p>
       </div>
     );
@@ -120,7 +120,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Software System</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
                   isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
                 }`}
                 value={formData.systemId}
@@ -137,7 +137,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Operational Priority</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
                   isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
                 }`}
                 value={formData.priorityId}
@@ -154,7 +154,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Module</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.moduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, moduleId: e.target.value, submoduleId: "" }))}
                 required
@@ -170,7 +170,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Submodule</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.submoduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, submoduleId: e.target.value }))}
                 required
@@ -187,7 +187,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Issue Category</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
                   isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
                 }`}
                 value={formData.categoryId}
@@ -204,7 +204,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Issue Sub Category</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.subcategoryId}
                 onChange={(e) => setFormData(prev => ({ ...prev, subcategoryId: e.target.value }))}
                 required
@@ -232,7 +232,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
           <div className="space-y-2">
             <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Issue Description</label>
             <textarea 
-              className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[100px] resize-none ${
+              className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
                 isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
               }`}
               placeholder="Describe the application fault, bug behavior, or system error in detail..."
@@ -243,13 +243,13 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
           </div>
 
           {isReqCategory && (
-            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-indigo-500/20 rounded-2xl mt-4">
-              <h4 className="text-sm font-bold text-indigo-400 mb-2">Requirement Details (Mandatory)</h4>
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-accent/20 rounded-2xl mt-4">
+              <h4 className="text-sm font-bold text-accent mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
                 <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[100px] resize-none ${
+                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
                   }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
@@ -262,7 +262,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               <div className="space-y-2">
                 <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[120px] resize-none ${
+                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
                   }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
@@ -278,7 +278,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="flex-1 space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider ${isLightMode ? "text-gray-600" : "text-gray-500"}`}>Technical Evidence (Screenshots / Logs)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
-                isLightMode ? "border-gray-100 hover:border-indigo-200 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
+                isLightMode ? "border-gray-100 hover:border-accent/30 bg-gray-50/50" : "border-white/5 hover:border-white/20 bg-white/[0.01]"
               } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-red-500/5' : ''}`}>
                 <input 
                   type="file" 
@@ -288,7 +288,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${isLightMode ? "bg-white shadow-sm" : "bg-white/5"}`}>
-                      <Paperclip className={`h-4 w-4 ${isLightMode ? "text-indigo-600" : "text-gray-400"}`} />
+                      <Paperclip className={`h-4 w-4 ${isLightMode ? "text-accent" : "text-gray-400"}`} />
                     </div>
                     <div>
                       <p className={`text-xs font-medium ${"text-foreground"}`}>
@@ -314,7 +314,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               <AppButton variant="ghost" type="button" onClick={onCancel} className={isLightMode ? "text-gray-500" : "text-gray-400 hover:text-white"}>
                 Cancel
               </AppButton>
-              <AppButton variant="primary" type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white min-w-[140px]">
+              <AppButton variant="primary" type="submit" className="bg-accent hover:bg-accent text-white min-w-[140px]">
                 <Send className="h-4 w-4 mr-2" />
                 Initialize Workflow
               </AppButton>

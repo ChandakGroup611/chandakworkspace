@@ -202,7 +202,7 @@ export default function NotificationRuleBuilder() {
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-blue-400 font-bold text-lg">THEN</span>
+                    <span className="font-mono text-accent font-bold text-lg">THEN</span>
                     <span className="text-sm font-bold text-gray-300">Resolve Recipients:</span>
                   </div>
                   
@@ -215,7 +215,7 @@ export default function NotificationRuleBuilder() {
                           onClick={() => toggleArrayItem(rule.id, "recipient_type", type)}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
                             isSelected 
-                              ? 'bg-blue-500/20 border-blue-500/50 text-blue-300' 
+                              ? 'bg-accent/20 border-accent/50 text-blue-300' 
                               : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'
                           }`}
                         >
@@ -228,7 +228,7 @@ export default function NotificationRuleBuilder() {
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-purple-400 font-bold text-lg">VIA</span>
+                    <span className="font-mono text-accent font-bold text-lg">VIA</span>
                     <span className="text-sm font-bold text-gray-300">Delivery Method:</span>
                   </div>
                   
@@ -238,7 +238,7 @@ export default function NotificationRuleBuilder() {
                         type="checkbox" 
                         checked={rule.delivery_method.includes("EMAIL")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "EMAIL")}
-                        className="rounded border-gray-600 bg-gray-700 text-purple-500 focus:ring-purple-500"
+                        className="rounded border-gray-600 bg-gray-700 text-accent focus:ring-accent"
                       />
                       <span className="text-sm text-gray-300 font-medium">Email Dispatch</span>
                     </label>
@@ -247,7 +247,7 @@ export default function NotificationRuleBuilder() {
                         type="checkbox" 
                         checked={rule.delivery_method.includes("IN_APP")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "IN_APP")}
-                        className="rounded border-gray-600 bg-gray-700 text-purple-500 focus:ring-purple-500"
+                        className="rounded border-gray-600 bg-gray-700 text-accent focus:ring-accent"
                       />
                       <span className="text-sm text-gray-300 font-medium">In-App Notification</span>
                     </label>

@@ -64,7 +64,7 @@ export function AMCHistoryModal({
   const getOperationColor = (op: string) => {
     switch (op) {
       case "INSERT": return "text-green-500 bg-green-500/10";
-      case "UPDATE": return "text-blue-500 bg-blue-500/10";
+      case "UPDATE": return "text-accent bg-accent/10";
       case "DELETE": return "text-red-500 bg-red-500/10";
       default: return "text-gray-500 bg-gray-500/10";
     }

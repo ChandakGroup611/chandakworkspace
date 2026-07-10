@@ -43,12 +43,12 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
 
   return (
     <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-6 rounded-xl animate-in fade-in-50">
-      <AppCard className={`w-full max-w-md p-6 shadow-2xl ${isLightMode ? "bg-white border-blue-200" : "bg-[#0a0c16] border-blue-500/30"}`}>
+      <AppCard className={`w-full max-w-md p-6 shadow-2xl ${isLightMode ? "bg-white border-accent/30" : "bg-[#0a0c16] border-accent/30"}`}>
         
         <div className="flex items-center justify-between border-b pb-4 mb-5 border-gray-200 dark:border-white/5">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Activity className="h-5 w-5 text-blue-500" />
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <Activity className="h-5 w-5 text-accent" />
             </div>
             <div>
               <h3 className={`font-bold ${"text-foreground"}`}>Workload Intelligence</h3>
@@ -71,7 +71,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             <div className="space-y-2">
               <div className="flex items-end justify-between">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Utilization</span>
-                <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-rose-500' : 'text-blue-500'}`}>
+                <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-rose-500' : 'text-accent'}`}>
                   {metrics.capacity_percentage}%
                 </span>
               </div>
@@ -105,13 +105,13 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                 <span className="text-xs text-rose-500/70 uppercase tracking-wider font-bold">Overdue SLA</span>
               </div>
               <div className={`p-4 rounded-xl border ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
-                <Clock className="h-4 w-4 text-indigo-500 mb-2" />
+                <Clock className="h-4 w-4 text-accent mb-2" />
                 <span className="block text-2xl font-bold text-gray-900 dark:text-white mb-1">{metrics.estimated_hours}h</span>
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Estimated Load</span>
               </div>
-              <div className={`p-4 rounded-xl border flex flex-col justify-center ${isLightMode ? "bg-blue-50 border-blue-100" : "bg-blue-500/10 border-blue-500/20"}`}>
-                <span className="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
-                <span className="text-xl font-bold text-blue-700 dark:text-blue-300">{metrics.available_capacity}%</span>
+              <div className={`p-4 rounded-xl border flex flex-col justify-center ${isLightMode ? "bg-accent/10 border-blue-100" : "bg-accent/10 border-accent/20"}`}>
+                <span className="text-xs text-accent dark:text-accent uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
+                <span className="text-xl font-bold text-accent dark:text-blue-300">{metrics.available_capacity}%</span>
               </div>
             </div>
 

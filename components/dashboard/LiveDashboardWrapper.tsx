@@ -41,7 +41,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbEr
   const refreshComponent = (
     <div className="flex items-center gap-3">
       <div className="text-[10px] text-[var(--muted-foreground)] font-mono flex items-center gap-2 whitespace-nowrap">
-        {isFetching ? <Loader2 className="w-3 h-3 animate-spin text-indigo-400" /> : <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+        {isFetching ? <Loader2 className="w-3 h-3 animate-spin text-accent" /> : <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
         {lastUpdated}
       </div>
       <AppButton 

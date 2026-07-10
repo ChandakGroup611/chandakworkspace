@@ -99,7 +99,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
   const getCellBg = (intensity: number) => {
     if (intensity > 75) return "bg-rose-500 shadow-md shadow-rose-500/20";
     if (intensity > 50) return "bg-amber-500";
-    if (intensity > 25) return "bg-blue-500/80";
+    if (intensity > 25) return "bg-accent/80";
     return "bg-white/5 hover:bg-white/10";
   };
 
@@ -139,7 +139,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         <div className="h-8 flex items-center justify-between px-3 rounded-lg bg-black/20 border border-white/5 text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
           {hoveredCell ? (
             <div className="flex items-center gap-2.5 text-gray-300 font-medium animate-in fade-in duration-150">
-              <Activity className="h-3 w-3 text-blue-400 shrink-0" />
+              <Activity className="h-3 w-3 text-accent shrink-0" />
               <span><strong className="text-foreground">{hoveredCell.day} @ {hoveredCell.hour}</strong></span>
               <span className="text-gray-600">|</span>
               <span className="text-xs">
@@ -165,7 +165,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           <div className="flex items-center gap-1">
             <span className="text-[0.7rem] text-gray-600 mr-1 select-none">Scale:</span>
             <div className="w-2 h-2 rounded bg-white/5" />
-            <div className="w-2 h-2 rounded bg-blue-500/80" />
+            <div className="w-2 h-2 rounded bg-accent/80" />
             <div className="w-2 h-2 rounded bg-amber-500" />
             <div className="w-2 h-2 rounded bg-rose-500" />
           </div>

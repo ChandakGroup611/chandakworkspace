@@ -274,7 +274,7 @@ export default function UserProfileEditor() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-accent" />
       </div>
     );
   }
@@ -300,7 +300,7 @@ export default function UserProfileEditor() {
       <AppCard>
         <AppCardHeader>
           <div className="flex items-center gap-2">
-            <Image className="h-5 w-5 text-blue-500" />
+            <Image className="h-5 w-5 text-accent" />
             <AppCardTitle>Profile Picture</AppCardTitle>
           </div>
           <p className={`text-xs ${"text-muted"}`}>
@@ -314,7 +314,7 @@ export default function UserProfileEditor() {
               <img 
                 src={formPhoto || PRESET_AVATARS[0]}
                 alt="Profile"
-                className="h-32 w-32 rounded-full object-cover border-4 border-blue-500 shadow-lg"
+                className="h-32 w-32 rounded-full object-cover border-4 border-accent shadow-lg"
                 onError={(e) => { (e.target as any).src = PRESET_AVATARS[0]; }}
               />
             </div>
@@ -326,8 +326,8 @@ export default function UserProfileEditor() {
                 onClick={() => setIsViewingPhoto(true)}
                 className={`px-4 py-2 rounded-lg border text-sm font-semibold flex items-center gap-2 transition-all ${
                   isLightMode 
-                    ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-blue-600" 
-                    : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-blue-400"
+                    ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-accent" 
+                    : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-accent"
                 }`}
               >
                 <Eye className="h-4 w-4" />
@@ -342,12 +342,12 @@ export default function UserProfileEditor() {
                   photoUploading
                     ? "opacity-50 cursor-not-allowed"
                     : (isLightMode 
-                      ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-blue-600" 
-                      : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-blue-400")
+                      ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-accent" 
+                      : "bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:text-accent")
                 }`}
               >
                 {photoUploading ? (
-                  <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                  <RefreshCw className="h-4 w-4 animate-spin text-accent" />
                 ) : (
                   <Image className="h-4 w-4" />
                 )}
@@ -367,8 +367,8 @@ export default function UserProfileEditor() {
             {/* Info Badge */}
             <div className={`p-3 rounded-lg border text-xs ${
               isLightMode 
-                ? "bg-blue-50 border-blue-200 text-blue-700" 
-                : "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                ? "bg-accent/10 border-accent/30 text-accent" 
+                : "bg-accent/10 border-accent/30 text-blue-300"
             }`}>
               <p>✓ All users can view and change their profile picture</p>
             </div>
@@ -380,7 +380,7 @@ export default function UserProfileEditor() {
       <AppCard>
         <AppCardHeader>
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-blue-500" />
+            <User className="h-5 w-5 text-accent" />
             <AppCardTitle>Profile Details</AppCardTitle>
           </div>
           <p className={`text-xs ${"text-muted"}`}>
@@ -471,7 +471,7 @@ export default function UserProfileEditor() {
       <AppCard>
         <AppCardHeader>
           <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-purple-500" />
+            <Lock className="h-5 w-5 text-accent" />
             <AppCardTitle>Change Password</AppCardTitle>
           </div>
           <p className={`text-xs ${"text-muted"}`}>

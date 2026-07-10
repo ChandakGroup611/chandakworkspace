@@ -28,8 +28,8 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
         ? "bg-transparent text-rose-600 border-rose-600 dark:text-rose-400 dark:border-rose-500"
         : (isLight ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-rose-500/10 text-rose-400 border-rose-500/20"),
       info: isOutline
-        ? "bg-transparent text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-500"
-        : (isLight ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-blue-500/10 text-blue-400 border-blue-500/20"),
+        ? "bg-transparent text-accent border-accent dark:text-accent dark:border-accent"
+        : (isLight ? "bg-accent/10 text-accent border-accent/30" : "bg-accent/10 text-accent border-accent/20"),
       accent: isOutline
         ? "bg-transparent text-accent border-accent"
         : "bg-accent/10 text-accent border-accent/20",

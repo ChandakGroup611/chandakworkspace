@@ -57,14 +57,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
                 <span className={`text-2xl font-bold tabular-nums ${"text-foreground"}`}>{timeLeft}m</span>
                 <p className="text-xs text-gray-500 font-medium">Until Resolution Breach</p>
               </div>
-              <div className={`p-3 rounded-xl ${isLightMode ? "bg-indigo-50" : "bg-indigo-500/10"}`}>
-                <Clock className={`h-5 w-5 ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`} />
+              <div className={`p-3 rounded-xl ${isLightMode ? "bg-accent/10" : "bg-accent/10"}`}>
+                <Clock className={`h-5 w-5 ${isLightMode ? "text-accent" : "text-accent"}`} />
               </div>
             </div>
             <div className="space-y-2">
               <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLightMode ? "bg-gray-200" : "bg-white/5"}`}>
                 <div 
-                  className={`h-full transition-all duration-1000 ${isStable ? "bg-indigo-500" : "bg-amber-500"}`}
+                  className={`h-full transition-all duration-1000 ${isStable ? "bg-accent" : "bg-amber-500"}`}
                   style={{ width: `${slaPercentage}%` }}
                 />
               </div>
@@ -83,8 +83,8 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <AppButton 
               className={`w-full justify-start text-xs py-5 border ${
                 isLightMode 
-                  ? "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100" 
-                  : "bg-indigo-600/10 border border-indigo-500/20 text-indigo-300 hover:bg-indigo-600/20"
+                  ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/10" 
+                  : "bg-accent/10 border border-accent/20 text-indigo-300 hover:bg-accent/20"
               }`}
               onClick={() => onAction("ASSIGN")}
             >
@@ -137,11 +137,11 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Watchers</h3>
-            <span className="text-xs text-indigo-600 font-bold cursor-pointer">Manage</span>
+            <span className="text-xs text-accent font-bold cursor-pointer">Manage</span>
           </div>
           <div className="flex -space-x-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-indigo-500 ${
+              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-accent ${
                 isLightMode ? "border-white" : "border-[#070913]"
               }`}>
                 JD
@@ -161,8 +161,8 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
             isLightMode ? "border-gray-200 bg-gray-50/50 hover:bg-gray-100/50" : "border-white/10 bg-transparent hover:bg-white/5"
           }`}>
-            <div className={`p-2 rounded-lg ${isLightMode ? "bg-white" : "bg-white/5"} group-hover:bg-indigo-500/10`}>
-              <Eye className={`h-4 w-4 ${isLightMode ? "text-gray-400" : "text-gray-600"} group-hover:text-indigo-500`} />
+            <div className={`p-2 rounded-lg ${isLightMode ? "bg-white" : "bg-white/5"} group-hover:bg-accent/10`}>
+              <Eye className={`h-4 w-4 ${isLightMode ? "text-gray-400" : "text-gray-600"} group-hover:text-accent`} />
             </div>
             <p className="text-[0.7rem] text-gray-500">Drop files to link</p>
           </div>

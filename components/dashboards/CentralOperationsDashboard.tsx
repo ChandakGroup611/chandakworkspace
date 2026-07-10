@@ -31,23 +31,23 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
             <div className="absolute inset-0 bg-gradient-to-br from-white to-blue-500/10 dark:from-white/5 dark:to-blue-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-accent" />
 
-            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-blue-500">
+            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-accent">
               <Target className="h-24 w-24" />
             </div>
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Total Tasks</h3>
-                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-blue-500">
+                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-accent">
                   <Target className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400 drop-shadow-sm">{kpis.tasks?.total || 0}</span>
+                  <span className="text-4xl font-black tracking-tight text-accent dark:text-accent drop-shadow-sm">{kpis.tasks?.total || 0}</span>
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-xs font-semibold">
                   <span className="text-emerald-500 flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5" /> {kpis.tasks?.resolved || 0} Resolved</span>
@@ -98,26 +98,26 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
             <div className="absolute inset-0 bg-gradient-to-br from-white to-purple-500/10 dark:from-white/5 dark:to-purple-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
             {/* Glowing Accent Top Border */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-purple-500" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-accent" />
 
-            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-purple-500">
+            <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 transform translate-x-2 -translate-y-2 group-hover:scale-110 transition-transform text-accent">
               <LayoutDashboard className="h-24 w-24" />
             </div>
 
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Tickets & Reqs</h3>
-                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-purple-500">
+                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-accent">
                   <LayoutDashboard className="h-5 w-5" />
                 </div>
               </div>
               
               <div className="mt-auto">
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl font-black tracking-tight text-purple-600 dark:text-purple-400 drop-shadow-sm">{kpis.tickets_reqs?.total_tickets || 0}</span>
+                  <span className="text-4xl font-black tracking-tight text-accent dark:text-accent drop-shadow-sm">{kpis.tickets_reqs?.total_tickets || 0}</span>
                   <span className="text-sm font-semibold text-muted-foreground">Tickets</span>
                 </div>
-                <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-purple-500 dark:text-purple-400">
+                <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-accent dark:text-accent">
                   <Activity className="h-3.5 w-3.5" />
                   <span>{kpis.tickets_reqs?.total_requirements || 0} Requirements</span>
                 </div>

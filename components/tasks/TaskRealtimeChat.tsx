@@ -324,7 +324,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
       {/* Header */}
       <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>
         <div className="flex items-center gap-2">
-          <MessageSquare className={`h-4 w-4 ${isLightMode ? "text-blue-600" : "text-blue-400"}`} />
+          <MessageSquare className={`h-4 w-4 ${isLightMode ? "text-accent" : "text-accent"}`} />
           <h3 className={`text-sm font-bold ${"text-foreground"}`}>
             Realtime Collaboration
           </h3>
@@ -413,9 +413,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                   
                   <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
                     isSender 
-                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border border-indigo-500/30"
+                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border border-accent/30"
                       : isMention
-                        ? (isLightMode ? "bg-indigo-50 border border-indigo-100 text-indigo-900 rounded-tl-sm" : "bg-indigo-900/30 border border-indigo-500/20 text-indigo-100 rounded-tl-sm")
+                        ? (isLightMode ? "bg-accent/10 border border-indigo-100 text-accent-secondary rounded-tl-sm" : "bg-indigo-900/30 border border-accent/20 text-indigo-100 rounded-tl-sm")
                         : (isLightMode ? "bg-gray-100 text-gray-800 rounded-tl-sm" : "bg-[#1f2233] text-gray-200 rounded-tl-sm")
                   }`}>
                     {(() => {
@@ -474,10 +474,10 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                   type="button"
                   onClick={() => insertMention('ALL')}
                   className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-colors ${
-                    isLightMode ? "hover:bg-indigo-50 text-indigo-700 font-bold" : "hover:bg-indigo-500/20 text-indigo-400 font-bold"
+                    isLightMode ? "hover:bg-accent/10 text-accent font-bold" : "hover:bg-accent/20 text-accent font-bold"
                   }`}
                 >
-                  <div className="h-6 w-6 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                  <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center">
                     <Users className="h-3 w-3" />
                   </div>
                   Notify Everyone (@All)
@@ -526,13 +526,13 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
         <form
           onSubmit={handleSend}
-          className={`flex items-center gap-2 p-1.5 rounded-xl border focus-within:ring-2 focus-within:ring-blue-500 transition-all ${
+          className={`flex items-center gap-2 p-1.5 rounded-xl border focus-within:ring-2 focus-within:ring-accent transition-all ${
             isLightMode ? "bg-white border-gray-300" : "bg-[#0a0c16] border-white/10"
           }`}
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
           
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-blue-500 transition-colors shrink-0" tabIndex={-1}>
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-accent transition-colors shrink-0" tabIndex={-1}>
             <Paperclip className="h-4 w-4" />
           </button>
           
@@ -553,7 +553,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             type="submit"
             variant="primary"
             size="sm"
-            className="h-8 w-8 p-0 rounded-lg shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700"
+            className="h-8 w-8 p-0 rounded-lg shrink-0 flex items-center justify-center bg-accent hover:bg-accent-secondary"
             disabled={sending || (!newMessage.trim() && selectedFiles.length === 0)}
           >
             {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}

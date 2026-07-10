@@ -721,7 +721,7 @@ export default function AMCPage() {
   if (!mounted || permsLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -754,7 +754,7 @@ export default function AMCPage() {
                 Analytics
               </AppButton>
             </Link>
-            <AppButton variant="outline" size="sm" onClick={fetchRecords} leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />}>
+            <AppButton variant="outline" size="sm" onClick={fetchRecords} leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-accent' : ''}`} />}>
               Refresh
             </AppButton>
             {hasPermission("AMC_CREATE") && (
@@ -860,7 +860,7 @@ export default function AMCPage() {
                         </>
                       )}
                       <AppButton variant="ghost" size="sm" onClick={() => setSelectedHistoryId(rec.id)} title="View Audit History">
-                        <Clock className="h-3.5 w-3.5 text-blue-500" />
+                        <Clock className="h-3.5 w-3.5 text-accent" />
                       </AppButton>
                       {hasPermission("AMC_EDIT") && (
                         <AppButton variant="ghost" size="sm" onClick={() => openEditModal(rec)} title="Edit Record & Log Transactions">
@@ -1486,7 +1486,7 @@ export default function AMCPage() {
                         {existingAttachments.map((file, idx) => (
                           <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border ${isLightMode ? 'bg-gray-50 border-gray-200' : 'bg-white/5 border-white/10'}`}>
                             <div className="flex items-center gap-3 text-sm overflow-hidden">
-                              <div className="p-2 bg-blue-500/10 text-blue-500 rounded shrink-0">
+                              <div className="p-2 bg-accent/10 text-accent rounded shrink-0">
                                 <Paperclip className="h-4 w-4" />
                               </div>
                               <span className="truncate" title={file.name}>{formatFileName(file.name)}</span>
@@ -1496,7 +1496,7 @@ export default function AMCPage() {
                                 const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
                                 window.open(url, '_blank');
                               }}>
-                                <Download className="h-4 w-4 text-blue-500" />
+                                <Download className="h-4 w-4 text-accent" />
                               </AppButton>
                               {hasPermission("AMC_DELETE") && (
                                 <AppButton type="button" variant="ghost" size="sm" onClick={() => deleteAttachment(file.name)}>

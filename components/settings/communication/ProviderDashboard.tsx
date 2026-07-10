@@ -91,7 +91,7 @@ export default function ProviderDashboard() {
     setProviders(providers.map(p => p.priority_level === priority ? { ...p, [field]: value } : p));
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -105,13 +105,13 @@ export default function ProviderDashboard() {
       <div className="space-y-6">
         {providers.map((prov) => (
           <div key={prov.id || prov.priority_level} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl">
-            <div className={`p-4 border-b border-white/5 flex items-center justify-between ${prov.priority_level === 1 ? 'bg-blue-500/10' : 'bg-white/5'}`}>
+            <div className={`p-4 border-b border-white/5 flex items-center justify-between ${prov.priority_level === 1 ? 'bg-accent/10' : 'bg-white/5'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-blue-500/20' : 'bg-gray-700/50'}`}>
-                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-blue-400' : 'text-gray-400'}`} />
+                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent/20' : 'bg-gray-700/50'}`}>
+                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-accent' : 'text-gray-400'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-blue-400' : 'text-foreground'}`}>
+                  <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-accent' : 'text-foreground'}`}>
                     {prov.priority_level === 1 ? 'PRIMARY DISPATCH' : `FALLBACK LEVEL ${prov.priority_level - 1}`}
                   </h3>
                   <p className="text-xs text-gray-500">
@@ -123,12 +123,12 @@ export default function ProviderDashboard() {
                 <select 
                   value={prov.provider_name}
                   onChange={(e) => updateProviderField(prov.priority_level, "provider_name", e.target.value)}
-                  className="bg-[#0A0D14] border border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-blue-500"
+                  className="bg-[#0A0D14] border border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-accent"
                 >
                   {PROVIDER_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                 </select>
                 <label className="flex items-center gap-2 cursor-pointer ml-4">
-                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-blue-500' : 'bg-gray-600'}`}>
+                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-accent' : 'bg-gray-600'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${prov.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
@@ -151,7 +151,7 @@ export default function ProviderDashboard() {
                       type="text" 
                       value={prov.config.host || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "host", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
                       placeholder="smtp.office365.com"
                     />
                   </div>
@@ -161,7 +161,7 @@ export default function ProviderDashboard() {
                       type="number" 
                       value={prov.config.port || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "port", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
                       placeholder="587"
                     />
                   </div>
@@ -171,7 +171,7 @@ export default function ProviderDashboard() {
                       type="text" 
                       value={prov.config.username || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "username", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
                       placeholder="noreply@enterprise.com"
                     />
                   </div>
@@ -182,7 +182,7 @@ export default function ProviderDashboard() {
                         type="password" 
                         value={prov.config.password || ""}
                         onChange={(e) => updateProviderConfig(prov.priority_level, "password", e.target.value)}
-                        className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:border-accent"
                         placeholder="••••••••"
                       />
                       <Key className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
@@ -199,7 +199,7 @@ export default function ProviderDashboard() {
                       type="password" 
                       value={prov.config.api_key || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "api_key", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:border-accent"
                       placeholder="re_..."
                     />
                     <Key className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
@@ -224,7 +224,7 @@ export default function ProviderDashboard() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : 'bg-blue-600'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : 'bg-accent'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

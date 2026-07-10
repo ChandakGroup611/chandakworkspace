@@ -64,7 +64,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
             key={p} 
             onClick={() => setProvider(p)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              provider === p ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              provider === p ? 'bg-accent text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]' : 'bg-white/5 text-gray-400 hover:bg-white/10'
             }`}
           >
             {p === 'OFFICE365' ? 'Office 365' : p === 'GMAIL' ? 'Gmail' : 'Resend API'}
@@ -75,27 +75,27 @@ export default function NotificationProviderForm({ initialData }: { initialData:
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">SMTP Host</label>
-          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">SMTP Port</label>
-          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">Username / Email</label>
-          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">{provider === 'RESEND' ? 'API Key' : 'App Password'}</label>
-          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">Sender Name</label>
-          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
         </div>
         <div>
           <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">Sender Email (From)</label>
-          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all" />
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
           <button onClick={handleTest} disabled={testing} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
             {testing ? 'Testing...' : 'Test Connection'}
           </button>
-          <button onClick={handleSave} disabled={loading} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] disabled:opacity-50">
+          <button onClick={handleSave} disabled={loading} className="px-5 py-2.5 bg-accent hover:bg-accent text-white text-sm font-medium rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] disabled:opacity-50">
             {loading ? 'Saving...' : 'Save Configuration'}
           </button>
         </div>

@@ -12,7 +12,7 @@ export function WorkloadIntelligence({ workload }: { workload: any }) {
           <h3 className="text-sm font-bold tracking-tight">Tactical Workload</h3>
           <p className="text-xs text-muted-foreground mt-1">Your active assignments</p>
         </div>
-        <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-lg">
+        <div className="p-2 bg-accent/10 text-accent rounded-lg">
           <Briefcase className="w-5 h-5" />
         </div>
       </div>
@@ -21,21 +21,21 @@ export function WorkloadIntelligence({ workload }: { workload: any }) {
         {/* Workload Bars */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-medium">
-            <span className="flex items-center gap-2"><ListTodo className="w-4 h-4 text-blue-500" /> Active Tickets</span>
+            <span className="flex items-center gap-2"><ListTodo className="w-4 h-4 text-accent" /> Active Tickets</span>
             <span>{workload.active_tickets}</span>
           </div>
           <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-            <div className="bg-blue-500 h-full rounded-full" style={{ width: `${Math.min(100, workload.active_tickets * 10)}%` }} />
+            <div className="bg-accent h-full rounded-full" style={{ width: `${Math.min(100, workload.active_tickets * 10)}%` }} />
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-medium">
-            <span className="flex items-center gap-2"><Layers className="w-4 h-4 text-purple-500" /> Active Tasks</span>
+            <span className="flex items-center gap-2"><Layers className="w-4 h-4 text-accent" /> Active Tasks</span>
             <span>{workload.active_tasks}</span>
           </div>
           <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-            <div className="bg-purple-500 h-full rounded-full" style={{ width: `${Math.min(100, workload.active_tasks * 10)}%` }} />
+            <div className="bg-accent h-full rounded-full" style={{ width: `${Math.min(100, workload.active_tasks * 10)}%` }} />
           </div>
         </div>
 
@@ -52,7 +52,7 @@ export function WorkloadIntelligence({ workload }: { workload: any }) {
       
       <AppButton 
         variant="secondary" 
-        className="w-full mt-6 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-500 hover:text-indigo-600 border-none rounded-xl"
+        className="w-full mt-6 bg-accent/5 hover:bg-accent/10 text-accent hover:text-accent border-none rounded-xl"
         rightIcon={<ArrowUpRight className="w-3 h-3" />}
       >
         View Assignment Queue

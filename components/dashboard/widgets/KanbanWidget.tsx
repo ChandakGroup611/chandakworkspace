@@ -38,7 +38,7 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
     const isBug = m.module === 'Tickets';
     const isTask = m.module === 'Tasks';
     
-    const tagBg = isBug ? 'bg-red-500/10 text-red-500 border-red-500/20' : isTask ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+    const tagBg = isBug ? 'bg-red-500/10 text-red-500 border-red-500/20' : isTask ? 'bg-accent/10 text-accent border-accent/20' : 'bg-accent/10 text-accent border-accent/20';
     const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
     const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 

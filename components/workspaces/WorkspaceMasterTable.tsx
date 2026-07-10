@@ -150,7 +150,7 @@ export function WorkspaceMasterTable({
             const isOnline = onlineUsers.has(uid);
             return (
               <div key={idx} className="relative">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17] bg-indigo-600'}`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : '#4f46e5' }}>
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17] bg-accent'}`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : '#4f46e5' }}>
                   {uInfo?.profile_photo ? <img src={uInfo.profile_photo} className="h-full w-full rounded-full" alt="" /> : (uInfo?.full_name?.substring(0,2).toUpperCase() || "U")}
                 </div>
                 <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 ${isLightMode ? 'border-white' : 'border-[#0B0D17]'} ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -259,7 +259,7 @@ export function WorkspaceMasterTable({
             let guideLineColor = isLightMode ? 'border-gray-300' : 'border-white/20';
             
             if (isLast) {
-              if (node.type === 'SUB_WORKSPACE') guideLineColor = isLightMode ? 'border-indigo-400' : 'border-indigo-500/80';
+              if (node.type === 'SUB_WORKSPACE') guideLineColor = isLightMode ? 'border-accent' : 'border-accent/80';
               else if (node.type === 'TASK') guideLineColor = isLightMode ? 'border-emerald-400' : 'border-emerald-500/80';
               else if (node.type === 'SUB_TASK') guideLineColor = isLightMode ? 'border-amber-400' : 'border-amber-500/80';
             }
@@ -296,7 +296,7 @@ export function WorkspaceMasterTable({
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
-                      <div className="h-4 w-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                      <div className="h-4 w-4 rounded-full border-2 border-accent border-t-transparent animate-spin" />
                     ) : isExpanded ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
@@ -312,7 +312,7 @@ export function WorkspaceMasterTable({
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-1.5 min-w-0 max-w-full">
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
-                      isWorkspaceType ? (depth === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500/80') : 'text-emerald-500'
+                      isWorkspaceType ? (depth === 0 ? 'text-accent dark:text-accent' : 'text-accent/80') : 'text-emerald-500'
                     }`} />
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold shrink-0">
@@ -330,7 +330,7 @@ export function WorkspaceMasterTable({
                           : (node.workspace_name || node.name || node.subject || node.title)}
                       </span>
                       {node.attachmentCount > 0 && (
-                        <div className={`flex items-center justify-center p-0.5 px-1 rounded-md ml-1 ${isLightMode ? 'bg-purple-100 text-purple-600' : 'bg-purple-500/20 text-purple-400'}`} title={`${node.attachmentCount} Attachment(s)`}>
+                        <div className={`flex items-center justify-center p-0.5 px-1 rounded-md ml-1 ${isLightMode ? 'bg-accent/10 text-accent' : 'bg-accent/20 text-accent'}`} title={`${node.attachmentCount} Attachment(s)`}>
                           <Paperclip className="h-3 w-3" />
                         </div>
                       )}
@@ -395,8 +395,8 @@ export function WorkspaceMasterTable({
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
                   className={`h-6 px-2 text-[10px] font-medium uppercase ${
                     isLightMode 
-                      ? 'border-indigo-200 text-indigo-600 hover:bg-indigo-50' 
-                      : 'border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10'
+                      ? 'border-accent/30 text-accent hover:bg-accent/10' 
+                      : 'border-accent/30 text-accent hover:bg-accent/10'
                   }`}
                 >
                   + Sub WS
@@ -409,8 +409,8 @@ export function WorkspaceMasterTable({
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
                   className={`h-6 px-2 text-[10px] font-medium uppercase ${
                     isLightMode 
-                      ? 'border-purple-200 text-purple-600 hover:bg-purple-50' 
-                      : 'border-purple-500/30 text-purple-400 hover:bg-purple-500/10'
+                      ? 'border-accent/30 text-accent hover:bg-accent/10' 
+                      : 'border-accent/30 text-accent hover:bg-accent/10'
                   }`}
                 >
                   {isWorkspaceType ? '+ Task' : '+ Sub Task'}
@@ -447,7 +447,7 @@ export function WorkspaceMasterTable({
                     router.push(`/tasks/${node.id}`);
                   }
                 }}
-                className={`h-7 w-7 p-0 ${isLightMode ? 'text-indigo-600 hover:bg-indigo-50' : 'text-indigo-400 hover:bg-indigo-500/20'}`}
+                className={`h-7 w-7 p-0 ${isLightMode ? 'text-accent hover:bg-accent/10' : 'text-accent hover:bg-accent/20'}`}
                 title="Edit"
               >
                 <Edit2 className="h-3.5 w-3.5" />

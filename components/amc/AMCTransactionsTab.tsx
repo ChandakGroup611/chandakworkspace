@@ -164,7 +164,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
               <AppCard key={tx.id} className={`p-4 flex items-center justify-between border ${isLightMode ? 'bg-white border-gray-100' : 'bg-white/5 border-white/10'}`}>
                 <div>
                   <div className="flex items-center gap-3">
-                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${tx.transaction_type === 'Add-on Licenses' ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}>
+                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${tx.transaction_type === 'Add-on Licenses' ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>
                       {tx.transaction_type}
                     </span>
                     <span className="font-semibold text-sm">{tx.po_number || 'No PO'}</span>

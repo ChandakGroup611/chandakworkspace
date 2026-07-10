@@ -56,7 +56,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[10px] font-normal px-2 py-1 rounded bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-indigo-500 placeholder:text-gray-400"
+            className="w-full text-[10px] font-normal px-2 py-1 rounded bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-gray-400"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -334,10 +334,10 @@ export default function ReportsClient() {
           <button onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <Layers className="h-3.5 w-3.5" /> Sub-Workspaces
           </button>
-          <button onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-purple-500/20 text-purple-500" : "text-muted hover:bg-elevated"}`}>
+          <button onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <LayoutList className="h-3.5 w-3.5" /> Tasks
           </button>
-          <button onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-purple-500/20 text-purple-500" : "text-muted hover:bg-elevated"}`}>
+          <button onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <AlignLeft className="h-3.5 w-3.5" /> Sub-Tasks
           </button>
         </div>
@@ -558,7 +558,7 @@ export default function ReportsClient() {
                             <AppTableCell key={col.field_id} className="text-[13px] text-gray-600 dark:text-gray-400">
                               <div className="truncate max-w-[200px]" title={String(val)}>
                                 {col.data_type === "link" && val !== "—" ? (
-                                  <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{val}</a>
+                                  <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
                                 ) : col.data_type === "badge" && val !== "—" ? (
                                   <AppBadge variant="neutral">{val}</AppBadge>
                                 ) : (

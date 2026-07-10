@@ -137,12 +137,12 @@ export default function SLAPage() {
       {/* Interactive SLA Governance Heatmap Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-indigo-500' : 'hover:bg-gray-50/50 dark:hover:bg-white/5'} ${isLightMode ? "bg-white" : ""}`}
+          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-gray-50/50 dark:hover:bg-white/5'} ${isLightMode ? "bg-white" : ""}`}
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
             <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total Records</span>
-            <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{loading ? '-' : totalRecords}</span>
+            <span className="text-3xl font-bold text-accent dark:text-accent">{loading ? '-' : totalRecords}</span>
           </AppCardContent>
         </AppCard>
 
@@ -202,9 +202,9 @@ export default function SLAPage() {
                       <AppTableRow key={item.id} className={isLightMode ? "hover:bg-gray-50" : ""}>
                         <AppTableCell>
                           <div className="space-y-0.5">
-                            <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-indigo-600" : "text-white"}`}>{item.displayId || item.id}</span>
+                            <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-accent" : "text-white"}`}>{item.displayId || item.id}</span>
                             <span className="text-[0.8rem] text-gray-500 block truncate max-w-[150px]">{item.targetEntity}</span>
-                            <span className={`text-xs font-semibold ${isLightMode ? "text-indigo-500" : "text-indigo-400"}`}>{item.type}</span>
+                            <span className={`text-xs font-semibold ${isLightMode ? "text-accent" : "text-accent"}`}>{item.type}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell>
@@ -225,7 +225,7 @@ export default function SLAPage() {
                           <div className="space-y-1 flex flex-col items-end">
                             <span className="text-xs text-gray-500 italic block truncate max-w-[120px]">{item.actionRecipient}</span>
                             <div className="flex items-center gap-1 mt-1 justify-end">
-                              <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-blue-500 hover:bg-blue-500/10" title="View SLA Tracker">
+                              <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-accent hover:bg-accent/10" title="View SLA Tracker">
                                 <Eye className="h-3.5 w-3.5" />
                               </AppButton>
                               {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (

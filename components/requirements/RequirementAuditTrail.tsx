@@ -36,15 +36,15 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
   const getEventIcon = (type: string) => {
     if (type.includes('APPROVAL')) return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
     if (type.includes('ESCALATION')) return <AlertCircle className="w-4 h-4 text-red-500" />;
-    if (type.includes('INITIATED') || type.includes('CREATED')) return <PlayCircle className="w-4 h-4 text-blue-500" />;
-    return <Activity className="w-4 h-4 text-indigo-500" />;
+    if (type.includes('INITIATED') || type.includes('CREATED')) return <PlayCircle className="w-4 h-4 text-accent" />;
+    return <Activity className="w-4 h-4 text-accent" />;
   };
 
   return (
     <AppCard className={`h-full ${isLightMode ? "bg-white border-gray-200" : "bg-[#0a0a0b] border-white/5"}`}>
       <AppCardHeader className={`border-b ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/5"}`}>
         <div className="flex items-center gap-2">
-          <Clock className={`w-4 h-4 ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`} />
+          <Clock className={`w-4 h-4 ${isLightMode ? "text-accent" : "text-accent"}`} />
           <AppCardTitle className={isLightMode ? "text-gray-900" : "text-white"}>Governance Audit Trail</AppCardTitle>
         </div>
       </AppCardHeader>
@@ -56,7 +56,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
               No activity recorded yet.
             </div>
           ) : (
-            <div className="relative border-l border-indigo-500/20 ml-3 space-y-6 pb-4">
+            <div className="relative border-l border-accent/20 ml-3 space-y-6 pb-4">
               {events.map((ev, idx) => (
                 <div key={ev.id} className="relative pl-6 group">
                   {/* Timeline Dot */}
@@ -82,7 +82,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
 
                     {ev.new_value?.level && (
                       <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold w-fit ${
-                        isLightMode ? "bg-indigo-50 text-indigo-700" : "bg-indigo-500/10 text-indigo-400"
+                        isLightMode ? "bg-accent/10 text-accent" : "bg-accent/10 text-accent"
                       }`}>
                         Level {ev.new_value.level}
                       </div>

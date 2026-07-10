@@ -119,7 +119,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
   };
 
   const getFileIcon = (mime: string) => {
-    if (mime.startsWith('image/')) return <ImageIcon className="h-5 w-5 text-indigo-500" />;
+    if (mime.startsWith('image/')) return <ImageIcon className="h-5 w-5 text-accent" />;
     if (mime.includes('pdf')) return <FileText className="h-5 w-5 text-red-500" />;
     if (mime.includes('zip') || mime.includes('compressed')) return <FileArchive className="h-5 w-5 text-yellow-500" />;
     return <File className="h-5 w-5 text-gray-500" />;
@@ -135,8 +135,8 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
         onClick={() => fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
           isDragging 
-            ? isLightMode ? "border-indigo-500 bg-indigo-50" : "border-indigo-500 bg-indigo-500/10"
-            : isLightMode ? "border-gray-300 hover:border-indigo-400 bg-gray-50" : "border-white/10 hover:border-white/30 bg-white/5"
+            ? isLightMode ? "border-accent bg-accent/10" : "border-accent bg-accent/10"
+            : isLightMode ? "border-gray-300 hover:border-accent bg-gray-50" : "border-white/10 hover:border-white/30 bg-white/5"
         }`}
       >
         <input 
@@ -147,7 +147,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
           onChange={handleFileSelect} 
         />
         <div className={`p-3 rounded-xl mb-3 ${isLightMode ? "bg-white shadow-sm" : "bg-white/10"}`}>
-          <UploadCloud className={`h-6 w-6 ${isLightMode ? "text-indigo-600" : "text-gray-300"}`} />
+          <UploadCloud className={`h-6 w-6 ${isLightMode ? "text-accent" : "text-gray-300"}`} />
         </div>
         <h4 className={`text-sm font-bold mb-1 ${"text-foreground"}`}>
           Click or drag files to upload
@@ -189,14 +189,14 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                 {/* Progress bar */}
                 {fileObj.status === 'uploading' && (
                   <div className="w-full h-1 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
-                    <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${fileObj.progress}%` }} />
+                    <div className="h-full bg-accent transition-all duration-300" style={{ width: `${fileObj.progress}%` }} />
                   </div>
                 )}
               </div>
               
               <div className="flex items-center">
                 {fileObj.status === 'uploading' ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
+                  <Loader2 className="h-4 w-4 animate-spin text-accent" />
                 ) : (
                   <button 
                     onClick={() => removeFile(index)}
@@ -213,7 +213,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
             <button 
               onClick={startUploads}
               disabled={files.every(f => f.status === 'success') || files.some(f => f.status === 'uploading')}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-all"
+              className="px-4 py-2 text-xs font-semibold rounded-xl bg-accent text-white hover:bg-accent-secondary disabled:opacity-50 transition-all"
             >
               Upload Pending Files
             </button>

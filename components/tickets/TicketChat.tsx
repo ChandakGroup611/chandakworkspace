@@ -174,7 +174,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
 
           <div className="relative">
             <textarea 
-              className={`w-full h-24 p-4 pr-12 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none transition-all ${
+              className={`w-full h-24 p-4 pr-12 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none transition-all ${
                 isLightMode 
                   ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" 
                   : "bg-white/[0.02] border-white/10 text-white placeholder:text-gray-600"
@@ -190,10 +190,10 @@ export function TicketChat({ ticket }: TicketChatProps) {
               }}
             />
             <div className="absolute right-4 bottom-4 flex items-center gap-3">
-              <AppButton type="button" variant="ghost" size="sm" className="p-2 h-auto text-muted-foreground hover:text-indigo-600">
+              <AppButton type="button" variant="ghost" size="sm" className="p-2 h-auto text-muted-foreground hover:text-accent">
                 <Paperclip className="h-4 w-4" />
               </AppButton>
-              <AppButton type="submit" variant="primary" size="sm" className="h-8 w-8 p-0 flex items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/20">
+              <AppButton type="submit" variant="primary" size="sm" className="h-8 w-8 p-0 flex items-center justify-center rounded-xl bg-accent hover:bg-accent shadow-lg shadow-indigo-500/20">
                 <Send className="h-4 w-4" />
               </AppButton>
             </div>

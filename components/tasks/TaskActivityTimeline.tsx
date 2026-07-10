@@ -38,12 +38,12 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
 
   const getActionIcon = (action: string) => {
     switch (action) {
-      case 'STATUS_CHANGE': return <Activity className="h-4 w-4 text-blue-500" />;
-      case 'DEPARTMENT_CHANGE': return <Activity className="h-4 w-4 text-blue-500" />;
+      case 'STATUS_CHANGE': return <Activity className="h-4 w-4 text-accent" />;
+      case 'DEPARTMENT_CHANGE': return <Activity className="h-4 w-4 text-accent" />;
       case 'CHECKLIST_UPDATE': return <CheckSquare className="h-4 w-4 text-emerald-500" />;
-      case 'COMMENT': return <MessageSquare className="h-4 w-4 text-indigo-500" />;
+      case 'COMMENT': return <MessageSquare className="h-4 w-4 text-accent" />;
       case 'EDIT': return <Edit className="h-4 w-4 text-amber-500" />;
-      case 'CREATE': return <Activity className="h-4 w-4 text-purple-500" />;
+      case 'CREATE': return <Activity className="h-4 w-4 text-accent" />;
       case 'DELETE': return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'RESTORE': return <Activity className="h-4 w-4 text-emerald-500" />;
       case 'ASSIGNMENT_CHANGE': return <Edit className="h-4 w-4 text-emerald-600" />;
@@ -89,7 +89,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   return (
     <AppCard className={`p-5 space-y-4 border-smooth ${isLightMode ? "bg-white shadow-sm" : "bg-elevated"}`}>
       <div className="flex items-center gap-2 border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
-        <Clock className={`h-4 w-4 ${isLightMode ? "text-purple-600" : "text-purple-400"}`} />
+        <Clock className={`h-4 w-4 ${isLightMode ? "text-accent" : "text-accent"}`} />
         <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>
       </div>
 
@@ -108,7 +108,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
                 isLightMode ? "bg-gray-50/50 border-gray-100" : "bg-white/[0.02] border-white/5"
               }`}>
                 <p className={`text-xs ${isLightMode ? "text-gray-800" : "text-gray-300"}`}>
-                  <strong className={isLightMode ? "text-indigo-700" : "text-indigo-400"}>
+                  <strong className={isLightMode ? "text-accent" : "text-accent"}>
                     {log.actor?.full_name || 'System Administrator'}
                   </strong> {getActionText(log)}
                 </p>

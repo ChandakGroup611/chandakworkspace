@@ -633,7 +633,7 @@ export default function MastersPage() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
         <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
           Verifying Credentials...
         </span>
@@ -667,7 +667,7 @@ export default function MastersPage() {
             <AppButton 
               variant="outline" 
               size="sm" 
-              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />}
+              leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-accent' : ''}`} />}
               onClick={fetchRecords}
             >
               Refresh Data
@@ -753,7 +753,7 @@ export default function MastersPage() {
                     }}
                     className={`py-1 px-2 rounded-lg text-center transition-all truncate ${tier.id === "ALL" ? "col-span-2" : ""} ${
                       isSelected
-                        ? (isLightMode ? "bg-white text-blue-700 shadow-sm" : "bg-white/10 text-white shadow")
+                        ? (isLightMode ? "bg-white text-accent shadow-sm" : "bg-white/10 text-white shadow")
                         : (isLightMode ? "hover:text-gray-900 hover:bg-white/50" : "hover:text-gray-200 hover:bg-white/5")
                     }`}
                   >
@@ -775,7 +775,7 @@ export default function MastersPage() {
                   <div key={groupCategory} className="space-y-1.5">
                     <div className="flex items-center gap-2 px-1 pt-1">
                       <span className={`text-[0.7rem] font-bold tracking-widest uppercase font-mono ${
-                        isLightMode ? "text-blue-700" : "text-blue-400"
+                        isLightMode ? "text-accent" : "text-accent"
                       }`}>
                         ■ {groupCategory} CATEGORY
                       </span>
@@ -795,14 +795,14 @@ export default function MastersPage() {
                           }}
                           className={`w-full p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-3 ${
                             isLightMode
-                              ? (isActive ? "bg-blue-50 border-blue-300 shadow-sm" : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50")
-                              : (isActive ? "bg-white/[0.06] border-blue-500/40 shadow-md" : "bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]")
+                              ? (isActive ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50")
+                              : (isActive ? "bg-white/[0.06] border-accent/40 shadow-md" : "bg-white/[0.01] border-white/5 hover:border-white/10 hover:bg-white/[0.02]")
                           }`}
                         >
                           <div className={`p-2 rounded-lg mt-0.5 ${
                             isLightMode
-                              ? (isActive ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500")
-                              : (isActive ? "bg-blue-500/10 text-blue-400" : "bg-white/5 text-gray-400")
+                              ? (isActive ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-500")
+                              : (isActive ? "bg-accent/10 text-accent" : "bg-white/5 text-gray-400")
                           }`}>
                             <IconComponent className="h-4 w-4 shrink-0" />
                           </div>
@@ -813,12 +813,12 @@ export default function MastersPage() {
                               }`}>
                                 {tab.label}
                               </span>
-                              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />}
+                              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
                             </div>
                             <p className="text-xs text-gray-500 font-medium line-clamp-1">{tab.desc}</p>
                             {tab.parentTable && (
                               <span className={`text-[0.65rem] font-mono px-1 py-0.2 rounded border inline-block mt-1 ${
-                                isLightMode ? "text-purple-700 bg-purple-50 border-purple-200" : "text-purple-400/80 bg-purple-500/10 border-purple-500/20"
+                                isLightMode ? "text-accent bg-accent/10 border-accent/30" : "text-accent/80 bg-accent/10 border-accent/20"
                               }`}>
                                 ↳ Dependent on {tab.parentTable}
                               </span>
@@ -848,7 +848,7 @@ export default function MastersPage() {
                     <h2 className="text-sm font-bold text-gray-900 dark:text-white">
                       {currentConfig.label}
                     </h2>
-                    <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider py-0 px-1.5 h-4 min-h-0 border border-blue-200">
+                    <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider py-0 px-1.5 h-4 min-h-0 border border-accent/30">
                       {activeTab.replace(/_/g, ' ')}
                     </AppBadge>
                   </div>
@@ -874,7 +874,7 @@ export default function MastersPage() {
             <div className="p-4 flex-1 overflow-y-auto">
               {loading ? (
                 <div className="py-16 flex flex-col items-center justify-center space-y-3">
-                  <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
+                  <RefreshCw className="h-6 w-6 animate-spin text-accent" />
                   <span className="text-xs text-gray-500 font-medium">Resolving normalized records live from database schema...</span>
                 </div>
               ) : (
@@ -930,7 +930,7 @@ export default function MastersPage() {
                             <AppTableRow key={rec.id}>
                               <AppTableCell>
                                 <div className="space-y-0.5">
-                                  <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-blue-700" : "text-blue-400"}`}>{rec.code}</span>
+                                  <span className={`font-mono text-xs font-bold block ${isLightMode ? "text-accent" : "text-accent"}`}>{rec.code}</span>
                                   <span className="text-[0.7rem] text-gray-500 font-mono block truncate max-w-[120px]">{rec.id}</span>
                                 </div>
                               </AppTableCell>
@@ -940,10 +940,10 @@ export default function MastersPage() {
                                     <span className={`font-bold text-xs block ${"text-foreground"}`}>{rec.name}</span>
                                     <span className={`text-[0.65rem] font-bold px-1 rounded border tracking-tighter ${
                                       rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
-                                        ? "text-purple-400 border-purple-500/30 bg-purple-500/5"
+                                        ? "text-accent border-accent/30 bg-accent/5"
                                         : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
                                         ? "text-amber-400 border-amber-500/30 bg-amber-500/5"
-                                        : "text-blue-400 border-blue-500/30 bg-blue-500/5"
+                                        : "text-accent border-accent/30 bg-accent/5"
                                     }`}>
                                       {rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
                                         ? "FLAG 2 (ERP)"
@@ -962,7 +962,7 @@ export default function MastersPage() {
                               {currentConfig.parentTable && (
                                 <AppTableCell>
                                   <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block truncate max-w-[120px] ${
-                                    isLightMode ? "text-purple-700 bg-purple-50 border-purple-200" : "text-purple-400 bg-purple-500/10 border-purple-500/20"
+                                    isLightMode ? "text-accent bg-accent/10 border-accent/30" : "text-accent bg-accent/10 border-accent/20"
                                   }`}>
                                     {rec[currentConfig.parentKey!] || "Unmapped"}
                                   </span>
@@ -999,7 +999,7 @@ export default function MastersPage() {
                               {activeTab === "workflow_states" && (
                                 <AppTableCell>
                                   <span className={`text-xs font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                                    isLightMode ? "text-blue-700 bg-blue-50 border-blue-200" : "text-blue-400 bg-blue-500/10 border-blue-500/20"
+                                    isLightMode ? "text-accent bg-accent/10 border-accent/30" : "text-accent bg-accent/10 border-accent/20"
                                   }`}>
                                     {(rec.module || "Universal").replace(/_/g, ' ')}
                                   </span>
@@ -1028,7 +1028,7 @@ export default function MastersPage() {
                                     onClick={() => openEditModal(rec)}
                                     disabled={!hasPermission("MASTERS_UPDATE")}
                                     className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      isLightMode ? "bg-white border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-blue-400 hover:border-blue-500/30"
+                                      isLightMode ? "bg-white border-gray-200 text-gray-500 hover:text-accent hover:border-accent/30" : "bg-white/[0.01] border-white/5 text-gray-400 hover:text-accent hover:border-accent/30"
                                     }`}
                                     title="Edit Record Details"
                                   >
@@ -1141,7 +1141,7 @@ export default function MastersPage() {
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   rows={2}
-                  className={`w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-blue-500/50 resize-none transition-all ${
+                  className={`w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-accent/50 resize-none transition-all ${
                     isLightMode ? "bg-white border-gray-300 text-gray-900 placeholder-gray-400" : "bg-white/5 border-white/10 text-gray-200 placeholder-gray-500"
                   }`}
                 />
@@ -1173,13 +1173,13 @@ export default function MastersPage() {
               {/* Conditional Cascading Mapping dropmenus */}
               {currentConfig.parentTable && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-purple-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-accent uppercase tracking-wider block">
                     Parent Record Link <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={formParentId}
                     onChange={(e) => setFormParentId(e.target.value)}
-                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-purple-500/50 cursor-pointer ${
+                    className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-accent/50 cursor-pointer ${
                       isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-purple-300"
                     }`}
                     required={currentConfig.parentRequired}
@@ -1248,8 +1248,8 @@ export default function MastersPage() {
                 <select
                   value={formScopeId || ""}
                   onChange={(e) => setFormScopeId(e.target.value || null)}
-                  className={`w-full h-9 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:border-indigo-500/50 cursor-pointer ${
-                    isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-indigo-400"
+                  className={`w-full h-9 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:border-accent/50 cursor-pointer ${
+                    isLightMode ? "bg-white border-gray-300 text-gray-900" : "bg-white/5 border-white/10 text-accent"
                   }`}
                   required
                 >

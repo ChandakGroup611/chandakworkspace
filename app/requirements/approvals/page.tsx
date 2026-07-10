@@ -134,7 +134,7 @@ export default function RequirementsPage() {
   if (!mounted || permsLoading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-[#070913]">
-        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
     );
   }
@@ -189,7 +189,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">System</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-indigo-500"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
           >
@@ -202,7 +202,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-indigo-500"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.priority}
             onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
           >
@@ -215,7 +215,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-indigo-500"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.department}
             onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
           >
@@ -228,7 +228,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-indigo-500"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.status}
             onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
           >
@@ -287,7 +287,7 @@ export default function RequirementsPage() {
                 }).map((r) => (
                   <AppTableRow 
                     key={r.id} 
-                    className="cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                    className="cursor-pointer hover:bg-accent/10/50 dark:hover:bg-white/[0.02] transition-colors"
                     onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis&from=approvals`)}
                   >
                     <AppTableCell className="font-mono text-xs font-bold text-amber-400">{r.id}</AppTableCell>
@@ -323,7 +323,7 @@ export default function RequirementsPage() {
                           size="sm" 
                           title="View Business Analysis"
                           onClick={(e) => { e.stopPropagation(); router.push(`/requirements/${r.dbId}?tab=analysis`); }}
-                          className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                          className="text-gray-500 hover:text-accent dark:hover:text-accent"
                         >
                           <Eye className="h-4 w-4" />
                         </AppButton>

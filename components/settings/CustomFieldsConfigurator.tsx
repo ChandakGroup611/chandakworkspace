@@ -107,7 +107,7 @@ export default function CustomFieldsConfigurator() {
     <div className="space-y-6 pt-4 border-t border-white/5">
       {/* Toast alert notice */}
       {successToast && (
-        <div id="cf-toast-notice" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div id="cf-toast-notice" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
@@ -117,7 +117,7 @@ export default function CustomFieldsConfigurator() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-blue-500 animate-pulse" />
+            <Database className="h-4 w-4 text-accent animate-pulse" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-300">
               Global Custom Fields Configuration Engine
             </h2>
@@ -149,12 +149,12 @@ export default function CustomFieldsConfigurator() {
                     onClick={() => setActiveModule(tab.id)}
                     className={`w-full p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${
                       isActive 
-                        ? "bg-white/[0.06] border-blue-500/40 text-white shadow-md font-bold" 
+                        ? "bg-white/[0.06] border-accent/40 text-white shadow-md font-bold" 
                         : "bg-white/[0.01] border-white/5 hover:border-white/10 text-gray-400 hover:text-gray-200"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <div className={`p-1.5 rounded-lg ${isActive ? "bg-blue-500 text-white" : "bg-white/5 text-gray-500"}`}>
+                      <div className={`p-1.5 rounded-lg ${isActive ? "bg-accent text-white" : "bg-white/5 text-gray-500"}`}>
                         <IconComponent className="h-3.5 w-3.5" />
                       </div>
                       <span className="text-xs truncate">{tab.label}</span>
@@ -169,7 +169,7 @@ export default function CustomFieldsConfigurator() {
           </AppCard>
 
           {/* New field definition append form */}
-          <AppCard className="p-5 space-y-4 border-blue-500/20 bg-gradient-to-b from-blue-950/10 via-transparent to-transparent">
+          <AppCard className="p-5 space-y-4 border-accent/20 bg-gradient-to-b from-blue-950/10 via-transparent to-transparent">
             <span className="text-xs font-semibold text-foreground block pb-2 border-b border-white/5">
               Append Schema Definition
             </span>
@@ -196,7 +196,7 @@ export default function CustomFieldsConfigurator() {
                   placeholder="e.g. kernel_patch_id" 
                   value={newKey}
                   onChange={(e) => setNewKey(e.target.value)}
-                  className="h-8 font-mono text-xs text-blue-400"
+                  className="h-8 font-mono text-xs text-accent"
                 />
               </div>
 
@@ -206,7 +206,7 @@ export default function CustomFieldsConfigurator() {
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-white/5 border border-white/5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+                    className="w-full h-8 px-2 rounded-lg bg-white/5 border border-white/5 text-xs text-gray-200 focus:outline-none focus:border-accent/50"
                   >
                     <option value="text" className="bg-[#0f172a]">Text String</option>
                     <option value="number" className="bg-[#0f172a]">Numeric Scalar</option>
@@ -255,7 +255,7 @@ export default function CustomFieldsConfigurator() {
             <AppCardHeader className="flex flex-row items-center justify-between pb-3 border-b border-white/5">
               <div className="space-y-0.5">
                 <AppCardTitle className="text-foreground">
-                  Active Dictionaries: <strong className="text-blue-400 capitalize">{activeModule}</strong>
+                  Active Dictionaries: <strong className="text-accent capitalize">{activeModule}</strong>
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-gray-400">Values ingest seamlessly via runtime custom form mutators.</p>
               </div>
@@ -289,7 +289,7 @@ export default function CustomFieldsConfigurator() {
                             )}
                           </div>
                         </AppTableCell>
-                        <AppTableCell className="font-mono text-xs text-blue-400 font-semibold">
+                        <AppTableCell className="font-mono text-xs text-accent font-semibold">
                           {fItem.field_key}
                         </AppTableCell>
                         <AppTableCell>

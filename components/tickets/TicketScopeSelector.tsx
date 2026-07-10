@@ -44,7 +44,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-4 animate-pulse">
-        <div className="h-12 w-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
+        <div className="h-12 w-12 rounded-full border-4 border-accent/20 border-t-indigo-500 animate-spin" />
         <p className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Syncing Governance Matrix...</p>
       </div>
     );
@@ -72,7 +72,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
             >
               <AppCard className={`h-full transition-all overflow-hidden relative ${
                 isLightMode 
-                  ? "bg-white border-gray-100 shadow-xl shadow-gray-200/50 group-hover:border-indigo-200 group-hover:bg-gray-50/50" 
+                  ? "bg-white border-gray-100 shadow-xl shadow-gray-200/50 group-hover:border-accent/30 group-hover:bg-gray-50/50" 
                   : "bg-white/[0.03] border-white/5 backdrop-blur-xl group-hover:border-white/20 group-hover:bg-white/[0.05]"
               }`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-100 transition-opacity`} />
@@ -80,12 +80,12 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                   <div className={`h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 border ${
                     isLightMode ? "bg-white border-gray-100" : "bg-white/5 border-white/10"
                   }`}>
-                    <Icon className={`h-6 w-6 ${isLightMode ? "text-indigo-600" : "text-white"}`} />
+                    <Icon className={`h-6 w-6 ${isLightMode ? "text-accent" : "text-white"}`} />
                   </div>
                   
                   <div className="space-y-1">
                     <h3 className={`text-lg font-semibold transition-colors ${
-                      isLightMode ? "text-gray-900 group-hover:text-indigo-600" : "text-white group-hover:text-indigo-300"
+                      isLightMode ? "text-gray-900 group-hover:text-accent" : "text-white group-hover:text-indigo-300"
                     }`}>
                       {scope.name}
                     </h3>
@@ -95,7 +95,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                   </div>
 
                   <div className={`flex items-center text-xs font-bold uppercase tracking-widest transition-colors pt-2 ${
-                    isLightMode ? "text-indigo-600" : "text-indigo-400 group-hover:text-indigo-300"
+                    isLightMode ? "text-accent" : "text-accent group-hover:text-indigo-300"
                   }`}>
                     <span>Initialize Flow</span>
                     <ChevronRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform" />

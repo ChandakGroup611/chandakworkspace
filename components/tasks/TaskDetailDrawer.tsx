@@ -29,7 +29,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   onClick={() => setActiveTab("details")}
                   className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
                     activeTab === "details"
-                      ? "border-indigo-500 text-indigo-400"
+                      ? "border-accent text-accent"
                       : "border-transparent text-gray-500 hover:text-gray-300"
                   }`}
                 >
@@ -40,7 +40,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   onClick={() => setActiveTab("collaboration")}
                   className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
                     activeTab === "collaboration"
-                      ? "border-indigo-500 text-indigo-400"
+                      ? "border-accent text-accent"
                       : "border-transparent text-gray-500 hover:text-gray-300"
                   }`}
                 >
@@ -119,7 +119,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
               <div className="bg-gray-900/40 rounded-xl p-4 border border-white/5">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between">
                   Custom Fields
-                  <AppButton size="sm" variant="ghost" className="h-6 w-6 p-0 text-indigo-400 hover:text-indigo-300 bg-indigo-500/10">+</AppButton>
+                  <AppButton size="sm" variant="ghost" className="h-6 w-6 p-0 text-accent hover:text-indigo-300 bg-accent/10">+</AppButton>
                 </h3>
                 <div className="mt-4 space-y-3">
                   {Object.entries(task.custom_fields || {}).map(([key, val]: any) => (

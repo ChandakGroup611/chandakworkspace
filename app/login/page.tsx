@@ -310,7 +310,7 @@ export default function LoginPage() {
             <span className={isLight ? "text-slate-500" : "text-slate-400"}>
               Don't have an account?{" "}
             </span>
-            <Link href="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+            <Link href="/register" className="font-semibold text-accent dark:text-accent hover:text-accent dark:hover:text-blue-300 transition-colors">
               Request Access
             </Link>
           </div>

@@ -167,7 +167,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
 
   return (
     <div className="space-y-6">
-      <div className={`p-4 rounded-xl border flex items-center justify-between ${isLightMode ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'}`}>
+      <div className={`p-4 rounded-xl border flex items-center justify-between ${isLightMode ? 'bg-accent/10 border-accent/30 text-accent-secondary' : 'bg-accent/10 border-accent/20 text-accent'}`}>
         <div>
           <h4 className="font-bold">License Utilization</h4>
           <p className="text-sm mt-1">Assign available licenses to users. The master record will automatically track usage.</p>
@@ -218,7 +218,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                           size="sm" 
                           onClick={() => setTransferringId(a.id)}
                           disabled={processingId === a.id}
-                          className="text-blue-500 hover:bg-blue-500/10"
+                          className="text-accent hover:bg-accent/10"
                         >
                           Transfer
                         </AppButton>

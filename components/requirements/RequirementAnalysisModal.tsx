@@ -151,10 +151,10 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
     }
   };
 
-  const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+  const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
   }`;
-  const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none min-h-[80px] ${
+  const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none min-h-[80px] ${
     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-white/5 border-white/10 text-white"
   }`;
   const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 ${isLightMode ? "text-gray-500" : "text-gray-400"}`;
@@ -175,7 +175,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
         <AppCardHeader className={`border-b shrink-0 pb-4 ${isLightMode ? "border-gray-200 bg-white" : "border-white/5 bg-white/[0.02]"}`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${isLightMode ? "bg-indigo-50 text-indigo-600" : "bg-indigo-500/10 text-indigo-400"}`}>
+            <div className={`p-2 rounded-lg ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/10 text-accent"}`}>
               <LayoutDashboard className="h-5 w-5" />
             </div>
             <div>
@@ -196,7 +196,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Business Section */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b ${isLightMode ? "text-indigo-700 border-gray-200" : "text-indigo-400 border-white/10"}`}>
+              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b ${isLightMode ? "text-accent border-gray-200" : "text-accent border-white/10"}`}>
                 <Briefcase className="h-4 w-4" /> Business Classification
               </h3>
               
@@ -296,7 +296,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                         onClick={() => handleDepartmentToggle(d.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
                           isSelected 
-                            ? "bg-indigo-600 border-indigo-600 text-white" 
+                            ? "bg-accent border-accent text-white" 
                             : isLightMode ? "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100" : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
                         }`}
                       >
@@ -317,8 +317,8 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                       const selectedApprovers = formData.department_approvers[deptId] || [];
                       
                       return (
-                        <div key={deptId} className={`p-3 border rounded-md ${isLightMode ? "border-indigo-500/20 bg-indigo-50/30" : "border-indigo-500/20 bg-indigo-500/5"}`}>
-                          <div className={`text-xs font-semibold mb-2 ${isLightMode ? "text-indigo-700" : "text-indigo-300"}`}>{deptName} Approvers</div>
+                        <div key={deptId} className={`p-3 border rounded-md ${isLightMode ? "border-accent/20 bg-accent/10/30" : "border-accent/20 bg-accent/5"}`}>
+                          <div className={`text-xs font-semibold mb-2 ${isLightMode ? "text-accent" : "text-indigo-300"}`}>{deptName} Approvers</div>
                           <div className="flex flex-wrap gap-2">
                             {deptUsers.map((u: any) => {
                               const isUserSelected = selectedApprovers.includes(u.id);
@@ -340,7 +340,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                   }}
                                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
                                     isUserSelected 
-                                      ? "bg-indigo-600 border-indigo-600 text-white" 
+                                      ? "bg-accent border-accent text-white" 
                                       : isLightMode
                                         ? "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                                         : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10"
@@ -388,7 +388,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
               <AppButton type="button" variant="ghost" onClick={onClose} disabled={loading} className={isLightMode ? "text-gray-600" : "text-gray-400"}>
                 Cancel
               </AppButton>
-              <AppButton type="submit" variant="primary" disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white min-w-[140px]">
+              <AppButton type="submit" variant="primary" disabled={loading} className="bg-accent hover:bg-accent text-white min-w-[140px]">
                 {loading ? "Submitting..." : "Submit Analysis"}
               </AppButton>
             </div>

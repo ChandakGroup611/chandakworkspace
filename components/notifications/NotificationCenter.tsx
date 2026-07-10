@@ -80,7 +80,7 @@ export default function NotificationCenter() {
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2 rounded-xl transition-all ${
           isOpen 
-            ? (isLightMode ? "bg-indigo-50 text-indigo-600" : "bg-indigo-500/20 text-indigo-400") 
+            ? (isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent") 
             : (isLightMode ? "text-gray-500 hover:bg-gray-100" : "text-gray-400 hover:bg-white/10")
         }`}
       >
@@ -111,7 +111,7 @@ export default function NotificationCenter() {
                   size="sm" 
                   onClick={handleMarkAllRead} 
                   leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
-                  className="h-7 px-2 text-[10px] text-indigo-500 hover:text-indigo-600 border-none bg-transparent"
+                  className="h-7 px-2 text-[10px] text-accent hover:text-accent border-none bg-transparent"
                 >
                   Mark all read
                 </AppButton>
@@ -125,8 +125,8 @@ export default function NotificationCenter() {
                   onClick={() => handleRead(n.id, n.link)}
                   className={`p-4 border-b cursor-pointer transition-colors group ${
                     isLightMode 
-                      ? "border-gray-100 hover:bg-indigo-50/50" 
-                      : "border-white/5 hover:bg-indigo-500/10"
+                      ? "border-gray-100 hover:bg-accent/10/50" 
+                      : "border-white/5 hover:bg-accent/10"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -138,7 +138,7 @@ export default function NotificationCenter() {
                       </span>
                     </div>
                     {n.link && (
-                      <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-indigo-500 shrink-0 mt-0.5" />
+                      <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-accent shrink-0 mt-0.5" />
                     )}
                   </div>
                 </div>

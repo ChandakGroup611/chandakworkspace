@@ -11,18 +11,18 @@ const MODULES = [
     description: "Manage Primary and Fallback SMTP/Graph providers for high-availability routing.",
     href: "/settings/communication/providers",
     icon: Server,
-    color: "text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/20"
+    color: "text-accent",
+    bg: "bg-accent/10",
+    border: "border-accent/20"
   },
   {
     title: "Template Designer",
     description: "Design dynamic HTML email templates with intelligent merge tag hydration.",
     href: "/settings/communication/templates",
     icon: LayoutTemplate,
-    color: "text-purple-400",
-    bg: "bg-purple-500/10",
-    border: "border-purple-500/20"
+    color: "text-accent",
+    bg: "bg-accent/10",
+    border: "border-accent/20"
   },
   {
     title: "Notification Rules",
@@ -50,7 +50,7 @@ export default function CommunicationCenterHub() {
   if (permsLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
     );
   }
@@ -87,7 +87,7 @@ export default function CommunicationCenterHub() {
                   <mod.icon className={`w-6 h-6 ${mod.color}`} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground group-hover:text-blue-400 transition-colors">{mod.title}</h2>
+                  <h2 className="text-lg font-semibold text-foreground group-hover:text-accent transition-colors">{mod.title}</h2>
                   <p className="text-sm text-gray-400 mt-1 leading-relaxed">{mod.description}</p>
                 </div>
               </div>

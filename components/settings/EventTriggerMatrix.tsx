@@ -25,7 +25,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   const modules = Array.from(new Set(configs.map(c => c.module_code)));
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto my-12" />;
+    return <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full mx-auto my-12" />;
   }
 
   if (!hasPermission("SETTINGS_NOTIFICATIONS_VIEW")) {
@@ -70,7 +70,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                         <span className="text-xs font-medium text-gray-400 uppercase">In-App</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500/50" 
+                          className="w-4 h-4 rounded border-white/20 bg-black/50 text-accent focus:ring-accent/50" 
                           checked={config.is_inapp_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_inapp_enabled', config.is_inapp_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}
@@ -80,7 +80,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                         <span className="text-xs font-medium text-gray-400 uppercase">Email</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500/50" 
+                          className="w-4 h-4 rounded border-white/20 bg-black/50 text-accent focus:ring-accent/50" 
                           checked={config.is_email_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_email_enabled', config.is_email_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}

@@ -48,7 +48,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   onClick={() => setActiveTab("details")}
                   className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
                     activeTab === "details"
-                      ? "border-indigo-500 text-indigo-400"
+                      ? "border-accent text-accent"
                       : "border-transparent text-gray-500 hover:text-gray-300"
                   }`}
                 >
@@ -59,7 +59,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   onClick={() => setActiveTab("collaboration")}
                   className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
                     activeTab === "collaboration"
-                      ? "border-indigo-500 text-indigo-400"
+                      ? "border-accent text-accent"
                       : "border-transparent text-gray-500 hover:text-gray-300"
                   }`}
                 >
@@ -71,7 +71,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               {activeTab === "details" && (
                 <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
                   <section className="bg-gray-900/20 rounded-2xl p-6 border border-white/5">
-                    <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">Business Justification</h3>
+                    <h3 className="text-xs font-bold text-accent uppercase tracking-widest mb-3">Business Justification</h3>
                     <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
                       {requirement.business_justification}
                     </div>
@@ -88,7 +88,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   <section className="bg-gray-900/40 rounded-2xl p-6 border border-white/5">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-sm font-bold text-foreground">Implementation Progress</h3>
-                      <span className="text-2xl font-bold text-indigo-400">{requirement.completion_percentage}%</span>
+                      <span className="text-2xl font-bold text-accent">{requirement.completion_percentage}%</span>
                     </div>
                     <div className="h-2 w-full bg-black rounded-full overflow-hidden mb-6">
                       <div 
@@ -198,7 +198,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               <div className="bg-gray-900/40 rounded-2xl p-5 border border-white/5">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex justify-between items-center mb-4">
                   Attachments
-                  <AppButton size="sm" variant="ghost" className="text-indigo-400 hover:text-indigo-300 p-1 bg-indigo-500/10">+</AppButton>
+                  <AppButton size="sm" variant="ghost" className="text-accent hover:text-indigo-300 p-1 bg-accent/10">+</AppButton>
                 </h3>
                 <div className="space-y-3">
                   <div className="text-sm text-gray-400 flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/5">

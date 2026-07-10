@@ -60,7 +60,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded uppercase tracking-widest ${
-                isLightMode ? "text-indigo-600 bg-indigo-50" : "text-indigo-400 bg-indigo-500/10"
+                isLightMode ? "text-accent bg-accent/10" : "text-accent bg-accent/10"
               }`}>
                 {ticket.id}
               </span>
@@ -81,7 +81,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             </div>
             <div className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full ${
-                priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : (isLightMode ? "bg-indigo-600" : "bg-indigo-500")
+                priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : (isLightMode ? "bg-accent" : "bg-accent")
               }`} />
               <span className={`text-sm font-semibold ${"text-foreground"}`}>{priority?.name || "Medium"}</span>
             </div>
@@ -120,13 +120,13 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             onClick={() => setActiveTab(tab)}
             className={`py-4 text-[0.8rem] font-bold uppercase tracking-widest transition-all relative ${
               activeTab === tab 
-                ? (isLightMode ? "text-indigo-600" : "text-white") 
+                ? (isLightMode ? "text-accent" : "text-white") 
                 : "text-gray-500 hover:text-gray-400"
             }`}
           >
             {tab === "COLLAB" ? "Collaboration" : tab === "DETAILS" ? "Technical Data" : "Audit Trail"}
             {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
             )}
           </button>
         ))}
@@ -169,7 +169,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                     <Paperclip className="h-5 w-5 text-gray-600" />
                   </div>
                   <p className="text-xs text-gray-600">No diagnostic files attached</p>
-                  <AppButton variant="ghost" size="sm" className="text-xs text-indigo-400 hover:text-indigo-300 hover:bg-white/5">
+                  <AppButton variant="ghost" size="sm" className="text-xs text-accent hover:text-indigo-300 hover:bg-white/5">
                     Upload File
                   </AppButton>
                 </div>

@@ -80,8 +80,8 @@ export default function Navbar() {
               placeholder="Search tickets, documentation, quick masters..." 
               className={`h-10 w-full rounded-xl border pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${
                 isLight 
-                  ? "bg-gray-100/80 border-gray-200 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-blue-500" 
-                  : "bg-white/5 border-white/5 text-white placeholder-gray-500 focus:border-blue-500/50 focus:bg-white/10"
+                  ? "bg-gray-100/80 border-gray-200 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-accent" 
+                  : "bg-white/5 border-white/5 text-white placeholder-gray-500 focus:border-accent/50 focus:bg-white/10"
               }`}
             />
             <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold pointer-events-none ${
@@ -100,7 +100,7 @@ export default function Navbar() {
             onClick={toggleQuickTheme}
             className="!h-10 !w-10 rounded-xl bg-surface border-border text-muted hover:bg-muted hover:text-foreground"
           >
-            {isLight ? <Moon className="h-4 w-4 text-indigo-400" /> : <Sun className="h-4 w-4 text-amber-500" />}
+            {isLight ? <Moon className="h-4 w-4 text-accent" /> : <Sun className="h-4 w-4 text-amber-500" />}
           </AppButton>
 
           <Link 
@@ -111,7 +111,7 @@ export default function Navbar() {
                 : "bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <Palette className="h-4 w-4 text-purple-400" />
+            <Palette className="h-4 w-4 text-accent" />
           </Link>
 
           <RealtimeNotificationsDrawer />
@@ -145,7 +145,7 @@ export default function Navbar() {
                         isLight ? "hover:bg-gray-100 text-gray-700" : "hover:bg-white/5 text-gray-300"
                       }`}
                     >
-                      <User className="h-3.5 w-3.5 text-purple-500" />
+                      <User className="h-3.5 w-3.5 text-accent" />
                       <span>My Profile & Settings</span>
                     </Link>
                   </div>

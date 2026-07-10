@@ -25,7 +25,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       {/* 1. Where to Start (Header & Overview) */}
       <section className={`p-6 rounded-2xl border shadow-sm ${isLight ? "bg-white border-gray-200" : "bg-[#0A0D14] border-white/10"}`}>
         <div className="flex items-center gap-4 mb-4">
-          <div className={`p-3 rounded-xl ${isLight ? "bg-blue-50 text-blue-600" : "bg-blue-500/10 text-blue-400"}`}>
+          <div className={`p-3 rounded-xl ${isLight ? "bg-accent/10 text-accent" : "bg-accent/10 text-accent"}`}>
             <module.icon className="h-8 w-8" />
           </div>
           <div>
@@ -38,7 +38,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
 
         <div className="mt-6 space-y-4">
           <div className="flex gap-2">
-            <Info className={`h-5 w-5 shrink-0 ${isLight ? "text-indigo-500" : "text-indigo-400"}`} />
+            <Info className={`h-5 w-5 shrink-0 ${isLight ? "text-accent" : "text-accent"}`} />
             <div>
               <h3 className={`font-semibold text-sm ${isLight ? "text-gray-900" : "text-gray-200"}`}>Where to Start / Overview</h3>
               <p className={`text-sm mt-1 leading-relaxed ${isLight ? "text-gray-600" : "text-gray-400"}`}>
@@ -110,7 +110,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
         <div className="space-y-3">
           {module.steps.map((step, idx) => (
             <div key={idx} className={`relative flex items-start gap-4 p-5 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-md ${isLight ? "bg-white border-gray-200" : "bg-[#0A0D14] border-white/10"}`}>
-              <div className={`flex items-center justify-center h-8 w-8 rounded-full shrink-0 font-bold text-sm ${isLight ? "bg-blue-100 text-blue-700" : "bg-blue-500/20 text-blue-400"}`}>
+              <div className={`flex items-center justify-center h-8 w-8 rounded-full shrink-0 font-bold text-sm ${isLight ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
                 {idx + 1}
               </div>
               <div>
@@ -143,7 +143,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                 {result.outcome}
               </p>
               <div className={`p-3 rounded-xl border text-[11px] font-mono leading-relaxed mt-auto ${isLight ? "bg-gray-800 text-gray-300 border-gray-900" : "bg-black/50 text-gray-400 border-white/5"}`}>
-                <span className="text-purple-400 mr-2">$</span>
+                <span className="text-accent mr-2">$</span>
                 {result.technicalDetail}
               </div>
             </div>

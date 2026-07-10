@@ -128,8 +128,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
           className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${
             isLightMode 
-              ? (activeWorkspace?.id === w.id ? 'bg-indigo-50 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
-              : (activeWorkspace?.id === w.id ? 'bg-indigo-500/10 border-white/5' : 'hover:bg-white/5 border-white/5')
+              ? (activeWorkspace?.id === w.id ? 'bg-accent/10 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
+              : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:bg-white/5 border-white/5')
           }`}
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
@@ -560,7 +560,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+        <Loader2 className="h-10 w-10 animate-spin text-accent" />
         <p className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Hydrating Enterprise Workspaces...</p>
       </div>
     );
@@ -596,7 +596,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 placeholder="Search workspaces..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-indigo-500 w-48 transition-all ${
+                className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-accent w-48 transition-all ${
                   isLightMode ? 'bg-white border-gray-300 text-gray-900 focus:w-64' : 'bg-black/30 border-white/10 text-white focus:w-64'
                 }`}
               />
@@ -640,7 +640,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => setActiveView('HIERARCHY')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? (isLightMode ? "border-purple-600 text-purple-600" : "border-purple-400 text-purple-400") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? (isLightMode ? "border-accent text-accent" : "border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <GitMerge className="h-4 w-4" />
@@ -648,7 +648,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   </button>
                   <button 
                     onClick={() => setActiveView('SPRINTS')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? (isLightMode ? "border-indigo-600 text-indigo-600" : "border-indigo-400 text-indigo-400") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? (isLightMode ? "border-accent text-accent" : "border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <Calendar className="h-4 w-4" />
@@ -665,7 +665,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         type="checkbox" 
                         checked={autoCollapse} 
                         onChange={e => setAutoCollapse(e.target.checked)} 
-                        className={`rounded ${isLightMode ? 'border-gray-300 text-indigo-600 focus:ring-indigo-500' : 'border-white/10 bg-black/50 text-indigo-500 focus:ring-indigo-500/50'}`}
+                        className={`rounded ${isLightMode ? 'border-gray-300 text-accent focus:ring-accent' : 'border-white/10 bg-black/50 text-accent focus:ring-accent/50'}`}
                       />
                       Auto-Minimize Others
                     </label>
@@ -788,7 +788,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           footer={
             <div className="flex justify-end gap-3 w-full">
               <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting}>Cancel</AppButton>
-              <AppButton variant="primary" onClick={handleCreateWorkspace} className="bg-indigo-600 hover:bg-indigo-700" disabled={isSubmitting}>
+              <AppButton variant="primary" onClick={handleCreateWorkspace} className="bg-accent hover:bg-accent-secondary" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : (editWSId ? "Save Changes" : "Provision Workspace")}
               </AppButton>
             </div>
@@ -799,7 +799,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             {/* Section 1: Workspace Identity */}
             <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
-                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-indigo-100 text-indigo-600" : "bg-indigo-500/20 text-indigo-400"}`}>
+                <div className={`p-1.5 rounded-lg ${isLightMode ? "bg-accent/10 text-accent" : "bg-accent/20 text-accent"}`}>
                   <Building2 className="h-4 w-4" />
                 </div>
                 <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Workspace Identity</h3>
@@ -809,7 +809,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Company / Entity Link *</label>
                   <select 
-                    className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-colors ${
+                    className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${
                       isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                     }`}
                     value={newWS.company_id}
@@ -837,7 +837,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Link</label>
                     <select 
-                      className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer transition-colors ${
+                      className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${
                         isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                       }`}
                       value={newWS.parent_workspace_id}
@@ -883,7 +883,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
                 <textarea 
-                  className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none ${
+                  className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-none ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                   }`}
                   placeholder="Detailed project requirements, goals, and constraints..."
@@ -904,7 +904,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="space-y-1.5 relative mb-6">
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5 mb-2">
-                  <label className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider block">Workspace Assignees (Users)</label>
+                  <label className="text-[10px] font-bold text-accent uppercase tracking-wider block">Workspace Assignees (Users)</label>
                   <button 
                     type="button" 
                     onClick={(e) => {
@@ -916,7 +916,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         setNewWS({...newWS, assigneeIds: allIds});
                       }
                     }}
-                    className={`text-[9px] font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600 hover:text-indigo-700" : "text-indigo-400 hover:text-indigo-300"}`}
+                    className={`text-[9px] font-bold uppercase tracking-wider ${isLightMode ? "text-accent hover:text-accent" : "text-accent hover:text-indigo-300"}`}
                   >
                     {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
                   </button>
@@ -935,7 +935,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         e.preventDefault();
                       }
                     }}
-                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-accent ${
                       isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                     }`}
                   />
@@ -944,7 +944,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <div className={`max-h-[160px] overflow-y-auto space-y-1 pr-1 rounded-xl p-2 border ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10"} scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent`}>
                   {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
                     <label key={u.id} className={`flex items-center gap-3 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
-                      isLightMode ? "hover:bg-indigo-100/50" : "hover:bg-white/10"
+                      isLightMode ? "hover:bg-accent/10/50" : "hover:bg-white/10"
                     }`}>
                       <input 
                         type="checkbox" 
@@ -953,7 +953,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                           if (e.target.checked) setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
                           else setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
                         }} 
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4" 
+                        className="rounded border-gray-300 text-accent focus:ring-accent h-4 w-4" 
                       />
                       <div className="flex flex-col">
                         <span className={isLightMode ? "text-gray-900 font-medium" : "text-gray-200 font-medium"}>{u.full_name}</span>
@@ -967,7 +967,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className={`p-4 rounded-xl border flex items-center gap-3 transition-colors ${
                 newWS.is_public 
-                  ? (isLightMode ? "bg-indigo-50/50 border-indigo-200" : "bg-indigo-500/10 border-indigo-500/30") 
+                  ? (isLightMode ? "bg-accent/10/50 border-accent/30" : "bg-accent/10 border-accent/30") 
                   : (isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/5 border-white/10")
               }`}>
                 <input 
@@ -983,7 +983,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       setNewWS({...newWS, is_public: false});
                     }
                   }} 
-                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5 cursor-pointer"
+                  className="rounded border-gray-300 text-accent focus:ring-accent h-5 w-5 cursor-pointer"
                 />
                 <label htmlFor="is_public" className="cursor-pointer flex flex-col">
                   <span className={`text-sm font-bold ${"text-foreground"}`}>Public Visibility</span>
@@ -1018,7 +1018,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
       )}

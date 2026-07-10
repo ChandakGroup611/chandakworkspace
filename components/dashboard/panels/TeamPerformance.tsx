@@ -49,7 +49,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
     <AppCard className="mt-5">
       <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-purple-500" />
+          <Users className="h-4 w-4 text-accent" />
           <span className="text-sm font-bold text-foreground">Team Performance · Sprint 24</span>
         </div>
         <AppButton variant="ghost" size="sm" className="h-6 text-xs gap-1">Full Report <ArrowRight className="h-3 w-3" /></AppButton>
@@ -68,8 +68,8 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
           <AppTableBody>
             {teamStats.map((u: any, i: number) => {
               const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-              const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-amber-500', 'bg-purple-500', 'bg-blue-500'];
-              const textColors = ['text-emerald-500', 'text-teal-500', 'text-amber-500', 'text-purple-500', 'text-blue-500'];
+              const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-amber-500', 'bg-accent', 'bg-accent'];
+              const textColors = ['text-emerald-500', 'text-teal-500', 'text-amber-500', 'text-accent', 'text-accent'];
               const color = colors[i % colors.length];
               const textColor = textColors[i % textColors.length];
 
@@ -89,7 +89,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                   <AppTableCell className={`text-center font-bold text-lg ${textColor}`}>
                     {u.closed}
                   </AppTableCell>
-                  <AppTableCell className="text-center font-bold text-lg text-indigo-500">
+                  <AppTableCell className="text-center font-bold text-lg text-accent">
                     {u.pts}
                   </AppTableCell>
                   <AppTableCell>

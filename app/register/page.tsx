@@ -146,7 +146,7 @@ export default function RegisterPage() {
     }`}>
       {/* Dynamic Glow Accents */}
       <div className={`absolute top-1/3 right-1/4 w-[550px] h-[550px] rounded-full blur-[130px] pointer-events-none animate-pulse duration-1000 ${
-        isLight ? "bg-purple-500/10" : "bg-purple-600/10"
+        isLight ? "bg-accent/10" : "bg-accent/10"
       }`} />
       <div className={`absolute bottom-1/3 left-1/4 w-[550px] h-[550px] rounded-full blur-[130px] pointer-events-none animate-pulse duration-1000 ${
         isLight ? "bg-cyan-500/10" : "bg-cyan-600/10"
@@ -180,7 +180,7 @@ export default function RegisterPage() {
         }`}>
           <AppCardHeader className={`pb-3 border-b text-center ${isLight ? "border-gray-100" : "border-white/5"}`}>
             <AppCardTitle className={`text-base font-bold flex items-center justify-center gap-2 ${isLight ? "text-gray-900" : "text-white"}`}>
-              <ShieldCheck className="h-4 w-4 text-purple-500" />
+              <ShieldCheck className="h-4 w-4 text-accent" />
               <span>Registration Form</span>
             </AppCardTitle>
             <span className="text-xs text-gray-500 font-mono block">Secure Identity Provisioning</span>
@@ -251,8 +251,8 @@ export default function RegisterPage() {
                       onChange={(e) => { setDepartment(e.target.value); setDesignation(""); }}
                       className={`w-full h-10 pl-9 pr-3 rounded-xl border text-xs focus:outline-none cursor-pointer transition-colors ${
                         isLight 
-                          ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-purple-500 focus:bg-white" 
-                          : "bg-white/5 border-white/10 text-gray-200 focus:border-purple-500/50"
+                          ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:bg-white" 
+                          : "bg-white/5 border-white/10 text-gray-200 focus:border-accent/50"
                       }`}
                       required
                     >
@@ -280,8 +280,8 @@ export default function RegisterPage() {
                       disabled={!department}
                       className={`w-full h-10 pl-9 pr-3 rounded-xl border text-xs focus:outline-none cursor-pointer transition-colors ${
                         isLight 
-                          ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-purple-500 focus:bg-white" 
-                          : "bg-white/5 border-white/10 text-gray-200 focus:border-purple-500/50"
+                          ? "bg-gray-50 border-gray-200 text-gray-900 focus:border-accent focus:bg-white" 
+                          : "bg-white/5 border-white/10 text-gray-200 focus:border-accent/50"
                       } ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
                       required
                     >
@@ -301,11 +301,11 @@ export default function RegisterPage() {
                   Identity Visual (Photo Upload)
                 </label>
                 <div className="flex items-center gap-4 p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
-                  <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="h-12 w-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shrink-0">
                     {uploadFile ? (
                       <img src={URL.createObjectURL(uploadFile)} className="h-full w-full object-cover" />
                     ) : (
-                      <Camera className="h-5 w-5 text-indigo-400" />
+                      <Camera className="h-5 w-5 text-accent" />
                     )}
                   </div>
                   <div className="flex-1 space-y-1">
@@ -319,7 +319,7 @@ export default function RegisterPage() {
                     />
                     <label 
                       htmlFor="photo-upload"
-                      className="inline-block px-3 py-1 rounded-lg bg-indigo-500 text-white text-xs font-bold cursor-pointer hover:bg-indigo-400 transition-colors"
+                      className="inline-block px-3 py-1 rounded-lg bg-accent text-white text-xs font-bold cursor-pointer hover:bg-indigo-400 transition-colors"
                     >
                       Select Image
                     </label>
@@ -332,12 +332,12 @@ export default function RegisterPage() {
                       key={idx}
                       onClick={() => { setPhoto(url); setUploadFile(null); }}
                       className={`relative shrink-0 h-10 w-10 rounded-full cursor-pointer transition-all border-2 ${
-                        photo === url && !uploadFile ? "border-purple-500 scale-110 shadow-lg shadow-purple-500/20" : "border-transparent opacity-50 hover:opacity-100"
+                        photo === url && !uploadFile ? "border-accent scale-110 shadow-lg shadow-purple-500/20" : "border-transparent opacity-50 hover:opacity-100"
                       }`}
                     >
                       <img src={url} alt={`Avatar ${idx}`} className="h-full w-full rounded-full object-cover" />
                       {photo === url && !uploadFile && (
-                        <div className="absolute -right-1 -top-1 bg-purple-500 rounded-full p-0.5 shadow-sm">
+                        <div className="absolute -right-1 -top-1 bg-accent rounded-full p-0.5 shadow-sm">
                           <CheckCircle2 className="h-2 w-2 text-foreground" />
                         </div>
                       )}
@@ -404,7 +404,7 @@ export default function RegisterPage() {
             {/* Back navigation context */}
             <div className={`pt-3 text-center border-t text-xs text-gray-500 ${isLight ? "border-gray-100" : "border-white/5"}`}>
               <span>Already have an account? </span>
-              <Link href="/login" className="text-purple-500 font-bold hover:underline">
+              <Link href="/login" className="text-accent font-bold hover:underline">
                 Sign In
               </Link>
             </div>

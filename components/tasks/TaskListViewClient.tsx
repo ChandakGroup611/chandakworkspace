@@ -261,8 +261,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     const completed = filtered.filter(t => t.status?.is_closed || t.status?.name?.toLowerCase().includes('done')).length;
     
     return [
-      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-blue-500/10", iconColorClass: "text-blue-600" },
-      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-purple-500/10", iconColorClass: "text-purple-600" },
+      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
+      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
       { label: "In Progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-amber-500/10", iconColorClass: "text-amber-600" },
       { label: "Completed", value: completed, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-emerald-500/10", iconColorClass: "text-emerald-600" },
     ];
@@ -685,7 +685,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   });
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto my-12" />;
+    return <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full mx-auto my-12" />;
   }
 
   if (!hasPermission("TASKS_VIEW")) {
@@ -727,7 +727,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               setCreationWorkspaceId(initialWs);
               setCreationSubWorkspaceId(initialSubWs);
               setShowWorkspaceSelector(true);
-            }} leftIcon={<Plus className="h-4 w-4" />} className="h-9 px-4 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+            }} leftIcon={<Plus className="h-4 w-4" />} className="h-9 px-4 font-semibold bg-accent hover:bg-accent-secondary text-white shadow-sm">
               New Task
             </AppButton>
           </div>
@@ -741,7 +741,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <button
                   key={sc}
                   onClick={() => setScope(sc)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-indigo-600 text-indigo-600" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Tasks" : sc === "ASSIGNEE" ? "Assigned To Me" : "Enrolled Tasks"}
                 </button>
@@ -784,7 +784,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             </select>
             
             <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer hover:opacity-80 transition-opacity">
-              <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-border text-indigo-600 focus:ring-indigo-600 w-4 h-4" />
+              <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-border text-accent focus:ring-accent w-4 h-4" />
               Escalated
             </label>
 
@@ -834,7 +834,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         />
 
         {successToast && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
             <span className="text-xs font-semibold">{successToast}</span>
           </div>
         )}
@@ -854,7 +854,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       }
                     }}
                     onChange={handleSelectAll}
-                    className="rounded border-border text-indigo-600 focus:ring-indigo-600 w-3.5 h-3.5 mx-auto block"
+                    className="rounded border-border text-accent focus:ring-accent w-3.5 h-3.5 mx-auto block"
                   />
                 </AppTableHead>
                 <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
@@ -882,7 +882,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       type="checkbox" 
                       checked={selectedTaskIds.has(task.id)}
                       onChange={(e) => handleSelectTask(task.id, e.target.checked)}
-                      className="rounded border-border text-indigo-600 focus:ring-indigo-600 w-3.5 h-3.5 mx-auto block"
+                      className="rounded border-border text-accent focus:ring-accent w-3.5 h-3.5 mx-auto block"
                     />
                   </AppTableCell>
                   {visibleColumns.map((col, index) => {
@@ -896,7 +896,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           <div className="flex items-center gap-2">
                             <div className="text-[13px] font-semibold text-foreground whitespace-normal break-words w-full">{task.title || '-'}</div>
                             {task.attachmentCount > 0 && (
-                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400" title={`${task.attachmentCount} Attachment(s)`}>
+                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-accent/10 dark:bg-accent/20 text-accent dark:text-accent" title={`${task.attachmentCount} Attachment(s)`}>
                                 <Paperclip className="h-3 w-3" />
                               </div>
                             )}
@@ -1014,7 +1014,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                      {a.profile_photo ? (
                                        <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
                                      ) : (
-                                       <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                       <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
                                          {a.full_name?.substring(0, 2).toUpperCase() || "U"}
                                        </div>
                                      )}
@@ -1084,7 +1084,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                 u.profile_photo ? (
                                   <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
                                 ) : (
-                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-indigo-100 text-indigo-700 text-[8px] font-bold" title={u.full_name}>
+                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-accent/10 text-accent text-[8px] font-bold" title={u.full_name}>
                                     {u.full_name?.substring(0, 2).toUpperCase() || "W"}
                                   </div>
                                 )
@@ -1101,7 +1101,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       case "attachments": return (
                         <AppTableCell className="text-center">
                           {task.attachmentCount > 0 ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 font-medium text-[11px]">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/10 text-accent dark:bg-accent/10 dark:text-accent font-medium text-[11px]">
                               <Paperclip className="h-3 w-3" />
                               {task.attachmentCount}
                             </div>
@@ -1111,7 +1111,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       case "comments": return (
                         <AppTableCell className="text-center">
                           {task.commentCount > 0 ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium text-[11px]">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/10 text-accent dark:bg-accent/10 dark:text-accent font-medium text-[11px]">
                               <MessageSquare className="h-3 w-3" />
                               {task.commentCount}
                             </div>
@@ -1121,7 +1121,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       case "external_link": return (
                         <AppTableCell className="text-xs">
                           {task.custom_fields?.link_url ? (
-                            <a href={task.custom_fields.link_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
+                            <a href={task.custom_fields.link_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
                               <ExternalLink className="h-3 w-3 flex-shrink-0" />
                               <span className="truncate">{task.custom_fields.link_url}</span>
                             </a>
@@ -1139,7 +1139,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           <div className="flex items-center justify-end gap-3">
                             <Link 
                               href={`/tasks/${task.id}?mode=view`}
-                              className="text-blue-500 hover:text-blue-600 transition-colors active:scale-95"
+                              className="text-accent hover:text-accent transition-colors active:scale-95"
                               title="View Task"
                             >
                               <Eye className="h-[15px] w-[15px]" />
@@ -1186,7 +1186,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           <AppTableCell className="text-[13px] text-gray-600 dark:text-gray-400">
                             <div className="truncate max-w-[200px]" title={String(val)}>
                               {col.data_type === "link" && val !== "—" ? (
-                                <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">{val}</a>
+                                <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
                               ) : col.data_type === "badge" && val !== "—" ? (
                                 <AppBadge variant="neutral">{val}</AppBadge>
                               ) : (
@@ -1279,7 +1279,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02] flex items-center gap-2">
               <Link href={`/tasks/${selectedTask.id}`} className="w-full flex-1">
-                <AppButton variant="primary" className="w-full bg-blue-600 hover:bg-blue-700">Open Execution Workspace</AppButton>
+                <AppButton variant="primary" className="w-full bg-accent hover:bg-accent-secondary">Open Execution Workspace</AppButton>
               </Link>
             </div>
           </div>
@@ -1291,7 +1291,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       {selectedTaskIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
+            <div className="bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
               {selectedTaskIds.size}
             </div>
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tasks Selected</span>
@@ -1324,7 +1324,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkOldStatus}
                   onChange={(e) => setBulkOldStatus(e.target.value)}
-                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Any Status</option>
                   {masterStatuses.map((st) => (
@@ -1338,7 +1338,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkNewStatus}
                   onChange={(e) => setBulkNewStatus(e.target.value)}
-                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Leave Unchanged</option>
                   {masterStatuses.map((st) => (
@@ -1354,7 +1354,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkOldDepartment}
                   onChange={(e) => setBulkOldDepartment(e.target.value)}
-                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Any Department</option>
                   {departments.map((dep) => (
@@ -1368,7 +1368,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkNewDepartment}
                   onChange={(e) => setBulkNewDepartment(e.target.value)}
-                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Leave Unchanged</option>
                   {departments.map((dep) => (
@@ -1384,7 +1384,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={bulkRemark}
                 onChange={(e) => setBulkRemark(e.target.value)}
                 placeholder="Why are you updating these tasks?"
-                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-none"
+                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
             <div className="text-[10px] text-amber-600">Note: Tasks you don't own will fail to update unless you are a super admin.</div>
@@ -1418,7 +1418,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={inlineNewStatus}
                   onChange={(e) => setInlineNewStatus(e.target.value)}
-                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="" disabled>Select Status</option>
                   {masterStatuses.map((st) => (
@@ -1438,7 +1438,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-none"
+                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1471,7 +1471,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={inlineNewDepartment}
                   onChange={(e) => setInlineNewDepartment(e.target.value)}
-                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">-- No Department --</option>
                   {departments.map((dep) => (
@@ -1491,7 +1491,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-none"
+                className="w-full text-[13px] bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1523,7 +1523,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   setCreationWorkspaceId(e.target.value);
                   setCreationSubWorkspaceId("");
                 }}
-                className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
               >
                 <option value="">-- Select Workspace --</option>
                 {allWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
@@ -1538,7 +1538,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
                 >
                   <option value="">-- None --</option>
                   {allWorkspaces.filter(sw => sw.parent_workspace_id === creationWorkspaceId).map(sw => (

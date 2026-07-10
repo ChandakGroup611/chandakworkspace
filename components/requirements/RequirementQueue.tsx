@@ -38,11 +38,11 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filtered.map(req => (
           <div key={req.id} className={`rounded-2xl p-5 transition-all group cursor-pointer border ${
-            isLightMode ? "bg-white border-gray-200 hover:border-indigo-300 shadow-sm" : "bg-gray-900/40 border-white/10 hover:border-indigo-500/50"
+            isLightMode ? "bg-white border-gray-200 hover:border-accent/30 shadow-sm" : "bg-gray-900/40 border-white/10 hover:border-accent/50"
           }`}>
             <div className="flex justify-between items-start mb-3">
               <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
-                isLightMode ? "bg-indigo-50 text-indigo-700" : "bg-indigo-900/20 text-indigo-400"
+                isLightMode ? "bg-accent/10 text-accent" : "bg-indigo-900/20 text-accent"
               }`}>
                 {req.code || req.department?.name || 'REQ'}
               </span>
@@ -63,7 +63,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
             </div>
             
             <h3 className={`font-semibold text-lg leading-tight mb-2 transition-colors line-clamp-2 ${
-              isLightMode ? "text-gray-900 group-hover:text-indigo-600" : "text-gray-100 group-hover:text-white"
+              isLightMode ? "text-gray-900 group-hover:text-accent" : "text-gray-100 group-hover:text-white"
             }`}>
               {req.title}
             </h3>
@@ -80,7 +80,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
               </div>
               <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLightMode ? "bg-gray-100" : "bg-black"}`}>
                 <div 
-                  className="h-full bg-indigo-500 transition-all duration-500" 
+                  className="h-full bg-accent transition-all duration-500" 
                   style={{ width: `${req.completion_percentage || 0}%` }}
                 />
               </div>

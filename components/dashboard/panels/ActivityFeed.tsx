@@ -80,8 +80,8 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
             let iconElement;
             if (act.type === 'closed') iconElement = <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
             else if (act.type === 'blocked') iconElement = <AlertCircle className="h-4 w-4 text-rose-500" />;
-            else if (act.type === 'comment') iconElement = <MessageSquare className="h-4 w-4 text-blue-500" />;
-            else iconElement = <Plus className="h-4 w-4 text-indigo-500" />;
+            else if (act.type === 'comment') iconElement = <MessageSquare className="h-4 w-4 text-accent" />;
+            else iconElement = <Plus className="h-4 w-4 text-accent" />;
 
             return (
               <div key={act.id || i} className="flex gap-3">

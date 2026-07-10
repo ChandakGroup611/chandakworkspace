@@ -130,7 +130,7 @@ export default function TicketsPage() {
     if (!code) return "bg-gray-500";
     if (code.includes("CRITICAL") || code === "PRIO_CRIT_P1" || code === "P1") return "bg-red-500 text-white";
     if (code.includes("HIGH") || code === "PRIO_HIGH_P2" || code === "P2") return "bg-amber-500 text-white";
-    if (code.includes("MEDIUM") || code === "PRIO_MED_P3" || code === "P3") return "bg-blue-500 text-white";
+    if (code.includes("MEDIUM") || code === "PRIO_MED_P3" || code === "P3") return "bg-accent text-white";
     return "bg-green-500 text-white";
   };
 
@@ -140,7 +140,7 @@ export default function TicketsPage() {
   if (!mounted || permissionsLoading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
-        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
         <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
           Verifying Capabilities...
         </span>
@@ -225,7 +225,7 @@ export default function TicketsPage() {
               <input 
                 type="text"
                 placeholder="Search tickets by ID or title..."
-                className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+                className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
                   isLightMode 
                     ? "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400" 
                     : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
@@ -275,7 +275,7 @@ export default function TicketsPage() {
               size="sm"
               className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
                 selectedScope === "ALL" 
-                  ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                  ? "bg-accent text-white hover:bg-accent-secondary" 
                   : ""
               }`}
             >
@@ -289,7 +289,7 @@ export default function TicketsPage() {
                 size="sm"
                 className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
                   selectedScope === scope.id 
-                    ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                    ? "bg-accent text-white hover:bg-accent-secondary" 
                     : ""
                 }`}
               >
@@ -303,7 +303,7 @@ export default function TicketsPage() {
         <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border shadow-sm">
           {loading && tickets.length === 0 ? (
             <div className="flex-1 h-64 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
           ) : (
             <AppTableContainer>
@@ -328,7 +328,7 @@ export default function TicketsPage() {
                         onClick={() => handleTicketClick(ticket)}
                         className="cursor-pointer"
                       >
-                        <AppTableCell className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                        <AppTableCell className="font-mono text-xs font-bold text-accent dark:text-accent">
                           {ticket.id}
                         </AppTableCell>
                         <AppTableCell className="font-semibold max-w-xs truncate">
@@ -358,7 +358,7 @@ export default function TicketsPage() {
                             <AppButton 
                               variant="ghost" 
                               size="sm" 
-                              className="h-8 px-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                              className="h-8 px-2 text-accent hover:bg-accent/10 dark:hover:bg-accent/10 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleTicketClick(ticket);
@@ -416,7 +416,7 @@ export default function TicketsPage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-4 duration-300">
-          <div className="px-6 py-3 bg-indigo-600 text-white text-sm font-bold rounded-2xl shadow-2xl shadow-indigo-500/40 border border-indigo-400 flex items-center gap-3">
+          <div className="px-6 py-3 bg-accent text-white text-sm font-bold rounded-2xl shadow-2xl shadow-indigo-500/40 border border-accent flex items-center gap-3">
             <CheckCircle2 className="h-4 w-4" />
             {toastMessage}
           </div>

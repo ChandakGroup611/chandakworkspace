@@ -108,14 +108,14 @@ export default function AMCAnalyticsPage() {
     if (total === 0) return 'text-gray-500';
     const percent = (used / total) * 100;
     if (percent >= 90) return 'text-emerald-500';
-    if (percent >= 50) return 'text-blue-500';
+    if (percent >= 50) return 'text-accent';
     return 'text-amber-500';
   };
 
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function AMCAnalyticsPage() {
         {/* KPI Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <AppCard className={`p-6 flex items-center gap-4 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-blue-50 text-blue-600' : 'bg-blue-500/10 text-blue-400'}`}>
+            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>
               <DollarSign className="h-6 w-6" />
             </div>
             <div>
@@ -161,7 +161,7 @@ export default function AMCAnalyticsPage() {
           </AppCard>
 
           <AppCard className={`p-6 flex items-center gap-4 ${isLightMode ? 'bg-white' : 'bg-[#0A0D14]'}`}>
-            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-indigo-50 text-indigo-600' : 'bg-indigo-500/10 text-indigo-400'}`}>
+            <div className={`p-4 rounded-xl ${isLightMode ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>
               <Users className="h-6 w-6" />
             </div>
             <div>

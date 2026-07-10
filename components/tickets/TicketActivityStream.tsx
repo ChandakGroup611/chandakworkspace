@@ -119,7 +119,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
               <div className={`z-10 h-10 w-10 rounded-full flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-110 ${
                 activity.event_type === "SLA_ESCALATION" 
                   ? (isLightMode ? "bg-red-50 border-red-100 text-red-600" : "bg-red-500/10 border-red-500/20 text-red-400") 
-                  : (isLightMode ? "bg-white border-gray-100 text-indigo-600 shadow-sm" : "bg-[#0f172a] border-white/5 text-indigo-400")
+                  : (isLightMode ? "bg-white border-gray-100 text-accent shadow-sm" : "bg-[#0f172a] border-white/5 text-accent")
               }`}>
                 <Icon className="h-4 w-4" />
               </div>

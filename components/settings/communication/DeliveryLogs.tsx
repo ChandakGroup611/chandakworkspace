@@ -98,7 +98,7 @@ export default function DeliveryLogs() {
                       </span>
                     </div>
                   </AppTableCell>
-                  <AppTableCell className="font-mono text-blue-500">
+                  <AppTableCell className="font-mono text-accent">
                     {log.recipient_email}
                   </AppTableCell>
                   <AppTableCell className="text-xs text-muted-foreground">

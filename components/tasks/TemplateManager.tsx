@@ -74,7 +74,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
       <AppCard className="w-full max-w-2xl mt-10 mb-10 overflow-hidden flex flex-col max-h-[90vh]">
         <div className={`p-4 border-b flex justify-between items-center ${isLightMode ? "bg-gray-50 border-gray-200" : "bg-white/[0.02] border-white/10"}`}>
           <div className="flex items-center gap-2">
-            <LayoutTemplate className="h-5 w-5 text-indigo-500" />
+            <LayoutTemplate className="h-5 w-5 text-accent" />
             <h2 className="font-bold text-lg">Task Templates Manager</h2>
           </div>
           <button onClick={onClose} className="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
@@ -86,14 +86,14 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
           {!isCreating && (
             <div className="flex justify-between items-center">
               <p className="text-sm text-gray-500">Standardize your team's workflow by creating reusable task blueprints.</p>
-              <AppButton onClick={() => setIsCreating(true)} variant="primary" className="bg-indigo-600 hover:bg-indigo-700">
+              <AppButton onClick={() => setIsCreating(true)} variant="primary" className="bg-accent hover:bg-accent-secondary">
                 <Plus className="h-4 w-4 mr-1" /> New Template
               </AppButton>
             </div>
           )}
 
           {isCreating && (
-            <form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 ${isLightMode ? "bg-indigo-50/50 border-indigo-100" : "bg-indigo-500/10 border-indigo-500/20"}`}>
+            <form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 ${isLightMode ? "bg-accent/10/50 border-indigo-100" : "bg-accent/10 border-accent/20"}`}>
               <h3 className="font-semibold text-sm">Create New Template</h3>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Template Name</label>
@@ -109,7 +109,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Steps to execute..."
-                  className={`w-full min-h-[80px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-y ${
+                  className={`w-full min-h-[80px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-y ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
                   }`}
                 />

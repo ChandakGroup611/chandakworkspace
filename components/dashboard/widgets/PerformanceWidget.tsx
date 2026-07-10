@@ -70,8 +70,8 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
           <AppTableBody>
             {teamStats.map((u: any, i: number) => {
               const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-              const colors = ['bg-emerald-500/20 text-emerald-500 border-emerald-500/30', 'bg-blue-500/20 text-blue-500 border-blue-500/30', 'bg-purple-500/20 text-purple-500 border-purple-500/30', 'bg-amber-500/20 text-amber-500 border-amber-500/30', 'bg-rose-500/20 text-rose-500 border-rose-500/30'];
-              const fillColors = ['bg-emerald-500', 'bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500'];
+              const colors = ['bg-emerald-500/20 text-emerald-500 border-emerald-500/30', 'bg-accent/20 text-accent border-accent/30', 'bg-accent/20 text-accent border-accent/30', 'bg-amber-500/20 text-amber-500 border-amber-500/30', 'bg-rose-500/20 text-rose-500 border-rose-500/30'];
+              const fillColors = ['bg-emerald-500', 'bg-accent', 'bg-accent', 'bg-amber-500', 'bg-rose-500'];
               
               const colorCls = colors[i % colors.length];
               const fillCls = fillColors[i % fillColors.length];

@@ -43,7 +43,7 @@ export function TicketListSidebar({
           <input 
             type="text"
             placeholder="Search tickets..."
-            className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
+            className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
               isLightMode 
                 ? "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400" 
                 : "bg-white/5 border-white/10 text-white placeholder:text-gray-600"
@@ -60,7 +60,7 @@ export function TicketListSidebar({
             size="sm"
             className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
               selectedDept === "ALL" 
-                ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                ? "bg-accent text-white hover:bg-accent-secondary" 
                 : ""
             }`}
           >
@@ -74,7 +74,7 @@ export function TicketListSidebar({
               size="sm"
               className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
                 selectedDept === dept.id 
-                  ? "bg-indigo-600 text-white hover:bg-indigo-700" 
+                  ? "bg-accent text-white hover:bg-accent-secondary" 
                   : ""
               }`}
             >
@@ -104,18 +104,18 @@ export function TicketListSidebar({
                 onClick={() => onSelect(ticket)}
                 className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border cursor-pointer ${
                   isSelected 
-                    ? (isLightMode ? "bg-indigo-50 border-indigo-200 shadow-sm" : "bg-indigo-600/20 border-indigo-500/30")
+                    ? (isLightMode ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-accent/20 border-accent/30")
                     : (isLightMode ? "hover:bg-gray-50 border-transparent" : "hover:bg-white/[0.03] border-transparent")
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className={`text-xs font-mono font-bold uppercase tracking-wider ${isLightMode ? "text-indigo-600" : "text-indigo-400"}`}>
+                  <span className={`text-xs font-mono font-bold uppercase tracking-wider ${isLightMode ? "text-accent" : "text-accent"}`}>
                     {ticket.id}
                   </span>
                   <div className="flex items-center gap-1">
                     <div className={`h-1.5 w-1.5 rounded-full ${
                       priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : 
-                      priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-blue-500"
+                      priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-accent"
                     }`} />
                     <span className="text-xs text-gray-500 font-medium">
                       {priority?.name || "P3"}
@@ -125,8 +125,8 @@ export function TicketListSidebar({
 
                 <h4 className={`text-sm font-semibold mb-2 line-clamp-1 transition-colors ${
                   isSelected 
-                    ? (isLightMode ? "text-indigo-900" : "text-white") 
-                    : (isLightMode ? "text-gray-900 group-hover:text-indigo-700" : "text-gray-300 group-hover:text-white")
+                    ? (isLightMode ? "text-accent-secondary" : "text-white") 
+                    : (isLightMode ? "text-gray-900 group-hover:text-accent" : "text-gray-300 group-hover:text-white")
                 }`}>
                   {ticket.title}
                 </h4>
@@ -153,7 +153,7 @@ export function TicketListSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20" title="View" onClick={(e) => e.stopPropagation()}>
+                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-accent/10 text-accent hover:bg-accent/20" title="View" onClick={(e) => e.stopPropagation()}>
                         <Eye className="h-3.5 w-3.5" />
                       </AppButton>
                       <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" title="Update" onClick={(e) => e.stopPropagation()}>

@@ -131,7 +131,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
               <select
                 value={targetWorkspaceId}
                 onChange={(e) => setTargetWorkspaceId(e.target.value)}
-                className="w-full text-sm bg-white dark:bg-[#151923] text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full text-sm bg-white dark:bg-[#151923] text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
               >
                 <option value="">Select a Workspace...</option>
                 {workspaces.map(w => (

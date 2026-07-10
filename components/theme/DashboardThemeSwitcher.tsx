@@ -35,7 +35,7 @@ export function DashboardThemeSwitcher() {
               onClick={() => setDashboardTheme(t.id as any)}
               className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex justify-between items-center ${
                 dashboardTheme === t.id 
-                  ? 'bg-indigo-600 text-white font-bold' 
+                  ? 'bg-accent text-white font-bold' 
                   : 'text-gray-300 hover:bg-white/5'
               }`}
             >

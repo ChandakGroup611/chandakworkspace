@@ -457,7 +457,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-[#050505]">
-        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -594,7 +594,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <select
                 value={selectedWorkspaceId}
                 onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
               >
                 <option value="">-- Select Workspace --</option>
                 {workspaces.map(w => <option key={w.id} value={w.id}>{w.workspace_name || w.name}</option>)}
@@ -607,7 +607,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 <select
                   value={selectedSubWorkspaceId}
                   onChange={(e) => setSelectedSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
                 >
                   <option value="">-- None --</option>
                   {subWorkspaces.filter(sw => sw.parent_workspace_id === selectedWorkspaceId).map(sw => (
@@ -707,7 +707,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === tab.id 
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                ? 'border-accent text-accent dark:text-accent'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:text-gray-200 hover:border-gray-400'
               }`}
             >
@@ -786,14 +786,14 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         key={att.id}
                         className="flex items-center gap-2 pl-3 pr-1 py-1 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-md text-sm shadow-sm"
                       >
-                        <Paperclip className="h-4 w-4 text-indigo-500" />
+                        <Paperclip className="h-4 w-4 text-accent" />
                         <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]" title={att.file_name}>{att.file_name}</span>
                         <span className="text-xs text-gray-400 mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
                         <div className="flex items-center gap-1 border-l border-gray-200 dark:border-white/10 pl-2">
                           <AppButton 
                             variant="ghost" size="sm"
                             onClick={() => handleAttachmentAction(att.id, 'view')}
-                            className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded transition-colors"
+                            className="p-1.5 text-gray-500 hover:text-accent hover:bg-accent/10 dark:hover:bg-accent/10 rounded transition-colors"
                             title="View Attachment"
                           >
                             <Eye className="h-4 w-4" />
@@ -801,7 +801,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                           <AppButton 
                             variant="ghost" size="sm"
                             onClick={() => handleAttachmentAction(att.id, 'download')}
-                            className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded transition-colors"
+                            className="p-1.5 text-gray-500 hover:text-accent hover:bg-accent/10 dark:hover:bg-accent/10 rounded transition-colors"
                             title="Download Attachment"
                           >
                             <Download className="h-4 w-4" />
@@ -826,7 +826,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               
               <div className="p-0 space-y-4">
                 <div className="space-y-2">
-                  <h3 className="text-xs font-bold flex items-center gap-2 pb-1 border-b text-indigo-500 dark:text-indigo-400 border-gray-200 dark:border-white/10">
+                  <h3 className="text-xs font-bold flex items-center gap-2 pb-1 border-b text-accent dark:text-accent border-gray-200 dark:border-white/10">
                     <Briefcase className="h-3 w-3" /> Business Classification
                   </h3>
                   
@@ -834,7 +834,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <div>
                       <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Requirement Type <span className="text-red-500">*</span></label>
                       <select 
-                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
                          value={formData.requirement_type_id} 
                          onChange={e => setFormData({...formData, requirement_type_id: e.target.value})} 
                          disabled={!(isAdmin && (isEditable || isSuperAdmin))}
@@ -848,7 +848,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <div>
                       <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Business Criticality <span className="text-red-500">*</span></label>
                       <select 
-                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
                          value={formData.business_criticality_id} 
                          onChange={e => setFormData({...formData, business_criticality_id: e.target.value})} 
                          disabled={!(isAdmin && (isEditable || isSuperAdmin))}
@@ -862,7 +862,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <div>
                       <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Business Value</label>
                       <select 
-                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
                          value={formData.business_value_id} 
                          onChange={e => setFormData({...formData, business_value_id: e.target.value})} 
                          disabled={!(isAdmin && (isEditable || isSuperAdmin))}
@@ -896,7 +896,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <div className="md:col-span-2">
                       <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Dependency Notes <span className="text-red-500">*</span></label>
                       <textarea 
-                         className="w-full p-2 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[60px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                         className="w-full p-2 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[60px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
                          value={formData.dependency_notes} 
                          onChange={e => setFormData({...formData, dependency_notes: e.target.value})} 
                          disabled={!(isAdmin && (isEditable || isSuperAdmin))}
@@ -914,7 +914,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <div>
                       <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Technical Scope / Architecture <span className="text-red-500">*</span></label>
                       <textarea 
-                         className="w-full p-2 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[80px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                         className="w-full p-2 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[80px] bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
                          value={formData.technical_scope} 
                          onChange={e => setFormData({...formData, technical_scope: e.target.value})} 
                          disabled={!(isAdmin && (isEditable || isSuperAdmin))}
@@ -983,7 +983,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         {(masters.departments || []).map((d: any) => {
                           const isSelected = formData.impacted_departments.includes(d.id);
                           return (
-                            <label key={d.id} className={`flex items-center p-2 rounded-md border cursor-pointer transition-all ${isSelected ? 'bg-indigo-500/10 border-indigo-500/30 shadow-inner' : 'bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/[0.02]'}`}>
+                            <label key={d.id} className={`flex items-center p-2 rounded-md border cursor-pointer transition-all ${isSelected ? 'bg-accent/10 border-accent/30 shadow-inner' : 'bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/[0.02]'}`}>
                               <input 
                                 type="checkbox" 
                                 className="sr-only"
@@ -991,10 +991,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                 onChange={() => handleDepartmentToggle(d.id)}
                                 disabled={!(isAdmin && (isEditable || isSuperAdmin))}
                               />
-                              <div className={`w-4 h-4 rounded border mr-2 flex items-center justify-center ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-gray-300 dark:border-gray-600'}`}>
+                              <div className={`w-4 h-4 rounded border mr-2 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300 dark:border-gray-600'}`}>
                                 {isSelected && <svg className="w-3 h-3 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                               </div>
-                              <span className={`text-xs font-medium ${isSelected ? 'text-indigo-600 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'}`}>{d.name}</span>
+                              <span className={`text-xs font-medium ${isSelected ? 'text-accent dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'}`}>{d.name}</span>
                             </label>
                           );
                         })}
@@ -1011,8 +1011,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         const selectedApprovers = formData.department_approvers[deptId] || [];
                         
                         return (
-                          <div key={deptId} className="p-3 border rounded-md border-indigo-500/20 bg-indigo-50/30 dark:bg-indigo-500/5">
-                            <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-2">{deptName} Approvers</div>
+                          <div key={deptId} className="p-3 border rounded-md border-accent/20 bg-accent/10/30 dark:bg-accent/5">
+                            <div className="text-xs font-semibold text-accent dark:text-indigo-300 mb-2">{deptName} Approvers</div>
                             <div className="flex flex-wrap gap-2">
                               {deptUsers.map((u: any) => {
                                 const isUserSelected = selectedApprovers.includes(u.id);
@@ -1036,7 +1036,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                     size="sm"
                                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-2 ${
                                       isUserSelected 
-                                        ? "bg-indigo-600 border-indigo-600 text-white" 
+                                        ? "bg-accent border-accent text-white" 
                                         : "bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
                                     }`}
                                     disabled={!(isAdmin && (isEditable || isSuperAdmin))}
@@ -1050,18 +1050,18 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                             </div>
                             <p className="text-[9px] text-gray-400 mt-2">Select users in the order they should approve (1st = Approver, 2nd = Executive, etc).</p>
                             {selectedApprovers.length > 0 && (
-                              <div className="mt-3 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/30 rounded-md">
-                                <div className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-1">
+                              <div className="mt-3 p-2 bg-accent/10/50 dark:bg-accent/10 border border-accent/30 dark:border-indigo-800/30 rounded-md">
+                                <div className="text-[10px] font-bold text-accent dark:text-accent uppercase tracking-wider mb-1">
                                   {deptName} - Approval Sequence
                                 </div>
-                                <div className="text-xs text-indigo-900 dark:text-indigo-200">
+                                <div className="text-xs text-accent-secondary dark:text-indigo-200">
                                   {selectedApprovers.map((id: string, index: number) => {
                                     const user = deptUsers.find((u: any) => u.id === id);
                                     const roleLabel = index === 0 ? "Approver" : index === 1 ? "Executive" : `Level ${index + 1}`;
                                     return (
                                       <span key={id} className="inline-flex items-center">
                                         <span className="font-semibold">{roleLabel}:</span>&nbsp;{user?.full_name || 'Unknown'}
-                                        {index < selectedApprovers.length - 1 && <span className="mx-2 text-indigo-400">→</span>}
+                                        {index < selectedApprovers.length - 1 && <span className="mx-2 text-accent">→</span>}
                                       </span>
                                     );
                                   })}
@@ -1088,7 +1088,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                           variant="ghost"
                           size="sm"
                           onClick={() => setShowRemarksHistory(!showRemarksHistory)}
-                          className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-2 py-1 rounded transition-colors"
+                          className="text-[10px] font-semibold text-accent dark:text-accent hover:bg-accent/10 dark:hover:bg-accent/10 px-2 py-1 rounded transition-colors"
                         >
                           {showRemarksHistory ? 'Hide History ▲' : 'Show History ▼'}
                         </AppButton>
@@ -1119,7 +1119,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     Add New Analysis Remarks (Mandatory for Approvers)
                   </label>
                   <textarea
-                    className="w-full text-sm px-3 py-2 border rounded-md bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
+                    className="w-full text-sm px-3 py-2 border rounded-md bg-white dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 focus:ring-1 focus:ring-accent min-h-[80px]"
                     placeholder="Enter your remarks or justification here before saving or approving..."
                     value={formData.analysis_remarks}
                     onChange={(e) => {
@@ -1213,7 +1213,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <div className="space-y-6 animate-in fade-in duration-300">
               {approvalFlow.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 opacity-50 mt-4 border border-dashed border-gray-300 dark:border-white/10 rounded-lg">
-                  <Shield className="h-8 w-8 mb-2 text-indigo-500" />
+                  <Shield className="h-8 w-8 mb-2 text-accent" />
                   <p className="text-xs text-gray-500 dark:text-gray-400">No approval workflow has been initiated yet.</p>
                 </div>
               ) : (
@@ -1351,7 +1351,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           {activeTab === 'audit' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-2 pb-10">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200 dark:border-white/10">
-                <Clock className="h-5 w-5 text-indigo-500" />
+                <Clock className="h-5 w-5 text-accent" />
                 <h2 className="text-sm font-bold text-gray-900 dark:text-white">Audit Trail & Lifecycle History</h2>
               </div>
               
@@ -1365,7 +1365,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <AppCard key={log.id} className="p-3 flex flex-col gap-1 shadow-sm">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                          <div className="w-6 h-6 rounded-full bg-accent/10 dark:bg-accent/20 flex items-center justify-center text-accent dark:text-accent">
                             <Clock className="w-3 h-3" />
                           </div>
                           <span className="font-bold text-sm text-gray-900 dark:text-white">{log.event_type.replace(/_/g, ' ')}</span>

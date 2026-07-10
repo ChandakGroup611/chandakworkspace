@@ -124,14 +124,14 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
     <div className="flex flex-col h-full space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-bold flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-indigo-500" />
+          <Calendar className="h-4 w-4 text-accent" />
           Agile Sprint Planning
         </h3>
         <div className="flex items-center gap-3">
           <select 
             value={taskFilter} 
             onChange={(e) => setTaskFilter(e.target.value as any)}
-            className={`text-xs p-1.5 rounded-lg border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${"bg-surface border-border"}`}
+            className={`text-xs p-1.5 rounded-lg border focus:outline-none focus:ring-1 focus:ring-accent ${"bg-surface border-border"}`}
           >
             <option value="ALL">All Tasks</option>
             <option value="ASSIGNED">Assigned To Me</option>
@@ -146,18 +146,18 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       </div>
 
       {isCreatingSprint && (
-        <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end ${isLightMode ? "bg-indigo-50/50 border-indigo-100" : "bg-indigo-500/10 border-indigo-500/20"}`}>
+        <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end ${isLightMode ? "bg-accent/10/50 border-indigo-100" : "bg-accent/10 border-accent/20"}`}>
           <div className="space-y-1.5 flex-1">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Sprint Name</label>
-            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${"bg-surface border-border"}`} />
+            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent ${"bg-surface border-border"}`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
-            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${"bg-surface border-border"}`} />
+            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent ${"bg-surface border-border"}`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">End Date</label>
-            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${"bg-surface border-border"}`} />
+            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent ${"bg-surface border-border"}`} />
           </div>
           <div className="flex gap-2 h-9">
             <AppButton type="button" variant="ghost" onClick={() => setIsCreatingSprint(false)}>Cancel</AppButton>
@@ -209,18 +209,18 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         {activeSprints.map(sprint => (
           <div 
             key={sprint.id}
-            className={`flex-shrink-0 w-80 rounded-xl border flex flex-col ${isLightMode ? "bg-indigo-50/30 border-indigo-100" : "bg-indigo-900/10 border-indigo-500/20"}`}
+            className={`flex-shrink-0 w-80 rounded-xl border flex flex-col ${isLightMode ? "bg-accent/10/30 border-indigo-100" : "bg-indigo-900/10 border-accent/20"}`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, sprint.id)}
           >
-            <div className="p-3 border-b border-indigo-500/20 group relative">
+            <div className="p-3 border-b border-accent/20 group relative">
               {editingSprintId === sprint.id ? (
                 <div className="space-y-2">
                   <input 
                     type="text" 
                     value={editSprintName} 
                     onChange={e => setEditSprintName(e.target.value)} 
-                    className={`w-full text-sm font-bold p-1 rounded border focus:outline-none focus:ring-1 focus:ring-indigo-500 ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
+                    className={`w-full text-sm font-bold p-1 rounded border focus:outline-none focus:ring-1 focus:ring-accent ${isLightMode ? "bg-white border-gray-300" : "bg-black/50 border-gray-700"}`}
                     placeholder="Sprint Name"
                   />
                   <div className="flex gap-2">
@@ -245,7 +245,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
               ) : (
                 <>
                   <div className="flex justify-between items-start">
-                    <div className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{sprint.name}</div>
+                    <div className="font-bold text-sm text-accent dark:text-accent">{sprint.name}</div>
                     <button 
                       onClick={() => {
                         setEditingSprintId(sprint.id);
@@ -253,7 +253,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                         setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
                         setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
                       }} 
-                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${isLightMode ? 'text-gray-400 hover:bg-white hover:text-indigo-600' : 'text-gray-500 hover:bg-black/30 hover:text-indigo-400'}`}
+                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${isLightMode ? 'text-gray-400 hover:bg-white hover:text-accent' : 'text-gray-500 hover:bg-black/30 hover:text-accent'}`}
                       title="Edit Sprint"
                     >
                       <Edit2 className="h-3.5 w-3.5" />

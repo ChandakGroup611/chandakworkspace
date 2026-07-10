@@ -48,7 +48,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   };
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto my-12" />;
+    return <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full mx-auto my-12" />;
   }
 
   if (!hasPermission("ENROLLED_WORKSPACES_VIEW")) {

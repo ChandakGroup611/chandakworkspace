@@ -45,7 +45,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
     <AppCard className="flex flex-col h-full justify-between">
       <AppCardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-indigo-400" />
+          <Users className="h-4 w-4 text-accent" />
           <AppCardTitle>Workload Saturation Engine</AppCardTitle>
         </div>
         <span className="text-xs bg-white/5 border border-white/10 px-2 py-0.5 rounded text-gray-400 font-semibold uppercase">

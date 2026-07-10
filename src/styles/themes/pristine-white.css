@@ -5,10 +5,10 @@
   --bg-surface: #FFFFFF; /* Cards are also pure white, separated by shadows/borders */
   --bg-elevated: #FFFFFF;
 
-  /* Typography - High Contrast Slate/Black */
-  --text-primary: #0F172A; /* Slate 900 for maximum readability */
-  --text-secondary: #475569; /* Slate 600 */
-  --text-muted: #94A3B8; /* Slate 400 */
+  /* Typography - High Contrast Sharp Black */
+  --text-primary: #000000; /* Pure black for maximum readability */
+  --text-secondary: #334155; /* Slate 700 */
+  --text-muted: #64748B; /* Slate 500 */
 
   /* Borders & Dividers - Crisp and Clean */
   --border-subtle: #E2E8F0; /* Slate 200 */

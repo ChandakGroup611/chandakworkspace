@@ -36,7 +36,7 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
     <AppCard className="overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
         <div className="flex items-center gap-2">
-          <ListChecks className="h-5 w-5 text-indigo-500" />
+          <ListChecks className="h-5 w-5 text-accent" />
           <span className="text-sm font-bold text-foreground">Recent Tickets</span>
         </div>
         <AppButton variant="ghost" size="sm" onClick={() => router.push('/tickets')}>

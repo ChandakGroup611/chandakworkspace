@@ -44,15 +44,15 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors" />
-          <Ticket className="w-8 h-8 text-blue-500 mb-3" />
+          <div className="absolute inset-0 bg-accent/5 group-hover:bg-accent/10 transition-colors" />
+          <Ticket className="w-8 h-8 text-accent mb-3" />
           <div className="text-3xl font-black text-foreground">{totalTickets}</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Total Tickets</div>
         </div>
 
         <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-purple-500/5 group-hover:bg-purple-500/10 transition-colors" />
-          <Clock className="w-8 h-8 text-purple-500 mb-3" />
+          <div className="absolute inset-0 bg-accent/5 group-hover:bg-accent/10 transition-colors" />
+          <Clock className="w-8 h-8 text-accent mb-3" />
           <div className="text-3xl font-black text-foreground">{openTickets}</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Open Tickets</div>
         </div>

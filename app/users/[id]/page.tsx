@@ -209,7 +209,7 @@ export default function UserFormPage() {
     }
   };
 
-  const inputStyle = `w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 ${
+  const inputStyle = `w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent ${
     isLightMode 
       ? "bg-slate-50 border-slate-200 text-slate-800 disabled:bg-slate-100 disabled:text-slate-400" 
       : "bg-black/20 border-white/10 text-white disabled:bg-white/5 disabled:text-gray-500"
@@ -221,7 +221,7 @@ export default function UserFormPage() {
     return (
       <div className="p-8 flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="h-8 w-8 animate-spin text-indigo-500" />
+          <RefreshCw className="h-8 w-8 animate-spin text-accent" />
           <span className="text-sm font-medium text-gray-500">Loading Configuration Master...</span>
         </div>
       </div>
@@ -260,7 +260,7 @@ export default function UserFormPage() {
           <AppButton 
             onClick={handleSubmit} 
             disabled={saving || (!isSuperAdmin && !isEditingMode)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 h-10 gap-2 shadow-sm font-semibold"
+            className="bg-accent hover:bg-accent-secondary text-white px-8 h-10 gap-2 shadow-sm font-semibold"
           >
             {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             <span>{saving ? "Committing..." : "Commit Record"}</span>
@@ -284,7 +284,7 @@ export default function UserFormPage() {
           <AppCard className={`overflow-hidden transition-all ${isLightMode ? "border-slate-200" : "border-slate-800"}`}>
             <AppCardHeader className={isLightMode ? "bg-slate-50/50 pb-4" : "bg-white/[0.02] pb-4"}>
               <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-indigo-500" />
+                <User className="h-5 w-5 text-accent" />
                 <AppCardTitle className="text-lg">Personal Identity</AppCardTitle>
               </div>
             </AppCardHeader>
@@ -299,7 +299,7 @@ export default function UserFormPage() {
                       <ImageIcon className="w-12 h-12 opacity-50" />
                     )}
                   </div>
-                  <div className="absolute bottom-0 right-0 w-9 h-9 bg-indigo-600 text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform group-hover:scale-110">
+                  <div className="absolute bottom-0 right-0 w-9 h-9 bg-accent text-white rounded-full flex items-center justify-center border-[3px] border-surface shadow-sm transition-transform group-hover:scale-110">
                     <Camera className="w-4 h-4" />
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function UserFormPage() {
                       {PRESET_AVATARS.map((avatar, idx) => (
                         <img 
                           key={idx} src={avatar} alt="Preset" 
-                          className="w-10 h-10 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-indigo-500 transition-all opacity-80 hover:opacity-100" 
+                          className="w-10 h-10 rounded-full object-cover cursor-pointer shrink-0 hover:ring-2 hover:ring-accent transition-all opacity-80 hover:opacity-100" 
                           onClick={() => setFormPhoto(avatar)} 
                         />
                       ))}
@@ -483,7 +483,7 @@ export default function UserFormPage() {
                     value={formRoleId} 
                     onChange={(e) => setFormRoleId(e.target.value)} 
                     disabled={!isSuperAdmin}
-                    className={`${inputStyle} appearance-none pr-10 font-semibold text-indigo-600 dark:text-indigo-400`}
+                    className={`${inputStyle} appearance-none pr-10 font-semibold text-accent dark:text-accent`}
                   >
                     <option value="">Select Role...</option>
                     {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -538,7 +538,7 @@ export default function UserFormPage() {
               <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative ${isLightMode ? "bg-slate-50 border-slate-200" : "bg-black/20 border-white/10"}`}>
                 <div className="flex flex-wrap items-center gap-2">
                   {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
-                    <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-lg dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30 shadow-sm">
+                    <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-accent/10 text-accent-secondary border border-accent/30 rounded-lg dark:bg-accent/20 dark:text-indigo-300 dark:border-accent/30 shadow-sm">
                       <MonitorSmartphone className="h-3 w-3" />
                       {tag} 
                       <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" onClick={() => {

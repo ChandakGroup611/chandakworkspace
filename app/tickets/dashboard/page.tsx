@@ -38,7 +38,7 @@ export default function TicketDashboardPage() {
   if (permissionsLoading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4 bg-surface text-foreground">
-        <div className="animate-spin h-10 w-10 border-2 border-indigo-500 border-t-transparent rounded-full" />
+        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export default function TicketDashboardPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {loading && !metrics ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full" />
+            <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full" />
           </div>
         ) : (
           <TicketsDashboard metrics={metrics} />

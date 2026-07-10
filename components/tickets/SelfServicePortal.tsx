@@ -50,7 +50,7 @@ export function SelfServicePortal() {
   const getStatusColor = (statusName: string) => {
     const lower = statusName?.toLowerCase() || '';
     if (lower.includes('resolv') || lower.includes('clos')) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-    if (lower.includes('progress') || lower.includes('doing')) return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+    if (lower.includes('progress') || lower.includes('doing')) return "bg-accent/10 text-accent border-accent/20";
     return "bg-gray-500/10 text-gray-600 border-gray-500/20";
   };
 
@@ -58,14 +58,14 @@ export function SelfServicePortal() {
     <PageContainer strict={true}>
       <PageHeader
         title="My IT Support"
-        icon={<MessageSquare className="h-6 w-6 text-indigo-500" />}
+        icon={<MessageSquare className="h-6 w-6 text-accent" />}
         actions={
           <AppButton 
             variant="primary" 
             size="sm" 
             onClick={() => setShowWizard(true)}
             leftIcon={<Plus className="h-4 w-4" />}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+            className="bg-accent hover:bg-accent-secondary text-white font-bold"
           >
             New Request
           </AppButton>
@@ -85,7 +85,7 @@ export function SelfServicePortal() {
               placeholder="Search your tickets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ export function SelfServicePortal() {
           <div className="flex-1 overflow-y-auto">
             {loading && tickets.length === 0 ? (
               <div className="flex items-center justify-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
               </div>
             ) : tickets.length > 0 ? (
               <AppTableContainer>
@@ -115,7 +115,7 @@ export function SelfServicePortal() {
                   <AppTableBody>
                     {tickets.map(ticket => (
                       <AppTableRow key={ticket.dbId} onClick={() => router.push(`/tickets/${ticket.dbId}`)} className="cursor-pointer group hover:bg-gray-50 dark:hover:bg-white/5">
-                        <AppTableCell className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                        <AppTableCell className="font-mono text-xs font-bold text-accent dark:text-accent">
                           {ticket.id}
                         </AppTableCell>
                         <AppTableCell className="font-semibold text-sm max-w-xs truncate">
@@ -131,7 +131,7 @@ export function SelfServicePortal() {
                           {new Date(ticket.created_at).toLocaleDateString()}
                         </AppTableCell>
                         <AppTableCell className="text-right">
-                          <AppButton variant="ghost" size="sm" className="h-8 w-8 p-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/20 text-indigo-500">
+                          <AppButton variant="ghost" size="sm" className="h-8 w-8 p-0 group-hover:bg-accent/10 dark:group-hover:bg-accent/20 text-accent">
                             <ArrowRight className="h-4 w-4" />
                           </AppButton>
                         </AppTableCell>

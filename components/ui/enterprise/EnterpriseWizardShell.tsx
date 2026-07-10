@@ -32,8 +32,8 @@ const ACCENT_MAP = {
 };
 
 const ACCENT_BORDER_MAP = {
-  purple: "border-purple-500/50",
-  indigo: "border-indigo-500/50",
+  purple: "border-accent/50",
+  indigo: "border-accent/50",
   emerald: "border-emerald-500/50",
   amber: "border-amber-500/50",
   rose: "border-rose-500/50",

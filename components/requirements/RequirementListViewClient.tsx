@@ -202,10 +202,10 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     });
 
     return [
-      { label: "Total Reqs", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-blue-500/10", iconColorClass: "text-blue-600" },
+      { label: "Total Reqs", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
       { label: "Pending", value: pending, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-amber-500/10", iconColorClass: "text-amber-600" },
       { label: "Approved", value: approved, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-emerald-500/10", iconColorClass: "text-emerald-600" },
-      { label: "Linked Tasks Progress", value: totalTasks > 0 ? `${Math.round((closedTasks / totalTasks) * 100)}%` : "0%", icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-purple-500/10", iconColorClass: "text-purple-600" },
+      { label: "Linked Tasks Progress", value: totalTasks > 0 ? `${Math.round((closedTasks / totalTasks) * 100)}%` : "0%", icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
     ];
   }, [filtered]);
 
@@ -329,7 +329,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   });
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto my-12" />;
+    return <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full mx-auto my-12" />;
   }
 
   if (!hasPermission("REQUIREMENTS_REPORTS_VIEW")) {
@@ -376,7 +376,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                 <button
                   key={sc}
                   onClick={() => setScope(sc)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-indigo-600 text-indigo-600" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Requirements" : sc === "REQUESTER" ? "My Requests" : "Pending My Approval"}
                 </button>
@@ -443,7 +443,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                       <AppTableRow 
                         key={r.id} 
                         style={{ height: `${virtualRow.size}px` }} 
-                        className="hover:bg-indigo-50/50 dark:hover:bg-white/[0.02] cursor-pointer"
+                        className="hover:bg-accent/10/50 dark:hover:bg-white/[0.02] cursor-pointer"
                         onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
                       >
                         {visibleColumns.map((col, i) => {
@@ -483,7 +483,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                               ) : col.field_key === "title" ? (
                                 <div className="font-medium truncate" title={r.title}>{r.title}</div>
                               ) : col.field_key === "task_count" ? (
-                                <div className="font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
+                                <div className="font-bold text-accent bg-accent/10 dark:bg-accent/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
                               ) : col.field_key === "due_days" ? (
                                 <div className={cn("font-semibold", r.due_days?.includes("Overdue") ? "text-rose-500" : "text-emerald-500")}>
                                   {r.due_days}

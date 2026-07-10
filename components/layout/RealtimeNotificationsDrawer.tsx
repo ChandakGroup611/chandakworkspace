@@ -195,7 +195,7 @@ export default function RealtimeNotificationsDrawer() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative !h-10 !w-10 rounded-xl bg-surface border-border text-muted hover:bg-muted hover:text-foreground"
       >
-        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-blue-400 animate-bounce" : ""}`} />
+        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-accent animate-bounce" : ""}`} />
         {unreadCount > 0 && (
           <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
             {unreadCount}

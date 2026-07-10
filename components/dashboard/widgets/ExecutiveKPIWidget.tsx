@@ -86,19 +86,19 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/workspaces/tasks" className="block h-full group">
         <BaseWidget 
           id="kpi-tasks" 
-          className="h-full border-blue-500/20 bg-gradient-to-br from-surface to-blue-500/5 hover:to-blue-500/10 dark:from-surface/80 dark:to-blue-500/10 overflow-hidden relative"
+          className="h-full border-accent/20 bg-gradient-to-br from-surface to-blue-500/5 hover:to-blue-500/10 dark:from-surface/80 dark:to-blue-500/10 overflow-hidden relative"
           noPadding
           overflowHidden
         >
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-          <div className="absolute top-0 right-0 p-3 opacity-[0.03] dark:opacity-5 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500 text-blue-500">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-accent shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+          <div className="absolute top-0 right-0 p-3 opacity-[0.03] dark:opacity-5 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500 text-accent">
             <Target className="h-16 w-16" />
           </div>
 
           <div className="p-4 flex flex-col h-full relative z-10">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tasks</h3>
-              <div className="p-1.5 rounded-xl bg-blue-500/10 text-blue-500 ring-1 ring-inset ring-blue-500/20 shadow-sm">
+              <div className="p-1.5 rounded-xl bg-accent/10 text-accent ring-1 ring-inset ring-accent/20 shadow-sm">
                 <Target className="h-4 w-4" />
               </div>
             </div>
@@ -108,7 +108,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
                 <span className="text-3xl font-black tracking-tighter text-foreground drop-shadow-sm">{kpis.tasks?.total || 0}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-semibold mt-2 p-2 rounded-lg bg-background/40 backdrop-blur-sm border border-border/50">
-                <span className="text-blue-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.tasks?.resolved || 0}</span>
+                <span className="text-accent flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.tasks?.resolved || 0}</span>
                 <span className="text-amber-500 flex items-center gap-1"><Clock className="h-3 w-3" /> {kpis.tasks?.upcoming_due || 0}</span>
               </div>
             </div>
@@ -153,19 +153,19 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/requirements" className="block h-full group">
         <BaseWidget 
           id="kpi-requirements" 
-          className="h-full border-indigo-500/20 bg-gradient-to-br from-surface to-indigo-500/5 hover:to-indigo-500/10 dark:from-surface/80 dark:to-indigo-500/10 overflow-hidden relative"
+          className="h-full border-accent/20 bg-gradient-to-br from-surface to-indigo-500/5 hover:to-indigo-500/10 dark:from-surface/80 dark:to-indigo-500/10 overflow-hidden relative"
           noPadding
           overflowHidden
         >
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-          <div className="absolute top-0 right-0 p-3 opacity-[0.03] dark:opacity-5 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500 text-indigo-500">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-accent shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+          <div className="absolute top-0 right-0 p-3 opacity-[0.03] dark:opacity-5 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500 text-accent">
             <FileText className="h-16 w-16" />
           </div>
 
           <div className="p-4 flex flex-col h-full relative z-10">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Requirements</h3>
-              <div className="p-1.5 rounded-xl bg-indigo-500/10 text-indigo-500 ring-1 ring-inset ring-indigo-500/20 shadow-sm">
+              <div className="p-1.5 rounded-xl bg-accent/10 text-accent ring-1 ring-inset ring-accent/20 shadow-sm">
                 <FileText className="h-4 w-4" />
               </div>
             </div>
@@ -175,7 +175,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
                 <span className="text-3xl font-black tracking-tighter text-foreground drop-shadow-sm">{kpis.requirements?.total || 0}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-semibold mt-2 p-2 rounded-lg bg-background/40 backdrop-blur-sm border border-border/50">
-                <span className="text-indigo-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.requirements?.resolved || 0} Resolved</span>
+                <span className="text-accent flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.requirements?.resolved || 0} Resolved</span>
               </div>
             </div>
           </div>
@@ -186,19 +186,19 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/tickets" className="block h-full group">
         <BaseWidget 
           id="kpi-tickets" 
-          className="h-full border-purple-500/20 bg-gradient-to-br from-surface to-purple-500/5 hover:to-purple-500/10 dark:from-surface/80 dark:to-purple-500/10 overflow-hidden relative"
+          className="h-full border-accent/20 bg-gradient-to-br from-surface to-purple-500/5 hover:to-purple-500/10 dark:from-surface/80 dark:to-purple-500/10 overflow-hidden relative"
           noPadding
           overflowHidden
         >
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-          <div className="absolute top-0 right-0 p-3 opacity-[0.03] dark:opacity-5 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500 text-purple-500">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-accent shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+          <div className="absolute top-0 right-0 p-3 opacity-[0.03] dark:opacity-5 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-500 text-accent">
             <LayoutDashboard className="h-16 w-16" />
           </div>
 
           <div className="p-4 flex flex-col h-full relative z-10">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tickets</h3>
-              <div className="p-1.5 rounded-xl bg-purple-500/10 text-purple-500 ring-1 ring-inset ring-purple-500/20 shadow-sm">
+              <div className="p-1.5 rounded-xl bg-accent/10 text-accent ring-1 ring-inset ring-accent/20 shadow-sm">
                 <LayoutDashboard className="h-4 w-4" />
               </div>
             </div>
@@ -208,7 +208,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
                 <span className="text-3xl font-black tracking-tighter text-foreground drop-shadow-sm">{kpis.tickets?.total || 0}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-semibold mt-2 p-2 rounded-lg bg-background/40 backdrop-blur-sm border border-border/50">
-                <span className="text-purple-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.tickets?.resolved || 0} Resolved</span>
+                <span className="text-accent flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.tickets?.resolved || 0} Resolved</span>
               </div>
             </div>
           </div>

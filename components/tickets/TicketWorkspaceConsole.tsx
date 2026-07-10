@@ -224,7 +224,7 @@ export function TicketWorkspaceConsole({
     if (code === "PR_CRITICAL") return "bg-red-500/10 text-red-500 border-red-500/20";
     if (code === "PR_HIGH") return "bg-orange-500/10 text-orange-500 border-orange-500/20";
     if (code === "PR_MEDIUM") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-    return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+    return "bg-accent/10 text-accent border-accent/20";
   };
 
   return (
@@ -252,7 +252,7 @@ export function TicketWorkspaceConsole({
                       checked={st.completed}
                       onChange={() => toggleSubTask(st.id)}
                       disabled={!canEditFields}
-                      className="w-4 h-4 rounded border-border text-purple-600 focus:ring-purple-500"
+                      className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
                     />
                     <span className={`text-xs font-medium ${st.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                       {st.text}
@@ -268,7 +268,7 @@ export function TicketWorkspaceConsole({
                     value={newSubTask}
                     onChange={(e) => setNewSubTask(e.target.value)}
                     placeholder="Add a new sub-task..."
-                    className="flex-1 border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all"
+                    className="flex-1 border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all"
                   />
                   <AppButton type="submit" variant="primary" disabled={!newSubTask.trim()}>
                     Add
@@ -294,7 +294,7 @@ export function TicketWorkspaceConsole({
                       <div className="flex items-center gap-3">
                         <span className={`px-2 py-0.5 rounded font-bold uppercase ${
                           rel.relation_type === 'DUPLICATE' ? 'bg-amber-500/10 text-amber-500' :
-                          rel.relation_type === 'BLOCKS' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'
+                          rel.relation_type === 'BLOCKS' ? 'bg-red-500/10 text-red-500' : 'bg-accent/10 text-accent'
                         }`}>
                           {rel.relation_type}
                         </span>
@@ -384,7 +384,7 @@ export function TicketWorkspaceConsole({
           <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Clock className="w-4 h-4 text-purple-500" /> Timeline & Meta
+                 <Clock className="w-4 h-4 text-accent" /> Timeline & Meta
                </h3>
                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest ${getPriorityColor()}`}>
                  {ticket.priorityObj?.name || "STANDARD"}
@@ -403,7 +403,7 @@ export function TicketWorkspaceConsole({
                           ? (pendingChanges.due_date ? new Date(pendingChanges.due_date).toISOString().split('T')[0] : "") 
                           : (ticket.due_date ? new Date(ticket.due_date).toISOString().split('T')[0] : "")}
                         onChange={(e) => handleFieldUpdate({ due_date: e.target.value })}
-                        className="bg-transparent border-b border-border/50 text-foreground outline-none focus:border-purple-500 py-0.5 w-full cursor-pointer"
+                        className="bg-transparent border-b border-border/50 text-foreground outline-none focus:border-accent py-0.5 w-full cursor-pointer"
                       />
                     ) : (
                       ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : "Not Set"
@@ -412,7 +412,7 @@ export function TicketWorkspaceConsole({
                </div>
                <div>
                   <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">SLA Status</div>
-                  <div className={`text-xs font-semibold ${slaStatus === "BREACHED" ? "text-red-500" : slaStatus === "MET" ? "text-green-500" : "text-purple-500"}`}>
+                  <div className={`text-xs font-semibold ${slaStatus === "BREACHED" ? "text-red-500" : slaStatus === "MET" ? "text-green-500" : "text-accent"}`}>
                     {slaTimeRemaining}
                   </div>
                </div>
@@ -434,7 +434,7 @@ export function TicketWorkspaceConsole({
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" /> Total Time Logged
               </span>
-              <span className="text-sm font-black text-purple-600 dark:text-purple-400">
+              <span className="text-sm font-black text-accent dark:text-accent">
                 {Math.floor(timeLogged / 60)}h {timeLogged % 60}m
               </span>
             </div>
@@ -448,7 +448,7 @@ export function TicketWorkspaceConsole({
           <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Users className="w-4 h-4 text-blue-500" /> Execution Team & Routing
+                 <Users className="w-4 h-4 text-accent" /> Execution Team & Routing
                </h3>
             </div>
             <div className="p-6 space-y-6">
@@ -468,7 +468,7 @@ export function TicketWorkspaceConsole({
                     handleFieldUpdate(updates);
                   }}
                   disabled={!canEditFields}
-                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-background border-border text-foreground"
+                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-accent focus:ring-1 focus:ring-accent bg-background border-border text-foreground"
                 >
                   <option value="">Unassigned</option>
                   {assigneesList.map(a => (
@@ -483,7 +483,7 @@ export function TicketWorkspaceConsole({
                   value={ticket.status_id}
                   onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
                   disabled={!canEditFields}
-                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-background border-border text-foreground"
+                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-accent focus:ring-1 focus:ring-accent bg-background border-border text-foreground"
                 >
                   {states.map((s: any) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
@@ -501,7 +501,7 @@ export function TicketWorkspaceConsole({
                       value={newTimeLog}
                       onChange={(e) => setNewTimeLog(e.target.value)}
                       placeholder="e.g. 30"
-                      className="w-full border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground focus:border-blue-500 outline-none"
+                      className="w-full border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground focus:border-accent outline-none"
                     />
                     <AppButton type="submit" variant="outline" size="sm" disabled={!newTimeLog || isLoggingTime}>
                       {isLoggingTime ? "..." : "Log"}
@@ -626,7 +626,7 @@ export function TicketWorkspaceConsole({
                     setUpdateRemark("Acknowledged and actively investigating.");
                   }
                 }}
-                className="text-[10px] font-bold px-2 py-1 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors border border-blue-500/20"
+                className="text-[10px] font-bold px-2 py-1 rounded bg-accent/10 text-accent hover:bg-accent/20 transition-colors border border-accent/20"
               >
                 Acknowledge
               </button>
@@ -650,7 +650,7 @@ export function TicketWorkspaceConsole({
           value={updateRemark}
           onChange={e => setUpdateRemark(e.target.value)}
           disabled={!canEditFields}
-          className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors bg-background border-border text-foreground ${!canEditFields ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-accent transition-colors bg-background border-border text-foreground ${!canEditFields ? 'opacity-50 cursor-not-allowed' : ''}`}
           placeholder={!canEditFields ? "Ticket is frozen/read-only." : "Add update notes or operational remarks..."}
         />
         <div className="flex items-center justify-between gap-3">
@@ -670,12 +670,12 @@ export function TicketWorkspaceConsole({
             className="flex items-center justify-between cursor-pointer select-none group"
           >
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-blue-500" />
-              <span className="text-[11px] font-bold uppercase tracking-wider transition-colors text-muted-foreground group-hover:text-blue-500">
+              <MessageSquare className="h-4 w-4 text-accent" />
+              <span className="text-[11px] font-bold uppercase tracking-wider transition-colors text-muted-foreground group-hover:text-accent">
                 Remarks History Queue
               </span>
               {remarksHistory.length > 0 && (
-                <span className="text-xs py-0.5 px-2 font-extrabold rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                <span className="text-xs py-0.5 px-2 font-extrabold rounded-full bg-accent/20 text-accent border border-accent/30">
                   {remarksHistory.length}
                 </span>
               )}
@@ -698,7 +698,7 @@ export function TicketWorkspaceConsole({
             <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
               {loadingRemarksHistory ? (
                 <div className="flex items-center justify-center py-6 gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
+                  <Loader2 className="h-4 w-4 animate-spin text-accent" />
                   <span className="text-xs text-muted-foreground">Loading history queue...</span>
                 </div>
               ) : remarksHistory.length === 0 ? (
@@ -706,7 +706,7 @@ export function TicketWorkspaceConsole({
                   No remark history entries. Create a new remark above to start the queue.
                 </div>
               ) : (
-                <div className="relative pl-4 border-l border-purple-500/20 space-y-5">
+                <div className="relative pl-4 border-l border-accent/20 space-y-5">
                   {remarksHistory.map((item: any) => {
                     const initials = (item.author?.full_name || item.user?.full_name || "Unknown")
                       .split(" ")
@@ -718,7 +718,7 @@ export function TicketWorkspaceConsole({
                     return (
                       <div key={item.id} className="relative group/item">
                         {/* Timeline Node Point */}
-                        <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-purple-500 border-2 border-background group-hover/item:scale-125 transition-transform" />
+                        <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent border-2 border-background group-hover/item:scale-125 transition-transform" />
                         
                         <div className="flex items-start gap-3">
                           {/* Avatar */}
@@ -726,10 +726,10 @@ export function TicketWorkspaceConsole({
                             <img 
                               src={item.user.profile_photo} 
                               alt={item.user.full_name} 
-                              className="h-7 w-7 rounded-full border border-purple-500/20 object-cover"
+                              className="h-7 w-7 rounded-full border border-accent/20 object-cover"
                             />
                           ) : (
-                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-purple-500/20 shadow-md">
+                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-accent/20 shadow-md">
                               {initials}
                             </div>
                           )}
@@ -737,7 +737,7 @@ export function TicketWorkspaceConsole({
                           {/* Content Block */}
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
-                              <span className="text-xs font-bold transition-colors text-foreground group-hover/item:text-purple-500">
+                              <span className="text-xs font-bold transition-colors text-foreground group-hover/item:text-accent">
                                 {item.author?.full_name || item.user?.full_name || "System Actor"}
                               </span>
                               <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">

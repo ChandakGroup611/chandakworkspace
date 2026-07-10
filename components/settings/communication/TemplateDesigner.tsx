@@ -120,7 +120,7 @@ export default function TemplateDesigner() {
     return preview;
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -131,7 +131,7 @@ export default function TemplateDesigner() {
         </div>
         <button
           onClick={handleAddTemplate}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-500/20 transition-all"
+          className="flex items-center gap-2 bg-accent hover:bg-accent text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-500/20 transition-all"
         >
           <Plus className="w-4 h-4" /> Add Template
         </button>
@@ -148,7 +148,7 @@ export default function TemplateDesigner() {
                   type="text" 
                   value={tpl.template_name}
                   onChange={(e) => updateLocal(tpl.id, "template_name", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
                 />
               </div>
               <div className="space-y-2">
@@ -177,7 +177,7 @@ export default function TemplateDesigner() {
                   type="text" 
                   value={tpl.subject}
                   onChange={(e) => updateLocal(tpl.id, "subject", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 font-mono"
+                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent font-mono"
                   placeholder="e.g. Action Required: {{task_name}}"
                 />
               </div>
@@ -198,7 +198,7 @@ export default function TemplateDesigner() {
                       updateLocal(tpl.id, "html_body", newBody);
                     }
                   }}
-                  className="px-2 py-1 bg-white/5 hover:bg-purple-500/20 text-purple-300 text-xs font-mono rounded transition-colors"
+                  className="px-2 py-1 bg-white/5 hover:bg-accent/20 text-purple-300 text-xs font-mono rounded transition-colors"
                 >
                   {tag}
                 </button>
@@ -209,13 +209,13 @@ export default function TemplateDesigner() {
             <div className="flex border-b border-white/5 bg-[#0A0D14]">
               <button 
                 onClick={() => setActiveTab(p => ({ ...p, [tpl.id]: "code" }))}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-purple-500 text-purple-400 bg-white/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </button>
               <button 
                 onClick={() => setActiveTab(p => ({ ...p, [tpl.id]: "preview" }))}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-purple-500 text-purple-400 bg-white/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview
               </button>
@@ -227,7 +227,7 @@ export default function TemplateDesigner() {
                 id={`editor_${tpl.id}`}
                 value={tpl.html_body}
                 onChange={(e) => updateLocal(tpl.id, "html_body", e.target.value)}
-                className="w-full h-64 bg-[#05070D] text-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-purple-500/20 resize-y"
+                className="w-full h-64 bg-[#05070D] text-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-accent/20 resize-y"
                 spellCheck={false}
               />
             ) : (
@@ -240,7 +240,7 @@ export default function TemplateDesigner() {
             {/* Footer Actions */}
             <div className="bg-[#0A0D14] px-6 py-3 border-t border-white/5 flex justify-between items-center">
               <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-purple-500' : 'bg-gray-600'}`}>
+                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-accent' : 'bg-gray-600'}`}>
                   <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${tpl.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                 </div>
                 <input 

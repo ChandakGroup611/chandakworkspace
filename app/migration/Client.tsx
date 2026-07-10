@@ -228,7 +228,7 @@ export default function MigrationClient() {
           </div>
           
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs">1</span>
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-xs">1</span>
             Configure Template
           </h2>
           
@@ -242,7 +242,7 @@ export default function MigrationClient() {
                   setTargetWorkspaceId('');
                   setTargetSubworkspaceId('');
                 }}
-                className="w-full bg-[#1C1C21] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-[#1C1C21] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition-colors"
               >
                 <option value="WORKSPACE">Root Workspace</option>
                 <option value="SUBWORKSPACE">Subworkspace</option>
@@ -251,9 +251,9 @@ export default function MigrationClient() {
             </div>
 
             {selectedModule === 'TASK' && (
-              <div className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div className="p-4 bg-accent/5 border border-accent/20 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-start gap-2 mb-2">
-                  <Database className="w-4 h-4 text-indigo-400 mt-0.5" />
+                  <Database className="w-4 h-4 text-accent mt-0.5" />
                   <p className="text-xs text-indigo-300 leading-relaxed">
                     Task imports require a destination context. The template will automatically restrict the 'Assignee' and 'Watchers' fields to the users who have access to this context.
                   </p>
@@ -262,7 +262,7 @@ export default function MigrationClient() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-300 mb-1.5">Target Workspace (Root) <span className="text-red-400">*</span></label>
                   <select
-                    className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
                     value={targetWorkspaceId}
                     onChange={(e) => {
                       setTargetWorkspaceId(e.target.value);
@@ -279,7 +279,7 @@ export default function MigrationClient() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-300 mb-1.5">Target Subworkspace (Optional)</label>
                   <select
-                    className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                    className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent disabled:opacity-50"
                     value={targetSubworkspaceId}
                     onChange={(e) => setTargetSubworkspaceId(e.target.value)}
                     disabled={!targetWorkspaceId}
@@ -311,7 +311,7 @@ export default function MigrationClient() {
         <div className={`bg-[#121827] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-opacity ${selectedModule === 'TASK' && !targetWorkspaceId ? 'opacity-50 pointer-events-none' : ''}`}>
           
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs">2</span>
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-xs">2</span>
             Upload Data
           </h2>
           
@@ -332,7 +332,7 @@ export default function MigrationClient() {
              )}
 
              <div 
-               className={`border-2 border-dashed ${isUploading ? 'border-indigo-500/50 bg-indigo-500/5' : 'border-white/10 hover:border-indigo-500/50 hover:bg-white/5 cursor-pointer transition-all'} rounded-xl p-8 flex flex-col items-center justify-center text-center`}
+               className={`border-2 border-dashed ${isUploading ? 'border-accent/50 bg-accent/5' : 'border-white/10 hover:border-accent/50 hover:bg-white/5 cursor-pointer transition-all'} rounded-xl p-8 flex flex-col items-center justify-center text-center`}
                onClick={() => !isUploading && fileInputRef.current?.click()}
                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                onDrop={(e) => {
@@ -351,13 +351,13 @@ export default function MigrationClient() {
              >
                {isUploading ? (
                  <>
-                   <Loader2 className="w-10 h-10 text-indigo-500 mb-3 animate-spin" />
+                   <Loader2 className="w-10 h-10 text-accent mb-3 animate-spin" />
                    <h3 className="text-sm font-semibold text-indigo-300 mb-1">Processing Excel File...</h3>
-                   <p className="text-xs text-indigo-400/70">Please do not close this page.</p>
+                   <p className="text-xs text-accent/70">Please do not close this page.</p>
                  </>
                ) : (
                  <>
-                   <Upload className="w-10 h-10 text-gray-500 mb-3 group-hover:text-indigo-400 transition-colors" />
+                   <Upload className="w-10 h-10 text-gray-500 mb-3 group-hover:text-accent transition-colors" />
                    <h3 className="text-sm font-semibold text-gray-300 mb-1">Click to browse or drag file here</h3>
                    <p className="text-xs text-gray-500">Only .xlsx files are supported</p>
                    <AppButton 
