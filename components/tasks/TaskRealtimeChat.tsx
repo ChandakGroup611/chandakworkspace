@@ -254,27 +254,29 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             .from('task_attachments')
             .upload(filePath, file);
             
-          if (!uploadError && uploadData) {
-            // Create database record to enable secure proxy access
-            const { data: dbData } = await supabase.from('task_attachments').insert([{
-               task_id: taskId,
-               file_name: file.name,
-               file_url: `storage:task_attachments:${filePath}`,
-               file_type: file.type,
-               size: file.size,
-               uploaded_by: userId
-            }]).select().single();
-
-            const fileUrl = dbData?.id ? `/api/proxy-attachment/${dbData.id}` : supabase.storage.from('task_attachments').getPublicUrl(filePath).data.publicUrl;
-
-            uploadedAttachments.push({
-              id: dbData?.id,
-              name: file.name,
-              url: fileUrl,
-              size: file.size,
-              type: file.type
-            });
+          if (uploadError || !uploadData) {
+            throw new Error(`Failed to upload ${file.name}: ${uploadError?.message || 'Unknown error'}`);
           }
+
+          // Create database record to enable secure proxy access
+          const { data: dbData } = await supabase.from('task_attachments').insert([{
+             task_id: taskId,
+             file_name: file.name,
+             file_url: `storage:task_attachments:${filePath}`,
+             file_type: file.type,
+             size: file.size,
+             uploaded_by: userId
+          }]).select().single();
+
+          const fileUrl = dbData?.id ? `/api/proxy-attachment/${dbData.id}` : supabase.storage.from('task_attachments').getPublicUrl(filePath).data.publicUrl;
+
+          uploadedAttachments.push({
+            id: dbData?.id,
+            name: file.name,
+            url: fileUrl,
+            size: file.size,
+            type: file.type
+          });
         }
       }
       setSelectedFiles([]);
@@ -431,6 +433,16 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                           {attachments.length > 0 && (
                             <div className="flex flex-col gap-1.5 mt-1 border-t border-white/20 pt-2">
                               {attachments.map((att, i) => (
+                                att.type?.startsWith('image/') ? (
+                                  <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
+                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-black/5 dark:bg-white/5" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors" title="View Full Image">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                                      </a>
+                                    </div>
+                                  </div>
+                                ) : (
                                 <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-black/10' : 'bg-black/5 dark:bg-white/5'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden">
                                     <Paperclip className="h-3 w-3 shrink-0 opacity-70" />
@@ -445,6 +457,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                                     </a>
                                   </div>
                                 </div>
+                                )
                               ))}
                             </div>
                           )}
