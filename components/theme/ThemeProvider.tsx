@@ -149,6 +149,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const bSize = activeBaseSize || baseFontSize;
     const sSize = activeSubtextSize || subtextFontSize;
+    
+    document.documentElement.style.setProperty("--base-font-size", bSize + "px");
+    document.documentElement.style.setProperty("--subtext-font-size", sSize + "px");
+    document.documentElement.style.setProperty("--text-scale-ratio", String(bSize / 16));
 
     const wProfile = activeWeightProfile || fontWeightProfile;
     if (wProfile === "heavy") {

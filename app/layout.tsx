@@ -50,6 +50,7 @@ export default function RootLayout({
 
               const textScaleRatio = Number(baseSize) / 16;
               document.documentElement.style.setProperty("--text-scale-ratio", String(textScaleRatio));
+              document.documentElement.style.setProperty("--base-font-size", baseSize + "px");
               document.documentElement.style.setProperty("--subtext-font-size", subtextSize + "px");
             } catch (e) {}
           `
