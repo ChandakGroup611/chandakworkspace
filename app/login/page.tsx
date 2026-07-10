@@ -288,6 +288,7 @@ export default function LoginPage() {
                 </span>
               </div>
             </div>
+          </div>
 
           <AppButton
             variant="outline"
