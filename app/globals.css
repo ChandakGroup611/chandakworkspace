@@ -41,6 +41,17 @@
     font-family: inherit;
   }
 
+  /* Premium Global Text Selection */
+  ::selection {
+    background-color: var(--color-accent);
+    color: #ffffff;
+  }
+
+  ::-moz-selection {
+    background-color: var(--color-accent);
+    color: #ffffff;
+  }
+
   body {
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
