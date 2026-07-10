@@ -483,17 +483,19 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                                     </div>
                                   </div>
                                 ) : (
-                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-black/10' : 'bg-black/5 dark:bg-white/5'}`}>
-                                  <div className="flex items-center gap-2 overflow-hidden">
-                                    <Paperclip className="h-3 w-3 shrink-0 opacity-70" />
-                                    <span className="truncate max-w-[150px]" title={att.name}>{att.name}</span>
+                                <div key={i} className={`flex items-center justify-between p-2 rounded border ${isSender ? 'bg-black/10 border-black/10' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'}`}>
+                                  <div className="flex items-center gap-2 overflow-hidden mr-3">
+                                    <Paperclip className="h-4 w-4 shrink-0 opacity-70" />
+                                    <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
                                   </div>
-                                  <div className="flex items-center gap-1 shrink-0 ml-2">
-                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-white/20 rounded cursor-pointer transition-colors" title="View">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 text-foreground'}`} title="View Document">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                      <span>VIEW</span>
                                     </a>
-                                    <a href={att.url} download={att.name} className="p-1 hover:bg-white/20 rounded cursor-pointer transition-colors" title="Download">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                    <a href={att.url} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 text-foreground'}`} title="Download Document">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                      <span>DOWNLOAD</span>
                                     </a>
                                   </div>
                                 </div>
