@@ -38,7 +38,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 
     const headers = new Headers();
-    headers.set('Content-Type', fileResponse.headers.get('Content-Type') || 'application/octet-stream');
+    headers.set('Content-Type', attachment.file_type || fileResponse.headers.get('Content-Type') || 'application/octet-stream');
     headers.set('Content-Disposition', `inline; filename="${attachment.file_name}"`);
 
     // Stream the file back

@@ -264,7 +264,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
           
           const { error: uploadError, data: uploadData } = await supabase.storage
             .from('task_attachments')
-            .upload(filePath, file);
+            .upload(filePath, file, { contentType: file.type });
             
           if (uploadError || !uploadData) {
             throw new Error(`Failed to upload ${file.name}: ${uploadError?.message || 'Unknown error'}`);
