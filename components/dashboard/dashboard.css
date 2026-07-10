@@ -8,17 +8,17 @@
     --inst: 'Instrument Sans', sans-serif;
     --mono: 'DM Mono', monospace;
     --r4: 4px; --r8: 8px; --r12: 12px; --r16: 16px;
-    --bg: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-    --bg2: #ffffff;
-    --bg3: #f1f5f9;
-    --bg4: #20253200;
-    --border: rgba(0,0,0,0.08);
-    --border2: rgba(0,0,0,0.15);
-    --text1: #0f172a;
-    --text2: #334155;
-    --text3: #475569;
-    --accent: #4f46e5;
-    --accent2: #4338ca;
+    --bg: var(--color-background, #f8fafc);
+    --bg2: var(--color-surface, #ffffff);
+    --bg3: var(--color-elevated, #f1f5f9);
+    --bg4: transparent;
+    --border: var(--color-border, rgba(0,0,0,0.08));
+    --border2: var(--color-border-active, rgba(0,0,0,0.15));
+    --text1: var(--color-foreground, #0f172a);
+    --text2: var(--color-muted, #334155);
+    --text3: var(--color-subtle, #475569);
+    --accent: var(--color-accent, #4f46e5);
+    --accent2: var(--color-accent-secondary, #4338ca);
     --green: #10b981;
     --amber: #f59e0b;
     --red: #ef4444;
@@ -468,14 +468,14 @@
 
 /* NextThemes Dark Mode Support */
 .dark .dash-theme {
-  --bg: #05070D;
-  --bg2: #111827;
-  --bg3: #1f2937;
-  --bg4: #374151;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.15);
-  --text1: #f8fafc;
-  --text2: #cbd5e1;
-  --text3: #94a3b8;
+  --bg: var(--color-background, #05070D);
+  --bg2: var(--color-surface, #111827);
+  --bg3: var(--color-elevated, #1f2937);
+  --bg4: transparent;
+  --border: var(--color-border, rgba(255,255,255,0.08));
+  --border2: var(--color-border-active, rgba(255,255,255,0.15));
+  --text1: var(--color-foreground, #f8fafc);
+  --text2: var(--color-muted, #cbd5e1);
+  --text3: var(--color-subtle, #94a3b8);
 }
 
