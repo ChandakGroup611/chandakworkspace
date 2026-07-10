@@ -109,23 +109,47 @@
   .theme-light .bg-white\/20,
   .theme-light .bg-white\/\[0\.02\],
   .theme-light .bg-white\/\[0\.05\],
-  .theme-light .bg-white\/\[0\.1\] {
+  .theme-light .bg-white\/\[0\.1\],
+  .theme-light .bg-slate-950:not(.text-white),
+  .theme-light .bg-slate-900:not(.text-white),
+  .theme-light .bg-slate-800:not(.text-white),
+  .theme-light .bg-gray-950:not(.text-white),
+  .theme-light .bg-gray-900:not(.text-white),
+  .theme-light .bg-gray-800:not(.text-white),
+  .theme-light .bg-zinc-950:not(.text-white),
+  .theme-light .bg-zinc-900:not(.text-white),
+  .theme-light .bg-zinc-800:not(.text-white) {
     background-color: var(--color-surface) !important;
   }
 
   .theme-light .border-white\/5,
   .theme-light .border-white\/10,
-  .theme-light .border-white\/20 {
+  .theme-light .border-white\/20,
+  .theme-light .border-slate-800,
+  .theme-light .border-slate-700,
+  .theme-light .border-gray-800,
+  .theme-light .border-gray-700,
+  .theme-light .border-zinc-800,
+  .theme-light .border-zinc-700 {
     border-color: var(--color-border) !important;
   }
 
-  .theme-light .text-white {
+  .theme-light .text-white:not([class*="bg-"]):not([class*="from-"]) {
     color: var(--color-foreground) !important;
   }
   
   .theme-light .text-gray-200,
   .theme-light .text-gray-300,
-  .theme-light .text-gray-400 {
+  .theme-light .text-gray-400,
+  .theme-light .text-slate-200,
+  .theme-light .text-slate-300,
+  .theme-light .text-slate-400,
+  .theme-light .text-zinc-200,
+  .theme-light .text-zinc-300,
+  .theme-light .text-zinc-400,
+  .theme-light .text-white\/50,
+  .theme-light .text-white\/60,
+  .theme-light .text-white\/70 {
     color: var(--color-subtle) !important;
   }
 
@@ -163,5 +187,29 @@
   .theme-light [class*="from-rose-"].text-white,
   .theme-light [class*="from-amber-"].text-white {
     color: #ffffff !important;
+  }
+
+  /* Universal Recharts Light Theme Overrides */
+  .theme-light .recharts-cartesian-grid-horizontal line,
+  .theme-light .recharts-cartesian-grid-vertical line {
+    stroke: var(--color-border) !important;
+  }
+  
+  .theme-light .recharts-text,
+  .theme-light .recharts-cartesian-axis-tick-value {
+    fill: var(--color-subtle) !important;
+  }
+  
+  .theme-light .recharts-default-tooltip {
+    background-color: var(--color-surface) !important;
+    border-color: var(--color-border) !important;
+  }
+  
+  .theme-light .recharts-tooltip-item {
+    color: var(--color-foreground) !important;
+  }
+  
+  .theme-light .recharts-tooltip-label {
+    color: var(--color-subtle) !important;
   }
 }
