@@ -323,7 +323,7 @@ export function WorkspaceMasterTable({
                         isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
                         'text-[13px]'
                       } ${
-                        isLightMode ? (depth === 0 ? 'text-gray-900' : 'text-gray-800') : (depth === 0 ? 'text-white' : 'text-gray-200')
+                        isLightMode ? (depth === 0 ? 'text-black' : 'text-slate-900') : (depth === 0 ? 'text-white' : 'text-gray-200')
                       }`}>
                         {isSubWorkspace && parentNode && (parentNode.workspace_name || parentNode.name) && !(node.workspace_name || node.name || '').startsWith((parentNode.workspace_name || parentNode.name) + ' -')
                           ? `${parentNode.workspace_name || parentNode.name} - ${node.workspace_name || node.name}`
@@ -371,12 +371,12 @@ export function WorkspaceMasterTable({
           </div>
           
           {/* Created Date */}
-          <div className="py-1 px-2 text-xs text-gray-500 whitespace-nowrap" title={fullDate}>
+          <div className="py-1 px-2 text-xs text-slate-900 dark:text-gray-300 whitespace-nowrap" title={fullDate}>
             {shortDate}
           </div>
 
           {/* Created By */}
-          <div className="py-1 px-2 text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
+          <div className="py-1 px-2 text-xs font-semibold text-black dark:text-gray-200 whitespace-nowrap">
             {creatorId ? getUserName(creatorId) : "System"}
           </div>
 
@@ -495,11 +495,11 @@ export function WorkspaceMasterTable({
     };
 
   return (
-    <div className="w-full">
+    <div className="w-full font-sans">
       <div className="w-full flex flex-col">
         {/* Header */}
-        <div className={`grid items-center text-xs uppercase tracking-wider font-semibold border-b-2 ${
-          isLightMode ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700'
+        <div className={`grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
+          isLightMode ? 'bg-slate-100 text-black border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700'
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>
           <div className="py-2 px-2">Created Date</div>
