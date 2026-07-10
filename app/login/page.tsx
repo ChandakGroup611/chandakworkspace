@@ -149,7 +149,7 @@ export default function LoginPage() {
 
   return (
     <div className={`min-h-[100dvh] w-full flex font-sans transition-colors duration-300 ${
-      "bg-surface text-slate-900"
+      "bg-surface text-foreground"
     }`}>
       
       {/* LEFT SIDE - Branding & Premium Abstract Graphic */}
@@ -202,7 +202,7 @@ export default function LoginPage() {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
               Sign in
             </h1>
-            <p className={`text-sm text-slate-500`}>
+            <p className={`text-sm text-muted`}>
               Enter your credentials to access your secure workspace.
             </p>
           </div>
@@ -228,7 +228,7 @@ export default function LoginPage() {
           {/* Standard Credentials Submission Form */}
           <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
             <div className="space-y-2">
-              <label className={`text-sm font-semibold text-slate-900`}>
+              <label className={`text-sm font-semibold text-foreground`}>
                 Email Address
               </label>
               <AppInput 
@@ -237,14 +237,14 @@ export default function LoginPage() {
                 placeholder="e.g. user@enterprise.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                leftIcon={<Mail className="h-4 w-4 text-slate-400" />}
+                leftIcon={<Mail className="h-4 w-4 text-muted" />}
                 className="h-11 text-sm"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-semibold text-slate-900`}>
+              <label className={`text-sm font-semibold text-foreground`}>
                 Password
               </label>
               <AppInput 
@@ -253,7 +253,7 @@ export default function LoginPage() {
                 placeholder="••••••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                leftIcon={<Lock className="h-4 w-4 text-slate-400" />}
+                leftIcon={<Lock className="h-4 w-4 text-muted" />}
                 className="h-11 text-sm"
                 required
               />
@@ -280,21 +280,20 @@ export default function LoginPage() {
           </form>
 
           <div className="relative py-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className={`w-full border-t border-slate-200`}></span>
+            <div className="relative flex justify-center text-xs uppercase my-6">
+              <span className={`w-full border-t border-border`}></span>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`px-4 font-semibold tracking-wider bg-surface text-muted`}>
+                  OR CONTINUE WITH
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className={`px-4 font-semibold tracking-wider bg-surface text-slate-400`}>
-                Or continue with
-              </span>
-            </div>
-          </div>
 
           <AppButton
             variant="outline"
             type="button"
             onClick={handleMicrosoftLogin}
-            className="w-full h-11 font-semibold flex items-center justify-center gap-3 text-sm border-slate-200 dark:border-white/10"
+            className="w-full h-11 font-semibold flex items-center justify-center gap-3 text-sm border-border"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21">
               <path fill="#f25022" d="M1 1h9v9H1z"/>
@@ -307,7 +306,7 @@ export default function LoginPage() {
 
           {/* Navigation link to Registration screen */}
           <div className="pt-8 text-center text-sm">
-            <span className={"text-slate-500"}>
+            <span className={"text-subtle"}>
               Don't have an account?{" "}
             </span>
             <Link href="/register" className="font-semibold text-accent dark:text-accent hover:text-accent dark:hover:text-blue-300 transition-colors">
