@@ -166,7 +166,7 @@ export default function LoginPage() {
 
         {/* Top Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="h-10 w-auto flex items-center justify-center bg-white/10 backdrop-blur-md rounded-lg p-1.5 ring-1 ring-white/20">
+          <div className="h-12 w-auto flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
             <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white drop-shadow-sm">
@@ -193,7 +193,7 @@ export default function LoginPage() {
           
           {/* Mobile Logo (Only visible on small screens) */}
           <div className="lg:hidden flex justify-center mb-8">
-            <div className="h-14 w-auto flex items-center justify-center">
+            <div className="h-16 w-auto flex items-center justify-center bg-white rounded-xl p-3 shadow-md">
               <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
           </div>
