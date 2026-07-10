@@ -46,6 +46,14 @@ export default function RootLayout({
               
               if (fontFam === "outfit") document.documentElement.style.setProperty("--app-font-family", "var(--font-outfit), 'Outfit', system-ui, sans-serif");
               else if (fontFam === "roboto") document.documentElement.style.setProperty("--app-font-family", "var(--font-roboto), 'Roboto', system-ui, sans-serif");
+              else if (fontFam === "arial") document.documentElement.style.setProperty("--app-font-family", "Arial, Helvetica, sans-serif");
+              else if (fontFam === "times") document.documentElement.style.setProperty("--app-font-family", "'Times New Roman', Times, serif");
+              else if (fontFam === "verdana") document.documentElement.style.setProperty("--app-font-family", "Verdana, Geneva, sans-serif");
+              else if (fontFam === "courier") document.documentElement.style.setProperty("--app-font-family", "'Courier New', Courier, monospace");
+              else if (fontFam === "georgia") document.documentElement.style.setProperty("--app-font-family", "Georgia, serif");
+              else if (fontFam === "trebuchet") document.documentElement.style.setProperty("--app-font-family", "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif");
+              else if (fontFam === "comic-sans") document.documentElement.style.setProperty("--app-font-family", "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif");
+              else if (fontFam === "impact") document.documentElement.style.setProperty("--app-font-family", "Impact, Charcoal, sans-serif");
               else document.documentElement.style.setProperty("--app-font-family", "var(--font-inter), 'Inter', system-ui, sans-serif");
 
               const textScaleRatio = Number(baseSize) / 16;

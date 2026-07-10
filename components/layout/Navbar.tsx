@@ -70,7 +70,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 flex h-16 w-full shrink-0 font-sans items-center justify-between border-b border-border bg-surface transition-all duration-300 px-6`}
+        className={`sticky top-0 z-40 flex h-16 w-full shrink-0 font-sharp items-center justify-between border-b border-border bg-surface transition-all duration-300 px-6`}
       >
         <div className="flex items-center gap-4 flex-1 max-w-md">
           <div className="relative flex items-center w-full">

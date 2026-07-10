@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type ThemeType = "executive-light" | "midnight-operations" | "material-ocean" | "aurora-breeze" | "pure-elegance" | "glass-intelligence" | "enterprise-bento" | "tactical-utility" | "pristine-white";
 export type DensityType = "comfortable" | "compact" | "dense";
-export type FontFamilyType = "inter" | "outfit" | "roboto";
+export type FontFamilyType = "inter" | "outfit" | "roboto" | "arial" | "times" | "verdana" | "courier" | "georgia" | "trebuchet" | "comic-sans" | "impact";
 export type FontWeightProfileType = "heavy" | "standard" | "light";
 export type AccentColorType = "blue" | "emerald" | "rose" | "amber" | "purple" | "slate" | string;
 
@@ -62,10 +62,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (state.tactile !== undefined) {
           setTactileFeedbackState(state.tactile === "true" || state.tactile === true);
         }
-        if (state.fontFamily && ["inter", "outfit", "roboto"].includes(state.fontFamily)) {
+        if (state.fontFamily && ["inter", "outfit", "roboto", "arial", "times", "verdana", "courier", "georgia", "trebuchet", "comic-sans", "impact"].includes(state.fontFamily)) {
           setFontFamilyState(state.fontFamily);
-        } else if (state.fontFamily) {
-          setFontFamilyState("inter");
         }
         if (state.fontWeightProfile && ["heavy", "standard", "light"].includes(state.fontWeightProfile)) {
           setFontWeightProfileState(state.fontWeightProfile);
@@ -143,6 +141,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.style.setProperty("--app-font-family", "var(--font-outfit), 'Outfit', system-ui, sans-serif");
     } else if (fontTarget === "roboto") {
       document.documentElement.style.setProperty("--app-font-family", "var(--font-roboto), 'Roboto', system-ui, sans-serif");
+    } else if (fontTarget === "arial") {
+      document.documentElement.style.setProperty("--app-font-family", "Arial, Helvetica, sans-serif");
+    } else if (fontTarget === "times") {
+      document.documentElement.style.setProperty("--app-font-family", "'Times New Roman', Times, serif");
+    } else if (fontTarget === "verdana") {
+      document.documentElement.style.setProperty("--app-font-family", "Verdana, Geneva, sans-serif");
+    } else if (fontTarget === "courier") {
+      document.documentElement.style.setProperty("--app-font-family", "'Courier New', Courier, monospace");
+    } else if (fontTarget === "georgia") {
+      document.documentElement.style.setProperty("--app-font-family", "Georgia, serif");
+    } else if (fontTarget === "trebuchet") {
+      document.documentElement.style.setProperty("--app-font-family", "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif");
+    } else if (fontTarget === "comic-sans") {
+      document.documentElement.style.setProperty("--app-font-family", "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif");
+    } else if (fontTarget === "impact") {
+      document.documentElement.style.setProperty("--app-font-family", "Impact, Charcoal, sans-serif");
     } else {
       document.documentElement.style.setProperty("--app-font-family", "var(--font-inter), 'Inter', system-ui, sans-serif");
     }

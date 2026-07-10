@@ -183,7 +183,15 @@ export default function SettingsGallery() {
   const fontsList: { id: FontFamilyType; name: string; sample: string; css: string; familyValue: string }[] = [
     { id: "inter", name: "Inter UI", sample: "Crisp geometric precision.", css: "font-sans", familyValue: "var(--font-inter), 'Inter', sans-serif" },
     { id: "outfit", name: "Outfit Premium", sample: "Warm modern corporate.", css: "font-sans tracking-wide", familyValue: "var(--font-outfit), 'Outfit', sans-serif" },
-    { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible.", css: "font-sans", familyValue: "var(--font-roboto), 'Roboto', sans-serif" }
+    { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible.", css: "font-sans", familyValue: "var(--font-roboto), 'Roboto', sans-serif" },
+    { id: "arial", name: "Arial", sample: "Standard classic system font.", css: "font-sans", familyValue: "Arial, Helvetica, sans-serif" },
+    { id: "times", name: "Times New Roman", sample: "Traditional serif reading.", css: "font-sans", familyValue: "'Times New Roman', Times, serif" },
+    { id: "verdana", name: "Verdana", sample: "Wide readable geometry.", css: "font-sans", familyValue: "Verdana, Geneva, sans-serif" },
+    { id: "courier", name: "Courier New", sample: "Monospaced technical feel.", css: "font-mono", familyValue: "'Courier New', Courier, monospace" },
+    { id: "georgia", name: "Georgia", sample: "Elegant and classy serif.", css: "font-sans", familyValue: "Georgia, serif" },
+    { id: "trebuchet", name: "Trebuchet MS", sample: "Sharp sans-serif style.", css: "font-sans", familyValue: "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif" },
+    { id: "comic-sans", name: "Comic Sans MS", sample: "Casual handwritten style.", css: "font-sans", familyValue: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif" },
+    { id: "impact", name: "Impact", sample: "Heavy condensed titling.", css: "font-sans", familyValue: "Impact, Charcoal, sans-serif" }
   ];
 
   const weightProfilesList: { id: FontWeightProfileType; name: string; desc: string }[] = [

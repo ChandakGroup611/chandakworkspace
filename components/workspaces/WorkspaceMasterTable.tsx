@@ -495,7 +495,7 @@ export function WorkspaceMasterTable({
     };
 
   return (
-    <div className="w-full font-sans">
+    <div className="w-full font-sharp">
       <div className="w-full flex flex-col">
         {/* Header */}
         <div className={`grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${

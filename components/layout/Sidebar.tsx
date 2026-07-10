@@ -191,7 +191,7 @@ export default function Sidebar() {
       <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative z-40 flex flex-col shrink-0 font-sans transition-all duration-300 border-r border-border select-none bg-surface ${
+      className={`relative z-40 flex flex-col shrink-0 font-sharp transition-all duration-300 border-r border-border select-none bg-surface ${
         isCompact ? "w-16" : "w-64"
       }`}
     >
