@@ -8,8 +8,19 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params;
     if (!id) return new NextResponse('Missing ID', { status: 400 });
 
-    const { data: attachment, error } = await supabaseAdmin.from('task_attachments').select('*').eq('id', id).single();
-    if (error || !attachment || !attachment.file_url) {
+    let attachment = null;
+    let { data: taskAttachment } = await supabaseAdmin.from('task_attachments').select('*').eq('id', id).single();
+    
+    if (taskAttachment && taskAttachment.file_url) {
+      attachment = taskAttachment;
+    } else {
+      let { data: ticketAttachment } = await supabaseAdmin.from('ticket_attachments').select('*').eq('id', id).single();
+      if (ticketAttachment && ticketAttachment.file_url) {
+        attachment = ticketAttachment;
+      }
+    }
+
+    if (!attachment) {
       return new NextResponse('Attachment Not Found', { status: 404 });
     }
 
