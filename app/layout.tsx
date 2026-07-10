@@ -64,7 +64,7 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body className="bg-background text-foreground min-h-screen subpixel-antialiased font-sans text-base" suppressHydrationWarning>
+      <body className="bg-background text-foreground min-h-screen antialiased font-sans text-base" suppressHydrationWarning>
         <QueryProvider>
           <PermissionsProvider>
             <ThemeProvider>
