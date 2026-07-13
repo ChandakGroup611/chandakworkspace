@@ -64,6 +64,7 @@ jobs:
             cd domains/chandakgroup.tech/public_html/
             unzip -o deploy.zip
             rm deploy.zip
-            # If you use PM2 or a specific restart command, it goes here, e.g., pm2 restart all
-            # Wait 2 seconds
-            sleep 2
+            # Restart Hostinger Node.js App (Passenger)
+            mkdir -p tmp
+            touch tmp/restart.txt
+            echo "Restarted Node server"
