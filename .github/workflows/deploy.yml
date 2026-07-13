@@ -29,24 +29,19 @@ jobs:
           npm install
           npm run build
 
-      # Copy static assets into standalone folder so everything is self-contained and zip it
+      # Copy static assets into standalone folder so everything is self-contained
       - name: Prepare deployment files
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
-          cd .next/standalone
-          zip -r ../../deploy.zip .
-          cd ../..
-          mkdir upload-payload
-          mv deploy.zip upload-payload/
 
-      # Upload the compiled standalone zip file to Hostinger via FTP
+      # Upload the uncompressed files to Hostinger via FTP (Fully Automated)
       - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./upload-payload/
+          local-dir: .next/standalone/
           server-dir: domains/chandakgroup.tech/public_html/
           protocol: ftp
