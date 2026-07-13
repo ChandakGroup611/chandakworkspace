@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${roboto.variable}`}>
       <head>
-        <script id="theme-init" dangerouslySetInnerHTML={{
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             try {
               const theme = localStorage.getItem("app_theme") || "glass-intelligence";
