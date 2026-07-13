@@ -856,7 +856,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                     setSelectedWorkspaceId(newWsId);
                     fetchTasksData(1, false, newWsId);
                   }}
-                  className="text-sm font-medium h-9 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
                 >
                   <option value="">All Workspaces</option>
                   {allWorkspaces.map((ws: any) => (
@@ -867,7 +867,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </select>
               </div>
 
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
                 <option value="">All Statuses</option>
                 {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -876,7 +876,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
           {/* Bottom Row: Priority, Escalated, Date Range, Search, Actions */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 dark:bg-white/[0.02]">
-            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-10 px-3 w-40 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
               <option value="">All Priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -887,9 +887,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             </label>
 
             <div className="flex items-center gap-2 mx-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
               <span className="text-sm text-muted">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
             </div>
             
             <div className="relative flex-1">
@@ -898,7 +898,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 placeholder="Search tasks, code..." 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-9 pl-9 pr-3 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
+                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
               />
             </div>
 

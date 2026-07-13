@@ -55,7 +55,7 @@ const navGroups: NavGroup[] = [
     label: "Core Operations",
     items: [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
-      { label: "My Support Portal", href: "/support", icon: LifeBuoy },
+      { label: "My Support Portal", href: "/support", icon: LifeBuoy, permission: "SUPPORT_PORTAL_VIEW" },
       { label: "ITSM Tickets", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
       { 
         label: "Requirements", 
@@ -155,14 +155,31 @@ export default function Sidebar() {
   const { hasPermission, roleCode } = usePermissions();
   const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
-  // OPTIMIZATION: Memoize the massive permission evaluation tree
   const visibleNavTree = React.useMemo(() => {
     return navGroups.map(group => {
-      const visibleItems = (roleCode === "SUPER_ADMIN" ? group.items : group.items.filter(item => !item.permission || hasPermission(item.permission))).map(item => {
-        if (!item.subItems) return item;
-        const visibleSubItems = roleCode === "SUPER_ADMIN" ? item.subItems : item.subItems.filter(sub => !sub.permission || hasPermission(sub.permission));
-        return { ...item, subItems: visibleSubItems.length > 0 ? visibleSubItems : undefined };
-      });
+      const visibleItems = group.items.map(item => {
+        if (!item.subItems) {
+          if (roleCode === "SUPER_ADMIN" || !item.permission || hasPermission(item.permission)) {
+            return item;
+          }
+          return null;
+        }
+
+        const visibleSubItems = roleCode === "SUPER_ADMIN" 
+          ? item.subItems 
+          : item.subItems.filter(sub => !sub.permission || hasPermission(sub.permission));
+          
+        if (visibleSubItems.length > 0) {
+          return { ...item, subItems: visibleSubItems };
+        }
+        
+        if (roleCode === "SUPER_ADMIN" || (!item.permission || hasPermission(item.permission))) {
+           return { ...item, subItems: undefined };
+        }
+        
+        return null;
+      }).filter(Boolean) as NavItem[];
+      
       if (visibleItems.length === 0) return null;
       return { ...group, items: visibleItems };
     }).filter(Boolean) as NavGroup[];

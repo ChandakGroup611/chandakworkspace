@@ -4,7 +4,7 @@ import UserProfileEditor from "@/components/settings/UserProfileEditor";
 
 export const metadata: Metadata = {
   title: "My Profile | Chandak Workspace",
-  description: "Manage your profile, update profile picture, and change password.",
+  description: "View your profile and update your profile picture.",
 };
 
 export default function ProfilePage() {
@@ -16,7 +16,7 @@ export default function ProfilePage() {
           My Profile Settings
         </h1>
         <p className="text-xs text-gray-400 mt-1">
-          Manage your account details, profile picture, and security settings. Super Admins can edit all fields, while other users can only update their picture and password.
+          View your account details and update your profile picture. Most of your profile information is managed centrally via Single Sign-On (SSO).
         </p>
       </header>
 

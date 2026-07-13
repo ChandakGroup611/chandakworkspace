@@ -6,7 +6,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SettingsPage() {
   const { hasPermission, roleCode } = usePermissions();
-  const canManage = roleCode === "SUPER_ADMIN" || hasPermission("SETTINGS_MANAGE");
+  const canManage = roleCode === "SUPER_ADMIN" || hasPermission("SETTINGS_THEME_VIEW") || hasPermission("SETTINGS_MANAGE");
 
   if (!canManage) {
     return (

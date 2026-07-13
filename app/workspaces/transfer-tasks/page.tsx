@@ -1,3 +1,4 @@
+import { checkServerPermission } from "@/lib/permissions";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
@@ -8,6 +9,18 @@ import { Loader2 } from "lucide-react";
 export const dynamic = 'force-dynamic';
 
 export default async function TransferTasksPage() {
+  const canAccess = await checkServerPermission("TASKS_TRANSFER_VIEW");
+  if (!canAccess) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
+          <p className="text-gray-500">You do not have permission to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   

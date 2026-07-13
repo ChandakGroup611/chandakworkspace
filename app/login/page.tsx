@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ssoLoading, setSsoLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -38,25 +39,38 @@ export default function LoginPage() {
       const searchParams = new URLSearchParams(window.location.search);
       const isLogout = searchParams.get("action") === "logout";
       const isTimeout = searchParams.get("reason") === "timeout";
+      const urlError = searchParams.get("error");
+      const urlErrorDesc = searchParams.get("error_description");
 
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check hash for implicit flow errors (Supabase sometimes returns errors in hash)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hashError = hashParams.get("error");
+      const hashErrorDesc = hashParams.get("error_description");
 
-      if (isLogout) {
+      const finalError = urlErrorDesc || urlError || hashErrorDesc || hashError;
+      if (finalError) {
+        setErrorMsg(`Authentication failed: ${finalError.replace(/\+/g, ' ')}`);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (isLogout) {
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await supabase.auth.signOut();
         }
         setSuccessMsg("You have been successfully logged out.");
-        // Clear the URL to avoid repeated logouts on refresh
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isTimeout) {
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await supabase.auth.signOut();
         }
         setErrorMsg("Your session expired due to inactivity. Please sign in again.");
         window.history.replaceState({}, document.title, window.location.pathname);
-      } else if (session) {
-        // Auto login if already authenticated
-        router.push("/");
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          router.push("/");
+        }
       }
     };
 
@@ -106,34 +120,30 @@ export default function LoginPage() {
           if (sessionData && sessionData.last_active_at) {
             const lastActive = new Date(sessionData.last_active_at).getTime();
             const now = Date.now();
-            // If active within the last 5 minutes, consider it an active concurrent session
             if (now - lastActive < 5 * 60 * 1000) {
               const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
               if (!proceed) {
-                // User cancelled, sign out
                 await supabase.auth.signOut();
                 setLoading(false);
                 return;
               }
             }
           }
-        } catch (e) {
-          // Ignore table not found errors if migration is pending
-        }
+        } catch (e) {}
       }
 
-      // Immediate hard redirect to dashboard to skip client-cache latency
       window.location.href = "/";
 
     } catch (err: any) {
       setErrorMsg(err.message || "Invalid email or password.");
-      setLoading(false); // Only stop loading if there was an error
+      setLoading(false); 
     }
   };
 
   const handleMicrosoftLogin = async () => {
     try {
-      // Direct OAuth call to Supabase utilizing the underlying Azure integration
+      setErrorMsg(null);
+      setSsoLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
@@ -142,8 +152,10 @@ export default function LoginPage() {
         }
       });
       if (error) throw error;
+      // Note: Do not setSsoLoading(false) here because the page will redirect
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to initialize Microsoft login.");
+      setSsoLoading(false);
     }
   };
 
@@ -285,15 +297,25 @@ export default function LoginPage() {
             variant="outline"
             type="button"
             onClick={handleMicrosoftLogin}
+            disabled={ssoLoading}
             className="w-full h-11 font-semibold flex items-center justify-center gap-3 text-sm border-border"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21">
-              <path fill="#f25022" d="M1 1h9v9H1z"/>
-              <path fill="#00a4ef" d="M1 11h9v9H1z"/>
-              <path fill="#7fba00" d="M11 1h9v9h-9z"/>
-              <path fill="#ffb900" d="M11 11h9v9h-9z"/>
-            </svg>
-            Microsoft SSO
+            {ssoLoading ? (
+              <>
+                <span className="h-4 w-4 rounded-full border-2 border-black/20 dark:border-white/20 border-t-black dark:border-t-white animate-spin" />
+                Redirecting...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21">
+                  <path fill="#f25022" d="M1 1h9v9H1z"/>
+                  <path fill="#00a4ef" d="M1 11h9v9H1z"/>
+                  <path fill="#7fba00" d="M11 1h9v9h-9z"/>
+                  <path fill="#ffb900" d="M11 11h9v9h-9z"/>
+                </svg>
+                Microsoft SSO
+              </>
+            )}
           </AppButton>
 
           {/* Navigation link to Registration screen */}

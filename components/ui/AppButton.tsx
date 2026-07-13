@@ -48,11 +48,11 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     };
 
     const sizes = {
-      sm: "h-7 px-2.5 text-[11px] gap-1.5",
-      md: "h-8 px-3 text-[12px] gap-1.5",
-      lg: "h-9 px-4 text-[13px] gap-2",
-      icon: "h-8 w-8 px-0 gap-0",
-      "icon-sm": "h-6 w-6 px-0 gap-0",
+      sm: "h-8 px-3.5 text-[12px] gap-1.5",
+      md: "h-10 px-5 text-[14px] gap-2",
+      lg: "h-11 px-6 text-[15px] gap-2",
+      icon: "h-10 w-10 px-0 gap-0",
+      "icon-sm": "h-8 w-8 px-0 gap-0",
     };
 
     return (

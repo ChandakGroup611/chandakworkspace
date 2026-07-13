@@ -180,3 +180,15 @@ export async function canManageWorkspace(userId: string, workspaceId: string): P
 
   return member?.role === 'manager';
 }
+
+
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+
+export async function checkServerPermission(permissionCode: string): Promise<boolean> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  return await hasPermission(user.id, permissionCode);
+}

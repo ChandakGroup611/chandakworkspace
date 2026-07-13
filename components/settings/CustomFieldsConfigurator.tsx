@@ -186,7 +186,7 @@ export default function CustomFieldsConfigurator() {
                       setNewKey(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "_"));
                     }
                   }}
-                  className="h-8 text-xs"
+                  className="h-10 text-[14px]"
                 />
               </div>
 
@@ -196,7 +196,7 @@ export default function CustomFieldsConfigurator() {
                   placeholder="e.g. kernel_patch_id" 
                   value={newKey}
                   onChange={(e) => setNewKey(e.target.value)}
-                  className="h-8 font-mono text-xs text-accent"
+                  className="h-10 font-mono text-[14px] text-accent"
                 />
               </div>
 
@@ -206,7 +206,7 @@ export default function CustomFieldsConfigurator() {
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-white/5 border border-white/5 text-xs text-gray-200 focus:outline-none focus:border-accent/50"
+                    className="w-full h-10 px-3 rounded-lg bg-white/5 border border-white/5 text-[14px] text-gray-200 focus:outline-none focus:border-accent/50"
                   >
                     <option value="text" className="bg-[#0f172a]">Text String</option>
                     <option value="number" className="bg-[#0f172a]">Numeric Scalar</option>
@@ -216,7 +216,7 @@ export default function CustomFieldsConfigurator() {
                 </div>
 
                 <div className="space-y-1 flex flex-col justify-end">
-                  <label className="flex items-center gap-2 h-8 px-2 rounded-lg bg-white/[0.02] border border-white/5 cursor-pointer select-none hover:bg-white/5">
+                  <label className="flex items-center gap-2 h-10 px-3 rounded-lg bg-white/[0.02] border border-white/5 cursor-pointer select-none hover:bg-white/5">
                     <input 
                       type="checkbox" 
                       checked={newRequired}
@@ -235,13 +235,13 @@ export default function CustomFieldsConfigurator() {
                     placeholder="Comma-separated items..." 
                     value={newOptionsStr}
                     onChange={(e) => setNewOptionsStr(e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-10 text-[14px]"
                   />
                   <span className="text-[0.7rem] text-gray-500 block">Separate multiple lookup keys using standard commas.</span>
                 </div>
               )}
 
-              <AppButton variant="primary" size="sm" type="submit" className="w-full mt-2 h-8 text-xs font-bold">
+              <AppButton variant="primary" size="md" type="submit" className="w-full mt-2 font-bold">
                 <Plus className="h-3.5 w-3.5 mr-1" />
                 <span>Inject Field Mapping</span>
               </AppButton>

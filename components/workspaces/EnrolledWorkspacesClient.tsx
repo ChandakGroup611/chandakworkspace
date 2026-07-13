@@ -92,7 +92,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
               placeholder="Search by name or code..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm"
+              className="pl-9 h-10 text-sm"
             />
           </div>
           <div className="text-sm text-gray-500 font-medium">

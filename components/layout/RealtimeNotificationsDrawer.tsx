@@ -23,7 +23,7 @@ import {
 import { AppBadge } from "@/components/ui/AppBadge";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
-import { useProfile } from "@/hooks/usePermissions";
+import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { useQuery } from "@tanstack/react-query";
 import { AppButton } from "@/components/ui/AppButton";
 
@@ -54,6 +54,7 @@ export default function RealtimeNotificationsDrawer() {
   const [toasts, setToasts] = useState<NotificationItem[]>([]);
   
   const { data: profile } = useProfile();
+  const { roleCode } = usePermissions();
   const currentUserId = profile?.id;
 
   // Track state locally for optimistic updates and read toggles
@@ -64,12 +65,19 @@ export default function RealtimeNotificationsDrawer() {
     enabled: !!currentUserId,
     queryFn: async () => {
       console.count("Notification Fetch Count");
-      const { data, error } = await supabase
+      let query = supabase
         .from("notification_queue")
         .select("*")
-        .or(`target_user_id.eq.${currentUserId},target_user_id.eq.GLOBAL_OPS`)
         .order("created_at", { ascending: false })
         .limit(40);
+
+      if (roleCode === "SUPER_ADMIN") {
+        query = query.or(`target_user_id.eq.${currentUserId},target_user_id.eq.GLOBAL_OPS`);
+      } else {
+        query = query.eq("target_user_id", currentUserId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -121,7 +129,8 @@ export default function RealtimeNotificationsDrawer() {
             const newItem = payload.new as NotificationItem;
             
             // Verify target user is this logged in user
-            if (newItem.target_user_id === currentUserId || newItem.target_user_id === 'GLOBAL_OPS') {
+            const isGlobal = newItem.target_user_id === 'GLOBAL_OPS';
+            if (newItem.target_user_id === currentUserId || (isGlobal && roleCode === 'SUPER_ADMIN')) {
               setLocalNotifications(prev => [newItem, ...prev]);
             }
           }
