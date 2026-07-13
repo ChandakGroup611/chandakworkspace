@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Server, Save, Loader2, ShieldAlert, Key } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { saveEmailProvider, updateEmailProvider } from "@/lib/actions/email-config";
 
 const PROVIDER_TYPES = ["SMTP", "Microsoft 365", "Resend", "SendGrid"];
 
@@ -64,11 +65,9 @@ export default function ProviderDashboard() {
       };
 
       if (provider.id.startsWith("temp_")) {
-        const { error } = await supabase.from("email_providers").insert([payload]);
-        if (error) throw error;
+        await saveEmailProvider(payload);
       } else {
-        const { error } = await supabase.from("email_providers").update(payload).eq("id", provider.id);
-        if (error) throw error;
+        await updateEmailProvider(provider.id, payload);
       }
       
       triggerToast(`Provider level ${provider.priority_level} saved successfully`);

@@ -92,3 +92,15 @@ export async function fetchSpecificEventConfig(moduleCode: string, eventCode: st
   }
   return data || null;
 }
+
+export async function saveEmailProvider(payload: any) {
+  const { data, error } = await supabaseAdmin.from("email_providers").insert([payload]).select().single();
+  if (error) throw new Error(error.message);
+  return { success: true, data };
+}
+
+export async function updateEmailProvider(id: string, payload: any) {
+  const { data, error } = await supabaseAdmin.from("email_providers").update(payload).eq("id", id).select().single();
+  if (error) throw new Error(error.message);
+  return { success: true, data };
+}
