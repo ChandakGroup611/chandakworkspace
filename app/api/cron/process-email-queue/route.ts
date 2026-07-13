@@ -53,10 +53,10 @@ export async function POST(request: Request) {
 
       for (const provider of providers) {
         try {
-          // Attempt Delivery (Mocking actual provider execution for safety in this environment)
+          // Attempt Delivery
           console.log(`[Queue Processor] Attempting to send ${item.id} via ${provider.provider_name}`);
           
-          const success = await simulateEmailDispatch(item, provider);
+          const success = await dispatchEmail(item, provider);
           
           if (success) {
             delivered = true;
@@ -134,18 +134,32 @@ async function markQueueFailed(ids: string[], providerId: string | null, errorMs
   await supabaseAdmin.from("email_delivery_logs").insert(logs);
 }
 
-// In a real production system, this would import `nodemailer` or `@sendgrid/mail`. 
-// For safety in this simulated enterprise branch, we mock the HTTP 200 OK.
-async function simulateEmailDispatch(item: any, provider: any) {
-  // Simulate network latency
-  await new Promise(resolve => setTimeout(resolve, 150));
-  
+async function dispatchEmail(item: any, provider: any) {
   if (!provider.config) throw new Error("Invalid provider configuration.");
   
-  // Random failure simulation to test the Fallback Router logic: 10% chance
-  if (Math.random() < 0.1) {
-    throw new Error(`Provider connection timeout on port ${provider.config.port || 'api'}`);
+  if (provider.provider_name === "SMTP" || provider.provider_name === "Microsoft 365") {
+    const nodemailer = (await import('nodemailer')).default;
+    const transporter = nodemailer.createTransport({
+      host: provider.config.host,
+      port: Number(provider.config.port),
+      secure: Number(provider.config.port) === 465, // usually true for 465, false for 587
+      auth: {
+        user: provider.config.username,
+        pass: provider.config.password,
+      },
+    });
+
+    const senderEmail = provider.config.username || "no-reply@enterprise.com";
+    
+    await transporter.sendMail({
+      from: `"Chandak Workspace" <${senderEmail}>`,
+      to: item.recipient_email,
+      subject: item.subject || "System Notification",
+      text: item.body_template || "You have a new notification."
+    });
+    
+    return true;
+  } else {
+    throw new Error(`Provider ${provider.provider_name} API integration is not yet implemented.`);
   }
-  
-  return true;
 }

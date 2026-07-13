@@ -95,26 +95,26 @@ export default function ProviderDashboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between items-center bg-card border border-border p-4 rounded-xl shadow-sm">
         <div>
           <h2 className="text-lg font-bold text-foreground">Routing Infrastructure</h2>
-          <p className="text-xs text-gray-400">Configure Primary and Fallback SMTP/API gateways for high-availability delivery.</p>
+          <p className="text-xs text-muted-foreground">Configure Primary and Fallback SMTP/API gateways for high-availability delivery.</p>
         </div>
       </div>
 
       <div className="space-y-6">
         {providers.map((prov) => (
-          <div key={prov.id || prov.priority_level} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl">
-            <div className={`p-4 border-b border-white/5 flex items-center justify-between ${prov.priority_level === 1 ? 'bg-accent/10' : 'bg-white/5'}`}>
+          <div key={prov.id || prov.priority_level} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+            <div className={`p-4 border-b border-border flex items-center justify-between ${prov.priority_level === 1 ? 'bg-accent/5' : 'bg-muted/30'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent/20' : 'bg-gray-700/50'}`}>
-                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-accent' : 'text-gray-400'}`} />
+                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent/20' : 'bg-muted'}`}>
+                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-accent' : 'text-muted-foreground'}`} />
                 </div>
                 <div>
                   <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-accent' : 'text-foreground'}`}>
                     {prov.priority_level === 1 ? 'PRIMARY DISPATCH' : `FALLBACK LEVEL ${prov.priority_level - 1}`}
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {prov.priority_level === 1 ? 'All queues will attempt delivery via this provider first.' : `Used automatically if Level ${prov.priority_level - 1} fails.`}
                   </p>
                 </div>
@@ -123,12 +123,12 @@ export default function ProviderDashboard() {
                 <select 
                   value={prov.provider_name}
                   onChange={(e) => updateProviderField(prov.priority_level, "provider_name", e.target.value)}
-                  className="bg-[#0A0D14] border border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-white focus:outline-none focus:border-accent"
+                  className="bg-background border border-border rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-accent"
                 >
                   {PROVIDER_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                 </select>
                 <label className="flex items-center gap-2 cursor-pointer ml-4">
-                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-accent' : 'bg-gray-600'}`}>
+                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-accent' : 'bg-muted-foreground/30'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${prov.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
@@ -137,7 +137,7 @@ export default function ProviderDashboard() {
                     checked={prov.is_active} 
                     onChange={(e) => updateProviderField(prov.priority_level, "is_active", e.target.checked)}
                   />
-                  <span className="text-xs font-bold text-gray-400 uppercase">Active</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase">Active</span>
                 </label>
               </div>
             </div>
@@ -146,46 +146,46 @@ export default function ProviderDashboard() {
               {(prov.provider_name === "SMTP" || prov.provider_name === "Microsoft 365") && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">SMTP Host</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">SMTP Host</label>
                     <input 
                       type="text" 
                       value={prov.config.host || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "host", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
                       placeholder="smtp.office365.com"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">SMTP Port</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">SMTP Port</label>
                     <input 
                       type="number" 
                       value={prov.config.port || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "port", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
                       placeholder="587"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Username / Email</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Username / Email</label>
                     <input 
                       type="text" 
                       value={prov.config.username || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "username", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
                       placeholder="noreply@enterprise.com"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Password / App Password</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase">Password / App Password</label>
                     <div className="relative">
                       <input 
                         type="password" 
                         value={prov.config.password || ""}
                         onChange={(e) => updateProviderConfig(prov.priority_level, "password", e.target.value)}
-                        className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:border-accent"
+                        className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-accent"
                         placeholder="••••••••"
                       />
-                      <Key className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
+                      <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
                     </div>
                   </div>
                 </>
@@ -193,28 +193,28 @@ export default function ProviderDashboard() {
 
               {(prov.provider_name === "Resend" || prov.provider_name === "SendGrid") && (
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">API Key</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase">API Key</label>
                   <div className="relative">
                     <input 
                       type="password" 
                       value={prov.config.api_key || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "api_key", e.target.value)}
-                      className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-accent"
                       placeholder="re_..."
                     />
-                    <Key className="w-4 h-4 text-gray-500 absolute left-3 top-2.5" />
+                    <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     <ShieldAlert className="w-3 h-3 text-amber-500" /> Keys are encrypted at rest.
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="bg-[#0A0D14] px-6 py-3 border-t border-white/5 flex justify-end">
+            <div className="bg-muted/20 px-6 py-3 border-t border-border flex justify-end">
               <button 
                 onClick={() => handleSave(prov)}
-                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
+                className="flex items-center gap-2 bg-background hover:bg-accent/10 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border"
               >
                 <Save className="w-4 h-4" /> Save Details
               </button>

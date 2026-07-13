@@ -81,14 +81,14 @@ export default function CommunicationCenterHub() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {MODULES.map((mod) => (
           <Link href={mod.href} key={mod.title}>
-            <div className="bg-[#0A0D14] border border-white/10 rounded-xl p-6 shadow-xl hover:bg-[#121620] hover:border-white/20 transition-all cursor-pointer group h-full">
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md hover:border-accent/50 hover:bg-accent/5 transition-all cursor-pointer group h-full">
               <div className="flex items-start space-x-4">
                 <div className={`p-3 rounded-lg ${mod.bg} ${mod.border} border transition-colors group-hover:bg-opacity-20`}>
                   <mod.icon className={`w-6 h-6 ${mod.color}`} />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-foreground group-hover:text-accent transition-colors">{mod.title}</h2>
-                  <p className="text-sm text-gray-400 mt-1 leading-relaxed">{mod.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{mod.description}</p>
                 </div>
               </div>
             </div>
