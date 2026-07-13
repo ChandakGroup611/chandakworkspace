@@ -2,7 +2,7 @@ import { checkServerPermission } from "@/lib/permissions";
 import React from 'react';
 import MigrationClient from './Client';
 
-export default function MigrationPage() {
+export default async function MigrationPage() {
   const canAccess = await checkServerPermission("DATA_MIGRATION_VIEW");
   if (!canAccess) {
     return (

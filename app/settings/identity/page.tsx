@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "Configure Microsoft 365 Single Sign-On and enterprise authentication policies.",
 };
 
-export default function IdentitySettingsPage() {
+export default async function IdentitySettingsPage() {
   const canAccess = await checkServerPermission("SETTINGS_IDENTITY_VIEW");
   if (!canAccess) {
     return (
