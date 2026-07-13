@@ -21,7 +21,9 @@ export default function ProfilePage() {
       </header>
 
       {/* Profile Editor Component */}
-      <UserProfileEditor />
+      <React.Suspense fallback={<div className="h-40 w-full animate-pulse bg-white/5 rounded-xl" />}>
+        <UserProfileEditor />
+      </React.Suspense>
     </div>
   );
 }
