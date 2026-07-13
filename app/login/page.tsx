@@ -186,9 +186,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT SIDE - Authentication Form */}
-      <div className={`w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 lg:p-24 ${
-        "bg-surface"
-      }`}>
+      <div className={`w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 lg:p-24 bg-white text-black`}>
         <div className="w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-700">
 
           <div className="mb-8">
@@ -221,7 +219,7 @@ export default function LoginPage() {
           {/* Standard Credentials Submission Form */}
           <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
             <div className="space-y-2">
-              <label className={`text-sm font-semibold text-foreground`}>
+              <label className={`text-sm font-semibold text-slate-900`}>
                 Email Address
               </label>
               <AppInput 
@@ -237,7 +235,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-semibold text-foreground`}>
+              <label className={`text-sm font-semibold text-slate-900`}>
                 Password
               </label>
               <AppInput 
@@ -276,7 +274,7 @@ export default function LoginPage() {
             <div className="relative flex justify-center text-xs uppercase my-6">
               <span className={`w-full border-t border-border`}></span>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`px-4 font-semibold tracking-wider bg-surface text-muted`}>
+                <span className={`px-4 font-semibold tracking-wider bg-white text-muted`}>
                   OR CONTINUE WITH
                 </span>
               </div>
