@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import { Check, ChevronDown, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import * as Popover from "@radix-ui/react-popover";
 
 interface Option {
   value: string;
@@ -18,19 +19,7 @@ interface MultiSelectFilterProps {
 }
 
 export function MultiSelectFilter({ options, selectedValues, onChange, placeholder = "Select...", iconOnly = false }: MultiSelectFilterProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Close when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const handleToggle = (value: string) => {
     if (selectedValues.includes(value)) {
@@ -55,30 +44,36 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
       : `${selectedValues.length} Selected`;
 
   return (
-    <div className="relative inline-block text-left" ref={containerRef}>
-      <button
-        type="button"
-        className={cn(
-          iconOnly 
-            ? "flex items-center justify-center p-1 rounded-sm hover:bg-accent/10 text-gray-400 hover:text-accent data-[active=true]:text-accent data-[active=true]:bg-accent/10 transition-colors" 
-            : "tb-btn flex items-center justify-between gap-2 px-3 py-1.5 min-w-[140px] text-sm bg-surface hover:bg-elevated border border-border rounded-md transition-colors"
-        )}
-        data-active={selectedValues.length > 0}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {!iconOnly && <span className="truncate max-w-[120px]">{displayValue}</span>}
-        {iconOnly && selectedValues.length > 0 ? (
-          <Filter className="w-3.5 h-3.5 fill-current" />
-        ) : (
-          <ChevronDown className={cn("w-4 h-4", !iconOnly && "opacity-50")} />
-        )}
-      </button>
-
-      {isOpen && (
-        <div className={cn(
-          "absolute z-50 mt-1 bg-surface border border-border rounded-md shadow-xl max-h-60 overflow-auto",
-          iconOnly ? "w-48 right-0" : "w-56 left-0"
-        )}>
+    <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          className={cn(
+            iconOnly 
+              ? "flex items-center justify-center p-1 rounded-sm hover:bg-accent/10 text-gray-400 hover:text-accent data-[active=true]:text-accent data-[active=true]:bg-accent/10 transition-colors" 
+              : "tb-btn flex items-center justify-between gap-2 px-3 py-1.5 min-w-[140px] text-sm bg-surface hover:bg-elevated border border-border rounded-md transition-colors"
+          )}
+          data-active={selectedValues.length > 0}
+        >
+          {!iconOnly && <span className="truncate max-w-[120px]">{displayValue}</span>}
+          {iconOnly && selectedValues.length > 0 ? (
+            <Filter className="w-3.5 h-3.5 fill-current" />
+          ) : (
+            <ChevronDown className={cn("w-4 h-4", !iconOnly && "opacity-50")} />
+          )}
+        </button>
+      </Popover.Trigger>
+      
+      <Popover.Portal>
+        <Popover.Content
+          align={iconOnly ? "end" : "start"}
+          sideOffset={4}
+          className={cn(
+            "z-[100] bg-surface border border-border rounded-md shadow-xl max-h-60 overflow-auto outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95",
+            iconOnly ? "w-48" : "w-56"
+          )}
+          onInteractOutside={() => setIsOpen(false)}
+        >
           <div className="p-1">
             <button
               className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
@@ -103,8 +98,8 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
               </button>
             ))}
           </div>
-        </div>
-      )}
-    </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }

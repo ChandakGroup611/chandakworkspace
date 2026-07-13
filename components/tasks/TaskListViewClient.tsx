@@ -32,6 +32,7 @@ import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
 import { Settings2, MessageSquare, ExternalLink, Plus, Upload, RotateCcw, LayoutList, Layers, CheckCircle2 } from "lucide-react";
 import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
 import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
+import * as Popover from "@radix-ui/react-popover";
 
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -1066,46 +1067,54 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
                       );
                       case "status": return (
-                        <AppTableCell className="whitespace-nowrap text-center relative">
-                          <button 
-                            onClick={(e) => {
-                               e.stopPropagation();
-                               if (canUpdate) setOpenMenuTaskId(openMenuTaskId === task.id ? null : task.id);
-                            }} 
-                            className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
-                            title={canUpdate ? "Options" : "Status"}
-                          >
-                            <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""} isOutline={true}>
-                              {task.status?.name || '—'}
-                            </AppBadge>
-                          </button>
-                          {openMenuTaskId === task.id && (
-                             <>
-                               <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setOpenMenuTaskId(null); }} />
-                               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl z-50 flex flex-col py-1 min-w-[150px]">
-                                  <Link 
-                                    href={`/tasks/${task.id}`}
-                                    className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
-                                    onClick={(e) => {
-                                       e.stopPropagation();
-                                       setOpenMenuTaskId(null);
-                                    }}
-                                  >
-                                    <Eye className="w-3.5 h-3.5" /> View Task
-                                  </Link>
-                                  <button 
-                                    className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
-                                    onClick={(e) => {
-                                       e.stopPropagation();
-                                       setOpenMenuTaskId(null);
-                                       handleStatusClick(e, task);
-                                    }}
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5" /> Change Status
-                                  </button>
-                               </div>
-                             </>
-                          )}
+                        <AppTableCell className="whitespace-nowrap text-center">
+                          <Popover.Root open={openMenuTaskId === task.id} onOpenChange={(open) => {
+                             if (!open) setOpenMenuTaskId(null);
+                             else if (canUpdate) setOpenMenuTaskId(task.id);
+                          }}>
+                            <Popover.Trigger asChild>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); }} 
+                                className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
+                                title={canUpdate ? "Options" : "Status"}
+                              >
+                                <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""} isOutline={true}>
+                                  {task.status?.name || '—'}
+                                </AppBadge>
+                              </button>
+                            </Popover.Trigger>
+                            
+                            <Popover.Portal>
+                              <Popover.Content
+                                align="center"
+                                sideOffset={4}
+                                className="z-[100] bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl flex flex-col py-1 min-w-[150px] outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+                                onInteractOutside={() => setOpenMenuTaskId(null)}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Link 
+                                  href={`/tasks/${task.id}`}
+                                  className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
+                                  onClick={(e) => {
+                                     e.stopPropagation();
+                                     setOpenMenuTaskId(null);
+                                  }}
+                                >
+                                  <Eye className="w-3.5 h-3.5" /> View Task
+                                </Link>
+                                <button 
+                                  className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
+                                  onClick={(e) => {
+                                     e.stopPropagation();
+                                     setOpenMenuTaskId(null);
+                                     handleStatusClick(e, task);
+                                  }}
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" /> Change Status
+                                </button>
+                              </Popover.Content>
+                            </Popover.Portal>
+                          </Popover.Root>
                         </AppTableCell>
                       );
                       case "assignee": return (
