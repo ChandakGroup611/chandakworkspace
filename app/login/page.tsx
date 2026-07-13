@@ -148,12 +148,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`min-h-[100dvh] w-full flex font-sans transition-colors duration-300 ${
+    <div className={`min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans transition-colors duration-300 ${
       "bg-surface text-foreground"
     }`}>
       
       {/* LEFT SIDE - Branding & Premium Abstract Graphic */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden bg-black border-r border-white/5">
+      <div className="flex w-full min-h-[35vh] lg:min-h-0 lg:w-1/2 relative flex-col justify-between p-8 lg:p-12 overflow-hidden bg-black border-b lg:border-b-0 lg:border-r border-white/5">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img 
@@ -175,11 +175,11 @@ export default function LoginPage() {
         </div>
 
         {/* Bottom Tagline */}
-        <div className="relative z-10 max-w-lg mb-8">
-          <h2 className="text-4xl font-bold text-white mb-4 leading-tight tracking-tight drop-shadow-lg">
-            Intelligent Governance &<br />Enterprise Mastery
+        <div className="relative z-10 max-w-lg mt-8 lg:mb-8">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 lg:mb-4 leading-tight tracking-tight drop-shadow-lg">
+            Intelligent Governance &<br className="hidden sm:block" />Enterprise Mastery
           </h2>
-          <p className="text-lg text-white/70 font-medium">
+          <p className="text-sm lg:text-lg text-white/70 font-medium">
             Streamline your organizational compliance, lifecycle management, and asset tracking all within a unified, high-performance suite.
           </p>
         </div>
@@ -190,13 +190,6 @@ export default function LoginPage() {
         "bg-surface"
       }`}>
         <div className="w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
-          {/* Mobile Logo (Only visible on small screens) */}
-          <div className="lg:hidden flex justify-center mb-8">
-            <div className="h-16 w-auto flex items-center justify-center bg-white rounded-xl p-3 shadow-md">
-              <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
-            </div>
-          </div>
 
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
