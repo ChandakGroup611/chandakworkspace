@@ -228,7 +228,70 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* Standard Credentials Submission Form */}
+          <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
+            <div className="space-y-2">
+              <label className={`text-sm font-semibold text-slate-900`}>
+                Email Address
+              </label>
+              <AppInput 
+                name="email"
+                type="email"
+                placeholder="e.g. user@enterprise.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                leftIcon={<Mail className="h-4 w-4 text-muted" />}
+                className="h-11 text-sm"
+                required
+              />
+            </div>
 
+            <div className="space-y-2">
+              <label className={`text-sm font-semibold text-slate-900`}>
+                Password
+              </label>
+              <AppInput 
+                name="password"
+                type="password"
+                placeholder="••••••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                leftIcon={<Lock className="h-4 w-4 text-muted" />}
+                className="h-11 text-sm"
+                required
+              />
+            </div>
+
+            <AppButton 
+              variant="primary" 
+              type="submit" 
+              disabled={loading || !!successMsg}
+              className="w-full h-11 mt-2 font-semibold text-sm"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  <span>Authenticating...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <span>Sign In</span>
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              )}
+            </AppButton>
+          </form>
+
+          <div className="relative py-6">
+            <div className="relative flex justify-center text-xs uppercase my-6">
+              <span className={`w-full border-t border-border`}></span>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`px-4 font-semibold tracking-wider bg-white text-muted`}>
+                  OR CONTINUE WITH
+                </span>
+              </div>
+            </div>
+          </div>
 
           <AppButton
             variant="outline"
