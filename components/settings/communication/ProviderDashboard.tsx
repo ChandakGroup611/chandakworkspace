@@ -1,22 +1,23 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Server, Save, Loader2, ShieldAlert, Key } from "lucide-react";
+import { Server, Save, Loader2, ShieldAlert, Key, Zap } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { saveEmailProvider, updateEmailProvider } from "@/lib/actions/email-config";
+import { saveEmailProvider, updateEmailProvider, testProviderConnection } from "@/lib/actions/email-config";
 
 const PROVIDER_TYPES = ["SMTP", "Microsoft 365", "Resend", "SendGrid"];
 
 export default function ProviderDashboard() {
   const [providers, setProviders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toastMsg, setToastMsg] = useState<{type: "success" | "error", text: string} | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<{type: "success" | "error" | "warning", text: string} | null>(null);
   
   const supabase = createClient();
 
-  const triggerToast = (text: string, type: "success" | "error" = "success") => {
+  const triggerToast = (text: string, type: "success" | "error" | "warning" = "success") => {
     setToastMsg({ text, type });
-    setTimeout(() => setToastMsg(null), 3000);
+    setTimeout(() => setToastMsg(null), 4000);
   };
 
   useEffect(() => {
@@ -88,6 +89,26 @@ export default function ProviderDashboard() {
 
   const updateProviderField = (priority: number, field: string, value: any) => {
     setProviders(providers.map(p => p.priority_level === priority ? { ...p, [field]: value } : p));
+  };
+
+  const handleTestConnection = async (provider: any) => {
+    if (!provider.config.host || !provider.config.port || !provider.config.username || !provider.config.password) {
+      triggerToast("Please fill in all SMTP details (Host, Port, Username, Password) before testing.", "warning");
+      return;
+    }
+    setTestingId(provider.id || provider.priority_level.toString());
+    try {
+      const result = await testProviderConnection(provider.provider_name, provider.config);
+      if (result.success) {
+        triggerToast("Connection verified successfully! Your SMTP credentials are valid.", "success");
+      } else {
+        triggerToast(result.message || "Failed to connect to SMTP server.", "error");
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "An unexpected error occurred during testing.", "error");
+    } finally {
+      setTestingId(null);
+    }
   };
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
@@ -210,10 +231,24 @@ export default function ProviderDashboard() {
               )}
             </div>
 
-            <div className="bg-muted/20 px-6 py-3 border-t border-border flex justify-end">
+            <div className="bg-muted/20 px-6 py-3 border-t border-border flex justify-end gap-3">
+              {(prov.provider_name === "SMTP" || prov.provider_name === "Microsoft 365") && (
+                <button 
+                  onClick={() => handleTestConnection(prov)}
+                  disabled={testingId === (prov.id || prov.priority_level.toString())}
+                  className="flex items-center gap-2 bg-background hover:bg-accent/10 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border disabled:opacity-50"
+                >
+                  {testingId === (prov.id || prov.priority_level.toString()) ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Zap className="w-4 h-4 text-amber-500" />
+                  )}
+                  {testingId === (prov.id || prov.priority_level.toString()) ? 'Testing...' : 'Test Connection'}
+                </button>
+              )}
               <button 
                 onClick={() => handleSave(prov)}
-                className="flex items-center gap-2 bg-background hover:bg-accent/10 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border"
+                className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors shadow-sm"
               >
                 <Save className="w-4 h-4" /> Save Details
               </button>
@@ -223,7 +258,7 @@ export default function ProviderDashboard() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : 'bg-accent'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : toastMsg.type === 'warning' ? 'bg-amber-500' : 'bg-accent'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

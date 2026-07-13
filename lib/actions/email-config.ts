@@ -104,3 +104,28 @@ export async function updateEmailProvider(id: string, payload: any) {
   if (error) throw new Error(error.message);
   return { success: true, data };
 }
+
+export async function testProviderConnection(providerName: string, config: any) {
+  try {
+    if (providerName === "SMTP" || providerName === "Microsoft 365") {
+      const nodemailer = (await import('nodemailer')).default;
+      const transporter = nodemailer.createTransport({
+        host: config.host,
+        port: Number(config.port),
+        secure: Number(config.port) === 465,
+        auth: {
+          user: config.username,
+          pass: config.password,
+        },
+        connectionTimeout: 10000, // 10 seconds
+      });
+      await transporter.verify();
+      return { success: true, message: "Connection verified successfully!" };
+    } else {
+      return { success: false, message: `Test connection not supported for ${providerName} yet.` };
+    }
+  } catch (error: any) {
+    console.error("Provider Test connection failed:", error);
+    return { success: false, message: error.message || "Failed to connect to SMTP server." };
+  }
+}
