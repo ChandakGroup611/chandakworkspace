@@ -318,15 +318,7 @@ export default function LoginPage() {
             )}
           </AppButton>
 
-          {/* Navigation link to Registration screen */}
-          <div className="pt-8 text-center text-sm">
-            <span className={"text-subtle"}>
-              Don't have an account?{" "}
-            </span>
-            <Link href="/register" className="font-semibold text-accent dark:text-accent hover:text-accent dark:hover:text-blue-300 transition-colors">
-              Request Access
-            </Link>
-          </div>
+
 
         </div>
       </div>
