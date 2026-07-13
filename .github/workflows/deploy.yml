@@ -29,19 +29,40 @@ jobs:
           npm install
           npm run build
 
-      # Copy static assets into standalone folder so everything is self-contained
+      # Copy static assets into standalone folder so everything is self-contained and zip it
       - name: Prepare deployment files
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
+          cd .next/standalone
+          zip -r ../../deploy.zip .
+          cd ../..
+          mkdir upload-payload
+          mv deploy.zip upload-payload/
 
-      # Upload the uncompressed files to Hostinger via FTP (Fully Automated)
+      # Upload the compiled standalone zip file to Hostinger via FTP
       - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: .next/standalone/
+          local-dir: ./upload-payload/
           server-dir: domains/chandakgroup.tech/public_html/
           protocol: ftp
+
+      # Automatically extract the zip and restart the Node.js server via SSH
+      - name: Extract and Restart Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd domains/chandakgroup.tech/public_html/
+            unzip -o deploy.zip
+            rm deploy.zip
+            # If you use PM2 or a specific restart command, it goes here, e.g., pm2 restart all
+            # Wait 2 seconds
+            sleep 2
