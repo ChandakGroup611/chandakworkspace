@@ -164,7 +164,10 @@ export default function LoginPage() {
         provider: 'azure',
         options: {
           scopes: 'email profile User.Read',
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: 'select_account'
+          }
         }
       });
       if (error) throw error;
