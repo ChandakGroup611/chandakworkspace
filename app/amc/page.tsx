@@ -135,47 +135,38 @@ export default function AMCPage() {
   // Phase 2 Fields - Structured
   const [solutionLineItems, setSolutionLineItems] = useState<SolutionLineItem[]>([]);
 
-  useEffect(() => {
-    if (solutionLineItems && solutionLineItems.length > 0) {
-      const total = solutionLineItems.reduce((sum, i) => sum + i.netAmount, 0);
-      setFormCost(total ? total.toFixed(2) : "");
-    }
-  }, [solutionLineItems]);
+  // Derive computed values dynamically during render instead of useEffect loops
+  const computedTotalCost = solutionLineItems.length > 0 
+    ? solutionLineItems.reduce((sum, i) => sum + i.netAmount, 0).toFixed(2)
+    : formCost;
 
-  useEffect(() => {
-    if (formTotalLicenses && formCost) {
-      const total = parseFloat(formCost);
-      const licenses = parseInt(formTotalLicenses);
-      if (licenses > 0 && !isNaN(total)) {
-        setFormCostPerLicense((total / licenses).toFixed(2));
-      }
-    }
-  }, [formTotalLicenses, formCost]);
+  const parsedTotalCost = parseFloat(computedTotalCost);
+  const parsedLicenses = parseInt(formTotalLicenses);
+  const computedCostPerLicense = (parsedLicenses > 0 && !isNaN(parsedTotalCost))
+    ? (parsedTotalCost / parsedLicenses).toFixed(2)
+    : formCostPerLicense;
 
-  
   const [formPoNumber, setFormPoNumber] = useState("");
   const [formPoDate, setFormPoDate] = useState("");
   const [formPutToUseDate, setFormPutToUseDate] = useState("");
   const [formRenewalPeriodType, setFormRenewalPeriodType] = useState("");
-  useEffect(() => {
-    if (formRenewalPeriodType && formRenewalPeriodType !== "Custom" && formRenewalPeriodType !== "") {
-      const baseDateStr = formPutToUseDate;
-      if (baseDateStr) {
-        const d = new Date(baseDateStr);
-        if (!isNaN(d.getTime())) {
-          switch (formRenewalPeriodType) {
-            case "Yearly": d.setFullYear(d.getFullYear() + 1); break;
-            case "Half-Yearly": d.setMonth(d.getMonth() + 6); break;
-            case "Quarterly": d.setMonth(d.getMonth() + 3); break;
-            case "Monthly": d.setMonth(d.getMonth() + 1); break;
-          }
-          // Subtract 1 day for contract expiration standard (e.g. Jan 1 -> Dec 31)
-          d.setDate(d.getDate() - 1);
-          setFormExpiryDate(d.toISOString().split('T')[0]);
+
+  const handleRenewalChange = (periodType: string, baseDateStr: string) => {
+    setFormRenewalPeriodType(periodType);
+    if (periodType && periodType !== "Custom" && baseDateStr) {
+      const d = new Date(baseDateStr);
+      if (!isNaN(d.getTime())) {
+        switch (periodType) {
+          case "Yearly": d.setFullYear(d.getFullYear() + 1); break;
+          case "Half-Yearly": d.setMonth(d.getMonth() + 6); break;
+          case "Quarterly": d.setMonth(d.getMonth() + 3); break;
+          case "Monthly": d.setMonth(d.getMonth() + 1); break;
         }
+        d.setDate(d.getDate() - 1);
+        setFormExpiryDate(d.toISOString().split('T')[0]);
       }
     }
-  }, [formRenewalPeriodType, formPutToUseDate, formPurchaseDate]);
+  };
 
   
   const [vendorContactName, setVendorContactName] = useState("");
@@ -579,7 +570,7 @@ export default function AMCPage() {
       expiry_date: formExpiryDate || null,
       put_to_use_date: formPutToUseDate || null,
       renewal_period_type: formRenewalPeriodType || null,
-      cost: formCost ? parseFloat(formCost) : null,
+      cost: computedTotalCost ? parseFloat(computedTotalCost) : null,
       assigned_to: formAssignedTo || null,
       department_id: formDepartmentId || null,
       status: formStatus,
@@ -594,7 +585,7 @@ export default function AMCPage() {
       currency: formCurrency,
       total_licenses: formTotalLicenses ? parseInt(formTotalLicenses) : null,
       used_licenses: formUsedLicenses ? parseInt(formUsedLicenses) : null,
-      cost_per_license: formCostPerLicense ? parseFloat(formCostPerLicense) : null,
+      cost_per_license: computedCostPerLicense ? parseFloat(computedCostPerLicense) : null,
       license_key: formLicenseKey || null,
       payment_terms: formPaymentTerms || null,
       support_tier: formSupportTier || null,
@@ -974,11 +965,14 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Put to Use Date</label>
-                  <AppInput type="date" value={formPutToUseDate} onChange={(e) => setFormPutToUseDate(e.target.value)} className="h-11" />
+                  <AppInput type="date" value={formPutToUseDate} onChange={(e) => {
+                    setFormPutToUseDate(e.target.value);
+                    if (formRenewalPeriodType) handleRenewalChange(formRenewalPeriodType, e.target.value);
+                  }} className="h-11" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Renewal Period</label>
-                  <select value={formRenewalPeriodType} onChange={(e) => setFormRenewalPeriodType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formRenewalPeriodType} onChange={(e) => handleRenewalChange(e.target.value, formPutToUseDate)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select --</option>
                     <option value="Yearly">Yearly</option>
                     <option value="Half-Yearly">Half-Yearly</option>
@@ -1036,7 +1030,7 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Cost Per License</label>
-                  <AppInput type="number" value={formCostPerLicense} onChange={(e) => setFormCostPerLicense(e.target.value)} placeholder="Auto-calculated" readOnly className="h-11 opacity-70" />
+                  <AppInput type="number" value={computedCostPerLicense} onChange={(e) => setFormCostPerLicense(e.target.value)} placeholder="Auto-calculated" readOnly className="h-11 opacity-70" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">License Key</label>
@@ -1349,7 +1343,7 @@ export default function AMCPage() {
                         <AppInput 
                           type="number" 
                           step="0.01" 
-                          value={formCost} 
+                          value={computedTotalCost} 
                           onChange={(e) => setFormCost(e.target.value)} 
                           className="pl-9" 
                           placeholder="0.00" 
