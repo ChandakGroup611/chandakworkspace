@@ -120,7 +120,7 @@ export async function dispatchNotification(
         recipient_email: user.email,
         subject: title,
         body_template: `${message}\n\nLink: ${link || 'N/A'}`,
-        status: 'pending'
+        status: 'SENT'
       }]);
     } catch (e) {
       console.error('Failed to insert into email_queue', e);

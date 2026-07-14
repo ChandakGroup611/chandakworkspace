@@ -30,10 +30,12 @@ CREATE TABLE IF NOT EXISTS public.amc_license_views (
 ALTER TABLE public.amc_license_views ENABLE ROW LEVEL SECURITY;
 
 -- Allow authenticated users to insert logs and view their own logs (or admins to view all)
+DROP POLICY IF EXISTS "Authenticated users can insert license view logs" ON public.amc_license_views;
 CREATE POLICY "Authenticated users can insert license view logs" ON public.amc_license_views
     FOR INSERT TO authenticated
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Users can view license view logs for AMCs they own" ON public.amc_license_views;
 CREATE POLICY "Users can view license view logs for AMCs they own" ON public.amc_license_views
     FOR SELECT TO authenticated
     USING (

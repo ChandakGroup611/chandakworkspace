@@ -36,6 +36,7 @@ ALTER TABLE public.amc_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.amc_renewals ENABLE ROW LEVEL SECURITY;
 
 -- Shared Policy for Transactions
+DROP POLICY IF EXISTS "Users can view transactions for their AMCs or if Admin" ON public.amc_transactions;
 CREATE POLICY "Users can view transactions for their AMCs or if Admin" ON public.amc_transactions
     FOR SELECT TO authenticated
     USING (
@@ -51,6 +52,7 @@ CREATE POLICY "Users can view transactions for their AMCs or if Admin" ON public
         )
     );
 
+DROP POLICY IF EXISTS "Admins and AMC owners can insert transactions" ON public.amc_transactions;
 CREATE POLICY "Admins and AMC owners can insert transactions" ON public.amc_transactions
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -67,6 +69,7 @@ CREATE POLICY "Admins and AMC owners can insert transactions" ON public.amc_tran
     );
 
 -- Shared Policy for Renewals
+DROP POLICY IF EXISTS "Users can view renewals for their AMCs or if Admin" ON public.amc_renewals;
 CREATE POLICY "Users can view renewals for their AMCs or if Admin" ON public.amc_renewals
     FOR SELECT TO authenticated
     USING (
@@ -82,6 +85,7 @@ CREATE POLICY "Users can view renewals for their AMCs or if Admin" ON public.amc
         )
     );
 
+DROP POLICY IF EXISTS "Admins and AMC owners can insert renewals" ON public.amc_renewals;
 CREATE POLICY "Admins and AMC owners can insert renewals" ON public.amc_renewals
     FOR INSERT TO authenticated
     WITH CHECK (

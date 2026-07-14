@@ -9,14 +9,17 @@ CREATE TABLE IF NOT EXISTS public.ticket_relations (
 
 ALTER TABLE public.ticket_relations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow read access to ticket_relations" ON public.ticket_relations;
 CREATE POLICY "Allow read access to ticket_relations" 
   ON public.ticket_relations FOR SELECT 
   USING (true);
 
+DROP POLICY IF EXISTS "Allow insert access to ticket_relations" ON public.ticket_relations;
 CREATE POLICY "Allow insert access to ticket_relations" 
   ON public.ticket_relations FOR INSERT 
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow delete access to ticket_relations" ON public.ticket_relations;
 CREATE POLICY "Allow delete access to ticket_relations" 
   ON public.ticket_relations FOR DELETE 
   USING (true);

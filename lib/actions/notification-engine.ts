@@ -78,8 +78,9 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     // 5. Hydrate Templates and Queue
     const queueInserts = users.map(user => {
       const hydratedPayload = { ...payload, recipient_name: user.first_name };
-      const subject = hydrateTemplate(template.subject, hydratedPayload);
-      const htmlBody = hydrateTemplate(template.html_body, hydratedPayload);
+      const subject = template.subject ? hydrateTemplate(template.subject, hydratedPayload) : "System Notification";
+      const htmlBody = template.html_body ? hydrateTemplate(template.html_body, hydratedPayload) : null;
+      const bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, hydratedPayload) : null;
 
       return {
         module: moduleName,
@@ -88,6 +89,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
         recipient_user_id: user.id,
         subject: subject,
         html_body: htmlBody,
+        body_template: bodyTemplate,
         status: "PENDING"
       };
     });

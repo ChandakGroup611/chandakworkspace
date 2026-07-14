@@ -12,10 +12,12 @@ CREATE TABLE IF NOT EXISTS public.ticket_macros (
 
 ALTER TABLE public.ticket_macros ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow read access to ticket_macros" ON public.ticket_macros;
 CREATE POLICY "Allow read access to ticket_macros" 
   ON public.ticket_macros FOR SELECT 
   USING (is_deleted = false);
 
+DROP POLICY IF EXISTS "Allow insert access to ticket_macros" ON public.ticket_macros;
 CREATE POLICY "Allow insert access to ticket_macros" 
   ON public.ticket_macros FOR INSERT 
   WITH CHECK (true);

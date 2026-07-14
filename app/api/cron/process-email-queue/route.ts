@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const { data: queueItems } = await supabaseAdmin
       .from("email_queue")
       .select("*")
-      .eq("status", "PENDING")
+      .in("status", ["PENDING", "pending"])
       .order("created_at", { ascending: true })
       .limit(10);
 
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     const { count } = await supabaseAdmin
       .from("email_queue")
       .select("*", { count: 'exact', head: true })
-      .eq("status", "PENDING");
+      .in("status", ["PENDING", "pending"]);
       
     if (count && count > 0) {
       // Async trigger to continue processing
@@ -155,7 +155,8 @@ async function dispatchEmail(item: any, provider: any) {
       from: `"Chandak Workspace" <${senderEmail}>`,
       to: item.recipient_email,
       subject: item.subject || "System Notification",
-      text: item.body_template || "You have a new notification."
+      text: item.body_template || "You have a new notification.",
+      html: item.html_body || undefined
     });
     
     return true;

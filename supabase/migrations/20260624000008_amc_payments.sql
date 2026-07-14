@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.amc_invoices (
 ALTER TABLE public.amc_invoices ENABLE ROW LEVEL SECURITY;
 
 -- Shared Policy for Invoices
+DROP POLICY IF EXISTS "Users can view invoices for their AMCs or if Admin" ON public.amc_invoices;
 CREATE POLICY "Users can view invoices for their AMCs or if Admin" ON public.amc_invoices
     FOR SELECT TO authenticated
     USING (
@@ -39,6 +40,7 @@ CREATE POLICY "Users can view invoices for their AMCs or if Admin" ON public.amc
         )
     );
 
+DROP POLICY IF EXISTS "Admins and AMC owners can manage invoices" ON public.amc_invoices;
 CREATE POLICY "Admins and AMC owners can manage invoices" ON public.amc_invoices
     FOR ALL TO authenticated
     USING (
