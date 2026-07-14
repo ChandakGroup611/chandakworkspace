@@ -10,6 +10,8 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache";
  * Gated by: checkIAMAuthorization helper for strict capability checking.
  */
 
+import { checkServerPermission } from "@/lib/permissions";
+
 async function checkIAMAuthorization(requiredPermission?: string) {
   try {
     const cookieStore = await cookies();
@@ -19,60 +21,12 @@ async function checkIAMAuthorization(requiredPermission?: string) {
     if (authError || !user) {
       throw new Error("Unauthenticated request. Please log in.");
     }
-    
-    // Fast-path: Check SUPER_ADMIN via auth metadata
-    if (user.app_metadata?.role === "SUPER_ADMIN") {
-      console.log("[checkIAMAuthorization] User is SUPER_ADMIN via app_metadata");
-      return;
-    }
-    
-    // Run authentication/authorization checks in parallel to eliminate waterfall latency
-    const [profileRes, userRolesRes, userPermsRes] = await Promise.all([
-      supabase.from("user_master").select("role:roles(code)").eq("id", user.id).maybeSingle(),
-      supabase.from("user_roles").select("role:roles(code)").eq("user_id", user.id),
-      supabase.from("user_permissions_snapshot").select("permission_code").eq("user_id", user.id)
-    ]);
 
-    if (profileRes.error) {
-      console.error("[checkIAMAuthorization] Profile error:", profileRes.error);
-    }
-    if (userRolesRes.error) {
-      console.error("[checkIAMAuthorization] UserRoles error:", userRolesRes.error);
-    }
-    if (userPermsRes.error) {
-      console.error("[checkIAMAuthorization] Snapshot error:", userPermsRes.error);
-    }
-
-    // 1. Check primary role on user_master
-    const primaryRole = profileRes.data?.role;
-    const dbRoleCode = Array.isArray(primaryRole) ? (primaryRole[0] as any)?.code : (primaryRole as any)?.code;
-    if (dbRoleCode === "SUPER_ADMIN") {
-      return;
-    }
-
-    // 2. Check secondary roles on user_roles
-    if (userRolesRes.data && userRolesRes.data.length > 0) {
-      for (const ur of userRolesRes.data) {
-        const role = ur.role as any;
-        const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
-        if (roleCode === "SUPER_ADMIN") {
-          return;
-        }
-      }
-    }
+    const isAuthorized = await checkServerPermission(requiredPermission || "IAM_MANAGE");
     
-    // 3. Check for IAM_MANAGE or the specific requested permission in user snapshot
-    const perms = userPermsRes.data ? userPermsRes.data.map((r: any) => r.permission_code) : [];
-    
-    if (perms.includes("IAM_MANAGE")) {
-      return; // IAM_MANAGE allows all IAM actions
+    if (!isAuthorized) {
+      throw new Error("Unauthorized: You do not have capabilities to perform this IAM operation.");
     }
-    
-    if (requiredPermission && perms.includes(requiredPermission)) {
-      return;
-    }
-    
-    throw new Error("Unauthorized: You do not have capabilities to perform this IAM operation.");
   } catch (err: any) {
     const msg = err?.message || String(err);
     console.error(`[checkIAMAuthorization] Error: ${msg}`);
