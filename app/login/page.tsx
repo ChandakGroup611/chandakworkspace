@@ -4,29 +4,28 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
-import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { useTheme } from "@/components/theme/ThemeProvider";
+import { AppButton } from "@/components/ui/AppButton";
 import { 
   ShieldCheck, 
   Lock, 
   Mail, 
   ArrowRight, 
   AlertCircle, 
-  Layers, 
-  Cpu, 
-  UserCheck 
+  User,
+  Zap
 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
-  const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
   
+  const [isRegister, setIsRegister] = useState(false);
+  
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -42,7 +41,6 @@ export default function LoginPage() {
       const urlError = searchParams.get("error");
       const urlErrorDesc = searchParams.get("error_description");
 
-      // Check hash for implicit flow errors (Supabase sometimes returns errors in hash)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const hashError = hashParams.get("error");
       const hashErrorDesc = hashParams.get("error_description");
@@ -50,7 +48,6 @@ export default function LoginPage() {
       const finalError = urlErrorDesc || urlError || hashErrorDesc || hashError;
       if (finalError) {
         setErrorMsg(`Authentication failed: ${finalError.replace(/\+/g, ' ')}`);
-        // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isLogout) {
         const { data: { session } } = await supabase.auth.getSession();
@@ -77,65 +74,84 @@ export default function LoginPage() {
     checkSession();
   }, [router, supabase.auth]);
 
-  const handlePrefill = (role: "admin" | "auditor") => {
-    if (role === "admin") {
-      setEmail("global-ops@enterprise.internal");
-      setPassword("SecuredAdminPass2026!");
-    } else {
-      setEmail("auditor-bridge@enterprise.internal");
-      setPassword("StandardStaffPass2026!");
-    }
-    setErrorMsg(null);
-  };
-
   const handleStandardAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
 
     if (!email.trim() || !password) {
-      setErrorMsg("Please enter both email and password.");
+      setErrorMsg("Please fill in all required fields.");
+      return;
+    }
+
+    if (isRegister && !name.trim()) {
+      setErrorMsg("Please enter your full name.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        try {
-          // Check for concurrent active sessions
-          const { data: sessionData } = await supabase
-            .from("active_sessions")
-            .select("last_active_at")
-            .eq("user_id", data.user.id)
-            .single();
-
-          if (sessionData && sessionData.last_active_at) {
-            const lastActive = new Date(sessionData.last_active_at).getTime();
-            const now = Date.now();
-            if (now - lastActive < 5 * 60 * 1000) {
-              const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
-              if (!proceed) {
-                await supabase.auth.signOut();
-                setLoading(false);
-                return;
-              }
+      if (isRegister) {
+        // Registration Flow
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password: password,
+          options: {
+            data: {
+              full_name: name.trim(),
             }
           }
-        } catch (e) {}
+        });
+
+        if (error) throw error;
+        
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+          throw new Error("This email is already registered. Please sign in instead.");
+        }
+
+        setSuccessMsg("Registration successful! You can now sign in.");
+        setIsRegister(false); // Flip back to login
+        
+      } else {
+        // Login Flow
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          // Check for concurrent active sessions
+          try {
+            const { data: sessionData } = await supabase
+              .from("active_sessions")
+              .select("last_active_at")
+              .eq("user_id", data.user.id)
+              .single();
+
+            if (sessionData && sessionData.last_active_at) {
+              const lastActive = new Date(sessionData.last_active_at).getTime();
+              const now = Date.now();
+              if (now - lastActive < 5 * 60 * 1000) {
+                const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
+                if (!proceed) {
+                  await supabase.auth.signOut();
+                  setLoading(false);
+                  return;
+                }
+              }
+            }
+          } catch (e) {}
+        }
+
+        window.location.href = "/";
       }
 
-      window.location.href = "/";
-
     } catch (err: any) {
-      setErrorMsg(err.message || "Invalid email or password.");
+      setErrorMsg(err.message || "An error occurred during authentication.");
+    } finally {
       setLoading(false); 
     }
   };
@@ -152,7 +168,6 @@ export default function LoginPage() {
         }
       });
       if (error) throw error;
-      // Note: Do not setSsoLoading(false) here because the page will redirect
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to initialize Microsoft login.");
       setSsoLoading(false);
@@ -160,94 +175,93 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`min-h-[100dvh] w-full flex flex-col lg:flex-row font-sans transition-colors duration-300 ${
-      "bg-surface text-foreground"
-    }`}>
+    <div className="relative min-h-[100dvh] w-full flex items-center justify-center font-sans overflow-hidden bg-slate-950">
       
-      {/* LEFT SIDE - Branding & Premium Abstract Graphic */}
-      <div className="flex w-full min-h-[35vh] lg:min-h-0 lg:w-1/2 relative flex-col justify-between p-8 lg:p-12 overflow-hidden bg-black border-b lg:border-b-0 lg:border-r border-white/5">
-        {/* Background Image Layer */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="/login-bg.png" 
-            alt="Abstract Enterprise Background" 
-            className="w-full h-full object-cover opacity-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-        </div>
-
-        {/* Top Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="h-12 w-auto flex items-center justify-center bg-white rounded-lg p-2 shadow-lg">
-            <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white drop-shadow-sm">
-            Chandak Workspace
-          </span>
-        </div>
-
-        {/* Bottom Tagline */}
-        <div className="relative z-10 max-w-lg mt-8 lg:mb-8">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 lg:mb-4 leading-tight tracking-tight drop-shadow-lg">
-            Intelligent Governance &<br className="hidden sm:block" />Enterprise Mastery
-          </h2>
-          <p className="text-sm lg:text-lg text-white/70 font-medium">
-            Streamline your organizational compliance, lifecycle management, and asset tracking all within a unified, high-performance suite.
-          </p>
-        </div>
+      {/* Dynamic Animated Background */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
+        <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] rounded-full bg-emerald-500/10 blur-[100px] animate-pulse duration-[8000ms]"></div>
+        
+        {/* Subtle grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
       </div>
 
-      {/* RIGHT SIDE - Authentication Form */}
-      <div className={`w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 lg:p-24 bg-white text-black`}>
-        <div className="w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-
-          <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
-              Sign in
-            </h1>
-            <p className={`text-sm text-muted`}>
-              Enter your credentials to access your secure workspace.
-            </p>
+      {/* Floating Glass Container */}
+      <div className="relative z-10 w-full max-w-[440px] px-6 py-12">
+        
+        {/* Logo and Branding Header */}
+        <div className="flex flex-col items-center justify-center mb-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="h-16 w-16 mb-6 flex items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+            <Zap className="h-8 w-8 text-white drop-shadow-md" />
           </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-2 text-center drop-shadow-sm">
+            Chandak Workspace
+          </h1>
+          <p className="text-slate-400 text-center font-medium">
+            Intelligent Governance & Enterprise Mastery
+          </p>
+        </div>
 
+        {/* Authentication Card */}
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150 fill-mode-both">
+          
           {/* Realtime Alert Displays */}
           {errorMsg && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20 text-rose-600 dark:text-rose-300 text-sm flex items-start gap-3 animate-in fade-in duration-200">
-              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-rose-500" />
+            <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-rose-400" />
               <div className="space-y-1">
-                <strong className="font-semibold block">Access Denied</strong>
+                <strong className="font-semibold block text-rose-200">Authentication Failed</strong>
                 <span className="opacity-90">{errorMsg}</span>
               </div>
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-sm flex items-center gap-3 animate-in fade-in duration-200">
-              <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-500" />
+            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-400" />
               <span className="font-medium">{successMsg}</span>
             </div>
           )}
 
-          {/* Standard Credentials Submission Form */}
+          {/* Form */}
           <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
+            
+            {/* Smooth transition for Name field when toggling Register */}
+            <div className={`space-y-2 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isRegister ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                Full Name
+              </label>
+              <AppInput 
+                name="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                leftIcon={<User className="h-4 w-4 text-slate-400" />}
+                className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-purple-500/50 transition-colors"
+                required={isRegister}
+              />
+            </div>
+
             <div className="space-y-2">
-              <label className={`text-sm font-semibold text-slate-900`}>
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Email Address
               </label>
               <AppInput 
                 name="email"
                 type="email"
-                placeholder="e.g. user@enterprise.com"
+                placeholder="user@enterprise.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                leftIcon={<Mail className="h-4 w-4 text-muted" />}
-                className="h-11 text-sm"
+                leftIcon={<Mail className="h-4 w-4 text-slate-400" />}
+                className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-purple-500/50 transition-colors"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-semibold text-slate-900`}>
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Password
               </label>
               <AppInput 
@@ -256,54 +270,71 @@ export default function LoginPage() {
                 placeholder="••••••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                leftIcon={<Lock className="h-4 w-4 text-muted" />}
-                className="h-11 text-sm"
+                leftIcon={<Lock className="h-4 w-4 text-slate-400" />}
+                className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-purple-500/50 transition-colors"
                 required
               />
             </div>
 
-            <AppButton 
-              variant="primary" 
+            <button 
               type="submit" 
               disabled={loading || !!successMsg}
-              className="w-full h-11 mt-2 font-semibold text-sm"
+              className="w-full h-12 mt-2 bg-white text-slate-950 font-bold rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100 flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                  <span>Authenticating...</span>
-                </span>
+                <>
+                  <span className="h-4 w-4 rounded-full border-2 border-slate-900/20 border-t-slate-900 animate-spin" />
+                  <span>Processing...</span>
+                </>
               ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <span>Sign In</span>
+                <>
+                  <span>{isRegister ? "Create Account" : "Sign In"}</span>
                   <ArrowRight className="h-4 w-4" />
-                </span>
+                </>
               )}
-            </AppButton>
+            </button>
           </form>
 
-          <div className="relative py-6">
-            <div className="relative flex justify-center text-xs uppercase my-6">
-              <span className={`w-full border-t border-border`}></span>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`px-4 font-semibold tracking-wider bg-white text-muted`}>
-                  OR CONTINUE WITH
-                </span>
-              </div>
+          {/* Toggle Login / Register */}
+          <div className="mt-6 text-center">
+            <button 
+              type="button"
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+              className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+            >
+              {isRegister ? (
+                <>Already have an account? <span className="text-purple-400 hover:text-purple-300">Sign in instead</span></>
+              ) : (
+                <>New to the workspace? <span className="text-purple-400 hover:text-purple-300">Create an account</span></>
+              )}
+            </button>
+          </div>
+
+          <div className="relative py-8">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/10"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-slate-900 px-4 text-slate-500 font-semibold tracking-widest">
+                Enterprise SSO
+              </span>
             </div>
           </div>
 
-          <AppButton
-            variant="outline"
+          <button
             type="button"
             onClick={handleMicrosoftLogin}
             disabled={ssoLoading}
-            className="w-full h-11 font-semibold flex items-center justify-center gap-3 text-sm border-border"
+            className="w-full h-12 bg-[#2f2f2f] hover:bg-[#3f3f3f] text-white border border-white/5 rounded-xl font-semibold flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:pointer-events-none"
           >
             {ssoLoading ? (
               <>
-                <span className="h-4 w-4 rounded-full border-2 border-black/20 dark:border-white/20 border-t-black dark:border-t-white animate-spin" />
-                Redirecting...
+                <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                Connecting to Microsoft...
               </>
             ) : (
               <>
@@ -313,12 +344,10 @@ export default function LoginPage() {
                   <path fill="#7fba00" d="M11 1h9v9h-9z"/>
                   <path fill="#ffb900" d="M11 11h9v9h-9z"/>
                 </svg>
-                Microsoft SSO
+                Continue with Microsoft
               </>
             )}
-          </AppButton>
-
-
+          </button>
 
         </div>
       </div>
