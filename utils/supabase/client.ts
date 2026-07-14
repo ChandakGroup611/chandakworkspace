@@ -6,11 +6,6 @@ export const createClient = () => {
 
   return createBrowserClient(
     supabaseUrl,
-    supabaseKey,
-    {
-      cookieOptions: {
-        maxAge: undefined,
-      }
-    }
+    supabaseKey
   );
 };
