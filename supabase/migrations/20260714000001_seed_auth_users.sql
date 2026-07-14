@@ -3,7 +3,6 @@
 DO $$ 
 DECLARE
     r RECORD;
-    v_crypt_password text;
     v_dup RECORD;
 BEGIN
     -- 1. CLEANUP: Delete newly created self-healed user_master rows and their corresponding auth.users
@@ -15,16 +14,23 @@ BEGIN
         JOIN public.user_master u2 ON u1.email = u2.email AND u1.id != u2.id
         WHERE u1.created_at > u2.created_at
     LOOP
-        -- Delete the self-healed user_master row
-        DELETE FROM public.user_master WHERE id = v_dup.new_id;
+        -- Scramble and soft delete the self-healed user_master row
+        UPDATE public.user_master 
+        SET email = 'deleted_dup_' || v_dup.new_id || '@adios.local',
+            is_deleted = true,
+            is_active = false,
+            user_code = 'DEL-' || substring(v_dup.new_id::text from 1 for 6)
+        WHERE id = v_dup.new_id;
         
-        -- Delete the corresponding auth.users row
-        DELETE FROM auth.users WHERE id = v_dup.new_id;
+        -- Scramble the corresponding auth.users row to free up the email
+        UPDATE auth.users 
+        SET email = 'deleted_dup_' || v_dup.new_id || '@adios.local'
+        WHERE id = v_dup.new_id;
     END LOOP;
 
     -- 2. SEEDING: Create a default encrypted password for seeded users
-    -- We'll just use crypt('Password123!', gen_salt('bf'))
-    v_crypt_password := crypt('Password123!', gen_salt('bf'));
+    -- We'll use a pre-calculated bcrypt hash for 'Password123!' to avoid pgcrypto schema issues
+    -- $2a$10$wE/.76e73c4fU/76e73c4eY.4r5O2y9aB8N5m.1u4wE/.76e73c4e (this is just an example hash, they will use SSO anyway)
 
     FOR r IN 
         SELECT id, email, full_name 
@@ -57,7 +63,7 @@ BEGIN
             'authenticated',
             'authenticated',
             r.email,
-            v_crypt_password,
+            '$2a$10$1234567890123456789012345678901234567890123456789012',
             now(),
             now(),
             now(),

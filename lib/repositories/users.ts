@@ -59,6 +59,15 @@ export async function getVisibleUsers(userId: string) {
     }
   }
 
+  // Hardcoded fallback for known super admin emails (to match frontend PermissionsProvider)
+  if (!isSuperAdmin) {
+    const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
+    const myUser = usersRes.data?.find(u => u.id === userId);
+    if (myUser && myUser.email && adminEmails.includes(myUser.email)) {
+      isSuperAdmin = true;
+    }
+  }
+
   // Check for granular permission
   if (!isSuperAdmin && permsRes.data) {
     if (permsRes.data.some(p => p.permission_code === 'USERS_VIEW')) {
