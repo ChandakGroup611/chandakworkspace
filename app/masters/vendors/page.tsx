@@ -389,7 +389,7 @@ export default function VendorMasterPage() {
                           </div>
                         </AppTableCell>
                         <AppTableCell>
-                          {v.tax_gstin ? <AppBadge variant="secondary" className="text-[10px]">{v.tax_gstin}</AppBadge> : '-'}
+                          {v.tax_gstin ? <AppBadge variant="neutral" className="text-[10px]">{v.tax_gstin}</AppBadge> : '-'}
                         </AppTableCell>
                         <AppTableCell>{v.city || '-'}</AppTableCell>
                         <AppTableCell className="text-right">
