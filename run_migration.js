@@ -1,25 +1,21 @@
-const fs = require('fs');
-const { Client } = require('pg');
-
-let dbUrl = "postgresql://postgres.tkovzymkubxtpcgynkgd:Chandak_Workspace@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
-
-const client = new Client({ 
-  connectionString: dbUrl,
-  ssl: { rejectUnauthorized: false }
-});
+const { Client } = require("pg");
+const fs = require("fs");
+require("dotenv").config({ path: ".env.local" });
 
 async function runMigration() {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
   try {
     await client.connect();
-    console.log("Connected to PostgreSQL via pooler");
-    
-    // Read the migration file
-    const sql = fs.readFileSync('supabase/migrations/20260615000001_fix_requirements_select.sql', 'utf8');
-    
-    // Execute
+    console.log("Connected to DB.");
+
+    const sql = fs.readFileSync("supabase/migrations/20260714000004_master_cities_management.sql", "utf8");
     await client.query(sql);
-    console.log("Migration executed successfully");
-    
+
+    console.log("Migration executed successfully!");
   } catch (err) {
     console.error("Migration failed:", err);
   } finally {

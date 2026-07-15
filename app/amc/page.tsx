@@ -259,7 +259,7 @@ export default function AMCPage() {
         supabase.from("user_master").select("id, full_name, email").eq("is_active", true),
         supabase.from("departments").select("id, name").eq("is_active", true),
         supabase.from("master_cities").select("*").order("city_name"),
-        supabase.from("vendor_master").select("id, name").order("name")
+        supabase.from("vendor_master").select("*").order("name")
       ]);
       if (usersData) setUsers(usersData);
       if (deptsData) setDepartments(deptsData);
@@ -377,6 +377,33 @@ export default function AMCPage() {
     
     setAttachments([]);
     setExistingAttachments([]);
+  };
+
+  const handleVendorChange = (vendorId: string) => {
+    setFormVendorId(vendorId);
+    if (!vendorId) return;
+    const vendor = vendors.find(v => v.id === vendorId);
+    if (vendor) {
+      setVendorContactName(vendor.contact_name || "");
+      setVendorContactEmail(vendor.contact_email || "");
+      setVendorContactPhone(vendor.phone || "");
+      setVendorAddrLine1(vendor.address_line1 || "");
+      setVendorAddrLine2(vendor.address_line2 || "");
+      setVendorAddrCity(vendor.city || "");
+      setVendorAddrState(vendor.state || "");
+      setVendorAddrPincode(vendor.pincode || "");
+      setTaxGstNumber(vendor.tax_gstin || "");
+      setTaxPanNumber(vendor.tax_pan || "");
+      setFormMsmeNumber(vendor.tax_code || "");
+      setBankName(vendor.bank_name || "");
+      setBankAccountNo(vendor.bank_account_number || "");
+      setBankIfsc(vendor.bank_ifsc || "");
+      setBankBranch(vendor.bank_branch || "");
+      setBankState(vendor.bank_state || "");
+      setBankCity(vendor.bank_city || "");
+      setFormIndustryType(vendor.industry_type || "");
+      setFormVendorType(vendor.vendor_type || "");
+    }
   };
 
   const openCreateModal = () => {
@@ -516,50 +543,9 @@ export default function AMCPage() {
     if (!formAssignedTo) { setErrorAlert("Assigned To (Owner) is mandatory."); return; }
     if (!formDepartmentId) { setErrorAlert("Department is mandatory."); return; }
 
-    if (!vendorContactName.trim()) { setErrorAlert("Contact Name is mandatory."); return; }
-    if (!vendorContactEmail.trim()) { setErrorAlert("Contact Email is mandatory."); return; }
-    if (!vendorContactPhone.trim()) { setErrorAlert("Contact Phone / Ext is mandatory."); return; }
-
-    // Input Validations
-    if (vendorContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vendorContactEmail)) {
-      setErrorAlert("Please enter a valid email address.");
-      return;
-    }
-    if (vendorContactPhone && !/^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[6789]\d{9}$/.test(vendorContactPhone.replace(/[\s-]/g, ''))) {
-      setErrorAlert("Please enter a valid 10-digit Indian phone number.");
-      return;
-    }
-    if (vendorAddrPincode && !/^\d{6}$/.test(vendorAddrPincode)) {
-      setErrorAlert("Please enter a valid 6-digit Indian Pincode.");
-      return;
-    }
-    if (taxGstNumber && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(taxGstNumber)) {
-      setErrorAlert("Please enter a valid Indian GST Number.");
-      return;
-    }
-    if (taxPanNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(taxPanNumber)) {
-      setErrorAlert("Please enter a valid Indian PAN Number.");
-      return;
-    }
-    if (taxGstNumber && taxPanNumber) {
-      const panFromGst = taxGstNumber.substring(2, 12);
-      if (panFromGst !== taxPanNumber) {
-        setErrorAlert("The GST Number does not match the provided PAN Number. The PAN should be embedded in the GSTIN.");
-        return;
-      }
-    }
-    if (formMsmeNumber && !/^UDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}$/.test(formMsmeNumber.toUpperCase())) {
-      setErrorAlert("Please enter a valid MSME Udyam Registration Number (e.g., UDYAM-MH-00-1234567).");
-      return;
-    }
-    if (bankAccountNo && !/^\d{9,18}$/.test(bankAccountNo)) {
-      setErrorAlert("Please enter a valid Indian Bank Account Number (9-18 digits).");
-      return;
-    }
-    if (bankIfsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfsc)) {
-      setErrorAlert("Please enter a valid Indian IFSC Code.");
-      return;
-    }
+    if (!vendorContactName.trim()) { setErrorAlert("Contact Name is mandatory. Please update the Vendor Master profile to include a Contact Name."); return; }
+    if (!vendorContactEmail.trim()) { setErrorAlert("Contact Email is mandatory. Please update the Vendor Master profile to include a Contact Email."); return; }
+    if (!vendorContactPhone.trim()) { setErrorAlert("Contact Phone / Ext is mandatory. Please update the Vendor Master profile to include a Phone Number."); return; }
 
     const payload = {
       software_name: formSoftwareName,
@@ -924,7 +910,7 @@ export default function AMCPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-xs font-bold text-gray-500 uppercase">Provider / Vendor <span className="text-red-500">*</span></label>
-                  <select value={formVendorId} onChange={(e) => setFormVendorId(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formVendorId} onChange={(e) => handleVendorChange(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                     <option value="">-- Select Vendor --</option>
                     {vendors.map(v => (
                       <option key={v.id} value={v.id}>{v.name}</option>
@@ -1263,31 +1249,31 @@ export default function AMCPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase">Contact Name <span className="text-red-500">*</span></label>
-                      <AppInput value={vendorContactName} onChange={(e) => setVendorContactName(e.target.value)} placeholder="Full Name" />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={vendorContactName} onChange={(e) => setVendorContactName(e.target.value)} placeholder="Full Name" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase">Contact Email <span className="text-red-500">*</span></label>
-                      <AppInput type="email" value={vendorContactEmail} onChange={(e) => setVendorContactEmail(e.target.value)} placeholder="Email Address" />
+                      <AppInput type="email" readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={vendorContactEmail} onChange={(e) => setVendorContactEmail(e.target.value)} placeholder="Email Address" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase">Address Line 1</label>
-                      <AppInput value={vendorAddrLine1} onChange={(e) => setVendorAddrLine1(e.target.value)} placeholder="Building, Street" />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={vendorAddrLine1} onChange={(e) => setVendorAddrLine1(e.target.value)} placeholder="Building, Street" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase">Address Line 2</label>
-                      <AppInput value={vendorAddrLine2} onChange={(e) => setVendorAddrLine2(e.target.value)} placeholder="Area, Landmark" />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={vendorAddrLine2} onChange={(e) => setVendorAddrLine2(e.target.value)} placeholder="Area, Landmark" />
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase">Phone / Ext <span className="text-red-500">*</span></label>
-                      <AppInput value={vendorContactPhone} onChange={(e) => setVendorContactPhone(e.target.value)} placeholder="Contact Number" />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={vendorContactPhone} onChange={(e) => setVendorContactPhone(e.target.value)} placeholder="Contact Number" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase">State</label>
-                      <select value={vendorAddrState} onChange={(e) => {
+                      <select disabled={!!formVendorId} value={vendorAddrState} onChange={(e) => {
                         setVendorAddrState(e.target.value);
                         setVendorAddrCity(""); // Reset city when state changes
-                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select State</option>
                         {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -1295,18 +1281,18 @@ export default function AMCPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
                         <span>City</span>
-                        <button type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors" title="Add New City">
+                        <button type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                           <Plus className="h-4 w-4" />
                         </button>
                       </label>
-                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select City</option>
                         {masterCities.filter(c => c.state_name === vendorAddrState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase">Pincode / Zip</label>
-                      <AppInput value={vendorAddrPincode} onChange={(e) => setVendorAddrPincode(e.target.value)} placeholder="Pincode" />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={vendorAddrPincode} onChange={(e) => setVendorAddrPincode(e.target.value)} placeholder="Pincode" />
                     </div>
                   </div>
                 </div>
@@ -1360,15 +1346,15 @@ export default function AMCPage() {
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] font-bold text-gray-500 uppercase">GST Number</label>
-                      <AppInput value={taxGstNumber} onChange={(e) => setTaxGstNumber(e.target.value)} placeholder="GSTIN" />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={taxGstNumber} onChange={(e) => setTaxGstNumber(e.target.value)} placeholder="GSTIN" />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-gray-500 uppercase">PAN Number</label>
-                      <AppInput value={taxPanNumber} onChange={(e) => setTaxPanNumber(e.target.value)} placeholder="PAN" />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={taxPanNumber} onChange={(e) => setTaxPanNumber(e.target.value)} placeholder="PAN" />
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-gray-500 uppercase">MSME Number</label>
-                      <AppInput value={formMsmeNumber} onChange={(e) => setFormMsmeNumber(e.target.value)} placeholder="MSME Reg. No." />
+                      <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70" : ""} value={formMsmeNumber} onChange={(e) => setFormMsmeNumber(e.target.value)} placeholder="MSME Reg. No." />
                     </div>
                   </div>
                 </div>
@@ -1380,26 +1366,26 @@ export default function AMCPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase">Bank Name</label>
-                    <AppInput value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank Name" className="h-11" />
+                    <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70 h-11" : "h-11"} value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank Name" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase">Account Number</label>
-                    <AppInput value={bankAccountNo} onChange={(e) => setBankAccountNo(e.target.value)} placeholder="Account No" className="h-11" />
+                    <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70 h-11" : "h-11"} value={bankAccountNo} onChange={(e) => setBankAccountNo(e.target.value)} placeholder="Account No" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase">IFSC Code</label>
-                    <AppInput value={bankIfsc} onChange={(e) => setBankIfsc(e.target.value)} placeholder="IFSC" className="h-11" />
+                    <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70 h-11" : "h-11"} value={bankIfsc} onChange={(e) => setBankIfsc(e.target.value)} placeholder="IFSC" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase">Branch Name</label>
-                    <AppInput value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} placeholder="e.g., MG Road Branch" className="h-11" />
+                    <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-gray-50 opacity-70 h-11" : "h-11"} value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} placeholder="e.g., MG Road Branch" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase">State</label>
-                    <select value={bankState} onChange={(e) => {
+                    <select disabled={!!formVendorId} value={bankState} onChange={(e) => {
                       setBankState(e.target.value);
                       setBankCity(""); // Reset city
-                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="">Select State</option>
                       {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -1407,11 +1393,11 @@ export default function AMCPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
                       <span>City</span>
-                      <button type="button" onClick={() => handleAddCity(bankState, setBankCity)} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors" title="Add New City">
+                      <button type="button" onClick={() => handleAddCity(bankState, setBankCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                         <Plus className="h-4 w-4" />
                       </button>
                     </label>
-                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="">Select City</option>
                       {masterCities.filter(c => c.state_name === bankState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                     </select>

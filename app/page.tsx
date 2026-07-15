@@ -16,13 +16,17 @@ export default async function Page() {
     redirect("/login");
   }
 
-  if (user) {
     const { data: profile } = await supabase
       .from("user_master")
-      .select("department_id, designation_id, manager_id, role_id")
+      .select("department_id, designation_id, manager_id, role_id, is_deleted")
       .eq("id", user.id)
       .single();
       
+    if (profile?.is_deleted) {
+      await supabase.auth.signOut();
+      redirect("/login?error=account-deleted");
+    }
+
     if (profile) {
       // Check if standard onboarding fields are missing
       const isMissingOrgDetails = !profile.department_id || !profile.designation_id || !profile.manager_id;
@@ -36,8 +40,6 @@ export default async function Page() {
         }
       }
     }
-  }
-
   // Fetch real aggregated production items from backend with RLS inherently applied
   const metricsResult = await fetchLiveDashboardMetrics();
 

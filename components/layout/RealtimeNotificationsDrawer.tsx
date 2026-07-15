@@ -71,6 +71,10 @@ export default function RealtimeNotificationsDrawer() {
         .order("created_at", { ascending: false })
         .limit(40);
 
+      if (profile?.created_at) {
+        query = query.gte("created_at", profile.created_at);
+      }
+
       if (roleCode === "SUPER_ADMIN") {
         query = query.or(`target_user_id.eq.${currentUserId},target_user_id.eq.GLOBAL_OPS`);
       } else {

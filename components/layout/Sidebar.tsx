@@ -104,6 +104,7 @@ const navGroups: NavGroup[] = [
         permission: "MASTERS_VIEW",
         subItems: [
           { label: "Company Master", href: "/masters/companies", permission: "COMPANIES_VIEW" },
+          { label: "Vendor / Provider Master", href: "/masters/vendors", permission: "MASTERS_VIEW" },
           { label: "System Master", href: "/masters", permission: "SYSTEM_MASTERS_VIEW" }
         ]
       },

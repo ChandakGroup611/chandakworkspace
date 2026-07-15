@@ -32,6 +32,7 @@ interface ProfileData {
   full_name: string;
   profile_photo: string | null;
   roleCode: string | null;
+  created_at?: string;
 }
 
 interface PermissionsContextValue {
@@ -95,7 +96,7 @@ interface UnifiedAuthData {
       const [profileRes, secondaryRolesRes] = await Promise.all([
         supabase
           .from("user_master")
-          .select("id, full_name, email, profile_photo, role:roles(code, role_permissions(permissions(code)))")
+          .select("id, full_name, email, profile_photo, is_deleted, created_at, role:roles(code, role_permissions(permissions(code)))")
           .eq("id", user.id)
           .single(),
         supabase
@@ -105,9 +106,17 @@ interface UnifiedAuthData {
       ]);
 
       const profileData = profileRes.data;
+      
+      // Safety net: if they somehow bypassed the server layout and are deleted
+      if (profileData?.is_deleted) {
+        supabase.auth.signOut();
+        if (typeof window !== 'undefined') window.location.href = '/login?error=account-deleted';
+        return { profile: null, permissions: [], roleCode: null };
+      }
+
       const primaryRole = profileData?.role;
 
-      let baseRoleCode = user.app_metadata?.role || null;
+      let baseRoleCode = null;
       if (profileData) {
         const dbRoleCode = Array.isArray(primaryRole) ? (primaryRole[0] as any)?.code : (primaryRole as any)?.code;
         if (dbRoleCode === "SUPER_ADMIN") baseRoleCode = "SUPER_ADMIN";
@@ -118,7 +127,8 @@ interface UnifiedAuthData {
         email: user.email, 
         full_name: profileData?.full_name || user.user_metadata?.full_name || "Unknown User",
         profile_photo: profileData?.profile_photo || null,
-        roleCode: baseRoleCode
+        roleCode: baseRoleCode,
+        created_at: profileData?.created_at
       };
 
       let finalRoleCode = baseRoleCode;
