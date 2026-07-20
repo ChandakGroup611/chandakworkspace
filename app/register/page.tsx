@@ -146,81 +146,109 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className={`min-h-screen w-full flex flex-col items-center py-6 sm:py-10 overflow-x-hidden relative font-sans px-4 sm:px-12 transition-colors duration-300 ${
-      "bg-gray-50 text-foreground"
-    }`}>
-      {/* Dynamic Glow Accents */}
-      <div className={`absolute top-1/3 right-1/4 w-[550px] h-[550px] rounded-full blur-[130px] pointer-events-none animate-pulse duration-1000 ${
-        "bg-accent/10"
-      }`} />
-      <div className={`absolute bottom-1/3 left-1/4 w-[550px] h-[550px] rounded-full blur-[130px] pointer-events-none animate-pulse duration-1000 ${
-        "bg-cyan-500/10"
-      }`} />
+    <div className="dark theme-dark flex h-screen w-full bg-[#0A0D14] text-white font-sans overflow-hidden" data-theme="glass-intelligence">
+      
+      {/* LEFT PANEL - Branding / Image Split */}
+      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-slate-950">
+        <Image 
+          src="/login-bg.png"
+          alt="Abstract Background"
+          fill
+          priority
+          className="object-cover opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/70 to-slate-900/40"></div>
+        
+        {/* Abstract Glow Effects */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
 
-      {/* Grid Pattern Decorative Layer */}
-      <div 
-        className={`absolute inset-0 pointer-events-none opacity-5`} 
-        style={{
-          backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px"
-        }}
-      />
-
-      {/* Central Identity Registration Card Container */}
-      <div className="w-full max-w-2xl relative z-10 animate-in fade-in-50 zoom-in-95 duration-400">
-        <div className="text-center mb-6 space-y-2">
-          <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight text-foreground`}>
-            <div className="p-2 rounded-xl bg-gradient-to-tr from-purple-600 to-cyan-500 shadow-lg text-white">
-              <UserPlus className="h-5 w-5" />
+        <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
+          
+          {/* Logo - Pushed to Absolute Top */}
+          <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
+            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-white/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
+              <img 
+                src="/logo.png" 
+                alt="Chandak Logo" 
+                className="h-full w-auto max-w-full object-contain p-2"
+              />
             </div>
-            <span>Staff Registration</span>
           </div>
-          <p className={`text-xs max-w-xs mx-auto text-muted`}>
-            Register new personnel records to enable authenticated platform access.
-          </p>
-        </div>
 
-        <AppCard className={`shadow-2xl backdrop-blur-2xl transition-all duration-300 border hover:shadow-3xl hover:-translate-y-1 ${
-          "bg-surface/80 border-border shadow-blue-900/5 hover:border-border"
-        }`}>
-          <AppCardHeader className={`pb-3 border-b text-center border-border`}>
-            <AppCardTitle className={`text-base font-bold flex items-center justify-center gap-2 text-foreground`}>
-              <ShieldCheck className="h-4 w-4 text-accent" />
-              <span>Registration Form</span>
-            </AppCardTitle>
-            <span className="text-xs text-gray-500 font-mono block mb-3">Secure Identity Provisioning</span>
-            <div className="p-3 mx-4 mb-2 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-lg text-xs flex items-start text-left gap-2 border border-blue-200 dark:border-blue-800">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>
-                <strong>Important:</strong> You must use your official <b>@chandakgroup.com</b> mail ID credentials for access.
+          {/* Main Text - Perfectly Centered */}
+          <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight !text-white mb-12 leading-tight drop-shadow-lg">
+              Intelligent Governance <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+                & Enterprise Mastery
               </span>
-            </div>
-          </AppCardHeader>
+            </h1>
+            <p className="!text-slate-200 text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-md">
+              Securely orchestrate enterprise operations, manage identities, and automate workflows in one unified platform.
+            </p>
+          </div>
 
-          <AppCardContent className="p-6 space-y-4">
+        </div>
+      </div>
+
+      {/* RIGHT PANEL - Authentication Form */}
+      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-[#0F131E] lg:bg-[#0A0D14] relative text-white">
+        {/* Subtle grid on right panel for texture */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
+
+        <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-16 relative z-10 min-h-full">
+          <div className="w-full max-w-xl animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
+            
+            <div className="lg:hidden flex flex-col items-center justify-center mb-8">
+              <div className="relative h-20 w-56 flex items-center justify-center">
+                <img 
+                  src="/logo.png" 
+                  alt="Chandak Logo" 
+                  className="h-full w-auto max-w-full object-contain"
+                />
+              </div>
+            </div>
+
+            <div className="mb-8 lg:mb-10 text-center">
+              <h2 className="text-3xl font-bold text-white mb-2">
+                Create an Account
+              </h2>
+              <p className="text-gray-400 mb-4">
+                Register new personnel records to enable authenticated platform access.
+              </p>
+              
+              <div className="p-3 bg-blue-950/30 text-blue-400 rounded-lg text-xs flex items-start text-left gap-2 border border-blue-900/50">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Important:</strong> You must use your official <b>@chandakgroup.com</b> mail ID credentials for access.
+                </span>
+              </div>
+            </div>
+
             {/* Realtime Alert Displays */}
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-300 text-xs flex items-start gap-2 animate-in fade-in duration-200">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500 mt-0.5" />
-                <div className="space-y-0.5">
-                  <strong className="font-bold block">Error:</strong>
-                  <span>{errorMsg}</span>
+              <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-900/50 text-red-400 text-sm flex items-start gap-3 animate-in fade-in duration-300">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <strong className="font-semibold block">Error</strong>
+                  <span className="opacity-90">{errorMsg}</span>
                 </div>
               </div>
             )}
 
             {successMsg && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in duration-200">
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              <div className="mb-6 p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50 text-emerald-400 text-sm flex items-center gap-3 animate-in fade-in duration-300">
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
                 <span className="font-medium">{successMsg}</span>
               </div>
             )}
 
             {/* Registration Submission Inputs */}
-            <form onSubmit={handleRegistrationSubmit} className="space-y-6 mt-2">
+            <form onSubmit={handleRegistrationSubmit} className="space-y-6" autoComplete="off">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                     Full Name
                   </label>
                   <AppInput 
@@ -229,22 +257,22 @@ export default function RegisterPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     leftIcon={<User className="h-4 w-4" />}
-                    className="h-12 text-sm"
+                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                     Email Address
                   </label>
                   <AppInput 
                     type="email"
-                    placeholder="e.g. richard@enterprise.internal"
+                    placeholder="e.g. richard@chandakgroup.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     leftIcon={<Mail className="h-4 w-4" />}
-                    className="h-12 text-sm"
+                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -252,19 +280,17 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                     Department
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
                       <Building2 className="h-4 w-4" />
                     </span>
                     <select
                       value={department}
                       onChange={(e) => { setDepartment(e.target.value); setDesignation(""); }}
-                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors ${
-                        "bg-elevated border-border text-foreground focus:border-accent focus:bg-white"
-                      }`}
+                      className="w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] text-white"
                       required
                     >
                       <option value="" disabled>Select Department</option>
@@ -277,21 +303,19 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                     Designation
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
                       <Briefcase className="h-4 w-4" />
                     </span>
                     <select
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
                       disabled={!department}
-                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors ${
-                        "bg-elevated border-border text-foreground focus:border-accent focus:bg-white"
-                      } ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
+                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] text-white ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
                       required
                     >
                       <option value="" disabled>Select Designation</option>
@@ -306,10 +330,10 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                   Identity Visual (Photo Upload)
                 </label>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-white/20 bg-white/[0.02]">
                   <div className="h-16 w-16 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shrink-0">
                     {uploadFile ? (
                       <img src={URL.createObjectURL(uploadFile)} className="h-full w-full object-cover" />
@@ -317,7 +341,7 @@ export default function RegisterPage() {
                       <Camera className="h-5 w-5 text-accent" />
                     )}
                   </div>
-                  <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-2">
                     <p className="text-xs text-gray-400">Upload a professional portrait or choose a preset below.</p>
                     <input 
                       type="file" 
@@ -328,14 +352,14 @@ export default function RegisterPage() {
                     />
                     <label 
                       htmlFor="photo-upload"
-                      className="inline-block px-3 py-1 rounded-lg bg-accent text-white text-xs font-bold cursor-pointer hover:bg-indigo-400 transition-colors"
+                      className="inline-block px-4 py-2 rounded-lg bg-accent/20 text-accent border border-accent/30 text-xs font-bold cursor-pointer hover:bg-accent/40 transition-colors"
                     >
                       Select Image
                     </label>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                <div className="flex items-center justify-center gap-4 overflow-x-auto pb-1 custom-scrollbar">
                   {PRESET_AVATARS.map((url, idx) => (
                     <div 
                       key={idx}
@@ -347,7 +371,7 @@ export default function RegisterPage() {
                       <img src={url} alt={`Avatar ${idx}`} className="h-full w-full rounded-full object-cover" />
                       {photo === url && !uploadFile && (
                         <div className="absolute -right-1 -top-1 bg-accent rounded-full p-0.5 shadow-sm">
-                          <CheckCircle2 className="h-2 w-2 text-foreground" />
+                          <CheckCircle2 className="h-2 w-2 text-white" />
                         </div>
                       )}
                     </div>
@@ -357,7 +381,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                     Password
                   </label>
                   <AppInput 
@@ -366,13 +390,13 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 text-sm"
+                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                     Confirm Password
                   </label>
                   <AppInput 
@@ -381,29 +405,29 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 text-sm"
+                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-6">
                 <AppButton 
                   variant="primary" 
                   size="md" 
                   type="submit" 
                   disabled={loading || !!successMsg}
-                  className="w-full h-12 font-bold text-sm tracking-wide bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 shadow-lg shadow-purple-500/20 text-white"
+                  className="w-full h-12 font-bold text-base tracking-wide bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 shadow-lg shadow-purple-500/20 text-white border-none"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="h-3 w-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                       <span>Registering User Account...</span>
                     </span>
                   ) : (
-                    <span className="flex items-center justify-center gap-1.5">
+                    <span className="flex items-center justify-center gap-2">
                       <span>Register Account</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
+                      <ArrowRight className="h-4 w-4" />
                     </span>
                   )}
                 </AppButton>
@@ -411,20 +435,13 @@ export default function RegisterPage() {
             </form>
 
             {/* Back navigation context */}
-            <div className={`pt-3 text-center border-t text-xs text-gray-500 border-border`}>
-              <span>Already have an account? </span>
-              <Link href="/login" className="text-accent font-bold hover:underline">
-                Sign In
-              </Link>
+            <div className="mt-8 text-center">
+              <span className="text-sm font-medium text-gray-400">
+                Already have an account? <Link href="/login" className="text-accent font-semibold hover:underline transition-colors">Sign In</Link>
+              </span>
             </div>
-          </AppCardContent>
-        </AppCard>
 
-        {/* Footer static banner info */}
-        <div className="mt-4 text-center space-y-1">
-          <p className="text-xs text-gray-500 font-mono">
-            Enterprise Access Management
-          </p>
+          </div>
         </div>
       </div>
     </div>

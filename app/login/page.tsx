@@ -146,7 +146,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-background font-sans overflow-hidden">
+    <div className="dark theme-dark flex h-screen w-full bg-[#0A0D14] text-white font-sans overflow-hidden" data-theme="glass-intelligence">
       
       {/* LEFT PANEL - Branding / Image Split */}
       <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-slate-950">
@@ -193,7 +193,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT PANEL - Authentication Form */}
-      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-card lg:bg-background relative">
+      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-[#0F131E] lg:bg-[#0A0D14] relative text-white">
         {/* Subtle grid on right panel for texture */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
 
@@ -211,10 +211,10 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-10 lg:mb-12">
-              <h2 className="text-3xl font-bold text-foreground mb-2">
+              <h2 className="text-3xl font-bold text-white mb-2">
                 Welcome back
               </h2>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-gray-400 mb-4">
                 Please enter your details to sign in to your workspace.
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-background lg:bg-muted/50 border-border focus:bg-background transition-colors"
+                  className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                   required
                 />
               </div>
@@ -272,7 +272,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-background lg:bg-muted/50 border-border focus:bg-background transition-colors"
+                  className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                   required
                 />
               </div>
@@ -309,7 +309,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card lg:bg-background px-4 text-muted-foreground font-semibold tracking-widest backdrop-blur-sm">
+                <span className="bg-[#0F131E] lg:bg-[#0A0D14] px-4 text-gray-400 font-semibold tracking-widest backdrop-blur-sm">
                   Or Continue With
                 </span>
               </div>
@@ -320,15 +320,15 @@ export default function LoginPage() {
               variant="outline"
               onClick={handleMicrosoftLogin}
               disabled={ssoLoading}
-              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-muted font-semibold bg-background lg:bg-transparent"
+              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-white/5 font-semibold bg-[#0A0D14] lg:bg-transparent border border-white/10"
             >
               {ssoLoading ? (
-                <div className="flex items-center gap-2 text-foreground">
+                <div className="flex items-center gap-2 text-white">
                   <span className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
                   Connecting to Microsoft...
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-foreground">
+                <div className="flex items-center gap-2 text-white">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21">
                     <path fill="#f25022" d="M1 1h9v9H1z"/>
                     <path fill="#00a4ef" d="M1 11h9v9H1z"/>
