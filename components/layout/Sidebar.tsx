@@ -207,8 +207,6 @@ export default function Sidebar() {
   return (
     <Profiler id="Sidebar" onRender={onRenderCallback}>
       <aside
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className={`relative z-40 flex flex-col shrink-0 font-sharp transition-all duration-300 border-r border-border select-none bg-surface ${
         isCompact ? "w-16" : "w-64"
       }`}
@@ -238,8 +236,6 @@ export default function Sidebar() {
           variant="outline"
           size="icon-sm"
           onClick={() => setIsCompactState(!isCompactState)}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
           className="absolute -right-3 top-5 rounded-full shadow-md transition-all hover:scale-125 duration-300 z-50 bg-surface border-border text-muted hover:text-foreground hover:border-accent"
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
@@ -274,14 +270,14 @@ export default function Sidebar() {
                     <div className="relative flex items-center">
                       <Link
                         href={item.href}
-                        className={`group relative flex-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                        className={`group relative flex-1 flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap ${
                           isBaseActive 
                             ? ("bg-slate-100 text-foreground font-bold")
                             : ("text-slate-900 font-semibold hover:bg-slate-50 hover:text-foreground")
-                        } ${isCompact ? "justify-center" : ""}`}
+                        } ${isCompact ? "justify-center px-3" : (item.subItems ? "pl-3 pr-8" : "px-3")}`}
                       >
                         {/* Text wrapper with z-10 so it's above the background */}
-                        <div className="relative z-10 flex items-center gap-3 w-full">
+                        <div className="relative z-10 flex items-center gap-3 w-full overflow-hidden">
                         {isBaseActive && (
                           <div className={`absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 bg-slate-900`} />
                         )}
