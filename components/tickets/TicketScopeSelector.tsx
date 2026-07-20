@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { AppCard, AppCardContent } from "@/components/ui/AppCard";
 import { Server, Monitor, Layers, ChevronRight, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -65,7 +66,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
           const colorClass = getColor(scope.code);
           
           return (
-            <button
+            <AppButton
               key={scope.id}
               onClick={() => onSelect(scope)}
               className="group relative text-left transition-all duration-300 hover:scale-[1.02] focus:outline-none"
@@ -100,7 +101,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                   </div>
                 </AppCardContent>
               </AppCard>
-            </button>
+            </AppButton>
           );
         })}
       </div>

@@ -19,6 +19,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import Link from "next/link";
+import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
+
 
 export default function AMCReportsPage() {
   let isLightMode = false;
@@ -231,27 +233,27 @@ export default function AMCReportsPage() {
           </h3>
           <AppCard className={`overflow-hidden border bg-surface border-border`}>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className={`text-xs uppercase tracking-wider text-gray-500 border-b bg-elevated border-border`}>
-                    <th className="p-4 font-bold">Status</th>
-                    <th className="p-4 font-bold">Due Date</th>
-                    <th className="p-4 font-bold">Software</th>
-                    <th className="p-4 font-bold">Description</th>
-                    <th className="p-4 font-bold">Payment Date</th>
-                    <th className="p-4 font-bold text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-white/5 text-sm">
+              <AppTable className="w-full text-left border-collapse">
+                <AppTableHeader>
+                  <AppTableRow className={`text-xs uppercase tracking-wider text-gray-500 border-b bg-elevated border-border`}>
+                    <AppTableHead className="p-4 font-bold">Status</AppTableHead>
+                    <AppTableHead className="p-4 font-bold">Due Date</AppTableHead>
+                    <AppTableHead className="p-4 font-bold">Software</AppTableHead>
+                    <AppTableHead className="p-4 font-bold">Description</AppTableHead>
+                    <AppTableHead className="p-4 font-bold">Payment Date</AppTableHead>
+                    <AppTableHead className="p-4 font-bold text-right">Amount</AppTableHead>
+                  </AppTableRow>
+                </AppTableHeader>
+                <AppTableBody className="divide-y divide-gray-200 dark:divide-white/5 text-sm">
                   {invoices.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-gray-500 italic">No payment records found.</td>
-                    </tr>
+                    <AppTableRow>
+                      <AppTableCell colSpan={6} className="p-8 text-center text-gray-500 italic">No payment records found.</AppTableCell>
+                    </AppTableRow>
                   ) : invoices.map(inv => {
                     const isOverdue = inv.status === 'Pending' && new Date(inv.due_date) < new Date();
                     return (
-                      <tr key={inv.id} className={`hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${isOverdue ? 'bg-rose-500/5' : ''}`}>
-                        <td className="p-4">
+                      <AppTableRow key={inv.id} className={`hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${isOverdue ? 'bg-rose-500/5' : ''}`}>
+                        <AppTableCell className="p-4">
                           {inv.status === 'Paid' ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 flex items-center gap-1 w-max"><CheckCircle className="h-3 w-3" /> PAID</span>
                           ) : isOverdue ? (
@@ -259,27 +261,27 @@ export default function AMCReportsPage() {
                           ) : (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 flex items-center gap-1 w-max"><Clock className="h-3 w-3" /> PENDING</span>
                           )}
-                        </td>
-                        <td className={`p-4 font-semibold ${isOverdue ? 'text-rose-500' : ''}`}>
+                        </AppTableCell>
+                        <AppTableCell className={`p-4 font-semibold ${isOverdue ? 'text-rose-500' : ''}`}>
                           {new Date(inv.due_date).toLocaleDateString()}
-                        </td>
-                        <td className="p-4 font-medium text-accent">
+                        </AppTableCell>
+                        <AppTableCell className="p-4 font-medium text-accent">
                           {inv.software_amc?.software_name}
-                        </td>
-                        <td className="p-4 text-gray-500">
+                        </AppTableCell>
+                        <AppTableCell className="p-4 text-gray-500">
                           {inv.description}
-                        </td>
-                        <td className="p-4">
+                        </AppTableCell>
+                        <AppTableCell className="p-4">
                           {inv.payment_date ? new Date(inv.payment_date).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="p-4 text-right font-black">
+                        </AppTableCell>
+                        <AppTableCell className="p-4 text-right font-black">
                           {formatCurrency(inv.amount)}
-                        </td>
-                      </tr>
+                        </AppTableCell>
+                      </AppTableRow>
                     )
                   })}
-                </tbody>
-              </table>
+                </AppTableBody>
+              </AppTable>
             </div>
           </AppCard>
         </div>

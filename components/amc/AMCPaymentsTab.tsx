@@ -200,9 +200,9 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
                         {processingId === inv.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark Paid"}
                       </AppButton>
                     )}
-                    <button onClick={() => handleDelete(inv.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                    <AppButton variant="secondary" onClick={() => handleDelete(inv.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </AppButton>
                   </div>
                 </div>
               </AppCard>

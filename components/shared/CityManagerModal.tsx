@@ -83,9 +83,9 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
           <h2 className="text-xl font-black text-foreground">
             Manage Cities for {stateName}
           </h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
             <X className="h-6 w-6" />
-          </button>
+          </AppButton>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1">
@@ -104,7 +104,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <button
+                    <AppButton variant="secondary"
                       onClick={() => toggleStatus(c)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
                         c.is_active 
@@ -114,14 +114,14 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
                     >
                       <Power className="h-3.5 w-3.5" />
                       {c.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
+                    </AppButton>
+                    <AppButton variant="secondary"
                       onClick={() => handleDelete(c)}
                       className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                       title="Delete City"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </AppButton>
                   </div>
                 </div>
               ))}

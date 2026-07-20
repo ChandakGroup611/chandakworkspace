@@ -143,11 +143,11 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
                 JD
               </div>
             ))}
-            <button className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
+            <AppButton variant="secondary" className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
               "border-border bg-elevated text-gray-400 hover:bg-elevated"
             }`}>
               <UserPlus className="h-3 w-3" />
-            </button>
+            </AppButton>
           </div>
         </section>
 
@@ -169,9 +169,9 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
       <div className={`p-4 border-t flex items-center justify-between ${
         "bg-elevated border-border"
       }`}>
-        <button className={`p-2 rounded-lg transition-colors hover:bg-gray-200 text-gray-400`}>
+        <AppButton variant="secondary" className={`p-2 rounded-lg transition-colors hover:bg-gray-200 text-gray-400`}>
           <Workflow className="h-4 w-4" />
-        </button>
+        </AppButton>
         <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Governance ID: 9910-E</span>
       </div>
     </div>

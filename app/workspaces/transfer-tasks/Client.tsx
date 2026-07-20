@@ -6,6 +6,8 @@ import { AppCard } from '@/components/ui/AppCard';
 import { ArrowRightLeft, Search, Users, AlertTriangle } from 'lucide-react';
 import { moveTasksInBulk } from '@/lib/actions/tasks';
 import { useRouter } from 'next/navigation';
+import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
+
 
 export default function TransferTasksClient({ initialTasks, workspaces, allUsers, wsMembers }: any) {
   const router = useRouter();
@@ -213,64 +215,64 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
       {/* Table */}
       <AppCard className="overflow-hidden border border-border">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-base text-muted-foreground">
-            <thead className="bg-muted border-b border-border text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 w-10">
+          <AppTable className="w-full text-left text-base text-muted-foreground">
+            <AppTableHeader className="bg-muted border-b border-border text-xs uppercase text-muted-foreground">
+              <AppTableRow>
+                <AppTableHead className="px-4 py-3 w-10">
                   <input 
                     type="checkbox" 
                     className="rounded border-input bg-transparent text-primary focus:ring-primary"
                     checked={selectedTaskIds.size > 0 && selectedTaskIds.size === filteredTasks.length}
                     onChange={toggleAll}
                   />
-                </th>
-                <th className="px-4 py-3">Task Name</th>
-                <th className="px-4 py-3">Workspace</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Assignee</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border bg-card">
+                </AppTableHead>
+                <AppTableHead className="px-4 py-3">Task Name</AppTableHead>
+                <AppTableHead className="px-4 py-3">Workspace</AppTableHead>
+                <AppTableHead className="px-4 py-3">Status</AppTableHead>
+                <AppTableHead className="px-4 py-3">Assignee</AppTableHead>
+              </AppTableRow>
+            </AppTableHeader>
+            <AppTableBody className="divide-y divide-border bg-card">
               {filteredTasks.map((task: any) => (
-                <tr key={task.id} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-4 py-3">
+                <AppTableRow key={task.id} className="hover:bg-muted/50 transition-colors">
+                  <AppTableCell className="px-4 py-3">
                     <input 
                       type="checkbox" 
                       className="rounded border-input bg-transparent text-primary focus:ring-primary"
                       checked={selectedTaskIds.has(task.id)}
                       onChange={() => toggleTaskSelection(task.id)}
                     />
-                  </td>
-                  <td className="px-4 py-3 font-medium text-foreground">
+                  </AppTableCell>
+                  <AppTableCell className="px-4 py-3 font-medium text-foreground">
                     {task.subject || task.task_code || 'Untitled'}
-                  </td>
-                  <td className="px-4 py-3">
+                  </AppTableCell>
+                  <AppTableCell className="px-4 py-3">
                     <div className="flex flex-col">
                       <span>{task.workspace?.workspace_name || 'No Workspace'}</span>
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
+                  </AppTableCell>
+                  <AppTableCell className="px-4 py-3">
                     {task.status?.status_name || '-'}
-                  </td>
-                  <td className="px-4 py-3 flex items-center space-x-2">
+                  </AppTableCell>
+                  <AppTableCell className="px-4 py-3 flex items-center space-x-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {task.owner_id 
                         ? allUsers.find((u: any) => u.id === task.owner_id)?.full_name || 'Unknown User' 
                         : 'Unassigned'}
                     </span>
-                  </td>
-                </tr>
+                  </AppTableCell>
+                </AppTableRow>
               ))}
               {filteredTasks.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                <AppTableRow>
+                  <AppTableCell colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     No tasks found.
-                  </td>
-                </tr>
+                  </AppTableCell>
+                </AppTableRow>
               )}
-            </tbody>
-          </table>
+            </AppTableBody>
+          </AppTable>
         </div>
       </AppCard>
 
@@ -361,7 +363,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-xs font-medium text-muted-foreground">Executives</label>
-                        <button 
+                        <AppButton variant="secondary" 
                           className="text-[10px] text-primary hover:underline"
                           onClick={() => {
                             if (newExecutors.length === targetWorkspaceUsers.length) setNewExecutors([]);
@@ -369,7 +371,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                           }}
                         >
                           {newExecutors.length === targetWorkspaceUsers.length ? 'Deselect All' : 'Select All'}
-                        </button>
+                        </AppButton>
                       </div>
                       <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
                         {targetWorkspaceUsers.map((s: any) => (
@@ -393,7 +395,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-xs font-medium text-muted-foreground">Watchers</label>
-                        <button 
+                        <AppButton variant="secondary" 
                           className="text-[10px] text-primary hover:underline"
                           onClick={() => {
                             if (newWatchers.length === targetWorkspaceUsers.length) setNewWatchers([]);
@@ -401,7 +403,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                           }}
                         >
                           {newWatchers.length === targetWorkspaceUsers.length ? 'Deselect All' : 'Select All'}
-                        </button>
+                        </AppButton>
                       </div>
                       <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
                         {targetWorkspaceUsers.map((s: any) => (

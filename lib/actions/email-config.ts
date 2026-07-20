@@ -93,6 +93,81 @@ export async function fetchSpecificEventConfig(moduleCode: string, eventCode: st
   return data || null;
 }
 
+export async function deleteEmailProvider(id: string) {
+  const { error } = await supabaseAdmin.from("email_providers").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function previewEmailTemplate(moduleName: string, htmlBody: string) {
+  let sampleData: any = {
+    ticket_no: "TKT-SAMPLE",
+    ticket_title: "Sample Ticket",
+    task_name: "Sample Task",
+    workspace_name: "Sample Workspace",
+    assigned_user: "Sample User",
+    creator_name: "Admin User",
+    status: "In Progress",
+    priority: "High",
+    due_date: new Date().toLocaleDateString(),
+    link: "#"
+  };
+
+  try {
+    if (moduleName === "Task") {
+      const { data } = await supabaseAdmin.from("tasks").select("id, title, status_master(name), priority_master(name), end_date, creator:user_master!tasks_created_by_fkey(full_name)").limit(1).single();
+      if (data) {
+        sampleData = {
+          ...sampleData,
+          task_name: data.title,
+          status: data.status_master?.name || "Open",
+          priority: data.priority_master?.name || "Normal",
+          creator_name: data.creator?.full_name || "Unknown",
+          due_date: data.end_date || "N/A",
+          link: `/tasks/${data.id}`
+        };
+      }
+    } else if (moduleName === "Ticket") {
+      const { data } = await supabaseAdmin.from("tickets").select("id, ticket_number, title, status_master(name), priority_master(name), creator:user_master!tickets_created_by_fkey(full_name)").limit(1).single();
+      if (data) {
+        sampleData = {
+          ...sampleData,
+          ticket_no: data.ticket_number,
+          ticket_title: data.title,
+          status: data.status_master?.name || "Open",
+          priority: data.priority_master?.name || "Normal",
+          creator_name: data.creator?.full_name || "Unknown",
+          link: `/tickets/${data.id}`
+        };
+      }
+    } else if (moduleName === "Requirement") {
+      const { data } = await supabaseAdmin.from("requirements").select("id, title, approval_status, creator:user_master!requirements_creator_id_fkey(full_name)").limit(1).single();
+      if (data) {
+        sampleData = {
+          ...sampleData,
+          ticket_title: data.title,
+          status: data.approval_status || "Draft",
+          creator_name: data.creator?.full_name || "Unknown",
+          link: `/requirements/${data.id}`
+        };
+      }
+    }
+  } catch (e) {
+    console.error("Preview sample fetch failed", e);
+  }
+
+  let hydrated = htmlBody;
+  const matches = hydrated.match(/{{(.*?)}}/g);
+  if (matches) {
+    matches.forEach(match => {
+      const key = match.replace(/[{}]/g, "").trim();
+      const value = sampleData[key] || "";
+      hydrated = hydrated.replace(match, String(value));
+    });
+  }
+  return hydrated;
+}
+
 export async function saveEmailProvider(payload: any) {
   const { data, error } = await supabaseAdmin.from("email_providers").insert([payload]).select().single();
   if (error) throw new Error(error.message);

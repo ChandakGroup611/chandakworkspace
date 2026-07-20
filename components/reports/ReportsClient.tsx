@@ -328,24 +328,24 @@ export default function ReportsClient() {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border pb-3">
         {/* Entity Selection Tabs */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <button onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <Briefcase className="h-3.5 w-3.5" /> Workspaces
-          </button>
-          <button onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          </AppButton>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <Layers className="h-3.5 w-3.5" /> Sub-Workspaces
-          </button>
-          <button onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          </AppButton>
+          <AppButton variant="secondary" onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <LayoutList className="h-3.5 w-3.5" /> Tasks
-          </button>
-          <button onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          </AppButton>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
             <AlignLeft className="h-3.5 w-3.5" /> Sub-Tasks
-          </button>
+          </AppButton>
         </div>
 
         {/* Scope Toggle */}
         <div className="flex items-center gap-1 p-1 rounded-lg bg-elevated border border-border overflow-x-auto shrink-0">
           {(["ALL", "ASSIGNED_TO_ME", "ENROLLED_TASKS"] as ReportScope[]).map(sc => (
-            <button
+            <AppButton variant="secondary"
               key={sc}
               onClick={() => setScope(sc)}
               className={`whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-md transition-all ${
@@ -355,7 +355,7 @@ export default function ReportsClient() {
               }`}
             >
               {sc === "ALL" ? "All Records" : sc === "ASSIGNED_TO_ME" ? "Assigned To Me" : "Enrolled Tasks"}
-            </button>
+            </AppButton>
           ))}
         </div>
       </div>
@@ -372,7 +372,7 @@ export default function ReportsClient() {
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent`} />
             
             {(selectedStatus || dateFrom || dateTo || query || Object.keys(columnFilters).some(k => columnFilters[k])) && (
-              <button 
+              <AppButton variant="secondary" 
                 onClick={() => {
                   setSelectedStatus("");
                   setDateFrom("");
@@ -383,7 +383,7 @@ export default function ReportsClient() {
                 className="ml-2 px-2 py-1 text-[10px] uppercase font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
               >
                 Clear Filters
-              </button>
+              </AppButton>
             )}
           </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -55,9 +56,9 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <p className="text-xs text-gray-500">Capacity & bandwidth analysis</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
+          <AppButton onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
             <X className="h-4 w-4" />
-          </button>
+          </AppButton>
         </div>
 
         {loading ? (
@@ -115,14 +116,14 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               </div>
             </div>
 
-            <button 
+            <AppButton 
               onClick={onClose}
               className={`w-full py-2 rounded-lg text-sm font-bold transition-colors ${
                 "bg-elevated text-muted hover:bg-gray-200"
               }`}
             >
               Close Analysis
-            </button>
+            </AppButton>
           </div>
         )}
       </AppCard>

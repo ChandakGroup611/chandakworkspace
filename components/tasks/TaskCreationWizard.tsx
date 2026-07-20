@@ -393,12 +393,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     />
                   </div>
                 </div>
-                <button type="button" onClick={() => {
+                <AppButton variant="secondary" type="button" onClick={() => {
                   if (assignees.length === stakeholders.length && stakeholders.length > 0) setAssignees([]);
                   else setAssignees(stakeholders.map(s => s.id));
                 }} className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
                   {assignees.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
-                </button>
+                </AppButton>
               </div>
               <div className={`p-2 rounded-xl border max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent bg-surface border-border`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
@@ -431,12 +431,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     />
                   </div>
                 </div>
-                <button type="button" onClick={() => {
+                <AppButton variant="secondary" type="button" onClick={() => {
                   if (watchers.length === stakeholders.length && stakeholders.length > 0) setWatchers([]);
                   else setWatchers(stakeholders.map(s => s.id));
                 }} className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
                   {watchers.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
-                </button>
+                </AppButton>
               </div>
               <div className={`p-2 rounded-xl border max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent bg-surface border-border`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
@@ -499,7 +499,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   {tags.map((tag, idx) => (
                     <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent`}>
                       {tag}
-                      <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-rose-500"><X className="h-3 w-3" /></button>
+                      <AppButton variant="secondary" type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-rose-500"><X className="h-3 w-3" /></AppButton>
                     </span>
                   ))}
                 </div>
@@ -548,13 +548,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-gray-50`} />
                         <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
                       </div>
-                      <button
+                      <AppButton variant="secondary"
                         type="button"
                         onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
                         className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
                       >
                         <X className="h-3.5 w-3.5" />
-                      </button>
+                      </AppButton>
                     </div>
                   ))}
                 </div>
@@ -610,13 +610,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                           <span className="text-[10px] text-gray-500">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Unknown size"}</span>
                         </div>
                       </div>
-                      <button
+                      <AppButton variant="secondary"
                         type="button"
                         onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
                         className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
                       >
                         <X className="h-3.5 w-3.5" />
-                      </button>
+                      </AppButton>
                     </div>
                   ))}
                 </div>
@@ -631,13 +631,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     </div>
                     <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Extended Properties</h3>
                   </div>
-                  <button 
+                  <AppButton variant="secondary" 
                     type="button" 
                     onClick={() => setIsAddingField(!isAddingField)}
                     className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-700 hover:bg-amber-200`}
                   >
                     <Plus className="h-3 w-3" /> New Field
-                  </button>
+                  </AppButton>
                 </div>
 
                 {isAddingField && (

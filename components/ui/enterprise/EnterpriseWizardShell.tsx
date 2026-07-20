@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { X } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -80,13 +81,13 @@ export function EnterpriseWizardShell({
             {title && <div className={`text-xl font-semibold tracking-tight ${"text-foreground"}`}>{title}</div>}
             {subtitle && <div className={`mt-1 text-sm ${"text-muted"}`}>{subtitle}</div>}
           </div>
-          <button 
+          <AppButton 
             onClick={onClose}
             type="button"
             className="relative z-10 p-2 rounded-md transition-all shrink-0 active:scale-95 text-muted-foreground hover:text-foreground hover:bg-surface"
           >
             <X className="h-5 w-5" />
-          </button>
+          </AppButton>
         </div>
 
         {/* Body (Scrollable) */}

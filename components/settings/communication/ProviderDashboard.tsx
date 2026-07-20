@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { Server, Save, Loader2, ShieldAlert, Key, Zap } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { saveEmailProvider, updateEmailProvider, testProviderConnection } from "@/lib/actions/email-config";
@@ -233,7 +234,7 @@ export default function ProviderDashboard() {
 
             <div className="bg-muted/20 px-6 py-3 border-t border-border flex justify-end gap-3">
               {(prov.provider_name === "SMTP" || prov.provider_name === "Microsoft 365") && (
-                <button 
+                <AppButton 
                   onClick={() => handleTestConnection(prov)}
                   disabled={testingId === (prov.id || prov.priority_level.toString())}
                   className="flex items-center gap-2 bg-background hover:bg-accent/10 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border disabled:opacity-50"
@@ -244,14 +245,14 @@ export default function ProviderDashboard() {
                     <Zap className="w-4 h-4 text-amber-500" />
                   )}
                   {testingId === (prov.id || prov.priority_level.toString()) ? 'Testing...' : 'Test Connection'}
-                </button>
+                </AppButton>
               )}
-              <button 
+              <AppButton 
                 onClick={() => handleSave(prov)}
                 className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors shadow-sm"
               >
                 <Save className="w-4 h-4" /> Save Details
-              </button>
+              </AppButton>
             </div>
           </div>
         ))}

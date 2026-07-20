@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { learningModules } from "@/lib/data/learning-data";
 import ModuleRenderer from "@/components/learning/ModuleRenderer";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -30,14 +31,14 @@ export default function LearningHubClient() {
           <h1 className={`text-4xl md:text-5xl font-extrabold tracking-tight text-foreground`}>
             Enterprise Learning Hub
           </h1>
-          <p className={`text-lg md:text-xl max-w-2xl mx-auto text-muted`}>
+          <p className={`text-lg md:text-xl max-w-2xl mx-auto text-muted-foreground`}>
             Master the core concepts of the Chandak Workspace platform. Select a module below to begin your detailed learning journey.
           </p>
         </div>
 
         {/* Custom Dropdown Selector */}
         <div className="relative w-full max-w-md mx-auto mt-8 z-20">
-          <button
+          <AppButton variant="secondary"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl border-2 text-left transition-all ${
               "bg-surface border-blue-100 hover:border-accent/30 shadow-lg text-foreground"
@@ -50,11 +51,11 @@ export default function LearningHubClient() {
                   <span className="font-bold text-lg">{selectedModule.title}</span>
                 </>
               ) : (
-                <span className={`font-semibold text-lg text-gray-400`}>Select a Learning Module...</span>
+                <span className={`font-semibold text-lg text-muted-foreground`}>Select a Learning Module...</span>
               )}
             </div>
             <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} />
-          </button>
+          </AppButton>
 
           {isDropdownOpen && (
             <div className={`absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl border shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200 ${
@@ -62,30 +63,30 @@ export default function LearningHubClient() {
             }`}>
               <div className="space-y-1">
                 {learningModules.map((module) => (
-                  <button
+                  <AppButton variant="secondary"
                     key={module.id}
                     onClick={() => {
                       setSelectedModuleId(module.id);
                       setIsDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+                    className={`w-full flex items-start gap-4 px-4 py-3 rounded-xl transition-all border border-transparent ${
                       selectedModuleId === module.id
-                        ? ("bg-accent/10 text-accent font-bold")
-                        : ("hover:bg-elevated text-muted")
+                        ? ("bg-accent/10 border-accent/20 text-accent font-bold")
+                        : ("hover:bg-elevated hover:border-border text-foreground")
                     }`}
                   >
-                    <div className={`p-2 rounded-lg ${
+                    <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${
                       selectedModuleId === module.id 
-                        ? ("bg-accent/10 text-accent")
-                        : ("bg-elevated text-muted")
+                        ? ("bg-accent/20 text-accent")
+                        : ("bg-surface border border-border text-muted-foreground")
                     }`}>
                       <module.icon className="h-5 w-5" />
                     </div>
-                    <div className="text-left flex-1">
-                      <div className="font-semibold">{module.title}</div>
-                      <div className={`text-[11px] truncate mt-0.5 text-muted`}>{module.description}</div>
+                    <div className="text-left flex-1 min-w-0">
+                      <div className="font-semibold text-sm">{module.title}</div>
+                      <div className={`text-[11px] mt-0.5 text-muted-foreground leading-snug`}>{module.description}</div>
                     </div>
-                  </button>
+                  </AppButton>
                 ))}
               </div>
             </div>

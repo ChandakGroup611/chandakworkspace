@@ -76,7 +76,7 @@ export default function NotificationCenter() {
 
   return (
     <div className="relative z-50">
-      <button 
+      <AppButton 
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2 rounded-xl transition-all ${
           isOpen 
@@ -88,7 +88,7 @@ export default function NotificationCenter() {
         {unreadCount > 0 && (
           <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[#070913]" />
         )}
-      </button>
+      </AppButton>
 
       {isOpen && (
         <>

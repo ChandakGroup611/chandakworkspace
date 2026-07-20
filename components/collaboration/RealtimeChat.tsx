@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { AppButton } from '@/components/ui/AppButton';
 import { createClient } from '@/utils/supabase/client';
 import { performanceGovernor, DegradationStage } from '@/utils/performance/PerformanceGovernanceEngine';
 
@@ -118,9 +119,9 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
           placeholder="Type a message or @mention someone..."
           className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-accent"
         />
-        <button type="submit" className="bg-accent hover:bg-accent-secondary text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
+        <AppButton type="submit" className="bg-accent hover:bg-accent-secondary text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
           Send
-        </button>
+        </AppButton>
       </form>
     </div>
   );

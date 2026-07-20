@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { CheckCircle, Shield, Key, Link2, Users, Save, Loader2, AlertCircle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -120,12 +121,12 @@ export default function IdentityProviderForm() {
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-400">Status</span>
-            <button 
+            <AppButton 
               onClick={() => setConfig({ ...config, is_active: !config.is_active })}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-accent' : 'bg-gray-700'}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
+            </AppButton>
           </div>
         </div>
 
@@ -197,12 +198,12 @@ export default function IdentityProviderForm() {
 
         <div className="space-y-4">
           <label className="flex items-center space-x-3 cursor-pointer group">
-            <button 
+            <AppButton 
               onClick={() => setConfig({ ...config, auto_provision_users: !config.auto_provision_users })}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-accent' : 'bg-gray-700'}`}
             >
               <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
-            </button>
+            </AppButton>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
               <span className="text-xs text-gray-500">Automatically create user accounts in the system if they authenticate successfully via Azure AD.</span>
@@ -210,12 +211,12 @@ export default function IdentityProviderForm() {
           </label>
 
           <label className="flex items-center space-x-3 cursor-pointer group">
-            <button 
+            <AppButton 
               onClick={() => setConfig({ ...config, force_sso: !config.force_sso })}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-red-500' : 'bg-gray-700'}`}
             >
               <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
-            </button>
+            </AppButton>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Force SSO (Disable Password Login)</span>
               <span className="text-xs text-gray-500">If enabled, standard password login will be hidden and all users MUST use Microsoft SSO.</span>
@@ -234,14 +235,14 @@ export default function IdentityProviderForm() {
       </div>
 
       <div className="flex justify-end pt-4">
-        <button
+        <AppButton
           onClick={handleSave}
           disabled={loading || !hasPermission("SETTINGS_IDENTITY_MANAGE")}
           className="flex items-center space-x-2 bg-accent hover:bg-accent text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           <span>{loading ? "Saving..." : "Save Configuration"}</span>
-        </button>
+        </AppButton>
       </div>
 
       {/* Local Toast Notification */}

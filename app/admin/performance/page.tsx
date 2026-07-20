@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AppButton } from '@/components/ui/AppButton';
+import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from '@/components/ui/AppTable';
 import { queryStore, QueryMetrics, budgetManager } from '@/utils/performance/query-tracker';
 import { websocketStore } from '@/utils/performance/websocket-tracker';
 import { hydrationStore } from '@/hooks/use-hydration-tracker';
@@ -85,7 +87,7 @@ export default function PerformanceCommandCenter() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Enterprise Performance Command Center</h1>
         <div className="flex items-center gap-4">
-          <button 
+          <AppButton 
             onClick={toggleKillSwitch}
             className={`px-4 py-2 font-bold rounded-lg transition-colors ${
               killSwitchEnabled 
@@ -94,7 +96,7 @@ export default function PerformanceCommandCenter() {
             }`}
           >
             {killSwitchEnabled ? "KILL SWITCH ENGAGED (Realtime Paused)" : "Engage Realtime Kill Switch"}
-          </button>
+          </AppButton>
         </div>
       </div>
       
@@ -170,26 +172,26 @@ export default function PerformanceCommandCenter() {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-red-600">Soft Governance Budget Violations</h2>
           <div className="overflow-x-auto border rounded-lg border-red-200">
-            <table className="min-w-full divide-y divide-red-200 text-base">
-              <thead className="bg-red-50">
-                <tr>
-                  <th className="px-4 py-3 text-left">Route</th>
-                  <th className="px-4 py-3 text-right">Query Count</th>
-                  <th className="px-4 py-3 text-right">Allowed Budget</th>
-                  <th className="px-4 py-3 text-left">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-red-100">
+            <AppTableContainer><AppTable className="min-w-full divide-y divide-red-200 text-base">
+              <AppTableHeader className="bg-red-50">
+                <AppTableRow>
+                  <AppTableHead className="px-4 py-3 text-left">Route</AppTableHead>
+                  <AppTableHead className="px-4 py-3 text-right">Query Count</AppTableHead>
+                  <AppTableHead className="px-4 py-3 text-right">Allowed Budget</AppTableHead>
+                  <AppTableHead className="px-4 py-3 text-left">Time</AppTableHead>
+                </AppTableRow>
+              </AppTableHeader>
+              <AppTableBody className="divide-y divide-red-100">
                 {violations.map((v, i) => (
-                  <tr key={i} className="bg-white">
-                    <td className="px-4 py-3 font-medium">{v.route}</td>
-                    <td className="px-4 py-3 text-right font-bold text-red-600">{v.count}</td>
-                    <td className="px-4 py-3 text-right text-gray-500">{v.budget}</td>
-                    <td className="px-4 py-3 text-gray-500">{new Date(v.timestamp).toLocaleTimeString()}</td>
-                  </tr>
+                  <AppTableRow key={i} className="bg-white">
+                    <AppTableCell className="px-4 py-3 font-medium">{v.route}</AppTableCell>
+                    <AppTableCell className="px-4 py-3 text-right font-bold text-red-600">{v.count}</AppTableCell>
+                    <AppTableCell className="px-4 py-3 text-right text-gray-500">{v.budget}</AppTableCell>
+                    <AppTableCell className="px-4 py-3 text-gray-500">{new Date(v.timestamp).toLocaleTimeString()}</AppTableCell>
+                  </AppTableRow>
                 ))}
-              </tbody>
-            </table>
+              </AppTableBody>
+            </AppTable></AppTableContainer>
           </div>
         </div>
       )}
@@ -197,29 +199,29 @@ export default function PerformanceCommandCenter() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Query Log</h2>
         <div className="overflow-x-auto border rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200 text-base">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left">Time</th>
-                <th className="px-4 py-3 text-left">Type</th>
-                <th className="px-4 py-3 text-left">Target</th>
-                <th className="px-4 py-3 text-right">Duration</th>
-                <th className="px-4 py-3 text-right">Rows</th>
-                <th className="px-4 py-3 text-right">Payload</th>
-                <th className="px-4 py-3 text-left">Severity</th>
-                <th className="px-4 py-3 text-left">Duplicate</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+          <AppTableContainer><AppTable className="min-w-full divide-y divide-gray-200 text-base">
+            <AppTableHeader className="bg-gray-50">
+              <AppTableRow>
+                <AppTableHead className="px-4 py-3 text-left">Time</AppTableHead>
+                <AppTableHead className="px-4 py-3 text-left">Type</AppTableHead>
+                <AppTableHead className="px-4 py-3 text-left">Target</AppTableHead>
+                <AppTableHead className="px-4 py-3 text-right">Duration</AppTableHead>
+                <AppTableHead className="px-4 py-3 text-right">Rows</AppTableHead>
+                <AppTableHead className="px-4 py-3 text-right">Payload</AppTableHead>
+                <AppTableHead className="px-4 py-3 text-left">Severity</AppTableHead>
+                <AppTableHead className="px-4 py-3 text-left">Duplicate</AppTableHead>
+              </AppTableRow>
+            </AppTableHeader>
+            <AppTableBody className="divide-y divide-gray-200">
               {metrics.slice(0, 50).map((m) => (
-                <tr key={m.id} className={m.severity === 'critical' ? 'bg-red-50' : m.severity === 'slow' ? 'bg-orange-50' : m.severity === 'warning' ? 'bg-yellow-50' : ''}>
-                  <td className="px-4 py-3 text-gray-500">{new Date(m.timestamp).toLocaleTimeString()}</td>
-                  <td className="px-4 py-3 font-medium">{m.queryType.toUpperCase()}</td>
-                  <td className="px-4 py-3">{m.tableOrFunction}</td>
-                  <td className="px-4 py-3 text-right font-mono">{m.durationMs.toFixed(1)} ms</td>
-                  <td className="px-4 py-3 text-right">{m.rowsReturned}</td>
-                  <td className="px-4 py-3 text-right">{(m.payloadBytes / 1024).toFixed(1)} KB</td>
-                  <td className="px-4 py-3">
+                <AppTableRow key={m.id} className={m.severity === 'critical' ? 'bg-red-50' : m.severity === 'slow' ? 'bg-orange-50' : m.severity === 'warning' ? 'bg-yellow-50' : ''}>
+                  <AppTableCell className="px-4 py-3 text-gray-500">{new Date(m.timestamp).toLocaleTimeString()}</AppTableCell>
+                  <AppTableCell className="px-4 py-3 font-medium">{m.queryType.toUpperCase()}</AppTableCell>
+                  <AppTableCell className="px-4 py-3">{m.tableOrFunction}</AppTableCell>
+                  <AppTableCell className="px-4 py-3 text-right font-mono">{m.durationMs.toFixed(1)} ms</AppTableCell>
+                  <AppTableCell className="px-4 py-3 text-right">{m.rowsReturned}</AppTableCell>
+                  <AppTableCell className="px-4 py-3 text-right">{(m.payloadBytes / 1024).toFixed(1)} KB</AppTableCell>
+                  <AppTableCell className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
                       m.severity === 'critical' ? 'bg-red-200 text-red-800' :
                       m.severity === 'slow' ? 'bg-orange-200 text-orange-800' :
@@ -228,12 +230,12 @@ export default function PerformanceCommandCenter() {
                     }`}>
                       {m.severity.toUpperCase()}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-red-600 font-bold">{m.isDuplicate ? `YES (${m.duplicateCount})` : ''}</td>
-                </tr>
+                  </AppTableCell>
+                  <AppTableCell className="px-4 py-3 text-red-600 font-bold">{m.isDuplicate ? `YES (${m.duplicateCount})` : ''}</AppTableCell>
+                </AppTableRow>
               ))}
-            </tbody>
-          </table>
+            </AppTableBody>
+          </AppTable></AppTableContainer>
         </div>
       </div>
     </div>

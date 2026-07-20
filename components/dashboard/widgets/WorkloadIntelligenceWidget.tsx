@@ -3,6 +3,8 @@
 import React from "react";
 import { Briefcase, ListTodo, Layers, ArrowUpRight } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
+import { AppButton } from "@/components/ui/AppButton";
+
 
 interface WorkloadIntelligenceWidgetProps {
   analytics?: any;
@@ -68,9 +70,9 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
         </div>
       </div>
       
-      <button className="w-full mt-6 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors py-2.5 bg-primary/5 hover:bg-primary/10 rounded-xl">
+      <AppButton variant="primary" className="w-full mt-6 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors py-2.5 bg-primary/5 hover:bg-primary/10 rounded-xl">
         View Assignment Queue <ArrowUpRight className="w-3 h-3" />
-      </button>
+      </AppButton>
     </BaseWidget>
   );
 }

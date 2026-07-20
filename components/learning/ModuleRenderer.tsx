@@ -12,6 +12,8 @@ import {
   Settings2,
   ArrowRight
 } from "lucide-react";
+import { Clock, PlayCircle, FileText, Lock, ListTodo, Presentation, Play } from "lucide-react";
+import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 
 export default function ModuleRenderer({ module }: { module: LearningModule }) {
   const { theme } = useTheme();
@@ -48,6 +50,16 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
           </div>
 
           <div className="flex gap-2">
+            <ArrowRight className={`h-5 w-5 shrink-0 text-blue-500`} />
+            <div>
+              <h3 className={`font-semibold text-sm text-foreground`}>Navigation Flow</h3>
+              <p className={`text-sm mt-1 leading-relaxed text-muted font-mono font-semibold`}>
+                {module.startInfo.navigation}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
             <ListChecks className={`h-5 w-5 shrink-0 text-emerald-500`} />
             <div>
               <h3 className={`font-semibold text-sm text-foreground`}>Prerequisites</h3>
@@ -68,36 +80,36 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
           <h2 className={`text-lg font-bold tracking-tight text-foreground`}>Field to Field Information</h2>
         </div>
         <div className={`rounded-2xl border overflow-hidden bg-surface border-border`}>
-          <table className="w-full text-left text-base">
-            <thead className={`border-b text-xs uppercase font-semibold bg-elevated text-muted`}>
-              <tr>
-                <th className="px-6 py-4">Field Name</th>
-                <th className="px-6 py-4">Input Type</th>
-                <th className="px-6 py-4">Requirement</th>
-                <th className="px-6 py-4">Detailed Description</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-white/5">
+          <AppTableContainer><AppTable className="w-full text-left text-base">
+            <AppTableHeader className={`border-b text-xs uppercase font-semibold bg-elevated text-muted`}>
+              <AppTableRow>
+                <AppTableHead className="px-6 py-4">Field Name</AppTableHead>
+                <AppTableHead className="px-6 py-4">Input Type</AppTableHead>
+                <AppTableHead className="px-6 py-4">Requirement</AppTableHead>
+                <AppTableHead className="px-6 py-4">Detailed Description</AppTableHead>
+              </AppTableRow>
+            </AppTableHeader>
+            <AppTableBody className="divide-y divide-gray-200 dark:divide-white/5">
               {module.fields.map((field, idx) => (
-                <tr key={idx} className={`transition-colors hover:bg-elevated`}>
-                  <td className={`px-6 py-4 font-medium whitespace-nowrap text-foreground`}>{field.name}</td>
-                  <td className="px-6 py-4">
+                <AppTableRow key={idx} className={`transition-colors hover:bg-elevated`}>
+                  <AppTableCell className={`px-6 py-4 font-medium whitespace-nowrap text-foreground`}>{field.name}</AppTableCell>
+                  <AppTableCell className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-[10px] font-mono font-bold bg-elevated text-muted`}>
                       {field.type}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
+                  </AppTableCell>
+                  <AppTableCell className="px-6 py-4">
                     {field.isRequired ? (
                       <span className="text-[10px] font-bold uppercase text-rose-500 bg-rose-500/10 px-2 py-1 rounded">Required</span>
                     ) : (
                       <span className="text-[10px] font-bold uppercase text-gray-500 bg-gray-500/10 px-2 py-1 rounded">Optional</span>
                     )}
-                  </td>
-                  <td className={`px-6 py-4 leading-relaxed text-muted`}>{field.description}</td>
-                </tr>
+                  </AppTableCell>
+                  <AppTableCell className={`px-6 py-4 leading-relaxed text-muted`}>{field.description}</AppTableCell>
+                </AppTableRow>
               ))}
-            </tbody>
-          </table>
+            </AppTableBody>
+          </AppTable></AppTableContainer>
         </div>
       </section>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { X } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -70,7 +71,7 @@ export function EnterpriseModalShell({
               {title && <h2 className={`text-lg font-bold tracking-tight ${"text-foreground"}`}>{title}</h2>}
               {subtitle && <div className="text-xs text-gray-500 mt-1">{subtitle}</div>}
             </div>
-            <button 
+            <AppButton 
               onClick={onClose}
               type="button"
               className={`p-2 rounded-xl transition-colors ${
@@ -78,7 +79,7 @@ export function EnterpriseModalShell({
               }`}
             >
               <X className="h-5 w-5" />
-            </button>
+            </AppButton>
           </div>
         )}
 

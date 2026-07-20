@@ -77,9 +77,9 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
             <LayoutTemplate className="h-5 w-5 text-accent" />
             <h2 className="font-bold text-lg">Task Templates Manager</h2>
           </div>
-          <button onClick={onClose} className="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+          <AppButton variant="primary" onClick={onClose} className="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
             <X className="h-5 w-5" />
-          </button>
+          </AppButton>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
@@ -136,9 +136,9 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                     <p className="text-xs text-gray-500 truncate max-w-md mt-0.5">{t.subject}</p>
                   </div>
                   {canDelete && (
-                    <button onClick={() => handleDelete(t.id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors">
+                    <AppButton variant="secondary" onClick={() => handleDelete(t.id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors">
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </AppButton>
                   )}
                 </div>
               ))

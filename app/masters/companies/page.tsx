@@ -5,6 +5,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
+import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -250,63 +251,63 @@ export default function CompanyMasterPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className={`border-b text-xs uppercase tracking-wider border-border text-muted`}>
-                <th className="pb-3 px-4 font-semibold">Code</th>
-                <th className="pb-3 px-4 font-semibold">Company Name</th>
-                <th className="pb-3 px-4 font-semibold">Contact</th>
-                <th className="pb-3 px-4 font-semibold">Status</th>
-                <th className="pb-3 px-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <AppTableContainer><AppTable className="w-full text-left border-collapse">
+            <AppTableHeader>
+              <AppTableRow className={`border-b text-xs uppercase tracking-wider border-border text-muted`}>
+                <AppTableHead className="pb-3 px-4 font-semibold">Code</AppTableHead>
+                <AppTableHead className="pb-3 px-4 font-semibold">Company Name</AppTableHead>
+                <AppTableHead className="pb-3 px-4 font-semibold">Contact</AppTableHead>
+                <AppTableHead className="pb-3 px-4 font-semibold">Status</AppTableHead>
+                <AppTableHead className="pb-3 px-4 font-semibold text-right">Actions</AppTableHead>
+              </AppTableRow>
+            </AppTableHeader>
+            <AppTableBody>
               {filteredData.map(c => (
-                <tr key={c.id} className={`border-b last:border-0 transition-colors ${
+                <AppTableRow key={c.id} className={`border-b last:border-0 transition-colors ${
                   "border-border hover:bg-elevated"
                 }`}>
-                  <td className="py-3 px-4 font-mono text-xs font-bold text-accent">{c.code}</td>
-                  <td className="py-3 px-4">
+                  <AppTableCell className="py-3 px-4 font-mono text-xs font-bold text-accent">{c.code}</AppTableCell>
+                  <AppTableCell className="py-3 px-4">
                     <div className="flex flex-col">
                       <span className={`text-sm font-bold ${"text-foreground"}`}>{c.name}</span>
                       <span className="text-xs text-gray-500">{c.short_name}</span>
                     </div>
-                  </td>
-                  <td className="py-3 px-4 text-xs text-gray-400">
+                  </AppTableCell>
+                  <AppTableCell className="py-3 px-4 text-xs text-gray-400">
                     <div className="flex flex-col">
                       <span>{c.email}</span>
                       <span>{c.contact}</span>
                     </div>
-                  </td>
-                  <td className="py-3 px-4">
+                  </AppTableCell>
+                  <AppTableCell className="py-3 px-4">
                     <AppBadge variant={c.is_active ? 'success' : 'neutral'}>
                       {c.is_active ? 'ACTIVE' : 'INACTIVE'}
                     </AppBadge>
-                  </td>
-                  <td className="py-3 px-4 text-right">
+                  </AppTableCell>
+                  <AppTableCell className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-rose-400 hover:bg-rose-500/10' : 'text-emerald-400 hover:bg-emerald-500/10'}`}>
+                      <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-rose-400 hover:bg-rose-500/10' : 'text-emerald-400 hover:bg-emerald-500/10'}`}>
                         {c.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                      </button>
-                      <button onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-accent hover:bg-accent/10 transition-colors">
+                      </AppButton>
+                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-accent hover:bg-accent/10 transition-colors">
                         Edit
-                      </button>
-                      <button onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
+                      </AppButton>
+                      <AppButton variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
                         <Trash2 className="h-4 w-4" />
-                      </button>
+                      </AppButton>
                     </div>
-                  </td>
-                </tr>
+                  </AppTableCell>
+                </AppTableRow>
               ))}
               {filteredData.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-sm text-gray-500">
+                <AppTableRow>
+                  <AppTableCell colSpan={5} className="py-12 text-center text-sm text-gray-500">
                     No company records found. Ensure database migrations are synced.
-                  </td>
-                </tr>
+                  </AppTableCell>
+                </AppTableRow>
               )}
-            </tbody>
-          </table>
+            </AppTableBody>
+          </AppTable></AppTableContainer>
         </div>
       </AppCard>
 

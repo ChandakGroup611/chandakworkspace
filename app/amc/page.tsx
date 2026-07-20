@@ -39,6 +39,8 @@ import {
   BarChart2,
   PieChart
 } from "lucide-react";
+import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
+
 
 interface AttachmentEntry {
   id: string;
@@ -500,6 +502,7 @@ export default function AMCPage() {
   };
 
   const addLineItem = () => {
+    setFormRenewalPeriodType("Custom");
     setSolutionLineItems(prev => [
       ...prev,
       {
@@ -547,9 +550,30 @@ export default function AMCPage() {
     if (!vendorContactEmail.trim()) { setErrorAlert("Contact Email is mandatory. Please update the Vendor Master profile to include a Contact Email."); return; }
     if (!vendorContactPhone.trim()) { setErrorAlert("Contact Phone / Ext is mandatory. Please update the Vendor Master profile to include a Phone Number."); return; }
 
+    let finalLineItems = [...solutionLineItems];
+    if (finalLineItems.length === 0) {
+      finalLineItems = [{
+        id: Math.random().toString(36).substr(2, 9),
+        resolutionName: formSoftwareName,
+        remark: formSpecifications || "",
+        qty: formTotalLicenses ? parseInt(formTotalLicenses) : 1,
+        rate: computedTotalCost ? (parseFloat(computedTotalCost) || 0) : 0,
+        cgstPercent: 0,
+        cgstAmount: 0,
+        sgstPercent: 0,
+        sgstAmount: 0,
+        igstPercent: 0,
+        igstAmount: 0,
+        discount: 0,
+        netAmount: computedTotalCost ? (parseFloat(computedTotalCost) || 0) : 0,
+        renewalPeriodType: formRenewalPeriodType || "",
+        customRenewalDate: ""
+      }];
+    }
+
     const payload = {
       software_name: formSoftwareName,
-      solution_name: solutionLineItems.map(item => item.resolutionName).filter(Boolean).join(", ") || null,
+      solution_name: finalLineItems.map(item => item.resolutionName).filter(Boolean).join(", ") || null,
       vendor_id: formVendorId,
       contract_type: formContractType,
       purchase_date: formPurchaseDate || null,
@@ -581,7 +605,7 @@ export default function AMCPage() {
       notify_before_days: formNotifyBeforeDays ? parseInt(formNotifyBeforeDays) : 30,
       
       // JSON fields
-      solution_line_items: solutionLineItems,
+      solution_line_items: finalLineItems,
       vendor_contact_json: {
         name: vendorContactName,
         email: vendorContactEmail,
@@ -773,59 +797,59 @@ export default function AMCPage() {
         </div>
         
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
-            <thead className={`sticky top-0 z-10 bg-gray-50`}>
-              <tr>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Software Name</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Solution Name</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Vendor</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Type</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Owner</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Expiry Date</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Approval</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border">Status</th>
-                <th className="p-3 font-medium text-gray-500 border-b border-border text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <AppTable className="w-full text-left border-collapse text-sm whitespace-nowrap">
+            <AppTableHeader className={`sticky top-0 z-10 bg-gray-50`}>
+              <AppTableRow>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Software Name</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Solution Name</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Vendor</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Type</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Owner</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Expiry Date</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Approval</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border">Status</AppTableHead>
+                <AppTableHead className="p-3 font-medium text-gray-500 border-b border-border text-right">Actions</AppTableHead>
+              </AppTableRow>
+            </AppTableHeader>
+            <AppTableBody>
               {filteredDataset.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center text-gray-500">
+                <AppTableRow>
+                  <AppTableCell colSpan={8} className="p-8 text-center text-gray-500">
                     No subscriptions found.
-                  </td>
-                </tr>
+                  </AppTableCell>
+                </AppTableRow>
               ) : (
                 filteredDataset.map((rec) => (
-                  <tr key={rec.id} className={`border-b border-border transition-colors hover:bg-elevated`}>
-                    <td className="p-3 font-medium">{rec.software_name}</td>
-                    <td className="p-3">{rec.solution_name || '-'}</td>
-                    <td className="p-3">{rec.vendor_master?.name || '-'}</td>
-                    <td className="p-3">
+                  <AppTableRow key={rec.id} className={`border-b border-border transition-colors hover:bg-elevated`}>
+                    <AppTableCell className="p-3 font-medium">{rec.software_name}</AppTableCell>
+                    <AppTableCell className="p-3">{rec.solution_name || '-'}</AppTableCell>
+                    <AppTableCell className="p-3">{rec.vendor_master?.name || '-'}</AppTableCell>
+                    <AppTableCell className="p-3">
                       <AppBadge variant={rec.contract_type === 'AMC' ? 'accent' : rec.contract_type === 'Subscription' ? 'warning' : 'neutral'}>
                         {rec.contract_type}
                       </AppBadge>
-                    </td>
-                    <td className="p-3">
+                    </AppTableCell>
+                    <AppTableCell className="p-3">
                       <div className="flex items-center gap-2">
                         <User className="h-3 w-3 text-gray-400" />
                         <span>{rec.user_master?.full_name || 'Unassigned'}</span>
                       </div>
-                    </td>
-                    <td className="p-3">
+                    </AppTableCell>
+                    <AppTableCell className="p-3">
                       {rec.expiry_date ? (
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3 w-3 text-gray-400" />
                           <span>{new Date(rec.expiry_date).toLocaleDateString()}</span>
                         </div>
                       ) : '-'}
-                    </td>
-                    <td className="p-3">
+                    </AppTableCell>
+                    <AppTableCell className="p-3">
                       <AppBadge variant={rec.approval_status === 'Active' ? 'success' : rec.approval_status === 'Pending Approval' ? 'warning' : 'neutral'}>{rec.approval_status || 'Pending Approval'}</AppBadge>
-                    </td>
-                    <td className="p-3">
+                    </AppTableCell>
+                    <AppTableCell className="p-3">
                       <AppBadge variant={rec.status === 'Active' ? 'success' : 'danger'}>{rec.status}</AppBadge>
-                    </td>
-                    <td className="p-3 text-right space-x-2">
+                    </AppTableCell>
+                    <AppTableCell className="p-3 text-right space-x-2">
                       {rec.approval_status === 'Pending Approval' && hasPermission("SUPER_ADMIN") && (
                         <>
                           <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Active')} className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10">
@@ -849,12 +873,12 @@ export default function AMCPage() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </AppButton>
                       )}
-                    </td>
-                  </tr>
+                    </AppTableCell>
+                  </AppTableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </AppTableBody>
+          </AppTable>
         </div>
       </AppCard>
 
@@ -877,22 +901,22 @@ export default function AMCPage() {
               <h2 className="text-2xl font-bold text-accent">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
               <p className="text-sm text-gray-500">Manage the core software record, mid-year transactions, and renewals.</p>
             </div>
-            <button onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
+            <AppButton variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
               <X className="h-6 w-6" />
-            </button>
+            </AppButton>
           </div>
 
           {editRecordId && (
             <div className={`flex items-center gap-6 px-6 border-b shrink-0 bg-gray-50 border-border`}>
               {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
-                <button 
+                <AppButton variant="secondary" 
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
                   className={`py-4 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === tab ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                 >
                   {tab}
-                </button>
+                </AppButton>
               ))}
             </div>
           )}
@@ -1023,9 +1047,9 @@ export default function AMCPage() {
                   <div className="relative">
                     <AppInput type={showLicenseKey ? "text" : "password"} value={formLicenseKey} onChange={(e) => setFormLicenseKey(e.target.value)} placeholder="Enter License Key" className="h-11 pr-10" />
                     {formLicenseKey && (
-                      <button type="button" onClick={showLicenseKey ? () => setShowLicenseKey(false) : handleRevealLicenseKey} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                      <AppButton variant="secondary" type="button" onClick={showLicenseKey ? () => setShowLicenseKey(false) : handleRevealLicenseKey} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
                         {showLicenseKey ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
+                      </AppButton>
                     )}
                   </div>
                 </div>
@@ -1094,38 +1118,38 @@ export default function AMCPage() {
               </div>
               
               <div className="overflow-x-auto pb-4">
-                <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
-                  <thead>
-                    <tr className="text-xs text-gray-500 uppercase tracking-wider border-b border-border">
-                      <th className="pb-3 px-2 font-bold w-64">Resolution Name</th>
-                      <th className="pb-3 px-2 font-bold w-48">Remark</th>
-                      <th className="pb-3 px-2 font-bold w-32">Renewal Period</th>
-                      <th className="pb-3 px-2 font-bold w-32">Renewal Date</th>
-                      <th className="pb-3 px-2 font-bold w-20">Qty</th>
-                      <th className="pb-3 px-2 font-bold w-28">Rate</th>
-                      <th className="pb-3 px-2 font-bold w-32">CGST (%)</th>
-                      <th className="pb-3 px-2 font-bold w-32">SGST (%)</th>
-                      <th className="pb-3 px-2 font-bold w-32">IGST (%)</th>
-                      <th className="pb-3 px-2 font-bold w-28">Discount</th>
-                      <th className="pb-3 px-2 font-bold w-32 text-right">Net Amount</th>
-                      <th className="pb-3 px-2 font-bold w-12"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <AppTable className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
+                  <AppTableHeader>
+                    <AppTableRow className="text-xs text-gray-500 uppercase tracking-wider border-b border-border">
+                      <AppTableHead className="pb-3 px-2 font-bold w-64">Resolution Name</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-48">Remark</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-32">Renewal Period</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-32">Renewal Date</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-20">Qty</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-28">Rate</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-32">CGST (%)</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-32">SGST (%)</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-32">IGST (%)</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-28">Discount</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-32 text-right">Net Amount</AppTableHead>
+                      <AppTableHead className="pb-3 px-2 font-bold w-12"></AppTableHead>
+                    </AppTableRow>
+                  </AppTableHeader>
+                  <AppTableBody>
                     {solutionLineItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} className="py-8 text-center text-gray-500 italic">No line items added. Click "Add Line Item" to begin.</td>
-                      </tr>
+                      <AppTableRow>
+                        <AppTableCell colSpan={10} className="py-8 text-center text-gray-500 italic">No line items added. Click "Add Line Item" to begin.</AppTableCell>
+                      </AppTableRow>
                     ) : (
                       solutionLineItems.map((item, index) => (
-                        <tr key={item.id} className="border-b border-border/50">
-                          <td className="py-2 px-1">
+                        <AppTableRow key={item.id} className="border-b border-border/50">
+                          <AppTableCell className="py-2 px-1">
                             <AppInput value={item.resolutionName} onChange={(e) => handleLineItemChange(item.id, "resolutionName", e.target.value)} placeholder="Name" className="h-9 text-xs" />
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark" className="h-9 text-xs" />
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                               <option value="">-- Select --</option>
                               <option value="Yearly">Yearly</option>
@@ -1134,65 +1158,65 @@ export default function AMCPage() {
                               <option value="Monthly">Monthly</option>
                               <option value="Custom">Custom</option>
                             </select>
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             {item.renewalPeriodType === "Custom" ? (
                               <AppInput type="date" value={item.customRenewalDate || ""} onChange={(e) => handleLineItemChange(item.id, "customRenewalDate", e.target.value)} className="h-9 text-xs" />
                             ) : (
                               <span className="text-gray-500 text-xs">-</span>
                             )}
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <AppInput type="number" value={item.qty} onChange={(e) => handleLineItemChange(item.id, "qty", e.target.value)} className="h-9 text-xs" min={1} />
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <AppInput type="number" value={item.rate} onChange={(e) => handleLineItemChange(item.id, "rate", e.target.value)} className="h-9 text-xs" />
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <div className="flex items-center gap-1">
                               <AppInput type="number" value={item.cgstPercent} onChange={(e) => handleLineItemChange(item.id, "cgstPercent", e.target.value)} className="h-9 text-xs w-16" placeholder="%" />
                               <span className="text-xs text-gray-500 w-16 truncate">({item.cgstAmount.toFixed(2)})</span>
                             </div>
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <div className="flex items-center gap-1">
                               <AppInput type="number" value={item.sgstPercent} onChange={(e) => handleLineItemChange(item.id, "sgstPercent", e.target.value)} className="h-9 text-xs w-16" placeholder="%" />
                               <span className="text-xs text-gray-500 w-16 truncate">({item.sgstAmount.toFixed(2)})</span>
                             </div>
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <div className="flex items-center gap-1">
                               <AppInput type="number" value={item.igstPercent} onChange={(e) => handleLineItemChange(item.id, "igstPercent", e.target.value)} className="h-9 text-xs w-16" placeholder="%" />
                               <span className="text-xs text-gray-500 w-16 truncate">({item.igstAmount.toFixed(2)})</span>
                             </div>
-                          </td>
-                          <td className="py-2 px-1">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1">
                             <AppInput type="number" value={item.discount} onChange={(e) => handleLineItemChange(item.id, "discount", e.target.value)} className="h-9 text-xs" />
-                          </td>
-                          <td className="py-2 px-1 text-right font-bold text-accent">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1 text-right font-bold text-accent">
                             {item.netAmount.toFixed(2)}
-                          </td>
-                          <td className="py-2 px-1 text-right">
-                            <button type="button" onClick={() => removeLineItem(item.id)} className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors">
+                          </AppTableCell>
+                          <AppTableCell className="py-2 px-1 text-right">
+                            <AppButton variant="secondary" type="button" onClick={() => removeLineItem(item.id)} className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors">
                               <X className="h-4 w-4" />
-                            </button>
-                          </td>
-                        </tr>
+                            </AppButton>
+                          </AppTableCell>
+                        </AppTableRow>
                       ))
                     )}
-                  </tbody>
+                  </AppTableBody>
                   {solutionLineItems.length > 0 && (
                     <tfoot>
-                      <tr>
-                        <td colSpan={8} className="py-4 text-right font-bold text-gray-500">Total Net Amount:</td>
-                        <td className="py-4 px-1 text-right font-black text-lg text-emerald-500">
+                      <AppTableRow>
+                        <AppTableCell colSpan={8} className="py-4 text-right font-bold text-gray-500">Total Net Amount:</AppTableCell>
+                        <AppTableCell className="py-4 px-1 text-right font-black text-lg text-emerald-500">
                           {solutionLineItems.reduce((sum, i) => sum + i.netAmount, 0).toFixed(2)}
-                        </td>
-                        <td></td>
-                      </tr>
+                        </AppTableCell>
+                        <AppTableCell></AppTableCell>
+                      </AppTableRow>
                     </tfoot>
                   )}
-                </table>
+                </AppTable>
               </div>
             </div>
 
@@ -1209,7 +1233,7 @@ export default function AMCPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2 col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Industry Type</label>
-                      <select value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      <select disabled={!!formVendorId} value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select Industry Type</option>
                         <option value="IT Software">IT Software</option>
                         <option value="IT Hardware / Electronics">IT Hardware / Electronics</option>
@@ -1223,11 +1247,14 @@ export default function AMCPage() {
                         <option value="Logistics & Supply Chain">Logistics & Supply Chain</option>
                         <option value="Government & PSU">Government & PSU</option>
                         <option value="Other">Other</option>
+                        {formIndustryType && !["IT Software", "IT Hardware / Electronics", "Manufacturing", "BFSI (Banking, Financial Services, Insurance)", "Retail & E-Commerce", "Healthcare & Pharma", "Telecommunications", "Education & EdTech", "Construction & Real Estate", "Logistics & Supply Chain", "Government & PSU", "Other"].includes(formIndustryType) && (
+                          <option value={formIndustryType}>{formIndustryType}</option>
+                        )}
                       </select>
                     </div>
                     <div className="space-y-2 col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type</label>
-                      <select value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      <select disabled={!!formVendorId} value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select Vendor Type</option>
                         <option value="OEM (Original Equipment Manufacturer)">OEM (Original Equipment Manufacturer)</option>
                         <option value="Authorized Distributor">Authorized Distributor</option>
@@ -1238,6 +1265,9 @@ export default function AMCPage() {
                         <option value="Consultant / Advisory">Consultant / Advisory</option>
                         <option value="Direct Retailer">Direct Retailer</option>
                         <option value="Other">Other</option>
+                        {formVendorType && !["OEM (Original Equipment Manufacturer)", "Authorized Distributor", "Value Added Reseller (VAR)", "System Integrator (SI)", "Managed Service Provider (MSP)", "Implementation Partner", "Consultant / Advisory", "Direct Retailer", "Other"].includes(formVendorType) && (
+                          <option value={formVendorType}>{formVendorType}</option>
+                        )}
                       </select>
                     </div>
                   </div>
@@ -1281,9 +1311,9 @@ export default function AMCPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
                         <span>City</span>
-                        <button type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
+                        <AppButton variant="secondary" type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                           <Plus className="h-4 w-4" />
-                        </button>
+                        </AppButton>
                       </label>
                       <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select City</option>
@@ -1393,9 +1423,9 @@ export default function AMCPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
                       <span>City</span>
-                      <button type="button" onClick={() => handleAddCity(bankState, setBankCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
+                      <AppButton variant="secondary" type="button" onClick={() => handleAddCity(bankState, setBankCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                         <Plus className="h-4 w-4" />
-                      </button>
+                      </AppButton>
                     </label>
                     <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="">Select City</option>
@@ -1446,9 +1476,9 @@ export default function AMCPage() {
                             onChange={(e) => setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, file: e.target.files?.[0] || null } : a))} 
                             className="flex-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
                           />
-                          <button type="button" onClick={() => setAttachments(prev => prev.filter(a => a.id !== entry.id))} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <AppButton variant="secondary" type="button" onClick={() => setAttachments(prev => prev.filter(a => a.id !== entry.id))} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                             <X className="h-4 w-4" />
-                          </button>
+                          </AppButton>
                         </div>
                       ))}
                       {attachments.length === 0 && (

@@ -692,7 +692,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {error && (
         <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-xs text-rose-400/60 hover:text-rose-400 font-bold px-2">Dismiss</button>
+          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-rose-400/60 hover:text-rose-400 font-bold px-2">Dismiss</AppButton>
         </div>
       )}
 
@@ -829,7 +829,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">Executors</span>
                 { !readOnly && (isExecutor || task.currentUserIsSuperAdmin) && !isEffectivelyFrozen && (
-                  <button 
+                  <AppButton variant="secondary" 
                     onClick={async () => {
                       if (!isEditingAssignees) {
                         if (stakeholders.length === 0) {
@@ -848,7 +848,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 hover:opacity-80 underline"
                   >
                     {isEditingAssignees ? 'Cancel' : 'Edit'}
-                  </button>
+                  </AppButton>
                 )}
               </div>
               
@@ -1171,21 +1171,21 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         {pendingStatus && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
             <span>Status change to <strong>{statuses.find(s => s.status_code === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
-            <button onClick={() => setPendingStatus(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-2 underline hover:no-underline">Cancel Change</button>
+            <AppButton variant="secondary" onClick={() => setPendingStatus(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
 
         {pendingDepartment && (
           <div className="p-3 bg-accent/10 border border-accent/20 text-accent text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
             <span>Department change to <strong>{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
-            <button onClick={() => setPendingDepartment(null)} className="text-xs text-accent/60 hover:text-accent font-bold px-2 underline hover:no-underline">Cancel Change</button>
+            <AppButton variant="secondary" onClick={() => setPendingDepartment(null)} className="text-xs text-accent/60 hover:text-accent font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
 
         {pendingAssignees && (
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
             <span>Executors change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <button onClick={() => setPendingAssignees(null)} className="text-xs text-emerald-500/60 hover:text-emerald-500 font-bold px-2 underline hover:no-underline">Cancel Change</button>
+            <AppButton variant="secondary" onClick={() => setPendingAssignees(null)} className="text-xs text-emerald-500/60 hover:text-emerald-500 font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
  
@@ -1232,7 +1232,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 )}
               </div>
               
-              <button 
+              <AppButton variant="secondary" 
                 type="button"
                 className={`p-1 rounded-lg transition-colors ${
                   "hover:bg-gray-200 text-muted hover:text-foreground"
@@ -1243,7 +1243,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 ) : (
                   <ChevronUp className="h-4 w-4" />
                 )}
-              </button>
+              </AppButton>
             </div>
 
             {/* Collapsible Content */}
@@ -1372,7 +1372,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Tabs Menu */}
       <div className={`flex border-b border-gray-200 dark:border-white/5`}>
         {(["checklist", "attachments"] as const).map((tab) => (
-          <button
+          <AppButton variant="secondary"
             key={tab}
             onClick={() => setActiveTab(tab)}
             onMouseEnter={() => {
@@ -1399,7 +1399,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 {Math.max(task._meta?.attachmentCount || 0, task.attachments?.length || 0)}
               </AppBadge>
             )}
-          </button>
+          </AppButton>
         ))}
       </div>
 
@@ -1460,14 +1460,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Attachments</span>
                   {canEditAux && (
-                    <button
+                    <AppButton variant="primary"
                       type="button"
                       onClick={triggerFileSelect}
                       className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-accent/10 hover:text-accent"
                       aria-label="Upload file"
                     >
                       <Pin className="h-4 w-4" />
-                    </button>
+                    </AppButton>
                   )}
                 </div>
 

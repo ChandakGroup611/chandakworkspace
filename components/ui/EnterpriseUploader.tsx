@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { UploadCloud, X, File, FileText, FileArchive, Image as ImageIcon, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { initializeAttachmentUpload } from "@/lib/actions/attachments";
 import { createClient } from "@/utils/supabase/client";
@@ -198,25 +199,25 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                 {fileObj.status === 'uploading' ? (
                   <Loader2 className="h-4 w-4 animate-spin text-accent" />
                 ) : (
-                  <button 
+                  <AppButton 
                     onClick={() => removeFile(index)}
                     className={`p-1.5 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors`}
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </AppButton>
                 )}
               </div>
             </div>
           ))}
           
           <div className="flex justify-end pt-2">
-            <button 
+            <AppButton 
               onClick={startUploads}
               disabled={files.every(f => f.status === 'success') || files.some(f => f.status === 'uploading')}
               className="px-4 py-2 text-xs font-semibold rounded-xl bg-accent text-white hover:bg-accent-secondary disabled:opacity-50 transition-all"
             >
               Upload Pending Files
-            </button>
+            </AppButton>
           </div>
         </div>
       )}

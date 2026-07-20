@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { Search, Loader2, LayoutDashboard, Target, Briefcase } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -103,7 +104,7 @@ export function GlobalCommandCenter() {
           )}
 
           {results.map((r, i) => (
-            <button
+            <AppButton
               key={i}
               onClick={() => {
                 setIsOpen(false);
@@ -130,7 +131,7 @@ export function GlobalCommandCenter() {
                   </div>
                 )}
               </div>
-            </button>
+            </AppButton>
           ))}
         </div>
 

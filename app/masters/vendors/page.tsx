@@ -394,12 +394,12 @@ export default function VendorMasterPage() {
                         <AppTableCell>{v.city || '-'}</AppTableCell>
                         <AppTableCell className="text-right">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                            <AppButton variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
                               <Edit className="h-4 w-4" />
-                            </button>
-                            <button onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                            </AppButton>
+                            <AppButton variant="secondary" onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
                               <Trash2 className="h-4 w-4" />
-                            </button>
+                            </AppButton>
                           </div>
                         </AppTableCell>
                       </AppTableRow>
@@ -420,9 +420,9 @@ export default function VendorMasterPage() {
               <h2 className="text-xl font-black text-foreground">
                 {editId ? "Edit Vendor Profile" : "Add New Vendor"}
               </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-black/5 transition-colors">
+              <AppButton variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-black/5 transition-colors">
                 <X className="h-5 w-5 text-gray-500" />
-              </button>
+              </AppButton>
             </div>
 
             <div className="flex-1 overflow-y-auto">
@@ -447,20 +447,33 @@ export default function VendorMasterPage() {
                       <label className="text-xs font-bold text-gray-500 uppercase">Industry Type</label>
                       <select value={formIndustryType} onChange={e => setFormIndustryType(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border">
                         <option value="">-- Select Industry --</option>
-                        <option value="IT Services">IT Services</option>
-                        <option value="Hardware / OEM">Hardware / OEM</option>
-                        <option value="Cloud Provider">Cloud Provider</option>
-                        <option value="Consulting">Consulting</option>
-                        <option value="Others">Others</option>
+                        <option value="IT Software">IT Software</option>
+                        <option value="IT Hardware / Electronics">IT Hardware / Electronics</option>
+                        <option value="Manufacturing">Manufacturing</option>
+                        <option value="BFSI (Banking, Financial Services, Insurance)">BFSI (Banking, Financial Services, Insurance)</option>
+                        <option value="Retail & E-Commerce">Retail & E-Commerce</option>
+                        <option value="Healthcare & Pharma">Healthcare & Pharma</option>
+                        <option value="Telecommunications">Telecommunications</option>
+                        <option value="Education & EdTech">Education & EdTech</option>
+                        <option value="Construction & Real Estate">Construction & Real Estate</option>
+                        <option value="Logistics & Supply Chain">Logistics & Supply Chain</option>
+                        <option value="Government & PSU">Government & PSU</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type</label>
                       <select value={formVendorType} onChange={e => setFormVendorType(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border">
                         <option value="">-- Select Type --</option>
-                        <option value="Supplier">Supplier</option>
-                        <option value="Service Provider">Service Provider</option>
-                        <option value="Partner">Partner</option>
+                        <option value="OEM (Original Equipment Manufacturer)">OEM (Original Equipment Manufacturer)</option>
+                        <option value="Authorized Distributor">Authorized Distributor</option>
+                        <option value="Value Added Reseller (VAR)">Value Added Reseller (VAR)</option>
+                        <option value="System Integrator (SI)">System Integrator (SI)</option>
+                        <option value="Managed Service Provider (MSP)">Managed Service Provider (MSP)</option>
+                        <option value="Implementation Partner">Implementation Partner</option>
+                        <option value="Consultant / Advisory">Consultant / Advisory</option>
+                        <option value="Direct Retailer">Direct Retailer</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
                     <div className="space-y-2">

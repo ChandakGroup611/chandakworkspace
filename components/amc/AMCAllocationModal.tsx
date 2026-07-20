@@ -144,9 +144,9 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
               {allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'} Licenses Assigned
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
             <X className="h-5 w-5" />
-          </button>
+          </AppButton>
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col md:flex-row">

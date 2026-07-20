@@ -288,7 +288,7 @@ export function WorkspaceMasterTable({
             <div className="flex items-start gap-2 min-w-0 w-full">
               <div className="mt-0.5 flex-shrink-0 z-10 bg-transparent">
                 {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : (childTaskCount > 0 || hasChildren)) ? (
-                  <button 
+                  <AppButton 
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
                     className={`p-1 rounded-md transition-colors relative z-20 ${
@@ -302,7 +302,7 @@ export function WorkspaceMasterTable({
                     ) : (
                       <ChevronRight className="h-4 w-4" />
                     )}
-                  </button>
+                  </AppButton>
                 ) : (
                   <div className="w-6 h-6" /> // spacer matching button size
                 )}

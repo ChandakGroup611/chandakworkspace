@@ -306,7 +306,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     const isSelected = formData.impacted_departments.includes(d.id);
                     const index = formData.impacted_departments.indexOf(d.id);
                     return (
-                      <button
+                      <AppButton variant="secondary"
                         type="button"
                         key={d.id}
                         onClick={() => handleDepartmentToggle(d.id)}
@@ -318,7 +318,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       >
                         {isSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
                         {d.department_name}
-                      </button>
+                      </AppButton>
                     );
                   })}
                 </div>

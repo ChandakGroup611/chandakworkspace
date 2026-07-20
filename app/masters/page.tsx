@@ -693,9 +693,9 @@ export default function MastersPage() {
             <strong className="font-semibold block text-rose-300">Governance Integrity Notice:</strong>
             {errorAlert}
           </div>
-          <button onClick={() => setErrorAlert(null)} className="text-gray-500 hover:text-white">
+          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-gray-500 hover:text-white">
             <X className="h-3.5 w-3.5" />
-          </button>
+          </AppButton>
         </div>
       )}
 
@@ -705,9 +705,9 @@ export default function MastersPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             <span>{successAlert}</span>
           </div>
-          <button onClick={() => setSuccessAlert(null)} className="text-gray-500 hover:text-white">
+          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-gray-500 hover:text-white">
             <X className="h-3.5 w-3.5" />
-          </button>
+          </AppButton>
         </div>
       )}
 
@@ -740,7 +740,7 @@ export default function MastersPage() {
               ].map(tier => {
                 const isSelected = activeCategoryFilter === tier.id;
                 return (
-                  <button
+                  <AppButton variant="secondary"
                     key={tier.id}
                     type="button"
                     onClick={() => {
@@ -758,7 +758,7 @@ export default function MastersPage() {
                     }`}
                   >
                     {tier.label}
-                  </button>
+                  </AppButton>
                 );
               })}
             </div>
@@ -786,7 +786,7 @@ export default function MastersPage() {
                       const IconComponent = tab.icon;
                       const isActive = activeTab === tab.id;
                       return (
-                        <button
+                        <AppButton variant="secondary"
                           key={tab.id}
                           type="button"
                           onClick={() => {
@@ -820,7 +820,7 @@ export default function MastersPage() {
                               </span>
                             )}
                           </div>
-                        </button>
+                        </AppButton>
                       );
                     })}
                   </div>
@@ -1003,7 +1003,7 @@ export default function MastersPage() {
                               )}
 
                               <AppTableCell className="text-center">
-                                <button
+                                <AppButton variant="secondary"
                                   type="button"
                                   onClick={() => toggleActive(rec)}
                                   disabled={!hasPermission("MASTERS_UPDATE")}
@@ -1014,12 +1014,12 @@ export default function MastersPage() {
                                   }`}
                                 >
                                   {rec.is_active ? "Active" : "Disabled"}
-                                </button>
+                                </AppButton>
                               </AppTableCell>
 
                               <AppTableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
-                                  <button
+                                  <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => openEditModal(rec)}
                                     disabled={!hasPermission("MASTERS_UPDATE")}
@@ -1029,8 +1029,8 @@ export default function MastersPage() {
                                     title="Edit Record Details"
                                   >
                                     <Edit className="h-3.5 w-3.5" />
-                                  </button>
-                                  <button
+                                  </AppButton>
+                                  <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => handleDelete(rec)}
                                     disabled={!hasPermission("MASTERS_DELETE")}
@@ -1040,7 +1040,7 @@ export default function MastersPage() {
                                     title="Delete Record"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
+                                  </AppButton>
                                 </div>
                               </AppTableCell>
                             </AppTableRow>
@@ -1087,13 +1087,13 @@ export default function MastersPage() {
                   {editRecordId ? "Modify specific attributes of this pre-existing record." : "Enter the specific details to create this record in the company directory."}
                 </p>
               </div>
-              <button 
+              <AppButton variant="secondary" 
                 type="button" 
                 onClick={() => setShowModal(false)}
                 className="p-1.5 rounded-lg text-gray-500 hover:text-white"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </AppButton>
             </div>
 
             {/* Input elements form */}

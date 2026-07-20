@@ -6,6 +6,8 @@ import ClientSessionManager from '@/components/auth/ClientSessionManager'
 import QueryProvider from '@/components/providers/QueryProvider'
 import { PermissionsProvider } from '@/components/providers/PermissionsProvider'
 import Script from 'next/script'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
@@ -70,6 +72,7 @@ export default function RootLayout({
             <ThemeProvider>
               <ClientSessionManager />
               <WorkspaceShell>{children}</WorkspaceShell>
+              <ToastContainer position="bottom-right" theme="colored" />
             </ThemeProvider>
           </PermissionsProvider>
         </QueryProvider>

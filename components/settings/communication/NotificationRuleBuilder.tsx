@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { Plus, Trash2, Save, Filter, Users, Send, Loader2, Workflow } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -142,12 +143,12 @@ export default function NotificationRuleBuilder() {
           <h2 className="text-lg font-bold text-foreground">Rule Engine</h2>
           <p className="text-xs text-gray-400">Configure declarative IF-THEN routing constraints.</p>
         </div>
-        <button
+        <AppButton
           onClick={handleAddRule}
           className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
         >
           <Plus className="w-4 h-4" /> Add Rule
-        </button>
+        </AppButton>
       </div>
 
       <div className="space-y-6">
@@ -210,7 +211,7 @@ export default function NotificationRuleBuilder() {
                     {RECIPIENT_TYPES.map(type => {
                       const isSelected = rule.recipient_type.includes(type);
                       return (
-                        <button
+                        <AppButton
                           key={type}
                           onClick={() => toggleArrayItem(rule.id, "recipient_type", type)}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
@@ -220,7 +221,7 @@ export default function NotificationRuleBuilder() {
                           }`}
                         >
                           {type}
-                        </button>
+                        </AppButton>
                       );
                     })}
                   </div>
@@ -271,15 +272,15 @@ export default function NotificationRuleBuilder() {
                 </label>
 
                 <div className="flex items-center gap-3">
-                  <button onClick={() => handleDeleteRule(rule.id)} className="text-gray-500 hover:text-rose-400 transition-colors">
+                  <AppButton onClick={() => handleDeleteRule(rule.id)} className="text-gray-500 hover:text-rose-400 transition-colors">
                     <Trash2 className="w-4 h-4" />
-                  </button>
-                  <button 
+                  </AppButton>
+                  <AppButton 
                     onClick={() => handleSaveRule(rule)}
                     className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
                   >
                     <Save className="w-4 h-4" /> Save
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>

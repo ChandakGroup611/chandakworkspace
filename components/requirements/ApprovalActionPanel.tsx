@@ -88,14 +88,14 @@ export default function ApprovalActionPanel({
               {actions.map((action) => {
                 const Icon = action.icon;
                 return (
-                  <button
+                  <AppButton variant="secondary"
                     key={action.id}
                     onClick={() => { setActiveAction(action.id); setError(null); }}
                     className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${action.color} border-transparent`}
                   >
                     <Icon className="h-5 w-5 mb-1.5" />
                     <span className="text-xs font-bold">{action.label}</span>
-                  </button>
+                  </AppButton>
                 );
               })}
             </div>
@@ -108,12 +108,12 @@ export default function ApprovalActionPanel({
                   {React.createElement(actions.find(a => a.id === activeAction)?.icon || ArrowRight, { className: "h-4 w-4" })}
                   Action: {activeAction}
                 </span>
-                <button 
+                <AppButton variant="secondary" 
                   onClick={() => setActiveAction(null)}
                   className={`text-[10px] font-bold uppercase hover:underline text-muted`}
                 >
                   Change Action
-                </button>
+                </AppButton>
               </div>
 
               <div>

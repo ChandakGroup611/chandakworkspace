@@ -39,6 +39,9 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalList
 import { CSS } from '@dnd-kit/utilities';
 import { getAllReportCustomFields } from "@/lib/actions/workspace_reports";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
+import TaskBoardView from "@/components/tasks/TaskBoardView";
+import TaskTimelineView from "@/components/tasks/TaskTimelineView";
+import { LayoutGrid, List as ListIcon, CalendarDays } from "lucide-react";
 
 type Task = any;
 
@@ -137,6 +140,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 };
 
 export default function TaskListViewClient({ initialTasks }: { initialTasks: Task[] }) {
+  const [viewMode, setViewMode] = useState<"list" | "board" | "timeline">("list");
   const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
   const [scope, setScope] = useState<"ALL" | "ASSIGNEE" | "ENROLLED">("ALL");
   const [query, setQuery] = useState("");
@@ -811,6 +815,29 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="flex flex-wrap items-center gap-3">
             <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0" />
             <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
+            <div className="flex bg-surface border border-border p-0.5 rounded-lg mr-2">
+              <AppButton variant="secondary" 
+                onClick={() => setViewMode("list")} 
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-accent text-white" : "text-muted hover:text-foreground"}`}
+                title="List View"
+              >
+                <ListIcon className="h-4 w-4" />
+              </AppButton>
+              <AppButton variant="secondary" 
+                onClick={() => setViewMode("board")} 
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "board" ? "bg-accent text-white" : "text-muted hover:text-foreground"}`}
+                title="Board View"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </AppButton>
+              <AppButton variant="secondary" 
+                onClick={() => setViewMode("timeline")} 
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "timeline" ? "bg-accent text-white" : "text-muted hover:text-foreground"}`}
+                title="Timeline View"
+              >
+                <CalendarDays className="h-4 w-4" />
+              </AppButton>
+            </div>
             <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-4 font-semibold border-border shadow-sm">
               Export
             </AppButton>
@@ -836,13 +863,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="flex items-center justify-between border-b border-border px-4 pt-2">
             <div className="flex items-center gap-6 self-end">
               {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
-                <button
+                <AppButton variant="secondary"
                   key={sc}
                   onClick={() => setScope(sc)}
                   className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Tasks" : sc === "ASSIGNEE" ? "Assigned To Me" : "Enrolled Tasks"}
-                </button>
+                </AppButton>
               ))}
             </div>
 
@@ -937,6 +964,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </div>
         )}
 
+      {viewMode === "list" ? (
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
           <AppTable className="w-full min-w-max border-separate border-spacing-0 table-fixed">
@@ -1045,7 +1073,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       }
                       case "department": return (
                         <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center">
-                          <button 
+                          <AppButton variant="secondary" 
                             onClick={(e) => canUpdate && handleDepartmentClick(e, task)} 
                             className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
                             title={canUpdate ? "Update Department" : "Department"}
@@ -1053,7 +1081,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                             <AppBadge variant="neutral" className={canUpdate ? "border-dashed" : ""}>
                               {task.department?.name || '—'}
                             </AppBadge>
-                          </button>
+                          </AppButton>
                         </AppTableCell>
                       );
                       case "priority": return (
@@ -1073,7 +1101,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                              else if (canUpdate) setOpenMenuTaskId(task.id);
                           }}>
                             <Popover.Trigger asChild>
-                              <button 
+                              <AppButton variant="secondary" 
                                 onClick={(e) => { e.stopPropagation(); }} 
                                 className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
                                 title={canUpdate ? "Options" : "Status"}
@@ -1081,7 +1109,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                 <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""} isOutline={true}>
                                   {task.status?.name || '—'}
                                 </AppBadge>
-                              </button>
+                              </AppButton>
                             </Popover.Trigger>
                             
                             <Popover.Portal>
@@ -1102,7 +1130,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                 >
                                   <Eye className="w-3.5 h-3.5" /> View Task
                                 </Link>
-                                <button 
+                                <AppButton variant="secondary" 
                                   className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
                                   onClick={(e) => {
                                      e.stopPropagation();
@@ -1111,7 +1139,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                   }}
                                 >
                                   <Edit2 className="w-3.5 h-3.5" /> Change Status
-                                </button>
+                                </AppButton>
                               </Popover.Content>
                             </Popover.Portal>
                           </Popover.Root>
@@ -1269,7 +1297,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               </Link>
                             )}
                             {canDelete && (
-                              <button 
+                              <AppButton variant="secondary" 
                                 onClick={(e) => handleDeleteTask(e, task.id)}
                                 disabled={deleteLoadingId === task.id}
                                 className="text-rose-500 hover:text-rose-600 transition-colors active:scale-95 disabled:opacity-50"
@@ -1280,7 +1308,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                 ) : (
                                   <Trash2 className="h-[15px] w-[15px]" />
                                 )}
-                              </button>
+                              </AppButton>
                             )}
                           </div>
                         </AppTableCell>
@@ -1337,6 +1365,38 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         </AppTable>
       </div>
     </DndContext>
+  ) : viewMode === "board" ? (
+    <div className="h-[calc(100vh-200px)]">
+      <TaskBoardView 
+        tasks={filtered} 
+        statuses={masterStatuses} 
+        onStatusChange={async (taskId, newStatusId) => {
+          setInlineTask({ id: taskId } as any);
+          setInlineNewStatus(newStatusId);
+          setInlineRemark("Moved via Kanban Board");
+          // Perform inline save
+          const stMaster = masterStatuses.find(s => s.id === newStatusId);
+          const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
+          
+          await updateTaskStatusInline(taskId, newStatusId, "Moved via Kanban Board");
+          setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status_id: newStatusId, status: mappedStatus || t.status } : t));
+          triggerToast(`Status updated successfully.`);
+        }}
+        onTaskClick={(task) => {
+          setSelectedTask(task);
+        }}
+      />
+    </div>
+  ) : (
+    <div className="h-[calc(100vh-200px)]">
+      <TaskTimelineView 
+        tasks={filtered}
+        onTaskClick={(task) => {
+          setSelectedTask(task);
+        }}
+      />
+    </div>
+  )}
 
         {filtered.length === 0 && !loading && (
           <div className="text-center py-10 text-gray-500">No tasks found for this filter.</div>
@@ -1390,6 +1450,35 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.end_date || 'N/A'}</div>
                 </div>
               </div>
+              
+              {/* Checklists and Custom Fields */}
+              {selectedTask.custom_fields && Object.keys(selectedTask.custom_fields).length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-white/5">
+                  <h4 className="text-[11px] uppercase font-bold text-accent tracking-wider mb-2">Checklists & Details</h4>
+                  
+                  {selectedTask.custom_fields.checklist && Array.isArray(selectedTask.custom_fields.checklist) && (
+                    <div className="space-y-2 mb-4">
+                      {selectedTask.custom_fields.checklist.map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-start gap-2 bg-gray-50 dark:bg-white/[0.02] p-2 rounded-lg border border-gray-100 dark:border-white/5">
+                          <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-gray-300 text-accent focus:ring-accent" />
+                          <span className={`text-[13px] ${item.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{item.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid gap-3">
+                    {Object.entries(selectedTask.custom_fields).filter(([k]) => k !== 'checklist' && k !== 'progress_percentage').map(([key, value]) => (
+                      <div key={key} className="flex flex-col gap-1">
+                        <span className="text-[11px] uppercase font-bold text-gray-400 tracking-wider">{key.replace(/_/g, ' ')}</span>
+                        <div className="text-[13px] text-gray-800 dark:text-gray-200">
+                          {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02] flex items-center gap-2">

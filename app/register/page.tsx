@@ -75,6 +75,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!email.trim().toLowerCase().endsWith('@chandakgroup.com')) {
+      setErrorMsg("Registration is restricted to official @chandakgroup.com email addresses only.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMsg("Passwords do not match. Please try again.");
       return;
@@ -141,7 +146,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className={`min-h-screen w-full flex flex-col items-center justify-center relative font-sans p-4 sm:p-12 transition-colors duration-300 ${
+    <div className={`min-h-screen w-full flex flex-col items-center py-6 sm:py-10 overflow-x-hidden relative font-sans px-4 sm:px-12 transition-colors duration-300 ${
       "bg-gray-50 text-foreground"
     }`}>
       {/* Dynamic Glow Accents */}
@@ -162,7 +167,7 @@ export default function RegisterPage() {
       />
 
       {/* Central Identity Registration Card Container */}
-      <div className="w-full max-w-md relative z-10 animate-in fade-in-50 zoom-in-95 duration-400">
+      <div className="w-full max-w-2xl relative z-10 animate-in fade-in-50 zoom-in-95 duration-400">
         <div className="text-center mb-6 space-y-2">
           <div className={`flex items-center justify-center gap-2 font-bold text-lg tracking-tight text-foreground`}>
             <div className="p-2 rounded-xl bg-gradient-to-tr from-purple-600 to-cyan-500 shadow-lg text-white">
@@ -183,7 +188,13 @@ export default function RegisterPage() {
               <ShieldCheck className="h-4 w-4 text-accent" />
               <span>Registration Form</span>
             </AppCardTitle>
-            <span className="text-xs text-gray-500 font-mono block">Secure Identity Provisioning</span>
+            <span className="text-xs text-gray-500 font-mono block mb-3">Secure Identity Provisioning</span>
+            <div className="p-3 mx-4 mb-2 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-lg text-xs flex items-start text-left gap-2 border border-blue-200 dark:border-blue-800">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                <strong>Important:</strong> You must use your official <b>@chandakgroup.com</b> mail ID credentials for access.
+              </span>
+            </div>
           </AppCardHeader>
 
           <AppCardContent className="p-6 space-y-4">
@@ -206,39 +217,41 @@ export default function RegisterPage() {
             )}
 
             {/* Registration Submission Inputs */}
-            <form onSubmit={handleRegistrationSubmit} className="space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
-                  Full Name
-                </label>
-                <AppInput 
-                  type="text"
-                  placeholder="e.g. Richard Hendricks"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  leftIcon={<User className="h-4 w-4" />}
-                  className="h-10 text-xs"
-                  required
-                />
+            <form onSubmit={handleRegistrationSubmit} className="space-y-6 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                    Full Name
+                  </label>
+                  <AppInput 
+                    type="text"
+                    placeholder="e.g. Richard Hendricks"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    leftIcon={<User className="h-4 w-4" />}
+                    className="h-12 text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <AppInput 
+                    type="email"
+                    placeholder="e.g. richard@enterprise.internal"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    leftIcon={<Mail className="h-4 w-4" />}
+                    className="h-12 text-sm"
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
-                  Email Address
-                </label>
-                <AppInput 
-                  type="email"
-                  placeholder="e.g. richard@enterprise.internal"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  leftIcon={<Mail className="h-4 w-4" />}
-                  className="h-10 text-xs"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Department
                   </label>
@@ -249,7 +262,7 @@ export default function RegisterPage() {
                     <select
                       value={department}
                       onChange={(e) => { setDepartment(e.target.value); setDesignation(""); }}
-                      className={`w-full h-10 pl-9 pr-3 rounded-xl border text-xs focus:outline-none cursor-pointer transition-colors ${
+                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors ${
                         "bg-elevated border-border text-foreground focus:border-accent focus:bg-white"
                       }`}
                       required
@@ -276,7 +289,7 @@ export default function RegisterPage() {
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
                       disabled={!department}
-                      className={`w-full h-10 pl-9 pr-3 rounded-xl border text-xs focus:outline-none cursor-pointer transition-colors ${
+                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors ${
                         "bg-elevated border-border text-foreground focus:border-accent focus:bg-white"
                       } ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
                       required
@@ -296,8 +309,8 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                   Identity Visual (Photo Upload)
                 </label>
-                <div className="flex items-center gap-4 p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
-                  <div className="h-12 w-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shrink-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+                  <div className="h-16 w-16 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shrink-0">
                     {uploadFile ? (
                       <img src={URL.createObjectURL(uploadFile)} className="h-full w-full object-cover" />
                     ) : (
@@ -342,8 +355,8 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Password
                   </label>
@@ -353,12 +366,12 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-10 text-xs"
+                    className="h-12 text-sm"
                     required
                   />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 block uppercase tracking-wider">
                     Confirm Password
                   </label>
@@ -368,19 +381,19 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-10 text-xs"
+                    className="h-12 text-sm"
                     required
                   />
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-4">
                 <AppButton 
                   variant="primary" 
                   size="md" 
                   type="submit" 
                   disabled={loading || !!successMsg}
-                  className="w-full h-10 font-bold text-xs tracking-wide bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 shadow-md shadow-purple-500/10 text-white"
+                  className="w-full h-12 font-bold text-sm tracking-wide bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 shadow-lg shadow-purple-500/20 text-white"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">

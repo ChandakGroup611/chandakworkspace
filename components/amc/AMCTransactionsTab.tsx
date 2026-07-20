@@ -182,9 +182,9 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
                     </div>
                     <div className="text-[10px] text-gray-400">Logged by {tx.user_master?.full_name}</div>
                   </div>
-                  <button onClick={() => handleDelete(tx.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                  <AppButton variant="secondary" onClick={() => handleDelete(tx.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </AppButton>
                 </div>
               </AppCard>
             ))}

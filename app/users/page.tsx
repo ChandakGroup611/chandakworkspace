@@ -135,7 +135,7 @@ export default function UserMasterPage() {
   // Filtering strings
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-
+  const [departmentFilter, setDepartmentFilter] = useState<string>("ALL");
 
   // Smart delete/deactivate states
   const [deleteInspectUser, setDeleteInspectUser] = useState<AppUserItem | null>(null);
@@ -336,8 +336,7 @@ export default function UserMasterPage() {
 
   // Update selected entity tracking on index changes
   const handleInspectUser = (usr: AppUserItem) => {
-    setSelectedUser(usr);
-    fetchUserAudits(usr.id);
+    router.push("/users/" + usr.id);
   };
 
   // Append robust local log helper
@@ -547,11 +546,19 @@ export default function UserMasterPage() {
 
   // Custom multi-parameter view list filter
   const filteredUsers = users.filter(usr => {
+    const q = searchQuery.toLowerCase();
     const matchQuery = 
-      (usr.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (usr.user_code || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (usr.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (usr.departmentObj?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+      (usr.full_name || "").toLowerCase().includes(q) ||
+      (usr.user_code || "").toLowerCase().includes(q) ||
+      (usr.email || "").toLowerCase().includes(q) ||
+      (usr.departmentObj?.name || "").toLowerCase().includes(q) ||
+      (usr.designationObj?.name || "").toLowerCase().includes(q) ||
+      (usr.roleObj?.name || "").toLowerCase().includes(q) ||
+      (usr.managerObj?.full_name || "").toLowerCase().includes(q);
+      
+    const matchDept = departmentFilter === "ALL" || usr.department_id === departmentFilter;
+    
+    if (!matchDept) return false;
     
     if (statusFilter === "ALL") return matchQuery;
     if (statusFilter === "ACTIVE") return matchQuery && usr.is_active;
@@ -620,9 +627,9 @@ export default function UserMasterPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
             <span className="font-medium">{successAlert}</span>
           </div>
-          <button onClick={() => setSuccessAlert(null)} className="text-gray-400 hover:text-gray-600">
+          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-gray-400 hover:text-gray-600">
             <X className="h-3.5 w-3.5" />
-          </button>
+          </AppButton>
         </div>
       )}
 
@@ -635,16 +642,16 @@ export default function UserMasterPage() {
             <strong className="font-bold block mb-0.5">Validation Constraint Notice:</strong>
             {errorAlert}
           </div>
-          <button onClick={() => setErrorAlert(null)} className="text-gray-400 hover:text-gray-600">
+          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-gray-400 hover:text-gray-600">
             <X className="h-3.5 w-3.5" />
-          </button>
+          </AppButton>
         </div>
       )}
 
-      {/* Grid Display Split Interface Shell */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Spanning List View: User Array Indexing */}
-        <div className="lg:col-span-7 flex flex-col space-y-4">
+      {/* Full Width List Display Shell */}
+      <div className="w-full flex flex-col gap-6">
+        {/* Main Spanning List View */}
+        <div className="w-full flex flex-col space-y-4">
           <AppCard className={`flex-1 flex flex-col justify-start overflow-hidden shadow-xl ${
             "border-border"
           }`}>
@@ -663,7 +670,7 @@ export default function UserMasterPage() {
                 {/* Status Switcher Tabs */}
                 <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
-                    <button
+                    <AppButton variant="secondary"
                       key={flt}
                       type="button"
                       onClick={() => setStatusFilter(flt)}
@@ -674,15 +681,28 @@ export default function UserMasterPage() {
                       }`}
                     >
                       {flt}
-                    </button>
+                    </AppButton>
                   ))}
                 </div>
               </div>
 
-              {/* Dynamic Quick Text Search bar */}
-              <div className="flex items-center pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
+              {/* Dynamic Quick Text Search bar and Department Filter */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
+                <div className="relative w-full sm:w-1/4 max-w-[200px] shrink-0">
+                  <select 
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-white dark:bg-[#0f111a] border-gray-200 dark:border-white/10 appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 text-gray-700 dark:text-gray-300"
+                  >
+                    <option value="ALL">All Departments</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.name || d.code}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500 pointer-events-none" />
+                </div>
                 <AppInput
-                  placeholder="Search by Full Name, User Code, Email string, or Department..."
+                  placeholder="Search across all fields (Name, UIN, Email, Dept, Designation, Role, Manager)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   leftIcon={<Search className="h-3.5 w-3.5" />}
@@ -692,7 +712,7 @@ export default function UserMasterPage() {
             </div>
 
             {/* Main Output List Table */}
-            <div className="p-0 flex-1 overflow-y-auto max-h-[650px] min-h-[400px]">
+            <div className="p-0 flex-1 flex flex-col">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-16 space-y-4">
                   <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
@@ -711,14 +731,19 @@ export default function UserMasterPage() {
                   </p>
                 </div>
               ) : (
-                <AppTableContainer className="rounded-none border-none">
+                <AppTableContainer className="rounded-none border-none max-h-[650px] overflow-auto">
                   <AppTable>
                     <AppTableHeader>
                       <tr>
                         <AppTableHead className="w-14 text-center px-2">Avatar</AppTableHead>
-                        <AppTableHead>Staff Identity &amp; Scope</AppTableHead>
-                        <AppTableHead>Assigned Assets</AppTableHead>
-                        <AppTableHead className="w-24 text-center">Status</AppTableHead>
+                        <AppTableHead>Full Name</AppTableHead>
+                        <AppTableHead>Corporate Email</AppTableHead>
+                        <AppTableHead>Department</AppTableHead>
+                        <AppTableHead>Designation</AppTableHead>
+                        <AppTableHead>Reporting Manager</AppTableHead>
+                        <AppTableHead className="w-28 text-center">Account Status</AppTableHead>
+                        <AppTableHead>Unique Code (UIN)</AppTableHead>
+                        <AppTableHead>System Role</AppTableHead>
                         <AppTableHead className="text-right w-24 shrink-0 pr-4">Actions</AppTableHead>
                       </tr>
                     </AppTableHeader>
@@ -752,51 +777,37 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <div className="flex flex-col justify-center gap-1.5 py-2">
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-sm font-bold truncate max-w-[180px] sm:max-w-[220px] text-slate-900`}>
-                                    {usr.full_name}
-                                  </span>
-                                  {usr.user_code && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap shrink-0 bg-slate-100 text-slate-500`}>
-                                      {usr.user_code}
-                                    </span>
-                                  )}
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap shrink-0 bg-accent/10 text-accent`}>
-                                    {usr.designationObj?.name || "General Assignee"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className={`truncate max-w-[200px] text-slate-500`}>
-                                    {usr.email}
-                                  </span>
-                                  <span className="text-slate-300 dark:text-slate-600">•</span>
-                                  <span className={`flex items-center gap-1 shrink-0 text-slate-600 font-medium`}>
-                                    <Layers className="h-3 w-3 opacity-70" />
-                                    <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
-                                  </span>
-                                </div>
-                              </div>
+                              <span className={`text-sm font-bold text-slate-900 block`}>
+                                {usr.full_name}
+                              </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                {usr.assigned_assets && usr.assigned_assets.length > 0 ? (
-                                  usr.assigned_assets.map((ast, aIdx) => (
-                                    <span key={aIdx} className={`text-[10px] px-2 py-1 rounded-md flex items-center gap-1 border ${
-                                      "bg-white border-amber-200 text-amber-700 shadow-sm"
-                                    }`} title={ast}>
-                                      <span className="opacity-70 text-[9px]">💻</span>
-                                      <span className="font-mono tracking-tight">{ast}</span>
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">Unassigned</span>
-                                )}
-                              </div>
+                              <span className={`truncate max-w-[200px] text-slate-500 text-xs`}>
+                                {usr.email}
+                              </span>
                             </AppTableCell>
 
-                            <AppTableCell className="w-24 text-center">
+                            <AppTableCell>
+                              <span className={`flex items-center gap-1 shrink-0 text-slate-600 font-medium text-xs`}>
+                                <Layers className="h-3 w-3 opacity-70" />
+                                <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
+                              </span>
+                            </AppTableCell>
+
+                            <AppTableCell>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap bg-accent/10 text-accent`}>
+                                {usr.designationObj?.name || "General Assignee"}
+                              </span>
+                            </AppTableCell>
+
+                            <AppTableCell>
+                              <span className={`text-[11px] font-semibold text-slate-700`}>
+                                {usr.managerObj?.full_name || "Self / Root"}
+                              </span>
+                            </AppTableCell>
+
+                            <AppTableCell className="w-28 text-center">
                               <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase inline-block ${
                                 usr.is_active 
                                   ? ("bg-emerald-50 text-emerald-600") 
@@ -806,10 +817,28 @@ export default function UserMasterPage() {
                               </span>
                             </AppTableCell>
 
+                            <AppTableCell>
+                              {usr.user_code ? (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap bg-slate-100 text-slate-500`}>
+                                  {usr.user_code}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">NA</span>
+                              )}
+                            </AppTableCell>
+
+                            <AppTableCell>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                                usr.roleObj?.code === "SUPER_ADMIN" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
+                              }`}>
+                                {usr.roleObj?.name || "Standard Profile"}
+                              </span>
+                            </AppTableCell>
+
                             <AppTableCell className="text-right w-24 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
-                                  <button
+                                  <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
                                     className={`p-1.5 rounded transition-all ${
@@ -818,10 +847,10 @@ export default function UserMasterPage() {
                                     title="Edit User Profile"
                                   >
                                     <Edit3 className="h-4 w-4" />
-                                  </button>
+                                  </AppButton>
                                 )}
                                 {(hasPermission("USERS_DELETE") || isSuperAdmin) && (
-                                  <button
+                                  <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
                                     className={`p-1.5 rounded transition-all ${
@@ -830,7 +859,7 @@ export default function UserMasterPage() {
                                     title="Remove User"
                                   >
                                     <Trash2 className="h-4 w-4" />
-                                  </button>
+                                  </AppButton>
                                 )}
                               </div>
                             </AppTableCell>
@@ -845,285 +874,9 @@ export default function UserMasterPage() {
           </AppCard>
         </div>
 
-        {/* Right Column Span 5: Granular User Details Inspector & Auditing */}
-        <div className="lg:col-span-5 flex flex-col overflow-hidden">
-          {selectedUser ? (
-            <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden shadow-2xl ${
-              "border-border"
-            }`}>
-              {/* Card Profile Overview Header */}
-              <AppCardHeader className={`flex flex-col items-center p-6 text-center border-b relative ${
-                "border-border bg-gradient-to-b from-blue-50/40 to-transparent"
-              }`}>
-                {/* Embedded quick edit icon icon overlay */}
-                {hasPermission("USERS_UPDATE") && (
-                  <button
-                    type="button"
-                    onClick={() => router.push("/users/" + selectedUser.id)}
-                    className={`absolute top-4 right-4 p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition-all ${
-                      "bg-white border-border text-muted hover:bg-elevated"
-                    }`}
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    <span>Update</span>
-                  </button>
-                )}
-
-                <img 
-                  src={selectedUser.profile_photo || PRESET_AVATARS[0]} 
-                  alt={selectedUser.full_name}
-                  className="w-20 h-20 rounded-full object-cover border-2 border-accent shadow-md mb-3"
-                  onError={(e) => { (e.target as any).src = PRESET_AVATARS[0]; }}
-                />
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-center gap-2 flex-wrap">
-                    <AppCardTitle className={`text-base font-bold ${"text-foreground"}`}>
-                      {selectedUser.full_name}
-                    </AppCardTitle>
-                    <span className={`text-xs font-mono font-bold px-1.5 py-0.2 rounded border ${
-                      "text-accent bg-accent/10 border-accent/30"
-                    }`}>
-                      {selectedUser.user_code}
-                    </span>
-                  </div>
-
-                  <p className={`text-xs ${"text-muted"}`}>
-                    {selectedUser.email}
-                  </p>
-
-                  <div className="pt-2 flex items-center justify-center gap-2">
-                    <span className={`text-[0.8rem] font-semibold px-2 py-0.5 rounded-full ${
-                      "bg-accent/10 text-accent border border-accent/30"
-                    }`}>
-                      {selectedUser.roleObj?.name || "Standard Scope Profile"}
-                    </span>
-                  </div>
-                </div>
-              </AppCardHeader>
-
-              {/* Inspector Scroll Body */}
-              <div className="p-5 space-y-5 flex-1">
-                {/* Structural Assignments Grid */}
-                <div className="space-y-2">
-                  <span className={`text-xs font-bold tracking-wider uppercase block ${
-                    "text-muted"
-                  }`}>
-                    Hierarchical Attachments
-                  </span>
-                  
-                  <div className={`p-3 rounded-xl border space-y-2 text-xs ${
-                    "bg-white border-border"
-                  }`}>
-                    <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
-                      <span className="text-gray-500 flex items-center gap-1.5">
-                        <Briefcase className="h-3 w-3" />
-                        <span>Job Designation:</span>
-                      </span>
-                      <strong className={`font-semibold text-foreground`}>
-                        {selectedUser.designationObj?.name || "Not Designated"}
-                      </strong>
-                    </div>
-
-                    <div className="flex items-center justify-between pb-1.5 border-b border-white/5">
-                      <span className="text-gray-500 flex items-center gap-1.5">
-                        <Layers className="h-3 w-3" />
-                        <span>Department Scope:</span>
-                      </span>
-                      <strong className={`font-semibold text-foreground`}>
-                        {selectedUser.departmentObj?.name || "Global Tier"}
-                      </strong>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500 flex items-center gap-1.5">
-                        <UserCheck className="h-3 w-3" />
-                        <span>Line Manager:</span>
-                      </span>
-                      <strong className={`font-semibold ${selectedUser.managerObj ? ("text-accent") : "text-gray-500"}`}>
-                        {selectedUser.managerObj ? `${selectedUser.managerObj.full_name} (${selectedUser.managerObj.user_code})` : "Self Directed (Root)"}
-                      </strong>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                      <span className="text-gray-500 flex items-center gap-1.5">
-                        <Briefcase className="h-3 w-3 text-amber-500" />
-                        <span>Assigned Assets:</span>
-                      </span>
-                      <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
-                        {selectedUser.assigned_assets && selectedUser.assigned_assets.length > 0 ? (
-                          selectedUser.assigned_assets.map((ast, aIdx) => (
-                            <span key={aIdx} className={`text-[0.7rem] font-mono px-1 py-0.2 rounded border ${
-                              "bg-amber-50 text-amber-800 border-amber-200"
-                            }`}>
-                              🏷️ {ast}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-gray-500 italic font-normal">None Assigned</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Session Timestamps Simulators Interface */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs font-bold tracking-wider uppercase block ${
-                      "text-muted"
-                    }`}>
-                      Live Access Times Tracker
-                    </span>
-                    <span className="text-[0.7rem] text-gray-500 italic">Simulate connection vector updates</span>
-                  </div>
-
-                  <div className={`p-3 rounded-xl border space-y-3 ${
-                    "bg-white border-border"
-                  }`}>
-                    {/* Last Login element */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-white/5">
-                      <div className="space-y-0.5">
-                        <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-emerald-500" />
-                          <span>Last Log-In Time:</span>
-                        </span>
-                        <span className={`text-xs font-mono font-bold block ${
-                          selectedUser.last_login_at ? ("text-foreground") : "text-gray-500"
-                        }`}>
-                          {selectedUser.last_login_at ? new Date(selectedUser.last_login_at).toLocaleString() : "Never Logged In"}
-                        </span>
-                      </div>
-                      <AppButton
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSimulateLoginTime(selectedUser)}
-                        disabled={!(hasPermission("USERS_UPDATE") || isSuperAdmin)}
-                        className="text-xs h-7 px-2 disabled:opacity-50"
-                      >
-                        Stamp Log-In
-                      </AppButton>
-                    </div>
-
-                    {/* Last Logout element */}
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="space-y-0.5">
-                        <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-amber-500" />
-                          <span>Last Log-Out Time:</span>
-                        </span>
-                        <span className={`text-xs font-mono font-bold block ${
-                          selectedUser.last_logout_at ? ("text-foreground") : "text-gray-500"
-                        }`}>
-                          {selectedUser.last_logout_at ? new Date(selectedUser.last_logout_at).toLocaleString() : "Active Ongoing"}
-                        </span>
-                      </div>
-                      <AppButton
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSimulateLogoutTime(selectedUser)}
-                        disabled={!hasPermission("USERS_UPDATE")}
-                        className="text-xs h-7 px-2 disabled:opacity-50"
-                      >
-                        Stamp Log-Out
-                      </AppButton>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Event Actions Bar: Mail Trigger Simulation */}
-                <div className="space-y-2 pt-1">
-                  <span className={`text-xs font-bold tracking-wider uppercase block ${
-                    "text-muted"
-                  }`}>
-                    Outbound Triggers
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTriggerPasswordReset(selectedUser)}
-                    disabled={!hasPermission("USERS_UPDATE")}
-                    className={`w-full p-2.5 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                      "bg-white border-accent/30 text-accent hover:bg-accent/10 shadow-2xs"
-                    }`}
-                  >
-                    <Mail className="h-3.5 w-3.5 shrink-0" />
-                    <span>Trigger Password Reset Email</span>
-                  </button>
-                  <span className="text-[0.7rem] text-gray-500 block text-center">
-                    Simulates secure token generation link routing over outbound message handlers.
-                  </span>
-                </div>
-
-                {/* Audit Timeline Render Container */}
-                <div className="space-y-2 pt-1 border-t border-white/5">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs font-bold tracking-wider uppercase block flex items-center gap-1 ${
-                      "text-muted"
-                    }`}>
-                      <History className="h-3 w-3" />
-                      <span>Personnel Audit Logs</span>
-                    </span>
-                    <span className="text-[0.7rem] font-mono text-gray-500">{auditLogs.length} Events</span>
-                  </div>
-
-                  <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
-                    {auditLogs.length === 0 ? (
-                      <div className="p-3 text-center text-xs text-gray-500 italic border border-dashed rounded-lg border-white/5">
-                        Zero automated mutations recorded locally for user identity tuple.
-                      </div>
-                    ) : (
-                      auditLogs.map((lg) => (
-                        <div key={lg.id} className={`p-2.5 rounded-lg border text-[0.8rem] space-y-1 ${
-                          "bg-gray-50/50 border-border"
-                        }`}>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className={`font-mono text-[0.7rem] font-bold px-1 py-0.2 rounded ${
-                              lg.operation === "CREATE" ? "bg-emerald-500/10 text-emerald-400" :
-                              lg.operation === "UPDATE" ? "bg-accent/10 text-accent" :
-                              lg.operation === "DELETE" ? "bg-rose-500/10 text-rose-400" :
-                              "bg-accent/10 text-accent"
-                            }`}>
-                              {lg.operation}
-                            </span>
-                            <span className="text-[0.7rem] text-gray-500 font-mono">
-                              {new Date(lg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                          </div>
-                          
-                          <p className={`text-xs leading-snug ${"text-foreground"}`}>
-                            {lg.payload ? (lg.payload.status || lg.payload.action || lg.payload.event || lg.payload.updateScope || JSON.stringify(lg.payload)) : "Metadata schema payload execution"}
-                          </p>
-                          <span className="text-[0.7rem] text-gray-500 block italic">
-                            By {lg.performed_by}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            </AppCard>
-          ) : (
-            <AppCard className={`flex-1 flex flex-col items-center justify-center p-8 text-center border-dashed ${
-              "bg-elevated/50 border-border"
-            }`}>
-              <Users className="h-10 w-10 text-gray-600 stroke-1 mb-2" />
-              <strong className={`text-sm font-bold block text-foreground`}>
-                No User Record Selected
-              </strong>
-              <p className="text-xs text-gray-500 max-w-xs mt-1">
-                Click upon any item entry record row array inside the left registry column to review security metadata attachments and audit timelines.
-              </p>
-            </AppCard>
-          )}
-        </div>
-      </div>
 
 
-      {/* ── Dynamic Premium Smart Delete & Deactivate User Warning Modal ── */}
+      {/* â”€â”€ Dynamic Premium Smart Delete & Deactivate User Warning Modal â”€â”€ */}
       {deleteInspectUser && deleteWarningData && (
         <div 
           className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-0 duration-150"
@@ -1171,7 +924,7 @@ export default function UserMasterPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500 flex items-center gap-1.5">
-                        🎫 Active Tickets:
+                        ðŸŽ« Active Tickets:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.tickets > 0 
@@ -1184,7 +937,7 @@ export default function UserMasterPage() {
 
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500 flex items-center gap-1.5">
-                        📋 Workspace Tasks:
+                        ðŸ“‹ Workspace Tasks:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.tasks > 0 
@@ -1197,7 +950,7 @@ export default function UserMasterPage() {
 
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500 flex items-center gap-1.5">
-                        🛠️ Requirements:
+                        ðŸ› ï¸ Requirements:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.requirements > 0 
@@ -1304,6 +1057,7 @@ export default function UserMasterPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

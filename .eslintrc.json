@@ -1,3 +1,24 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "JSXElement[openingElement.name.name='button']",
+        "message": "Use <AppButton> from @/components/ui/AppButton instead of raw <button>."
+      },
+      {
+        "selector": "JSXElement[openingElement.name.name='table']",
+        "message": "Use <AppTable> from @/components/ui/AppTable instead of raw <table>."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["components/ui/**/*.tsx", "components/ui/**/*.jsx", "components/ui/**/*.ts", "components/ui/**/*.js"],
+      "rules": {
+        "no-restricted-syntax": "off"
+      }
+    }
+  ]
 }

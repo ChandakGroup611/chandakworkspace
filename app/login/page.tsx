@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { AppInput } from "@/components/ui/AppInput";
@@ -20,9 +21,6 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
   
-  const [isRegister, setIsRegister] = useState(false);
-  
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
@@ -84,70 +82,40 @@ export default function LoginPage() {
       return;
     }
 
-    if (isRegister && !name.trim()) {
-      setErrorMsg("Please enter your full name.");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      if (isRegister) {
-        // Registration Flow
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password,
-          options: {
-            data: {
-              full_name: name.trim(),
-            }
-          }
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
 
-        if (error) throw error;
-        
-        if (data.user && data.user.identities && data.user.identities.length === 0) {
-          throw new Error("This email is already registered. Please sign in instead.");
-        }
+      if (error) throw error;
 
-        setSuccessMsg("Registration successful! You can now sign in.");
-        setIsRegister(false); // Flip back to login
-        
-      } else {
-        // Login Flow
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: password
-        });
+      if (data.user) {
+        try {
+          const { data: sessionData } = await supabase
+            .from("active_sessions")
+            .select("last_active_at")
+            .eq("user_id", data.user.id)
+            .single();
 
-        if (error) throw error;
-
-        if (data.user) {
-          // Check for concurrent active sessions
-          try {
-            const { data: sessionData } = await supabase
-              .from("active_sessions")
-              .select("last_active_at")
-              .eq("user_id", data.user.id)
-              .single();
-
-            if (sessionData && sessionData.last_active_at) {
-              const lastActive = new Date(sessionData.last_active_at).getTime();
-              const now = Date.now();
-              if (now - lastActive < 5 * 60 * 1000) {
-                const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
-                if (!proceed) {
-                  await supabase.auth.signOut();
-                  setLoading(false);
-                  return;
-                }
+          if (sessionData && sessionData.last_active_at) {
+            const lastActive = new Date(sessionData.last_active_at).getTime();
+            const now = Date.now();
+            if (now - lastActive < 5 * 60 * 1000) {
+              const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
+              if (!proceed) {
+                await supabase.auth.signOut();
+                setLoading(false);
+                return;
               }
             }
-          } catch (e) {}
-        }
-
-        window.location.href = "/";
+          }
+        } catch (e) {}
       }
+
+      window.location.href = "/";
 
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during authentication.");
@@ -178,182 +146,204 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full flex items-center justify-center font-sans overflow-hidden bg-slate-950">
+    <div className="flex h-screen w-full bg-background font-sans overflow-hidden">
       
-      {/* Dynamic Animated Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
-        <div className="absolute top-[40%] left-[20%] w-[30%] h-[30%] rounded-full bg-emerald-500/10 blur-[100px] animate-pulse duration-[8000ms]"></div>
+      {/* LEFT PANEL - Branding / Image Split */}
+      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-slate-950">
+        <Image 
+          src="/login-bg.png"
+          alt="Abstract Background"
+          fill
+          priority
+          className="object-cover opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/70 to-slate-900/40"></div>
         
-        {/* Subtle grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+        {/* Abstract Glow Effects */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
+
+        <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
+          
+          {/* Logo - Pushed to Absolute Top */}
+          <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
+            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-white/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
+              <img 
+                src="/logo.png" 
+                alt="Chandak Logo" 
+                className="h-full w-auto max-w-full object-contain p-2"
+              />
+            </div>
+          </div>
+
+          {/* Main Text - Perfectly Centered */}
+          <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight !text-white mb-12 leading-tight drop-shadow-lg">
+              Intelligent Governance <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+                & Enterprise Mastery
+              </span>
+            </h1>
+            <p className="!text-slate-200 text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-md">
+              Securely orchestrate enterprise operations, manage identities, and automate workflows in one unified platform.
+            </p>
+          </div>
+
+        </div>
       </div>
 
-      {/* Floating Glass Container */}
-      <div className="relative z-10 w-full max-w-[440px] px-6 py-12">
-        
-        {/* Logo and Branding Header */}
-        <div className="flex flex-col items-center justify-center mb-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <div className="h-16 w-16 mb-6 flex items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-            <Zap className="h-8 w-8 text-white drop-shadow-md" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2 text-center drop-shadow-sm">
-            Chandak Workspace
-          </h1>
-          <p className="text-slate-400 text-center font-medium">
-            Intelligent Governance & Enterprise Mastery
-          </p>
-        </div>
+      {/* RIGHT PANEL - Authentication Form */}
+      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-card lg:bg-background relative">
+        {/* Subtle grid on right panel for texture */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
 
-        {/* Authentication Card */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150 fill-mode-both">
-          
-          {/* Realtime Alert Displays */}
-          {errorMsg && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-rose-400" />
-              <div className="space-y-1">
-                <strong className="font-semibold block text-rose-200">Authentication Failed</strong>
-                <span className="opacity-90">{errorMsg}</span>
+        <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
+          <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
+            
+            <div className="lg:hidden flex flex-col items-center justify-center mb-10">
+              <div className="relative h-20 w-56 flex items-center justify-center">
+                <img 
+                  src="/logo.png" 
+                  alt="Chandak Logo" 
+                  className="h-full w-auto max-w-full object-contain"
+                />
               </div>
             </div>
-          )}
 
-          {successMsg && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-400" />
-              <span className="font-medium">{successMsg}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
-            
-            {/* Smooth transition for Name field when toggling Register */}
-            <div className={`space-y-2 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isRegister ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Full Name
-              </label>
-              <AppInput 
-                name="name"
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                leftIcon={<User className="h-4 w-4 text-slate-400" />}
-                className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-purple-500/50 transition-colors"
-                required={isRegister}
-              />
+            <div className="mb-10 lg:mb-12">
+              <h2 className="text-3xl font-bold text-foreground mb-2">
+                Welcome back
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Please enter your details to sign in to your workspace.
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Email Address
-              </label>
-              <AppInput 
-                name="email"
-                type="email"
-                placeholder="user@enterprise.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                leftIcon={<Mail className="h-4 w-4 text-slate-400" />}
-                className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-purple-500/50 transition-colors"
-                required
-              />
-            </div>
+            {/* Realtime Alert Displays */}
+            {errorMsg && (
+              <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <strong className="font-semibold block">Authentication Failed</strong>
+                  <span className="opacity-90">{errorMsg}</span>
+                </div>
+              </div>
+            )}
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Password
-              </label>
-              <AppInput 
-                name="password"
-                type="password"
-                placeholder="••••••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                leftIcon={<Lock className="h-4 w-4 text-slate-400" />}
-                className="h-12 bg-slate-800/50 border-white/10 text-white placeholder:text-slate-500 focus:bg-slate-800 focus:border-purple-500/50 transition-colors"
-                required
-              />
-            </div>
+            {successMsg && (
+              <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <ShieldCheck className="h-5 w-5 shrink-0" />
+                <span className="font-medium">{successMsg}</span>
+              </div>
+            )}
 
-            <button 
-              type="submit" 
-              disabled={loading || !!successMsg}
-              className="w-full h-12 mt-2 bg-white text-slate-950 font-bold rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <span className="h-4 w-4 rounded-full border-2 border-slate-900/20 border-t-slate-900 animate-spin" />
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <>
-                  <span>{isRegister ? "Create Account" : "Sign In"}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
+            {/* Form */}
+            <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
 
-          {/* Toggle Login / Register */}
-          <div className="mt-6 text-center">
-            <button 
-              type="button"
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setErrorMsg(null);
-                setSuccessMsg(null);
-              }}
-              className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
-            >
-              {isRegister ? (
-                <>Already have an account? <span className="text-purple-400 hover:text-purple-300">Sign in instead</span></>
-              ) : (
-                <>New to the workspace? <span className="text-purple-400 hover:text-purple-300">Create an account</span></>
-              )}
-            </button>
-          </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Email Address
+                </label>
+                <AppInput 
+                  name="email"
+                  type="email"
+                  placeholder="user@enterprise.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  leftIcon={<Mail className="h-4 w-4 text-muted-foreground" />}
+                  className="h-12 bg-background lg:bg-muted/50 border-border focus:bg-background transition-colors"
+                  required
+                />
+              </div>
 
-          <div className="relative py-8">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/10"></span>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-slate-900 px-4 text-slate-500 font-semibold tracking-widest">
-                Enterprise SSO
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Password
+                  </label>
+                  <Link href="#" onClick={(e) => { e.preventDefault(); alert("Contact administrator to reset password."); }} className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
+                <AppInput 
+                  name="password"
+                  type="password"
+                  placeholder="••••••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  leftIcon={<Lock className="h-4 w-4 text-muted-foreground" />}
+                  className="h-12 bg-background lg:bg-muted/50 border-border focus:bg-background transition-colors"
+                  required
+                />
+              </div>
+
+              <AppButton 
+                type="submit" 
+                variant="primary"
+                disabled={loading || !!successMsg}
+                className="w-full h-12 mt-4 text-base font-semibold shadow-lg shadow-accent/20 hover:shadow-accent/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <span className="h-5 w-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 w-full">
+                    <span>Sign In</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                )}
+              </AppButton>
+            </form>
+
+            {/* Navigate to Registration */}
+            <div className="mt-8 text-center">
+              <span className="text-sm font-medium text-muted-foreground">
+                Don't have an account? <Link href="/register" className="text-accent font-semibold hover:underline transition-colors">Register now</Link>
               </span>
             </div>
+
+            <div className="relative py-8">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card lg:bg-background px-4 text-muted-foreground font-semibold tracking-widest backdrop-blur-sm">
+                  Or Continue With
+                </span>
+              </div>
+            </div>
+
+            <AppButton
+              type="button"
+              variant="outline"
+              onClick={handleMicrosoftLogin}
+              disabled={ssoLoading}
+              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-muted font-semibold bg-background lg:bg-transparent"
+            >
+              {ssoLoading ? (
+                <div className="flex items-center gap-2 text-foreground">
+                  <span className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                  Connecting to Microsoft...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21">
+                    <path fill="#f25022" d="M1 1h9v9H1z"/>
+                    <path fill="#00a4ef" d="M1 11h9v9H1z"/>
+                    <path fill="#7fba00" d="M11 1h9v9h-9z"/>
+                    <path fill="#ffb900" d="M11 11h9v9h-9z"/>
+                  </svg>
+                  Continue with Microsoft
+                </div>
+              )}
+            </AppButton>
+
           </div>
-
-          <button
-            type="button"
-            onClick={handleMicrosoftLogin}
-            disabled={ssoLoading}
-            className="w-full h-12 bg-[#2f2f2f] hover:bg-[#3f3f3f] text-white border border-white/5 rounded-xl font-semibold flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:pointer-events-none"
-          >
-            {ssoLoading ? (
-              <>
-                <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                Connecting to Microsoft...
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21">
-                  <path fill="#f25022" d="M1 1h9v9H1z"/>
-                  <path fill="#00a4ef" d="M1 11h9v9H1z"/>
-                  <path fill="#7fba00" d="M11 1h9v9h-9z"/>
-                  <path fill="#ffb900" d="M11 11h9v9h-9z"/>
-                </svg>
-                Continue with Microsoft
-              </>
-            )}
-          </button>
-
         </div>
       </div>
+
     </div>
   );
 }

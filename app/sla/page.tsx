@@ -34,7 +34,9 @@ interface SLATracker {
   id: string;
   displayId?: string;
   targetEntity: string;
-  type: "First Response" | "Resolution SLA" | "Escalation SLA";
+  type: string;
+  module: "TICKET" | "TASK" | "REQUIREMENT";
+  entityId: string;
   allocatedWindow: string;
   elapsedTime: string;
   status: "Healthy" | "Warning" | "Breached";
@@ -52,6 +54,7 @@ export default function SLAPage() {
   const [slas, setSlas] = useState<SLATracker[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'UPCOMING' | 'ESCALATED'>('ALL');
+  const [moduleFilter, setModuleFilter] = useState<'ALL' | 'TICKET' | 'TASK' | 'REQUIREMENT'>('ALL');
 
   const fetchSlas = async () => {
     try {
@@ -77,26 +80,24 @@ export default function SLAPage() {
   const escalatedRecords = slas.filter(s => s.status === 'Breached').length;
 
   const filteredSlas = slas.filter(s => {
-    if (filter === 'UPCOMING') return s.status === 'Warning';
-    if (filter === 'ESCALATED') return s.status === 'Breached';
+    if (filter === 'UPCOMING' && s.status !== 'Warning') return false;
+    if (filter === 'ESCALATED' && s.status !== 'Breached') return false;
+    
+    if (moduleFilter !== 'ALL' && s.module !== moduleFilter) return false;
+    
     return true;
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const simulateTick = () => {
+  const refreshLiveTracking = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setSlas(slas.map(s => {
-        if (s.status === "Warning") return { ...s, status: "Breached", escalationTier: "Level 4", elapsedTime: "0h remaining" };
-        return s;
-      }));
-      setIsRefreshing(false);
-      fetchSlas(); // Refresh from backend too
-    }, 1500);
+    await fetchSlas();
+    setIsRefreshing(false);
   };
 
-  const overrideBreach = (id: string) => {
+  const overrideBreach = async (id: string) => {
+    // In a real app this would call an API to pause/delete the SLA tracker
     setSlas(slas.map(s => s.id === id ? { ...s, status: "Healthy", escalationTier: "Level 1", elapsedTime: "Reset via manual override" } : s));
   };
 
@@ -122,15 +123,42 @@ export default function SLAPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <div className={`hidden sm:flex p-1 rounded-md border ${isLightMode ? "bg-gray-100 border-gray-200" : "bg-elevated border-border"}`}>
+            <AppButton variant="secondary"
+              onClick={() => setModuleFilter('ALL')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'ALL' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
+            >
+              All Modules
+            </AppButton>
+            <AppButton variant="secondary"
+              onClick={() => setModuleFilter('TICKET')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'TICKET' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
+            >
+              Tickets
+            </AppButton>
+            <AppButton variant="secondary"
+              onClick={() => setModuleFilter('TASK')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'TASK' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
+            >
+              Tasks
+            </AppButton>
+            <AppButton variant="secondary"
+              onClick={() => setModuleFilter('REQUIREMENT')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'REQUIREMENT' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
+            >
+              Requirements
+            </AppButton>
+          </div>
+
           <AppButton 
             variant="secondary" 
             size="sm" 
-            onClick={simulateTick}
+            onClick={refreshLiveTracking}
             isLoading={isRefreshing}
             leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
             className={isLightMode ? "bg-white border-gray-200 text-gray-700 shadow-sm" : ""}
           >
-            Simulate Timeout Expiration
+            Refresh Live Tracking
           </AppButton>
         </div>
       </div>
@@ -201,8 +229,11 @@ export default function SLAPage() {
                     {filteredSlas.map((item) => (
                       <AppTableRow key={item.id} className="hover:bg-elevated">
                         <AppTableCell>
-                          <div className="space-y-0.5">
-                            <span className={`font-mono text-xs font-bold block text-accent`}>{item.displayId || item.id}</span>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-mono text-xs font-bold text-accent`}>{item.displayId || item.id}</span>
+                              <AppBadge variant="neutral" className="text-[0.65rem] py-0">{item.module}</AppBadge>
+                            </div>
                             <span className="text-[0.8rem] text-gray-500 block truncate max-w-[150px]">{item.targetEntity}</span>
                             <span className={`text-xs font-semibold text-accent`}>{item.type}</span>
                           </div>
@@ -225,7 +256,19 @@ export default function SLAPage() {
                           <div className="space-y-1 flex flex-col items-end">
                             <span className="text-xs text-gray-500 italic block truncate max-w-[120px]">{item.actionRecipient}</span>
                             <div className="flex items-center gap-1 mt-1 justify-end">
-                              <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-accent hover:bg-accent/10" title="View SLA Tracker">
+                              <AppButton 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 w-6 p-0 text-accent hover:bg-accent/10" 
+                                title="View Record"
+                                onClick={() => {
+                                  let url = "";
+                                  if (item.module === "TICKET") url = `/tickets/${item.entityId}`;
+                                  else if (item.module === "TASK") url = `/tasks/${item.entityId}`;
+                                  else if (item.module === "REQUIREMENT") url = `/requirements/${item.entityId}`;
+                                  if (url) window.location.href = url;
+                                }}
+                              >
                                 <Eye className="h-3.5 w-3.5" />
                               </AppButton>
                               {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
@@ -249,8 +292,8 @@ export default function SLAPage() {
             </div>
 
             <div className={`p-4 border-t text-[0.8rem] text-gray-500 flex items-center justify-between bg-elevated border-border`}>
-              <span>Async worker loop interval syncs timeout status keys continuously.</span>
-              <span className={`cursor-pointer hover:underline text-rose-600`}>Flush breach cache</span>
+              <span>Powered by Real-Time Database Tracking Triggers & Dynamic Target Computations.</span>
+              <span className={`cursor-pointer hover:underline text-rose-600`} onClick={refreshLiveTracking}>Force Re-sync</span>
             </div>
           </AppCard>
         </div>

@@ -703,7 +703,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             { id: 'tasks', label: 'Tasks' },
             { id: 'audit', label: 'Audit Trail' }
           ].map(tab => (
-            <button
+            <AppButton variant="secondary"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === tab.id 
@@ -712,7 +712,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               }`}
             >
               {tab.label}
-            </button>
+            </AppButton>
           ))}
         </div>
 

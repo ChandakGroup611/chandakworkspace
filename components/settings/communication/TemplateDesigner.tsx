@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { previewEmailTemplate } from "@/lib/actions/email-config";
 
 const MODULES = ["Task", "Workspace", "Ticket", "Requirement", "Approval"];
 const EVENTS = ["Created", "Updated", "Assigned", "Reassigned", "Status Changed", "Delayed", "Completed", "Closed"];
@@ -13,6 +15,7 @@ export default function TemplateDesigner() {
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState<{type: "success" | "error", text: string} | null>(null);
   const [activeTab, setActiveTab] = useState<Record<string, "code" | "preview">>({});
+  const [previewContent, setPreviewContent] = useState<Record<string, string>>({});
   
   const supabase = createClient();
 
@@ -108,16 +111,20 @@ export default function TemplateDesigner() {
     }
   };
 
-  const renderPreview = (html: string) => {
-    // Replace merge tags with dummy data for preview
-    let preview = html;
-    preview = preview.replace(/{{task_name}}/g, "Annual Audit Report Q3");
-    preview = preview.replace(/{{creator_name}}/g, "John Administrator");
-    preview = preview.replace(/{{status}}/g, "<span style='color: #2563eb; font-weight: bold;'>IN_PROGRESS</span>");
-    preview = preview.replace(/{{link}}/g, "#");
-    preview = preview.replace(/{{ticket_no}}/g, "TKT-9921");
-    preview = preview.replace(/{{assigned_user}}/g, "Sarah Specialist");
-    return preview;
+  const handleTabSwitch = async (id: string, tab: "code" | "preview") => {
+    setActiveTab(p => ({ ...p, [id]: tab }));
+    if (tab === "preview") {
+      const tpl = templates.find(t => t.id === id);
+      if (tpl) {
+        setPreviewContent(p => ({ ...p, [id]: "Loading preview with real data..." }));
+        try {
+          const html = await previewEmailTemplate(tpl.module, tpl.html_body);
+          setPreviewContent(p => ({ ...p, [id]: html }));
+        } catch (e) {
+          setPreviewContent(p => ({ ...p, [id]: "Failed to render preview." }));
+        }
+      }
+    }
   };
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
@@ -129,12 +136,12 @@ export default function TemplateDesigner() {
           <h2 className="text-lg font-bold text-foreground">Dynamic Template Designer</h2>
           <p className="text-xs text-gray-400">Construct HTML payloads with runtime merge tag hydration.</p>
         </div>
-        <button
+        <AppButton
           onClick={handleAddTemplate}
           className="flex items-center gap-2 bg-accent hover:bg-accent text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-500/20 transition-all"
         >
           <Plus className="w-4 h-4" /> Add Template
-        </button>
+        </AppButton>
       </div>
 
       <div className="space-y-8">
@@ -187,7 +194,7 @@ export default function TemplateDesigner() {
             <div className="px-6 py-3 border-b border-white/5 bg-[#0A0D14] flex flex-wrap gap-2 items-center">
               <span className="text-xs font-bold text-gray-500 mr-2">AVAILABLE TAGS:</span>
               {MERGE_TAGS.map(tag => (
-                <button 
+                <AppButton 
                   key={tag} 
                   onClick={() => {
                     const el = document.getElementById(`editor_${tpl.id}`) as HTMLTextAreaElement;
@@ -201,24 +208,24 @@ export default function TemplateDesigner() {
                   className="px-2 py-1 bg-white/5 hover:bg-accent/20 text-purple-300 text-xs font-mono rounded transition-colors"
                 >
                   {tag}
-                </button>
+                </AppButton>
               ))}
             </div>
 
             {/* Editor vs Preview Tab */}
             <div className="flex border-b border-white/5 bg-[#0A0D14]">
-              <button 
-                onClick={() => setActiveTab(p => ({ ...p, [tpl.id]: "code" }))}
+              <AppButton 
+                onClick={() => handleTabSwitch(tpl.id, "code")}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
-              </button>
-              <button 
-                onClick={() => setActiveTab(p => ({ ...p, [tpl.id]: "preview" }))}
+              </AppButton>
+              <AppButton 
+                onClick={() => handleTabSwitch(tpl.id, "preview")}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
               >
-                <Eye className="w-4 h-4" /> Live Preview
-              </button>
+                <Eye className="w-4 h-4" /> Live Preview (Dynamic)
+              </AppButton>
             </div>
 
             {/* Content Area */}
@@ -233,7 +240,7 @@ export default function TemplateDesigner() {
             ) : (
               <div 
                 className="w-full h-64 bg-white text-black p-6 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: renderPreview(tpl.html_body) }}
+                dangerouslySetInnerHTML={{ __html: previewContent[tpl.id] || "Loading preview..." }}
               />
             )}
 
@@ -253,15 +260,15 @@ export default function TemplateDesigner() {
               </label>
 
               <div className="flex items-center gap-3">
-                <button onClick={() => handleDelete(tpl.id)} className="text-gray-500 hover:text-rose-400 transition-colors">
+                <AppButton onClick={() => handleDelete(tpl.id)} className="text-gray-500 hover:text-rose-400 transition-colors">
                   <Trash2 className="w-4 h-4" />
-                </button>
-                <button 
+                </AppButton>
+                <AppButton 
                   onClick={() => handleSave(tpl)}
                   className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
                 >
                   <Save className="w-4 h-4" /> Save
-                </button>
+                </AppButton>
               </div>
             </div>
 

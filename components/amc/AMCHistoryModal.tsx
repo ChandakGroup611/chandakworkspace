@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { X, Clock, User, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
+import { AppButton } from "@/components/ui/AppButton";
+
 
 export function AMCHistoryModal({
   amcId,
@@ -87,9 +89,9 @@ export function AMCHistoryModal({
               <p className="text-xs text-gray-500">Immutable changelog for this record</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
             <X className="h-5 w-5" />
-          </button>
+          </AppButton>
         </div>
 
         {/* Content */}

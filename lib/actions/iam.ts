@@ -249,3 +249,45 @@ export async function fetchDepartments() {
   const { data } = await supabase.from('departments').select('*').eq('is_deleted', false).order('name', { ascending: true });
   return data || [];
 }
+
+export async function fetchActiveSessions() {
+  await checkIAMAuthorization("IAM_VIEW");
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  // Join with user_master (or user_profiles) to get user details
+  const { data, error } = await supabase
+    .from("auth_session_logs")
+    .select("*, user:user_profiles(full_name, email, employee_code)")
+    .eq("is_active", true)
+    .order("last_activity", { ascending: false });
+    
+  if (error) {
+    console.error("[IAM] Error fetching active sessions:", error);
+    return [];
+  }
+  return data || [];
+}
+
+export async function killSession(sessionId: string) {
+  await checkIAMAuthorization("IAM_MANAGE");
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from("auth_session_logs")
+    .update({ is_active: false })
+    .eq("id", sessionId);
+    
+  if (error) {
+    throw new Error(`Failed to kill session: ${error.message}`);
+  }
+  
+  // In a real implementation, we would also revoke the JWT or delete from active_sessions table if it exists
+  const { data: sessionLog } = await supabase.from("auth_session_logs").select("user_id, session_token").eq("id", sessionId).single();
+  if (sessionLog) {
+     await supabase.from("active_sessions").delete().eq("user_id", sessionLog.user_id).eq("session_token", sessionLog.session_token);
+  }
+  
+  revalidatePath("/iam/sessions");
+}

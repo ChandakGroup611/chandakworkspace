@@ -238,15 +238,15 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                     />
                   </div>
                   <div className="flex justify-end gap-1">
-                    <button onClick={() => setEditingSprintId(null)} className="p-1 text-gray-500 hover:bg-gray-200 rounded transition-colors"><X className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} className="p-1 text-emerald-600 hover:bg-emerald-100 rounded transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></button>
+                    <AppButton variant="secondary" onClick={() => setEditingSprintId(null)} className="p-1 text-gray-500 hover:bg-gray-200 rounded transition-colors"><X className="h-3.5 w-3.5" /></AppButton>
+                    <AppButton variant="secondary" onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} className="p-1 text-emerald-600 hover:bg-emerald-100 rounded transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></AppButton>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-start">
                     <div className="font-bold text-sm text-accent dark:text-accent">{sprint.name}</div>
-                    <button 
+                    <AppButton variant="secondary" 
                       onClick={() => {
                         setEditingSprintId(sprint.id);
                         setEditSprintName(sprint.name);
@@ -257,7 +257,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                       title="Edit Sprint"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
-                    </button>
+                    </AppButton>
                   </div>
                   <div className="text-[10px] text-gray-500 mt-0.5">
                     {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : '?'} - {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : '?'}

@@ -88,9 +88,9 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
             <h2 className="text-lg font-bold text-foreground tracking-tight">Customize Dashboard</h2>
             <p className="text-xs text-muted-foreground mt-1">Drag to reorder widgets. Set widths for your command center.</p>
           </div>
-          <button onClick={onClose} className="p-2 text-muted-foreground hover:bg-accent/10 hover:text-accent rounded-full transition-colors">
+          <AppButton variant="primary" onClick={onClose} className="p-2 text-muted-foreground hover:bg-accent/10 hover:text-accent rounded-full transition-colors">
             <X className="w-5 h-5" />
-          </button>
+          </AppButton>
         </div>
 
         {/* Content */}
@@ -176,7 +176,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
           <div className="flex items-center gap-1">
             <span className="text-[10px] uppercase font-bold text-muted-foreground mr-2 tracking-wider">Width</span>
             {[1, 2, 3, 4].map(w => (
-              <button
+              <AppButton variant="secondary"
                 key={w}
                 onClick={() => onSpanChange(w as any)}
                 className={cn(
@@ -187,13 +187,13 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
                 )}
               >
                 {w}/4
-              </button>
+              </AppButton>
             ))}
           </div>
         )}
 
         {/* Toggle */}
-        <button
+        <AppButton variant="secondary"
           onClick={onToggle}
           className={cn(
             "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
@@ -208,7 +208,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
               isActive ? "translate-x-4" : "translate-x-0"
             )}
           />
-        </button>
+        </AppButton>
       </div>
     </div>
   );

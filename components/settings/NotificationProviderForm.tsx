@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { saveSystemEmailConfig, testEmailConnection } from "@/lib/actions/email-config";
 
 export default function NotificationProviderForm({ initialData }: { initialData: any }) {
@@ -60,7 +61,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
       
       <div className="flex gap-4 mb-8">
         {["GMAIL", "OFFICE365", "RESEND"].map((p) => (
-          <button 
+          <AppButton 
             key={p} 
             onClick={() => setProvider(p)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -68,7 +69,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
             }`}
           >
             {p === 'OFFICE365' ? 'Office 365' : p === 'GMAIL' ? 'Gmail' : 'Resend API'}
-          </button>
+          </AppButton>
         ))}
       </div>
 
@@ -104,12 +105,12 @@ export default function NotificationProviderForm({ initialData }: { initialData:
           {message}
         </span>
         <div className="flex gap-3">
-          <button onClick={handleTest} disabled={testing} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
+          <AppButton onClick={handleTest} disabled={testing} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
             {testing ? 'Testing...' : 'Test Connection'}
-          </button>
-          <button onClick={handleSave} disabled={loading} className="px-5 py-2.5 bg-accent hover:bg-accent text-white text-sm font-medium rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] disabled:opacity-50">
+          </AppButton>
+          <AppButton onClick={handleSave} disabled={loading} className="px-5 py-2.5 bg-accent hover:bg-accent text-white text-sm font-medium rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] disabled:opacity-50">
             {loading ? 'Saving...' : 'Save Configuration'}
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>

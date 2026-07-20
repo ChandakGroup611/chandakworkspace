@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -70,7 +71,7 @@ export function EnterpriseDrawerShell({
             {title && <h2 className={`text-xl font-extrabold tracking-tight ${"text-foreground"}`}>{title}</h2>}
             {subtitle && <div className="text-sm text-gray-500 mt-1">{subtitle}</div>}
           </div>
-          <button 
+          <AppButton 
             onClick={onClose}
             type="button"
             className={`p-2 rounded-xl transition-colors shrink-0 ${
@@ -78,7 +79,7 @@ export function EnterpriseDrawerShell({
             }`}
           >
             <X className="h-6 w-6" />
-          </button>
+          </AppButton>
         </div>
 
         {/* Body (Scrollable) */}

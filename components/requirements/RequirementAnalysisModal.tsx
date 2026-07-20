@@ -164,14 +164,14 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
       <AppCard className={`w-full max-w-5xl border shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col ${
         "bg-gray-50 border-border"
       }`}>
-        <button 
+        <AppButton variant="secondary" 
           onClick={onClose}
           className={`absolute top-4 right-4 p-2 rounded-full transition-colors z-10 ${
             "hover:bg-gray-200 text-muted"
           }`}
         >
           <X className="h-5 w-5" />
-        </button>
+        </AppButton>
 
         <AppCardHeader className={`border-b shrink-0 pb-4 border-border bg-white`}>
           <div className="flex items-center gap-3">
@@ -290,7 +290,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                     const isSelected = formData.impacted_departments.includes(d.id);
                     const index = formData.impacted_departments.indexOf(d.id);
                     return (
-                      <button
+                      <AppButton variant="secondary"
                         type="button"
                         key={d.id}
                         onClick={() => handleDepartmentToggle(d.id)}
@@ -302,7 +302,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                       >
                         {isSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
                         {d.department_name}
-                      </button>
+                      </AppButton>
                     );
                   })}
                 </div>
@@ -325,7 +325,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                               const orderIndex = selectedApprovers.indexOf(u.id) + 1;
                               
                               return (
-                                <button
+                                <AppButton variant="secondary"
                                   type="button"
                                   key={u.id}
                                   onClick={() => {
@@ -346,7 +346,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                 >
                                   {isUserSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
                                   {u.full_name}
-                                </button>
+                                </AppButton>
                               );
                             })}
                             {deptUsers.length === 0 && <span className="text-xs text-gray-500">No users found in this department.</span>}

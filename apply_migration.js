@@ -1,16 +1,22 @@
 const { Client } = require('pg');
 const fs = require('fs');
+require('dotenv').config({ path: '.env.local' });
 
 async function testConnection(url) {
     const client = new Client({ connectionString: url });
     try {
         await client.connect();
         
-        const sqlPath = "d:\\adios\\supabase\\migrations\\20260624000005_amc_enterprise_fields.sql";
+        const sqlPath = process.argv[2] || "d:\\adios\\supabase\\migrations\\20260715000000_universal_sla_trackers.sql";
         const sql = fs.readFileSync(sqlPath, 'utf8');
         
         await client.query(sql);
-        console.log("Successfully executed migration.");
+        console.log("Successfully executed migration:", sqlPath);
+        
+        // Notify postgrest to reload schema cache
+        await client.query("NOTIFY pgrst, 'reload schema'");
+        console.log("Reloaded schema cache");
+
         await client.end();
         return true;
     } catch (e) {
@@ -21,7 +27,7 @@ async function testConnection(url) {
 
 async function main() {
     const urls = [
-        'postgresql://postgres.cffmgqdypmilwxkwhhve:Avinash%40ADIOS@aws-1-ap-south-1.pooler.supabase.com:5432/postgres'
+        process.env.DATABASE_URL // exact env var
     ];
     
     for (const url of urls) {

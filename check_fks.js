@@ -1,41 +1,29 @@
+const { createClient } = require('@supabase/supabase-js');
 const { Client } = require('pg');
 require('dotenv').config({ path: '.env.local' });
 
 async function run() {
-  const client = new Client({
-    connectionString: "postgresql://postgres:Chandak_Workspace@db.tkovzymkubxtpcgynkgd.supabase.co:5432/postgres"
-  });
-
-  try {
-    await client.connect();
+    const client = new Client({
+        connectionString: process.env.DATABASE_URL
+    });
     
-    // Find all foreign keys referencing user_master
+    await client.connect();
     const res = await client.query(`
-      SELECT
-        tc.table_name, 
-        kcu.column_name, 
-        rc.update_rule, 
-        rc.delete_rule
-      FROM 
-        information_schema.table_constraints AS tc 
-        JOIN information_schema.key_column_usage AS kcu
-          ON tc.constraint_name = kcu.constraint_name
-          AND tc.table_schema = kcu.table_schema
-        JOIN information_schema.referential_constraints AS rc
-          ON tc.constraint_name = rc.constraint_name
-      WHERE tc.constraint_type = 'FOREIGN KEY'
-      AND rc.unique_constraint_name IN (
-        SELECT constraint_name FROM information_schema.table_constraints 
-        WHERE table_name = 'user_master' AND constraint_type = 'PRIMARY KEY'
-      )
+        SELECT
+            tc.table_name,
+            kcu.column_name
+        FROM 
+            information_schema.table_constraints AS tc 
+            JOIN information_schema.key_column_usage AS kcu
+              ON tc.constraint_name = kcu.constraint_name
+              AND tc.table_schema = kcu.table_schema
+            JOIN information_schema.constraint_column_usage AS ccu
+              ON ccu.constraint_name = tc.constraint_name
+              AND ccu.table_schema = tc.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY' AND ccu.table_name='user_master';
     `);
-
-    console.table(res.rows);
-  } catch (err) {
-    console.error("DB Error:", err.message);
-  } finally {
+    
+    console.log(res.rows);
     await client.end();
-  }
 }
-
 run();

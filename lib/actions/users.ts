@@ -171,6 +171,12 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       return { success: false, error: `Database Update Failed: ${dbError.message}` };
     }
 
+    // Sync to user_roles to properly update backend RBAC permissions
+    if (updatePayload.role_id) {
+      await targetClient.from("user_roles").delete().eq("user_id", editUserId);
+      await targetClient.from("user_roles").insert({ user_id: editUserId, role_id: updatePayload.role_id });
+    }
+
     // C. Update asset assignments in the assets table
     await updateAssetAssignments(targetClient, editUserId, payload.assigned_assets || []);
 
@@ -214,6 +220,11 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
 
       if (resurrectDbError) {
         return { success: false, error: `Resurrection Failed: ${resurrectDbError.message}` };
+      }
+
+      if (payload.role_id) {
+        await targetClient.from("user_roles").delete().eq("user_id", existingSoftDeleted.id);
+        await targetClient.from("user_roles").insert({ user_id: existingSoftDeleted.id, role_id: payload.role_id });
       }
 
       await updateAssetAssignments(targetClient, existingSoftDeleted.id, payload.assigned_assets || []);
@@ -267,6 +278,10 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
         return { success: false, error: `Database Profile Creation Failed: ${dbError.message}` };
       }
 
+      if (payload.role_id) {
+        await supabase.from("user_roles").insert({ user_id: newUserId, role_id: payload.role_id });
+      }
+
       await updateAssetAssignments(supabase, newUserId, payload.assigned_assets || []);
     } else {
       // Standard service role admin flow
@@ -310,6 +325,10 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
         // Clean up the auth user if DB insert fails
         await adminClient.auth.admin.deleteUser(newUserId);
         return { success: false, error: `Database Profile Creation Failed: ${dbError.message}` };
+      }
+
+      if (payload.role_id) {
+        await adminClient.from("user_roles").insert({ user_id: newUserId, role_id: payload.role_id });
       }
 
       // C. Update asset assignments in the assets table for new user
@@ -529,7 +548,7 @@ export async function deleteUserAction(userId: string) {
     email_confirm: true
   });
   
-  if (authUpdateError && !authUpdateError.message.includes("User not found")) {
+  if (authUpdateError && !authUpdateError.message.includes("User not found") && !authUpdateError.message.includes("Database error loading user") && !authUpdateError.message.includes("invalid input syntax")) {
     console.error("[Server Action] Auth update error:", authUpdateError);
     return { success: false, error: `Failed to remove user from authentication system: ${authUpdateError.message}. Database deletion aborted to prevent clash.` };
   }

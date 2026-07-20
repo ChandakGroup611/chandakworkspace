@@ -271,13 +271,13 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                     </div>
                   </div>
                   {formData.attachment && (
-                    <button 
+                    <AppButton variant="secondary" 
                       type="button"
                       onClick={() => setFormData({ ...formData, attachment: null })}
                       className="p-1 rounded-md hover:bg-red-500/10 text-red-500 transition-colors relative z-20"
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </AppButton>
                   )}
                 </div>
               </div>

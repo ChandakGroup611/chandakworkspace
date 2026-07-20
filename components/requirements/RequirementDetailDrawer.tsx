@@ -44,7 +44,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
               {/* Tabs */}
               <div className="flex border-b border-white/10">
-                <button
+                <AppButton
                   onClick={() => setActiveTab("details")}
                   className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
                     activeTab === "details"
@@ -54,8 +54,8 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                 >
                   <ListTodo className="w-4 h-4" />
                   Execution Details
-                </button>
-                <button
+                </AppButton>
+                <AppButton
                   onClick={() => setActiveTab("collaboration")}
                   className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
                     activeTab === "collaboration"
@@ -65,7 +65,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                 >
                   <MessageSquare className="w-4 h-4" />
                   Collaboration Chat
-                </button>
+                </AppButton>
               </div>
 
               {activeTab === "details" && (

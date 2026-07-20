@@ -657,7 +657,7 @@ export default function IAMGovernanceCockpit({
                         const isTabSelected = selectedModule === mod;
                         const stats = moduleStats[mod] || { active: 0, total: 0 };
                         return (
-                          <button
+                          <AppButton variant="secondary"
                             key={mod}
                             onClick={() => setSelectedModule(mod)}
                             className={cn(
@@ -676,7 +676,7 @@ export default function IAMGovernanceCockpit({
                             )}>
                               {stats.active}/{stats.total}
                             </span>
-                          </button>
+                          </AppButton>
                         );
                       })}
                     </div>
@@ -763,7 +763,7 @@ export default function IAMGovernanceCockpit({
                                           <AppTableCell key={act} className="text-center">
                                             {exists ? (
                                               <div className="flex justify-center">
-                                                <button
+                                                <AppButton variant="secondary"
                                                   type="button"
                                                   disabled={isSuperAdmin || !hasPermission("IAM_UPDATE")}
                                                   onClick={() => {
@@ -781,7 +781,7 @@ export default function IAMGovernanceCockpit({
                                                   )}
                                                 >
                                                   {checked && <Check className="h-3.5 w-3.5 stroke-[3] animate-in zoom-in-50 duration-200" />}
-                                                </button>
+                                                </AppButton>
                                               </div>
                                             ) : (
                                               <span className="text-xs text-gray-600 font-mono">-</span>

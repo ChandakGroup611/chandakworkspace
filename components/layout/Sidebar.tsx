@@ -217,7 +217,7 @@ export default function Sidebar() {
       <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
         {!isCompact ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex h-10 shrink-0 items-center justify-center overflow-hidden">
+            <div className={`flex items-center justify-center transition-all duration-300 h-12 w-32`}>
               <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
@@ -227,8 +227,10 @@ export default function Sidebar() {
             </div>
           </Link>
         ) : (
-          <Link href="/" className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center overflow-hidden">
-            <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain drop-shadow-md" />
+          <Link href="/" className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center">
+            <div className="h-10 w-full px-2 mb-2">
+              <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain drop-shadow-md" />
+            </div>
           </Link>
         )}
 

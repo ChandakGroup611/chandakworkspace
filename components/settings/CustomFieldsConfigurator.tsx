@@ -143,7 +143,7 @@ export default function CustomFieldsConfigurator() {
                 const IconComponent = tab.icon;
                 const isActive = activeModule === tab.id;
                 return (
-                  <button
+                  <AppButton variant="secondary"
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveModule(tab.id)}
@@ -162,7 +162,7 @@ export default function CustomFieldsConfigurator() {
                     <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/5 text-gray-400 border border-white/5">
                       {tab.count} fields
                     </span>
-                  </button>
+                  </AppButton>
                 );
               })}
             </div>
@@ -303,14 +303,14 @@ export default function CustomFieldsConfigurator() {
                           </AppBadge>
                         </AppTableCell>
                         <AppTableCell className="text-right">
-                          <button
+                          <AppButton variant="secondary"
                             type="button"
                             onClick={() => handleDeleteField(fItem.id)}
                             className="p-1 rounded text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                             title="Drop field dictionary key"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          </AppButton>
                         </AppTableCell>
                       </AppTableRow>
                     ))}

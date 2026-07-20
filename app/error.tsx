@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
+import { AppButton } from '@/components/ui/AppButton';
+
 export default function GlobalError({ error, reset }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -16,12 +19,12 @@ export default function GlobalError({ error, reset }: {
           </code>
         </p>
       )}
-      <button
+      <AppButton
         onClick={() => reset()}
         className="rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-secondary"
       >
         Try again
-      </button>
+      </AppButton>
     </div>
   );
 }

@@ -124,7 +124,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const renderWorkspaceTree = (nodes: any[], depth = 0) => {
     return nodes.map(w => (
       <React.Fragment key={w.id}>
-        <button 
+        <AppButton variant="secondary" 
           onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
           className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${
             isLightMode 
@@ -138,7 +138,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             <div className={`font-bold ${"text-foreground"}`}>{w.code}</div>
           </div>
           <div className={`text-[10px] text-gray-500 truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
-        </button>
+        </AppButton>
         {w.subWorkspaces && w.subWorkspaces.length > 0 && renderWorkspaceTree(w.subWorkspaces, depth + 1)}
       </React.Fragment>
     ));
@@ -638,22 +638,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             <AppCard className="flex-1 p-2 flex flex-col min-h-0 overflow-hidden">
               <div className="flex items-center justify-between border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
-                  <button 
+                  <AppButton variant="secondary" 
                     onClick={() => setActiveView('HIERARCHY')}
                     className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? ("border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <GitMerge className="h-4 w-4" />
                     <span>Execution Hierarchy</span>
-                  </button>
-                  <button 
+                  </AppButton>
+                  <AppButton variant="secondary" 
                     onClick={() => setActiveView('SPRINTS')}
                     className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? ("border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <Calendar className="h-4 w-4" />
                     <span>Sprint Planning</span>
-                  </button>
+                  </AppButton>
                 </div>
               </div>
 
@@ -905,7 +905,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="space-y-1.5 relative mb-6">
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5 mb-2">
                   <label className="text-[10px] font-bold text-accent uppercase tracking-wider block">Workspace Assignees (Users)</label>
-                  <button 
+                  <AppButton variant="secondary" 
                     type="button" 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -919,7 +919,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     className={`text-[9px] font-bold uppercase tracking-wider text-accent hover:text-accent`}
                   >
                     {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
-                  </button>
+                  </AppButton>
                 </div>
 
                 <div className="relative mb-2 shrink-0">

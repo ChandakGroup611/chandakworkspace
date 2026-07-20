@@ -237,8 +237,8 @@ export default function UserFormPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 sticky -top-4 md:-top-6 z-50 bg-white dark:bg-slate-900 border-b border-border shadow-sm px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <AppButton 
             variant="outline" 
@@ -275,6 +275,8 @@ export default function UserFormPage() {
           </AppButton>
         </div>
       </div>
+
+      <div className="px-4 sm:px-6 lg:px-8">
 
       {errorAlert && (
         <div className="p-4 mb-6 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-start gap-3">
@@ -513,9 +515,9 @@ export default function UserFormPage() {
                       className={inputStyle}
                       placeholder="••••••••"
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3 text-muted-foreground hover:text-foreground">
+                    <AppButton variant="secondary" type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
+                    </AppButton>
                   </div>
                 </div>
                 <div>
@@ -588,6 +590,7 @@ export default function UserFormPage() {
 
         </div>
       </form>
+      </div>
     </div>
   );
 }

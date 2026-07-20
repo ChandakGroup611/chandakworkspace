@@ -8,6 +8,8 @@ import { fetchTicketDashboardData } from "@/lib/actions/tickets";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { AppButton } from "@/components/ui/AppButton";
+
 
 export default function TicketDetailsPage({ params }: { params: Promise<{ ticketId: string }> }) {
   const router = useRouter();
@@ -106,9 +108,9 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background text-foreground space-y-4">
         <h2 className="text-xl font-bold">Ticket Not Found</h2>
-        <button onClick={() => router.push("/tickets")} className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-bold">
+        <AppButton variant="secondary" onClick={() => router.push("/tickets")} className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-bold">
           Return to Tickets
-        </button>
+        </AppButton>
       </div>
     );
   }
@@ -151,21 +153,21 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                     Subject
                   </span>
                   {!isEditing ? (
-                    <button onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-accent">
+                    <AppButton variant="secondary" onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-accent">
                       Edit
-                    </button>
+                    </AppButton>
                   ) : (
                     <div className="flex gap-2">
-                      <button onClick={() => {
+                      <AppButton variant="secondary" onClick={() => {
                         setIsEditing(false);
                         setEditTitle(ticketData.title || "");
                         setEditDescription(ticketData.description || "");
                       }} className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-600">
                         Cancel
-                      </button>
-                      <button onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-green-500 hover:text-green-600">
+                      </AppButton>
+                      <AppButton variant="secondary" onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-green-500 hover:text-green-600">
                         Save
-                      </button>
+                      </AppButton>
                     </div>
                   )}
                 </div>

@@ -295,7 +295,7 @@ export default function DataRetentionClient() {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <button
+            <AppButton variant="secondary"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
@@ -306,7 +306,7 @@ export default function DataRetentionClient() {
             >
               <Icon className="h-4 w-4" />
               {tab.label}
-            </button>
+            </AppButton>
           );
         })}
       </div>
@@ -321,15 +321,15 @@ export default function DataRetentionClient() {
             </AppCardTitle>
             
             <div className="flex bg-black/40 rounded-lg p-1 border border-white/10">
-              <button
+              <AppButton variant="secondary"
                 onClick={() => setActiveView("active")}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                   activeView === "active" ? "bg-white/20 text-white shadow-sm" : "text-gray-500 hover:text-gray-300"
                 }`}
               >
                 Active Records
-              </button>
-              <button
+              </AppButton>
+              <AppButton variant="secondary"
                 onClick={() => setActiveView("deleted")}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
                   activeView === "deleted" ? "bg-rose-500/20 text-rose-400 shadow-sm border border-rose-500/30" : "text-gray-500 hover:text-gray-300"
@@ -337,7 +337,7 @@ export default function DataRetentionClient() {
               >
                 <ShieldAlert className="h-3.5 w-3.5" />
                 Recycle Bin
-              </button>
+              </AppButton>
             </div>
           </div>
         </AppCardHeader>

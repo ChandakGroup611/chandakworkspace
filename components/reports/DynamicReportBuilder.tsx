@@ -14,9 +14,9 @@ function SortableColumnItem({ item, onToggle }: { item: UserReportLayout, onTogg
 
   return (
     <div ref={setNodeRef} style={style} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.is_visible ? "bg-white border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700" : "bg-slate-50 border-dashed border-slate-300 opacity-60 dark:bg-slate-900 dark:border-slate-800"}`}>
-      <button type="button" className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 p-1" {...attributes} {...listeners}>
+      <AppButton variant="secondary" type="button" className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 p-1" {...attributes} {...listeners}>
         <GripVertical className="w-5 h-5" />
-      </button>
+      </AppButton>
       <div className="flex-1 min-w-0">
         <span className={`text-sm font-bold block truncate ${item.is_visible ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
           {item.display_name}
@@ -24,14 +24,14 @@ function SortableColumnItem({ item, onToggle }: { item: UserReportLayout, onTogg
         <span className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">{item.data_type}</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <button
+        <AppButton variant="secondary"
           type="button"
           onClick={() => onToggle(item.field_id)}
           className={`p-2 rounded-lg border transition-colors ${item.is_visible ? "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400" : "bg-slate-100 border-slate-200 text-slate-400 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700"}`}
           title={item.is_visible ? "Hide Column" : "Show Column"}
         >
           {item.is_visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-        </button>
+        </AppButton>
       </div>
     </div>
   );
@@ -152,9 +152,9 @@ export default function DynamicReportBuilder({
             </h2>
             <p className="text-xs text-slate-500 mt-1 font-medium">Add, remove, or drag columns to rearrange your personal view.</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+          <AppButton variant="primary" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
             <X className="w-5 h-5" />
-          </button>
+          </AppButton>
         </div>
 
         {/* Body */}

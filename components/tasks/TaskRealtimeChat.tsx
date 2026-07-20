@@ -367,9 +367,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
       {error && (
         <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[0.8rem] shrink-0 font-medium flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-1">
+          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-1">
             Dismiss
-          </button>
+          </AppButton>
         </div>
       )}
 
@@ -420,13 +420,13 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                   {isSender && (
                     <div className="px-1 flex items-center gap-2">
                       {Date.now() - new Date(m.created_at).getTime() < 5 * 60 * 1000 && (
-                        <button 
+                        <AppButton variant="secondary" 
                           onClick={() => handleDeleteMessage(m.id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
                           title="Delete message"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                        </button>
+                        </AppButton>
                       )}
                       <span className="text-[0.7rem] text-gray-500">
                         {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -515,7 +515,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             <div className="max-h-48 overflow-y-auto py-1">
               {/* @All Option */}
               {("all".includes(mentionFilter)) && (
-                <button
+                <AppButton variant="secondary"
                   type="button"
                   onClick={() => insertMention('ALL')}
                   className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-colors ${
@@ -526,14 +526,14 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                     <Users className="h-3 w-3" />
                   </div>
                   Notify Everyone (@All)
-                </button>
+                </AppButton>
               )}
               
               {/* Stakeholders */}
               {stakeholders
                 .filter(u => u.id !== currentUserId && u.full_name?.toLowerCase().includes(mentionFilter))
                 .map(u => (
-                  <button
+                  <AppButton variant="secondary"
                     key={u.id}
                     type="button"
                     onClick={() => insertMention(u)}
@@ -545,7 +545,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                       {u.profile_photo ? <img src={u.profile_photo} alt="" className="h-full w-full object-cover" /> : u.full_name.substring(0, 2).toUpperCase()}
                     </div>
                     {u.full_name}
-                  </button>
+                  </AppButton>
                 ))
               }
               
@@ -561,9 +561,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             {selectedFiles.map((file, idx) => (
               <div key={idx} className="flex items-center gap-1 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 px-2 py-1 rounded text-xs">
                 <span className="truncate max-w-[120px]">{file.name}</span>
-                <button type="button" onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500 ml-1">
+                <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500 ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
+                </AppButton>
               </div>
             ))}
           </div>
@@ -577,9 +577,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
           
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-accent transition-colors shrink-0" tabIndex={-1}>
+          <AppButton variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-accent transition-colors shrink-0" tabIndex={-1}>
             <Paperclip className="h-4 w-4" />
-          </button>
+          </AppButton>
           
           <input
             type="text"
@@ -590,9 +590,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             disabled={sending}
           />
           
-          <button type="button" className="p-2 text-gray-400 hover:text-amber-500 transition-colors shrink-0" tabIndex={-1}>
+          <AppButton variant="secondary" type="button" className="p-2 text-gray-400 hover:text-amber-500 transition-colors shrink-0" tabIndex={-1}>
             <Smile className="h-4 w-4" />
-          </button>
+          </AppButton>
           
           <AppButton
             type="submit"

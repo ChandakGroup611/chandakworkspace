@@ -373,13 +373,13 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           <div className="flex items-center justify-between border-b border-border px-4 pt-2">
             <div className="flex items-center gap-6 self-end">
               {(["ALL","REQUESTER","APPROVER"] as const).map(sc => (
-                <button
+                <AppButton variant="secondary"
                   key={sc}
                   onClick={() => setScope(sc)}
                   className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Requirements" : sc === "REQUESTER" ? "My Requests" : "Pending My Approval"}
-                </button>
+                </AppButton>
               ))}
             </div>
 

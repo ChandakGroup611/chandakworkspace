@@ -607,7 +607,7 @@ export function TicketWorkspaceConsole({
         {(Object.keys(pendingChanges).length > 0) && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mb-4">
             <span>Ticket updates are pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <button onClick={cancelChanges} className="text-xs text-amber-500/60 hover:text-amber-500 font-bold px-2 underline hover:no-underline">Cancel Change</button>
+            <AppButton onClick={cancelChanges} className="text-xs text-amber-500/60 hover:text-amber-500 font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
 
@@ -617,7 +617,7 @@ export function TicketWorkspaceConsole({
           {/* Quick Actions */}
           {canEditFields && (
             <div className="flex gap-2">
-              <button 
+              <AppButton 
                 type="button"
                 onClick={() => {
                   const inProgressStatus = states.find((s: any) => s.name.includes("Progress") || s.name.includes("Doing"));
@@ -629,8 +629,8 @@ export function TicketWorkspaceConsole({
                 className="text-[10px] font-bold px-2 py-1 rounded bg-accent/10 text-accent hover:bg-accent/20 transition-colors border border-accent/20"
               >
                 Acknowledge
-              </button>
-              <button 
+              </AppButton>
+              <AppButton 
                 type="button"
                 onClick={() => {
                   const resolvedStatus = states.find((s: any) => s.name.includes("Resolv") || s.code === "ST_RESOLVED");
@@ -642,7 +642,7 @@ export function TicketWorkspaceConsole({
                 className="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors border border-emerald-500/20"
               >
                 Mark Resolved
-              </button>
+              </AppButton>
             </div>
           )}
         </div>
@@ -681,7 +681,7 @@ export function TicketWorkspaceConsole({
               )}
             </div>
             
-            <button 
+            <AppButton 
               type="button"
               className="p-1 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/10 text-muted-foreground"
             >
@@ -690,7 +690,7 @@ export function TicketWorkspaceConsole({
               ) : (
                 <ChevronUp className="h-4 w-4" />
               )}
-            </button>
+            </AppButton>
           </div>
 
           {/* Collapsible Content */}
