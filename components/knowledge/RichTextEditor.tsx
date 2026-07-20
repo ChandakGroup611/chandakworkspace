@@ -1,11 +1,6 @@
 "use client";
 
-import React, { useMemo } from 'react';
-import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
-
-// Dynamic import to avoid SSR issues with React-Quill
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import React from 'react';
 
 interface RichTextEditorProps {
   value: string;
@@ -15,56 +10,12 @@ interface RichTextEditorProps {
 }
 
 export default function RichTextEditor({ value, onChange, placeholder, className }: RichTextEditorProps) {
-  const modules = useMemo(() => ({
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      ['link', 'image', 'video'],
-      ['clean']
-    ]
-  }), []);
-
   return (
     <div className={`rich-text-editor-container ${className || ''}`}>
-      <style dangerouslySetInnerHTML={{__html: `
-        .rich-text-editor-container .ql-container {
-          font-family: var(--font-inter), sans-serif;
-          font-size: 14px;
-          min-height: 300px;
-          border-bottom-left-radius: 0.5rem;
-          border-bottom-right-radius: 0.5rem;
-          background: transparent;
-        }
-        .rich-text-editor-container .ql-toolbar {
-          border-top-left-radius: 0.5rem;
-          border-top-right-radius: 0.5rem;
-          background: #f9fafb;
-          border-color: #e5e7eb;
-        }
-        .theme-dark .rich-text-editor-container .ql-toolbar {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.1);
-        }
-        .theme-dark .rich-text-editor-container .ql-container {
-          border-color: rgba(255, 255, 255, 0.1);
-          color: #e5e7eb;
-        }
-        .theme-dark .rich-text-editor-container .ql-stroke {
-          stroke: #9ca3af;
-        }
-        .theme-dark .rich-text-editor-container .ql-fill {
-          fill: #9ca3af;
-        }
-        .theme-dark .rich-text-editor-container .ql-picker {
-          color: #9ca3af;
-        }
-      `}} />
-      <ReactQuill 
-        theme="snow" 
-        value={value} 
-        onChange={onChange} 
-        modules={modules}
+      <textarea
+        className="w-full min-h-[300px] p-4 text-sm font-inter bg-transparent border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || "Write your article content here..."}
       />
     </div>
