@@ -40,6 +40,18 @@ export async function markNotificationAsRead(notificationId: string) {
   if (error) throw new Error("Failed to mark notification as read");
 }
 
+export async function deleteNotification(notificationId: string) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { error } = await supabase
+    .from("task_notifications")
+    .delete()
+    .eq("id", notificationId);
+
+  if (error) throw new Error("Failed to delete notification");
+}
+
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 // Nodemailer will be dynamically imported in dispatchNotification
 

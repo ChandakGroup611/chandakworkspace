@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Bell, X, ExternalLink, CheckCircle } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { fetchUnreadNotifications, markNotificationAsRead } from "@/lib/actions/notifications";
+import { fetchUnreadNotifications, markNotificationAsRead, deleteNotification } from "@/lib/actions/notifications";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/ui/AppButton";
@@ -53,7 +53,7 @@ export default function NotificationCenter() {
 
   const handleRead = async (id: string, link: string | null) => {
     try {
-      await markNotificationAsRead(id);
+      await deleteNotification(id);
       setNotifications(prev => prev.filter(n => n.id !== id));
       setUnreadCount(prev => Math.max(0, prev - 1));
       
@@ -66,9 +66,20 @@ export default function NotificationCenter() {
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleMarkAllRead = async () => {
     for (const n of notifications) {
-      await markNotificationAsRead(n.id);
+      await deleteNotification(n.id);
     }
     setNotifications([]);
     setUnreadCount(0);
@@ -110,10 +121,10 @@ export default function NotificationCenter() {
                   variant="ghost" 
                   size="sm" 
                   onClick={handleMarkAllRead} 
-                  leftIcon={<CheckCircle className="h-3.5 w-3.5" />}
-                  className="h-7 px-2 text-[10px] text-accent hover:text-accent border-none bg-transparent"
+                  leftIcon={<X className="h-3.5 w-3.5" />}
+                  className="h-7 px-2 text-[10px] text-red-500 hover:text-red-600 border-none bg-transparent"
                 >
-                  Mark all read
+                  Clear all
                 </AppButton>
               )}
             </div>
@@ -123,11 +134,11 @@ export default function NotificationCenter() {
                 <div 
                   key={n.id} 
                   onClick={() => handleRead(n.id, n.link)}
-                  className={`p-4 border-b cursor-pointer transition-colors group ${
+                  className={`p-4 border-b cursor-pointer transition-colors group relative ${
                     "border-border hover:bg-accent/10/50"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3 pr-6">
                     <div className="space-y-1">
                       <h4 className={`text-xs font-bold ${"text-foreground"}`}>{n.title}</h4>
                       <p className="text-[0.8rem] text-gray-500 leading-snug line-clamp-2">{n.message}</p>
@@ -135,8 +146,17 @@ export default function NotificationCenter() {
                         {new Date(n.created_at).toLocaleString()}
                       </span>
                     </div>
+                  </div>
+                  <div className="absolute right-4 top-4 flex flex-col items-center gap-2">
+                    <button 
+                      onClick={(e) => handleDelete(e, n.id)}
+                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                      title="Delete Notification"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                     {n.link && (
-                      <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-accent shrink-0 mt-0.5" />
+                      <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-accent shrink-0" />
                     )}
                   </div>
                 </div>
