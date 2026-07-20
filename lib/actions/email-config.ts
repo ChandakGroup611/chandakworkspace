@@ -117,38 +117,41 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
     if (moduleName === "Task") {
       const { data } = await supabaseAdmin.from("tasks").select("id, title, status_master(name), priority_master(name), end_date, creator:user_master!tasks_created_by_fkey(full_name)").limit(1).single();
       if (data) {
+        const d = data as any;
         sampleData = {
           ...sampleData,
-          task_name: data.title,
-          status: data.status_master?.name || "Open",
-          priority: data.priority_master?.name || "Normal",
-          creator_name: data.creator?.full_name || "Unknown",
-          due_date: data.end_date || "N/A",
-          link: `/tasks/${data.id}`
+          task_name: d.title,
+          status: d.status_master?.name || (Array.isArray(d.status_master) && d.status_master[0]?.name) || "Open",
+          priority: d.priority_master?.name || (Array.isArray(d.priority_master) && d.priority_master[0]?.name) || "Normal",
+          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Unknown",
+          due_date: d.end_date || "N/A",
+          link: `/tasks/${d.id}`
         };
       }
     } else if (moduleName === "Ticket") {
       const { data } = await supabaseAdmin.from("tickets").select("id, ticket_number, title, status_master(name), priority_master(name), creator:user_master!tickets_created_by_fkey(full_name)").limit(1).single();
       if (data) {
+        const d = data as any;
         sampleData = {
           ...sampleData,
-          ticket_no: data.ticket_number,
-          ticket_title: data.title,
-          status: data.status_master?.name || "Open",
-          priority: data.priority_master?.name || "Normal",
-          creator_name: data.creator?.full_name || "Unknown",
-          link: `/tickets/${data.id}`
+          ticket_no: d.ticket_number,
+          ticket_title: d.title,
+          status: d.status_master?.name || (Array.isArray(d.status_master) && d.status_master[0]?.name) || "Open",
+          priority: d.priority_master?.name || (Array.isArray(d.priority_master) && d.priority_master[0]?.name) || "Normal",
+          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Unknown",
+          link: `/tickets/${d.id}`
         };
       }
     } else if (moduleName === "Requirement") {
       const { data } = await supabaseAdmin.from("requirements").select("id, title, approval_status, creator:user_master!requirements_creator_id_fkey(full_name)").limit(1).single();
       if (data) {
+        const d = data as any;
         sampleData = {
           ...sampleData,
-          ticket_title: data.title,
-          status: data.approval_status || "Draft",
-          creator_name: data.creator?.full_name || "Unknown",
-          link: `/requirements/${data.id}`
+          req_name: d.title,
+          status: d.approval_status || "Pending",
+          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Unknown",
+          link: `/requirements/${d.id}`
         };
       }
     }
