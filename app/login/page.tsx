@@ -146,8 +146,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="dark theme-dark flex h-screen w-full bg-[#0A0D14] text-white font-sans overflow-hidden" data-theme="glass-intelligence">
-      
+    <div className="dark theme-dark flex h-screen w-full bg-[#0A0D14] text-white font-sans overflow-hidden" data-theme="glass-intelligence" style={{ colorScheme: 'dark' }}>
+      <style dangerouslySetInnerHTML={{__html: `
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #0A0D14 inset !important;
+            -webkit-text-fill-color: white !important;
+        }
+      `}} />
       {/* LEFT PANEL - Branding / Image Split */}
       <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-slate-950">
         <Image 
@@ -169,7 +177,7 @@ export default function LoginPage() {
           <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
             <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-white/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
               <img 
-                src="/logo.png" 
+                src="/Chandak-Group-Final-Logo.svg" 
                 alt="Chandak Logo" 
                 className="h-full w-auto max-w-full object-contain p-2"
               />
@@ -203,7 +211,7 @@ export default function LoginPage() {
             <div className="lg:hidden flex flex-col items-center justify-center mb-10">
               <div className="relative h-20 w-56 flex items-center justify-center">
                 <img 
-                  src="/logo.png" 
+                  src="/Chandak-Group-Final-Logo.svg" 
                   alt="Chandak Logo" 
                   className="h-full w-auto max-w-full object-contain"
                 />
