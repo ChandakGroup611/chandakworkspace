@@ -42,15 +42,22 @@ export async function saveSystemEmailConfig(payload: any) {
 export async function testEmailConnection(config: any) {
   try {
     const nodemailer = (await import('nodemailer')).default;
-    const transporter = nodemailer.createTransport({
+    let transportConfig: any = {
       host: config.smtp_host,
       port: config.smtp_port,
       secure: config.encryption_type === 'SSL/TLS',
-      auth: {
+    };
+
+    if (config.smtp_username) {
+      transportConfig.auth = {
         user: config.smtp_username,
         pass: config.smtp_password_encrypted,
-      },
-    });
+      };
+    } else {
+      transportConfig.tls = { rejectUnauthorized: false };
+    }
+
+    const transporter = nodemailer.createTransport(transportConfig);
     await transporter.verify();
     return { success: true, message: "Connection verified successfully!" };
   } catch (error: any) {
