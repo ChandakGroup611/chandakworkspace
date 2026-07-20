@@ -139,15 +139,23 @@ async function dispatchEmail(item: any, provider: any) {
   
   if (provider.provider_name === "SMTP" || provider.provider_name === "Microsoft 365") {
     const nodemailer = (await import('nodemailer')).default;
-    const transporter = nodemailer.createTransport({
+    
+    let transportConfig: any = {
       host: provider.config.host,
       port: Number(provider.config.port),
       secure: Number(provider.config.port) === 465, // usually true for 465, false for 587
-      auth: {
+    };
+
+    if (provider.config.username) {
+      transportConfig.auth = {
         user: provider.config.username,
         pass: provider.config.password,
-      },
-    });
+      };
+    } else {
+      transportConfig.tls = { rejectUnauthorized: false };
+    }
+
+    const transporter = nodemailer.createTransport(transportConfig);
 
     const senderEmail = provider.config.username || "no-reply@enterprise.com";
     

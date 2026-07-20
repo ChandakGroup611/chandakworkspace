@@ -137,18 +137,27 @@ export async function dispatchNotification(
     const smtpFrom = dbEmailConfig?.sender_email || process.env.SMTP_FROM || 'no-reply@enterprise.com';
     const senderName = dbEmailConfig?.sender_name || 'Enterprise Platform';
 
-    if (smtpHost && smtpUser) {
+    if (smtpHost) {
       try {
     const nodemailer = (await import('nodemailer')).default;
-    const transporter = nodemailer.createTransport({
+    
+    let transportConfig: any = {
       host: smtpHost,
       port: Number(smtpPort),
       secure: smtpSecure,
-      auth: {
+    };
+
+    if (smtpUser) {
+      transportConfig.auth = {
         user: smtpUser,
         pass: smtpPass,
-      },
-    });
+      };
+    } else {
+      // Direct Send Configuration (No Auth, TLS rejectUnauthorized false as fallback)
+      transportConfig.tls = { rejectUnauthorized: false };
+    }
+
+    const transporter = nodemailer.createTransport(transportConfig);
 
         // Fire and forget SMTP so it doesn't block the HTTP request
         transporter.sendMail({
