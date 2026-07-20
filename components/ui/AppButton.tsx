@@ -48,11 +48,11 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     };
 
     const sizes = {
-      sm: "h-8 px-3.5 text-[12px] gap-1.5",
-      md: "h-10 px-5 text-[14px] gap-2",
-      lg: "h-11 px-6 text-[15px] gap-2",
-      icon: "h-10 w-10 px-0 gap-0",
-      "icon-sm": "h-8 w-8 px-0 gap-0",
+      sm: "min-h-[32px] py-1.5 px-3.5 text-[12px] gap-1.5",
+      md: "min-h-[40px] py-2 px-5 text-[14px] gap-2",
+      lg: "min-h-[44px] py-2.5 px-6 text-[15px] gap-2",
+      icon: "h-10 w-10 px-0 gap-0 shrink-0",
+      "icon-sm": "h-8 w-8 px-0 gap-0 shrink-0",
     };
 
     return (
@@ -65,7 +65,7 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       >
         {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-current" />}
         {!isLoading && leftIcon}
-        <span>{children}</span>
+        {children}
         {!isLoading && rightIcon}
       </button>
     );
