@@ -40,9 +40,10 @@ export default function LearningHubClient() {
         <div className="relative w-full max-w-md mx-auto mt-8 z-20">
           <AppButton variant="secondary"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl border-2 text-left transition-all ${
+            className={`w-full flex items-center justify-between px-6 h-auto py-4 rounded-2xl border-2 text-left transition-all ${
               "bg-surface border-blue-100 hover:border-accent/30 shadow-lg text-foreground"
             } ${isDropdownOpen ? ("border-accent ring-4 ring-accent/10") : ""}`}
+            rightIcon={<ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} />}
           >
             <div className="flex items-center gap-3">
               {selectedModule ? (
@@ -54,7 +55,6 @@ export default function LearningHubClient() {
                 <span className={`font-semibold text-lg text-muted-foreground`}>Select a Learning Module...</span>
               )}
             </div>
-            <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} />
           </AppButton>
 
           {isDropdownOpen && (
@@ -69,22 +69,24 @@ export default function LearningHubClient() {
                       setSelectedModuleId(module.id);
                       setIsDropdownOpen(false);
                     }}
-                    className={`w-full flex items-start gap-4 px-4 py-3 rounded-xl transition-all border border-transparent ${
+                    className={`w-full flex items-start justify-start gap-4 px-4 h-auto py-3 rounded-xl transition-all border border-transparent ${
                       selectedModuleId === module.id
                         ? ("bg-accent/10 border-accent/20 text-accent font-bold")
                         : ("hover:bg-elevated hover:border-border text-foreground")
                     }`}
+                    leftIcon={
+                      <div className={`p-2 rounded-lg shrink-0 ${
+                        selectedModuleId === module.id 
+                          ? ("bg-accent/20 text-accent")
+                          : ("bg-surface border border-border text-muted-foreground")
+                      }`}>
+                        <module.icon className="h-5 w-5" />
+                      </div>
+                    }
                   >
-                    <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${
-                      selectedModuleId === module.id 
-                        ? ("bg-accent/20 text-accent")
-                        : ("bg-surface border border-border text-muted-foreground")
-                    }`}>
-                      <module.icon className="h-5 w-5" />
-                    </div>
                     <div className="text-left flex-1 min-w-0">
                       <div className="font-semibold text-sm">{module.title}</div>
-                      <div className={`text-[11px] mt-0.5 text-muted-foreground leading-snug`}>{module.description}</div>
+                      <div className={`text-[11px] mt-0.5 text-muted-foreground leading-snug font-normal`}>{module.description}</div>
                     </div>
                   </AppButton>
                 ))}
