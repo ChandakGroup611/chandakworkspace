@@ -219,10 +219,10 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-10 lg:mb-12">
-              <h2 className="text-3xl font-bold text-white mb-2">
+              <h2 className="text-3xl font-bold mb-2" style={{ color: '#ffffff' }}>
                 Welcome back
               </h2>
-              <p className="text-gray-400 mb-4">
+              <p className="mb-4" style={{ color: '#9ca3af' }}>
                 Please enter your details to sign in to your workspace.
               </p>
             </div>
@@ -249,7 +249,7 @@ export default function LoginPage() {
             <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                <label className="text-xs font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
                   Email Address
                 </label>
                 <AppInput 
@@ -266,7 +266,7 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  <label className="text-xs font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
                     Password
                   </label>
                   <Link href="#" onClick={(e) => { e.preventDefault(); alert("Contact administrator to reset password."); }} className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors">
@@ -317,7 +317,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#0F131E] lg:bg-[#0A0D14] px-4 text-gray-400 font-semibold tracking-widest backdrop-blur-sm">
+                <span className="bg-[#0F131E] lg:bg-[#0A0D14] px-4 font-semibold tracking-widest backdrop-blur-sm" style={{ color: '#9ca3af' }}>
                   Or Continue With
                 </span>
               </div>
