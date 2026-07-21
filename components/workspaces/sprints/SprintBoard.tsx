@@ -12,7 +12,7 @@ import { Filter } from "lucide-react";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   const [sprints, setSprints] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -131,7 +131,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
           <select 
             value={taskFilter} 
             onChange={(e) => setTaskFilter(e.target.value as any)}
-            className={`text-xs p-1.5 rounded-lg border focus:outline-none focus:ring-1 focus:ring-accent ${"bg-surface border-border"}`}
+            className={`text-xs p-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent ${"theme-card-structural "}`}
           >
             <option value="ALL">All Tasks</option>
             <option value="ASSIGNED">Assigned To Me</option>
@@ -149,15 +149,15 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-accent/10/50 border-indigo-100`}>
           <div className="space-y-1.5 flex-1">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Sprint Name</label>
-            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent ${"bg-surface border-border"}`} />
+            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
-            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent ${"bg-surface border-border"}`} />
+            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">End Date</label>
-            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-accent ${"bg-surface border-border"}`} />
+            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="flex gap-2 h-9">
             <AppButton type="button" variant="ghost" onClick={() => setIsCreatingSprint(false)}>Cancel</AppButton>
@@ -220,7 +220,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                     type="text" 
                     value={editSprintName} 
                     onChange={e => setEditSprintName(e.target.value)} 
-                    className={`w-full text-sm font-bold p-1 rounded border focus:outline-none focus:ring-1 focus:ring-accent bg-surface border-border`}
+                    className={`w-full text-sm font-bold p-1 rounded focus:outline-none focus:ring-1 focus:ring-accent theme-card-structural`}
                     placeholder="Sprint Name"
                   />
                   <div className="flex gap-2">
@@ -228,13 +228,13 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                       type="date" 
                       value={editSprintStart} 
                       onChange={e => setEditSprintStart(e.target.value)} 
-                      className={`w-full text-[10px] p-1 rounded border focus:outline-none bg-surface border-border`}
+                      className={`w-full text-[10px] p-1 rounded focus:outline-none theme-card-structural`}
                     />
                     <input 
                       type="date" 
                       value={editSprintEnd} 
                       onChange={e => setEditSprintEnd(e.target.value)} 
-                      className={`w-full text-[10px] p-1 rounded border focus:outline-none bg-surface border-border`}
+                      className={`w-full text-[10px] p-1 rounded focus:outline-none theme-card-structural`}
                     />
                   </div>
                   <div className="flex justify-end gap-1">
@@ -253,7 +253,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                         setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
                         setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
                       }} 
-                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-gray-400 hover:bg-surface hover:text-accent`}
+                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-gray-400 hover:theme-input-structural hover:text-accent`}
                       title="Edit Sprint"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
@@ -300,3 +300,4 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
     </div>
   );
 }
+

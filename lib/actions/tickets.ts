@@ -845,3 +845,58 @@ export async function fetchTicketMacros(departmentId?: string) {
   }
   return data || [];
 }
+
+/**
+ * Fetches a single ticket directly by ID or Code.
+ */
+export async function fetchSingleTicketDetails(ticketId: string) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthenticated.");
+
+  const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+  
+  const { data, error } = await supabaseAdmin
+    .from('tickets')
+    .select(`
+      *,
+      creator:user_master!fk_tickets_creator(full_name, profile_photo),
+      assignee:user_master!fk_tickets_assignee(full_name, profile_photo),
+      department:departments(name),
+      priority:priority_master(priority_name, priority_color),
+      status:status_master(status_name, status_color, is_terminal)
+    `)
+    .eq('is_deleted', false)
+    .or(`id.eq.${ticketId},code.eq.${ticketId}`)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  // Permission check
+  const { hasPermission } = await import('@/lib/permissions');
+  const canViewAll = await hasPermission(user.id, 'TICKETS_MANAGE');
+  
+  if (!canViewAll) {
+    let allowed = data.creator_id === user.id || data.assignee_id === user.id || data.queue_owner_id === user.id;
+    if (!allowed) {
+      const { data: subordinates } = await supabaseAdmin
+        .from('user_master')
+        .select('id')
+        .eq('manager_id', user.id)
+        .eq('is_deleted', false);
+      if (subordinates) {
+        const subIds = subordinates.map(s => s.id);
+        if (subIds.includes(data.creator_id) || subIds.includes(data.assignee_id) || subIds.includes(data.queue_owner_id)) {
+          allowed = true;
+        }
+      }
+    }
+    if (!allowed) return null;
+  }
+
+  return data;
+}

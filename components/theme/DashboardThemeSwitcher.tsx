@@ -12,11 +12,12 @@ export function DashboardThemeSwitcher() {
   if (!isDashboardRoute) return null;
 
   const themes = [
-    { id: 'executive-light', name: 'Executive Light' },
-    { id: 'tactical-utility', name: 'Tactical Operations' },
-    { id: 'enterprise-bento', name: 'Enterprise Bento' },
-    { id: 'midnight-operations', name: 'Midnight Intelligence' },
-    { id: 'glass-intelligence', name: 'Executive Glass' }
+    { id: 'dark-neumorphic', name: 'Dark Neumorphic' },
+    { id: 'light-neumorphic', name: 'Light Soft-Neumorphic' },
+    { id: 'industrial-control', name: 'Industrial Control Panel' },
+    { id: 'cyberpunk', name: 'Cyberpunk Intelligence' },
+    { id: 'glassmorphism', name: 'Frosted Glassmorphism' },
+    { id: 'pure-white', name: 'Pure White (Clean)' }
   ];
 
   return (

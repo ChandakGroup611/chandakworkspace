@@ -215,7 +215,7 @@ export default function Sidebar() {
       <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
         {!isCompact ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-            <div className={`flex items-center justify-center transition-all duration-300 h-12 w-32`}>
+            <div className={`flex items-center justify-center transition-all duration-300 h-10 w-10 shrink-0 bg-white rounded-md p-1`}>
               <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
@@ -244,7 +244,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation Group Links */}
-      <div className={`flex-1 px-3 py-4 space-y-6 ${isCompact ? "overflow-visible" : "overflow-y-auto scrollbar-thin"}`}>
+      <div className={`flex-1 px-3 py-4 space-y-6 ${isCompact ? "overflow-visible" : "overflow-y-auto scrollbar-hide"}`}>
         {visibleNavTree.map((group, groupIdx) => {
           
           return (
@@ -370,3 +370,5 @@ export default function Sidebar() {
     </Profiler>
   );
 }
+
+

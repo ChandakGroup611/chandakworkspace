@@ -24,7 +24,7 @@ export default function ApprovalActionPanel({
   isSuperAdmin = false
 }: ApprovalActionPanelProps) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [remarks, setRemarks] = useState("");
@@ -60,7 +60,7 @@ export default function ApprovalActionPanel({
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <AppCard className={`w-full overflow-hidden bg-surface border-border`}>
+      <AppCard className={`w-full overflow-hidden theme-card-structural`}>
         <div className={`px-4 py-3 border-b flex items-center justify-between bg-elevated border-border`}>
           <div className="flex items-center gap-3">
             <div className={`p-1.5 rounded-full bg-accent/10 text-accent`}>
@@ -140,3 +140,4 @@ export default function ApprovalActionPanel({
     </div>
   );
 }
+

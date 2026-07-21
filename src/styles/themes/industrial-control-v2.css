@@ -1,0 +1,163 @@
+@layer theme {
+  [data-theme="industrial-control"] {
+    --bg-primary: #050505;
+    --bg-surface: rgba(20, 20, 20, 0.4);
+    --bg-elevated: rgba(30, 30, 30, 0.6);
+    --text-primary: #ffffff;
+    --text-secondary: #aaaaaa;
+    --text-muted: #555555;
+    --border-subtle: rgba(255, 255, 255, 0.1);
+    --border-active: rgba(255, 255, 255, 0.3);
+    --accent-primary: #0ea5e9;
+    --accent-secondary: #38bdf8;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+  
+  [data-theme="industrial-control"] body {
+    background: var(--bg-primary) !important;
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E") !important;
+    background-attachment: fixed;
+  }
+
+  /* Cards - Thick Frosted Dark Glass */
+  [data-theme="industrial-control"] .theme-card-structural {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.5), rgba(10, 10, 10, 0.3)) !important;
+    backdrop-filter: blur(32px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(32px) saturate(120%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 
+      inset 1px 1px 0px rgba(255, 255, 255, 0.2),
+      inset -1px -1px 0px rgba(0, 0, 0, 0.8),
+      0 10px 40px rgba(0, 0, 0, 0.8) !important;
+    border-radius: 16px !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  [data-theme="industrial-control"] .theme-card-structural::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 30%) !important;
+    pointer-events: none;
+  }
+  [data-theme="industrial-control"] .theme-card-structural:hover {
+    box-shadow: 
+      inset 1px 1px 0px rgba(255, 255, 255, 0.3),
+      inset -1px -1px 0px rgba(0, 0, 0, 0.9),
+      0 15px 50px rgba(0, 0, 0, 0.9),
+      0 0 20px rgba(99, 102, 241, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-2px);
+  }
+
+  /* Inputs - Deep Frosted Cuts */
+  [data-theme="industrial-control"] .theme-input-structural {
+    background: rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px;
+    box-shadow: 
+      inset 0 4px 10px rgba(0,0,0,0.8),
+      0 1px 0 rgba(255,255,255,0.1) !important;
+    transition: all 0.2s;
+  }
+  [data-theme="industrial-control"] .theme-input-structural:focus {
+    background: rgba(10, 10, 10, 0.8) !important;
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    box-shadow: 
+      inset 0 4px 15px rgba(0,0,0,1),
+      0 0 0 2px rgba(99, 102, 241, 0.3),
+      0 0 15px rgba(99, 102, 241, 0.2) !important;
+    outline: none;
+  }
+
+  /* Buttons - Glowing Glass Pills */
+  [data-theme="industrial-control"] .theme-button-structural {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding: 10px 20px;
+    font-weight: 600;
+    box-shadow: 
+      inset 1px 1px 0 rgba(255,255,255,0.2),
+      inset -1px -1px 0 rgba(0,0,0,0.5),
+      0 4px 15px rgba(0,0,0,0.5) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  [data-theme="industrial-control"] .theme-button-structural:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 
+      inset 1px 1px 0 rgba(255,255,255,0.3),
+      0 8px 25px rgba(0,0,0,0.6),
+      0 0 15px rgba(255,255,255,0.05) !important;
+    transform: translateY(-1px);
+  }
+  [data-theme="industrial-control"] .theme-button-structural.theme-btn-primary {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(14, 165, 233, 0.8)) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    box-shadow: 
+      inset 1px 1px 0 rgba(255,255,255,0.4),
+      0 8px 20px rgba(99, 102, 241, 0.4) !important;
+  }
+  [data-theme="industrial-control"] .theme-button-structural.theme-btn-primary:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(14, 165, 233, 1)) !important;
+    box-shadow: 
+      inset 1px 1px 0 rgba(255,255,255,0.6),
+      0 12px 30px rgba(99, 102, 241, 0.6) !important;
+  }
+
+  /* Tables */
+  [data-theme="industrial-control"] .theme-table-structural {
+    background: rgba(10, 10, 10, 0.5) !important;
+    backdrop-filter: blur(32px) saturate(120%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 1px 1px 0 rgba(255,255,255,0.1) !important;
+  }
+  [data-theme="industrial-control"] .theme-table-header {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary) !important;
+    font-weight: 700;
+  }
+  [data-theme="industrial-control"] .theme-table-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    transition: all 0.2s;
+  }
+  [data-theme="industrial-control"] .theme-table-row:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    transform: scale(1.01);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5) !important;
+    z-index: 10;
+    position: relative;
+    border-radius: 8px !important;
+    border-bottom: none;
+  }
+
+  /* Badges */
+  [data-theme="industrial-control"] .theme-badge-structural {
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 
+      inset 1px 1px 0 rgba(255,255,255,0.2),
+      0 4px 10px rgba(0,0,0,0.5) !important;
+  }
+}

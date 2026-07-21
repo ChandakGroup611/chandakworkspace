@@ -15,7 +15,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   const { theme } = useTheme();
   const router = useRouter();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -84,7 +84,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
         </div>
       </div>
 
-      <AppCard className={isLightMode ? "bg-white" : ""}>
+      <AppCard className="bg-surface">
         <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-b border-gray-100 dark:border-white/5">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -170,3 +170,4 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
     </div>
   );
 }
+

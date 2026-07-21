@@ -14,7 +14,7 @@ import TemplateManager from "@/components/tasks/TemplateManager";
 
 export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   const [departmentId, setDepartmentId] = useState("");
   const [departments, setDepartments] = useState<any[]>([]);
@@ -211,7 +211,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
         <div className="space-y-2">
           
           {/* Section 1: Core Details */}
-          <div className={`w-full p-4 rounded-xl border mb-2 bg-surface border-border flex flex-col gap-2`}>
+          <div className={`w-full p-4 rounded-xl mb-2 theme-card-structural flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5 justify-between">
               <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
@@ -235,9 +235,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Link</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    "bg-surface border-border text-foreground"
-                  }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${ "theme-card-structural text-foreground" }`}
                   value={parentTaskId}
                   onChange={e => setParentTaskId(e.target.value)}
                   disabled={!!initialParentTaskId}
@@ -251,9 +249,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assign to Sprint</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    "bg-surface border-border text-foreground"
-                  }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={sprintId}
                   onChange={e => setSprintId(e.target.value)}
                 >
@@ -284,7 +280,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 2: Timeline & Priority */}
-          <div className={`w-full p-4 rounded-xl border mb-2 bg-surface border-border flex flex-col gap-2`}>
+          <div className={`w-full p-4 rounded-xl mb-2 theme-card-structural flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5">
               <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
                 <CalendarDays className="h-4 w-4" />
@@ -323,9 +319,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    "bg-surface border-border text-foreground"
-                  }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={priorityId}
                   onChange={e => setPriorityId(e.target.value)}
                 >
@@ -338,9 +332,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Department</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    "bg-surface border-border text-foreground"
-                  }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={departmentId}
                   onChange={e => setDepartmentId(e.target.value)}
                 >
@@ -353,9 +345,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${
-                    "bg-surface border-border text-foreground"
-                  }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={statusId}
                   onChange={e => setStatusId(e.target.value)}
                 >
@@ -370,7 +360,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 3: Assignment & Execution */}
-          <div className={`w-full p-4 rounded-xl border mb-1 bg-surface border-border flex flex-col gap-2`}>
+          <div className={`w-full p-4 rounded-xl mb-1 theme-card-structural flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5">
               <div className={`p-1.5 rounded-lg bg-emerald-100 text-emerald-600`}>
                 <Users className="h-4 w-4" />
@@ -382,7 +372,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assignees (Task Owners) *</label>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-colors bg-surface border-border focus-within:border-emerald-500`}>
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural focus-within:border-emerald-500`}>
                     <Search className="h-3 w-3 text-gray-400" />
                     <input 
                       type="text" 
@@ -400,7 +390,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   {assignees.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
-              <div className={`p-2 rounded-xl border max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent bg-surface border-border`}>
+              <div className={`p-2 rounded-xl max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders.filter(s => s.full_name?.toLowerCase().includes(assigneeSearchTerm.toLowerCase())).map(s => (
                     <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
@@ -420,7 +410,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Watchers (Observers)</label>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-colors bg-surface border-border focus-within:border-emerald-500`}>
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural focus-within:border-emerald-500`}>
                     <Search className="h-3 w-3 text-gray-400" />
                     <input 
                       type="text" 
@@ -438,7 +428,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   {watchers.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
-              <div className={`p-2 rounded-xl border max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent bg-surface border-border`}>
+              <div className={`p-2 rounded-xl max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders
                     .filter(s => !assignees.includes(s.id))
@@ -463,7 +453,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* 2x2 Grid for Tags, Checklist, Attachments, Extended Properties */}
-          <div className={`w-full p-3 rounded-xl border mb-1 bg-surface border-border`}>
+          <div className={`w-full p-3 rounded-xl mb-1 theme-card-structural`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 w-full">
               {/* Top Left: Tags & Labels */}
               <div className="w-full flex flex-col gap-2">
@@ -543,7 +533,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="space-y-2">
                   {checklistItems.map((item, index) => (
-                    <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all border-border bg-surface hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
+                    <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
                         <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-gray-50`} />
                         <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
@@ -600,7 +590,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="grid grid-cols-1 gap-3">
                   {attachments.map((item, index) => (
-                    <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl border transition-all border-border bg-surface hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
+                    <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
                         <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold bg-accent/10 text-accent`}>
                           {item.file_type.substring(0,3).toUpperCase()}
@@ -660,7 +650,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <div className="w-full sm:flex-1 space-y-1.5">
                       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Data Type</label>
                       <select 
-                        className={`w-full h-10 px-3 rounded-xl text-sm border focus:outline-none cursor-pointer bg-surface border-border`}
+                        className={`w-full h-10 px-3 rounded-xl text-sm focus:outline-none cursor-pointer theme-card-structural`}
                         value={newFieldType}
                         onChange={e => setNewFieldType(e.target.value)}
                       >
@@ -697,3 +687,4 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     </EnterpriseWizardShell>
   );
 }
+

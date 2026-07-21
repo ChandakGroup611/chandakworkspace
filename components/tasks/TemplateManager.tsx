@@ -11,7 +11,7 @@ import { fetchTaskTemplates, createTaskTemplate, deleteTaskTemplate } from "@/li
 
 export default function TemplateManager({ workspaceId, onClose }: { workspaceId: string, onClose: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
 
@@ -109,9 +109,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Steps to execute..."
-                  className={`w-full min-h-[80px] p-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-y ${
-                    "bg-surface border-border text-foreground"
-                  }`}
+                  className={`w-full min-h-[80px] p-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-y ${ "theme-card-structural text-foreground" }`}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
@@ -130,7 +128,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
               </div>
             ) : (
               templates.map(t => (
-                <div key={t.id} className={`p-4 rounded-xl border flex justify-between items-center ${"bg-surface border-border"}`}>
+                <div key={t.id} className={`p-4 rounded-xl flex justify-between items-center ${"theme-card-structural "}`}>
                   <div>
                     <h4 className="font-bold text-sm">{t.template_name}</h4>
                     <p className="text-xs text-gray-500 truncate max-w-md mt-0.5">{t.subject}</p>
@@ -149,3 +147,4 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
     </div>
   );
 }
+

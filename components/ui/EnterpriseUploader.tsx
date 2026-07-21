@@ -162,9 +162,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
       {files.length > 0 && (
         <div className="space-y-2">
           {files.map((fileObj, index) => (
-            <div key={index} className={`flex items-center gap-3 p-3 rounded-xl border ${
-              "bg-surface border-border"
-            }`}>
+            <div key={index} className={`flex items-center gap-3 p-3 rounded-xl ${ "theme-card-structural " }`}>
               <div className="flex-shrink-0">
                 {getFileIcon(fileObj.file.type)}
               </div>

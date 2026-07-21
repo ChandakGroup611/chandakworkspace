@@ -74,9 +74,7 @@ export function AMCHistoryModal({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden ${
-        "bg-surface border-border"
-      } border`}>
+      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden ${ "theme-card-structural " } border`}>
         
         {/* Header */}
         <div className={`flex items-center justify-between p-5 border-b shrink-0 border-border bg-elevated`}>
@@ -111,7 +109,7 @@ export function AMCHistoryModal({
               {logs.map((log) => (
                 <div key={log.id} className="relative pl-6">
                   {/* Timeline Node */}
-                  <div className={`absolute -left-[11px] top-1 h-5 w-5 rounded-full border-4 bg-surface border-border`} />
+                  <div className={`absolute -left-[11px] top-1 h-5 w-5 rounded-full border-4 theme-card-structural`} />
                   
                   <div className={`p-4 rounded-xl border bg-white shadow-sm border-border`}>
                     

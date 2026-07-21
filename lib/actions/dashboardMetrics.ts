@@ -17,124 +17,86 @@ export async function fetchLiveDashboardMetrics() {
     const { hasPermission } = await import('@/lib/permissions');
     const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
 
+    // Always fetch enrolled workspaces for personal dashboard
     let workspaceIds: string[] = [];
     let subWorkspaceIds: string[] = [];
     let participantTaskIds: string[] = [];
-    if (!isSuperAdmin) {
-      // 1. Get workspaces where user is enrolled
-      const { data: wsMembers } = await supabase
-        .from("workspace_members")
-        .select("workspace_id, workspaces!inner(id)")
-        .eq("user_id", userId)
-        .eq("is_deleted", false)
-        .eq("workspaces.is_deleted", false);
-      
-      workspaceIds = wsMembers?.map(m => m.workspace_id) || [];
-      
-      // Removed sub_workspace_members query since sub_workspaces uses parent_workspace_id on workspaces table
+    
+    // 1. Get workspaces where user is enrolled
+    const { data: wsMembers } = await supabase
+      .from("workspace_members")
+      .select("workspace_id, workspaces!inner(id)")
+      .eq("user_id", userId)
+      .eq("is_deleted", false)
+      .eq("workspaces.is_deleted", false);
+    
+    workspaceIds = wsMembers?.map(m => m.workspace_id) || [];
 
-      // Get tasks where user is a participant
-      const { data: taskParticipants } = await supabase
-        .from("task_participants")
-        .select("task_id, tasks!inner(id)")
-        .eq("user_id", userId)
-        .eq("tasks.is_deleted", false);
-      
-      participantTaskIds = taskParticipants?.map(p => p.task_id) || [];
-    }
+    // Get tasks where user is a participant
+    const { data: taskParticipants } = await supabase
+      .from("task_participants")
+      .select("task_id, tasks!inner(id)")
+      .eq("user_id", userId)
+      .eq("tasks.is_deleted", false);
+    
+    participantTaskIds = taskParticipants?.map(p => p.task_id) || [];
 
     // 2. Fetch scoped data
+    // 2. Fetch scoped data
     let tasksPromise: any;
-    if (isSuperAdmin) {
-      tasksPromise = supabaseAdmin
-        .from("tasks")
-        .select(`
-          id, created_at, created_by, assigned_to, subject,
-          status_id, status_master(status_name),
-          priority_id, priority:priority_master(priority_name),
-          end_date
-        `)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false });
-    } else {
-      // Avoid massive .or() PostgREST strings by running efficient parallel independent queries
-      const createdPromise = supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('created_by', userId).eq("is_deleted", false);
-      const wsPromise = workspaceIds.length > 0 ? supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).in('workspace_id', workspaceIds).eq("is_deleted", false) : Promise.resolve({ data: [], error: null });
-      
-      // Chunk task IDs if it's exceptionally large
-      let partTasksData: any[] = [];
-      let partTasksError = null;
-      if (participantTaskIds.length > 0) {
-        const CHUNK_SIZE = 150;
-        for (let i = 0; i < participantTaskIds.length; i += CHUNK_SIZE) {
-          const chunk = participantTaskIds.slice(i, i + CHUNK_SIZE);
-          const { data, error } = await supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).in('id', chunk).eq("is_deleted", false);
-          if (error) partTasksError = error;
-          if (data) partTasksData.push(...data);
-        }
+    // Avoid massive .or() PostgREST strings by running efficient parallel independent queries
+    const createdPromise = supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('created_by', userId).eq("is_deleted", false);
+    const wsPromise = workspaceIds.length > 0 ? supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).in('workspace_id', workspaceIds).eq("is_deleted", false) : Promise.resolve({ data: [], error: null });
+    
+    // Chunk task IDs if it's exceptionally large
+    let partTasksData: any[] = [];
+    let partTasksError = null;
+    if (participantTaskIds.length > 0) {
+      const CHUNK_SIZE = 150;
+      for (let i = 0; i < participantTaskIds.length; i += CHUNK_SIZE) {
+        const chunk = participantTaskIds.slice(i, i + CHUNK_SIZE);
+        const { data, error } = await supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).in('id', chunk).eq("is_deleted", false);
+        if (error) partTasksError = error;
+        if (data) partTasksData.push(...data);
       }
-
-      tasksPromise = Promise.all([createdPromise, wsPromise]).then(([cRes, wRes]) => {
-        if (cRes.error) return { data: null, error: cRes.error };
-        if (wRes.error) return { data: null, error: wRes.error };
-        if (partTasksError) return { data: null, error: partTasksError };
-        
-        // Merge and deduplicate
-        const merged = [...(cRes.data || []), ...(wRes.data || []), ...partTasksData];
-        const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
-        
-        return { data: unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), error: null };
-      });
     }
+
+    tasksPromise = Promise.all([createdPromise, wsPromise]).then(([cRes, wRes]) => {
+      if (cRes.error) return { data: null, error: cRes.error };
+      if (wRes.error) return { data: null, error: wRes.error };
+      if (partTasksError) return { data: null, error: partTasksError };
+      
+      // Merge and deduplicate
+      const merged = [...(cRes.data || []), ...(wRes.data || []), ...partTasksData];
+      const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+      
+      return { data: unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), error: null };
+    });
 
     let subTasksPromise: any;
-    if (isSuperAdmin) {
-      subTasksPromise = supabaseAdmin
-        .from("sub_tasks")
-        .select(`
-          id, created_at, created_by, assigned_to, subject,
-          status
-        `)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false });
-    } else {
-      const createdSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('created_by', userId).eq("is_deleted", false);
-      const assignedSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('assigned_to', userId).eq("is_deleted", false);
-      
-      subTasksPromise = Promise.all([createdSubPromise, assignedSubPromise]).then(([cRes, aRes]) => {
-        if (cRes.error) return { data: null, error: cRes.error };
-        if (aRes.error) return { data: null, error: aRes.error };
-        const merged = [...(cRes.data || []), ...(aRes.data || [])];
-        const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
-        return { data: unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), error: null };
-      });
-    }
+    const createdSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('created_by', userId).eq("is_deleted", false);
+    const assignedSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('assigned_to', userId).eq("is_deleted", false);
+    
+    subTasksPromise = Promise.all([createdSubPromise, assignedSubPromise]).then(([cRes, aRes]) => {
+      if (cRes.error) return { data: null, error: cRes.error };
+      if (aRes.error) return { data: null, error: aRes.error };
+      const merged = [...(cRes.data || []), ...(aRes.data || [])];
+      const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+      return { data: unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), error: null };
+    });
 
 
     let ticketsPromise: any;
-    if (isSuperAdmin) {
-      ticketsPromise = supabaseAdmin
-        .from("tickets")
-        .select(`
-          id, created_at, creator_id, title,
-          status_id, status_master(status_name),
-          priority_id, priority:priority_master(priority_name),
-          due_date, assignee_id
-        `)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false });
-    } else {
-      const createdTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('creator_id', userId).eq("is_deleted", false);
-      const assignedTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('assignee_id', userId).eq("is_deleted", false);
-      
-      ticketsPromise = Promise.all([createdTkPromise, assignedTkPromise]).then(([cRes, aRes]) => {
-        if (cRes.error) return { data: null, error: cRes.error };
-        if (aRes.error) return { data: null, error: aRes.error };
-        const merged = [...(cRes.data || []), ...(aRes.data || [])];
-        const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
-        return { data: unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), error: null };
-      });
-    }
+    const createdTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('creator_id', userId).eq("is_deleted", false);
+    const assignedTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('assignee_id', userId).eq("is_deleted", false);
+    
+    ticketsPromise = Promise.all([createdTkPromise, assignedTkPromise]).then(([cRes, aRes]) => {
+      if (cRes.error) return { data: null, error: cRes.error };
+      if (aRes.error) return { data: null, error: aRes.error };
+      const merged = [...(cRes.data || []), ...(aRes.data || [])];
+      const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+      return { data: unique.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), error: null };
+    });
 
     let requirementsQuery = supabaseAdmin
       .from("requirements")
@@ -144,38 +106,23 @@ export async function fetchLiveDashboardMetrics() {
         due_date
       `)
       .eq("is_deleted", false)
+      .eq('creator_id', userId)
       .order("created_at", { ascending: false });
-
-    if (!isSuperAdmin) {
-      requirementsQuery = requirementsQuery.eq('creator_id', userId);
-    }
     
     const requirementsPromise = requirementsQuery;
 
     let workspacesPromise;
-    if (isSuperAdmin) {
-      workspacesPromise = supabaseAdmin
-        .from("workspaces")
-        .select(`
-          id, created_at, workspace_name, parent_workspace_id,
-          status_id, status_master(status_name),
-          end_date
-        `)
-        .eq('is_deleted', false)
-        .order("created_at", { ascending: false });
-    } else {
-      const idsToFetch = [...workspaceIds];
-      workspacesPromise = idsToFetch.length > 0 ? supabaseAdmin
-        .from("workspaces")
-        .select(`
-          id, created_at, workspace_name, parent_workspace_id,
-          status_id, status_master(status_name),
-          end_date
-        `)
-        .in('id', idsToFetch)
-        .eq('is_deleted', false)
-        .order("created_at", { ascending: false }) : Promise.resolve({ data: [], error: null });
-    }
+    const idsToFetch = [...workspaceIds];
+    workspacesPromise = idsToFetch.length > 0 ? supabaseAdmin
+      .from("workspaces")
+      .select(`
+        id, created_at, workspace_name, parent_workspace_id,
+        status_id, status_master(status_name),
+        end_date
+      `)
+      .in('id', idsToFetch)
+      .eq('is_deleted', false)
+      .order("created_at", { ascending: false }) : Promise.resolve({ data: [], error: null });
 
     // Execute parallel groups
     const [

@@ -38,7 +38,7 @@ export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   useEffect(() => {
     setMounted(true);
@@ -61,16 +61,16 @@ export default function Navbar() {
 
   const toggleQuickTheme = () => {
     if (isLight) {
-      setTheme("midnight-operations");
+      setTheme("cyberpunk");
     } else {
-      setTheme("executive-light");
+      setTheme("light-neumorphic");
     }
   };
 
   return (
     <>
       <header
-        className={`sticky top-0 z-40 flex h-16 w-full shrink-0 font-sharp items-center justify-between border-b border-border bg-surface transition-all duration-300 px-6`}
+        className={`theme-card-structural rounded-none border-t-0 border-l-0 border-r-0 sticky top-0 z-40 flex h-16 w-full shrink-0 font-sharp items-center justify-between transition-all duration-300 px-6`}
       >
         <div className="flex items-center gap-4 flex-1 max-w-md">
           <div className="relative flex items-center w-full">
@@ -79,7 +79,7 @@ export default function Navbar() {
               type="text" 
               placeholder="Search tickets, documentation, quick masters..." 
               className={`h-10 w-full rounded-xl border pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${
-                "bg-elevated/80 border-border text-foreground placeholder-gray-400 focus:bg-white focus:border-accent"
+                "theme-input-structural text-foreground placeholder-gray-400 focus:bg-surface/50 focus:border-accent"
               }`}
             />
             <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold pointer-events-none ${
@@ -96,7 +96,7 @@ export default function Navbar() {
             variant="outline"
             size="icon"
             onClick={toggleQuickTheme}
-            className="!h-10 !w-10 rounded-xl bg-surface border-border text-muted hover:bg-muted hover:text-foreground"
+            className="!h-10 !w-10 rounded-xl theme-card-structural text-muted hover:bg-muted hover:text-foreground"
           >
             {isLight ? <Moon className="h-4 w-4 text-accent" /> : <Sun className="h-4 w-4 text-amber-500" />}
           </AppButton>
@@ -127,7 +127,7 @@ export default function Navbar() {
             {profileOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                <div className={`absolute right-0 top-12 mt-2 w-56 rounded-xl border p-1.5 shadow-md z-50 animate-in fade-in zoom-in-95 duration-150 bg-surface border-border text-foreground`}>
+                <div className={`absolute right-0 top-12 mt-2 w-56 rounded-xl p-1.5 shadow-md z-50 animate-in fade-in zoom-in-95 duration-150 theme-card-structural text-foreground`}>
                   <div className={`px-2 py-2 border-b space-y-0.5 border-border`}>
                     <span className="text-sm font-medium block truncate">{userData?.full_name || 'System Operator'}</span>
                     <span className="text-xs text-gray-500 block truncate">{userData?.email}</span>
@@ -168,3 +168,4 @@ export default function Navbar() {
     </>
   );
 }
+

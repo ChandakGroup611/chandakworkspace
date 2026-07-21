@@ -14,6 +14,10 @@ const PerformanceWidget = dynamic(() => import("../widgets/PerformanceWidget").t
 const SlaGovernanceWidget = dynamic(() => import("../widgets/SlaGovernanceWidget").then(m => m.SlaGovernanceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
 const WorkloadIntelligenceWidget = dynamic(() => import("../widgets/WorkloadIntelligenceWidget").then(m => m.WorkloadIntelligenceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
 
+const StatusComparisonWidget = dynamic(() => import("../widgets/StatusComparisonWidget").then(m => m.StatusComparisonWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+const RiskIntelligenceWidget = dynamic(() => import("../widgets/RiskIntelligenceWidget").then(m => m.RiskIntelligenceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+const ResolutionVelocityWidget = dynamic(() => import("../widgets/ResolutionVelocityWidget").then(m => m.ResolutionVelocityWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+
 export const WidgetRegistry: Record<string, React.ComponentType<any>> = {
   kpi: ExecutiveKPIWidget,
   charts: ChartWidget,
@@ -24,4 +28,7 @@ export const WidgetRegistry: Record<string, React.ComponentType<any>> = {
   team_performance: PerformanceWidget,
   sla_governance: SlaGovernanceWidget,
   workload_intelligence: WorkloadIntelligenceWidget,
+  status_comparison: StatusComparisonWidget,
+  risk_intelligence: RiskIntelligenceWidget,
+  resolution_velocity: ResolutionVelocityWidget,
 };

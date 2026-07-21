@@ -102,7 +102,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
   return (
     <div className="space-y-8">
       {/* Add New Renewal */}
-      <AppCard className={`p-6 border bg-surface border-border`}>
+      <AppCard className={`p-6 theme-card-structural`}>
         <h3 className="text-lg font-bold text-emerald-500 mb-4 flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Log AMC Renewal

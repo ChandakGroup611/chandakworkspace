@@ -52,7 +52,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <Activity className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <h3 className={`font-bold ${"text-foreground"}`}>Workload Intelligence</h3>
+              <h3 className={`font-bold text-accent`}>Workload Intelligence</h3>
               <p className="text-xs text-gray-500">Capacity & bandwidth analysis</p>
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             {/* Primary Capacity Meter */}
             <div className="space-y-2">
               <div className="flex items-end justify-between">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Utilization</span>
+                <span className="text-xs font-bold text-accent uppercase tracking-wider">Utilization</span>
                 <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-rose-500' : 'text-accent'}`}>
                   {metrics.capacity_percentage}%
                 </span>
@@ -97,7 +97,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             <div className="grid grid-cols-2 gap-3">
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 mb-2" />
-                <span className="block text-2xl font-bold text-gray-900 dark:text-white mb-1">{metrics.active_tasks}</span>
+                <span className="block text-2xl font-bold text-accent mb-1">{metrics.active_tasks}</span>
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Active Directives</span>
               </div>
               <div className={`p-4 rounded-xl border bg-rose-50 border-rose-100`}>
@@ -107,7 +107,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               </div>
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <Clock className="h-4 w-4 text-accent mb-2" />
-                <span className="block text-2xl font-bold text-gray-900 dark:text-white mb-1">{metrics.estimated_hours}h</span>
+                <span className="block text-2xl font-bold text-accent mb-1">{metrics.estimated_hours}h</span>
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Estimated Load</span>
               </div>
               <div className={`p-4 rounded-xl border flex flex-col justify-center bg-accent/10 border-blue-100`}>
@@ -130,3 +130,4 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
     </div>
   );
 }
+

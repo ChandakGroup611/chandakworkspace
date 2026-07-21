@@ -38,7 +38,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const router = useRouter();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   const [workspaces, setWorkspaces] = useState<any[]>(initialData?.workspaces || []);
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);
@@ -596,9 +596,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 placeholder="Search workspaces..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`pl-9 pr-4 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-accent w-48 transition-all ${
-                  "bg-surface border-border text-foreground focus:w-64"
-                }`}
+                className={`pl-9 pr-4 py-1.5 text-sm rounded-lg outline-none focus:ring-2 focus:ring-accent w-48 transition-all ${ "theme-card-structural text-foreground focus:w-64" }`}
               />
             </div>
             <AppButton variant="outline" size="sm" leftIcon={<Filter className="h-4 w-4" />}>
@@ -797,7 +795,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           <div className="space-y-6">
             
             {/* Section 1: Workspace Identity */}
-            <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
+            <div className={`p-5 rounded-2xl ${"theme-card-structural shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
                 <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
                   <Building2 className="h-4 w-4" />
@@ -809,9 +807,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Company / Entity Link *</label>
                   <select 
-                    className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${
-                      "bg-surface border-border text-foreground"
-                    }`}
+                    className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                     value={newWS.company_id}
                     onChange={e => setNewWS({...newWS, company_id: e.target.value})}
                   >
@@ -837,9 +833,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Link</label>
                     <select 
-                      className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${
-                        "bg-surface border-border text-foreground"
-                      }`}
+                      className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                       value={newWS.parent_workspace_id}
                       onChange={e => {
                         const parentId = e.target.value;
@@ -861,7 +855,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             </div>
 
             {/* Section 2: Timeline & Objectives */}
-            <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
+            <div className={`p-5 rounded-2xl ${"theme-card-structural shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
                 <div className={`p-1.5 rounded-lg bg-amber-100 text-amber-600`}>
                   <Target className="h-4 w-4" />
@@ -883,9 +877,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
                 <textarea 
-                  className={`w-full h-24 p-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-none ${
-                    "bg-surface border-border text-foreground"
-                  }`}
+                  className={`w-full h-24 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-none ${ "theme-card-structural text-foreground" }`}
                   placeholder="Detailed project requirements, goals, and constraints..."
                   value={newWS.description}
                   onChange={e => setNewWS({...newWS, description: e.target.value})}
@@ -894,7 +886,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             </div>
 
             {/* Section 3: Access & Security */}
-            <div className={`p-5 rounded-2xl border ${"bg-surface border-border shadow-[var(--shadow-ambient)]"}`}>
+            <div className={`p-5 rounded-2xl ${"theme-card-structural shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
                 <div className={`p-1.5 rounded-lg bg-emerald-100 text-emerald-600`}>
                   <ShieldCheck className="h-4 w-4" />
@@ -935,9 +927,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         e.preventDefault();
                       }
                     }}
-                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-accent ${
-                      "bg-surface border-border text-foreground"
-                    }`}
+                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-accent ${ "theme-card-structural text-foreground" }`}
                   />
                 </div>
 
@@ -1038,3 +1028,4 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     </PageContainer>
   );
 }
+

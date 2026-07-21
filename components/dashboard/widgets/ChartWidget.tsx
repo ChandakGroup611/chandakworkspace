@@ -1,16 +1,27 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
 import { LineChart, Activity } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from "recharts";
 
 interface ChartWidgetProps {
   metrics?: any[];
 }
 
 export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
-  
   const burndownData = useMemo(() => {
     const days: Record<string, { tasksT: number; tasksR: number; wsT: number; wsR: number; ticT: number; ticR: number; reqT: number; reqR: number; }> = {};
     const now = new Date();
@@ -59,10 +70,8 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
 
       return {
         day,
-        tasksActive: rTasksT - rTasksR,
-        wsActive: rWsT - rWsR,
-        ticActive: rTicT - rTicR,
-        reqActive: rReqT - rReqR,
+        Tasks: rTasksT - rTasksR,
+        Tickets: rTicT - rTicR,
       };
     });
   }, [metrics]);
@@ -77,92 +86,115 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
     });
 
     return [
-      { name: "Tickets", value: tickets, color: "#a855f7" }, // purple-500
-      { name: "Tasks", value: tasks, color: "#3b82f6" },     // blue-500
-      { name: "Requirements", value: reqs, color: "#10b981" }, // emerald-500
-      { name: "Workspaces", value: workspaces, color: "#f59e0b" }, // amber-500
+      { name: "Tickets", value: tickets, color: "#a855f7" },
+      { name: "Tasks", value: tasks, color: "#3b82f6" },
+      { name: "Requirements", value: reqs, color: "#10b981" },
+      { name: "Workspaces", value: workspaces, color: "#f59e0b" },
     ].filter(d => d.value > 0);
   }, [metrics]);
 
   const total = donutData.reduce((acc, curr) => acc + curr.value, 0);
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background/95 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl">
+          <p className="text-sm font-semibold mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center gap-2 text-xs">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+              <span className="text-muted-foreground">{entry.name}:</span>
+              <span className="font-bold">{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomPieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
+      return (
+        <div className="bg-background/95 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl">
+          <div className="flex items-center gap-2 text-xs">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
+            <span className="text-muted-foreground">{data.name}:</span>
+            <span className="font-bold">{data.value}</span>
+            <span className="text-muted-foreground ml-1">({percentage}%)</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
       
-      {/* ACTIVE ITEMS TREND - Using Area Chart for Executive Feel */}
+      {/* ACTIVE ITEMS TREND - 2D Modern Bar */}
       <BaseWidget
         id="chart-trend"
         title="Active Items Trend"
         icon={<Activity className="w-5 h-5" />}
         headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View Details</span>}
+        overflowHidden
       >
-        <div className="h-64 w-full pt-4">
+        <div className="flex-1 w-full h-full pt-4 min-h-[280px] pb-2">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={burndownData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorTickets" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-              <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dx={-10} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))', fontSize: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
-                itemStyle={{ color: 'hsl(var(--foreground))' }}
-              />
-              <Area type="monotone" dataKey="tasksActive" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTasks)" strokeWidth={2} name="Tasks" />
-              <Area type="monotone" dataKey="ticActive" stroke="#a855f7" fillOpacity={1} fill="url(#colorTickets)" strokeWidth={2} name="Tickets" />
-              <Area type="monotone" dataKey="reqActive" stroke="#10b981" fillOpacity={0} strokeWidth={2} name="Requirements" />
-              <Area type="monotone" dataKey="wsActive" stroke="#f59e0b" fillOpacity={0} strokeWidth={2} name="Workspaces" />
-            </AreaChart>
+            <BarChart data={burndownData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
+              <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--muted)', opacity: 0.2 }} />
+              <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+              <Bar dataKey="Tasks" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="Tickets" stackId="a" fill="#a855f7" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </BaseWidget>
 
-      {/* DONUT CHART */}
+      {/* DONUT CHART - 2D Modern Donut */}
       <BaseWidget
         id="chart-distribution"
         title="Volume Distribution"
         icon={<LineChart className="w-5 h-5" />}
         headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By Type</span>}
+        overflowHidden
       >
-        <div className="flex items-center h-64">
+        <div className="flex items-center flex-1 w-full h-full min-h-[280px] pt-2 pb-2">
           <div className="w-1/2 h-full flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={donutData}
-                  innerRadius="65%"
-                  outerRadius="90%"
-                  paddingAngle={2}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
                   dataKey="value"
                   stroke="none"
-                  cornerRadius={4}
                 >
                   {donutData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))', fontSize: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
-                />
+                <Tooltip content={<CustomPieTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="w-1/2 pl-6 space-y-4">
+          <div className="w-1/2 pl-4 space-y-4 relative z-10">
             {donutData.map((d, i) => (
               <div key={i} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: d.color }}></div>
                   <div className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{d.name}</div>
                 </div>
-                <div className="text-sm font-bold bg-surface border border-border px-2 py-0.5 rounded-md">
+                <div className="text-sm font-bold theme-card-structural px-2 py-0.5 rounded-md">
                   {total > 0 ? Math.round((d.value/total)*100) : 0}%
                 </div>
               </div>
@@ -174,3 +206,4 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
     </div>
   );
 }
+

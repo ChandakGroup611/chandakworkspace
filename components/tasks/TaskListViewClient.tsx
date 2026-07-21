@@ -77,7 +77,7 @@ function DraggableTableHead({
       ref={setNodeRef} 
       style={style} 
       className={cn(
-        "select-none bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors align-middle group/header relative", 
+        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors align-middle group/header relative", 
         col.field_key === "actions" ? "w-[50px]" : "", 
         !isTitle ? "text-center" : "text-left",
         ["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""
@@ -815,7 +815,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="flex flex-wrap items-center gap-3">
             <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0" />
             <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
-            <div className="flex bg-surface border border-border p-0.5 rounded-lg mr-2">
+            <div className="flex theme-card-structural p-0.5 rounded-lg mr-2">
               <AppButton variant="secondary" 
                 onClick={() => setViewMode("list")} 
                 className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-accent text-white" : "text-muted hover:text-foreground"}`}
@@ -858,7 +858,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </div>
         </header>
 
-        <div className="bg-surface rounded-2xl border border-border shadow-sm flex flex-col">
+        <div className="theme-card-structural rounded-2xl shadow-sm flex flex-col">
           {/* Top Row: Tabs, Workspace, Status */}
           <div className="flex items-center justify-between border-b border-border px-4 pt-2">
             <div className="flex items-center gap-6 self-end">
@@ -883,7 +883,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                     setSelectedWorkspaceId(newWsId);
                     fetchTasksData(1, false, newWsId);
                   }}
-                  className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
                 >
                   <option value="">All Workspaces</option>
                   {allWorkspaces.map((ws: any) => (
@@ -894,7 +894,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </select>
               </div>
 
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
                 <option value="">All Statuses</option>
                 {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -903,7 +903,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
           {/* Bottom Row: Priority, Escalated, Date Range, Search, Actions */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 dark:bg-white/[0.02]">
-            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-10 px-3 w-40 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-10 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
               <option value="">All Priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -914,9 +914,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             </label>
 
             <div className="flex items-center gap-2 mx-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
               <span className="text-sm text-muted">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
             </div>
             
             <div className="relative flex-1">
@@ -925,14 +925,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 placeholder="Search tasks, code..." 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
+                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
               />
             </div>
 
             <AppButton 
               variant="outline"
               onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setQuery(""); setColumnFilters({}); }}
-              className="h-9 px-3 font-medium text-muted border-border hover:bg-surface hover:text-foreground shadow-sm"
+              className="h-9 px-3 font-medium text-muted hover:theme-card-structural hover:text-foreground shadow-sm"
               leftIcon={<RotateCcw className="h-4 w-4" />}
             >
               Reset
@@ -940,7 +940,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <AppButton 
               variant="outline"
               onClick={() => setIsConfigOpen(true)}
-              className="h-9 px-3 font-medium text-muted border-border hover:bg-surface hover:text-foreground shadow-sm"
+              className="h-9 px-3 font-medium text-muted hover:theme-card-structural hover:text-foreground shadow-sm"
               leftIcon={<Settings2 className="h-4 w-4" />}
             >
               Columns
@@ -966,11 +966,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {viewMode === "list" ? (
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-[#06080f] shadow-sm relative">
+        <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-elevated shadow-sm relative">
           <AppTable className="w-full min-w-max border-separate border-spacing-0 table-fixed">
-            <AppTableHeader className="sticky top-0 z-40 bg-white dark:bg-[#06080f]">
+            <AppTableHeader className="sticky top-0 z-40 bg-elevated">
               <AppTableRow>
-                <AppTableHead className="text-center p-0 w-[40px] min-w-[40px] max-w-[40px] sticky left-0 top-0 z-50 bg-white dark:bg-[#06080f]">
+                <AppTableHead className="text-center p-0 w-[40px] min-w-[40px] max-w-[40px] sticky left-0 top-0 z-50 bg-elevated">
                   <input 
                     type="checkbox" 
                     checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
@@ -1051,7 +1051,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         const parts = wsName.split(' - ');
                         const mainWorkspace = parts[0];
                         return (
-                          <AppTableCell className="text-[13px] text-subtle text-center" title={mainWorkspace}>{mainWorkspace}</AppTableCell>
+                          <AppTableCell className="text-[13px] text-subtle text-center truncate max-w-[0px] px-2" title={mainWorkspace}>{mainWorkspace}</AppTableCell>
                         );
                       }
                       case "sub_workspace": {
@@ -1068,17 +1068,17 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         const subParts = subName.split(' - ');
                         const finalSubName = subParts[subParts.length - 1]?.trim() || subName;
                         return (
-                          <AppTableCell className="text-[13px] text-subtle text-center" title={finalSubName}>{finalSubName}</AppTableCell>
+                          <AppTableCell className="text-[13px] text-subtle text-center truncate max-w-[0px] px-2" title={finalSubName}>{finalSubName}</AppTableCell>
                         );
                       }
                       case "department": return (
-                        <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center">
+                        <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center truncate max-w-[0px] px-2">
                           <AppButton variant="secondary" 
                             onClick={(e) => canUpdate && handleDepartmentClick(e, task)} 
-                            className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
+                            className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
                             title={canUpdate ? "Update Department" : "Department"}
                           >
-                            <AppBadge variant="neutral" className={canUpdate ? "border-dashed" : ""}>
+                            <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdate ? "border-dashed" : ""}`}>
                               {task.department?.name || '—'}
                             </AppBadge>
                           </AppButton>
@@ -1788,3 +1788,4 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     </ExperienceProvider>
   );
 }
+

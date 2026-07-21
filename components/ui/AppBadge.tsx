@@ -15,20 +15,20 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       const themeCtx = useTheme();
       theme = themeCtx.theme;
     } catch (e) {}
-    const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+    const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
     const variants = {
       success: isOutline 
-        ? "bg-transparent text-emerald-600 border-emerald-600 dark:text-emerald-400 dark:border-emerald-500"
-        : ("bg-emerald-50 text-emerald-700 border-emerald-200"),
+        ? "bg-transparent text-success border-success"
+        : ("bg-success/10 text-success border-success/30"),
       warning: isOutline
-        ? "bg-transparent text-amber-600 border-amber-600 dark:text-amber-400 dark:border-amber-500"
-        : ("bg-amber-50 text-amber-700 border-amber-200"),
+        ? "bg-transparent text-warning border-warning"
+        : ("bg-warning/10 text-warning border-warning/30"),
       danger: isOutline
-        ? "bg-transparent text-rose-600 border-rose-600 dark:text-rose-400 dark:border-rose-500"
-        : ("bg-rose-50 text-rose-700 border-rose-200"),
+        ? "bg-transparent text-danger border-danger"
+        : ("bg-danger/10 text-danger border-danger/30"),
       info: isOutline
-        ? "bg-transparent text-accent border-accent dark:text-accent dark:border-accent"
+        ? "bg-transparent text-accent border-accent"
         : ("bg-accent/10 text-accent border-accent/30"),
       accent: isOutline
         ? "bg-transparent text-accent border-accent"
@@ -49,7 +49,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       <span
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-wider uppercase select-none transition-colors",
+          "theme-badge-structural inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-wider uppercase select-none transition-colors whitespace-nowrap",
           customColor ? "bg-transparent" : variants[variant],
           className
         )}
@@ -63,3 +63,4 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
 );
 
 AppBadge.displayName = "AppBadge";
+

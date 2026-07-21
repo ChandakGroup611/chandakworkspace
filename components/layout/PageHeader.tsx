@@ -16,7 +16,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+    isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   } catch (e) {}
 
   return (
@@ -51,3 +51,4 @@ export function PageHeader({ title, description, icon, badge, actions, children 
     </div>
   );
 }
+

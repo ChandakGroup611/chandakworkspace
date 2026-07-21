@@ -49,7 +49,7 @@ export default function SLAPage() {
   const canView = roleCode === "SUPER_ADMIN" || hasPermission("SLA_VIEW");
 
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   
   const [slas, setSlas] = useState<SLATracker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +123,7 @@ export default function SLAPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className={`hidden sm:flex p-1 rounded-md border ${isLightMode ? "bg-gray-100 border-gray-200" : "bg-elevated border-border"}`}>
+          <div className={`hidden sm:flex p-1 rounded-md border bg-elevated border-border`}>
             <AppButton variant="secondary"
               onClick={() => setModuleFilter('ALL')}
               className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${moduleFilter === 'ALL' ? 'bg-background shadow-sm text-foreground' : 'text-muted hover:text-foreground'}`}
@@ -156,7 +156,7 @@ export default function SLAPage() {
             onClick={refreshLiveTracking}
             isLoading={isRefreshing}
             leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-            className={isLightMode ? "bg-white border-gray-200 text-gray-700 shadow-sm" : ""}
+            className="bg-surface border-border text-foreground shadow-[var(--shadow-ambient)]"
           >
             Refresh Live Tracking
           </AppButton>
@@ -165,7 +165,7 @@ export default function SLAPage() {
       {/* Interactive SLA Governance Heatmap Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-gray-50/50 dark:hover:bg-white/5'} ${isLightMode ? "bg-white" : ""}`}
+          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-gray-50/50 dark:hover:bg-white/5'} bg-surface`}
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
@@ -175,7 +175,7 @@ export default function SLAPage() {
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-amber-500/10'} ${isLightMode ? "bg-white" : ""}`}
+          className={`cursor-pointer transition-all ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-amber-500/10'} bg-surface`}
           onClick={() => setFilter('UPCOMING')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
@@ -185,7 +185,7 @@ export default function SLAPage() {
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-rose-500/10'} ${isLightMode ? "bg-white" : ""}`}
+          className={`cursor-pointer transition-all ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-rose-500/10'} bg-surface`}
           onClick={() => setFilter('ESCALATED')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
@@ -350,3 +350,4 @@ export default function SLAPage() {
     </div>
   );
 }
+

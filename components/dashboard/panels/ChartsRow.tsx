@@ -96,7 +96,7 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
     <div className="grid-2" style={{ marginBottom: '20px' }}>
       
       {/* ACTIVE ITEMS TREND */}
-      <div className="panel">
+      <div className="panel theme-card-structural">
         <div className="panel-header">
           <i className="ti ti-trending-down" style={{ fontSize: '16px', color: 'var(--accent)' }} aria-hidden="true"></i>
           <span className="panel-title">Active Items Trend</span>
@@ -124,7 +124,7 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
       </div>
 
       {/* DONUT + VELOCITY */}
-      <div className="panel">
+      <div className="panel theme-card-structural">
         <div className="panel-header">
           <i className="ti ti-chart-donut" style={{ fontSize: '16px', color: 'var(--purple)' }} aria-hidden="true"></i>
           <span className="panel-title">Ticket Distribution</span>
@@ -168,7 +168,7 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
           </div>
 
           <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '0.5px solid var(--border)' }}>
-            <div className="section-label" style={{ marginBottom: '8px' }}>Historical Velocity (Mock)</div>
+            <div className="section-label" style={{ marginBottom: '8px' }}>Historical Resolution (Mock)</div>
             <div className="velocity-chart">
               <div className="vel-bar-group">
                 <div className="vel-bars">

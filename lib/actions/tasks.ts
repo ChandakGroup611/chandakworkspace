@@ -1204,20 +1204,15 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  // Check if current user is an Executor
-  const { data: participant } = await supabaseAdmin
-    .from('task_participants')
-    .select('id')
-    .eq('task_id', taskId)
-    .eq('user_id', userId)
-    .eq('participation_role', 'EXECUTOR')
-    .maybeSingle();
+  // Check if current user is Super Admin
+  const { checkServerPermission } = await import("@/lib/permissions");
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
 
-  if (!participant && task.assigned_to !== userId) {
+  if (!isSuperAdmin && task.assigned_to !== userId) {
     await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
       action_attempted: 'UPDATE_ASSIGNMENT'
     }, userId);
-    return { error: "You do not have permission to edit assignees. Only the Assignee or Executors can do this." };
+    return { error: "You do not have permission to edit assignees. Only the Primary Assignee or a Super Admin can do this." };
   }
 
   if (assignees.length === 0) {
@@ -1232,15 +1227,13 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const participants: any[] = [];
   assignees.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'EXECUTOR' }));
 
-  // Add Watchers (Team)
-  stakeholders.forEach((s: any) => {
-    if (!assignees.includes(s.id)) {
-      participants.push({ task_id: taskId, user_id: s.id, participation_role: 'WATCHER' });
-    }
-  });
-
+  // Add Watchers (Team) ONLY if they are not already participants?
+  // Actually, to prevent timeouts on large workspaces, we will NOT bulk re-insert watchers.
+  // The system will just swap the EXECUTORS. Watchers can remain as they are or be handled by other flows.
+  
   // Perform the swap transactionally (via sequential queries in this case)
-  const { error: deleteError } = await supabaseAdmin.from('task_participants').delete().eq('task_id', taskId);
+  // ONLY delete executors, leave explicit watchers alone!
+  const { error: deleteError } = await supabaseAdmin.from('task_participants').delete().eq('task_id', taskId).eq('participation_role', 'EXECUTOR');
   if (deleteError) return { error: deleteError.message };
 
   const { error: insertError } = await supabaseAdmin.from('task_participants').insert(participants);
@@ -1571,3 +1564,4 @@ export async function getTransferableWorkspaces() {
     return [];
   }
 }
+

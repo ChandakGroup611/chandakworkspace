@@ -79,70 +79,70 @@ export default function SettingsGallery() {
     accentColor: string;
   }[] = [
     {
-      id: "midnight-operations",
-      name: "Layered Dark",
-      tagline: "High-Performance Solid Graphite",
-      benefit: "Optimized operational contrast",
-      sentiment: "Tactical & Immersive",
-      icon: Moon,
-      previewBg: "bg-[#111827]",
-      previewBorder: "border-[#334155]",
-      accentColor: "bg-emerald-500",
+      id: "cyberpunk",
+      name: "Cyberpunk",
+      tagline: "Standard Clean Neon",
+      benefit: "Subtle vibrant accents",
+      sentiment: "Creative & Fresh",
+      icon: Zap,
+      previewBg: "bg-[#0a0a0f] text-[#00FFFF]",
+      previewBorder: "border-cyan-500/30",
+      accentColor: "bg-pink-500",
     },
     {
-      id: "executive-light",
-      name: "Quiet Minimalist",
-      tagline: "Warm Executive Whites",
+      id: "glassmorphism",
+      name: "Glassmorphism",
+      tagline: "Standard Clean Translucent",
+      benefit: "Luxurious soft contrast",
+      sentiment: "Premium & Refined",
+      icon: Sparkles,
+      previewBg: "bg-[#f8fafc] text-[#0f172a]",
+      previewBorder: "border-[#e2e8f0]",
+      accentColor: "bg-indigo-500",
+    },
+    {
+      id: "light-neumorphic",
+      name: "Light Neumorphic",
+      tagline: "Standard Soft White UI",
       benefit: "Reduced cognitive load",
       sentiment: "Calm & Focused",
       icon: Sun,
-      previewBg: "bg-[#F8F9FA] text-gray-900",
+      previewBg: "bg-[#ffffff] text-slate-800",
       previewBorder: "border-gray-200",
       accentColor: "bg-blue-600",
     },
     {
-      id: "material-ocean",
-      name: "Material Ocean",
-      tagline: "Crisp Material UI Inspired",
-      benefit: "Clean, high-contrast usability",
-      sentiment: "Familiar & Solid",
+      id: "industrial-control",
+      name: "Industrial Control",
+      tagline: "Frosted Glass Elements",
+      benefit: "Deep frosted immersion",
+      sentiment: "Tactile & Blurred",
       icon: Layers,
-      previewBg: "bg-[#F0F2F5] text-[#1E293B]",
-      previewBorder: "border-[#E2E8F0]",
-      accentColor: "bg-[#0284C7]",
+      previewBg: "bg-[#1e293b] text-[#f8fafc]",
+      previewBorder: "border-white/10",
+      accentColor: "bg-cyan-500",
     },
     {
-      id: "aurora-breeze",
-      name: "Aurora Breeze",
-      tagline: "Stylish Gradient Pastels",
-      benefit: "Vibrant and aesthetic",
-      sentiment: "Creative & Fresh",
-      icon: Zap,
-      previewBg: "bg-[#EEF2FF] text-[#312E81]",
-      previewBorder: "border-indigo-500/30",
-      accentColor: "bg-pink-500",
+      id: "dark-neumorphic",
+      name: "Dark Neumorphic",
+      tagline: "Soft Dark UI Elements",
+      benefit: "Optimized dark contrast",
+      sentiment: "Tactical & Immersive",
+      icon: Moon,
+      previewBg: "bg-[#1e1e1e] text-[#e0e0e0]",
+      previewBorder: "border-[#333333]",
+      accentColor: "bg-emerald-500",
     },
     {
-      id: "pure-elegance",
-      name: "Pure Elegance",
-      tagline: "Minimalist Warm Ivory",
-      benefit: "Luxurious, sophisticated contrast",
-      sentiment: "Premium & Refined",
-      icon: Sparkles,
-      previewBg: "bg-[#FCFBF9] text-[#1C1917]",
-      previewBorder: "border-[#D6D3D1]",
-      accentColor: "bg-[#D4AF37]",
-    },
-    {
-      id: "pristine-white",
-      name: "Pristine White",
-      tagline: "Ultra Sharp Crystal Clear",
-      benefit: "Maximum clarity and brightness",
-      sentiment: "Pristine & Perfect",
+      id: "pure-white",
+      name: "Pure Bright White",
+      tagline: "Clean Minimalist Bright",
+      benefit: "Maximum daylight visibility",
+      sentiment: "Crisp & Professional",
       icon: Sun,
-      previewBg: "bg-[#FFFFFF] text-[#0F172A]",
-      previewBorder: "border-[#E2E8F0]",
-      accentColor: "bg-[#3B82F6]",
+      previewBg: "bg-[#ffffff] text-[#000000]",
+      previewBorder: "border-[#e5e5e5]",
+      accentColor: "bg-blue-600",
     },
   ];
 
@@ -210,7 +210,7 @@ export default function SettingsGallery() {
   ];
 
 
-  const isLightMode = theme === "executive-light" || theme === "material-ocean" || theme === "aurora-breeze" || theme === "pure-elegance" || theme === "pristine-white";
+  const isLightMode = theme === "light-neumorphic" || theme === "industrial-control" || theme === "glassmorphism";
 
   return (
     <div className="space-y-8 pb-12">
@@ -247,10 +247,10 @@ export default function SettingsGallery() {
                   setTheme(t.id);
                   triggerToast(`Theme applied: ${t.name}`);
                 }}
-                className={`group relative flex flex-col justify-between rounded-2xl border p-5 cursor-pointer transition-all duration-300 tactile-lift ${
+                className={`group relative flex flex-col justify-between rounded-2xl p-5 cursor-pointer transition-all duration-300 tactile-lift ${
                   isSelected 
-                    ? `ring-2 ring-blue-500 shadow-xl bg-white border-blue-500` 
-                    : `bg-white/50 border-border hover:bg-white`
+                    ? `ring-2 ring-blue-500 shadow-xl theme-card-structural border-blue-500` 
+                    : `theme-card-structural opacity-80 border-border hover:opacity-100 hover:-translate-y-1`
                 }`}
               >
                 {/* Active Check Indicator */}
@@ -340,8 +340,8 @@ export default function SettingsGallery() {
                 }}
                 className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
                   isSelected 
-                    ? `ring-2 ring-blue-500 bg-white border-blue-500 shadow-md`
-                    : `bg-white/50 border-border hover:bg-white`
+                    ? `ring-2 ring-blue-500 theme-card-structural border-blue-500 shadow-md`
+                    : `theme-card-structural opacity-80 border-border hover:opacity-100`
                 }`}
               >
                 <div className={`w-8 h-8 rounded-full ${a.hex} ${isSelected ? "ring-2 ring-offset-2 ring-offset-background ring-current" : ""}`} />
@@ -354,8 +354,8 @@ export default function SettingsGallery() {
           <div
             className={`p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 ${
               accentColor.startsWith("#") 
-                ? `ring-2 ring-blue-500 bg-white border-blue-500 shadow-md`
-                : `bg-white/50 border-border hover:bg-white`
+                ? `ring-2 ring-blue-500 theme-card-structural border-blue-500 shadow-md`
+                : `theme-card-structural opacity-80 border-border hover:opacity-100`
             }`}
           >
             <div 
@@ -396,7 +396,7 @@ export default function SettingsGallery() {
         {/* Sub-grid A: Font Families Selection */}
         <div className="space-y-2">
           <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Selector</span>
-          <div className={`p-4 rounded-xl border transition-all duration-200 bg-white/60 border-border`}>
+          <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
             <label className={`block text-xs font-bold mb-2 ${"text-foreground"}`}>System Font Style</label>
             <div className="relative">
               <select
@@ -406,9 +406,7 @@ export default function SettingsGallery() {
                   setFontFamily(selected);
                   triggerToast(`Typeface active: ${fontsList.find(f => f.id === selected)?.name}`);
                 }}
-                className={`w-full appearance-none p-3 pl-4 pr-10 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer text-base ${
-                  "bg-surface border-border text-foreground"
-                }`}
+                className={`w-full appearance-none p-3 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer text-base ${ "theme-card-structural text-foreground" }`}
                 style={{ fontFamily: fontsList.find(f => f.id === fontFamily)?.familyValue || 'inherit' }}
               >
                 {fontsList.map((f) => (
@@ -434,7 +432,7 @@ export default function SettingsGallery() {
           <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">B. Custom Numeric Sizing</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            <div className={`p-4 rounded-xl border transition-all duration-200 bg-white/60 border-border`}>
+            <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
               <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
                 <span className={`text-xs font-bold ${"text-foreground"}`}>Base Text Size</span>
                 <AppBadge variant="info">{baseFontSize}px</AppBadge>
@@ -454,13 +452,13 @@ export default function SettingsGallery() {
                   max="24"
                   value={baseFontSize}
                   onChange={(e) => setBaseFontSize(Number(e.target.value))}
-                  className={`w-14 px-2 py-1 text-xs rounded border text-center bg-surface border-border`}
+                  className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2 font-medium">Controls the root scaling of the entire application.</p>
             </div>
 
-            <div className={`p-4 rounded-xl border transition-all duration-200 bg-white/60 border-border`}>
+            <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
               <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
                 <span className={`text-xs font-bold ${"text-foreground"}`}>Subtext / UI Size</span>
                 <AppBadge variant="info">{subtextFontSize}px</AppBadge>
@@ -480,7 +478,7 @@ export default function SettingsGallery() {
                   max="18"
                   value={subtextFontSize}
                   onChange={(e) => setSubtextFontSize(Number(e.target.value))}
-                  className={`w-14 px-2 py-1 text-xs rounded border text-center bg-surface border-border`}
+                  className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2 font-medium">Controls the sizes of secondary labels and badges.</p>
@@ -504,8 +502,8 @@ export default function SettingsGallery() {
                   }}
                   className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                     isSelected 
-                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] border-blue-500` 
-                      : `hover:border-white/10 bg-white/60 border-border`
+                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] border-blue-500 theme-card-structural` 
+                      : `hover:border-white/10 theme-card-structural opacity-80 hover:opacity-100 border-border`
                   }`}
                 >
                   <div className="space-y-1">

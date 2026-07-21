@@ -110,7 +110,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           <Flame className="h-4 w-4 text-rose-400" />
           <AppCardTitle>Operational Heatmap Matrix</AppCardTitle>
         </div>
-        <span className="text-xs text-gray-500 font-medium">Ingress vs SLA Resolution</span>
+        <span className="text-xs text-accent font-bold">Ingress vs SLA Resolution</span>
       </AppCardHeader>
 
       <AppCardContent className="flex-1 flex flex-col justify-between space-y-4 pt-2">
@@ -118,7 +118,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         <div className="flex-1 flex flex-col justify-between space-y-2">
           {heatmapData.map((dItem) => (
             <div key={dItem.day} className="flex items-center gap-2">
-              <span className="w-8 text-[0.8rem] font-semibold text-gray-400 select-none">
+              <span className="w-8 text-[0.8rem] font-bold text-accent select-none">
                 {dItem.day}
               </span>
               <div className="flex-1 grid grid-cols-6 gap-1.5">
@@ -174,3 +174,4 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
     </AppCard>
   );
 }
+

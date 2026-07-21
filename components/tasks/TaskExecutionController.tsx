@@ -24,7 +24,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   const router = useRouter();
   const { hasPermission } = usePermissions();
@@ -649,19 +649,21 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const targetStatusId = pendingStatus || currentStatusCode;
   const targetStatusObj = statuses.find(s => s.code === targetStatusId || s.status_code === targetStatusId);
   const isEffectivelyFrozen = pendingStatus ? (targetStatusObj?.is_closed ?? isFrozen) : isFrozen;
+  const canBypassFreeze = task.currentUserIsSuperAdmin || hasPermission("WORKSPACES_MANAGE") || hasPermission("REQUIREMENTS_MANAGE");
+  const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
   
   // Roles
-  const isOwner = task.currentUserCanAct; // Owner/Assignee or SuperAdmin
+  const isOwner = task.currentUserCanAct || canBypassFreeze; // Owner/Assignee or SuperAdmin/Executive
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   
   // Owners and Executors can edit core properties, provided they have TASKS_UPDATE permission
-  const canEditCore = !readOnly && (isOwner || isExecutor) && !isEffectivelyFrozen && hasPermission("TASKS_UPDATE");
+  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && hasPermission("TASKS_UPDATE");
   const canEditAux = canEditCore;
   const canDeleteTask = !readOnly && isOwner && canDelete;
   
   // Reviewers & Watchers
-  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer) && !isEffectivelyFrozen);
+  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer) && !effectivelyFrozenForUser);
   // Filter inherited workspace members to remove anyone explicitly assigned
   const explicitExecutors = [...(task.task_assignees || [])];
   
@@ -702,14 +704,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4">
         
         {/* Timeline & Meta Block */}
-        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 bg-surface border-border/80 shadow-[var(--shadow-ambient)] space-y-4`}>
+        <div className={`theme-card-structural p-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 space-y-4`}>
           <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Timeline & Meta</h4>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Priority</span>
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border dark:border-white/10" style={{ backgroundColor: isLightMode ? `${task.priority?.color}15` || '#f1f5f9' : `${task.priority?.color}25` || '#1e293b' }}>
+                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border dark:border-white/10" style={{ backgroundColor: `var(--accent-primary)15` }}>
                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
                   <span className="text-xs font-semibold" style={{ color: task.priority?.color || ("#64748b") }}>{task.priority?.name || "Standard"}</span>
                 </div>
@@ -795,7 +797,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         </div>
 
         {/* Execution Team Block */}
-        <div className={`p-4 rounded-xl border transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 bg-accent/10/50 border-blue-100/50 space-y-4`}>
+        <div className={`theme-card-structural p-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 space-y-4`}>
           <h4 className="text-[10px] font-bold uppercase tracking-widest text-accent mb-1 border-b border-blue-100 dark:border-accent/10 pb-2 flex items-center gap-2"><Users2 className="w-3.5 h-3.5" /> Execution Team</h4>
           
           <div className="grid grid-cols-2 gap-4">
@@ -828,7 +830,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <div className="space-y-1.5 col-span-2 sm:col-span-1">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">Executors</span>
-                { !readOnly && (isExecutor || task.currentUserIsSuperAdmin) && !isEffectivelyFrozen && (
+                { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
                   <AppButton variant="secondary" 
                     onClick={async () => {
                       if (!isEditingAssignees) {
@@ -853,7 +855,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
               
               {isEditingAssignees ? (
-                <div ref={assigneesRef} className={`p-2 rounded-xl border max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 bg-surface border-emerald-200`}>
+                <div ref={assigneesRef} className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 theme-card-structural border-emerald-200`}>
                   <div className="flex flex-col gap-1">
                     {stakeholders.map(s => (
                       <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-md transition-colors">
@@ -901,9 +903,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       </div>
 
       {/* Interactive Lifecycle State Transition Panel (MOVED TO TOP) */}
-      <div className={`p-4 rounded-xl border shadow-sm space-y-3 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:border-accent/30 dark:hover:shadow-purple-500/20 dark:hover:border-accent/40 ${
-        "bg-surface border-border/80"
-      }`}>
+      <div className={`p-4 rounded-xl shadow-sm space-y-3 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:border-accent/30 dark:hover:shadow-purple-500/20 dark:hover:border-accent/40 ${ "theme-card-structural /80" }`}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status Field</label>
@@ -983,7 +983,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              {currentStatusCode === "ST_RESOLVED" && !readOnly && task.currentUserCanAct && (
+              {currentStatusCode === "ST_RESOLVED" && !readOnly && isOwner && (
                 <>
                   <AppButton 
                     size="sm" 
@@ -1008,7 +1008,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </>
               )}
 
-              { !readOnly && task.status?.is_closed && (task.currentUserCanAct || isExecutor) && (
+              { !readOnly && task.status?.is_closed && (isOwner || isExecutor) && (
                 <AppButton 
                   size="sm" 
                   variant="outline" 
@@ -1195,9 +1195,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             value={remarksDraft}
             onChange={e => setRemarksDraft(e.target.value)}
             disabled={!canAddRemark}
-            className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-accent transition-colors ${
-              "bg-surface border-border text-foreground"
-            } ${!canAddRemark ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full min-h-[64px] p-2 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-accent transition-colors ${ "theme-card-structural text-foreground" } ${!canAddRemark ? 'opacity-50 cursor-not-allowed' : ''}`}
             placeholder={!canAddRemark ? "Task is frozen/read-only." : "Add update notes or handoff remarks..."}
           />
           <div className="flex items-center justify-between gap-3">
@@ -1568,3 +1566,4 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     </ExperienceProvider>
   );
 }
+

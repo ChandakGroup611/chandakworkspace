@@ -29,10 +29,8 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
     const generatedId = React.useId();
     const inputId = id || generatedId;
 
-    let isLight = false;
     try {
       const { theme } = useTheme();
-      isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
     } catch (e) {}
 
     return (
@@ -60,32 +58,29 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             disabled={disabled}
             suppressHydrationWarning={true}
             className={cn(
-              "h-10 w-full rounded-[var(--radius-input,4px)] text-[14px] focus:outline-none transition-all duration-300",
+              "theme-input-structural",
+              "h-10 w-full rounded-xl text-[14px] focus:outline-none transition-all duration-300",
               "bg-surface text-foreground placeholder-muted",
-              // Light/Dark standard border + soft shadow
-              "border border-black/10 dark:border-white/10 shadow-sm",
-              // Hover effect
-              "hover:border-black/30 dark:hover:border-white/30 hover:shadow-md hover:-translate-y-[1px]",
-              // Focus effect overrides
-              "focus:border-accent focus:ring-1 focus:ring-accent focus:shadow-md focus:-translate-y-[1px]",
+              "focus:border-accent focus:ring-1 focus:ring-accent",
               leftIcon ? "pl-10" : "pl-3",
               rightIcon ? "pr-10" : "pr-3.5",
               error ? "border-danger focus:border-danger bg-danger/[0.02]" : "",
-              disabled ? "opacity-50 cursor-not-allowed hover:transform-none hover:shadow-sm" : "",
+              disabled ? "opacity-50 cursor-not-allowed" : "",
               className
             )}
+            style={props.style}
             {...props}
           />
 
           {rightIcon && (
-            <div className="absolute right-3 flex items-center text-gray-400">
+            <div className="absolute right-3 flex items-center text-muted">
               {rightIcon}
             </div>
           )}
         </div>
 
         {!error && helperText && (
-          <p className="text-[0.8rem] text-gray-500 font-medium select-none pl-1">
+          <p className="text-[0.8rem] text-muted font-medium select-none pl-1">
             {helperText}
           </p>
         )}

@@ -33,7 +33,7 @@ export function EnterpriseModalShell({
   className = "",
 }: EnterpriseModalShellProps) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   // Prevent background scrolling
   useEffect(() => {
@@ -55,9 +55,7 @@ export function EnterpriseModalShell({
 
       {/* Modal Container */}
       <div 
-        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl shadow-2xl overflow-hidden border ${
-          "bg-surface border-border shadow-xl"
-        } ${className}`}
+        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl shadow-2xl overflow-hidden ${ "theme-card-structural shadow-xl" } ${className}`}
         style={{
           maxHeight: "calc(100vh - 48px)" // Safe spacing
         }}
@@ -100,3 +98,4 @@ export function EnterpriseModalShell({
     </div>
   );
 }
+

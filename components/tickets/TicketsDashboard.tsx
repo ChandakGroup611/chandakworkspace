@@ -43,28 +43,28 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+        <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-accent/5 group-hover:bg-accent/10 transition-colors" />
           <Ticket className="w-8 h-8 text-accent mb-3" />
           <div className="text-3xl font-black text-foreground">{totalTickets}</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Total Tickets</div>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+        <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-accent/5 group-hover:bg-accent/10 transition-colors" />
           <Clock className="w-8 h-8 text-accent mb-3" />
           <div className="text-3xl font-black text-foreground">{openTickets}</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Open Tickets</div>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+        <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors" />
           <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-3" />
           <div className="text-3xl font-black text-foreground">{resolvedTickets}</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Resolved ({resolutionRate}%)</div>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+        <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
           <AlertCircle className="w-8 h-8 text-red-500 mb-3" />
           <div className="text-3xl font-black text-red-500">{breachedSla}</div>
@@ -75,7 +75,7 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ticket Volume Trends */}
-        <div className="bg-surface border border-border rounded-2xl p-6">
+        <div className="theme-card-structural rounded-2xl p-6">
           <h3 className="text-sm font-bold text-foreground mb-6 uppercase tracking-wider">7-Day Ticket Volume</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -101,7 +101,7 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
         </div>
 
         {/* Agent Workload */}
-        <div className="bg-surface border border-border rounded-2xl p-6">
+        <div className="theme-card-structural rounded-2xl p-6">
           <h3 className="text-sm font-bold text-foreground mb-6 uppercase tracking-wider">Top Agent Workload (Open)</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">

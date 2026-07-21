@@ -72,7 +72,7 @@ export default function AMCPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme();
-    isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+    isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   } catch (e) {}
 
   const [records, setRecords] = useState<any[]>([]);
@@ -1599,3 +1599,4 @@ export default function AMCPage() {
     </PageContainer>
   );
 }
+

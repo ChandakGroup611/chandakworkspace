@@ -53,19 +53,19 @@ export function TicketRightPanel({ ticketId, dbId }: { ticketId: string, dbId: s
 
   return (
     <div className="h-full min-h-0" ref={panelRef}>
-      <div className="h-full min-h-0 flex flex-col rounded-3xl border border-border bg-surface p-4 shadow-sm transition-all duration-300">
+      <div className="h-full min-h-0 flex flex-col rounded-3xl theme-card-structural p-4 shadow-sm transition-all duration-300">
         <Tabs defaultValue="chat" onValueChange={setActiveTab} value={activeTab} className="flex flex-col h-full min-h-0">
           <TabsList className="w-full grid grid-cols-2 shrink-0 gap-2 bg-transparent p-0 h-auto">
             <TabsTrigger 
               value="chat" 
-              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl border border-border bg-background hover:bg-surface data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:border-accent data-[state=active]:shadow-md transition-all"
+              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl bg-background hover:theme-card-structural data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:border-accent data-[state=active]:shadow-md transition-all"
             >
               <MessageCircle className="h-4 w-4" />
               Chat
             </TabsTrigger>
             <TabsTrigger 
               value="audit" 
-              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl border border-border bg-background hover:bg-surface data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:border-accent data-[state=active]:shadow-md transition-all"
+              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl bg-background hover:theme-card-structural data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:border-accent data-[state=active]:shadow-md transition-all"
             >
               <ActivitySquare className="h-4 w-4" />
               Audit
@@ -95,7 +95,7 @@ export function TicketRightPanel({ ticketId, dbId }: { ticketId: string, dbId: s
                       <div className="text-muted-foreground">
                         {log.changed_fields?.map((field: string) => (
                           <div key={field}>
-                            Changed <span className="font-mono text-[10px] bg-surface px-1 py-0.5 rounded border border-border">{field}</span>
+                            Changed <span className="font-mono text-[10px] theme-card-structural px-1 py-0.5 rounded">{field}</span>
                           </div>
                         ))}
                       </div>

@@ -23,7 +23,7 @@ export default function AMCAnalyticsPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme() as any;
-    isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+    isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   } catch (e) {}
   const supabase = createClient();
   const { hasPermission } = usePermissions();
@@ -258,3 +258,4 @@ export default function AMCAnalyticsPage() {
     </PageContainer>
   );
 }
+

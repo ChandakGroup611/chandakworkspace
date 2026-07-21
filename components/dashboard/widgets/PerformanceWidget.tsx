@@ -64,7 +64,7 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
               <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Closed</AppTableHead>
               <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Story Pts</AppTableHead>
               <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent w-48">Progress</AppTableHead>
-              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-right w-24">Avg Velocity</AppTableHead>
+              <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-right w-24">Avg Progress</AppTableHead>
             </AppTableRow>
           </AppTableHeader>
           <AppTableBody>

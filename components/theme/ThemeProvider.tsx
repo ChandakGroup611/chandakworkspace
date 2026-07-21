@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "executive-light" | "midnight-operations" | "material-ocean" | "aurora-breeze" | "pure-elegance" | "glass-intelligence" | "enterprise-bento" | "tactical-utility" | "pristine-white";
+export type ThemeType = "dark-neumorphic" | "light-neumorphic" | "industrial-control" | "cyberpunk" | "glassmorphism" | "pure-white";
 export type DensityType = "comfortable" | "compact" | "dense";
 export type FontFamilyType = "inter" | "outfit" | "roboto" | "arial" | "times" | "verdana" | "courier" | "georgia" | "trebuchet" | "comic-sans" | "impact";
 export type FontWeightProfileType = "heavy" | "standard" | "light";
@@ -30,7 +30,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeType>("pristine-white");
+  const [theme, setThemeState] = useState<ThemeType>("light-neumorphic");
   const [density, setDensityState] = useState<DensityType>("comfortable");
   const [tactileFeedback, setTactileFeedbackState] = useState<boolean>(true);
   const [fontFamily, setFontFamilyState] = useState<FontFamilyType>("inter");
@@ -53,7 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const storedSubtextSize = localStorage.getItem("app_subtext_font_size");
 
       const applyState = (state: any) => {
-        if (state.theme && ["executive-light", "midnight-operations", "material-ocean", "aurora-breeze", "pure-elegance", "glass-intelligence", "enterprise-bento", "tactical-utility", "pristine-white"].includes(state.theme)) {
+        if (state.theme && ["dark-neumorphic", "light-neumorphic", "industrial-control", "cyberpunk", "glassmorphism", "pure-white"].includes(state.theme)) {
           setThemeState(state.theme);
         }
         if (state.density && ["comfortable", "compact", "dense"].includes(state.density)) {
@@ -121,7 +121,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     activeSubtextSize?: number
   ) => {
     if (typeof document === "undefined") return;
-    const isLight = activeTheme === "executive-light" || activeTheme === "material-ocean" || activeTheme === "aurora-breeze" || activeTheme === "pure-elegance" || activeTheme === "pristine-white";
+    const isLight = activeTheme === "light-neumorphic" || activeTheme === "glassmorphism" || activeTheme === "pure-white";
     
     // Inject dynamic root classes to gracefully steer hardcoded container defaults
     if (isLight) {

@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const supabase = createClient();
   
   const [logs, setLogs] = useState<any[]>([]);
@@ -99,9 +99,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
         <div className="relative border-l border-gray-200 dark:border-white/10 ml-3 space-y-6">
           {logs.map((log, idx) => (
             <div key={log.id || idx} className="relative pl-6 animate-in fade-in slide-in-from-bottom-2">
-              <span className={`absolute -left-3.5 top-0.5 h-7 w-7 rounded-full border-4 flex items-center justify-center ${
-                "bg-surface border-white shadow-[var(--shadow-ambient)]"
-              }`}>
+              <span className={`absolute -left-3.5 top-0.5 h-7 w-7 rounded-full border-4 flex items-center justify-center ${ "theme-card-structural border-white shadow-[var(--shadow-ambient)]" }`}>
                 {getActionIcon(log.action)}
               </span>
               <div className={`p-3 rounded-xl border ${
@@ -113,9 +111,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
                   </strong> {getActionText(log)}
                 </p>
                 {log.action === 'COMMENT' && log.new_state?.message && (
-                  <div className={`mt-2 p-2 rounded-md border text-xs whitespace-pre-wrap ${
-                    "bg-surface border-border text-muted"
-                  }`}>
+                  <div className={`mt-2 p-2 rounded-md text-xs whitespace-pre-wrap ${ "theme-card-structural text-muted" }`}>
                     {log.new_state.message}
                   </div>
                 )}
@@ -135,3 +131,4 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
     </AppCard>
   );
 }
+

@@ -9,7 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 export default function TaskTimeLogs({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   
   const [logs, setLogs] = useState<any[]>([]);
   const [estimatedHours, setEstimatedHours] = useState<number>(0);
@@ -61,7 +61,7 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
   return (
     <div className="space-y-6">
       {/* Summary Card */}
-      <div className={`p-4 rounded-xl border ${"bg-surface border-border"}`}>
+      <div className={`p-4 rounded-xl ${"theme-card-structural "}`}>
         <div className="flex justify-between items-end mb-2">
           <div className="space-y-1">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Logged</p>
@@ -131,3 +131,4 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
     </div>
   );
 }
+

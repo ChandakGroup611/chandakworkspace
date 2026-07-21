@@ -10,7 +10,7 @@ import { AppButton } from "@/components/ui/AppButton";
 
 export default function NotificationCenter() {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const supabase = createClient();
   const router = useRouter();
 
@@ -104,9 +104,7 @@ export default function NotificationCenter() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className={`absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl border z-50 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200 ${
-            "bg-surface border-border"
-          }`}>
+          <div className={`absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl z-50 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200 ${ "theme-card-structural " }`}>
             <div className={`p-4 border-b flex items-center justify-between border-border bg-gray-50/50`}>
               <div className="flex items-center gap-2">
                 <h3 className={`font-bold ${"text-foreground"}`}>Notifications</h3>
@@ -175,3 +173,4 @@ export default function NotificationCenter() {
     </div>
   );
 }
+

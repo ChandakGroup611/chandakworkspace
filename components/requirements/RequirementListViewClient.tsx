@@ -56,7 +56,7 @@ function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
       ref={setNodeRef} 
       style={style} 
       className={cn(
-        "select-none bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors", 
+        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors", 
         col.field_key === "actions" ? "w-[50px]" : "", 
         !isTitle ? "text-center" : "text-left",
         ["code", "due_date", "created_at", "updated_at", "status_name", "priority_name", "department_name"].includes(col.field_key) ? "whitespace-nowrap" : ""
@@ -369,7 +369,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           </div>
         </header>
 
-        <div className="bg-surface rounded-2xl border border-border shadow-sm flex flex-col">
+        <div className="theme-card-structural rounded-2xl shadow-sm flex flex-col">
           <div className="flex items-center justify-between border-b border-border px-4 pt-2">
             <div className="flex items-center gap-6 self-end">
               {(["ALL","REQUESTER","APPROVER"] as const).map(sc => (
@@ -384,7 +384,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
             </div>
 
             <div className="flex items-center gap-4 pb-2">
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
                 <option value="">All Statuses</option>
                 {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -392,15 +392,15 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           </div>
 
           <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 dark:bg-white/[0.02]">
-            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
               <option value="">All Priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
             
             <div className="flex items-center gap-2 mx-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
               <span className="text-sm text-muted">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
             </div>
             
             <div className="relative flex-1">
@@ -409,7 +409,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                 placeholder="Search requirements, code, department..." 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-9 pl-9 pr-3 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
+                className="w-full text-sm font-medium h-9 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
               />
             </div>
           </div>
@@ -455,7 +455,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                               className={cn(
                                 !["title", "task_summary"].includes(col.field_key) && "text-center",
                                 "text-[13px]",
-                                i === 0 && "sticky left-0 bg-white dark:bg-[#06080f] z-20"
+                                i === 0 && "sticky left-0 bg-elevated z-20"
                               )}
                             >
                               {col.field_key === "actions" ? (
@@ -508,3 +508,4 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     </ExperienceProvider>
   );
 }
+

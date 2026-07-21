@@ -105,7 +105,7 @@ export default function MastersPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme();
-    isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+    isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   } catch (e) {}
   const [activeTab, setActiveTab] = useState("infra_issue_types");
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("ALL");
@@ -1299,3 +1299,4 @@ export default function MastersPage() {
     </PageContainer>
   );
 }
+

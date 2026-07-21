@@ -35,10 +35,8 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
     ? (roleRes.data?.role[0] as any)?.code 
     : (roleRes.data?.role as any)?.code;
 
-  const email = roleRes.data?.email;
-  const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
-  if (email && adminEmails.includes(email)) {
-    dbRoleCode = "SUPER_ADMIN";
+  if (dbRoleCode && dbRoleCode.toUpperCase() === 'SUPER_ADMIN') {
+    dbRoleCode = 'SUPER_ADMIN';
   }
 
   const rawPerms = permRes.data?.map(r => r.permission_code) || [];

@@ -71,7 +71,7 @@ export default function SprintKanbanBoard({ metrics = [] }: SprintKanbanBoardPro
   };
 
   return (
-    <div className="panel" style={{ marginBottom: '20px' }}>
+    <div className="panel theme-card-structural" style={{ marginBottom: '20px' }}>
       <div className="panel-header">
         <i className="ti ti-layout-kanban" style={{ fontSize: '16px', color: 'var(--teal)' }} aria-hidden="true"></i>
         <span className="panel-title">Kanban Board · Active Sprint</span>

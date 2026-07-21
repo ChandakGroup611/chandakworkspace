@@ -80,7 +80,7 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl bg-surface border border-border shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-2xl theme-card-structural shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border bg-background/50">

@@ -40,7 +40,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
           size="sm" 
           leftIcon={<Settings2 className="h-4 w-4" />}
           onClick={() => setIsCustomizeOpen(true)}
-          className="bg-surface/50 backdrop-blur-md border-border/50 hover:bg-surface"
+          className="theme-card-structural /50 backdrop-blur-md /50 hover:"
         >
           Customize
         </AppButton>
@@ -73,7 +73,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
       </div>
 
       {activeWidgets.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border border-dashed rounded-3xl border-border bg-surface/30 backdrop-blur-sm">
+        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-dashed rounded-3xl theme-card-structural /30 backdrop-blur-sm">
           <Settings2 className="w-12 h-12 mb-4 text-muted-foreground/30" />
           <h3 className="text-lg font-semibold text-foreground">Dashboard is Empty</h3>
           <p className="mt-2 text-sm text-muted-foreground max-w-md">

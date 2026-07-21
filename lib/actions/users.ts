@@ -52,7 +52,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       .eq("id", myProfileData.role_id)
       .single();
 
-    if (roleData?.code === "SUPER_ADMIN" || roleData?.code === "ROLE_ADMIN") {
+    if (roleData?.code?.toUpperCase() === "SUPER_ADMIN" || roleData?.code?.toUpperCase() === "ROLE_ADMIN") {
       isCallerAdmin = true;
     }
   }
@@ -68,7 +68,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       for (const ur of userRoles) {
         const role = ur.role as any;
         const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
-        if (roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN") {
+        if (roleCode?.toUpperCase() === "SUPER_ADMIN" || roleCode?.toUpperCase() === "ROLE_ADMIN") {
           isCallerAdmin = true;
           break;
         }
@@ -478,7 +478,7 @@ export async function deleteUserAction(userId: string) {
       .eq("id", myProfileData.role_id)
       .single();
 
-    if (roleData?.code === "SUPER_ADMIN" || roleData?.code === "ROLE_ADMIN") {
+    if (roleData?.code?.toUpperCase() === "SUPER_ADMIN" || roleData?.code?.toUpperCase() === "ROLE_ADMIN") {
       isCallerAdmin = true;
     }
   }
@@ -493,7 +493,7 @@ export async function deleteUserAction(userId: string) {
       for (const ur of userRoles) {
         const role = ur.role as any;
         const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
-        if (roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN") {
+        if (roleCode?.toUpperCase() === "SUPER_ADMIN" || roleCode?.toUpperCase() === "ROLE_ADMIN") {
           isCallerAdmin = true;
           break;
         }

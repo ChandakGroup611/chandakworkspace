@@ -13,7 +13,7 @@ import { fetchTicketMacros } from "@/lib/actions/tickets";
 export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
   useRenderLog("TicketRealtimeChat", { ticketId });
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   // Create client once with useRef so it's stable across renders
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
@@ -519,9 +519,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         
         {/* Mentions Dropdown */}
         {showMentions && (
-          <div className={`absolute bottom-full mb-2 left-4 right-16 rounded-xl shadow-xl border overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${
-            "bg-surface border-border"
-          }`}>
+          <div className={`absolute bottom-full mb-2 left-4 right-16 rounded-xl shadow-xl overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
             <div className="max-h-48 overflow-y-auto py-1">
               {/* @All Option */}
               {("all".includes(mentionFilter)) && (
@@ -581,9 +579,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
 
         {/* Macros Dropdown */}
         {showMacros && macros.length > 0 && (
-          <div className={`absolute bottom-full mb-2 left-16 w-64 rounded-xl shadow-xl border overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${
-            "bg-surface border-border"
-          }`}>
+          <div className={`absolute bottom-full mb-2 left-16 w-64 rounded-xl shadow-xl overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
             <div className="bg-gray-100 dark:bg-black/20 p-2 border-b border-gray-200 dark:border-white/10 text-xs font-bold uppercase text-gray-500">
               Quick Responses (Macros)
             </div>
@@ -610,9 +606,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
 
         <form
           onSubmit={handleSend}
-          className={`flex items-center gap-2 p-1.5 rounded-xl border focus-within:ring-2 focus-within:ring-accent transition-all ${
-            "bg-surface border-border"
-          }`}
+          className={`flex items-center gap-2 p-1.5 rounded-xl focus-within:ring-2 focus-within:ring-accent transition-all ${ "theme-card-structural " }`}
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
           
@@ -658,3 +652,4 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
     </Profiler>
   );
 }
+

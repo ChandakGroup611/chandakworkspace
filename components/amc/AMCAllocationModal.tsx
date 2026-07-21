@@ -162,7 +162,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                 <div className="text-center p-8 text-gray-500 italic">No licenses allocated yet.</div>
               ) : (
                 allocations.map(a => (
-                  <div key={a.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border`}>
+                  <div key={a.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural`}>
                     <div>
                       <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
                       <div className="text-xs text-gray-500">{a.user_master?.email}</div>
@@ -204,7 +204,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                 <div className="text-center p-8 text-gray-500 italic">No unassigned users found.</div>
               ) : (
                 filteredUsers.map(u => (
-                  <div key={u.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border hover:border-accent/50 transition-colors`}>
+                  <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-accent/50 transition-colors`}>
                     <div>
                       <div className="font-semibold text-sm">{u.full_name}</div>
                       <div className="text-xs text-gray-500">{u.email}</div>

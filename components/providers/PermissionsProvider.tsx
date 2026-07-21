@@ -119,7 +119,7 @@ interface UnifiedAuthData {
       let baseRoleCode = null;
       if (profileData) {
         const dbRoleCode = Array.isArray(primaryRole) ? (primaryRole[0] as any)?.code : (primaryRole as any)?.code;
-        if (dbRoleCode === "SUPER_ADMIN") baseRoleCode = "SUPER_ADMIN";
+        if (dbRoleCode && dbRoleCode.toUpperCase() === "SUPER_ADMIN") baseRoleCode = "SUPER_ADMIN";
       }
 
       const profile: ProfileData = { 
@@ -162,11 +162,6 @@ interface UnifiedAuthData {
       // Force SUPER_ADMIN if detected in roles or explicitly mapped
       if (rawPerms.includes("SUPER_ADMIN")) {
         finalRoleCode = "SUPER_ADMIN";
-      } else {
-        const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
-        if (profile.email && adminEmails.includes(profile.email)) {
-          finalRoleCode = "SUPER_ADMIN";
-        }
       }
 
       return { profile, permissions: perms, roleCode: finalRoleCode };

@@ -44,7 +44,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
     <AppTableHead 
       ref={setNodeRef} 
       style={style}
-      className={`bg-white dark:bg-[#06080f] border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:bg-accent/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
+      className={`bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:bg-accent/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
     >
       <div className="flex flex-col gap-2">
         <div className="cursor-grab active:cursor-grabbing select-none" {...attributes} {...listeners}>
@@ -98,7 +98,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 export default function ReportsClient() {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canExport = roleCode === "SUPER_ADMIN" || hasPermission("REPORTS_EXPORT");
 
@@ -348,11 +348,7 @@ export default function ReportsClient() {
             <AppButton variant="secondary"
               key={sc}
               onClick={() => setScope(sc)}
-              className={`whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-md transition-all ${
-                scope === sc 
-                  ? "bg-surface text-accent shadow-sm border border-border" 
-                  : "text-muted hover:text-foreground"
-              }`}
+              className={`whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-md transition-all ${ scope === sc ? "theme-card-structural text-accent shadow-sm " : "text-muted hover:text-foreground" }`}
             >
               {sc === "ALL" ? "All Records" : sc === "ASSIGNED_TO_ME" ? "Assigned To Me" : "Enrolled Tasks"}
             </AppButton>
@@ -365,11 +361,11 @@ export default function ReportsClient() {
         
         {/* Date Range & Clear Filters */}
         <div className="flex items-center flex-wrap gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-subtle bg-surface p-2 rounded-xl border border-border">
+          <div className="flex items-center gap-2 text-xs font-semibold text-subtle theme-card-structural p-2 rounded-xl">
             <span>Date Range:</span>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent`} />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-accent`} />
             <span>to</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg border border-border bg-surface focus:outline-none focus:ring-2 focus:ring-accent`} />
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-accent`} />
             
             {(selectedStatus || dateFrom || dateTo || query || Object.keys(columnFilters).some(k => columnFilters[k])) && (
               <AppButton variant="secondary" 
@@ -388,7 +384,7 @@ export default function ReportsClient() {
           </div>
 
           {(entityType === "TASK" || entityType === "SUB_TASK") && (
-            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-accent`}>
+            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl theme-card-structural text-foreground focus:outline-none focus:ring-2 focus:ring-accent`}>
               <option value="">All Statuses</option>
               {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -445,7 +441,7 @@ export default function ReportsClient() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="max-h-[600px] overflow-auto relative rounded-2xl border border-border">
             <AppTable className="w-full border-separate border-spacing-0">
-              <AppTableHeader className="sticky top-0 z-40 bg-white dark:bg-[#06080f]">
+              <AppTableHeader className="sticky top-0 z-40 bg-elevated">
                 <AppTableRow>
                   <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
                     {visibleColumns.map(col => (
@@ -581,3 +577,5 @@ export default function ReportsClient() {
     </div>
   );
 }
+
+

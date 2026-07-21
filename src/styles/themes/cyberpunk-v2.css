@@ -1,0 +1,168 @@
+@layer theme {
+  [data-theme="cyberpunk"] {
+    --bg-primary: #050508;
+    --bg-surface: #0a0a10;
+    --bg-elevated: #101018;
+    --text-primary: #ffffff;
+    --text-secondary: #00ffff;
+    --text-muted: #606080;
+    --border-subtle: rgba(0, 255, 255, 0.2);
+    --border-active: rgba(0, 255, 255, 0.6);
+    --accent-primary: #ff00ff;
+    --accent-secondary: #00ffff;
+    --success: #00ff00;
+    --warning: #ffff00;
+    --danger: #ff0044;
+  }
+  
+  [data-theme="cyberpunk"] body {
+    background: var(--bg-primary) !important;
+    background-image: 
+      linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px) !important;
+    background-size: 30px 30px;
+    background-position: center center;
+  }
+
+  /* Cards - Extreme Neon Blooming */
+  [data-theme="cyberpunk"] .theme-card-structural {
+    background: linear-gradient(145deg, rgba(10, 10, 16, 0.9), rgba(5, 5, 8, 0.95)) !important;
+    border: 1px solid rgba(0, 255, 255, 0.4) !important;
+    border-top: 2px solid #00ffff;
+    border-left: 1px solid rgba(0, 255, 255, 0.8);
+    box-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.1),
+      0 0 20px rgba(0, 255, 255, 0.05),
+      inset 0 0 20px rgba(0, 255, 255, 0.05) !important;
+    border-radius: 4px !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  
+  [data-theme="cyberpunk"] .theme-card-structural::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(to right, transparent, rgba(0, 255, 255, 0.1), transparent) !important;
+    transform: skewX(-45deg);
+    transition: 0.5s;
+  }
+  [data-theme="cyberpunk"] .theme-card-structural:hover::before {
+    left: 200%;
+  }
+
+  [data-theme="cyberpunk"] .theme-card-structural:hover {
+    box-shadow: 
+      0 0 15px rgba(0, 255, 255, 0.3),
+      0 0 30px rgba(0, 255, 255, 0.2),
+      0 0 50px rgba(0, 255, 255, 0.1),
+      inset 0 0 30px rgba(0, 255, 255, 0.15) !important;
+    border-color: #00ffff !important;
+  }
+
+  /* Inputs - Deep Hacker Terminal */
+  [data-theme="cyberpunk"] .theme-input-structural {
+    background: rgba(0, 0, 0, 0.8) !important;
+    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+    border-bottom: 2px solid rgba(0, 255, 255, 0.8);
+    color: #00ffff !important;
+    border-radius: 2px !important;
+    padding: 10px 14px;
+    font-family: monospace;
+    letter-spacing: 1px;
+    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.1) !important;
+  }
+  [data-theme="cyberpunk"] .theme-input-structural:focus {
+    border-color: #00ffff !important;
+    background: rgba(0, 20, 20, 0.9) !important;
+    box-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.4),
+      inset 0 0 15px rgba(0, 255, 255, 0.2) !important;
+    outline: none;
+  }
+
+  /* Buttons - Glitchy High-Tech */
+  [data-theme="cyberpunk"] .theme-button-structural {
+    background: transparent !important;
+    border: 1px solid rgba(0, 255, 255, 0.5) !important;
+    color: #00ffff !important;
+    border-radius: 2px !important;
+    padding: 10px 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.1) !important;
+    transition: all 0.2s;
+  }
+  [data-theme="cyberpunk"] .theme-button-structural:hover {
+    background: rgba(0, 255, 255, 0.1) !important;
+    box-shadow: 
+      0 0 15px rgba(0, 255, 255, 0.4),
+      inset 0 0 20px rgba(0, 255, 255, 0.3) !important;
+    border-color: #00ffff !important;
+    text-shadow: 0 0 5px #00ffff;
+  }
+  
+  [data-theme="cyberpunk"] .theme-button-structural.theme-btn-primary {
+    background: rgba(0, 255, 255, 0.2) !important;
+    border: 1px solid #00ffff !important;
+    color: #ffffff !important;
+    box-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.5),
+      inset 0 0 10px rgba(0, 255, 255, 0.5) !important;
+    text-shadow: 0 0 8px #ffffff;
+  }
+  [data-theme="cyberpunk"] .theme-button-structural.theme-btn-primary:hover {
+    background: #00ffff !important;
+    color: #000000 !important;
+    box-shadow: 
+      0 0 20px #00ffff,
+      0 0 40px rgba(0, 255, 255, 0.6),
+      inset 0 0 20px rgba(255, 255, 255, 0.8) !important;
+    text-shadow: none;
+  }
+
+  /* Tables */
+  [data-theme="cyberpunk"] .theme-table-structural {
+    background: rgba(5, 5, 8, 0.9) !important;
+    border: 1px solid rgba(0, 255, 255, 0.2) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8) !important;
+  }
+  [data-theme="cyberpunk"] .theme-table-header {
+    background: rgba(0, 255, 255, 0.05) !important;
+    border-bottom: 1px solid #00ffff;
+    color: #00ffff !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(0, 255, 255, 0.05) !important;
+  }
+  [data-theme="cyberpunk"] .theme-table-row {
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    transition: all 0.2s;
+  }
+  [data-theme="cyberpunk"] .theme-table-row:hover {
+    background: rgba(0, 255, 255, 0.08) !important;
+    box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.05) !important;
+  }
+
+  /* Badges - Neon Status */
+  [data-theme="cyberpunk"] .theme-badge-structural {
+    background: rgba(0, 255, 255, 0.15) !important;
+    border: 1px solid #00ffff !important;
+    color: #ffffff !important;
+    border-radius: 2px !important;
+    padding: 4px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.4),
+      inset 0 0 5px rgba(0, 255, 255, 0.4) !important;
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  }
+}

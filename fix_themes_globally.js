@@ -1,39 +1,54 @@
 const fs = require('fs');
 const path = require('path');
 
-function walk(dir) {
-  let results = [];
-  const list = fs.readdirSync(dir);
-  list.forEach(file => {
-    file = path.join(dir, file);
-    const stat = fs.statSync(file);
-    if (stat && stat.isDirectory()) {
-      results = results.concat(walk(file));
-    } else {
-      if (file.endsWith('.tsx') || file.endsWith('.ts')) {
-        results.push(file);
-      }
-    }
-  });
-  return results;
-}
-
-const files = walk('d:\\adios\\components').concat(walk('d:\\adios\\app'));
-let count = 0;
+const themesDir = 'd:\\adios\\src\\styles\\themes';
+const files = [
+  'cyberpunk.css',
+  'dark-neumorphic.css',
+  'glassmorphism.css',
+  'industrial-control.css',
+  'light-neumorphic.css'
+];
 
 files.forEach(file => {
-  let content = fs.readFileSync(file, 'utf8');
-  const target1 = `["executive-light", "material-ocean", "aurora-breeze"].includes(theme)`;
-  const target2 = `['executive-light', 'material-ocean', 'aurora-breeze'].includes(theme)`;
+  const filePath = path.join(themesDir, file);
+  if (!fs.existsSync(filePath)) return;
   
-  if (content.includes(target1) || content.includes(target2)) {
-    content = content.replace(/\["executive-light", "material-ocean", "aurora-breeze"\]\.includes\(theme\)/g, `["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme)`);
-    content = content.replace(/\['executive-light', 'material-ocean', 'aurora-breeze'\]\.includes\(theme\)/g, `["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"].includes(theme)`);
-    
-    fs.writeFileSync(file, content, 'utf8');
-    count++;
-    console.log("Fixed:", file);
-  }
-});
+  let content = fs.readFileSync(filePath, 'utf8');
+  
+  // We want to add !important to specific CSS properties inside the structural classes.
+  // We can do this with regex.
+  
+  const propertiesToForce = [
+    'background',
+    'background-image',
+    'background-color',
+    'box-shadow',
+    'border',
+    'border-color',
+    'border-radius',
+    'backdrop-filter',
+    '-webkit-backdrop-filter',
+    'color'
+  ];
 
-console.log(`Fixed ${count} files.`);
+  propertiesToForce.forEach(prop => {
+    // Matches: `  background: linear-gradient(...);`
+    // Captures the property and value, ensuring it doesn't already have !important
+    const regex = new RegExp(`(^\\s*${prop}\\s*:\\s*)([^;!]+?)(?:\\s*;$)`, 'gm');
+    
+    // We only want to add !important inside the actual classes, but wait, doing it globally in the file is fine because the file is entirely dedicated to defining the theme's structural classes and root variables! 
+    // Wait, we shouldn't add !important to CSS variables in :root or [data-theme="..."] block.
+    // CSS variables look like `--bg-primary: #050505;`
+    // Our properties are just standard CSS props.
+    
+    content = content.replace(regex, (match, p1, p2) => {
+      // If it already has !important, skip
+      if (p2.includes('!important')) return match;
+      return `${p1}${p2} !important;`;
+    });
+  });
+
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log(`Injected !important into ${file}`);
+});

@@ -88,7 +88,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
           <AppCard 
             key={card.id}
             className={`relative overflow-hidden group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${
-              "shadow-md bg-surface border-border"
+              "theme-card-structural"
             }`}
           >
             {/* 3D Gradient Overlay matching theme & status color */}

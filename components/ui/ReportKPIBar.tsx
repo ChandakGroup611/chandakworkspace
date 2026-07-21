@@ -31,7 +31,7 @@ export function ReportKPIBar({ kpis, className, variant = "default" }: { kpis: R
             )}
             <div className="flex flex-col">
               <span className={cn("font-bold text-muted uppercase tracking-wider", variant === "default" ? "text-[10px] gap-1" : "text-[8px] leading-tight")}>{kpi.label}</span>
-              <span className={cn("font-extrabold text-foreground leading-none", variant === "default" ? "text-2xl" : "text-[13px]")}>{kpi.value}</span>
+              <span className={cn("font-extrabold text-accent leading-none", variant === "default" ? "text-2xl" : "text-[13px]")}>{kpi.value}</span>
             </div>
           </div>
         );

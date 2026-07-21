@@ -24,7 +24,7 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { useProfile, usePermissions } from "@/hooks/usePermissions";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppButton } from "@/components/ui/AppButton";
 
 export interface NotificationItem {
@@ -47,7 +47,7 @@ export default function RealtimeNotificationsDrawer() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"ALL" | "UNREAD" | "CRITICAL">("UNREAD");
@@ -56,6 +56,7 @@ export default function RealtimeNotificationsDrawer() {
   const { data: profile } = useProfile();
   const { roleCode } = usePermissions();
   const currentUserId = profile?.id;
+  const queryClient = useQueryClient();
 
   // Track state locally for optimistic updates and read toggles
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
@@ -149,6 +150,7 @@ export default function RealtimeNotificationsDrawer() {
 
   const handleConsumeNotification = async (item: NotificationItem) => {
     setLocalNotifications(prev => prev.filter(n => n.id !== item.id));
+    queryClient.setQueryData(['notifications', currentUserId], (old: any) => old?.filter((n: any) => n.id !== item.id));
 
     try {
       await supabase
@@ -177,6 +179,7 @@ export default function RealtimeNotificationsDrawer() {
   const handleDismissNotification = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setLocalNotifications(prev => prev.filter(n => n.id !== id));
+    queryClient.setQueryData(['notifications', currentUserId], (old: any) => old?.filter((n: any) => n.id !== id));
     try {
       await supabase.from("notification_queue").delete().eq("id", id);
     } catch (_) {}
@@ -184,6 +187,7 @@ export default function RealtimeNotificationsDrawer() {
 
   const markAllAsRead = async () => {
     setLocalNotifications(prev => prev.filter(n => n.is_read));
+    queryClient.setQueryData(['notifications', currentUserId], (old: any) => old?.filter((n: any) => n.is_read));
     try {
       await supabase.from("notification_queue").delete().eq("is_read", false);
     } catch (_) {}
@@ -206,7 +210,7 @@ export default function RealtimeNotificationsDrawer() {
         variant="outline"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative !h-10 !w-10 rounded-xl bg-surface border-border text-muted hover:bg-muted hover:text-foreground"
+        className="relative !h-10 !w-10 rounded-xl theme-card-structural text-muted hover:bg-muted hover:text-foreground"
       >
         <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-accent animate-bounce" : ""}`} />
         {unreadCount > 0 && (
@@ -227,9 +231,7 @@ export default function RealtimeNotificationsDrawer() {
             <div
               key={toast.id}
               onClick={() => handleConsumeNotification(toast)}
-              className={`pointer-events-auto flex items-start gap-3 rounded-2xl p-4 shadow-2xl border backdrop-blur-xl transform transition-all duration-300 cursor-pointer hover:scale-[1.02] active:scale-95 group ${
-                "bg-surface/95 border-border/80 text-foreground shadow-indigo-500/10 animate-in slide-in-from-right-12 duration-300"
-              }`}
+              className={`pointer-events-auto flex items-start gap-3 rounded-2xl p-4 shadow-2xl backdrop-blur-xl transform transition-all duration-300 cursor-pointer hover:scale-[1.02] active:scale-95 group ${ "theme-card-structural /95 /80 text-foreground shadow-indigo-500/10 animate-in slide-in-from-right-12 duration-300" }`}
             >
               <div className="shrink-0 mt-0.5">
                 <div className={`p-2 rounded-xl ${
@@ -363,7 +365,7 @@ export default function RealtimeNotificationsDrawer() {
                           ? isCritical 
                             ? "bg-rose-50/80 border-rose-200" 
                             : "bg-cyan-50/50 border-cyan-200"
-                          : "bg-white border-border opacity-60"
+                          : "theme-card-structural border-border opacity-60"
                       }`}
                     >
                       <div className="shrink-0 mt-0.5">
@@ -407,3 +409,4 @@ export default function RealtimeNotificationsDrawer() {
     </>
   );
 }
+

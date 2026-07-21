@@ -25,7 +25,7 @@ export default function HealthGrid({ metrics = [] }: HealthGridProps) {
           <i className="ti ti-flame" aria-hidden="true"></i>
         </div>
         <div>
-          <div className="health-label">Velocity</div>
+          <div className="health-label">Resolution Rate</div>
           <div className="health-value" style={{ color: 'var(--green)' }}>{velocity} pts</div>
         </div>
       </div>

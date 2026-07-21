@@ -102,7 +102,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
   return (
     <div className="space-y-8">
       {/* Add New Transaction */}
-      <AppCard className={`p-6 border bg-surface border-border`}>
+      <AppCard className={`p-6 theme-card-structural`}>
         <h3 className="text-lg font-bold text-accent mb-4">Log New Transaction</h3>
         <form onSubmit={handleAddTransaction} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

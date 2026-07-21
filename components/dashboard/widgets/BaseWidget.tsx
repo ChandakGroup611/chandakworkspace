@@ -4,8 +4,9 @@ import React, { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export interface BaseWidgetProps {
-  id: string;
+  id?: string;
   title?: string;
+  subtitle?: string;
   icon?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -16,6 +17,7 @@ export interface BaseWidgetProps {
 
 export function BaseWidget({
   title,
+  subtitle,
   icon,
   children,
   className,
@@ -26,17 +28,17 @@ export function BaseWidget({
   return (
     <div 
       className={cn(
-        "flex flex-col h-full overflow-hidden rounded-2xl border border-border shadow-sm",
-        "bg-surface/80 backdrop-blur-md text-foreground transition-all duration-300",
+        "flex flex-col h-full overflow-hidden rounded-2xl theme-card-structural",
+        "text-foreground transition-all duration-300",
         "hover:-translate-y-0.5 hover:shadow-lg group",
         className
       )}
     >
       {(title || icon || headerRight) && (
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/50 bg-background/30">
+        <div className="flex items-center justify-between px-5 py-4 border-b theme-card-structural">
           <div className="flex items-center gap-2 text-foreground/80 group-hover:text-foreground transition-colors">
             {icon && <div className="text-primary/70">{icon}</div>}
-            {title && <h3 className="text-sm font-semibold tracking-wide uppercase">{title}</h3>}
+            {title && <div className="flex flex-col"><h3 className="text-sm font-semibold tracking-wide uppercase">{title}</h3>{subtitle && <span className="text-xs text-muted-foreground font-normal tracking-normal capitalize">{subtitle}</span>}</div>}
           </div>
           {headerRight && (
             <div className="flex items-center text-xs">
@@ -52,3 +54,5 @@ export function BaseWidget({
     </div>
   );
 }
+
+

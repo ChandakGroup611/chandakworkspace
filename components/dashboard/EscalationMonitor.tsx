@@ -42,7 +42,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
             >
               <div className="space-y-1 truncate pr-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-gray-500">{esc.id}</span>
+                  <span className="text-xs font-bold text-accent">{esc.id}</span>
                   <span className={`text-[0.7rem] font-bold px-1.5 py-0.2 rounded uppercase ${
                     esc.risk === "danger" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"
                   }`}>
@@ -77,3 +77,4 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
     </AppCard>
   );
 }
+

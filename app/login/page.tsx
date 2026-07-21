@@ -146,14 +146,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="dark theme-dark flex h-screen w-full bg-[#0A0D14] text-white font-sans overflow-hidden" data-theme="glass-intelligence" style={{ colorScheme: 'dark' }}>
+    <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
         input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #0A0D14 inset !important;
-            -webkit-text-fill-color: white !important;
+            -webkit-box-shadow: 0 0 0 30px var(--color-surface) inset !important;
+            -webkit-text-fill-color: var(--color-foreground) !important;
         }
       `}} />
       {/* LEFT PANEL - Branding / Image Split */}
@@ -201,7 +201,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT PANEL - Authentication Form */}
-      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-[#0F131E] lg:bg-[#0A0D14] relative text-white">
+      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-surface relative text-foreground">
         {/* Subtle grid on right panel for texture */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
 
@@ -219,10 +219,10 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-10 lg:mb-12">
-              <h2 className="text-3xl font-bold mb-2" style={{ color: '#ffffff' }}>
+              <h2 className="text-3xl font-bold mb-2">
                 Welcome back
               </h2>
-              <p className="mb-4" style={{ color: '#9ca3af' }}>
+              <p className="mb-4 text-muted">
                 Please enter your details to sign in to your workspace.
               </p>
             </div>
@@ -249,7 +249,7 @@ export default function LoginPage() {
             <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted">
                   Email Address
                 </label>
                 <AppInput 
@@ -259,14 +259,14 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12"
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted">
                     Password
                   </label>
                   <Link href="#" onClick={(e) => { e.preventDefault(); alert("Contact administrator to reset password."); }} className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors">
@@ -280,7 +280,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12"
                   required
                 />
               </div>
@@ -317,7 +317,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#0F131E] lg:bg-[#0A0D14] px-4 font-semibold tracking-widest backdrop-blur-sm" style={{ color: '#9ca3af' }}>
+                <span className="bg-surface px-4 font-semibold tracking-widest backdrop-blur-sm text-muted">
                   Or Continue With
                 </span>
               </div>
@@ -328,15 +328,15 @@ export default function LoginPage() {
               variant="outline"
               onClick={handleMicrosoftLogin}
               disabled={ssoLoading}
-              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-white/5 font-semibold bg-[#0A0D14] lg:bg-transparent border border-white/10"
+              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 font-semibold theme-button-structural bg-transparent"
             >
               {ssoLoading ? (
-                <div className="flex items-center gap-2 text-white">
+                <div className="flex items-center gap-2 text-foreground">
                   <span className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
                   Connecting to Microsoft...
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-white">
+                <div className="flex items-center gap-2 text-foreground">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21">
                     <path fill="#f25022" d="M1 1h9v9H1z"/>
                     <path fill="#00a4ef" d="M1 11h9v9H1z"/>

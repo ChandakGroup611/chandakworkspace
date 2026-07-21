@@ -1,16 +1,13 @@
 @import "tailwindcss";
 
-/* Import Phase 1 Enterprise Design Token Foundation Layers */
+/* Import Phase 2 Advanced 3D Themes */
 @import '../src/styles/themes/base.css';
-@import '../src/styles/themes/executive-light.css';
-@import '../src/styles/themes/midnight-operations.css';
-@import '../src/styles/themes/glass-intelligence.css';
-@import '../src/styles/themes/enterprise-bento.css';
-@import '../src/styles/themes/tactical-utility.css';
-@import '../src/styles/themes/material-ocean.css';
-@import '../src/styles/themes/aurora-breeze.css';
-@import '../src/styles/themes/pure-elegance.css';
-@import '../src/styles/themes/pristine-white.css';
+@import '../src/styles/themes/dark-neumorphic-v2.css';
+@import '../src/styles/themes/light-neumorphic-v2.css';
+@import '../src/styles/themes/industrial-control-v2.css';
+@import '../src/styles/themes/cyberpunk-v2.css';
+@import '../src/styles/themes/glassmorphism-v2.css';
+@import '../src/styles/themes/pure-white-v2.css';
 
 /* Force Tailwind v4 to use class-based dark mode instead of media queries */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -154,6 +151,9 @@
     color: var(--color-foreground) !important;
   }
   
+  .theme-light .text-gray-500,
+  .theme-light .text-slate-500,
+  .theme-light .text-zinc-500,
   .theme-light .text-gray-200,
   .theme-light .text-gray-300,
   .theme-light .text-gray-400,
@@ -228,4 +228,12 @@
   .theme-light .recharts-tooltip-label {
     color: var(--color-subtle) !important;
   }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }

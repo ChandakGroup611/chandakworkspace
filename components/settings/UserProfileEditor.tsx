@@ -482,7 +482,7 @@ export default function UserProfileEditor() {
                               setSelectedDept(e.target.value);
                               setSelectedDesig(""); // Clear designation
                             }}
-                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border border-amber-500/50 bg-surface px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border-amber-500/50 theme-card-structural px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
                           >
                             <option value="" disabled>Select Department...</option>
                             {departments.map((d) => (
@@ -504,7 +504,7 @@ export default function UserProfileEditor() {
                           <select
                             value={selectedDesig}
                             onChange={(e) => setSelectedDesig(e.target.value)}
-                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border border-amber-500/50 bg-surface px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="h-10 w-full appearance-none rounded-[var(--radius-input,4px)] border-amber-500/50 theme-card-structural px-3 text-[14px] text-foreground shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
                           >
                             <option value="" disabled>Select Designation...</option>
                             {designations
@@ -526,7 +526,7 @@ export default function UserProfileEditor() {
                         </label>
                         
                         <div 
-                          className="h-10 w-full flex items-center justify-between rounded-[var(--radius-input,4px)] border border-amber-500/50 bg-surface px-3 text-[14px] text-foreground shadow-sm cursor-pointer hover:border-amber-500 transition-colors"
+                          className="h-10 w-full flex items-center justify-between rounded-[var(--radius-input,4px)] border-amber-500/50 theme-card-structural px-3 text-[14px] text-foreground shadow-sm cursor-pointer hover:border-amber-500 transition-colors"
                           onClick={() => setManagerDropdownOpen(!managerDropdownOpen)}
                         >
                           {selectedManagerObj ? (

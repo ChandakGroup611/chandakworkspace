@@ -70,16 +70,10 @@ html {
 }
 
 /* Corresponding dark/solid mapping when Light Mode is active */
-.theme-light .text-gray-400,
-[data-theme="executive-light"] .text-gray-400,
-[data-theme="material-ocean"] .text-gray-400,
-[data-theme="aurora-breeze"] .text-gray-400 {
+.theme-light .text-gray-400 {
   color: #475569 !important; /* Deep dark slate-600 */
 }
-.theme-light .text-gray-500,
-[data-theme="executive-light"] .text-gray-500,
-[data-theme="material-ocean"] .text-gray-500,
-[data-theme="aurora-breeze"] .text-gray-500 {
+.theme-light .text-gray-500 {
   color: #334155 !important; /* Deep dark slate-700 */
 }
 
@@ -90,9 +84,7 @@ select option {
   font-weight: 500;
 }
 
-.theme-light select option,
-[data-theme="executive-light"] select option {
+.theme-light select option {
   background-color: #FFFFFF;
   color: #0F172A;
 }
-

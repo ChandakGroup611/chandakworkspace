@@ -15,7 +15,7 @@ interface TicketFormInfraProps {
 
 export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraProps) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [masters, setMasters] = useState<any>({});
@@ -223,7 +223,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 required
-                className={isLightMode ? "bg-white border-gray-200" : ""}
+                className="bg-surface border-border"
               />
             </div>
           </div>
@@ -323,3 +323,4 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
     </div>
   );
 }
+

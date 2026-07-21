@@ -13,7 +13,7 @@ interface TicketChatProps {
 export function TicketChat({ ticket }: TicketChatProps) {
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isPrivate, setIsPrivate] = useState(true);
@@ -221,3 +221,4 @@ function MessageSquare(props: any) {
     </svg>
   );
 }
+

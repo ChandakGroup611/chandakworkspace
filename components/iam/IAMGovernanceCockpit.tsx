@@ -53,7 +53,7 @@ export default function IAMGovernanceCockpit({
 }: IAMGovernanceCockpitProps) {
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   const resolvedRoles = initialRoles.length > 0 ? initialRoles : roles;
   const resolvedPermissions = initialPermissions.length > 0 ? initialPermissions : permissions;
@@ -233,7 +233,8 @@ export default function IAMGovernanceCockpit({
 
   const handleTogglePermissionByCode = async (permissionId: string, action: string) => {
     if (!activeRoleID) return;
-    if (activeRole?.code === "SUPER_ADMIN") return;
+    if (activeRole?.code?.toUpperCase() === "SUPER_ADMIN") return;
+
 
     const permission = permissionsList.find((p: any) => p.id === permissionId);
     if (!permission) return;
@@ -472,7 +473,7 @@ export default function IAMGovernanceCockpit({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         {/* Role Directory Pane */}
         <div className="lg:col-span-4 flex flex-col space-y-6">
-          <AppCard className={cn("overflow-hidden flex-1 flex flex-col", "border-border bg-surface shadow-[var(--shadow-ambient)]")}>
+          <AppCard className={cn("overflow-hidden flex-1 flex flex-col")}>
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -573,7 +574,7 @@ export default function IAMGovernanceCockpit({
 
         {/* Capability Matrix Pane */}
         <div className="lg:col-span-8 flex flex-col">
-          <AppCard className={cn("flex-1 overflow-hidden flex flex-col relative", "border-border bg-surface shadow-[var(--shadow-ambient)]")}>
+          <AppCard className={cn("flex-1 overflow-hidden flex flex-col relative")}>
             {isRoleLoading && (
               <div className="absolute inset-0 bg-[#0A0D14]/30 backdrop-blur-[2px] dark:bg-[#0A0D14]/30 bg-white/30 flex flex-col items-center justify-center space-y-3 z-50">
                 <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
@@ -727,7 +728,8 @@ export default function IAMGovernanceCockpit({
                                   </AppTableCell>
                                 </AppTableRow>
                                 {groupedByModule[moduleName].sort((a, b) => a.submodule.localeCompare(b.submodule)).map((m) => {
-                                  const isSuperAdmin = activeRole?.code === "SUPER_ADMIN";
+                                  const isSuperAdmin = activeRole?.code?.toUpperCase() === "SUPER_ADMIN";
+
 
                                   const getPermIdByAction = (action: string) => m.perms.find(p => p.action?.toUpperCase() === action.toUpperCase())?.id;
                                   const isActionChecked = (action: string) => {
@@ -836,3 +838,4 @@ export default function IAMGovernanceCockpit({
     </div>
   );
 }
+

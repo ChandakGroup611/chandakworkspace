@@ -237,7 +237,7 @@ export function TicketWorkspaceConsole({
         <div className="space-y-6">
           
           {/* Checklists / Subtasks */}
-          <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Checklist & Objectives
@@ -279,7 +279,7 @@ export function TicketWorkspaceConsole({
           </div>
 
           {/* TICKET RELATIONSHIPS */}
-          <div className="rounded-3xl border border-border bg-surface shadow-sm flex flex-col relative z-50">
+          <div className="rounded-3xl theme-card-structural shadow-sm flex flex-col relative z-50">
             <div className="bg-background border-b border-border p-4 rounded-t-3xl">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                  <Paperclip className="w-4 h-4 text-pink-500" /> Ticket Relationships
@@ -339,7 +339,7 @@ export function TicketWorkspaceConsole({
                       
                       {/* Autocomplete Dropdown */}
                       {showSuggestions && searchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-lg shadow-xl z-50 max-h-[250px] overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg shadow-xl z-50 max-h-[250px] overflow-y-auto">
                           {searchResults.map((t) => (
                             <div 
                               key={t.id} 
@@ -369,7 +369,7 @@ export function TicketWorkspaceConsole({
                         </div>
                       )}
                       {showSuggestions && searchResults.length === 0 && newRelationCode.trim().length > 0 && !isSearching && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-lg shadow-xl z-50 p-3 text-center text-xs text-muted-foreground">
+                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg shadow-xl z-50 p-3 text-center text-xs text-muted-foreground">
                           No tickets found matching "{newRelationCode}"
                         </div>
                       )}
@@ -381,7 +381,7 @@ export function TicketWorkspaceConsole({
           </div>
 
           {/* TIMELINE & META (Shifted Down) */}
-          <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                  <Clock className="w-4 h-4 text-accent" /> Timeline & Meta
@@ -445,7 +445,7 @@ export function TicketWorkspaceConsole({
         <div className="space-y-6">
           
           {/* EXECUTION TEAM & ROUTING (Moved to Top) */}
-          <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                  <Users className="w-4 h-4 text-accent" /> Execution Team & Routing
@@ -513,7 +513,7 @@ export function TicketWorkspaceConsole({
           </div>
 
           {/* CLASSIFICATION BLOCK (Shifted Down) */}
-          <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                  <Network className="w-4 h-4 text-emerald-500" /> Classification
@@ -585,7 +585,7 @@ export function TicketWorkspaceConsole({
 
         {/* LEFT: ATTACHMENTS */}
         <div className="space-y-6">
-          <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col">
+          <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                  <Paperclip className="w-4 h-4 text-amber-500" /> References & Artifacts
@@ -663,7 +663,7 @@ export function TicketWorkspaceConsole({
         </div>
 
         {/* Remarks History Queue */}
-        <div className="mt-3 rounded-md border p-3 transition-all duration-150 bg-surface border-border text-foreground">
+        <div className="mt-3 rounded-md p-3 transition-all duration-150 theme-card-structural text-foreground">
           {/* Header with toggle */}
           <div 
             onClick={() => setIsHistoryCollapsed(!isHistoryCollapsed)} 

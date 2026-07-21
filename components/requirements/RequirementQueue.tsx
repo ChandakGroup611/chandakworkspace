@@ -6,7 +6,7 @@ import { AppButton } from "@/components/ui/AppButton";
 
 export function RequirementQueue({ requirements }: { requirements: any[] }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const [filter, setFilter] = useState('ALL');
 
   const filtered = filter === 'ALL' 
@@ -37,9 +37,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filtered.map(req => (
-          <div key={req.id} className={`rounded-2xl p-5 transition-all group cursor-pointer border ${
-            "bg-surface border-border hover:border-accent/30 shadow-[var(--shadow-ambient)]"
-          }`}>
+          <div key={req.id} className={`rounded-2xl p-5 transition-all group cursor-pointer ${ "theme-card-structural hover:border-accent/30 shadow-[var(--shadow-ambient)]" }`}>
             <div className="flex justify-between items-start mb-3">
               <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
                 "bg-accent/10 text-accent"
@@ -115,3 +113,4 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
     </div>
   );
 }
+

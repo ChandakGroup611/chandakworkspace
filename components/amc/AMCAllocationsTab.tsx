@@ -180,7 +180,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
 
       <div className="flex flex-col md:flex-row gap-6 h-[500px]">
         {/* Active Allocations Panel */}
-        <AppCard className={`flex-1 flex flex-col border bg-surface border-border`}>
+        <AppCard className={`flex-1 flex flex-col theme-card-structural`}>
           <div className={`p-4 border-b font-semibold bg-elevated border-border`}>
             Currently Assigned Users
           </div>
@@ -191,7 +191,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
               <div className="text-center p-8 text-gray-500 italic">No licenses allocated yet.</div>
             ) : (
               allocations.map(a => (
-                <div key={a.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border`}>
+                <div key={a.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural`}>
                   <div>
                     <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
                     <div className="text-xs text-gray-500">{a.user_master?.email}</div>
@@ -201,7 +201,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                     {transferringId === a.id ? (
                       <div className="flex items-center gap-2">
                         <select 
-                          className={`text-xs p-1.5 rounded border bg-surface border-border`}
+                          className={`text-xs p-1.5 rounded theme-card-structural`}
                           onChange={(e) => handleTransfer(a.id, e.target.value)}
                         >
                           <option value="">Select user...</option>
@@ -241,7 +241,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
         </AppCard>
 
         {/* Unassigned Users Panel */}
-        <AppCard className={`flex-1 flex flex-col border bg-surface border-border`}>
+        <AppCard className={`flex-1 flex flex-col theme-card-structural`}>
           <div className={`p-4 border-b bg-elevated border-border`}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -250,7 +250,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                 placeholder="Search users to allocate..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 transition-all bg-surface border-border text-foreground`}
+                className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20 transition-all theme-card-structural text-foreground`}
               />
             </div>
           </div>
@@ -261,7 +261,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
               <div className="text-center p-8 text-gray-500 italic">No unassigned users found.</div>
             ) : (
               filteredUsers.map(u => (
-                <div key={u.id} className={`p-3 rounded-lg border flex items-center justify-between bg-surface border-border hover:border-accent/50 transition-colors`}>
+                <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-accent/50 transition-colors`}>
                   <div>
                     <div className="font-semibold text-sm">{u.full_name}</div>
                     <div className="text-xs text-gray-500">{u.email}</div>

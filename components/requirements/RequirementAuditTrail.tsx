@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/client';
 
 export function RequirementAuditTrail({ requirementId }: { requirementId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const supabase = createClient();
   
   const [events, setEvents] = useState<any[]>([]);
@@ -41,7 +41,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
   };
 
   return (
-    <AppCard className={`h-full bg-surface border-border`}>
+    <AppCard className={`h-full theme-card-structural`}>
       <AppCardHeader className={`border-b bg-elevated border-border`}>
         <div className="flex items-center gap-2">
           <Clock className={`w-4 h-4 text-accent`} />
@@ -60,9 +60,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
               {events.map((ev, idx) => (
                 <div key={ev.id} className="relative pl-6 group">
                   {/* Timeline Dot */}
-                  <div className={`absolute -left-[9px] top-1 rounded-full border-2 ${
-                    "bg-surface border-indigo-100"
-                  } p-0.5 group-hover:scale-110 transition-transform`}>
+                  <div className={`absolute -left-[9px] top-1 rounded-full border-2 ${ "theme-card-structural border-indigo-100" } p-0.5 group-hover:scale-110 transition-transform`}>
                     {getEventIcon(ev.event_type)}
                   </div>
 
@@ -97,3 +95,4 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
     </AppCard>
   );
 }
+

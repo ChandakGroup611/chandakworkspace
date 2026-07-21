@@ -165,7 +165,7 @@ export function WorkspaceMasterTable({
         </div>
 
         {/* Hover Tooltip */}
-        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] bg-surface border border-border`}>
+        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] theme-card-structural`}>
           <div className="text-[10px] font-bold uppercase text-gray-500 mb-2 px-1 border-b pb-1 border-gray-200 dark:border-white/10">Assigned Users ({members.length})</div>
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {
@@ -207,13 +207,13 @@ export function WorkspaceMasterTable({
     let rowBg = '';
     let hoverBg = '';
     
-    // Ultra-premium minimalist shading (Notion / Linear style)
+    // Inherit from global theme structural classes
     if (isLightMode) {
-      rowBg = depth % 2 === 0 ? 'bg-white' : 'bg-slate-50';
-      hoverBg = depth % 2 === 0 ? 'hover:bg-slate-50' : 'hover:bg-slate-100';
+      rowBg = '';
+      hoverBg = '';
     } else {
-      rowBg = depth % 2 === 0 ? 'bg-[#0B0D17]' : 'bg-[#161B22]';
-      hoverBg = depth % 2 === 0 ? 'hover:bg-slate-800/50' : 'hover:bg-slate-800/80';
+      rowBg = '';
+      hoverBg = '';
     }
     
     let subWsCount = node.subworkspace_count || 0;
@@ -249,7 +249,7 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
-        className={`grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${rowBg} ${hoverBg} ${
+        className={`theme-table-row grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
         "border-border"
       }`} style={{ gridTemplateColumns: gridCols }}>
 
@@ -292,7 +292,7 @@ export function WorkspaceMasterTable({
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
                     className={`p-1 rounded-md transition-colors relative z-20 ${
-                      "hover:bg-gray-200 text-muted bg-surface"
+                      "hover:bg-gray-200 text-muted bg-surface/40 backdrop-blur"
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
@@ -312,7 +312,7 @@ export function WorkspaceMasterTable({
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-1.5 min-w-0 max-w-full">
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
-                      isWorkspaceType ? (depth === 0 ? 'text-accent dark:text-accent' : 'text-accent/80') : 'text-emerald-500'
+                      isWorkspaceType ? (depth === 0 ? 'text-accent dark:text-accent' : 'text-accent/80') : 'text-success'
                     }`} />
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold shrink-0">
@@ -323,7 +323,7 @@ export function WorkspaceMasterTable({
                         isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
                         'text-[13px]'
                       } ${
-                        isLightMode ? (depth === 0 ? 'text-black' : 'text-slate-900') : (depth === 0 ? 'text-white' : 'text-gray-200')
+                        (depth === 0 ? 'text-foreground' : 'text-muted')
                       }`}>
                         {isSubWorkspace && parentNode && (parentNode.workspace_name || parentNode.name) && !(node.workspace_name || node.name || '').startsWith((parentNode.workspace_name || parentNode.name) + ' -')
                           ? `${parentNode.workspace_name || parentNode.name} - ${node.workspace_name || node.name}`
@@ -345,7 +345,7 @@ export function WorkspaceMasterTable({
                         e.stopPropagation();
                         router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                       }}
-                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 text-orange-500 bg-surface hover:bg-orange-50 border border-orange-400`} 
+                      className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20`} 
                       title={`${directTaskCount} Direct, ${childTaskCount} Child (Double-click to open)`}
                     >
                       {totalTaskCount} Tasks <span className="opacity-75 font-medium">({directTaskCount} Direct)</span>
@@ -359,7 +359,7 @@ export function WorkspaceMasterTable({
                         e.stopPropagation();
                         router.push(`/tasks/${node.id}`);
                       }}
-                      className={`text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 text-amber-500 bg-surface hover:bg-amber-50 border border-amber-400`} 
+                      className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded whitespace-nowrap cursor-pointer transition-all active:scale-95 bg-warning/10 text-warning hover:bg-warning/20 border border-warning/20`} 
                       title={`${childTaskCount} Sub-Tasks (Double-click to open)`}
                     >
                       {childTaskCount} Sub-Task{childTaskCount !== 1 ? 's' : ''}
@@ -376,7 +376,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Created By */}
-          <div className="py-1 px-2 text-xs font-semibold text-black dark:text-gray-200 whitespace-nowrap">
+          <div className="py-1 px-2 text-xs font-bold text-accent whitespace-nowrap">
             {creatorId ? getUserName(creatorId) : "System"}
           </div>
 
@@ -455,7 +455,7 @@ export function WorkspaceMasterTable({
                 variant="ghost"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); onShareNode(node); }}
-                className={`h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50`}
+                className={`h-7 w-7 p-0 text-success hover:bg-success/10`}
                 title="Share Workspace"
               >
                 <Share2 className="h-3.5 w-3.5" />
@@ -467,7 +467,7 @@ export function WorkspaceMasterTable({
                 variant="ghost"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); onDeleteNode(node); }}
-                className={`h-7 w-7 p-0 text-rose-600 hover:bg-rose-50`}
+                className={`h-7 w-7 p-0 text-danger hover:bg-danger/10`}
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -495,7 +495,7 @@ export function WorkspaceMasterTable({
       <div className="w-full flex flex-col">
         {/* Header */}
         <div className={`grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
-          "bg-slate-100 text-foreground border-slate-200"
+          "bg-elevated text-foreground border-border"
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>
           <div className="py-2 px-2">Created Date</div>
@@ -519,3 +519,4 @@ export function WorkspaceMasterTable({
     </div>
   );
 }
+

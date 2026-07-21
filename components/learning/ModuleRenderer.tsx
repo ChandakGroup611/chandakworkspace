@@ -17,7 +17,7 @@ import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow,
 
 export default function ModuleRenderer({ module }: { module: LearningModule }) {
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   if (!module) return null;
 
@@ -25,7 +25,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
     <div className={`w-full max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12`}>
       
       {/* 1. Where to Start (Header & Overview) */}
-      <section className={`p-6 rounded-2xl border shadow-sm bg-surface border-border`}>
+      <section className={`p-6 rounded-2xl shadow-sm theme-card-structural`}>
         <div className="flex items-center gap-4 mb-4">
           <div className={`p-3 rounded-xl bg-accent/10 text-accent`}>
             <module.icon className="h-8 w-8" />
@@ -79,7 +79,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
           <Settings2 className={`h-5 w-5 text-muted`} />
           <h2 className={`text-lg font-bold tracking-tight text-foreground`}>Field to Field Information</h2>
         </div>
-        <div className={`rounded-2xl border overflow-hidden bg-surface border-border`}>
+        <div className={`rounded-2xl overflow-hidden theme-card-structural`}>
           <AppTableContainer><AppTable className="w-full text-left text-base">
             <AppTableHeader className={`border-b text-xs uppercase font-semibold bg-elevated text-muted`}>
               <AppTableRow>
@@ -121,7 +121,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
         </div>
         <div className="space-y-3">
           {module.steps.map((step, idx) => (
-            <div key={idx} className={`relative flex items-start gap-4 p-5 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-md bg-surface border-border`}>
+            <div key={idx} className={`relative flex items-start gap-4 p-5 rounded-2xl transition-all hover:-translate-y-0.5 hover:shadow-md theme-card-structural`}>
               <div className={`flex items-center justify-center h-8 w-8 rounded-full shrink-0 font-bold text-sm bg-accent/10 text-accent`}>
                 {idx + 1}
               </div>
@@ -166,3 +166,4 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
     </div>
   );
 }
+

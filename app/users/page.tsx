@@ -103,7 +103,7 @@ export default function UserMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -122,8 +122,8 @@ export default function UserMasterPage() {
   const presenceMap = usePresence(allUserIds);
 
   // Helper to determine if current logged in user has administrative privileges
-  const isSuperAdmin = currentUserProfile?.roleObj?.code === "SUPER_ADMIN" || 
-                       currentUserProfile?.roleObj?.code === "ROLE_ADMIN" || 
+  const isSuperAdmin = currentUserProfile?.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" || 
+                       currentUserProfile?.roleObj?.code?.toUpperCase() === "ROLE_ADMIN" || 
                        currentUserProfile?.role_id === "admin-role-id";
 
   // Lookup selections
@@ -829,7 +829,7 @@ export default function UserMasterPage() {
 
                             <AppTableCell>
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                                usr.roleObj?.code === "SUPER_ADMIN" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
+                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
                               }`}>
                                 {usr.roleObj?.name || "Standard Profile"}
                               </span>
@@ -1061,3 +1061,4 @@ export default function UserMasterPage() {
     </div>
   );
 }
+

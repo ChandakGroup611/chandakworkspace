@@ -73,7 +73,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
       <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr] items-stretch">
-          <div className="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-white/10 dark:bg-slate-950/80">
+          <div className="rounded-3xl p-6 theme-card-structural border-transparent">
             
             {/* Top row: Tags and Button */}
             <div className="flex items-start justify-between gap-4 w-full">
@@ -114,19 +114,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
                   </div>
                 )}
                 
-                {task.custom_fields?.link_url && task.custom_fields.link_url !== "null" && (
-                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-1.5 rounded-lg bg-accent/10 dark:bg-accent/10 border border-blue-100 dark:border-accent/20 w-full overflow-hidden">
-                    <span className="text-[11px] font-bold text-accent dark:text-accent shrink-0 uppercase tracking-wider">External Link:</span>
-                    <a 
-                      href={task.custom_fields.link_url.startsWith('http') ? task.custom_fields.link_url : `https://${task.custom_fields.link_url}`}
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-sm font-medium text-accent dark:text-accent hover:text-accent-secondary dark:hover:text-blue-300 hover:underline break-all whitespace-normal"
-                    >
-                      {task.custom_fields.link_url}
-                    </a>
-                  </div>
-                )}
+
                 {typeof task.custom_fields?.progress_percentage === 'number' && (
                   <div className="mt-4 flex items-center gap-3">
                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtask Progress</span>

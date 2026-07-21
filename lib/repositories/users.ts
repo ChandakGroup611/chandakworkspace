@@ -41,7 +41,7 @@ export async function getVisibleUsers(userId: string) {
       isSuperAdmin = true;
     } else {
       const roleCode = Array.isArray(myProfile.role) ? myProfile.role[0]?.code : (myProfile.role as any)?.code;
-      if (roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN") {
+      if (roleCode?.toUpperCase() === "SUPER_ADMIN" || roleCode?.toUpperCase() === "ROLE_ADMIN") {
         isSuperAdmin = true;
       }
     }
@@ -52,7 +52,7 @@ export async function getVisibleUsers(userId: string) {
     for (const ur of rolesRes.data) {
       const role = ur.role as any;
       const roleCode = Array.isArray(role) ? role[0]?.code : role?.code;
-      if (roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN") {
+      if (roleCode?.toUpperCase() === "SUPER_ADMIN" || roleCode?.toUpperCase() === "ROLE_ADMIN") {
         isSuperAdmin = true;
         break;
       }

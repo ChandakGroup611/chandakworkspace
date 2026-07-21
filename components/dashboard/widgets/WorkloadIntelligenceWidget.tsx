@@ -31,7 +31,7 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
             </span>
             <span className="font-bold">{workload.active_tickets}</span>
           </div>
-          <div className="w-full bg-surface-hover h-2 rounded-full overflow-hidden border border-border/50">
+          <div className="w-full theme-input-structural h-2 rounded-full overflow-hidden p-0 flex items-center">
             <div 
               className="bg-accent h-full rounded-full transition-all duration-1000 ease-out" 
               style={{ width: `${Math.min(100, workload.active_tickets * 10)}%` }} 
@@ -46,7 +46,7 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
             </span>
             <span className="font-bold">{workload.active_tasks}</span>
           </div>
-          <div className="w-full bg-surface-hover h-2 rounded-full overflow-hidden border border-border/50">
+          <div className="w-full theme-input-structural h-2 rounded-full overflow-hidden p-0 flex items-center">
             <div 
               className="bg-accent h-full rounded-full transition-all duration-1000 ease-out delay-100" 
               style={{ width: `${Math.min(100, workload.active_tasks * 10)}%` }} 
@@ -61,7 +61,7 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
             </span>
             <span className="font-bold">{workload.active_requirements}</span>
           </div>
-          <div className="w-full bg-surface-hover h-2 rounded-full overflow-hidden border border-border/50">
+          <div className="w-full theme-input-structural h-2 rounded-full overflow-hidden p-0 flex items-center">
             <div 
               className="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out delay-200" 
               style={{ width: `${Math.min(100, workload.active_requirements * 10)}%` }} 

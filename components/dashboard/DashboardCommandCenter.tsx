@@ -107,13 +107,45 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
     let subTasksTotal = 0, subTasksResolved = 0;
     let reqsTotal = 0, reqsResolved = 0;
     let ticketsTotal = 0, ticketsResolved = 0;
+    
     let healthy = 0, warning = 0, breached = 0;
+    let totalEscalated = 0, totalOverdue = 0, totalActive = 0, totalReview = 0;
+    
+    // For Status-wise Comparison Monthly
+    const monthlyData: Record<string, { active: number, review: number, escalated: number, resolved: number }> = {};
+    
+    // Initialize last 6 months
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStr = d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+      monthlyData[monthStr] = { active: 0, review: 0, escalated: 0, resolved: 0 };
+    }
 
     filteredMetrics.forEach(m => {
       const sLower = String(m.status).toLowerCase();
       const isResolved = sLower.includes('resolv') || sLower.includes('done');
       const isEscalated = sLower.includes('escalat') || sLower.includes('block');
+      const isReview = sLower.includes('review');
+      const isActive = !isResolved && !isEscalated && !isReview;
+
+      if (isActive) totalActive++;
+      if (isEscalated) totalEscalated++;
+      if (isReview) totalReview++;
+      if (m.isOverdue) totalOverdue++;
       
+      // Monthly Bucket
+      if (m.createdAt) {
+        const d = new Date(m.createdAt);
+        const monthStr = d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+        if (monthlyData[monthStr]) {
+          if (isResolved) monthlyData[monthStr].resolved++;
+          else if (isEscalated) monthlyData[monthStr].escalated++;
+          else if (isReview) monthlyData[monthStr].review++;
+          else monthlyData[monthStr].active++;
+        }
+      }
+
       if (m.module === 'Workspaces') {
         wsTotal++;
         if (isResolved) wsResolved++;
@@ -148,6 +180,11 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
       }
     });
 
+    const activeItems = totalActive + totalEscalated + totalReview;
+    const escalationRate = activeItems > 0 ? (totalEscalated / activeItems) * 100 : 0;
+    const overdueRate = activeItems > 0 ? (totalOverdue / activeItems) * 100 : 0;
+    const resolutionVelocity = (wsResolved + tasksResolved + reqsResolved + ticketsResolved) / Math.max(1, (wsTotal + tasksTotal + reqsTotal + ticketsTotal));
+
     return {
       workspaces: { total: wsTotal, resolved: wsResolved },
       sub_workspaces: { total: subWsTotal, resolved: subWsResolved },
@@ -160,7 +197,16 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
         active_tasks: tasksTotal - tasksResolved,
         active_tickets: ticketsTotal - ticketsResolved,
         active_requirements: reqsTotal - reqsResolved
-      }
+      },
+      risk: {
+        escalationRate,
+        overdueRate,
+        velocity: resolutionVelocity * 100
+      },
+      monthlyTrends: Object.keys(monthlyData).map(month => ({
+        month,
+        ...monthlyData[month]
+      }))
     };
   }, [filteredMetrics]);
 

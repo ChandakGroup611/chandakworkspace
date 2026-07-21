@@ -4,7 +4,7 @@ import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
 import { TicketRightPanel } from "@/components/tickets/TicketRightPanel";
-import { fetchTicketDashboardData } from "@/lib/actions/tickets";
+import { fetchTicketDashboardData, fetchSingleTicketDetails } from "@/lib/actions/tickets";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -43,7 +43,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       setSubcategories(data.subcategories || []);
       setIssueTypes(data.issueTypes || []);
 
-      const foundTicket: any = (data.tickets as any[] || []).find((t: any) => t.id === ticketId || t.dbId === ticketId);
+      const foundTicket: any = await fetchSingleTicketDetails(ticketId);
       
       if (foundTicket && typeof foundTicket === 'object') {
         const custom = foundTicket.custom_fields || {};
@@ -51,9 +51,9 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
           ...foundTicket,
           dbId: foundTicket.id,
           id: foundTicket.code || `INC-${foundTicket.id.slice(0, 8)}`,
-          priorityObj: (data.priorities || []).find((p: any) => p.id === foundTicket.priority_id),
-          statusObj: (data.states || []).find((s: any) => s.id === foundTicket.status_id),
-          departmentObj: (data.departments || []).find((d: any) => d.id === foundTicket.department_id),
+          priorityObj: (data.priorities || []).find((p: any) => p.id === foundTicket.priority_id) || foundTicket.priority,
+          statusObj: (data.states || []).find((s: any) => s.id === foundTicket.status_id) || foundTicket.status,
+          departmentObj: (data.departments || []).find((d: any) => d.id === foundTicket.department_id) || foundTicket.department,
           categoryObj: (data.categories || []).find((c: any) => c.id === custom.category_id),
           subcategoryObj: (data.subcategories || []).find((sc: any) => sc.id === custom.subcategory_id),
           issueTypeObj: (data.issueTypes || []).find((it: any) => it.id === custom.issue_type_id),

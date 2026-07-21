@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const pathname = usePathname();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   const isAuthRoute = pathname === "/login" || pathname === "/register";
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
 
@@ -31,9 +31,8 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
   return (
     <div 
-      className="h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-cyan-500/20 overflow-hidden"
+      className="h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-cyan-500/20 overflow-hidden bg-transparent"
       style={{
-        backgroundColor: "var(--bg-primary, #0A0D14)",
         color: "var(--text-primary, #FFFFFF)"
       }}
     >
@@ -59,4 +58,5 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
     </div>
   );
 }
+
 

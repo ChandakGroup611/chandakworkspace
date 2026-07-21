@@ -126,7 +126,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
   return (
     <div className="space-y-8">
       {/* Add Manual Invoice */}
-      <AppCard className={`p-6 border bg-surface border-border`}>
+      <AppCard className={`p-6 theme-card-structural`}>
         <h3 className="text-lg font-bold text-accent mb-4">Add Custom Invoice</h3>
         <form onSubmit={handleAddInvoice} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

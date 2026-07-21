@@ -13,14 +13,17 @@ export interface DashboardWidgetConfig {
 
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardWidgetConfig[] = [
   { id: "kpi_main", type: "kpi", colSpan: 4, rowSpan: 1, order: 1 },
-  { id: "health_sla", type: "sla_governance", colSpan: 2, rowSpan: 2, order: 2 },
-  { id: "health_workload", type: "workload_intelligence", colSpan: 2, rowSpan: 2, order: 3 },
-  { id: "charts_row", type: "charts", colSpan: 4, rowSpan: 2, order: 4 },
-  { id: "kanban_board", type: "kanban", colSpan: 4, rowSpan: 2, order: 5 },
-  { id: "recent_tickets", type: "recent_tickets", colSpan: 2, rowSpan: 2, order: 6 },
-  { id: "activity_feed", type: "activity_feed", colSpan: 1, rowSpan: 2, order: 7 },
-  { id: "upcoming_deadlines", type: "upcoming_deadlines", colSpan: 1, rowSpan: 2, order: 8 },
-  { id: "team_performance", type: "team_performance", colSpan: 4, rowSpan: 2, order: 9 },
+  { id: "risk_intel", type: "risk_intelligence", colSpan: 2, rowSpan: 2, order: 2 },
+  { id: "status_comp", type: "status_comparison", colSpan: 2, rowSpan: 2, order: 3 },
+  { id: "reso_velo", type: "resolution_velocity", colSpan: 4, rowSpan: 2, order: 4 },
+  { id: "health_sla", type: "sla_governance", colSpan: 2, rowSpan: 2, order: 5 },
+  { id: "health_workload", type: "workload_intelligence", colSpan: 2, rowSpan: 2, order: 6 },
+  { id: "charts_row", type: "charts", colSpan: 4, rowSpan: 2, order: 7 },
+  { id: "kanban_board", type: "kanban", colSpan: 4, rowSpan: 2, order: 8 },
+  { id: "recent_tickets", type: "recent_tickets", colSpan: 2, rowSpan: 2, order: 9 },
+  { id: "activity_feed", type: "activity_feed", colSpan: 1, rowSpan: 2, order: 10 },
+  { id: "upcoming_deadlines", type: "upcoming_deadlines", colSpan: 1, rowSpan: 2, order: 11 },
+  { id: "team_performance", type: "team_performance", colSpan: 4, rowSpan: 2, order: 12 },
 ];
 
 export function useDashboardConfig(dashboardCode: string = 'DEFAULT_COMMAND_CENTER') {

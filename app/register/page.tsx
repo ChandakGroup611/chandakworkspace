@@ -35,7 +35,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
   
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -147,7 +147,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="dark theme-dark flex h-screen w-full bg-[#0A0D14] text-white font-sans overflow-hidden" data-theme="glass-intelligence">
+    <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
       
       {/* LEFT PANEL - Branding / Image Split */}
       <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-slate-950">
@@ -194,7 +194,7 @@ export default function RegisterPage() {
       </div>
 
       {/* RIGHT PANEL - Authentication Form */}
-      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-[#0F131E] lg:bg-[#0A0D14] relative text-white">
+      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-surface relative text-foreground">
         {/* Subtle grid on right panel for texture */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
 
@@ -212,7 +212,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="mb-8 lg:mb-10 text-center">
-              <h2 className="text-3xl font-bold text-white mb-2">
+              <h2 className="text-3xl font-bold text-foreground mb-2">
                 Create an Account
               </h2>
               <p className="text-gray-400 mb-4">
@@ -249,7 +249,7 @@ export default function RegisterPage() {
             <form onSubmit={handleRegistrationSubmit} className="space-y-6" autoComplete="off">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-muted block uppercase tracking-wider">
                     Full Name
                   </label>
                   <AppInput 
@@ -258,13 +258,13 @@ export default function RegisterPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     leftIcon={<User className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-muted block uppercase tracking-wider">
                     Email Address
                   </label>
                   <AppInput 
@@ -273,7 +273,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     leftIcon={<Mail className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12"
                     required
                   />
                 </div>
@@ -281,7 +281,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-muted block uppercase tracking-wider">
                     Department
                   </label>
                   <div className="relative">
@@ -291,12 +291,12 @@ export default function RegisterPage() {
                     <select
                       value={department}
                       onChange={(e) => { setDepartment(e.target.value); setDesignation(""); }}
-                      className="w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] text-white"
+                      className="w-full h-12 pl-10 pr-3 rounded-xl border border-border text-sm focus:outline-none cursor-pointer transition-colors bg-surface text-foreground"
                       required
                     >
                       <option value="" disabled>Select Department</option>
                       {departments.map(dept => (
-                        <option key={dept.id} value={dept.id} className="bg-[#0A0D14] text-white">
+                        <option key={dept.id} value={dept.id} className="bg-surface text-foreground">
                           {dept.name}
                         </option>
                       ))}
@@ -305,7 +305,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-muted block uppercase tracking-wider">
                     Designation
                   </label>
                   <div className="relative">
@@ -316,12 +316,12 @@ export default function RegisterPage() {
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
                       disabled={!department}
-                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] text-white ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
+                      className={`w-full h-12 pl-10 pr-3 rounded-xl border border-border text-sm focus:outline-none cursor-pointer transition-colors bg-surface text-foreground ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
                       required
                     >
                       <option value="" disabled>Select Designation</option>
                       {filteredDesignations.map(desig => (
-                        <option key={desig.id} value={desig.id} className="bg-[#0A0D14] text-white">
+                        <option key={desig.id} value={desig.id} className="bg-surface text-foreground">
                           {desig.name}
                         </option>
                       ))}
@@ -331,7 +331,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                <label className="text-xs font-bold text-muted block uppercase tracking-wider">
                   Identity Visual (Photo Upload)
                 </label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-white/20 bg-white/[0.02]">
@@ -382,7 +382,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-muted block uppercase tracking-wider">
                     Password
                   </label>
                   <AppInput 
@@ -391,13 +391,13 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-xs font-bold text-muted block uppercase tracking-wider">
                     Confirm Password
                   </label>
                   <AppInput 
@@ -406,7 +406,7 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12"
                     required
                   />
                 </div>
@@ -448,3 +448,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+

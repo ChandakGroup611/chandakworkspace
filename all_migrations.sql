@@ -10979,3 +10979,12 @@ CREATE POLICY policy_active_sessions_delete ON public.active_sessions
 ALTER PUBLICATION supabase_realtime ADD TABLE public.active_sessions;
 
 
+
+-- Fix global notification RLS
+BEGIN;
+DROP POLICY IF EXISTS policy_notification_queue_update ON public.notification_queue;
+CREATE POLICY policy_notification_queue_update ON public.notification_queue FOR UPDATE USING (target_user_id = auth.uid()::text OR (target_user_id = 'GLOBAL_OPS' AND public.is_super_admin())) WITH CHECK (target_user_id = auth.uid()::text OR (target_user_id = 'GLOBAL_OPS' AND public.is_super_admin()));
+DROP POLICY IF EXISTS policy_notification_queue_delete ON public.notification_queue;
+CREATE POLICY policy_notification_queue_delete ON public.notification_queue FOR DELETE USING (target_user_id = auth.uid()::text OR (target_user_id = 'GLOBAL_OPS' AND public.is_super_admin()));
+COMMIT;
+

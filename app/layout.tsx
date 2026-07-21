@@ -29,7 +29,7 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{
           __html: `
             try {
-              const theme = localStorage.getItem("app_theme") || "glass-intelligence";
+              const theme = localStorage.getItem("app_theme") || "light-neumorphic";
               const density = localStorage.getItem("app_density") || "comfortable";
               const baseSize = localStorage.getItem("app_base_font_size") || "16";
               const subtextSize = localStorage.getItem("app_subtext_font_size") || "14";
@@ -37,7 +37,7 @@ export default function RootLayout({
               document.documentElement.setAttribute("data-theme", theme);
               document.documentElement.setAttribute("data-density", density);
               
-              const lightThemes = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"];
+              const lightThemes = ["light-neumorphic", "glassmorphism", "pure-white"];
               if (lightThemes.includes(theme)) {
                 document.documentElement.classList.add("theme-light");
               } else {
@@ -80,3 +80,4 @@ export default function RootLayout({
     </html>
   )
 }
+
