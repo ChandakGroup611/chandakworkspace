@@ -50,14 +50,14 @@ export default function LoginPage() {
       } else if (isLogout) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          await supabase.auth.signOut();
+          await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
         }
         setSuccessMsg("You have been successfully logged out.");
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isTimeout) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          await supabase.auth.signOut();
+          await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
         }
         setErrorMsg("Your session expired due to inactivity. Please sign in again.");
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -106,7 +106,7 @@ export default function LoginPage() {
             if (now - lastActive < 5 * 60 * 1000) {
               const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
               if (!proceed) {
-                await supabase.auth.signOut();
+                await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
                 setLoading(false);
                 return;
               }
@@ -355,3 +355,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -49,14 +49,14 @@ export default function Navbar() {
     setProfileOpen(false);
     try {
       if (userData?.id) {
-        await supabase.from("active_sessions").delete().eq("user_id", userData.id);
+        supabase.from("active_sessions").delete().eq("user_id", userData.id).then();
       }
-      await supabase.auth.signOut();
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise(resolve => setTimeout(resolve, 800))
+      ]);
     } catch (_) {}
-    
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 600);
+    window.location.href = "/login?action=logout";
   };
 
   const toggleQuickTheme = () => {
@@ -168,4 +168,6 @@ export default function Navbar() {
     </>
   );
 }
+
+
 
