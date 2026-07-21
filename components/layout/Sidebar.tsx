@@ -219,7 +219,7 @@ export default function Sidebar() {
               <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
-              <span className={`text-[15px] font-bold tracking-tight truncate text-slate-900`}>
+              <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
                 Chandak Workspace
               </span>
             </div>
@@ -272,21 +272,21 @@ export default function Sidebar() {
                         href={item.href}
                         className={`group relative flex-1 flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap ${
                           isBaseActive 
-                            ? ("bg-slate-100 text-foreground font-bold")
-                            : ("text-slate-900 font-semibold hover:bg-slate-50 hover:text-foreground")
+                            ? ("bg-accent/10 text-foreground font-bold")
+                            : ("text-foreground font-semibold hover:bg-accent/5 hover:text-foreground")
                         } ${isCompact ? "justify-center px-3" : (item.subItems ? "pl-3 pr-8" : "px-3")}`}
                       >
                         {/* Text wrapper with z-10 so it's above the background */}
                         <div className="relative z-10 flex items-center gap-3 w-full overflow-hidden">
                         {isBaseActive && (
-                          <div className={`absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 bg-slate-900`} />
+                          <div className={`absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r transition-all group-hover:h-6 bg-accent`} />
                         )}
                         
                         {/* Responsive dynamically scaled icon */}
                         <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-105 h-4 w-4 ${
                           isBaseActive 
                             ? ("text-foreground") 
-                            : ("text-slate-800 group-hover:text-foreground")
+                            : ("text-muted-foreground group-hover:text-foreground")
                         }`} />
                         
                         {!isCompact && (
@@ -320,7 +320,7 @@ export default function Sidebar() {
                       {/* Premium Interactive Module Popover Tooltip with Open Action Indicator button when minimized */}
                       {isCompact && (
                         <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-md border shrink-0 ${
-                          "bg-white border-slate-200 text-slate-800"
+                          "bg-surface border-border text-foreground"
                         }`}>
                           <span className="font-medium whitespace-nowrap text-xs">{item.label}</span>
                         </div>
@@ -347,7 +347,7 @@ export default function Sidebar() {
                               className={`group relative flex items-center gap-2 px-2 py-1.5 rounded-md text-[0.8rem] transition-all overflow-hidden ${
                                 isSubActive 
                                   ? ("text-foreground font-bold") 
-                                  : ("text-slate-800 font-semibold hover:text-foreground")
+                                  : ("text-muted-foreground font-semibold hover:text-foreground")
                               }`}
                             >
                               <span className={`text-[0.65rem] relative z-10 ${isSubActive ? "opacity-100" : "opacity-40"}`}>▪</span>
@@ -370,5 +370,7 @@ export default function Sidebar() {
     </Profiler>
   );
 }
+
+
 
 
