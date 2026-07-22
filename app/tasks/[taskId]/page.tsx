@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft, MessageCircle, ClipboardList } from "lucide-react";
-import DOMPurify from 'dompurify';
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import dynamic from "next/dynamic";
+import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/tasks";
+import { notFound } from "next/navigation";
 
 const TaskRightPanel = dynamic(() => import("@/components/tasks/TaskRightPanel"), {
   loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-32 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Panel...</div>
 });
-import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/tasks";
-import { notFound } from "next/navigation";
+
+import SafeHtml from "@/components/ui/SafeHtml";
 
 interface TaskPageProps {
   params: Promise<{
@@ -108,9 +109,9 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1.5">
                       <ClipboardList className="w-3.5 h-3.5" /> Description
                     </span>
-                    <div 
+                    <SafeHtml 
                       className="text-[13px] sm:text-sm text-gray-700 dark:text-gray-300 w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-gray-50/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-gray-200/60 dark:border-white/10 shadow-sm"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(task.description) }} 
+                      html={task.description} 
                     />
                   </div>
                 )}

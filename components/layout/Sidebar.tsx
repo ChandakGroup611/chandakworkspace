@@ -207,6 +207,8 @@ export default function Sidebar() {
   return (
     <Profiler id="Sidebar" onRender={onRenderCallback}>
       <aside
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={`relative z-40 flex flex-col shrink-0 font-sharp transition-all duration-300 border-r select-none theme-card-structural ${ isCompact ? "w-16" : "w-64" }`}
     >
       {/* Sidebar Top Master Header */}
@@ -214,7 +216,7 @@ export default function Sidebar() {
         {!isCompact ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
             <div className={`flex items-center justify-center transition-all duration-300 h-10 w-10 shrink-0 bg-white rounded-md p-1`}>
-              <img src="/logo.png" alt="Chandak Logo" className="h-full w-auto object-contain" />
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
               <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
@@ -225,7 +227,7 @@ export default function Sidebar() {
         ) : (
           <Link href="/" className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center">
             <div className="h-10 w-full px-2 mb-2">
-              <img src="/logo.png" alt="Chandak Logo" className="h-full w-full object-contain drop-shadow-md" />
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-full object-contain drop-shadow-md" />
             </div>
           </Link>
         )}

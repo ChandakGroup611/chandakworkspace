@@ -16,11 +16,24 @@ export async function saveAMCEntity(tableName: string, payload: any, editId?: st
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
+  // Prevent setting updated_at on tables that don't have this column
+  const tablesWithoutUpdatedAt = [
+    "amc_invoices",
+    "amc_transactions", 
+    "amc_renewals",
+    "amc_license_allocations"
+  ];
+
   let res;
   if (editId) {
+    const updatePayload = { ...payload };
+    if (!tablesWithoutUpdatedAt.includes(tableName)) {
+      updatePayload.updated_at = new Date().toISOString();
+    }
+
     res = await supabase
       .from(tableName)
-      .update({ ...payload, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq("id", editId)
       .select()
       .single();
@@ -43,11 +56,23 @@ export async function deleteAMCEntity(tableName: string, id: string, hardDelete 
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
+  // Prevent setting updated_at on tables that don't have this column
+  const tablesWithoutUpdatedAt = [
+    "amc_invoices",
+    "amc_transactions", 
+    "amc_renewals",
+    "amc_license_allocations"
+  ];
+
   let res;
   if (hardDelete) {
     res = await supabase.from(tableName).delete().eq("id", id);
   } else {
-    res = await supabase.from(tableName).update({ is_deleted: true, updated_at: new Date().toISOString() }).eq("id", id);
+    const updatePayload: any = { is_deleted: true };
+    if (!tablesWithoutUpdatedAt.includes(tableName)) {
+      updatePayload.updated_at = new Date().toISOString();
+    }
+    res = await supabase.from(tableName).update(updatePayload).eq("id", id);
   }
 
   if (res.error) return { success: false, error: res.error.message };
