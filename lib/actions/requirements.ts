@@ -299,9 +299,9 @@ export async function createRequirement(payload: {
 }
 
 export async function submitRequirementAnalysis(reqId: string, payload: any, performedBy: string, action?: 'ACCEPT' | 'HOLD' | 'CANCEL' | 'SAVE') {
-  const { data: userRole } = await supabaseAdmin.from('user_roles').select('roles(code)').eq('user_id', performedBy).single();
-  const isSuperAdmin = (userRole?.roles as any)?.code === 'SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ROLE_SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ADMIN_ROLE' || (userRole?.roles as any)?.code === 'ROLE_ADMIN';
-  if (!isSuperAdmin) throw new Error("Only SUPER_ADMIN or ADMIN_ROLE can submit Requirement Analysis.");
+  const { hasPermission } = await import('@/lib/permissions');
+  const isSuperAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
+  if (!isSuperAdmin) throw new Error("Only SUPER_ADMIN can submit Requirement Analysis.");
 
   if (action === 'CANCEL') {
      await supabaseAdmin.from('requirements').update({ approval_status: 'Cancelled' }).eq('id', reqId);
@@ -407,8 +407,7 @@ export async function fetchRequirementStatuses() {
 export async function generateApprovalFlow(reqId: string, performedBy: string) {
   const { hasPermission } = await import('@/lib/permissions');
   const canManage = await hasPermission(performedBy, 'REQUIREMENTS_MANAGE');
-  const { data: userRole } = await supabaseAdmin.from('user_roles').select('roles(code)').eq('user_id', performedBy).single();
-  const isAdmin = (userRole?.roles as any)?.code === 'SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ROLE_SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ADMIN_ROLE' || (userRole?.roles as any)?.code === 'ROLE_ADMIN';
+  const isAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
   if (!canManage && !isAdmin) {
       throw new Error("Unauthorized: You do not have permission to generate approval flows.");
   }
@@ -442,8 +441,7 @@ export async function generateApprovalFlow(reqId: string, performedBy: string) {
 export async function deleteRequirement(reqId: string, performedBy: string) {
   const { hasPermission } = await import('@/lib/permissions');
   const canDelete = await hasPermission(performedBy, 'REQUIREMENTS_DELETE');
-  const { data: userRoles } = await supabaseAdmin.from('user_roles').select('roles(code)').eq('user_id', performedBy);
-  const isSuperAdmin = userRoles?.some((ur: any) => ur.roles?.code === 'SUPER_ADMIN' || ur.roles?.code === 'ROLE_SUPER_ADMIN');
+  const isSuperAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
   
   if (!isSuperAdmin && !canDelete) throw new Error('Only SUPER_ADMIN or users with REQUIREMENTS_DELETE permission can delete requirements.');
   const { error } = await supabaseAdmin.from('requirements').delete().eq('id', reqId);
@@ -487,10 +485,10 @@ export async function fetchRequirementAnalyticsData() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data: userRole } = await supabaseAdmin.from('user_roles').select('roles(code)').eq('user_id', user.id).single();
+  const { hasPermission } = await import('@/lib/permissions');
   const adminEmails = ["avinash2@gmail.com", "avinash.pise98@gmail.com", "chrome_superadmin@adios.com"];
   const isSuperAdminEmail = adminEmails.includes(user.email || '');
-  const isAdmin = isSuperAdminEmail || (userRole?.roles as any)?.code === 'SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ROLE_SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ADMIN_ROLE' || (userRole?.roles as any)?.code === 'ROLE_ADMIN';
+  const isAdmin = isSuperAdminEmail || await hasPermission(user.id, 'SUPER_ADMIN');
 
   const { data, error } = await supabaseAdmin.from('requirements').select(`
     id, code, title, scope, approval_status, current_assignee_id, created_at, updated_at, due_date, start_date, creator_id, requester_id, custom_fields,
@@ -611,8 +609,8 @@ export async function processApprovalAction(reqId: string, action: string, remar
   const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').select('id, code, title, requester_id, current_assignee_id, approval_status').eq('id', finalReqId).single();
   if (reqErr) throw new Error(`Requirement lookup failed for reqId '${finalReqId}': ${reqErr.message}`);
   if (!req) throw new Error(`Requirement not found for reqId: '${finalReqId}'`);
-  const { data: userRole } = await supabaseAdmin.from('user_roles').select('roles(code)').eq('user_id', performedBy).single();
-  const isAdmin = (userRole?.roles as any)?.code === 'SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ROLE_SUPER_ADMIN' || (userRole?.roles as any)?.code === 'ADMIN_ROLE' || (userRole?.roles as any)?.code === 'ROLE_ADMIN';
+  const { hasPermission } = await import('@/lib/permissions');
+  const isAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
 
   if (action === 'SignOff') {
      if (!isAdmin) throw new Error("Only an administrator can Sign Off.");

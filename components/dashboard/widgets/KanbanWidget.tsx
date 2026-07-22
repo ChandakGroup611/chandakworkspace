@@ -50,14 +50,14 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
         <div className="text-sm font-semibold text-foreground line-clamp-2 leading-snug mb-2" title={m.title}>{m.title || `${m.module} Assignment`}</div>
         
         <div className="flex items-center justify-between mt-auto">
-          <span className="text-[10px] font-mono text-muted-foreground bg-surface px-1.5 py-0.5 rounded border border-border/50">
+          <span className="text-[10px] font-mono text-muted-foreground theme-card-structural px-1.5 py-0.5 rounded /50">
             {m.code || `TF-${shortId}`}
           </span>
           <div className="flex items-center gap-2">
             <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border ${tagBg}`}>
               {m.module.substring(0,4)}
             </span>
-            <div className="w-5 h-5 rounded-full bg-surface-hover border border-border flex items-center justify-center text-[9px] font-bold text-foreground" title={m.user}>
+            <div className="w-5 h-5 rounded-full theme-card-structural -hover flex items-center justify-center text-[9px] font-bold text-foreground" title={m.user}>
               {initials}
             </div>
           </div>
@@ -93,10 +93,10 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
     >
       <div className="grid grid-cols-4 gap-4 h-full overflow-x-auto pb-2">
         {/* Backlog */}
-        <div className="flex flex-col h-full bg-surface-hover/30 rounded-xl p-2 border border-border/30">
+        <div className="flex flex-col h-full theme-card-structural -hover/30 rounded-xl p-2 /30">
           <div className="flex items-center justify-between mb-3 px-1">
             <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Backlog</h4>
-            <span className="bg-surface text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-border/50">{board.backlog.length}</span>
+            <span className="theme-card-structural text-muted-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full /50">{board.backlog.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.backlog.map(m => renderCard(m, false))}

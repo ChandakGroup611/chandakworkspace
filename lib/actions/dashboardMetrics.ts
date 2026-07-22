@@ -15,7 +15,7 @@ export async function fetchLiveDashboardMetrics() {
 
   try {
     const { hasPermission } = await import('@/lib/permissions');
-    const isSuperAdmin = await hasPermission(userId, "WORKSPACES_MANAGE");
+    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
 
     // Always fetch enrolled workspaces for personal dashboard
     let workspaceIds: string[] = [];

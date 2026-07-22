@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { X, Trash2, Power } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
+import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 
 interface CityManagerModalProps {
   stateName: string;
@@ -39,11 +40,8 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
 
   const toggleStatus = async (city: any) => {
     try {
-      const { error } = await supabase
-        .from("master_cities")
-        .update({ is_active: !city.is_active })
-        .eq("id", city.id);
-      if (error) throw error;
+      const res = await saveMasterEntity("master_cities", { is_active: !city.is_active }, city.id);
+      if (!res.success) throw new Error(res.error);
       await fetchCities();
       onCityChanged();
     } catch (e: any) {
@@ -66,8 +64,8 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
 
       if (!confirm(`Are you sure you want to delete '${city.city_name}'?`)) return;
 
-      const { error } = await supabase.from("master_cities").delete().eq("id", city.id);
-      if (error) throw error;
+      const res = await deleteMasterEntity("master_cities", city.id, true);
+      if (!res.success) throw new Error(res.error);
       
       await fetchCities();
       onCityChanged();

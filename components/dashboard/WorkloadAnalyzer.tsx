@@ -44,7 +44,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
 
   return (
     <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-6 rounded-xl animate-in fade-in-50">
-      <AppCard className={`w-full max-w-md p-6 shadow-2xl bg-surface border-accent/30`}>
+      <AppCard className={`w-full max-w-md p-6 shadow-2xl theme-card-structural border-accent/30`}>
         
         <div className="flex items-center justify-between border-b pb-4 mb-5 border-gray-200 dark:border-white/5">
           <div className="flex items-center gap-2">

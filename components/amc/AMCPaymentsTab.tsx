@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { Plus, Trash2, Loader2, IndianRupee, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { FileText, Plus, Search, Calendar, DollarSign, CheckCircle2, Clock, Check, Trash2, Loader2, IndianRupee, CheckCircle, AlertCircle } from "lucide-react";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
 import { createClient } from "@/utils/supabase/client";
 
 interface AMCPaymentsTabProps {
@@ -54,19 +55,16 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('amc_invoices')
-        .insert([{
-          amc_id: amcId,
-          description,
-          amount: parseFloat(amount) || 0,
-          due_date: dueDate,
-          invoice_number: invoiceNumber,
-          status: 'Pending',
-          created_by: user.id
-        }]);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_invoices", {
+        amc_id: amcId,
+        description,
+        amount: parseFloat(amount) || 0,
+        due_date: dueDate,
+        invoice_number: invoiceNumber,
+        status: 'Pending',
+        created_by: user.id
+      });
+      if (!res.success) throw new Error(res.error);
 
       setDescription("");
       setAmount("");
@@ -84,15 +82,11 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
   const handleMarkPaid = async (id: string) => {
     setProcessingId(id);
     try {
-      const { error } = await supabase
-        .from('amc_invoices')
-        .update({ 
-          status: 'Paid', 
-          payment_date: new Date().toISOString().split('T')[0] 
-        })
-        .eq('id', id);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_invoices", {
+        status: 'Paid', 
+        payment_date: new Date().toISOString().split('T')[0] 
+      }, id);
+      if (!res.success) throw new Error(res.error);
       await fetchInvoices();
     } catch (e: any) {
       alert("Error marking as paid: " + e.message);
@@ -104,8 +98,8 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this invoice?")) return;
     try {
-      const { error } = await supabase.from('amc_invoices').delete().eq('id', id);
-      if (error) throw error;
+      const res = await deleteAMCEntity("amc_invoices", id, true);
+      if (!res.success) throw new Error(res.error);
       await fetchInvoices();
     } catch (e: any) {
       alert("Error: " + e.message);

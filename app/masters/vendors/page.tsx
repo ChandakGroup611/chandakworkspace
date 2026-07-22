@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
+import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -107,8 +108,8 @@ export default function VendorMasterPage() {
     if (!newCity || !newCity.trim()) return;
 
     try {
-      const { error } = await supabase.from("master_cities").insert([{ state_name: formState, city_name: newCity.trim() }]);
-      if (error && !error.message.includes("duplicate key")) throw error;
+      const res = await saveMasterEntity("master_cities", { state_name: formState, city_name: newCity.trim() });
+      if (!res.success && res.error && !res.error.includes("duplicate key")) throw new Error(res.error);
       
       setFormCity(newCity.trim());
       await fetchCitiesForState(formState);
@@ -152,8 +153,8 @@ export default function VendorMasterPage() {
     if (!newCity || !newCity.trim()) return;
 
     try {
-      const { error } = await supabase.from("master_cities").insert([{ state_name: formBankState, city_name: newCity.trim() }]);
-      if (error && !error.message.includes("duplicate key")) throw error;
+      const res = await saveMasterEntity("master_cities", { state_name: formBankState, city_name: newCity.trim() });
+      if (!res.success && res.error && !res.error.includes("duplicate key")) throw new Error(res.error);
       
       setFormBankCity(newCity.trim());
       await fetchBankCitiesForState(formBankState);
@@ -290,13 +291,13 @@ export default function VendorMasterPage() {
         vendor_type: formVendorType.trim()
       };
 
+      let res;
       if (editId) {
-        const { error } = await supabase.from("vendor_master").update(payload).eq("id", editId);
-        if (error) throw error;
+        res = await saveMasterEntity("vendor_master", payload, editId);
       } else {
-        const { error } = await supabase.from("vendor_master").insert([payload]);
-        if (error) throw error;
+        res = await saveMasterEntity("vendor_master", payload);
       }
+      if (!res.success) throw new Error(res.error);
 
       setShowModal(false);
       fetchVendors();
@@ -310,8 +311,8 @@ export default function VendorMasterPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this vendor? This cannot be undone.")) return;
     try {
-      const { error } = await supabase.from("vendor_master").delete().eq("id", id);
-      if (error) throw error;
+      const res = await deleteMasterEntity("vendor_master", id, true);
+      if (!res.success) throw new Error(res.error);
       fetchVendors();
     } catch (e: any) {
       alert("Error deleting vendor: " + e.message);

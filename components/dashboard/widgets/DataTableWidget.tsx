@@ -78,7 +78,7 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
                 };
 
                 return (
-                  <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer hover:bg-surface-hover/50 transition-colors border-b border-border/40 last:border-0 group">
+                  <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer hover:theme-card-structural -hover/50 transition-colors border-b /40 last:border-0 group">
                     <AppTableCell>
                       <div className="font-mono text-[10px] font-bold text-muted-foreground uppercase mb-0.5">{m.code || `TF-${shortId}`}</div>
                       <div className="text-sm font-semibold text-foreground truncate max-w-[250px] group-hover:text-primary transition-colors" title={m.title}>{m.title || `${m.module} Assignment`}</div>
@@ -91,7 +91,7 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
                     <AppTableCell>{renderPriority(m.priority || "")}</AppTableCell>
                     <AppTableCell>{renderStatus(m.status)}</AppTableCell>
                     <AppTableCell>
-                      <div className="w-6 h-6 rounded-full bg-surface border border-border flex items-center justify-center text-[10px] font-bold text-foreground" title={m.user}>
+                      <div className="w-6 h-6 rounded-full theme-card-structural flex items-center justify-center text-[10px] font-bold text-foreground" title={m.user}>
                         {initials}
                       </div>
                     </AppTableCell>

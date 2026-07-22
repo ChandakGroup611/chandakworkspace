@@ -223,7 +223,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 required
-                className="bg-surface border-border"
+                className="theme-card-structural"
               />
             </div>
           </div>

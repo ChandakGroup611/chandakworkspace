@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';
 import { CheckCircle, Shield, Key, Link2, Users, Save, Loader2, AlertCircle } from "lucide-react";
+import { saveSettingsEntity } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -61,19 +62,11 @@ export default function IdentityProviderForm() {
         .single();
 
       if (existing?.id) {
-        const { error } = await supabase
-          .from("identity_provider_config")
-          .update({
-            ...config,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", existing.id);
-        if (error) throw error;
+        const res = await saveSettingsEntity("identity_provider_config", config, existing.id);
+        if (!res.success) throw new Error(res.error);
       } else {
-        const { error } = await supabase
-          .from("identity_provider_config")
-          .insert([config]);
-        if (error) throw error;
+        const res = await saveSettingsEntity("identity_provider_config", config);
+        if (!res.success) throw new Error(res.error);
       }
 
       triggerToast("Identity Provider Configuration Saved", "success");

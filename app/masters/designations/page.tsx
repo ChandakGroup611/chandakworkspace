@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
+import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -106,13 +107,13 @@ export default function DesignationsMasterPage() {
         is_active: formIsActive
       };
 
+      let res;
       if (editId) {
-        const { error } = await supabase.from("designations").update(payload).eq("id", editId);
-        if (error) throw error;
+        res = await saveMasterEntity("designations", payload, editId);
       } else {
-        const { error } = await supabase.from("designations").insert([payload]);
-        if (error) throw error;
+        res = await saveMasterEntity("designations", payload);
       }
+      if (!res.success) throw new Error(res.error);
 
       setShowModal(false);
       fetchData();
@@ -126,8 +127,8 @@ export default function DesignationsMasterPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this designation?")) return;
     try {
-      const { error } = await supabase.from("designations").update({ is_deleted: true }).eq("id", id);
-      if (error) throw error;
+      const res = await deleteMasterEntity("designations", id);
+      if (!res.success) throw new Error(res.error);
       fetchData();
     } catch (e: any) {
       alert("Error deleting designation: " + e.message);

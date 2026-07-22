@@ -53,17 +53,8 @@ export default function RequirementsPage() {
 
   useEffect(() => {
     setMounted(true);
-    const fetchUserRole = async () => {
-       const { data: { user } } = await supabase.auth.getUser();
-       if (!user) return;
-       const { data: userRoles } = await supabase
-         .from('user_roles')
-         .select('roles(code)')
-         .eq('user_id', user.id);
-       setIsSuperAdmin(userRoles?.some((ur: any) => ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN', 'ADMIN_ROLE', 'ROLE_ADMIN'].includes(ur.roles?.code)) ?? false);
-    };
-    fetchUserRole();
-  }, []);
+    setIsSuperAdmin(hasPermission("SUPER_ADMIN"));
+  }, [hasPermission]);
 
   const loadRequirements = async () => {
     setLoadingReqs(true);

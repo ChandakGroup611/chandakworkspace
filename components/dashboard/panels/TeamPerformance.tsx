@@ -47,7 +47,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
 
   return (
     <AppCard className="mt-5">
-      <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
+      <div className="flex items-center justify-between p-4 border-b theme-card-structural">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-accent" />
           <span className="text-sm font-bold text-foreground">Team Performance · Sprint 24</span>

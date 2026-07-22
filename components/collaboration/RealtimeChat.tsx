@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { AppButton } from '@/components/ui/AppButton';
 import { createClient } from '@/utils/supabase/client';
 import { performanceGovernor, DegradationStage } from '@/utils/performance/PerformanceGovernanceEngine';
+import { saveCollaborationEntity } from "@/lib/actions/collaboration";
 
 export function RealtimeChat({ recordId, moduleType }: { recordId: string, moduleType: string }) {
   const [messages, setMessages] = useState<any[]>([]);
@@ -65,13 +66,14 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await supabase.from('activity_events').insert({
+    const res = await saveCollaborationEntity('activity_events', {
       module_type: moduleType,
       record_id: recordId,
       event_type: 'CHAT',
       new_value: { content },
       performed_by: user.id
     });
+    if (!res.success) throw new Error(res.error);
   }
 
   return (

@@ -105,7 +105,7 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
               </div>
               <div className="flex flex-col justify-center pb-2">
                 <div className="text-sm text-foreground/90">
-                  <strong className="text-foreground">{act.user}</strong> {act.action} <span className="font-mono text-xs px-1 py-0.5 rounded bg-surface border border-border/50">{act.target}</span>
+                  <strong className="text-foreground">{act.user}</strong> {act.action} <span className="font-mono text-xs px-1 py-0.5 rounded theme-card-structural /50">{act.target}</span>
                 </div>
                 <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-1">{act.time}</div>
               </div>

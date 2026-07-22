@@ -10,6 +10,7 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import RichTextEditor from "@/components/knowledge/RichTextEditor";
 import { BookOpen, Save, Eye, LayoutTemplate, Tag, Globe, Lock } from "lucide-react";
 import { toast } from "react-toastify";
+import DOMPurify from "dompurify";
 
 export default function KnowledgeBaseAuthoring() {
   const [articles, setArticles] = useState<any[]>([
@@ -149,7 +150,7 @@ export default function KnowledgeBaseAuthoring() {
                       </AppBadge>
                     </div>
                     <h1 className="text-4xl font-black mb-8 text-foreground tracking-tight">{activeArticle.title || "Untitled Article"}</h1>
-                    <div className="prose prose-blue dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeArticle.content || "<p><i>Empty content</i></p>" }} />
+                    <div className="prose prose-blue dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeArticle.content || "<p><i>Empty content</i></p>") }} />
                   </div>
                 ) : (
                   <div className="p-6 space-y-6 max-w-4xl mx-auto">

@@ -292,7 +292,7 @@ export function WorkspaceMasterTable({
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
                     className={`p-1 rounded-md transition-colors relative z-20 ${
-                      "hover:bg-gray-200 text-muted bg-surface/40 backdrop-blur"
+                      "hover:bg-gray-200 text-muted bg-surface/40 backdrop-blur/40 backdrop-blur"
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (

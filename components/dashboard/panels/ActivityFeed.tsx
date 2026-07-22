@@ -67,7 +67,7 @@ export default function ActivityFeed({ metrics = [] }: ActivityFeedProps) {
 
   return (
     <AppCard>
-      <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
+      <div className="flex items-center justify-between p-4 border-b theme-card-structural">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-emerald-500" />
           <span className="text-sm font-bold text-foreground">Recent Activity</span>

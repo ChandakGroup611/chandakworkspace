@@ -207,9 +207,7 @@ export default function Sidebar() {
   return (
     <Profiler id="Sidebar" onRender={onRenderCallback}>
       <aside
-      className={`relative z-40 flex flex-col shrink-0 font-sharp transition-all duration-300 border-r border-border select-none bg-surface ${
-        isCompact ? "w-16" : "w-64"
-      }`}
+      className={`relative z-40 flex flex-col shrink-0 font-sharp transition-all duration-300 border-r select-none theme-card-structural ${ isCompact ? "w-16" : "w-64" }`}
     >
       {/* Sidebar Top Master Header */}
       <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
@@ -236,7 +234,7 @@ export default function Sidebar() {
           variant="outline"
           size="icon-sm"
           onClick={() => setIsCompactState(!isCompactState)}
-          className="absolute -right-3 top-5 rounded-full shadow-md transition-all hover:scale-125 duration-300 z-50 bg-surface border-border text-muted hover:text-foreground hover:border-accent"
+          className="absolute -right-3 top-5 rounded-full shadow-md transition-all hover:scale-125 duration-300 z-50 theme-card-structural text-muted hover:text-foreground hover:border-accent"
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
           {isCompactState ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -319,9 +317,7 @@ export default function Sidebar() {
 
                       {/* Premium Interactive Module Popover Tooltip with Open Action Indicator button when minimized */}
                       {isCompact && (
-                        <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-md border shrink-0 ${
-                          "bg-surface border-border text-foreground"
-                        }`}>
+                        <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-md shrink-0 ${ "theme-card-structural text-foreground" }`}>
                           <span className="font-medium whitespace-nowrap text-xs">{item.label}</span>
                         </div>
                       )}

@@ -110,7 +110,7 @@ export default function UserFormPage() {
       // Check current user permissions
       const me = rawUsers.find((u: any) => u.id === authUser.id);
       const myRole = data.roles?.find((r: any) => r.id === me?.role_id);
-      setIsSuperAdmin(myRole?.code?.toUpperCase() === "SUPER_ADMIN" || myRole?.code?.toUpperCase() === "ROLE_ADMIN");
+      setIsSuperAdmin(myRole?.code?.toUpperCase() === "SUPER_ADMIN");
 
       if (isEditingMode) {
         const userToEdit = rawUsers.find((u: any) => u.id === id);

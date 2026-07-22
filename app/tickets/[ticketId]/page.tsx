@@ -9,6 +9,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
+import DOMPurify from 'dompurify';
 
 
 export default function TicketDetailsPage({ params }: { params: Promise<{ ticketId: string }> }) {
@@ -191,7 +192,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                 {!isEditing ? (
                   <div 
                     className="text-[13px] sm:text-sm text-foreground w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-background/50 p-4 rounded-xl border border-border shadow-sm"
-                    dangerouslySetInnerHTML={{ __html: ticketData.description || "No description provided." }} 
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ticketData.description || "No description provided.") }} 
                   />
                 ) : (
                   <textarea 

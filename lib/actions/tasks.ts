@@ -1418,7 +1418,7 @@ export async function transferTask(payload: {
     if (!user) return { error: "Unauthenticated" };
 
     const { hasPermission } = await import('@/lib/permissions');
-    const isSuperAdmin = await hasPermission(user.id, "WORKSPACES_MANAGE");
+    const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
     
     // Check if user is an executor
     const { data: participant } = await supabaseAdmin

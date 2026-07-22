@@ -122,9 +122,7 @@ export default function UserMasterPage() {
   const presenceMap = usePresence(allUserIds);
 
   // Helper to determine if current logged in user has administrative privileges
-  const isSuperAdmin = currentUserProfile?.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" || 
-                       currentUserProfile?.roleObj?.code?.toUpperCase() === "ROLE_ADMIN" || 
-                       currentUserProfile?.role_id === "admin-role-id";
+  const isSuperAdmin = hasPermission("SUPER_ADMIN");
 
   // Lookup selections
   const [departments, setDepartments] = useState<any[]>([]);
@@ -242,7 +240,8 @@ export default function UserMasterPage() {
           is_active: true
         };
 
-        await supabase.from("user_master").insert([newProfile]);
+        const res = await saveUserAction(null, newProfile);
+        if (!res.success) console.error("Self-healing failed:", res.error);
         cleanUsers.push({ ...newProfile });
       }
 
@@ -421,8 +420,8 @@ export default function UserMasterPage() {
 
   const handleDeactivateUser = async (usr: AppUserItem) => {
     try {
-      const { error } = await supabase.from("user_master").update({ is_active: false }).eq("id", usr.id);
-      if (error) throw error;
+      const res = await saveUserAction(usr.id, { is_active: false });
+      if (!res.success) throw new Error(res.error);
       
       setUsers(prev => prev.map(u => u.id === usr.id ? { ...u, is_active: false } : u));
       if (selectedUser?.id === usr.id) {
@@ -502,8 +501,8 @@ export default function UserMasterPage() {
     const timeStr = new Date().toISOString();
     const payload = { last_login_at: timeStr, is_active: true };
     try {
-      const { error } = await supabase.from("user_master").update(payload).eq("id", usr.id);
-      if (error) throw error;
+      const res = await saveUserAction(usr.id, payload);
+      if (!res.success) throw new Error(res.error);
       updateLocalUserTimestamp(usr.id, payload);
       appendLocalAudit(usr.id, "SESSION_STATE", { event: "Staff account successfully authenticated online", timestamp: timeStr });
       triggerToast(`Last Log-In state recorded for ${usr.full_name}.`);
@@ -522,8 +521,8 @@ export default function UserMasterPage() {
     const timeStr = new Date().toISOString();
     const payload = { last_logout_at: timeStr };
     try {
-      const { error } = await supabase.from("user_master").update(payload).eq("id", usr.id);
-      if (error) throw error;
+      const res = await saveUserAction(usr.id, payload);
+      if (!res.success) throw new Error(res.error);
       updateLocalUserTimestamp(usr.id, payload);
       appendLocalAudit(usr.id, "SESSION_STATE", { event: "Staff account active connection revoked securely", timestamp: timeStr });
       triggerToast(`Last Log-Out state recorded for ${usr.full_name}.`);

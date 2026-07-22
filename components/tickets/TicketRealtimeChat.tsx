@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef, useCallback, Profiler } from "react
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { Send, Smile, Paperclip, MessageSquare, Wifi, WifiOff, Loader2, Users, Zap } from "lucide-react";
+import { Eye, FileText, Send, User, Reply, Users, ShieldCheck, X, Link, Check, Plus, Paperclip, Loader2, Maximize2, Minimize2, Settings, Download, Trash2, Mic, StopCircle, RefreshCw, MessageSquare, Smile, Wifi, WifiOff, Zap } from "lucide-react";
+import { saveCollaborationEntity, deleteCollaborationEntity } from "@/lib/actions/collaboration";
 import { createClient } from "@/utils/supabase/client";
 import { useRenderLog } from "@/hooks/use-render-log";
 import { onRenderCallback } from "@/utils/performance/profiler-utils";
@@ -211,8 +212,8 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
 
   const handleDeleteMessage = async (messageId: string) => {
     try {
-      const { error: delErr } = await supabase.from('ticket_chat_messages').delete().eq('id', messageId);
-      if (delErr) throw delErr;
+      const res = await deleteCollaborationEntity("ticket_chat_messages", messageId, true);
+      if (!res.success) throw new Error(res.error);
       setMessages(prev => prev.filter(m => m.id !== messageId));
     } catch (err: any) {
       console.error("Failed to delete message:", err);
@@ -281,14 +282,15 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
           }
 
           // Create database record to enable secure proxy access
-          const { data: dbData } = await supabase.from('ticket_attachments').insert([{
+          const res = await saveCollaborationEntity('ticket_attachments', {
              ticket_id: ticketId,
              file_name: file.name,
              file_url: `storage:ticket_attachments:${filePath}`,
              file_type: file.type,
              size: file.size,
              uploaded_by: userId
-          }]).select().single();
+          });
+          const dbData = res.data;
 
           const fileUrl = dbData?.id ? `/api/proxy-attachment/${dbData.id}` : supabase.storage.from('ticket_attachments').getPublicUrl(filePath).data.publicUrl;
 
@@ -307,13 +309,9 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
       if (uploadedAttachments.length > 0) {
         finalMessage += "|||ATTACHMENTS|||" + JSON.stringify(uploadedAttachments);
       }
-      const { data, error: insertErr } = await supabase
-        .from("ticket_chat_messages")
-        .insert([{ ticket_id: ticketId, user_id: userId, message: finalMessage }])
-        .select()
-        .single();
-
-      if (insertErr) throw insertErr;
+      const res = await saveCollaborationEntity("ticket_chat_messages", { ticket_id: ticketId, user_id: userId, message: finalMessage });
+      if (!res.success) throw new Error(res.error);
+      const data = res.data;
 
       // Handle @mentions via API route
       if ((finalMentionedIds.length > 0 || finalIsAll) && data?.id) {

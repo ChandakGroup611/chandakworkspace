@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Send, Lock, Globe, Smile, Paperclip, MoreHorizontal } from "lucide-react";
+import { Send, Lock, Globe, Smile, Paperclip, MoreHorizontal, Image, X, UploadCloud, Link as LinkIcon, Reply } from "lucide-react";
+import { saveCollaborationEntity } from "@/lib/actions/collaboration";
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -73,14 +74,14 @@ export function TicketChat({ ticket }: TicketChatProps) {
     if (!user) return;
 
     try {
-      const { error } = await supabase.from("ticket_chats").insert([{
+      const res = await saveCollaborationEntity("ticket_chats", {
         ticket_id: ticket.dbId,
-        author: user.email?.split("@")[0] || "System User",
+        user_id: user.id,
         content: newMessage.trim(),
-        is_private: isPrivate
-      }]);
-
-      if (error) throw error;
+        is_private: isPrivate,
+        author: user.email?.split("@")[0] || "System User"
+      });
+      if (!res.success) throw new Error(res.error);
       setNewMessage("");
     } catch (err) {
       console.error("Message send failed:", err);

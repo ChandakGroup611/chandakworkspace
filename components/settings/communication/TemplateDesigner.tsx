@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';
+import DOMPurify from 'dompurify';
 import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate } from "lucide-react";
+import { saveSettingsEntity, deleteSettingsEntity } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
 import { previewEmailTemplate } from "@/lib/actions/email-config";
 
@@ -81,12 +83,12 @@ export default function TemplateDesigner() {
       };
 
       if (template.is_new) {
-        const { error } = await supabase.from("email_templates").insert([payload]);
-        if (error) throw error;
+        const res = await saveSettingsEntity("email_templates", payload);
+        if (!res.success) throw new Error(res.error);
         triggerToast("Template created successfully");
       } else {
-        const { error } = await supabase.from("email_templates").update(payload).eq("id", template.id);
-        if (error) throw error;
+        const res = await saveSettingsEntity("email_templates", payload, template.id);
+        if (!res.success) throw new Error(res.error);
         triggerToast("Template updated successfully");
       }
       fetchTemplates();
@@ -102,8 +104,8 @@ export default function TemplateDesigner() {
     }
     if (!confirm("Delete this template?")) return;
     try {
-      const { error } = await supabase.from("email_templates").delete().eq("id", id);
-      if (error) throw error;
+      const res = await deleteSettingsEntity("email_templates", id, true);
+      if (!res.success) throw new Error(res.error);
       triggerToast("Template deleted");
       fetchTemplates();
     } catch (err: any) {
@@ -240,7 +242,7 @@ export default function TemplateDesigner() {
             ) : (
               <div 
                 className="w-full h-64 bg-white text-black p-6 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: previewContent[tpl.id] || "Loading preview..." }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewContent[tpl.id] || "Loading preview...") }}
               />
             )}
 

@@ -146,13 +146,13 @@ export default function NotificationCenter() {
                     </div>
                   </div>
                   <div className="absolute right-4 top-4 flex flex-col items-center gap-2">
-                    <button 
+                    <AppButton
                       onClick={(e) => handleDelete(e, n.id)}
                       className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                       title="Delete Notification"
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </AppButton>
                     {n.link && (
                       <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-accent shrink-0" />
                     )}

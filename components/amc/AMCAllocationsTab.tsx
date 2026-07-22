@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Search, Loader2 } from "lucide-react";
+import { UserCheck, Search, Filter, Shield, Clock, ArrowRight, UserX, UserMinus, Loader2 } from "lucide-react";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
 import { createClient } from "@/utils/supabase/client";
 
 interface AMCAllocationsTabProps {
@@ -82,15 +83,12 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('amc_license_allocations')
-        .insert([{
-          amc_id: amcId,
-          user_id: userId,
-          allocated_by: user.id
-        }]);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_license_allocations", {
+        amc_id: amcId,
+        user_id: userId,
+        allocated_by: user.id
+      });
+      if (!res.success) throw new Error(res.error);
       
       await fetchData();
       onUpdate();
@@ -106,12 +104,8 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
     
     setProcessingId(allocationId);
     try {
-      const { error } = await supabase
-        .from('amc_license_allocations')
-        .update({ status: 'Revoked', revoked_at: new Date().toISOString() })
-        .eq('id', allocationId);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_license_allocations", { status: 'Revoked', revoked_at: new Date().toISOString() }, allocationId);
+      if (!res.success) throw new Error(res.error);
       
       await fetchData();
       onUpdate();
@@ -133,22 +127,15 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Revoke old
-      const { error: revokeErr } = await supabase
-        .from('amc_license_allocations')
-        .update({ status: 'Revoked', revoked_at: new Date().toISOString() })
-        .eq('id', allocationId);
-      if (revokeErr) throw revokeErr;
+      const revokeRes = await saveAMCEntity("amc_license_allocations", { status: 'Revoked', revoked_at: new Date().toISOString() }, allocationId);
+      if (!revokeRes.success) throw new Error(revokeRes.error);
 
-      // Assign new
-      const { error: assignErr } = await supabase
-        .from('amc_license_allocations')
-        .insert([{
-          amc_id: amcId,
-          user_id: newUserId,
-          allocated_by: user.id
-        }]);
-      if (assignErr) throw assignErr;
+      const assignRes = await saveAMCEntity("amc_license_allocations", {
+        amc_id: amcId,
+        user_id: newUserId,
+        allocated_by: user.id
+      });
+      if (!assignRes.success) throw new Error(assignRes.error);
 
       setTransferringId(null);
       await fetchData();

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
+import { executeMasterMutation } from "@/lib/actions/masters";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -419,39 +420,10 @@ export default function MastersPage() {
     if (editRecordId) {
       // Perform UPDATE workflow for master editing
       try {
-        const { error } = await supabase
-          .from(currentConfig.table)
-          .update({
-            ...payload,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editRecordId);
+        const res = await executeMasterMutation(currentConfig.table, payload, "UPDATE", editRecordId);
+        if (!res.success) throw new Error(res.error);
 
-        if (error) throw error;
-
-        // Log audit
-        await supabase.from("master_audit_logs").insert([{
-          master_table: currentConfig.table,
-          record_id: editRecordId,
-          operation: "UPDATE",
-          after_values: payload
-        }]);
-
-        // Push global update notification broadcast
-        await supabase.from("notification_queue").insert([{
-          entity_type: currentConfig.table,
-          entity_id: payload.code || payload.name || editRecordId,
-          module: "masters",
-          action_type: "update",
-          actor: "System Administrator",
-          target_user_id: "GLOBAL_OPS",
-          payload: { message: `Master record '${payload.code || payload.name}' updated in relation '${currentConfig.table}'.`, values: payload },
-          redirect_url: `/masters?scope=OTHER`,
-          priority_level: "MEDIUM",
-          is_read: false
-        }]).then(() => {}, () => {});
-
-        setSuccessAlert(`Successfully updated dynamic master record '${payload.code}'.`);
+        setSuccessAlert(`Successfully updated dynamic master record '${payload.code || payload.name}'.`);
         setShowModal(false);
         setEditRecordId(null);
         setFormCode("");
@@ -473,39 +445,10 @@ export default function MastersPage() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from(currentConfig.table)
-        .insert([payload])
-        .select()
-        .single();
+      const res = await executeMasterMutation(currentConfig.table, payload, "CREATE");
+      if (!res.success) throw new Error(res.error);
 
-      if (error) {
-        throw error;
-      }
-
-      // Log master audit record
-      await supabase.from("master_audit_logs").insert([{
-        master_table: currentConfig.table,
-        record_id: data?.id || "00000000-0000-0000-0000-000000000000",
-        operation: "CREATE",
-        after_values: payload
-      }]);
-
-      // Push global creation notification broadcast
-      await supabase.from("notification_queue").insert([{
-        entity_type: currentConfig.table,
-        entity_id: payload.code || payload.name || data?.id || "00000000-0000-0000-0000-000000000000",
-        module: "masters",
-        action_type: "create",
-        actor: "System Administrator",
-        target_user_id: "GLOBAL_OPS",
-        payload: { message: `Master record '${payload.code || payload.name}' created in relation '${currentConfig.table}'.`, values: payload },
-        redirect_url: `/masters?scope=OTHER`,
-        priority_level: "MEDIUM",
-        is_read: false
-      }]).then(() => {}, () => {});
-
-      setSuccessAlert(`Successfully provisioned dynamic master record '${payload.code}'.`);
+      setSuccessAlert(`Successfully provisioned dynamic master record '${payload.code || payload.name}'.`);
       setShowModal(false);
       setFormCode("");
       setFormName("");
@@ -532,35 +475,9 @@ export default function MastersPage() {
     const updatedStatus = !record.is_active;
 
     try {
-      const { error } = await supabase
-        .from(currentConfig.table)
-        .update({ is_active: updatedStatus, updated_at: new Date().toISOString() })
-        .eq('id', record.id);
-
-      if (error) throw error;
-
-      // Log audit
-      await supabase.from("master_audit_logs").insert([{
-        master_table: currentConfig.table,
-        record_id: record.id,
-        operation: updatedStatus ? "ACTIVATE" : "DEACTIVATE",
-        before_values: { is_active: record.is_active },
-        after_values: { is_active: updatedStatus }
-      }]);
-
-      // Push global update notification broadcast
-      await supabase.from("notification_queue").insert([{
-        entity_type: currentConfig.table,
-        entity_id: record.code || record.name || record.id,
-        module: "masters",
-        action_type: "update",
-        actor: "System Administrator",
-        target_user_id: "GLOBAL_OPS",
-        payload: { message: `Master record status modified to '${updatedStatus ? "ACTIVE" : "DISABLED"}' on relation '${currentConfig.table}'.` },
-        redirect_url: `/masters?scope=OTHER`,
-        priority_level: "MEDIUM",
-        is_read: false
-      }]).then(() => {}, () => {});
+      const action = updatedStatus ? "ACTIVATE" : "DEACTIVATE";
+      const res = await executeMasterMutation(currentConfig.table, { is_active: updatedStatus }, action, record.id);
+      if (!res.success) throw new Error(res.error);
 
       setRecords(records.map(r => r.id === record.id ? { ...r, is_active: updatedStatus } : r));
       setSuccessAlert(`Record status successfully updated.`);
@@ -572,52 +489,15 @@ export default function MastersPage() {
 
   const handleDelete = async (record: any) => {
     setErrorAlert(null);
-    setSuccessAlert(null);
-    
     try {
-      // Hard delete from database. This guarantees constraint errors are thrown back to the user if the record is in use.
-      const { data, error } = await supabase
-        .from(currentConfig.table)
-        .delete()
-        .eq('id', record.id)
-        .select();
-
-      if (error) {
-        throw error;
-      }
+      const res = await executeMasterMutation(currentConfig.table, null, "DELETE", record.id, record);
+      if (!res.success) throw new Error(res.error);
       
-      // If data is empty and there was no error, RLS blocked it (silent failure)
-      if (!data || data.length === 0) {
-        throw new Error("Deletion failed. It may have already been deleted, or you don't have permission.");
-      }
-
-      // Log audit
-      await supabase.from("master_audit_logs").insert([{
-        master_table: currentConfig.table,
-        record_id: record.id,
-        operation: "DELETE",
-        before_values: record
-      }]);
-
-      // Push global deletion notification broadcast
-      await supabase.from("notification_queue").insert([{
-        entity_type: currentConfig.table,
-        entity_id: record.code || record.name || record.id,
-        module: "masters",
-        action_type: "delete",
-        actor: "System Administrator",
-        target_user_id: "GLOBAL_OPS",
-        payload: { message: `Master record '${record.code || record.name}' deleted from relation '${currentConfig.table}'.` },
-        redirect_url: `/masters?scope=OTHER`,
-        priority_level: "CRITICAL",
-        is_read: false
-      }]).then(() => {}, () => {});
-
-      setRecords(records.filter(r => r.id !== record.id));
-      setSuccessAlert(`Master entity successfully deleted.`);
+      setSuccessAlert(`Record deleted successfully.`);
+      fetchRecords();
     } catch (err: any) {
-      console.warn("Deletion restricted by remote relation models:", err);
-      alert("Database Error on Delete: " + (err.message || err.details || JSON.stringify(err)));
+      console.warn("Hard delete blocked:", err);
+      alert("Database Error on Deletion: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 

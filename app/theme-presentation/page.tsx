@@ -4,6 +4,7 @@ import React from "react";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppBadge } from "@/components/ui/AppBadge";
+import { AppTable } from "@/components/ui/AppTable";
 
 const ThemePreviewBlock = ({ themeId, themeName, description }: { themeId: string, themeName: string, description: string }) => {
   return (
@@ -41,7 +42,7 @@ const ThemePreviewBlock = ({ themeId, themeName, description }: { themeId: strin
 
           {/* Table Sample */}
           <div className="theme-table-structural overflow-hidden rounded-xl">
-            <table className="w-full text-left text-sm">
+            <AppTable className="w-full text-left text-sm">
               <thead className="theme-table-header">
                 <tr>
                   <th className="p-4 font-semibold text-[var(--text-primary)]">Project</th>
@@ -66,7 +67,7 @@ const ThemePreviewBlock = ({ themeId, themeName, description }: { themeId: strin
                   <td className="p-4"><AppButton size="sm" className="theme-button-structural">View</AppButton></td>
                 </tr>
               </tbody>
-            </table>
+            </AppTable>
           </div>
         </div>
       </div>

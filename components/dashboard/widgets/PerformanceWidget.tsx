@@ -77,7 +77,7 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
               const fillCls = fillColors[i % fillColors.length];
 
               return (
-                <AppTableRow key={i} className="hover:bg-surface-hover/50 transition-colors border-b border-border/40 last:border-0 group cursor-default">
+                <AppTableRow key={i} className="hover:theme-card-structural -hover/50 transition-colors border-b /40 last:border-0 group cursor-default">
                   <AppTableCell>
                     <div className="flex items-center gap-3">
                       <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold border shadow-sm group-hover:scale-110 transition-transform ${colorCls}`}>
@@ -99,7 +99,7 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
                     <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-1.5 uppercase tracking-wider">
                       <span>Sprint Goal</span><span className="font-bold text-foreground">{progress}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-surface-hover border border-border/50 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full theme-card-structural -hover /50 rounded-full overflow-hidden">
                       <div className={`h-full ${fillCls} transition-all duration-1000`} style={{ width: `${progress}%` }}></div>
                     </div>
                   </AppTableCell>

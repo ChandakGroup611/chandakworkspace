@@ -42,7 +42,7 @@ const TABS = [
 
 export default function DataRetentionClient() {
   const { roleCode, hasPermission } = usePermissions();
-  const isSuperAdmin = roleCode === "SUPER_ADMIN" || hasPermission("SUPER_ADMIN");
+  const isSuperAdmin = roleCode === "SUPER_ADMIN";
   const canRestore = isSuperAdmin || hasPermission("TRASH_UPDATE");
   const canPurge = isSuperAdmin || hasPermission("TRASH_DELETE");
 

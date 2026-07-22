@@ -27,6 +27,19 @@ export function useLocalReportConfig(reportCode: string, initialUIFields: UIFiel
   const [loading, setLoading] = useState(true);
   const fetchedRef = useRef(false);
 
+  const generateDefaultLayout = useCallback(() => {
+    const defaultLayout: UserReportLayout[] = initialUIFields.map((f, idx) => ({
+      field_id: f.field_key,
+      field_key: f.field_key,
+      display_name: f.display_name,
+      data_type: f.data_type,
+      display_order: idx + 1,
+      is_visible: f.is_default !== false,
+      column_width: f.default_width || 150
+    }));
+    setLayout(defaultLayout);
+  }, [initialUIFields]);
+
   const fetchLayout = useCallback(async () => {
     setLoading(true);
     
@@ -59,8 +72,7 @@ export function useLocalReportConfig(reportCode: string, initialUIFields: UIFiel
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reportCode]);
+  }, [reportCode, initialUIFields, generateDefaultLayout]);
 
   useEffect(() => {
     // Only run on mount or when reportCode changes
@@ -94,20 +106,6 @@ export function useLocalReportConfig(reportCode: string, initialUIFields: UIFiel
       return mergedLayout;
     });
   }, [initialUIFields]);
-
-  const generateDefaultLayout = useCallback(() => {
-    const defaultLayout: UserReportLayout[] = initialUIFields.map((f, idx) => ({
-      field_id: f.field_key,
-      field_key: f.field_key,
-      display_name: f.display_name,
-      data_type: f.data_type,
-      display_order: idx + 1,
-      is_visible: f.is_default !== false, // default true unless explicitly false
-      column_width: f.default_width || 150
-    }));
-    setLayout(defaultLayout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const saveLayout = async (newLayout: UserReportLayout[]) => {
     // Optimistic UI update

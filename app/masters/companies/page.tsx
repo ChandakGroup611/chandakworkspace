@@ -9,7 +9,8 @@ import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow,
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Plus, Search, CheckCircle2, X, AlertTriangle, Building2, Trash2, Check, RefreshCw, Lock } from "lucide-react";
+import { Save, Plus, Edit2, Trash2, MapPin, Globe, Phone, FileText, CheckCircle2, XCircle, Search, AlertTriangle, Building2, Check, RefreshCw, Lock, X } from "lucide-react";
+import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 
 export default function CompanyMasterPage() {
   const supabase = createClient();
@@ -116,18 +117,14 @@ export default function CompanyMasterPage() {
     };
 
     try {
+      let res;
       if (editId) {
-        const { error } = await supabase
-          .from('company_master')
-          .update(payload)
-          .eq('id', editId);
-        if (error) throw error;
+        res = await saveMasterEntity('company_master', payload, editId);
+        if (!res.success) throw new Error(res.error);
         setSuccessAlert("Company successfully updated.");
       } else {
-        const { error } = await supabase
-          .from('company_master')
-          .insert([payload]);
-        if (error) throw error;
+        res = await saveMasterEntity('company_master', payload);
+        if (!res.success) throw new Error(res.error);
         setSuccessAlert("Company successfully created.");
       }
       setShowModal(false);
@@ -139,11 +136,8 @@ export default function CompanyMasterPage() {
 
   const toggleActive = async (company: any) => {
     try {
-      const { error } = await supabase
-        .from('company_master')
-        .update({ is_active: !company.is_active })
-        .eq('id', company.id);
-      if (error) throw error;
+      const res = await saveMasterEntity('company_master', { is_active: !company.is_active }, company.id);
+      if (!res.success) throw new Error(res.error);
       setSuccessAlert(`Company marked as ${!company.is_active ? 'Active' : 'Inactive'}.`);
       fetchCompanies();
     } catch (err: any) {
@@ -154,11 +148,8 @@ export default function CompanyMasterPage() {
   const handleDelete = async (company: any) => {
     if (!confirm(`Are you sure you want to delete ${company.name}?`)) return;
     try {
-      const { error } = await supabase
-        .from('company_master')
-        .update({ is_deleted: true, is_active: false })
-        .eq('id', company.id);
-      if (error) throw error;
+      const res = await saveMasterEntity('company_master', { is_deleted: true, is_active: false }, company.id);
+      if (!res.success) throw new Error(res.error);
       setSuccessAlert("Company deleted successfully.");
       fetchCompanies();
     } catch (err: any) {

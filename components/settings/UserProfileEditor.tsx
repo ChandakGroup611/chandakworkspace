@@ -7,9 +7,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppButton } from "@/components/ui/AppButton";
-import { 
-  User, Mail, Building2, Briefcase, Users, Camera, Check, AlertCircle, Loader2, Lock, BadgeCheck, Building, ChevronDown 
-} from "lucide-react";
+import { Camera, Check, Briefcase, Mail, User, Shield, Key, ChevronRight, Lock, Loader2, AlertCircle, Building, Users, ChevronDown, BadgeCheck, Building2 } from "lucide-react";
+import { updateMyProfile } from "@/lib/actions/settings";
 
 interface UserProfile {
   id: string;
@@ -190,12 +189,8 @@ export default function UserProfileEditor() {
         .from("profiles")
         .getPublicUrl(fileName);
 
-      const { error: updateError } = await supabase
-        .from("user_master")
-        .update({ profile_photo: publicUrl, updated_at: new Date().toISOString() })
-        .eq("id", authUser.id);
-
-      if (updateError) throw updateError;
+      const res = await updateMyProfile({ profile_photo: publicUrl });
+      if (!res.success) throw new Error(res.error);
 
       setFormPhoto(publicUrl);
       setProfile(prev => prev ? { ...prev, profile_photo: publicUrl } : null);
@@ -213,12 +208,8 @@ export default function UserProfileEditor() {
     if (!profile) return;
     setPhotoUploading(true);
     try {
-      const { error: updateError } = await supabase
-        .from("user_master")
-        .update({ profile_photo: avatarUrl, updated_at: new Date().toISOString() })
-        .eq("id", profile.id);
-
-      if (updateError) throw updateError;
+      const res = await updateMyProfile({ profile_photo: avatarUrl });
+      if (!res.success) throw new Error(res.error);
 
       setFormPhoto(avatarUrl);
       setProfile(prev => prev ? { ...prev, profile_photo: avatarUrl } : null);
@@ -240,17 +231,12 @@ export default function UserProfileEditor() {
     
     setIsSavingOrg(true);
     try {
-      const { error } = await supabase
-        .from("user_master")
-        .update({
-          department_id: selectedDept,
-          designation_id: selectedDesig,
-          manager_id: selectedManager,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", profile.id);
-
-      if (error) throw error;
+      const res = await updateMyProfile({
+        department_id: selectedDept,
+        designation_id: selectedDesig,
+        manager_id: selectedManager
+      });
+      if (!res.success) throw new Error(res.error);
       
       triggerToast("Profile setup completed successfully!");
       setTimeout(() => {

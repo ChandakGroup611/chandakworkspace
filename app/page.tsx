@@ -35,7 +35,7 @@ export default async function Page() {
       if (isMissingOrgDetails) {
         // Double check they aren't SUPER_ADMIN before forcing redirect
         const { data: role } = await supabase.from("roles").select("code").eq("id", profile.role_id).single();
-        if (role?.code !== "SUPER_ADMIN" && role?.code !== "SYSTEM_ADMIN") {
+        if (role?.code !== "SUPER_ADMIN") {
           redirect("/profile?setup=true");
         }
       }

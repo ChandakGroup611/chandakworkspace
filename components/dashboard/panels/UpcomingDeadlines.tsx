@@ -42,7 +42,7 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
 
   return (
     <AppCard>
-      <div className="flex items-center gap-2 p-4 border-b border-border bg-surface">
+      <div className="flex items-center gap-2 p-4 border-b theme-card-structural">
         <CalendarClock className="h-4 w-4 text-rose-500" />
         <span className="text-sm font-bold text-foreground">Upcoming Deadlines</span>
       </div>
@@ -60,7 +60,7 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
             };
 
             return (
-              <div key={m.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-surface border border-transparent hover:border-border transition-colors cursor-pointer group" onClick={handleItemClick}>
+              <div key={m.id} className="flex items-center justify-between p-3 rounded-lg hover:theme-card-structural border-transparent hover: transition-colors cursor-pointer group" onClick={handleItemClick}>
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-md bg-surface group-hover:bg-background transition-colors">{icon}</div>
                   <div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';
 import { Plus, Trash2, Save, Filter, Users, Send, Loader2, Workflow } from "lucide-react";
+import { saveSettingsEntity, deleteSettingsEntity } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
 
 // Define available modules and their events/statuses
@@ -86,12 +87,12 @@ export default function NotificationRuleBuilder() {
       };
 
       if (rule.is_new) {
-        const { error } = await supabase.from("notification_rules").insert([payload]);
-        if (error) throw error;
+        const res = await saveSettingsEntity("notification_rules", payload);
+        if (!res.success) throw new Error(res.error);
         triggerToast("Rule created successfully");
       } else {
-        const { error } = await supabase.from("notification_rules").update(payload).eq("id", rule.id);
-        if (error) throw error;
+        const res = await saveSettingsEntity("notification_rules", payload, rule.id);
+        if (!res.success) throw new Error(res.error);
         triggerToast("Rule updated successfully");
       }
       fetchRules();
@@ -107,8 +108,8 @@ export default function NotificationRuleBuilder() {
     }
     if (!confirm("Delete this rule?")) return;
     try {
-      const { error } = await supabase.from("notification_rules").delete().eq("id", id);
-      if (error) throw error;
+      const res = await deleteSettingsEntity("notification_rules", id, true);
+      if (!res.success) throw new Error(res.error);
       triggerToast("Rule deleted");
       fetchRules();
     } catch (err: any) {

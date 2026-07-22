@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { Plus, Trash2, Loader2, IndianRupee } from "lucide-react";
+import { Receipt, Plus, Search, Trash2, Calendar, FileText, ArrowRight, Loader2, DollarSign, IndianRupee } from "lucide-react";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
 import { createClient } from "@/utils/supabase/client";
 
 interface AMCTransactionsTabProps {
@@ -56,20 +57,17 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('amc_transactions')
-        .insert([{
-          amc_id: amcId,
-          transaction_type: type,
-          po_number: poNumber,
-          cost: parseFloat(cost) || 0,
-          licenses_added: parseInt(licensesAdded) || 0,
-          transaction_date: transactionDate,
-          notes,
-          created_by: user.id
-        }]);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_transactions", {
+        amc_id: amcId,
+        transaction_type: type,
+        po_number: poNumber,
+        cost: parseFloat(cost) || 0,
+        licenses_added: parseInt(licensesAdded) || 0,
+        transaction_date: transactionDate,
+        notes,
+        created_by: user.id
+      });
+      if (!res.success) throw new Error(res.error);
 
       // Reset form
       setPoNumber("");
@@ -90,8 +88,8 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this transaction? (This will recalculate licenses)")) return;
     try {
-      const { error } = await supabase.from('amc_transactions').delete().eq('id', id);
-      if (error) throw error;
+      const res = await deleteAMCEntity("amc_transactions", id, true);
+      if (!res.success) throw new Error(res.error);
       await fetchTransactions();
       onUpdate();
     } catch (e: any) {

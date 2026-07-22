@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { X, Search, Trash2, ShieldCheck, Loader2 } from "lucide-react";
+import { UserCheck, Search, Filter, Clock, X, Shield, ArrowRight, UserMinus, AlertCircle, Loader2 } from "lucide-react";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -87,15 +88,12 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('amc_license_allocations')
-        .insert([{
-          amc_id: amcId,
-          user_id: userId,
-          allocated_by: user.id
-        }]);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_license_allocations", {
+        amc_id: amcId,
+        user_id: userId,
+        allocated_by: user.id
+      });
+      if (!res.success) throw new Error(res.error);
       
       await fetchData();
       onAllocated();
@@ -111,12 +109,8 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
     
     setProcessingId(allocationId);
     try {
-      const { error } = await supabase
-        .from('amc_license_allocations')
-        .update({ status: 'Revoked', revoked_at: new Date().toISOString() })
-        .eq('id', allocationId);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_license_allocations", { status: 'Revoked', revoked_at: new Date().toISOString() }, allocationId);
+      if (!res.success) throw new Error(res.error);
       
       await fetchData();
       onAllocated();

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, MessageCircle, ClipboardList } from "lucide-react";
+import DOMPurify from 'dompurify';
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import dynamic from "next/dynamic";
 
@@ -109,7 +110,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
                     </span>
                     <div 
                       className="text-[13px] sm:text-sm text-gray-700 dark:text-gray-300 w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-gray-50/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-gray-200/60 dark:border-white/10 shadow-sm"
-                      dangerouslySetInnerHTML={{ __html: task.description }} 
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(task.description) }} 
                     />
                   </div>
                 )}

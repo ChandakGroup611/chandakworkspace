@@ -15,6 +15,7 @@ import { AMCRenewalsTab } from "@/components/amc/AMCRenewalsTab";
 import { AMCAllocationsTab } from "@/components/amc/AMCAllocationsTab";
 import { AMCPaymentsTab } from "@/components/amc/AMCPaymentsTab";
 import { createClient } from "@/utils/supabase/client";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
 import Link from "next/link";
 import { 
   ShieldCheck, 
@@ -637,20 +638,13 @@ export default function AMCPage() {
       let currentEditId = editRecordId;
 
       if (editRecordId) {
-        const { error } = await supabase
-          .from("software_amc")
-          .update({ ...payload, updated_at: new Date().toISOString() })
-          .eq("id", editRecordId);
-        if (error) throw error;
+        const res = await saveAMCEntity("software_amc", payload, editRecordId);
+        if (!res.success) throw new Error(res.error);
         setSuccessAlert("Subscription updated successfully.");
       } else {
-        const { data: newRec, error } = await supabase
-          .from("software_amc")
-          .insert([payload])
-          .select()
-          .single();
-        if (error) throw error;
-        currentEditId = newRec.id;
+        const res = await saveAMCEntity("software_amc", payload);
+        if (!res.success) throw new Error(res.error);
+        currentEditId = res.data?.id;
         setSuccessAlert("Subscription created successfully.");
       }
 
@@ -675,11 +669,8 @@ export default function AMCPage() {
 
   const handleApprove = async (id: string, status: string) => {
     try {
-      const { error } = await supabase
-        .from('software_amc')
-        .update({ approval_status: status })
-        .eq('id', id);
-      if (error) throw error;
+      const res = await saveAMCEntity("software_amc", { approval_status: status }, id);
+      if (!res.success) throw new Error(res.error);
       setSuccessAlert(`AMC marked as ${status}`);
       await fetchRecords();
     } catch (err: any) {
@@ -690,11 +681,8 @@ export default function AMCPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this record?")) return;
     try {
-      const { error } = await supabase
-        .from("software_amc")
-        .update({ is_deleted: true, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
+      const res = await deleteAMCEntity("software_amc", id, false);
+      if (!res.success) throw new Error(res.error);
       setSuccessAlert("Record deleted.");
       fetchRecords();
     } catch (err: any) {

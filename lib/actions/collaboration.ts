@@ -146,3 +146,43 @@ export async function addTicketChatMessage(ticketId: string, content: string, at
 
   return { success: true, message };
 }
+
+/**
+ * Generic Collaboration Action
+ * For chats, attachments, and messages.
+ */
+export async function saveCollaborationEntity(tableName: string, payload: any, editId?: string) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return { success: false, error: "Unauthenticated." };
+
+  let res;
+  if (editId) {
+    res = await supabase.from(tableName).update(payload).eq("id", editId).select().single();
+  } else {
+    res = await supabase.from(tableName).insert([payload]).select().single();
+  }
+
+  if (res.error) return { success: false, error: res.error.message };
+  return { success: true, data: res.data };
+}
+
+export async function deleteCollaborationEntity(tableName: string, id: string, hardDelete = false) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return { success: false, error: "Unauthenticated." };
+
+  let res;
+  if (hardDelete) {
+    res = await supabase.from(tableName).delete().eq("id", id);
+  } else {
+    res = await supabase.from(tableName).update({ is_deleted: true }).eq("id", id);
+  }
+
+  if (res.error) return { success: false, error: res.error.message };
+  return { success: true };
+}

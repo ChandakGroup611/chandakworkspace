@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { Plus, Trash2, Loader2, IndianRupee, Calendar } from "lucide-react";
+import { CalendarClock, Plus, Search, Trash2, Calendar, FileText, ArrowRight, Loader2, IndianRupee } from "lucide-react";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
 import { createClient } from "@/utils/supabase/client";
 
 interface AMCRenewalsTabProps {
@@ -56,20 +57,17 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('amc_renewals')
-        .insert([{
-          amc_id: amcId,
-          po_number: poNumber,
-          renewal_cost: parseFloat(renewalCost) || 0,
-          previous_expiry: currentExpiryDate || null,
-          new_expiry: newExpiry,
-          renewal_date: renewalDate,
-          notes,
-          created_by: user.id
-        }]);
-
-      if (error) throw error;
+      const res = await saveAMCEntity("amc_renewals", {
+        amc_id: amcId,
+        po_number: poNumber,
+        renewal_cost: parseFloat(renewalCost) || 0,
+        previous_expiry: currentExpiryDate || null,
+        new_expiry: newExpiry,
+        renewal_date: renewalDate,
+        notes,
+        created_by: user.id
+      });
+      if (!res.success) throw new Error(res.error);
 
       // Reset form
       setPoNumber("");
@@ -90,8 +88,8 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this renewal log?")) return;
     try {
-      const { error } = await supabase.from('amc_renewals').delete().eq('id', id);
-      if (error) throw error;
+      const res = await deleteAMCEntity("amc_renewals", id, true);
+      if (!res.success) throw new Error(res.error);
       await fetchRenewals();
       onUpdate();
     } catch (e: any) {

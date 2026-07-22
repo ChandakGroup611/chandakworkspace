@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { 
   Clock, Users, Save, Paperclip, CheckCircle2, Video, MessageSquare, ChevronDown, ChevronUp, Loader2, Network
 } from "lucide-react";
+import DOMPurify from 'dompurify';
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchAssignees } from "@/lib/actions/users";
 import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, fetchTicketComments } from "@/lib/actions/tickets";
@@ -749,10 +750,7 @@ export function TicketWorkspaceConsole({
                             <div 
                               className="text-xs rounded-lg p-2.5 leading-relaxed break-words whitespace-pre-wrap border bg-background/50 border-border text-foreground"
                               dangerouslySetInnerHTML={{
-                                __html: (item.content || "")
-                                  .replace(/[&<>'"]/g, (tag: string) => (({'&': '&amp;','<': '&lt;','>': '&gt;',"'": '&#39;','"': '&quot;'} as any)[tag] || tag))
-                                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                  .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                __html: DOMPurify.sanitize(item.content || "")
                               }}
                             />
                           </div>

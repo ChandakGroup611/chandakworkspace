@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { X, Loader2, Calendar } from "lucide-react";
+import { X, Calendar, DollarSign, FileText, Loader2 } from "lucide-react";
+import { saveAMCEntity } from "@/lib/actions/amc";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
@@ -33,12 +34,8 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
     setLoading(true);
     try {
       // 1. Update old record status to "Renewed"
-      const { error: updateError } = await supabase
-        .from('software_amc')
-        .update({ status: 'Renewed' })
-        .eq('id', amcData.id);
-
-      if (updateError) throw updateError;
+      const updateRes = await saveAMCEntity("software_amc", { status: 'Renewed' }, amcData.id);
+      if (!updateRes.success) throw new Error(updateRes.error);
 
       // 2. Create new record based on old data but new dates/cost
       const newAmc = {
@@ -56,13 +53,8 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
       // Let's actually not reset used_licenses manually, but the DB default is 0. 
       // If they want to carry over allocations, they'll need a backend function. For now, new term = fresh allocations.
 
-      const { data: inserted, error: insertError } = await supabase
-        .from('software_amc')
-        .insert([newAmc])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
+      const insertRes = await saveAMCEntity("software_amc", newAmc);
+      if (!insertRes.success) throw new Error(insertRes.error);
 
       alert("Contract renewed successfully! Old record is archived as 'Renewed'.");
       onRenewed();

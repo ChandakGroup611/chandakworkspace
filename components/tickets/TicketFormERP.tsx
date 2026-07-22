@@ -224,7 +224,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
                 value={formData.subject}
                 onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                 required
-                className="bg-surface border-border"
+                className="theme-card-structural"
               />
             </div>
           </div>

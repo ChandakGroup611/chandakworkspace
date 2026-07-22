@@ -342,6 +342,40 @@ $$;
 
 ALTER FUNCTION "public"."check_task_access"("target_task_id" "uuid", "target_user_id" "uuid") OWNER TO "postgres";
 
+CREATE OR REPLACE FUNCTION "public"."check_task_update_access"("target_task_id" "uuid", "target_user_id" "uuid") RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  -- Super admin check
+  IF public.is_super_admin() THEN
+    RETURN true;
+  END IF;
+
+  -- Check if user is owner or creator on the task itself
+  IF EXISTS (
+    SELECT 1 FROM public.tasks
+    WHERE id = target_task_id
+    AND (owner_id = target_user_id OR created_by = target_user_id)
+  ) THEN
+    RETURN true;
+  END IF;
+
+  -- Check if user is a participant with an update-capable role (Exclude WATCHER)
+  IF EXISTS (
+    SELECT 1 FROM public.task_participants
+    WHERE task_id = target_task_id
+    AND user_id = target_user_id
+    AND participation_role IN ('OWNER', 'EXECUTOR', 'REVIEWER')
+  ) THEN
+    RETURN true;
+  END IF;
+
+  RETURN false;
+END;
+$$;
+
+ALTER FUNCTION "public"."check_task_update_access"("target_task_id" "uuid", "target_user_id" "uuid") OWNER TO "postgres";
+
 
 CREATE OR REPLACE FUNCTION "public"."check_user_permission"("p_permission_code" "text") RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
@@ -5665,11 +5699,11 @@ ALTER TABLE "public"."task_comments" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."task_participants" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "task_participants_delete" ON "public"."task_participants" FOR DELETE TO "authenticated" USING (("auth"."uid"() IS NOT NULL));
+CREATE POLICY "task_participants_delete" ON "public"."task_participants" FOR DELETE TO "authenticated" USING ("public"."check_task_update_access"("task_id", "auth"."uid"()));
 
 
 
-CREATE POLICY "task_participants_insert" ON "public"."task_participants" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() IS NOT NULL));
+CREATE POLICY "task_participants_insert" ON "public"."task_participants" FOR INSERT TO "authenticated" WITH CHECK ("public"."check_task_update_access"("task_id", "auth"."uid"()));
 
 
 
@@ -5677,7 +5711,7 @@ CREATE POLICY "task_participants_select" ON "public"."task_participants" FOR SEL
 
 
 
-CREATE POLICY "task_participants_update" ON "public"."task_participants" FOR UPDATE TO "authenticated" USING (("auth"."uid"() IS NOT NULL));
+CREATE POLICY "task_participants_update" ON "public"."task_participants" FOR UPDATE TO "authenticated" USING ("public"."check_task_update_access"("task_id", "auth"."uid"()));
 
 
 
@@ -5701,7 +5735,7 @@ CREATE POLICY "tasks_strict_select" ON "public"."tasks" FOR SELECT TO "authentic
 
 
 
-CREATE POLICY "tasks_strict_update" ON "public"."tasks" FOR UPDATE TO "authenticated" USING ("public"."check_task_access"("id", "auth"."uid"()));
+CREATE POLICY "tasks_strict_update" ON "public"."tasks" FOR UPDATE TO "authenticated" USING ("public"."check_task_update_access"("id", "auth"."uid"()));
 
 
 
@@ -5983,6 +6017,10 @@ GRANT ALL ON FUNCTION "public"."check_is_admin"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."check_task_access"("target_task_id" "uuid", "target_user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."check_task_access"("target_task_id" "uuid", "target_user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."check_task_access"("target_task_id" "uuid", "target_user_id" "uuid") TO "service_role";
+
+GRANT ALL ON FUNCTION "public"."check_task_update_access"("target_task_id" "uuid", "target_user_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."check_task_update_access"("target_task_id" "uuid", "target_user_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."check_task_update_access"("target_task_id" "uuid", "target_user_id" "uuid") TO "service_role";
 
 
 

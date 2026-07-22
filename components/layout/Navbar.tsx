@@ -78,9 +78,7 @@ export default function Navbar() {
             <input 
               type="text" 
               placeholder="Search tickets, documentation, quick masters..." 
-              className={`h-10 w-full rounded-xl border pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${
-                "theme-input-structural text-foreground placeholder-gray-400 focus:bg-surface/50 focus:border-accent"
-              }`}
+              className={`h-10 w-full rounded-xl pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${ "theme-input-structural text-foreground placeholder-gray-400 focus:theme-card-structural /50 focus:border-accent" }`}
             />
             <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold pointer-events-none ${
               "bg-gray-200/60 text-muted"

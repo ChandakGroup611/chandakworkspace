@@ -163,7 +163,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                 value={formData.subject}
                 onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                 required
-                className="bg-surface border-border"
+                className="theme-card-structural"
               />
             </div>
 
