@@ -115,19 +115,17 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
       {/* Navigation Tabs */}
       <div className={`px-8 border-b flex items-center gap-8 border-border bg-white`}>
         {(["DETAILS", "COLLAB", "TIMELINE"] as const).map((tab) => (
-          <AppButton variant="secondary"
+          <AppButton 
+            variant={activeTab === tab ? "primary" : "secondary"}
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`py-4 text-[0.8rem] font-bold uppercase tracking-widest transition-all relative ${
+            className={`py-2 px-5 text-sm font-bold uppercase tracking-widest transition-all shadow-sm ${
               activeTab === tab 
-                ? ("text-accent") 
-                : "text-gray-500 hover:text-gray-400"
+                ? "shadow-accent/20" 
+                : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
             }`}
           >
             {tab === "COLLAB" ? "Collaboration" : tab === "DETAILS" ? "Technical Data" : "Audit Trail"}
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
-            )}
           </AppButton>
         ))}
       </div>

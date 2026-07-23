@@ -895,13 +895,14 @@ export default function AMCPage() {
           </div>
 
           {editRecordId && (
-            <div className={`flex items-center gap-6 px-6 border-b shrink-0 bg-gray-50 border-border`}>
+            <div className={`flex flex-wrap items-center gap-3 p-4 border-b shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-border`}>
               {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
-                <AppButton variant="secondary" 
+                <AppButton 
+                  variant={activeTab === tab ? "primary" : "secondary"}
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === tab ? 'border-accent text-accent' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                  className={`py-2 px-5 text-sm font-bold transition-all shadow-sm ${activeTab === tab ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
                 >
                   {tab}
                 </AppButton>

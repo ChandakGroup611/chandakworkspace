@@ -703,13 +703,11 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             { id: 'tasks', label: 'Tasks' },
             { id: 'audit', label: 'Audit Trail' }
           ].map(tab => (
-            <AppButton variant="secondary"
+            <AppButton 
+              variant={activeTab === tab.id ? "primary" : "secondary"}
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === tab.id 
-                ? 'border-accent text-accent dark:text-accent'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:text-gray-200 hover:border-gray-400'
-              }`}
+              className={`py-2 px-5 text-sm font-bold transition-all shadow-sm ${activeTab === tab.id ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
             >
               {tab.label}
             </AppButton>

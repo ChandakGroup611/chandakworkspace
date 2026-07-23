@@ -46,18 +46,18 @@ export default function HolidayCalendar() {
         badge={<AppBadge variant="info">Governance Engine</AppBadge>}
       />
 
-      <div className="flex gap-4 border-b border-border mt-6">
+      <div className="flex flex-wrap items-center gap-3 p-4 border-b shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-border mt-6">
         <AppButton 
-          variant="outline" 
+          variant={activeTab === "holidays" ? "primary" : "secondary"} 
           onClick={() => setActiveTab("holidays")}
-          className={`border-b-2 rounded-none px-6 py-3 ${activeTab === 'holidays' ? 'border-accent text-accent bg-accent/5' : 'border-transparent'}`}
+          className={`px-5 py-2 text-sm font-bold transition-all shadow-sm ${activeTab === 'holidays' ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
         >
           <Calendar className="w-4 h-4 mr-2" /> Holiday Calendar
         </AppButton>
         <AppButton 
-          variant="outline" 
+          variant={activeTab === "working_hours" ? "primary" : "secondary"} 
           onClick={() => setActiveTab("working_hours")}
-          className={`border-b-2 rounded-none px-6 py-3 ${activeTab === 'working_hours' ? 'border-accent text-accent bg-accent/5' : 'border-transparent'}`}
+          className={`px-5 py-2 text-sm font-bold transition-all shadow-sm ${activeTab === 'working_hours' ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
         >
           <Clock className="w-4 h-4 mr-2" /> Working Hours (Business Schedules)
         </AppButton>

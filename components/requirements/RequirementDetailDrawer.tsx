@@ -43,24 +43,26 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
             <div className="col-span-2 space-y-6">
 
               {/* Tabs */}
-              <div className="flex border-b border-white/10">
+              <div className="flex gap-3 mb-2">
                 <AppButton
+                  variant={activeTab === "details" ? "primary" : "secondary"}
                   onClick={() => setActiveTab("details")}
-                  className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
+                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "details"
-                      ? "border-accent text-accent"
-                      : "border-transparent text-gray-500 hover:text-gray-300"
+                      ? "shadow-accent/20"
+                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                   }`}
                 >
                   <ListTodo className="w-4 h-4" />
                   Execution Details
                 </AppButton>
                 <AppButton
+                  variant={activeTab === "collaboration" ? "primary" : "secondary"}
                   onClick={() => setActiveTab("collaboration")}
-                  className={`px-4 py-3 text-sm font-bold tracking-wide transition-all border-b-2 -mb-px flex items-center gap-2 ${
+                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "collaboration"
-                      ? "border-accent text-accent"
-                      : "border-transparent text-gray-500 hover:text-gray-300"
+                      ? "shadow-accent/20"
+                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />

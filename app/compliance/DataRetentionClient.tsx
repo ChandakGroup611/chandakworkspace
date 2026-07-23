@@ -295,13 +295,14 @@ export default function DataRetentionClient() {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <AppButton variant="secondary"
+            <AppButton 
+              variant={isActive ? "primary" : "secondary"}
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-5 py-2 text-sm font-bold transition-all whitespace-nowrap shadow-sm ${
                 isActive 
-                  ? "bg-accent text-white shadow-md shadow-blue-500/20" 
-                  : "bg-white/5 text-gray-400 hover:bg-white/10"
+                  ? "shadow-accent/20" 
+                  : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
               }`}
             >
               <Icon className="h-4 w-4" />
