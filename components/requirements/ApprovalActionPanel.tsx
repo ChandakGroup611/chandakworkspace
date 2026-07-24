@@ -119,7 +119,7 @@ export default function ApprovalActionPanel({
               <div>
                 <textarea
                   className={`w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[80px] resize-none ${
-                    "bg-white border-border text-foreground placeholder:text-gray-400"
+                    "bg-surface border-border text-foreground placeholder:text-gray-400"
                   }`}
                   placeholder="Enter mandatory justification or remarks..."
                   value={remarks}

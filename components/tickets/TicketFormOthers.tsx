@@ -110,7 +110,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
               <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Service Area</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-white border-border text-foreground"
+                  "bg-surface border-border text-foreground"
                 }`}
                 value={formData.moduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, moduleId: e.target.value, submoduleId: "" }))}
@@ -127,7 +127,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
               <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-white border-border text-foreground"
+                  "bg-surface border-border text-foreground"
                 }`}
                 value={formData.priorityId}
                 onChange={(e) => handlePriorityChange(e.target.value)}
@@ -172,7 +172,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
               <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Request Classification</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-white border-border text-foreground"
+                  "bg-surface border-border text-foreground"
                 }`}
                 value={formData.issueTypeId}
                 onChange={(e) => setFormData(prev => ({ ...prev, issueTypeId: e.target.value, issueSubtypeId: "" }))}
@@ -206,7 +206,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Request Narrative</label>
             <textarea 
               className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
-                "bg-white border-border text-foreground placeholder:text-gray-400"
+                "bg-surface border-border text-foreground placeholder:text-gray-400"
               }`}
               placeholder="Provide detailed context for your inquiry or support request..."
               value={formData.remark}
@@ -223,7 +223,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                 <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
-                    "bg-white border-border text-foreground placeholder:text-gray-400"
+                    "bg-surface border-border text-foreground placeholder:text-gray-400"
                   }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
                   value={formData.business_reason || ''}
@@ -236,7 +236,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                 <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${
-                    "bg-white border-border text-foreground placeholder:text-gray-400"
+                    "bg-surface border-border text-foreground placeholder:text-gray-400"
                   }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
                   value={formData.requirement_description || ''}
@@ -260,7 +260,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                 />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-white shadow-sm`}>
+                    <div className={`p-2 rounded-lg bg-surface shadow-sm`}>
                       <Paperclip className={`h-4 w-4 text-accent`} />
                     </div>
                     <div>

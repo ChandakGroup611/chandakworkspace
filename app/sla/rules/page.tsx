@@ -118,7 +118,7 @@ export default function SLARuleBuilder() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <div className="lg:col-span-2 space-y-4">
           {rules.length === 0 && editingId !== "new" && (
-            <div className="text-center py-12 bg-white dark:bg-[#0B0F19] border border-border rounded-2xl">
+            <div className="text-center py-12 bg-surface dark:bg-[#0B0F19] border border-border rounded-2xl">
               <ShieldAlert className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-bold">No SLA Policies Found</h3>
               <p className="text-sm text-gray-500 mt-1">Create your first policy to start tracking SLA breaches.</p>
@@ -253,7 +253,7 @@ export default function SLARuleBuilder() {
 
         <div className="space-y-6">
           <AppCard>
-            <div className="p-4 border-b border-border bg-gray-50 dark:bg-white/[0.02]">
+            <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02]">
               <h3 className="font-bold text-sm">How SLA Governance Works</h3>
             </div>
             <div className="p-4 space-y-4 text-sm text-gray-600 dark:text-gray-400">

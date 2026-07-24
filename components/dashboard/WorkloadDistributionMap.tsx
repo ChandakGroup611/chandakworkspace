@@ -48,14 +48,14 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
           <Users className="h-4 w-4 text-accent" />
           <AppCardTitle>Workload Saturation Engine</AppCardTitle>
         </div>
-        <span className="text-xs bg-white/5 border border-white/10 px-2 py-0.5 rounded text-gray-400 font-semibold uppercase">
+        <span className="text-xs bg-surface/5 border border-white/10 px-2 py-0.5 rounded text-gray-400 font-semibold uppercase">
           Live Pool
         </span>
       </AppCardHeader>
 
       <AppCardContent className="space-y-4 pt-2">
         <div className="grid grid-cols-2 gap-3 mb-2">
-          <div className="p-3 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-surface/[0.01] border border-white/5 flex flex-col justify-between">
             <span className="text-xs text-gray-500 font-medium tracking-wide">Total Concurrency</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-xl font-bold text-foreground">{metrics.totalConcurrency}</span>

@@ -337,7 +337,7 @@ export default function CompanyMasterPage() {
               <div className="space-y-1">
                 <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Physical Address</label>
                 <textarea 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
+                  className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
                   rows={2}
                   value={formAddress}
                   onChange={e => setFormAddress(e.target.value)}
@@ -347,7 +347,7 @@ export default function CompanyMasterPage() {
               <div className="space-y-1">
                 <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Remarks</label>
                 <textarea 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
+                  className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
                   rows={2}
                   value={formRemarks}
                   onChange={e => setFormRemarks(e.target.value)}

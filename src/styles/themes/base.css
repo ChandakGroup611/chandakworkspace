@@ -77,6 +77,26 @@ html {
   color: #334155 !important; /* Deep dark slate-700 */
 }
 
+/* Corresponding light/white mapping when Dark Mode is active for all hardcoded texts */
+.theme-dark .text-gray-400,
+.theme-dark .text-gray-500,
+.theme-dark .text-gray-600,
+.theme-dark .text-slate-400,
+.theme-dark .text-slate-500,
+.theme-dark .text-slate-600,
+.theme-dark .text-zinc-400,
+.theme-dark .text-zinc-500,
+.theme-dark .text-muted,
+.theme-dark .text-muted-foreground {
+  color: #f1f5f9 !important; /* slate-100 (Bright white texture) */
+}
+
+.theme-dark .text-gray-300,
+.theme-dark .text-slate-300,
+.theme-dark .text-zinc-300 {
+  color: #ffffff !important; /* Pure white */
+}
+
 /* Global Fix for Select Dropdown Options Legibility in Dark/Light Modes */
 select option {
   background-color: var(--bg-primary, #0A0D14);

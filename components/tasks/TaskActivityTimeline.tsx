@@ -87,7 +87,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   };
 
   return (
-    <AppCard className={`p-5 space-y-4 border-smooth bg-white shadow-sm`}>
+    <AppCard className={`p-5 space-y-4 border-smooth bg-surface shadow-sm`}>
       <div className="flex items-center gap-2 border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
         <Clock className={`h-4 w-4 text-accent`} />
         <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>

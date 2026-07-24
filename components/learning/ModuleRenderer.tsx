@@ -130,7 +130,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                 <p className={`text-sm mt-1 leading-relaxed text-muted`}>{step.instruction}</p>
               </div>
               {idx < module.steps.length - 1 && (
-                <div className="absolute left-8 top-12 bottom-0 w-px bg-gray-200 dark:bg-white/10 -ml-px h-8 hidden sm:block" />
+                <div className="absolute left-8 top-12 bottom-0 w-px bg-gray-200 dark:bg-surface/10 -ml-px h-8 hidden sm:block" />
               )}
             </div>
           ))}

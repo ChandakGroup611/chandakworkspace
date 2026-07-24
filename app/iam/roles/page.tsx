@@ -139,8 +139,8 @@ export default function IAMRoleBuilder() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6 h-[calc(100vh-200px)]">
         {/* Left Sidebar: Roles List */}
-        <div className="lg:col-span-1 border border-border bg-white dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-border bg-gray-50 dark:bg-white/[0.02] flex items-center justify-between shrink-0">
+        <div className="lg:col-span-1 border border-border bg-surface dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
             <h3 className="font-bold text-sm">Enterprise Roles</h3>
             <AppButton size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => { setIsCreating(true); setSelectedRole(null); }}>
               <Plus className="w-4 h-4" />
@@ -154,7 +154,7 @@ export default function IAMRoleBuilder() {
                 className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                   selectedRole?.id === r.id && !isCreating 
                     ? "border-accent bg-accent/5 dark:bg-accent/10 shadow-sm" 
-                    : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5"
+                    : "border-transparent hover:bg-gray-50 dark:hover:bg-surface/5"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -170,7 +170,7 @@ export default function IAMRoleBuilder() {
         </div>
 
         {/* Right Area: Role Editor */}
-        <div className="lg:col-span-3 border border-border bg-white dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm relative">
+        <div className="lg:col-span-3 border border-border bg-surface dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm relative">
           {isCreating ? (
             <div className="p-8 max-w-lg mx-auto w-full">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function IAMRoleBuilder() {
             </div>
           ) : selectedRole ? (
             <>
-              <div className="p-6 border-b border-border bg-gray-50 dark:bg-white/[0.02] flex items-center justify-between shrink-0">
+              <div className="p-6 border-b border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
                 <div>
                   <div className="flex items-center gap-3">
                     <h2 className="text-xl font-bold">{selectedRole.name}</h2>
@@ -243,7 +243,7 @@ export default function IAMRoleBuilder() {
                     
                     return (
                       <AppCard key={module} className="overflow-hidden">
-                        <div className="p-4 border-b border-border bg-gray-50/80 dark:bg-white/[0.02] flex items-center justify-between cursor-pointer" onClick={() => toggleModulePermissions(module, modulePermIds)}>
+                        <div className="p-4 border-b border-border bg-gray-50/80 dark:bg-surface/[0.02] flex items-center justify-between cursor-pointer" onClick={() => toggleModulePermissions(module, modulePermIds)}>
                           <div className="flex items-center gap-3">
                             <input 
                               type="checkbox" 
@@ -254,7 +254,7 @@ export default function IAMRoleBuilder() {
                             />
                             <h3 className="font-bold text-sm tracking-wide uppercase text-gray-700 dark:text-gray-300">{module}</h3>
                           </div>
-                          <span className="text-xs font-medium text-gray-500 bg-white dark:bg-[#0B0F19] px-2 py-0.5 rounded shadow-sm border border-border">
+                          <span className="text-xs font-medium text-gray-500 bg-surface dark:bg-[#0B0F19] px-2 py-0.5 rounded shadow-sm border border-border">
                             {perms.filter(p => selectedRolePerms.includes(p.id)).length} / {perms.length}
                           </span>
                         </div>
@@ -268,7 +268,7 @@ export default function IAMRoleBuilder() {
                                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                                   isChecked 
                                     ? "bg-accent/5 border-accent/30 dark:bg-accent/10 dark:border-accent/40" 
-                                    : "bg-white dark:bg-[#0B0F19] border-gray-200 dark:border-white/10 hover:border-accent/50"
+                                    : "bg-surface dark:bg-[#0B0F19] border-gray-200 dark:border-white/10 hover:border-accent/50"
                                 }`}
                               >
                                 <input 

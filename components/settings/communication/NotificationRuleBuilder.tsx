@@ -159,7 +159,7 @@ export default function NotificationRuleBuilder() {
           return (
             <div key={rule.id} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl">
               {/* Header IF block */}
-              <div className="bg-white/5 px-6 py-4 border-b border-white/5 flex flex-wrap items-center gap-4">
+              <div className="bg-surface/5 px-6 py-4 border-b border-white/5 flex flex-wrap items-center gap-4">
                 <span className="font-mono text-emerald-400 font-bold text-lg">IF</span>
                 
                 <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function NotificationRuleBuilder() {
                           className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
                             isSelected 
                               ? 'bg-accent/20 border-accent/50 text-blue-300' 
-                              : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'
+                              : 'bg-surface/5 border-transparent text-gray-400 hover:bg-surface/10'
                           }`}
                         >
                           {type}
@@ -261,7 +261,7 @@ export default function NotificationRuleBuilder() {
               <div className="bg-[#0A0D14] px-6 py-3 border-t border-white/5 flex justify-between items-center">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-emerald-500' : 'bg-gray-600'}`}>
-                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
+                    <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
                     type="checkbox" 
@@ -278,7 +278,7 @@ export default function NotificationRuleBuilder() {
                   </AppButton>
                   <AppButton 
                     onClick={() => handleSaveRule(rule)}
-                    className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
+                    className="flex items-center gap-2 bg-surface/5 hover:bg-surface/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
                   >
                     <Save className="w-4 h-4" /> Save
                   </AppButton>

@@ -56,7 +56,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[10px] font-normal px-2 py-1 rounded bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-gray-400"
+            className="w-full text-[10px] font-normal px-2 py-1 rounded bg-surface dark:bg-black/40 border border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-gray-400"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -439,7 +439,7 @@ export default function ReportsClient() {
       {/* Data Table */}
       <AppTableContainer>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="max-h-[600px] overflow-auto relative rounded-2xl border border-border">
+          <div className="max-h-[600px] overflow-auto relative">
             <AppTable className="w-full border-separate border-spacing-0">
               <AppTableHeader className="sticky top-0 z-40 bg-elevated">
                 <AppTableRow>

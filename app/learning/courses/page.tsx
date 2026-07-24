@@ -87,7 +87,7 @@ export default function LearningCourseBuilder() {
       {editingCourse ? (
         <div className="mt-6 space-y-6 animate-in fade-in">
           <AppCard className="ring-2 ring-accent">
-            <div className="p-6 border-b border-border flex justify-between items-center bg-gray-50 dark:bg-white/[0.02]">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-gray-50 dark:bg-surface/[0.02]">
               <h3 className="font-bold text-lg text-accent">Course Settings</h3>
               <div className="flex gap-2">
                 <AppButton variant="outline" onClick={() => setEditingCourse(null)}>Cancel</AppButton>
@@ -214,7 +214,7 @@ export default function LearningCourseBuilder() {
                 <h3 className="font-bold text-lg leading-tight mb-2">{course.title}</h3>
                 <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
               </div>
-              <div className="p-4 border-t border-border bg-gray-50 dark:bg-white/[0.02] flex items-center justify-between">
+              <div className="p-4 border-t border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-400">{course.modules.length} Modules</span>
                 <span className="text-xs font-bold text-accent">Edit Course &rarr;</span>
               </div>

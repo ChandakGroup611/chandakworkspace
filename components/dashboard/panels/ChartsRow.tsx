@@ -107,8 +107,8 @@ export default function ChartsRow({ metrics = [] }: ChartsRowProps) {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={burndownData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
-                <XAxis dataKey="day" stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} dy={10} style={{ fontFamily: 'var(--mono)' }} />
-                <YAxis stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} dx={-10} style={{ fontFamily: 'var(--mono)' }} />
+                <XAxis dataKey="day" stroke="var(--text-muted)" fontSize={9} tickLine={false} axisLine={false} dy={10} style={{ fontFamily: 'var(--mono)' }} />
+                <YAxis stroke="var(--text-muted)" fontSize={9} tickLine={false} axisLine={false} dx={-10} style={{ fontFamily: 'var(--mono)' }} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderRadius: '8px', color: '#0f172a', fontSize: '11px', fontFamily: 'var(--mono)' }}
                   itemStyle={{ color: '#0f172a' }}

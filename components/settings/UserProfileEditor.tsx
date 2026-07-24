@@ -336,7 +336,7 @@ export default function UserProfileEditor() {
                   />
                   {/* Status Badge */}
                   <div className="absolute bottom-1 right-2 h-5 w-5 rounded-full bg-emerald-500 border-2 border-card flex items-center justify-center shadow-sm" title={profile?.is_active ? "Active" : "Inactive"}>
-                     <div className="h-2 w-2 bg-white rounded-full" />
+                     <div className="h-2 w-2 bg-surface rounded-full" />
                   </div>
                 </div>
               </div>

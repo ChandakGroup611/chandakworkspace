@@ -14,7 +14,7 @@ export default function GlobalError({ error, reset }: {
       </h1>
       {error?.digest && (
         <p className="mb-4 text-sm text-gray-600">
-          Error ID: <code className="rounded bg-white/75 px-1 py-0.5 font-mono text-xs text-red-600">
+          Error ID: <code className="rounded bg-surface/75 px-1 py-0.5 font-mono text-xs text-red-600">
             {error.digest}
           </code>
         </p>

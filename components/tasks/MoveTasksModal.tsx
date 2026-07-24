@@ -117,7 +117,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
       onOpenChange(val);
       if (!val) { setStep(1); setTargetWorkspaceId(""); }
     }}>
-      <DialogContent className="sm:max-w-[500px] bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
+      <DialogContent className="sm:max-w-[500px] bg-surface dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-gray-900 dark:text-gray-100">
             {step === 1 ? `Move ${taskIds.length} Task(s)` : "Map Assignees & Watchers"}
@@ -131,7 +131,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
               <select
                 value={targetWorkspaceId}
                 onChange={(e) => setTargetWorkspaceId(e.target.value)}
-                className="w-full text-sm bg-white dark:bg-[#151923] text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                className="w-full text-sm bg-surface dark:bg-[#151923] text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
               >
                 <option value="">Select a Workspace...</option>
                 {workspaces.map(w => (
@@ -154,7 +154,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                   </div>
                   
                   {taskDetails.map((t) => (
-                    <div key={t.id} className="p-3 border border-gray-200 dark:border-white/10 rounded-lg space-y-3 bg-gray-50 dark:bg-white/[0.02]">
+                    <div key={t.id} className="p-3 border border-gray-200 dark:border-white/10 rounded-lg space-y-3 bg-gray-50 dark:bg-surface/[0.02]">
                       <div className="font-semibold text-sm">{t.subject || t.id}</div>
                       
                       {t.reqNewExec && (
@@ -163,7 +163,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                           <select
                             value={mappings[t.id]?.newExecutive || ""}
                             onChange={(e) => setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newExecutive: e.target.value } }))}
-                            className="w-full mt-1 text-xs bg-white dark:bg-[#151923] border border-gray-300 dark:border-white/10 rounded px-2 py-1.5"
+                            className="w-full mt-1 text-xs bg-surface dark:bg-[#151923] border border-gray-300 dark:border-white/10 rounded px-2 py-1.5"
                           >
                             <option value="">Select Executive...</option>
                             {stakeholders.map(s => (
@@ -185,7 +185,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                               const opts = Array.from(e.target.selectedOptions, option => option.value);
                               setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newWatchers: opts } }));
                             }}
-                            className="w-full mt-1 text-xs bg-white dark:bg-[#151923] border border-gray-300 dark:border-white/10 rounded px-2 py-1.5"
+                            className="w-full mt-1 text-xs bg-surface dark:bg-[#151923] border border-gray-300 dark:border-white/10 rounded px-2 py-1.5"
                           >
                             {stakeholders.map(s => (
                               <option key={s.user_id} value={s.user_id}>{s.full_name || s.email}</option>

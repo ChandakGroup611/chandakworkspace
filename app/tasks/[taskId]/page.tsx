@@ -6,7 +6,7 @@ import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/t
 import { notFound } from "next/navigation";
 
 const TaskRightPanel = dynamic(() => import("@/components/tasks/TaskRightPanel"), {
-  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-32 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Panel...</div>
+  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-surface/[0.02] animate-pulse h-32 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Panel...</div>
 });
 
 import SafeHtml from "@/components/ui/SafeHtml";
@@ -83,7 +83,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
                 <p className="text-[11px] font-mono tracking-wider text-accent bg-accent/10 dark:bg-accent/10 px-2 py-0.5 rounded font-bold">
                   {task.task_code || "TASK"}
                 </p>
-                <p className="text-[11px] tracking-wider text-gray-500 px-2 py-0.5 border border-gray-200 dark:border-white/10 rounded font-bold bg-white dark:bg-transparent">
+                <p className="text-[11px] tracking-wider text-gray-500 px-2 py-0.5 border border-gray-200 dark:border-white/10 rounded font-bold bg-surface dark:bg-transparent">
                   WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
                 </p>
               </div>

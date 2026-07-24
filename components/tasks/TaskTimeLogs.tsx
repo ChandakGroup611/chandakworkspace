@@ -118,7 +118,7 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
           <p className="text-xs text-gray-500 text-center py-4">No time logged yet.</p>
         ) : (
           logs.slice().reverse().map(log => (
-            <div key={log.id} className={`p-3 rounded-lg border text-sm flex gap-3 border-border bg-white`}>
+            <div key={log.id} className={`p-3 rounded-lg border text-sm flex gap-3 border-border bg-surface`}>
               <div className="shrink-0 font-bold text-emerald-600 dark:text-emerald-400 w-12">{log.hours}h</div>
               <div className="flex-1 min-w-0">
                 <p className={`truncate text-foreground`}>{log.description}</p>

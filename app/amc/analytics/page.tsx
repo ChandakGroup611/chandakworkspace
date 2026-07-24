@@ -239,7 +239,7 @@ export default function AMCAnalyticsPage() {
                             {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(dept.spend)}
                           </span>
                         </div>
-                        <div className="w-full h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-white/10">
+                        <div className="w-full h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-surface/10">
                           <div 
                             className="h-full bg-accent"
                             style={{ width: `${percent}%` }}

@@ -118,7 +118,7 @@ export default function IdentityProviderForm() {
               onClick={() => setConfig({ ...config, is_active: !config.is_active })}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-accent' : 'bg-gray-700'}`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
             </AppButton>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function IdentityProviderForm() {
               onClick={() => setConfig({ ...config, auto_provision_users: !config.auto_provision_users })}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-accent' : 'bg-gray-700'}`}
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
             </AppButton>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
@@ -208,7 +208,7 @@ export default function IdentityProviderForm() {
               onClick={() => setConfig({ ...config, force_sso: !config.force_sso })}
               className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-red-500' : 'bg-gray-700'}`}
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
             </AppButton>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Force SSO (Disable Password Login)</span>

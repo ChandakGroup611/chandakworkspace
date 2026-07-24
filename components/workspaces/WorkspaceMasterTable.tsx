@@ -173,7 +173,7 @@ export function WorkspaceMasterTable({
               const uInfo = usersMap.get(uid);
               const isOnline = onlineUsers.has(uid);
               return (
-                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-white/5">
+                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-surface/5">
                   <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
                   <span className={`text-[11px] truncate ${isOnline ? ("text-foreground") : 'text-red-500 font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
                 </div>
@@ -491,10 +491,10 @@ export function WorkspaceMasterTable({
     };
 
   return (
-    <div className="w-full font-sharp">
-      <div className="w-full flex flex-col">
+    <div className="w-full font-sharp overflow-visible">
+      <div className="w-full flex flex-col min-w-[1050px]">
         {/* Header */}
-        <div className={`grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
+        <div className={`sticky top-0 z-20 grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
           "bg-elevated text-foreground border-border"
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>

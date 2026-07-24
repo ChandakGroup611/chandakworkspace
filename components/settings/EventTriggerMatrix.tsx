@@ -43,7 +43,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   const canManage = hasPermission("SETTINGS_NOTIFICATIONS_MANAGE");
 
   return (
-    <div className="bg-white/5 border border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+    <div className="bg-surface/5 border border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
       <h2 className="text-xl font-bold text-foreground mb-2">Event Trigger Controls</h2>
       <p className="text-sm text-gray-400 mb-6">Granular control over which system events trigger notifications. Disabling here bypasses backend processing for maximum performance.</p>
 
@@ -57,7 +57,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
               </div>
               <div className="divide-y divide-white/5">
                 {modConfigs.map(config => (
-                  <div key={config.id} className="flex items-center justify-between p-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                  <div key={config.id} className="flex items-center justify-between p-4 bg-surface/[0.02] hover:bg-surface/[0.04] transition-colors">
                     <div>
                       <p className="text-sm font-medium text-foreground">{config.event_code}</p>
                       <p className="text-xs text-gray-500 mt-1">

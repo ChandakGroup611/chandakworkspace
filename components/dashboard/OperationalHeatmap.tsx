@@ -100,7 +100,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
     if (intensity > 75) return "bg-rose-500 shadow-md shadow-rose-500/20";
     if (intensity > 50) return "bg-amber-500";
     if (intensity > 25) return "bg-accent/80";
-    return "bg-white/5 hover:bg-white/10";
+    return "bg-surface/5 hover:bg-surface/10";
   };
 
   return (
@@ -164,7 +164,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           {/* Legend scale indicators */}
           <div className="flex items-center gap-1">
             <span className="text-[0.7rem] text-gray-600 mr-1 select-none">Scale:</span>
-            <div className="w-2 h-2 rounded bg-white/5" />
+            <div className="w-2 h-2 rounded bg-surface/5" />
             <div className="w-2 h-2 rounded bg-accent/80" />
             <div className="w-2 h-2 rounded bg-amber-500" />
             <div className="w-2 h-2 rounded bg-rose-500" />

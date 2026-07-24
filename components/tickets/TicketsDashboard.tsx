@@ -80,9 +80,9 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={volumeData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                <XAxis dataKey="date" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#1e1e24", border: "1px solid #333", borderRadius: "8px" }}
                   itemStyle={{ color: "#fff" }}
@@ -106,9 +106,9 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={workloadData} layout="vertical" margin={{ left: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={true} vertical={false} />
-                <XAxis type="number" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="name" type="category" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={true} vertical={false} />
+                <XAxis type="number" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip
                   cursor={{ fill: "rgba(255,255,255,0.05)" }}
                   contentStyle={{ backgroundColor: "#1e1e24", border: "1px solid #333", borderRadius: "8px" }}

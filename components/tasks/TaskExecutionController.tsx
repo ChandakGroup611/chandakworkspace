@@ -803,7 +803,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5 col-span-2 sm:col-span-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Primary Assignee</span>
-              <div className="flex items-center gap-2 bg-white/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5">
+              <div className="flex items-center gap-2 bg-surface/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5">
                 {task.assignee ? (
                   (() => {
                      const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
@@ -858,7 +858,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <div ref={assigneesRef} className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 theme-card-structural border-emerald-200`}>
                   <div className="flex flex-col gap-1">
                     {stakeholders.map(s => (
-                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-md transition-colors">
+                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-black/5 dark:hover:bg-surface/5 p-1 rounded-md transition-colors">
                         <input type="checkbox" className="accent-emerald-500 h-3 w-3 rounded" checked={editingAssigneesList.includes(s.id)} onChange={e => {
                           if (e.target.checked) setEditingAssigneesList([...editingAssigneesList, s.id]);
                           else setEditingAssigneesList(editingAssigneesList.filter(id => id !== s.id));
@@ -880,7 +880,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   </AppButton>
                 </div>
               ) : (
-                <div className="text-sm font-medium dark:text-gray-200 bg-white/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5 min-h-[42px] flex items-center">
+                <div className="text-sm font-medium dark:text-gray-200 bg-surface/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5 min-h-[42px] flex items-center">
                   {pendingAssignees ? (
                     <span className="text-emerald-500 font-bold italic animate-pulse text-xs">Pending save...</span>
                   ) : (
@@ -894,7 +894,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             
             <div className="space-y-1.5 col-span-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">Watchers (Team)</span>
-              <div className="text-sm font-medium dark:text-gray-200 leading-relaxed bg-white/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5">
+              <div className="text-sm font-medium dark:text-gray-200 leading-relaxed bg-surface/50 dark:bg-black/20 p-2 rounded-lg border border-white/20 dark:border-white/5">
                 {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic text-xs">None</span>}
               </div>
             </div>
@@ -1107,7 +1107,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       </div>
                       
                       {isOwnerDropped && (
-                        <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-amber-200 dark:border-amber-500/30">
+                        <div className="bg-surface/50 dark:bg-black/20 p-3 rounded border border-amber-200 dark:border-amber-500/30">
                           <label className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1.5 block">Assign New Primary Owner <span className="text-red-500">*</span></label>
                           <select
                             value={newAssigneeId}
@@ -1123,11 +1123,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       )}
                       
                       {true && (
-                        <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-amber-200 dark:border-amber-500/30 mt-2">
+                        <div className="bg-surface/50 dark:bg-black/20 p-3 rounded border border-amber-200 dark:border-amber-500/30 mt-2">
                           <label className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1.5 block">Assign Additional Executives (Optional)</label>
                           <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
                             {targetStakeholders.map(s => (
-                              <label key={s.id} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded cursor-pointer">
+                              <label key={s.id} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 p-1 hover:bg-black/5 dark:hover:bg-surface/5 rounded cursor-pointer">
                                 <input 
                                   type="checkbox" 
                                   checked={newExecutors.includes(s.id)}
@@ -1427,7 +1427,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${canEditAux ? 'cursor-pointer' : 'cursor-default opacity-80'} ${
                     item.is_completed
                       ? ("bg-emerald-50/40 border-emerald-100 opacity-60")
-                      : ("bg-white border-border")
+                      : ("bg-surface border-border")
                   }`}
                 >
                   <input 
@@ -1461,7 +1461,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <AppButton variant="primary"
                       type="button"
                       onClick={triggerFileSelect}
-                      className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white p-2 text-gray-500 transition hover:bg-accent/10 hover:text-accent"
+                      className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-surface p-2 text-gray-500 transition hover:bg-accent/10 hover:text-accent"
                       aria-label="Upload file"
                     >
                       <Pin className="h-4 w-4" />
@@ -1514,7 +1514,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <div 
                       key={item.id} 
                       className={`flex items-center justify-between p-3 rounded-xl border ${
-                        "bg-white border-border"
+                        "bg-surface border-border"
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
@@ -1530,7 +1530,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           target="_blank" 
                           rel="noreferrer" 
                           title={(!isNativeViewable && isOfficeDoc) ? "View via Office Viewer" : "View Attachment"}
-                          className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+                          className="p-1.5 rounded-lg bg-surface/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </a>
@@ -1538,7 +1538,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           href={`${item.file_url}?download=`} 
                           download
                           title="Download Attachment"
-                          className="p-1.5 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+                          className="p-1.5 rounded-lg bg-surface/5 border border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
                         >
                           <Download className="h-3.5 w-3.5" />
                         </a>

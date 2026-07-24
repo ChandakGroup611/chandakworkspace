@@ -64,8 +64,8 @@ export default function KnowledgeBaseAuthoring() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6 h-[calc(100vh-200px)]">
         {/* Left Sidebar: Article List */}
-        <div className="lg:col-span-1 border border-border bg-white dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-border bg-gray-50 dark:bg-white/[0.02]">
+        <div className="lg:col-span-1 border border-border bg-surface dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02]">
             <h3 className="font-bold text-sm">Library</h3>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -76,7 +76,7 @@ export default function KnowledgeBaseAuthoring() {
                 className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                   activeArticle?.id === article.id
                     ? "border-accent bg-accent/5 dark:bg-accent/10 shadow-sm" 
-                    : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5"
+                    : "border-transparent hover:bg-gray-50 dark:hover:bg-surface/5"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -99,11 +99,11 @@ export default function KnowledgeBaseAuthoring() {
         </div>
 
         {/* Right Area: Editor */}
-        <div className="lg:col-span-3 flex flex-col h-full bg-white dark:bg-[#0B0F19] rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="lg:col-span-3 flex flex-col h-full bg-surface dark:bg-[#0B0F19] rounded-2xl border border-border shadow-sm overflow-hidden">
           {activeArticle ? (
             <>
               {/* Editor Header */}
-              <div className="p-4 border-b border-border bg-gray-50 dark:bg-white/[0.02] flex items-center justify-between shrink-0">
+              <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <AppButton 
                     variant={previewMode ? "outline" : "primary"} 
@@ -194,7 +194,7 @@ export default function KnowledgeBaseAuthoring() {
 
                     <div>
                       <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Article Content</label>
-                      <div className="border border-border rounded-lg overflow-hidden bg-white dark:bg-transparent">
+                      <div className="border border-border rounded-lg overflow-hidden bg-surface dark:bg-transparent">
                         <RichTextEditor 
                           value={activeArticle.content} 
                           onChange={content => setActiveArticle({...activeArticle, content})} 

@@ -164,7 +164,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
         ) : (
           <div className="space-y-3">
             {invoices.map(inv => (
-              <AppCard key={inv.id} className={`p-4 flex items-center justify-between border bg-white border-border`}>
+              <AppCard key={inv.id} className={`p-4 flex items-center justify-between border bg-surface border-border`}>
                 <div>
                   <div className="flex items-center gap-3">
                     {getStatusBadge(inv.status, inv.due_date)}

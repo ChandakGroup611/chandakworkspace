@@ -113,7 +113,7 @@ export default function TicketAutomationsBuilder() {
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 editingId === rule.id 
                   ? "border-accent bg-accent/5 shadow-md shadow-accent/10" 
-                  : "border-border bg-white dark:bg-[#121620] hover:border-gray-400"
+                  : "border-border bg-surface dark:bg-[#121620] hover:border-gray-400"
               }`}
             >
               <div className="flex justify-between items-start mb-2">
@@ -138,14 +138,14 @@ export default function TicketAutomationsBuilder() {
         {/* Rule Builder */}
         <div className="lg:col-span-2">
           {editingId ? (
-            <div className="bg-white dark:bg-[#121620] rounded-2xl border border-border shadow-xl overflow-hidden animate-in slide-in-from-right-8 duration-300">
-              <div className="p-6 border-b border-border flex justify-between items-center bg-gray-50 dark:bg-white/[0.02]">
+            <div className="bg-surface dark:bg-[#121620] rounded-2xl border border-border shadow-xl overflow-hidden animate-in slide-in-from-right-8 duration-300">
+              <div className="p-6 border-b border-border flex justify-between items-center bg-gray-50 dark:bg-surface/[0.02]">
                 <div className="flex-1 mr-4">
                   <label className="text-xs font-bold text-gray-500 uppercase">Rule Name</label>
                   <AppInput 
                     value={form.name} 
                     onChange={e => setForm({...form, name: e.target.value})} 
-                    className="text-lg font-bold py-2 mt-1 bg-transparent border-transparent focus:bg-white dark:focus:bg-[#0A0D14]" 
+                    className="text-lg font-bold py-2 mt-1 bg-transparent border-transparent focus:bg-surface dark:focus:bg-[#0A0D14]" 
                     placeholder="Enter Rule Name"
                   />
                 </div>
@@ -153,7 +153,7 @@ export default function TicketAutomationsBuilder() {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <span className="text-sm font-bold text-gray-500">Active</span>
                     <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-700'}`}>
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                     </div>
                     <input 
                       type="checkbox" 
@@ -182,7 +182,7 @@ export default function TicketAutomationsBuilder() {
                   
                   <div className="space-y-3 pl-12 relative z-10">
                     {form.conditions.map((cond, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-white dark:bg-[#121620] p-3 rounded-lg border border-border shadow-sm group">
+                      <div key={i} className="flex items-center gap-3 bg-surface dark:bg-[#121620] p-3 rounded-lg border border-border shadow-sm group">
                         {i > 0 && <span className="font-bold text-gray-400 text-xs mr-2 w-8 text-center">AND</span>}
                         <select 
                           className="p-2 bg-gray-50 dark:bg-[#0A0D14] border border-border rounded-md text-sm min-w-[150px]"
@@ -245,7 +245,7 @@ export default function TicketAutomationsBuilder() {
                   
                   <div className="space-y-3 pl-12 relative z-10">
                     {form.actions.map((act, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-white dark:bg-[#121620] p-3 rounded-lg border border-border shadow-sm group border-l-4 border-l-emerald-500">
+                      <div key={i} className="flex items-center gap-3 bg-surface dark:bg-[#121620] p-3 rounded-lg border border-border shadow-sm group border-l-4 border-l-emerald-500">
                         <select 
                           className="p-2 bg-gray-50 dark:bg-[#0A0D14] border border-border rounded-md text-sm min-w-[150px] font-bold"
                           value={act.type}
@@ -292,7 +292,7 @@ export default function TicketAutomationsBuilder() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full bg-white dark:bg-[#0B0F19] rounded-2xl border border-dashed border-border p-12 text-gray-500">
+            <div className="flex flex-col items-center justify-center h-full bg-surface dark:bg-[#0B0F19] rounded-2xl border border-dashed border-border p-12 text-gray-500">
               <Zap className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
               <h3 className="text-xl font-bold text-foreground">Automation Builder</h3>
               <p className="mt-2 max-w-md text-center">Select an existing rule to edit its workflow, or create a new automation to streamline your ticket processing.</p>

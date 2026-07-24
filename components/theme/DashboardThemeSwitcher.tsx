@@ -38,11 +38,11 @@ export function DashboardThemeSwitcher() {
               className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex justify-between items-center ${
                 dashboardTheme === t.id 
                   ? 'bg-accent text-white font-bold' 
-                  : 'text-gray-300 hover:bg-white/5'
+                  : 'text-gray-300 hover:bg-surface/5'
               }`}
             >
               {t.name}
-              {dashboardTheme === t.id && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
+              {dashboardTheme === t.id && <span className="w-2 h-2 rounded-full bg-surface animate-pulse" />}
             </AppButton>
           ))}
         </div>

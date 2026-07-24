@@ -233,7 +233,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">System</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
           >
@@ -246,7 +246,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.status}
             onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
           >
@@ -259,7 +259,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.priority}
             onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
           >
@@ -272,7 +272,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.department}
             onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
           >
@@ -285,7 +285,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Flow/Stage</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
             value={filter.stage}
             onChange={(e: any) => setFilter(f => ({ ...f, stage: e.target.value }))}
           >
@@ -343,7 +343,7 @@ export default function RequirementsPage() {
                 }).map((r) => (
                   <AppTableRow 
                     key={r.id} 
-                    className="cursor-pointer hover:bg-accent/10/50 dark:hover:bg-white/[0.02] transition-colors"
+                    className="cursor-pointer hover:bg-accent/10/50 dark:hover:bg-surface/[0.02] transition-colors"
                     onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
                   >
                     <AppTableCell className="font-mono text-xs font-bold text-amber-400">{r.id}</AppTableCell>

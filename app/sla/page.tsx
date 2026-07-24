@@ -165,7 +165,7 @@ export default function SLAPage() {
       {/* Interactive SLA Governance Heatmap Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-gray-50/50 dark:hover:bg-white/5'} bg-surface`}
+          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-gray-50/50 dark:hover:bg-surface/5'} bg-surface`}
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
@@ -317,7 +317,7 @@ export default function SLAPage() {
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-bold uppercase tracking-wider ${"text-foreground"}`}>{lvl.level}</span>
                     <span className={`text-[0.7rem] px-1.5 py-0.2 rounded font-bold uppercase border ${
-                      "bg-white text-muted border-border"
+                      "bg-surface text-muted border-border"
                     }`}>
                       {lvl.scope}
                     </span>

@@ -159,7 +159,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
         ) : (
           <div className="space-y-3">
             {transactions.map(tx => (
-              <AppCard key={tx.id} className={`p-4 flex items-center justify-between border bg-white border-border`}>
+              <AppCard key={tx.id} className={`p-4 flex items-center justify-between border bg-surface border-border`}>
                 <div>
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-bold ${tx.transaction_type === 'Add-on Licenses' ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>

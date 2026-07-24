@@ -181,7 +181,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 key={t.id} 
                 draggable 
                 onDragStart={(e) => handleDragStart(e, t.id)}
-                className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 bg-white shadow-sm`}
+                className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 bg-surface shadow-sm`}
               >
                 <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                 <div>
@@ -271,7 +271,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   key={t.id} 
                   draggable 
                   onDragStart={(e) => handleDragStart(e, t.id)}
-                  className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 bg-white shadow-sm`}
+                  className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 bg-surface shadow-sm`}
                 >
                   <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                   <div>

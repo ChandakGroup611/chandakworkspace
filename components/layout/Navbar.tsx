@@ -37,12 +37,27 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [profileOpen]);
 
   const handleExecuteSignOut = async () => {
     setLoggingOut(true);
@@ -70,7 +85,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`theme-card-structural rounded-none border-t-0 border-l-0 border-r-0 sticky top-0 z-40 flex h-16 w-full shrink-0 font-sharp items-center justify-between transition-all duration-300 px-6`}
+        className={`theme-card-structural !overflow-visible rounded-none border-t-0 border-l-0 border-r-0 sticky top-0 z-40 flex h-16 w-full shrink-0 font-sharp items-center justify-between transition-all duration-300 px-6`}
       >
         <div className="flex items-center gap-4 flex-1 max-w-md">
           <div className="relative flex items-center w-full">
@@ -110,7 +125,7 @@ export default function Navbar() {
 
           <RealtimeNotificationsDrawer />
 
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <div 
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-white cursor-pointer border border-transparent hover:border-slate-400 transition-all overflow-hidden"
@@ -124,7 +139,6 @@ export default function Navbar() {
 
             {profileOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
                 <div className={`absolute right-0 top-12 mt-2 w-56 rounded-xl p-1.5 shadow-md z-50 animate-in fade-in zoom-in-95 duration-150 theme-card-structural text-foreground`}>
                   <div className={`px-2 py-2 border-b space-y-0.5 border-border`}>
                     <span className="text-sm font-medium block truncate">{userData?.full_name || 'System Operator'}</span>

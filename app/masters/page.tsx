@@ -633,8 +633,8 @@ export default function MastersPage() {
                     }}
                     className={`py-1 px-2 rounded-lg text-center transition-all truncate ${tier.id === "ALL" ? "col-span-2" : ""} ${
                       isSelected
-                        ? ("bg-white text-accent shadow-sm")
-                        : ("hover:text-foreground hover:bg-white/50")
+                        ? ("bg-surface text-accent shadow-sm")
+                        : ("hover:text-foreground hover:bg-surface/50")
                     }`}
                   >
                     {tier.label}
@@ -674,7 +674,7 @@ export default function MastersPage() {
                             setSearchQuery("");
                           }}
                           className={`w-full p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-3 ${
-                            (isActive ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50")
+                            (isActive ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-surface border-gray-100 hover:border-gray-300 hover:bg-gray-50")
                           }`}
                         >
                           <div className={`p-2 rounded-lg mt-0.5 ${
@@ -717,7 +717,7 @@ export default function MastersPage() {
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
+            <div className="bg-gray-50 dark:bg-surface/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
@@ -741,7 +741,7 @@ export default function MastersPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   leftIcon={<Search className="h-3.5 w-3.5" />}
-                  className="w-full h-9 text-xs bg-white dark:bg-[#0f111a]"
+                  className="w-full h-9 text-xs bg-surface dark:bg-[#0f111a]"
                 />
               </div>
             </div>
@@ -904,7 +904,7 @@ export default function MastersPage() {
                                     onClick={() => openEditModal(rec)}
                                     disabled={!hasPermission("MASTERS_UPDATE")}
                                     className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      "bg-white border-border text-muted hover:text-accent hover:border-accent/30"
+                                      "bg-surface border-border text-muted hover:text-accent hover:border-accent/30"
                                     }`}
                                     title="Edit Record Details"
                                   >
@@ -915,7 +915,7 @@ export default function MastersPage() {
                                     onClick={() => handleDelete(rec)}
                                     disabled={!hasPermission("MASTERS_DELETE")}
                                     className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      "bg-white border-border text-gray-400 hover:text-rose-600 hover:border-rose-300"
+                                      "bg-surface border-border text-gray-400 hover:text-rose-600 hover:border-rose-300"
                                     }`}
                                     title="Delete Record"
                                   >
@@ -934,7 +934,7 @@ export default function MastersPage() {
             </div>
 
             {/* Pagination / Context Footer */}
-            <div className="p-4 bg-white/[0.005] border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500">
+            <div className="p-4 bg-surface/[0.005] border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
                 <span>Auditing active: all status updates automatically export JSONB snapshots.</span>
@@ -1018,7 +1018,7 @@ export default function MastersPage() {
                   onChange={(e) => setFormDesc(e.target.value)}
                   rows={2}
                   className={`w-full px-3 py-2 rounded-xl border text-xs focus:outline-none focus:border-accent/50 resize-none transition-all ${
-                    "bg-white border-border text-foreground placeholder-gray-400"
+                    "bg-surface border-border text-foreground placeholder-gray-400"
                   }`}
                 />
               </div>
@@ -1056,7 +1056,7 @@ export default function MastersPage() {
                     value={formParentId}
                     onChange={(e) => setFormParentId(e.target.value)}
                     className={`w-full h-9 px-3 rounded-xl border text-xs focus:outline-none focus:border-accent/50 cursor-pointer ${
-                      "bg-white border-border text-foreground"
+                      "bg-surface border-border text-foreground"
                     }`}
                     required={currentConfig.parentRequired}
                   >
@@ -1117,7 +1117,7 @@ export default function MastersPage() {
               {/* Associated System Module dropdown removed - dynamically assigned based on Governance Scope */}
 
               {/* Operational Scope Flag (1=INFRA, 2=ERP) */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <div className="space-y-1.5 p-3 rounded-xl bg-surface/[0.02] border border-white/5">
                 <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
                   Operational Governance Scope <span className="text-rose-400">*</span>
                 </label>
@@ -1125,7 +1125,7 @@ export default function MastersPage() {
                   value={formScopeId || ""}
                   onChange={(e) => setFormScopeId(e.target.value || null)}
                   className={`w-full h-9 px-3 rounded-xl border text-xs font-bold focus:outline-none focus:border-accent/50 cursor-pointer ${
-                    "bg-white border-border text-foreground"
+                    "bg-surface border-border text-foreground"
                   }`}
                   required
                 >

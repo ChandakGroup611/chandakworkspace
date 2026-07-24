@@ -147,7 +147,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
           className="hidden" 
           onChange={handleFileSelect} 
         />
-        <div className={`p-3 rounded-xl mb-3 bg-white shadow-sm`}>
+        <div className={`p-3 rounded-xl mb-3 bg-surface shadow-sm`}>
           <UploadCloud className={`h-6 w-6 text-accent`} />
         </div>
         <h4 className={`text-sm font-bold mb-1 ${"text-foreground"}`}>

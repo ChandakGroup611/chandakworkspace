@@ -175,7 +175,7 @@ export default function LoginPage() {
           
           {/* Logo - Pushed to Absolute Top */}
           <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
-            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-white/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
+            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-surface/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
               <img 
                 src="/Chandak-Group-Final-Logo.svg" 
                 alt="Chandak Logo" 
@@ -259,7 +259,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                   required
                 />
               </div>
@@ -280,7 +280,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                   required
                 />
               </div>
@@ -328,7 +328,7 @@ export default function LoginPage() {
               variant="outline"
               onClick={handleMicrosoftLogin}
               disabled={ssoLoading}
-              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-white/5 font-semibold bg-[#0A0D14] lg:bg-transparent border border-white/10"
+              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-surface/5 font-semibold bg-[#0A0D14] lg:bg-transparent border border-white/10"
             >
               {ssoLoading ? (
                 <div className="flex items-center gap-2 text-white">

@@ -8,15 +8,15 @@ import { MessageCircle, ActivitySquare, Clock } from "lucide-react";
 // Dynamically import heavy modules so they don't block initial SSR or JS bundle
 const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), { 
   ssr: false, 
-  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Realtime Communications...</div> 
+  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-surface/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Realtime Communications...</div> 
 });
 
 const TaskActivityTimeline = dynamic(() => import("@/components/tasks/TaskActivityTimeline"), { 
-  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Relational Timeline...</div> 
+  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-surface/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Relational Timeline...</div> 
 });
 
 const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), { 
-  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Time Logs...</div> 
+  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-surface/[0.02] animate-pulse h-96 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Time Logs...</div> 
 });
 
 export default function TaskRightPanel({ taskId }: { taskId: string }) {
@@ -62,7 +62,7 @@ export default function TaskRightPanel({ taskId }: { taskId: string }) {
           </TabsList>
           
           <TabsContent value="none" className="m-0">
-            <div className="text-center py-4 text-xs text-gray-500 font-bold border rounded-xl mt-4 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
+            <div className="text-center py-4 text-xs text-gray-500 font-bold border rounded-xl mt-4 dark:border-white/5 bg-gray-50/50 dark:bg-surface/[0.02]">
               Select a tab to view task Logs
             </div>
           </TabsContent>

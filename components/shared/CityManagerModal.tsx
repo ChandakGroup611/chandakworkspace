@@ -94,7 +94,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
           ) : (
             <div className="space-y-3">
               {cities.map(c => (
-                <div key={c.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-white shadow-sm group">
+                <div key={c.id} className="flex items-center justify-between p-4 rounded-xl border theme-card-structural group">
                   <div>
                     <div className="font-bold text-foreground text-sm flex items-center gap-2">
                       {c.city_name}

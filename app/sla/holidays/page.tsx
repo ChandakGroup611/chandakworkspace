@@ -107,16 +107,16 @@ export default function HolidayCalendar() {
             
             <div className="lg:col-span-2">
               <AppCard>
-                <div className="p-4 border-b border-border bg-gray-50 dark:bg-white/[0.02]">
+                <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02]">
                   <h3 className="font-bold text-sm">Upcoming Holidays (2026)</h3>
                 </div>
                 <div className="divide-y divide-border">
                   {holidays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(holiday => (
-                    <div key={holiday.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+                    <div key={holiday.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-surface/[0.02] transition-colors">
                       <div className="flex flex-col">
                         <span className="font-bold text-foreground">{holiday.name}</span>
                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                          <span className="font-mono bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">{holiday.date}</span>
+                          <span className="font-mono bg-gray-100 dark:bg-surface/10 px-1.5 py-0.5 rounded">{holiday.date}</span>
                           <span>•</span>
                           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {holiday.region}</span>
                         </div>
@@ -147,7 +147,7 @@ export default function HolidayCalendar() {
                     </div>
                     <AppBadge variant="info">{wh.timezone}</AppBadge>
                   </div>
-                  <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-border">
+                  <div className="p-4 bg-gray-50 dark:bg-surface/5 rounded-xl border border-border">
                     <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                       <Clock className="w-4 h-4 text-accent" /> Schedule
                     </div>
@@ -162,7 +162,7 @@ export default function HolidayCalendar() {
                 </div>
               </AppCard>
             ))}
-            <AppCard className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+            <AppCard className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-gray-50 dark:hover:bg-surface/[0.02] transition-colors">
               <div className="text-center">
                 <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <span className="font-bold text-gray-500">Create Working Hours Profile</span>

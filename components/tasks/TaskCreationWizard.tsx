@@ -393,7 +393,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className={`p-2 rounded-xl max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders.filter(s => s.full_name?.toLowerCase().includes(assigneeSearchTerm.toLowerCase())).map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
+                    <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
                       <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={assignees.includes(s.id)} onChange={e => {
                         if (e.target.checked) setAssignees([...assignees, s.id]);
                         else setAssignees(assignees.filter(id => id !== s.id));
@@ -434,7 +434,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     .filter(s => !assignees.includes(s.id))
                     .filter(s => s.full_name?.toLowerCase().includes(watcherSearchTerm.toLowerCase()))
                     .map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
+                    <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
                       <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={watchers.includes(s.id)} onChange={e => {
                         if (e.target.checked) setWatchers([...watchers, s.id]);
                         else setWatchers(watchers.filter(id => id !== s.id));
@@ -504,7 +504,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     </div>
                     <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Checklist</h3>
                   </div>
-                  <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{checklistItems.length} items</span>
+                  <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-surface/5 px-2 py-0.5 rounded-full">{checklistItems.length} items</span>
                 </div>
                 
                 <div className="flex gap-2 items-start">
@@ -585,7 +585,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     </label>
                   </div>
 
-                  <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full">{attachments.length} files</span>
+                  <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-surface/5 px-2 py-0.5 rounded-full">{attachments.length} files</span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">

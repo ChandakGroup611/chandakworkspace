@@ -171,7 +171,7 @@ export default function PerformanceCommandCenter() {
       {violations.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-red-600">Soft Governance Budget Violations</h2>
-          <div className="overflow-x-auto border rounded-lg border-red-200">
+          <div className="overflow-x-auto">
             <AppTableContainer><AppTable className="min-w-full divide-y divide-red-200 text-base">
               <AppTableHeader className="bg-red-50">
                 <AppTableRow>
@@ -183,7 +183,7 @@ export default function PerformanceCommandCenter() {
               </AppTableHeader>
               <AppTableBody className="divide-y divide-red-100">
                 {violations.map((v, i) => (
-                  <AppTableRow key={i} className="bg-white">
+                  <AppTableRow key={i} className="bg-surface">
                     <AppTableCell className="px-4 py-3 font-medium">{v.route}</AppTableCell>
                     <AppTableCell className="px-4 py-3 text-right font-bold text-red-600">{v.count}</AppTableCell>
                     <AppTableCell className="px-4 py-3 text-right text-gray-500">{v.budget}</AppTableCell>
@@ -198,7 +198,7 @@ export default function PerformanceCommandCenter() {
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Query Log</h2>
-        <div className="overflow-x-auto border rounded-lg">
+        <div className="overflow-x-auto">
           <AppTableContainer><AppTable className="min-w-full divide-y divide-gray-200 text-base">
             <AppTableHeader className="bg-gray-50">
               <AppTableRow>
@@ -243,7 +243,7 @@ export default function PerformanceCommandCenter() {
 }
 
 function MetricCard({ title, value, isWarning, isCritical }: { title: string, value: string | number, isWarning?: boolean, isCritical?: boolean }) {
-  let bgColor = 'bg-white';
+  let bgColor = 'bg-surface';
   let textColor = 'text-gray-900';
   let borderColor = 'border-gray-200';
 

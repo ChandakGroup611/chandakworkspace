@@ -42,7 +42,7 @@ export function TicketListSidebar({
             type="text"
             placeholder="Search tickets..."
             className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-              "bg-white border-border text-foreground placeholder:text-gray-400"
+              "bg-surface border-border text-foreground placeholder:text-gray-400"
             }`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -84,7 +84,7 @@ export function TicketListSidebar({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
         {tickets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
-            <div className="p-3 bg-white/5 rounded-full">
+            <div className="p-3 bg-surface/5 rounded-full">
               <Hash className="h-6 w-6 text-gray-600" />
             </div>
             <p className="text-sm text-gray-500">No tickets found</p>

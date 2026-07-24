@@ -556,7 +556,7 @@ export default function IAMGovernanceCockpit({
                       placeholder="New role name..."
                       value={newRoleName}
                       onChange={(e) => setNewRoleName(e.target.value)}
-                      className={cn("h-10 text-xs", "bg-surface border-border text-foreground focus:border-accent focus:bg-white")}
+                      className={cn("h-10 text-xs", "bg-surface border-border text-foreground focus:border-accent focus:bg-surface")}
                     />
                     <AppButton 
                       variant="secondary" 
@@ -576,7 +576,7 @@ export default function IAMGovernanceCockpit({
         <div className="lg:col-span-8 flex flex-col">
           <AppCard className={cn("flex-1 overflow-hidden flex flex-col relative")}>
             {isRoleLoading && (
-              <div className="absolute inset-0 bg-[#0A0D14]/30 backdrop-blur-[2px] dark:bg-[#0A0D14]/30 bg-white/30 flex flex-col items-center justify-center space-y-3 z-50">
+              <div className="absolute inset-0 bg-[#0A0D14]/30 backdrop-blur-[2px] dark:bg-[#0A0D14]/30 bg-surface/30 flex flex-col items-center justify-center space-y-3 z-50">
                 <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
                 <span className={cn("text-xs font-bold uppercase tracking-widest animate-pulse", "text-muted")}>
                   Loading Capabilities...
@@ -672,7 +672,7 @@ export default function IAMGovernanceCockpit({
                             <span className={cn(
                               "text-[0.7rem] font-mono font-bold px-1.5 py-0.5 rounded-md",
                               isTabSelected
-                                ? "bg-white/20 text-white"
+                                ? "bg-surface/20 text-white"
                                 : "bg-gray-200/50 text-muted"
                             )}>
                               {stats.active}/{stats.total}
@@ -744,7 +744,7 @@ export default function IAMGovernanceCockpit({
                                     <AppTableRow 
                                       key={m.name}
                                       className={cn(
-                                        "group/row transition-colors hover:bg-white/[0.01]",
+                                        "group/row transition-colors hover:bg-surface/[0.01]",
                                         "hover:bg-elevated/40"
                                       )}
                                     >

@@ -216,8 +216,8 @@ export default function TicketsPage() {
 
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-6 p-6">
         {/* Filters Top Bar */}
-        <div className={`p-4 space-y-4 rounded-xl border ${
-          "border-border bg-white shadow-sm"
+        <div className={`p-4 space-y-4 rounded-xl ${
+          "theme-card-structural"
         }`}>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="relative w-full sm:max-w-md">
@@ -298,7 +298,7 @@ export default function TicketsPage() {
         </div>
 
         {/* Data Table */}
-        <div className="flex-1 min-h-0 overflow-y-auto rounded-xl border border-border shadow-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {loading && tickets.length === 0 ? (
             <div className="flex-1 h-64 flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />

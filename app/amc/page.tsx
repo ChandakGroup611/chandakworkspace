@@ -1139,7 +1139,7 @@ export default function AMCPage() {
                             <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark" className="h-9 text-xs" />
                           </AppTableCell>
                           <AppTableCell className="py-2 px-1">
-                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none bg-white border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                               <option value="">-- Select --</option>
                               <option value="Yearly">Yearly</option>
                               <option value="Half-Yearly">Half-Yearly</option>
@@ -1222,7 +1222,7 @@ export default function AMCPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2 col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Industry Type</label>
-                      <select disabled={!!formVendorId} value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      <select disabled={!!formVendorId} value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select Industry Type</option>
                         <option value="IT Software">IT Software</option>
                         <option value="IT Hardware / Electronics">IT Hardware / Electronics</option>
@@ -1243,7 +1243,7 @@ export default function AMCPage() {
                     </div>
                     <div className="space-y-2 col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type</label>
-                      <select disabled={!!formVendorId} value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      <select disabled={!!formVendorId} value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select Vendor Type</option>
                         <option value="OEM (Original Equipment Manufacturer)">OEM (Original Equipment Manufacturer)</option>
                         <option value="Authorized Distributor">Authorized Distributor</option>
@@ -1292,7 +1292,7 @@ export default function AMCPage() {
                       <select disabled={!!formVendorId} value={vendorAddrState} onChange={(e) => {
                         setVendorAddrState(e.target.value);
                         setVendorAddrCity(""); // Reset city when state changes
-                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select State</option>
                         {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -1304,7 +1304,7 @@ export default function AMCPage() {
                           <Plus className="h-4 w-4" />
                         </AppButton>
                       </label>
-                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                         <option value="">Select City</option>
                         {masterCities.filter(c => c.state_name === vendorAddrState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                       </select>
@@ -1404,7 +1404,7 @@ export default function AMCPage() {
                     <select disabled={!!formVendorId} value={bankState} onChange={(e) => {
                       setBankState(e.target.value);
                       setBankCity(""); // Reset city
-                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="">Select State</option>
                       {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -1416,7 +1416,7 @@ export default function AMCPage() {
                         <Plus className="h-4 w-4" />
                       </AppButton>
                     </label>
-                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-white"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
                       <option value="">Select City</option>
                       {masterCities.filter(c => c.state_name === bankState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                     </select>

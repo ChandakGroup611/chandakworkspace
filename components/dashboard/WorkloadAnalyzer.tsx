@@ -56,7 +56,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <p className="text-xs text-gray-500">Capacity & bandwidth analysis</p>
             </div>
           </div>
-          <AppButton onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
+          <AppButton onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-surface/10 text-gray-400 transition-colors">
             <X className="h-4 w-4" />
           </AppButton>
         </div>

@@ -252,7 +252,7 @@ export default function AMCReportsPage() {
                   ) : invoices.map(inv => {
                     const isOverdue = inv.status === 'Pending' && new Date(inv.due_date) < new Date();
                     return (
-                      <AppTableRow key={inv.id} className={`hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${isOverdue ? 'bg-rose-500/5' : ''}`}>
+                      <AppTableRow key={inv.id} className={`hover:bg-black/5 dark:hover:bg-surface/5 transition-colors ${isOverdue ? 'bg-rose-500/5' : ''}`}>
                         <AppTableCell className="p-4">
                           {inv.status === 'Paid' ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 flex items-center gap-1 w-max"><CheckCircle className="h-3 w-3" /> PAID</span>

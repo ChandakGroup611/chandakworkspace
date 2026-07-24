@@ -331,7 +331,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
   return (
     <Profiler id={`TaskRealtimeChat-${taskId}`} onRender={onRenderCallback}>
-    <AppCard className={`flex flex-col h-full overflow-hidden border-smooth bg-white shadow-sm`}>
+    <AppCard className={`flex flex-col h-full overflow-hidden border-smooth bg-surface shadow-sm`}>
 
       {/* Header */}
       <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>
@@ -454,16 +454,16 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                               {attachments.map((att, i) => (
                                 att.type?.startsWith('image/') ? (
                                   <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
-                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-black/5 dark:bg-white/5 transition-transform duration-300 group-hover:scale-105" />
+                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-black/5 dark:bg-surface/5 transition-transform duration-300 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
-                                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-white/10 rounded-lg text-white transition-colors" title="View Full Image">
-                                        <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-lg">
+                                      <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="View Full Image">
+                                        <div className="p-2 bg-surface/20 rounded-full backdrop-blur-sm shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                         </div>
                                         <span className="text-[10px] font-semibold uppercase tracking-wider">View</span>
                                       </a>
-                                      <a href={att.url} download={att.name} className="flex flex-col items-center gap-1 p-2 hover:bg-white/10 rounded-lg text-white transition-colors" title="Download Image">
-                                        <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm shadow-lg">
+                                      <a href={att.url} download={att.name} className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="Download Image">
+                                        <div className="p-2 bg-surface/20 rounded-full backdrop-blur-sm shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                         </div>
                                         <span className="text-[10px] font-semibold uppercase tracking-wider">Download</span>
@@ -471,17 +471,17 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                                     </div>
                                   </div>
                                 ) : (
-                                <div key={i} className={`flex items-center justify-between p-2 rounded border ${isSender ? 'bg-black/10 border-black/10' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10'}`}>
+                                <div key={i} className={`flex items-center justify-between p-2 rounded border ${isSender ? 'bg-black/10 border-black/10' : 'bg-black/5 dark:bg-surface/5 border-black/5 dark:border-white/10'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden mr-3">
                                     <Paperclip className="h-4 w-4 shrink-0 opacity-70" />
                                     <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
                                   </div>
                                   <div className="flex items-center gap-1.5 shrink-0">
-                                    <a href={att.name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(att.url.startsWith('http') ? att.url : `https://chandakgroup.tech${att.url}`)}` : att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 text-foreground'}`} title="View Document">
+                                    <a href={att.name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(att.url.startsWith('http') ? att.url : `https://chandakgroup.tech${att.url}`)}` : att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="View Document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                       <span>VIEW</span>
                                     </a>
-                                    <a href={att.url} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 text-foreground'}`} title="Download Document">
+                                    <a href={att.url} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="Download Document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                       <span>DOWNLOAD</span>
                                     </a>
@@ -553,9 +553,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         )}
 
         {selectedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 dark:bg-white/5 rounded-lg">
+          <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 dark:bg-surface/5 rounded-lg">
             {selectedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center gap-1 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 px-2 py-1 rounded text-xs">
+              <div key={idx} className="flex items-center gap-1 bg-surface dark:bg-black/20 border border-gray-200 dark:border-white/10 px-2 py-1 rounded text-xs">
                 <span className="truncate max-w-[120px]">{file.name}</span>
                 <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500 ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>

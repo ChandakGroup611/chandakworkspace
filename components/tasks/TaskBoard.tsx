@@ -46,7 +46,7 @@ function SortableTask({ task }: { task: Task }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} 
-      className="p-3 mb-2 bg-white/5 border border-white/10 rounded-xl shadow-sm text-sm cursor-grab active:cursor-grabbing hover:bg-white/10 transition-colors">
+      className="p-3 mb-2 bg-surface/5 border border-white/10 rounded-xl shadow-sm text-sm cursor-grab active:cursor-grabbing hover:bg-surface/10 transition-colors">
       {task.subject}
     </div>
   );
@@ -57,7 +57,7 @@ function Column({ id, title, tasks }: ColumnProps) {
     <div className="flex-1 min-w-[280px] flex flex-col bg-gray-900/40 rounded-xl p-4 border border-white/5">
       <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex justify-between items-center">
         <span>{title}</span>
-        <span className="bg-white/10 px-2 py-0.5 rounded-full text-xs">{tasks.length}</span>
+        <span className="bg-surface/10 px-2 py-0.5 rounded-full text-xs">{tasks.length}</span>
       </h3>
       <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
         <div className="flex-1 min-h-[150px]">

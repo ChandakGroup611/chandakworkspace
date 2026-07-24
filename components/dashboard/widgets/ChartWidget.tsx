@@ -146,9 +146,9 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={burndownData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.4} />
-              <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--muted)', opacity: 0.2 }} />
+              <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--text-muted)', opacity: 0.2 }} />
               <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
               <Bar dataKey="Tasks" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
               <Bar dataKey="Tickets" stackId="a" fill="#a855f7" radius={[4, 4, 0, 0]} />

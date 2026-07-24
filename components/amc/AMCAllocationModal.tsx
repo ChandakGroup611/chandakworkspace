@@ -187,7 +187,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                   placeholder="Search users to allocate..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 transition-all bg-white border-border text-foreground`}
+                  className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 transition-all bg-surface border-border text-foreground`}
                 />
               </div>
             </div>

@@ -69,14 +69,14 @@ export default function SessionManagement() {
               placeholder="Search users or IP..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#0B0F19] border border-border rounded-lg text-sm focus:ring-accent outline-none"
+              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-[#0B0F19] border border-border rounded-lg text-sm focus:ring-accent outline-none"
             />
           </div>
         }
       />
 
       <div className="mt-6 flex-1 min-h-0 flex flex-col h-[calc(100vh-200px)]">
-        <AppTableContainer className="flex-1 overflow-y-auto bg-white dark:bg-[#0B0F19] rounded-2xl border border-border shadow-sm">
+        <AppTableContainer className="flex-1 overflow-y-auto bg-surface dark:bg-[#0B0F19] rounded-2xl border border-border shadow-sm">
           <AppTable>
             <AppTableHeader>
               <AppTableRow>
@@ -104,7 +104,7 @@ export default function SessionManagement() {
                 </AppTableRow>
               ) : (
                 filteredSessions.map(session => (
-                  <AppTableRow key={session.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                  <AppTableRow key={session.id} className="hover:bg-gray-50 dark:hover:bg-surface/[0.02]">
                     <AppTableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-xs">

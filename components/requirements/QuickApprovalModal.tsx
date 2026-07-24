@@ -81,11 +81,11 @@ export function QuickApprovalModal({
                </div>
                <div className="md:col-span-2">
                   <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Scope</span>
-                  <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-md text-gray-800 dark:text-gray-200">{reqDetails.scope || '-'}</div>
+                  <div className="bg-gray-50 dark:bg-surface/5 p-3 rounded-md text-gray-800 dark:text-gray-200">{reqDetails.scope || '-'}</div>
                </div>
                <div className="md:col-span-2">
                   <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Objective</span>
-                  <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-md text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{reqDetails.objective || '-'}</div>
+                  <div className="bg-gray-50 dark:bg-surface/5 p-3 rounded-md text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{reqDetails.objective || '-'}</div>
                </div>
             </div>
 
@@ -97,7 +97,7 @@ export function QuickApprovalModal({
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full text-sm p-3 border border-gray-300 dark:border-white/10 rounded-md bg-white dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-accent focus:border-accent shadow-inner min-h-[100px]"
+                className="w-full text-sm p-3 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-accent focus:border-accent shadow-inner min-h-[100px]"
                 rows={3}
                 placeholder="Enter your approval, rejection, or hold remarks here..."
               />

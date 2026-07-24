@@ -140,8 +140,8 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
   });
 
   return (
-    <div className="flex flex-col w-[320px] min-w-[320px] bg-gray-50 dark:bg-white/[0.02] rounded-xl border border-gray-200 dark:border-white/5 h-full max-h-full">
-      <div className="p-3 border-b border-gray-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#0B0F19] rounded-t-xl shrink-0">
+    <div className="flex flex-col w-[320px] min-w-[320px] bg-gray-50 dark:bg-surface/[0.02] rounded-xl border border-gray-200 dark:border-white/5 h-full max-h-full">
+      <div className="p-3 border-b border-gray-200 dark:border-white/5 flex items-center justify-between bg-surface dark:bg-[#0B0F19] rounded-t-xl shrink-0">
         <div className="flex items-center gap-2">
           {column.color && (
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: column.color }} />

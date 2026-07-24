@@ -158,10 +158,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   };
 
   const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-    "bg-white border-border text-foreground"
+    "bg-surface border-border text-foreground"
   }`;
   const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none min-h-[80px] ${
-    "bg-white border-border text-foreground"
+    "bg-surface border-border text-foreground"
   }`;
   const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
 
@@ -301,7 +301,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
               <div className="space-y-2">
                 <label className={labelClass}>Impacted Departments (Approval Sequence) *</label>
-                <div className={`p-4 rounded-xl border flex flex-wrap gap-2 bg-white border-border`}>
+                <div className={`p-4 rounded-xl border flex flex-wrap gap-2 bg-surface border-border`}>
                   {(masters?.departments || []).map((d: any) => {
                     const isSelected = formData.impacted_departments.includes(d.id);
                     const index = formData.impacted_departments.indexOf(d.id);
@@ -316,7 +316,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                             : "bg-elevated border-border text-muted hover:bg-elevated"
                         }`}
                       >
-                        {isSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
+                        {isSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
                         {d.department_name}
                       </AppButton>
                     );

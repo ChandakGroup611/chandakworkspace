@@ -175,7 +175,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   </div>
                 </div>
 
-                <div className="h-px w-full bg-white/5"></div>
+                <div className="h-px w-full bg-surface/5"></div>
 
                 <div>
                   <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Department</label>

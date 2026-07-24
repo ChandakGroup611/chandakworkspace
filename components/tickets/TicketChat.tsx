@@ -176,7 +176,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
           <div className="relative">
             <textarea 
               className={`w-full h-24 p-4 pr-12 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none transition-all ${
-                "bg-white border-border text-foreground placeholder:text-gray-400"
+                "bg-surface border-border text-foreground placeholder:text-gray-400"
               }`}
               placeholder={isPrivate ? "Type a private internal message..." : "Type a reply to the customer..."}
               value={newMessage}

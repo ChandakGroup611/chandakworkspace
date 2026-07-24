@@ -89,7 +89,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <AppButton 
               variant="secondary"
               className={`w-full justify-start text-xs py-5 border ${
-                "bg-white border-border text-muted hover:bg-elevated/50/50 shadow-sm"
+                "bg-surface border-border text-muted hover:bg-elevated/50/50 shadow-sm"
               }`}
               onClick={() => onAction("RESOLVE")}
             >
@@ -155,7 +155,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
             "border-border bg-elevated/50/50/50 hover:bg-elevated/50/50/50"
           }`}>
-            <div className={`p-2 rounded-lg bg-white group-hover:bg-accent/10`}>
+            <div className={`p-2 rounded-lg bg-surface group-hover:bg-accent/10`}>
               <Eye className={`h-4 w-4 text-gray-400 group-hover:text-accent`} />
             </div>
             <p className="text-[0.7rem] text-gray-500">Drop files to link</p>

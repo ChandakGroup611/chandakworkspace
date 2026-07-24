@@ -129,7 +129,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${
             isLightMode 
               ? (activeWorkspace?.id === w.id ? 'bg-accent/10 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
-              : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:bg-white/5 border-white/5')
+              : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:bg-surface/5 border-white/5')
           }`}
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
@@ -656,7 +656,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               {activeView === 'HIERARCHY' ? (
-                <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin pr-1">
+                <div className="flex-1 overflow-auto min-h-0 scrollbar-thin pr-1">
                   <div className="flex justify-end mb-3 mr-2">
                     <label className={`flex items-center gap-2 text-xs font-medium cursor-pointer text-muted`}>
                       <input 

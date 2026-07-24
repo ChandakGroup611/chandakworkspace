@@ -655,7 +655,7 @@ export default function UserMasterPage() {
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
+            <div className="bg-gray-50 dark:bg-surface/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
                   <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -667,7 +667,7 @@ export default function UserMasterPage() {
                 </div>
 
                 {/* Status Switcher Tabs */}
-                <div className="flex items-center gap-1 p-1 rounded-lg bg-white dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-surface dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
                     <AppButton variant="secondary"
                       key={flt}
@@ -676,7 +676,7 @@ export default function UserMasterPage() {
                       className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
                         statusFilter === flt 
                           ? "bg-accent text-white shadow-sm" 
-                          : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+                          : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-surface/5"
                       }`}
                     >
                       {flt}
@@ -691,7 +691,7 @@ export default function UserMasterPage() {
                   <select 
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-white dark:bg-[#0f111a] border-gray-200 dark:border-white/10 appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 text-gray-700 dark:text-gray-300"
+                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface dark:bg-[#0f111a] border-gray-200 dark:border-white/10 appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 text-gray-700 dark:text-gray-300"
                   >
                     <option value="ALL">All Departments</option>
                     {departments.map(d => (
@@ -705,7 +705,7 @@ export default function UserMasterPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   leftIcon={<Search className="h-3.5 w-3.5" />}
-                  className="w-full h-9 text-xs bg-white dark:bg-[#0f111a]"
+                  className="w-full h-9 text-xs bg-surface dark:bg-[#0f111a]"
                 />
               </div>
             </div>

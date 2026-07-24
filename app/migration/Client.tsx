@@ -332,7 +332,7 @@ export default function MigrationClient() {
              )}
 
              <div 
-               className={`border-2 border-dashed ${isUploading ? 'border-accent/50 bg-accent/5' : 'border-white/10 hover:border-accent/50 hover:bg-white/5 cursor-pointer transition-all'} rounded-xl p-8 flex flex-col items-center justify-center text-center`}
+               className={`border-2 border-dashed ${isUploading ? 'border-accent/50 bg-accent/5' : 'border-white/10 hover:border-accent/50 hover:bg-surface/5 cursor-pointer transition-all'} rounded-xl p-8 flex flex-col items-center justify-center text-center`}
                onClick={() => !isUploading && fileInputRef.current?.click()}
                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                onDrop={(e) => {

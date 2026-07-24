@@ -62,11 +62,11 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
   }
 
   return (
-    <AppCard className="flex flex-col h-full overflow-hidden bg-white dark:bg-[#0B0F19]">
+    <AppCard className="flex flex-col h-full overflow-hidden bg-surface dark:bg-[#0B0F19]">
       <div className="flex-1 overflow-auto relative">
         <div style={{ width: `${250 + totalDays * dayWidth}px` }} className="min-h-full">
           {/* Header Row */}
-          <div className="flex sticky top-0 z-20 bg-gray-50 dark:bg-white/[0.02] border-b border-border">
+          <div className="flex sticky top-0 z-20 bg-gray-50 dark:bg-surface/[0.02] border-b border-border">
             <div className="w-[250px] shrink-0 sticky left-0 z-30 bg-gray-50 dark:bg-[#0B0F19] border-r border-border p-3 font-bold text-xs uppercase text-gray-500">
               Task Name
             </div>
@@ -102,9 +102,9 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
               const isOverdue = end < new Date() && !task.status?.is_closed;
 
               return (
-                <div key={task.id} className="flex relative border-b border-border/30 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors group">
+                <div key={task.id} className="flex relative border-b border-border/30 hover:bg-gray-50/50 dark:hover:bg-surface/[0.02] transition-colors group">
                   {/* Fixed left column */}
-                  <div className="w-[250px] shrink-0 sticky left-0 z-10 bg-white dark:bg-[#0B0F19] border-r border-border p-3 flex flex-col justify-center gap-1 cursor-pointer group-hover:bg-gray-50/80 dark:group-hover:bg-white/[0.02]" onClick={() => onTaskClick(task)}>
+                  <div className="w-[250px] shrink-0 sticky left-0 z-10 bg-surface dark:bg-[#0B0F19] border-r border-border p-3 flex flex-col justify-center gap-1 cursor-pointer group-hover:bg-gray-50/80 dark:group-hover:bg-surface/[0.02]" onClick={() => onTaskClick(task)}>
                     <div className="font-bold text-xs text-foreground truncate">{task.title}</div>
                     <div className="text-[10px] text-gray-500 flex justify-between">
                       <span className="truncate">{task.code}</span>

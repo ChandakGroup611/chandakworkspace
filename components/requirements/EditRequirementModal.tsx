@@ -87,7 +87,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
-        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+        <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-surface/[0.02]">
           <DialogTitle>Update Requirement</DialogTitle>
         </DialogHeader>
 
@@ -108,7 +108,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  className="w-full px-3 py-2 bg-surface dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   placeholder="Requirement Title"
                 />
               </div>
@@ -117,7 +117,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 <select
                   value={formData.software_system_id}
                   onChange={(e) => setFormData({ ...formData, software_system_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  className="w-full px-3 py-2 bg-surface dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 >
                   <option value="">Select System</option>
                   {masters.systems.map((s: any) => (
@@ -130,7 +130,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 <select
                   value={formData.priority_id}
                   onChange={(e) => setFormData({ ...formData, priority_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  className="w-full px-3 py-2 bg-surface dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 >
                   <option value="">Select Priority</option>
                   {masters.priorities.map((p: any) => (
@@ -143,7 +143,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 <select
                   value={formData.department_id}
                   onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  className="w-full px-3 py-2 bg-surface dark:bg-[#151822] border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 >
                   <option value="">Select Department</option>
                   {masters.departments.map((d: any) => (
@@ -155,7 +155,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
           )}
         </div>
 
-        <DialogFooter className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] flex justify-end gap-3">
+        <DialogFooter className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-surface/[0.02] flex justify-end gap-3">
           <AppButton variant="outline" onClick={onClose} disabled={saving}>Cancel</AppButton>
           <AppButton variant="primary" onClick={handleSubmit} disabled={saving || loading}>
             {saving ? <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" /> : <Save className="w-4 h-4 mr-2" />}

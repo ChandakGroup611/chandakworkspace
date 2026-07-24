@@ -150,7 +150,7 @@ export default function ProviderDashboard() {
                 </select>
                 <label className="flex items-center gap-2 cursor-pointer ml-4">
                   <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-accent' : 'bg-muted-foreground/30'}`}>
-                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${prov.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
+                    <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${prov.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
                     type="checkbox" 

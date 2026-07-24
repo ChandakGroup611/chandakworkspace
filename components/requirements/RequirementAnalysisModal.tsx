@@ -152,10 +152,10 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
   };
 
   const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-    "bg-white border-border text-foreground"
+    "bg-surface border-border text-foreground"
   }`;
   const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none min-h-[80px] ${
-    "bg-white border-border text-foreground"
+    "bg-surface border-border text-foreground"
   }`;
   const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
 
@@ -173,7 +173,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
           <X className="h-5 w-5" />
         </AppButton>
 
-        <AppCardHeader className={`border-b shrink-0 pb-4 border-border bg-white`}>
+        <AppCardHeader className={`border-b shrink-0 pb-4 border-border bg-surface`}>
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg bg-accent/10 text-accent`}>
               <LayoutDashboard className="h-5 w-5" />
@@ -285,7 +285,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
               <div className="space-y-2">
                 <label className={labelClass}>Impacted Departments (Approval Sequence) <span className="text-red-500">*</span></label>
-                <div className={`p-4 rounded-xl border flex flex-wrap gap-2 bg-white border-border`}>
+                <div className={`p-4 rounded-xl border flex flex-wrap gap-2 bg-surface border-border`}>
                   {(masters?.departments || []).map((d: any) => {
                     const isSelected = formData.impacted_departments.includes(d.id);
                     const index = formData.impacted_departments.indexOf(d.id);
@@ -300,7 +300,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                             : "bg-elevated border-border text-muted hover:bg-elevated"
                         }`}
                       >
-                        {isSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
+                        {isSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{index + 1}</span>}
                         {d.department_name}
                       </AppButton>
                     );
@@ -341,10 +341,10 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
                                     isUserSelected 
                                       ? "bg-accent border-accent text-white" 
-                                      : "bg-white border-border text-muted hover:bg-elevated"
+                                      : "bg-surface border-border text-muted hover:bg-elevated"
                                   }`}
                                 >
-                                  {isUserSelected && <span className="bg-white/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
+                                  {isUserSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
                                   {u.full_name}
                                 </AppButton>
                               );

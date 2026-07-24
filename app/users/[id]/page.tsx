@@ -238,7 +238,7 @@ export default function UserFormPage() {
 
   return (
     <div className="w-full pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 sticky -top-4 md:-top-6 z-50 bg-white dark:bg-slate-900 border-b border-border shadow-sm px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between mb-6">
+      <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 sticky -top-4 md:-top-6 z-50 bg-surface dark:bg-slate-900 border-b border-border shadow-sm px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <AppButton 
             variant="outline" 
@@ -458,7 +458,7 @@ export default function UserFormPage() {
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="sr-only peer" disabled={!isSuperAdmin} />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                   </label>
                 </div>
               </div>

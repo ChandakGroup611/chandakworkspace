@@ -151,7 +151,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
         ) : (
           <div className="space-y-3">
             {renewals.map(rn => (
-              <AppCard key={rn.id} className={`p-4 flex items-center justify-between border bg-white border-border`}>
+              <AppCard key={rn.id} className={`p-4 flex items-center justify-between border bg-surface border-border`}>
                 <div>
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-500">

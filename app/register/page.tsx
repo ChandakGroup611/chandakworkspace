@@ -168,7 +168,7 @@ export default function RegisterPage() {
           
           {/* Logo - Pushed to Absolute Top */}
           <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
-            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-white/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
+            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-surface/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
               <img 
                 src="/logo.png" 
                 alt="Chandak Logo" 
@@ -258,7 +258,7 @@ export default function RegisterPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     leftIcon={<User className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -273,7 +273,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     leftIcon={<Mail className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -291,7 +291,7 @@ export default function RegisterPage() {
                     <select
                       value={department}
                       onChange={(e) => { setDepartment(e.target.value); setDesignation(""); }}
-                      className="w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] text-white"
+                      className="w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] text-white"
                       required
                     >
                       <option value="" disabled>Select Department</option>
@@ -316,7 +316,7 @@ export default function RegisterPage() {
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
                       disabled={!department}
-                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] text-white ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
+                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] text-white ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
                       required
                     >
                       <option value="" disabled>Select Designation</option>
@@ -334,7 +334,7 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
                   Identity Visual (Photo Upload)
                 </label>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-white/20 bg-white/[0.02]">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-white/20 bg-surface/[0.02]">
                   <div className="h-16 w-16 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shrink-0">
                     {uploadFile ? (
                       <img src={URL.createObjectURL(uploadFile)} className="h-full w-full object-cover" />
@@ -391,7 +391,7 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -406,7 +406,7 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-white/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>

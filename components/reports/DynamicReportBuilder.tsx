@@ -13,7 +13,7 @@ function SortableColumnItem({ item, onToggle }: { item: UserReportLayout, onTogg
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   return (
-    <div ref={setNodeRef} style={style} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.is_visible ? "bg-white border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700" : "bg-slate-50 border-dashed border-slate-300 opacity-60 dark:bg-slate-900 dark:border-slate-800"}`}>
+    <div ref={setNodeRef} style={style} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.is_visible ? "bg-surface border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700" : "bg-slate-50 border-dashed border-slate-300 opacity-60 dark:bg-slate-900 dark:border-slate-800"}`}>
       <AppButton variant="secondary" type="button" className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 p-1" {...attributes} {...listeners}>
         <GripVertical className="w-5 h-5" />
       </AppButton>
@@ -142,7 +142,7 @@ export default function DynamicReportBuilder({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95">
+      <div className="relative bg-surface dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-white/5 shrink-0">
@@ -152,7 +152,7 @@ export default function DynamicReportBuilder({
             </h2>
             <p className="text-xs text-slate-500 mt-1 font-medium">Add, remove, or drag columns to rearrange your personal view.</p>
           </div>
-          <AppButton variant="primary" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+          <AppButton variant="primary" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-surface/10 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </AppButton>
         </div>
@@ -162,7 +162,7 @@ export default function DynamicReportBuilder({
           
           {/* Left Panel: Selected/Active Columns */}
           <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-slate-950/30">
-            <div className="p-4 border-b border-slate-100 dark:border-white/5 shrink-0 bg-white dark:bg-slate-900">
+            <div className="p-4 border-b border-slate-100 dark:border-white/5 shrink-0 bg-surface dark:bg-slate-900">
               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Report Layout</h3>
             </div>
             <div className="p-4 flex-1 overflow-y-auto space-y-2">
@@ -180,7 +180,7 @@ export default function DynamicReportBuilder({
           </div>
 
           {/* Right Panel: Available Fields */}
-          <div className="w-full md:w-72 lg:w-80 flex flex-col min-h-0 bg-white dark:bg-slate-900">
+          <div className="w-full md:w-72 lg:w-80 flex flex-col min-h-0 bg-surface dark:bg-slate-900">
             <div className="p-4 border-b border-slate-100 dark:border-white/5 shrink-0">
               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Available Fields</h3>
             </div>
