@@ -219,7 +219,7 @@ export default function Sidebar() {
               <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
-              <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
+              <span className={`text-[0.9375rem] font-bold tracking-tight truncate text-foreground`}>
                 Chandak Workspace
               </span>
             </div>
@@ -294,7 +294,7 @@ export default function Sidebar() {
                         )}
                         
                         {!isCompact && item.badge && (
-                          <span className={`ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full ${item.badgeColor || 'bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]'}`}>
+                          <span className={`ml-auto text-[0.625rem] font-medium px-2 py-0.5 rounded-full ${item.badgeColor || 'bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]'}`}>
                             {item.badge}
                           </span>
                         )}

@@ -61,6 +61,39 @@ export async function deleteNotification(notificationId: string) {
   }
 }
 
+export async function deleteQueueNotification(notificationId: string) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: notif } = await supabaseAdmin.from("notification_queue").select("target_user_id").eq("id", notificationId).single();
+  if (!notif) return;
+
+  if (notif.target_user_id !== user.id && notif.target_user_id !== 'GLOBAL_OPS') {
+    throw new Error("Unauthorized");
+  }
+
+  await supabaseAdmin.from("notification_queue").delete().eq("id", notificationId);
+}
+
+export async function clearAllQueueNotifications() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  await supabaseAdmin.from("notification_queue").delete().eq("target_user_id", user.id);
+  
+  // Try to clear GLOBAL_OPS if they are admin, fail silently if not
+  try {
+     const { data: roleData } = await supabaseAdmin.from("user_master").select("roles!inner(code)").eq("id", user.id).single();
+     if ((roleData as any)?.roles?.code === 'SUPER_ADMIN') {
+        await supabaseAdmin.from("notification_queue").delete().eq("target_user_id", 'GLOBAL_OPS');
+     }
+  } catch (e) {}
+}
+
 // Nodemailer will be dynamically imported in dispatchNotification
 
 import { fetchSpecificEventConfig, fetchSystemEmailConfig } from "./email-config";

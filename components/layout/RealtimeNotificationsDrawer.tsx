@@ -25,6 +25,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteQueueNotification, clearAllQueueNotifications } from "@/lib/actions/notifications";
 import { AppButton } from "@/components/ui/AppButton";
 
 export interface NotificationItem {
@@ -153,10 +154,7 @@ export default function RealtimeNotificationsDrawer() {
     queryClient.setQueryData(['notifications', currentUserId], (old: any) => old?.filter((n: any) => n.id !== item.id));
 
     try {
-      await supabase
-        .from("notification_queue")
-        .delete()
-        .eq("id", item.id);
+      await deleteQueueNotification(item.id);
 
       await supabase.from("notification_history").insert([{
         original_notification_id: item.id.length === 36 ? item.id : "00000000-0000-0000-0000-000000000001",
@@ -181,16 +179,20 @@ export default function RealtimeNotificationsDrawer() {
     setLocalNotifications(prev => prev.filter(n => n.id !== id));
     queryClient.setQueryData(['notifications', currentUserId], (old: any) => old?.filter((n: any) => n.id !== id));
     try {
-      await supabase.from("notification_queue").delete().eq("id", id);
-    } catch (_) {}
+      await deleteQueueNotification(id);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const markAllAsRead = async () => {
     setLocalNotifications(prev => prev.filter(n => n.is_read));
     queryClient.setQueryData(['notifications', currentUserId], (old: any) => old?.filter((n: any) => n.is_read));
     try {
-      await supabase.from("notification_queue").delete().eq("is_read", false);
-    } catch (_) {}
+      await clearAllQueueNotifications();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const unreadCount = localNotifications.filter(n => !n.is_read).length;
