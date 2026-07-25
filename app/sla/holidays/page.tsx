@@ -46,21 +46,29 @@ export default function HolidayCalendar() {
         badge={<AppBadge variant="info">Governance Engine</AppBadge>}
       />
 
-      <div className="flex flex-wrap items-center gap-3 p-4 border-b shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-border mt-6">
-        <AppButton 
-          variant={activeTab === "holidays" ? "primary" : "secondary"} 
-          onClick={() => setActiveTab("holidays")}
-          className={`px-5 py-2 text-sm font-bold transition-all shadow-sm ${activeTab === 'holidays' ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
-        >
-          <Calendar className="w-4 h-4 mr-2" /> Holiday Calendar
-        </AppButton>
-        <AppButton 
-          variant={activeTab === "working_hours" ? "primary" : "secondary"} 
-          onClick={() => setActiveTab("working_hours")}
-          className={`px-5 py-2 text-sm font-bold transition-all shadow-sm ${activeTab === 'working_hours' ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
-        >
-          <Clock className="w-4 h-4 mr-2" /> Working Hours (Business Schedules)
-        </AppButton>
+      <div className="p-4 border-b shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-border mt-6">
+        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-gray-100/50 dark:bg-surface/30 border border-gray-200/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
+          <button 
+            onClick={() => setActiveTab("holidays")}
+            className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
+              activeTab === 'holidays' 
+                ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
+                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            <Calendar className="w-4 h-4 mr-2" /> Holiday Calendar
+          </button>
+          <button 
+            onClick={() => setActiveTab("working_hours")}
+            className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
+              activeTab === 'working_hours' 
+                ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
+                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            <Clock className="w-4 h-4 mr-2" /> Working Hours (Business Schedules)
+          </button>
+        </div>
       </div>
 
       <div className="mt-6">

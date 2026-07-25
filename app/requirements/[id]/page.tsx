@@ -16,9 +16,17 @@ import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 
 export default function RequirementAnalyzePage({ params }: { params: Promise<{ id: string }> }) {
+  const [reqId, setReqId] = useState<string>("");
   const router = useRouter();
   const supabase = createClient();
-  const [reqId, setReqId] = useState<string>("");
+  
+  useEffect(() => {
+    if (params && typeof (params as any).then === 'function') {
+      (params as any).then((p: any) => setReqId(p.id));
+    } else {
+      setReqId((params as any).id);
+    }
+  }, [params]);
   
   const [requirement, setRequirement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +63,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const [amendmentDetails, setAmendmentDetails] = useState("");
   const [needsReapproval, setNeedsReapproval] = useState(false);
   const [submittingAmendment, setSubmittingAmendment] = useState(false);
+  const [amendmentFile, setAmendmentFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     objective: "",
     business_impact: "",
@@ -80,14 +89,16 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     departments: [],
     issue_types: [],
     priority_master: [],
-    users: []
+    users: [],
+    business_values: []
   });
 
-  useEffect(() => {
-    params.then(p => {
-      setReqId(p.id);
-    });
-  }, [params]);
+  const [showAddMasterModal, setShowAddMasterModal] = useState(false);
+  const [masterModalType, setMasterModalType] = useState<"issue_type" | "business_value">("issue_type");
+  const [newMasterName, setNewMasterName] = useState("");
+  const [isAddingMaster, setIsAddingMaster] = useState(false);
+
+  // reqId is derived directly from params, no need for effect
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -97,13 +108,21 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
          .from('user_roles')
          .select('roles(code)')
          .eq('user_id', user.id);
-       const isSuper = userRoles?.some((ur: any) => ur.roles?.code === 'SUPER_ADMIN' || ur.roles?.code === 'ROLE_SUPER_ADMIN') ?? false;
-       const isAdminRole = userRoles?.some((ur: any) => ur.roles?.code === 'ADMIN_ROLE' || ur.roles?.code === 'ROLE_ADMIN') ?? false;
+       
+       const { data: userData } = await supabase.from('user_master').select('department_id, role:roles(code)').eq('id', user.id).single();
+
+       const primaryRoleCode = (userData as any)?.role?.code;
+       
+       const isSuper = primaryRoleCode === 'SUPER_ADMIN' || primaryRoleCode === 'ROLE_SUPER_ADMIN' || 
+                       (userRoles?.some((ur: any) => ur.roles?.code === 'SUPER_ADMIN' || ur.roles?.code === 'ROLE_SUPER_ADMIN') ?? false);
+       
+       const isAdminRole = primaryRoleCode === 'ADMIN_ROLE' || primaryRoleCode === 'ROLE_ADMIN' || 
+                           (userRoles?.some((ur: any) => ur.roles?.code === 'ADMIN_ROLE' || ur.roles?.code === 'ROLE_ADMIN') ?? false);
+       
        setIsAdmin(isSuper || isAdminRole);
        setIsSuperAdmin(isSuper);
        setCurrentUserId(user.id);
 
-       const { data: userData } = await supabase.from('user_master').select('department_id').eq('id', user.id).single();
        if (userData) {
            setCurrentUserDepartmentId(userData.department_id);
        }
@@ -221,18 +240,20 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         issueQuery = issueQuery.is('scope_id', null);
       }
 
-      const [deptRes, issueRes, priRes, userRes] = await Promise.all([
+      const [deptRes, issueRes, priRes, userRes, bvRes] = await Promise.all([
         supabase.from('departments').select('id, name').eq('is_deleted', false),
         issueQuery,
         priQuery,
-        supabase.from('user_master').select('id, full_name, department_id, email, designation_id').eq('is_active', true).eq('is_deleted', false)
+        supabase.from('user_master').select('id, full_name, department_id, email, designation_id').eq('is_active', true).eq('is_deleted', false),
+        supabase.from('business_values').select('id, name').eq('is_deleted', false).order('name')
       ]);
 
       setMasters({
         departments: deptRes.data || [],
         issue_types: issueRes.data || [],
         priority_master: priRes.data || [],
-        users: userRes.data || []
+        users: userRes.data || [],
+        business_values: bvRes.data || []
       });
 
     } catch (e) {
@@ -268,12 +289,31 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     if (!amendmentDetails.trim()) return alert("Please enter the revised details.");
     setSubmittingAmendment(true);
     try {
+      let attachmentData = undefined;
+      if (amendmentFile) {
+        const fileExt = amendmentFile.name.split('.').pop();
+        const fileName = `${reqId}_amendment_${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('requirement-files')
+          .upload(fileName, amendmentFile, { upsert: true });
+
+        if (uploadError) throw new Error("Failed to upload attachment: " + uploadError.message);
+        
+        attachmentData = {
+          file_name: amendmentFile.name,
+          file_size: amendmentFile.size,
+          mime_type: amendmentFile.type,
+          storage_path: uploadData.path
+        };
+      }
+
       const { amendRequirement } = await import("@/lib/actions/requirements");
-      const res = await amendRequirement(reqId, amendmentDetails, needsReapproval);
+      const res = await amendRequirement(reqId, amendmentDetails, needsReapproval, attachmentData);
       if (res.error) throw new Error(res.error);
       setShowAmendmentDialog(false);
       setAmendmentDetails("");
       setNeedsReapproval(false);
+      setAmendmentFile(null);
       loadData();
     } catch (e: any) {
       alert("Error: " + e.message);
@@ -336,7 +376,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         today.setHours(0, 0, 0, 0);
         const start = new Date(formData.start_date);
         start.setHours(0, 0, 0, 0);
-        if (start < today) {
+        if ((requirement.approval_status === 'Draft' || !requirement.approval_status) && start < today) {
             alert("Start Date cannot be less than today's date.");
             return;
         }
@@ -386,6 +426,30 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     } finally {
       setSavingApproval(false);
     }
+  };
+
+  const isApprovalFlowChanged = () => {
+    if (!requirement || !requirement.custom_fields) return false;
+    const oldDepts = requirement.custom_fields.impacted_departments || [];
+    const newDepts = formData.impacted_departments || [];
+    if (oldDepts.length !== newDepts.length) return true;
+    for (let d of newDepts) {
+      if (!oldDepts.includes(d)) return true;
+    }
+    
+    const oldApprovers = requirement.custom_fields.department_approvers || {};
+    const newApprovers = formData.department_approvers || {};
+    
+    const allKeys = new Set([...Object.keys(oldApprovers), ...Object.keys(newApprovers)]);
+    for (let key of allKeys) {
+      const oldArr = oldApprovers[key] || [];
+      const newArr = newApprovers[key] || [];
+      if (oldArr.length !== newArr.length) return true;
+      for (let i = 0; i < oldArr.length; i++) {
+        if (oldArr[i] !== newArr[i]) return true;
+      }
+    }
+    return false;
   };
 
   const handleDepartmentToggle = (id: string) => {
@@ -451,6 +515,30 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       }
     } catch (e: any) {
       alert(`Failed to ${action} attachment: ` + (e.message || "Unknown error"));
+    }
+  };
+
+  const handleAddMasterSubmit = async () => {
+    if (!newMasterName.trim()) return;
+    setIsAddingMaster(true);
+    try {
+      if (masterModalType === 'issue_type') {
+        const { createIssueType } = await import("@/lib/actions/masters");
+        const newIssue = await createIssueType(newMasterName.trim());
+        setMasters((prev: any) => ({ ...prev, issue_types: [...prev.issue_types, newIssue] }));
+        setFormData(prev => ({ ...prev, requirement_type_id: newIssue.id }));
+      } else {
+        const { createBusinessValue } = await import("@/lib/actions/masters");
+        const newBV = await createBusinessValue(newMasterName.trim());
+        setMasters((prev: any) => ({ ...prev, business_values: [...prev.business_values, newBV].sort((a,b) => a.name.localeCompare(b.name)) }));
+        setFormData(prev => ({ ...prev, business_value_id: newBV.id }));
+      }
+      setShowAddMasterModal(false);
+      setNewMasterName("");
+    } catch (e: any) {
+      alert("Failed to add master: " + e.message);
+    } finally {
+      setIsAddingMaster(false);
     }
   };
 
@@ -538,6 +626,19 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 value={amendmentDetails}
                 onChange={(e) => setAmendmentDetails(e.target.value)}
               />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Attachment (Optional)</label>
+              <input 
+                type="file" 
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-white hover:file:bg-accent-secondary transition-all"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    setAmendmentFile(e.target.files[0]);
+                  }
+                }}
+              />
+              {amendmentFile && <p className="text-xs text-gray-500 mt-1">Selected: {amendmentFile.name}</p>}
             </div>
             <div className="flex items-center space-x-2">
               <input 
@@ -637,6 +738,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         <TaskCreationWizard 
            workspaceId={selectedSubWorkspaceId || selectedWorkspaceId}
            initialTaskName={requirement.title || requirement.code}
+           initialDescription={`Requirement Reason:\n${requirement.requirement_reason || requirement.custom_fields?.business_reason || '-'}\n\nRequirement Details:\n${requirement.requirement_details || requirement.functional_scope || '-'}`}
            initialAttachments={attachments.map(att => ({
              file_name: att.original_file_name || att.file_name,
              file_url: "storage:requirement-files:" + (att.storage_path || att.file_name),
@@ -695,7 +797,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         )}
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200 dark:border-white/10 shrink-0 mb-4">
+        <div className="flex gap-1.5 mb-4 overflow-x-auto p-1.5 bg-gray-100/50 dark:bg-surface/30 border border-gray-200/60 dark:border-white/5 rounded-xl w-max max-w-full shrink-0 shadow-sm">
           {[
             { id: 'details', label: 'Requirement Details' },
             { id: 'analysis', label: 'Business Analysis' },
@@ -703,14 +805,17 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             { id: 'tasks', label: 'Tasks' },
             { id: 'audit', label: 'Audit Trail' }
           ].map(tab => (
-            <AppButton 
-              variant={activeTab === tab.id ? "primary" : "secondary"}
+            <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-5 text-sm font-bold transition-all shadow-sm ${activeTab === tab.id ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
+              className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
+                activeTab === tab.id 
+                  ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
+                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+              }`}
             >
               {tab.label}
-            </AppButton>
+            </button>
           ))}
         </div>
 
@@ -718,37 +823,37 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           {activeTab === 'details' && (
             <div className="flex flex-col h-full animate-in fade-in duration-300 gap-3">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
-                <div>
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wider">Scope</div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-200">{requirement.scope || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-0.5">Software System</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{requirement.software_system?.name || snap.system || '-'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Scope</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.scope || '-'}>{requirement.scope || '-'}</span>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wider">Module</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{requirement.module?.name || snap.module || '-'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Software System</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.software_system?.name || snap.system || '-'}>{requirement.software_system?.name || snap.system || '-'}</span>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wider">Submodule</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{requirement.sub_module?.name || snap.submodule || '-'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Module</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.module?.name || snap.module || '-'}>{requirement.module?.name || snap.module || '-'}</span>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wider">Category</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{requirement.category?.name || snap.category || '-'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Submodule</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.sub_module?.name || snap.submodule || '-'}>{requirement.sub_module?.name || snap.submodule || '-'}</span>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wider">Sub Category</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{requirement.sub_category?.name || snap.subcategory || '-'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Category</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.category?.name || snap.category || '-'}>{requirement.category?.name || snap.category || '-'}</span>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wider">Created By</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{requirement.creator?.full_name || '-'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Sub Category</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.sub_category?.name || snap.subcategory || '-'}>{requirement.sub_category?.name || snap.subcategory || '-'}</span>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-1 tracking-wider">Department</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{requirement.department?.name || '-'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Created By</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.creator?.full_name || '-'}>{requirement.creator?.full_name || '-'}</span>
+                </div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Department</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.department?.name || '-'}>{requirement.department?.name || '-'}</span>
                 </div>
               </div>
               
@@ -785,7 +890,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         className="flex items-center gap-2 pl-3 pr-1 py-1 bg-gray-50 dark:bg-surface/5 border border-gray-200 dark:border-white/10 rounded-md text-sm shadow-sm"
                       >
                         <Paperclip className="h-4 w-4 text-accent" />
-                        <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]" title={att.file_name}>{att.file_name}</span>
+                        <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
                         <span className="text-xs text-gray-400 mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
                         <div className="flex items-center gap-1 border-l border-gray-200 dark:border-white/10 pl-2">
                           <AppButton 
@@ -830,18 +935,27 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Requirement Type <span className="text-red-500">*</span></label>
-                      <select 
-                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
-                         value={formData.requirement_type_id} 
-                         onChange={e => setFormData({...formData, requirement_type_id: e.target.value})} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      >
-                        <option value="">Select Type</option>
-                        {masters.issue_types.map((t: any) => (
-                          <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
-                      </select>
+                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">
+                        Requirement Type <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-2 items-center">
+                        <select 
+                           className="flex-1 min-w-0 h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                           value={formData.requirement_type_id} 
+                           onChange={e => setFormData({...formData, requirement_type_id: e.target.value})} 
+                           disabled={!(isAdmin && (isEditable || isSuperAdmin))}
+                        >
+                          <option value="">Select Type</option>
+                          {masters.issue_types.map((t: any) => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                          ))}
+                        </select>
+                        {isAdmin && (isEditable || isSuperAdmin) && (
+                           <AppButton variant="outline" size="sm" type="button" className="h-9 w-9 p-0 shrink-0 border-dashed border-gray-300 dark:border-white/20" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }}>
+                             <Plus className="h-4 w-4 text-accent" />
+                           </AppButton>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Business Criticality <span className="text-red-500">*</span></label>
@@ -858,23 +972,27 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Business Value</label>
-                      <select 
-                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
-                         value={formData.business_value_id} 
-                         onChange={e => setFormData({...formData, business_value_id: e.target.value})} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      >
-                        <option value="">Select Business Value</option>
-                        <option value="Revenue Generation">Revenue Generation</option>
-                        <option value="Cost Reduction / Savings">Cost Reduction / Savings</option>
-                        <option value="Operational Efficiency">Operational Efficiency</option>
-                        <option value="Customer Experience / Satisfaction">Customer Experience / Satisfaction</option>
-                        <option value="Risk Mitigation & Security">Risk Mitigation & Security</option>
-                        <option value="Regulatory & Compliance">Regulatory & Compliance</option>
-                        <option value="Strategic Alignment">Strategic Alignment</option>
-                        <option value="Technical Debt Reduction">Technical Debt Reduction</option>
-                      </select>
+                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">
+                        Business Value
+                      </label>
+                      <div className="flex gap-2 items-center">
+                        <select 
+                           className="flex-1 min-w-0 h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
+                           value={formData.business_value_id} 
+                           onChange={e => setFormData({...formData, business_value_id: e.target.value})} 
+                           disabled={!(isAdmin && (isEditable || isSuperAdmin))}
+                        >
+                          <option value="">Select Business Value</option>
+                          {masters.business_values.map((bv: any) => (
+                            <option key={bv.id} value={bv.id}>{bv.name}</option>
+                          ))}
+                        </select>
+                        {isAdmin && (isEditable || isSuperAdmin) && (
+                           <AppButton variant="outline" size="sm" type="button" className="h-9 w-9 p-0 shrink-0 border-dashed border-gray-300 dark:border-white/20" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }}>
+                             <Plus className="h-4 w-4 text-accent" />
+                           </AppButton>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -1161,18 +1279,28 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
                 )}
 
-                {isAdmin && (!isCurrentApprover && searchParams.get('from') !== 'approvals') && (
+                {isAdmin && (searchParams.get('from') !== 'approvals') && (
                   <div className="flex items-center justify-end pt-4 gap-2">
-                    {['Draft', 'On Hold', 'Cancelled', 'Pending', 'Rejected', 'Clarification'].includes(requirement.approval_status || 'Draft') && (
-                      <AppButton 
-                        variant="primary" 
-                        onClick={() => handleAction('ACCEPT')} 
-                        isLoading={saving}
-                        leftIcon={<CheckCircle className="h-4 w-4"/>}
-                      >
-                        Accept Requirement
-                      </AppButton>
-                    )}
+                    {(() => {
+                      const status = requirement.approval_status || 'Draft';
+                      const isPendingApproval = status === 'Pending Approval';
+                      const changedFlow = isApprovalFlowChanged();
+                      
+                      if (isPendingApproval && !changedFlow) return null;
+                      
+                      if (!['Draft', 'On Hold', 'Cancelled', 'Pending', 'Pending Approval', 'Rejected', 'Clarification'].includes(status)) return null;
+
+                      return (
+                        <AppButton 
+                          variant="primary" 
+                          onClick={() => handleAction('ACCEPT')} 
+                          isLoading={saving}
+                          leftIcon={<CheckCircle className="h-4 w-4"/>}
+                        >
+                          {isPendingApproval ? 'Update & Restart Flow' : 'Accept Requirement'}
+                        </AppButton>
+                      );
+                    })()}
                     <AppButton 
                       variant="outline" 
                       onClick={() => handleAction('SAVE')} 
@@ -1399,6 +1527,40 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           )}
         </div>
       </div>
+
+      <Dialog open={showAddMasterModal} onOpenChange={setShowAddMasterModal}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-gray-200 dark:border-white/10 shadow-2xl rounded-xl bg-white dark:bg-[#0a0d14]">
+          <DialogHeader className="px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-surface/30">
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <FilePlus className="h-5 w-5 text-accent" />
+              Add {masterModalType === 'issue_type' ? 'Requirement Type' : 'Business Value'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Name <span className="text-red-500">*</span></label>
+              <AppInput
+                autoFocus
+                placeholder="Enter name..."
+                value={newMasterName}
+                onChange={(e) => setNewMasterName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddMasterSubmit(); }}
+              />
+            </div>
+          </div>
+          <DialogFooter className="px-6 py-4 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-surface/5">
+            <AppButton variant="outline" onClick={() => setShowAddMasterModal(false)}>Cancel</AppButton>
+            <AppButton 
+              variant="primary" 
+              disabled={!newMasterName.trim() || isAddingMaster} 
+              isLoading={isAddingMaster}
+              onClick={handleAddMasterSubmit}
+            >
+              Add
+            </AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

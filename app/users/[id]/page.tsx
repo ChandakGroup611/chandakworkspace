@@ -220,7 +220,7 @@ export default function UserFormPage() {
   };
 
   const inputStyle = `w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent ${
-    "bg-slate-50 border-slate-200 text-slate-800 disabled:bg-slate-100 disabled:text-slate-400"
+    "bg-slate-50 dark:bg-[#0a0d14] border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-400 disabled:dark:text-slate-500"
   }`;
 
   const labelStyle = `text-sm font-semibold mb-2 block text-slate-700`;

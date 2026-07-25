@@ -103,9 +103,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
         ))}
         
         {filtered.length === 0 && (
-          <div className={`col-span-full py-12 text-center border border-dashed rounded-2xl text-sm ${
-            "text-gray-400 border-border bg-surface"
-          }`}>
+          <div className={`col-span-full py-12 text-center border-dashed rounded-2xl text-sm ${ "text-gray-400 theme-card-structural " }`}>
             No requirements found in this view.
           </div>
         )}

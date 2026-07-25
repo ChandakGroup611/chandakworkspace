@@ -75,7 +75,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
               <AppCard className={`h-full transition-all overflow-hidden relative group-hover:border-accent/30`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-100 transition-opacity`} />
                 <AppCardContent className="p-6 relative z-10 space-y-4">
-                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 border border-border bg-surface`}>
+                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 theme-card-structural`}>
                     <Icon className={`h-6 w-6 text-accent`} />
                   </div>
                   

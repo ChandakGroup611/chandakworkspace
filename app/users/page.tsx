@@ -762,33 +762,33 @@ export default function UserMasterPage() {
                             <AppTableCell className="w-14 px-2">
                               <div className="relative w-8 h-8 mx-auto">
                                 <div className={`absolute inset-0 flex items-center justify-center rounded-full text-[10px] font-medium uppercase ${
-                                  "bg-slate-100 text-slate-700"
+                                  "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                                 }`}>
                                   {usr.full_name?.substring(0, 2) || "NA"}
                                 </div>
                                 <img 
                                   src={usr.profile_photo || PRESET_AVATARS[0]} 
                                   alt={usr.full_name}
-                                  className="absolute inset-0 w-8 h-8 rounded-full object-cover shadow-none ring-1 ring-transparent group-hover:ring-slate-200 transition-all z-10"
+                                  className="absolute inset-0 w-8 h-8 rounded-full object-cover shadow-none ring-1 ring-transparent group-hover:ring-slate-200 dark:group-hover:ring-slate-700 transition-all z-10"
                                   onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
                                 />
                               </div>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-sm font-bold text-slate-900 block`}>
+                              <span className={`text-sm font-bold text-slate-900 dark:text-slate-100 block`}>
                                 {usr.full_name}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`truncate max-w-[200px] text-slate-500 text-xs`}>
+                              <span className={`truncate max-w-[200px] text-slate-500 dark:text-slate-400 text-xs`}>
                                 {usr.email}
                               </span>
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`flex items-center gap-1 shrink-0 text-slate-600 font-medium text-xs`}>
+                              <span className={`flex items-center gap-1 shrink-0 text-slate-600 dark:text-slate-400 font-medium text-xs`}>
                                 <Layers className="h-3 w-3 opacity-70" />
                                 <span className="truncate max-w-[150px]">{usr.departmentObj?.name || "Global Scope"}</span>
                               </span>
@@ -801,7 +801,7 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[11px] font-semibold text-slate-700`}>
+                              <span className={`text-[11px] font-semibold text-slate-700 dark:text-slate-300`}>
                                 {usr.managerObj?.full_name || "Self / Root"}
                               </span>
                             </AppTableCell>
@@ -809,8 +809,8 @@ export default function UserMasterPage() {
                             <AppTableCell className="w-28 text-center">
                               <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase inline-block ${
                                 usr.is_active 
-                                  ? ("bg-emerald-50 text-emerald-600") 
-                                  : ("bg-slate-100 text-slate-500")
+                                  ? ("bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400") 
+                                  : ("bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400")
                               }`}>
                                 {usr.is_active ? "Active" : "Disabled"}
                               </span>
@@ -818,17 +818,17 @@ export default function UserMasterPage() {
 
                             <AppTableCell>
                               {usr.user_code ? (
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap bg-slate-100 text-slate-500`}>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono tracking-wide whitespace-nowrap bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400`}>
                                   {usr.user_code}
                                 </span>
                               ) : (
-                                <span className="text-[10px] text-slate-400 italic">NA</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">NA</span>
                               )}
                             </AppTableCell>
 
                             <AppTableCell>
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
+                                usr.roleObj?.code?.toUpperCase() === "SUPER_ADMIN" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                               }`}>
                                 {usr.roleObj?.name || "Standard Profile"}
                               </span>
@@ -841,7 +841,7 @@ export default function UserMasterPage() {
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
                                     className={`p-1.5 rounded transition-all ${
-                                      "text-slate-400 hover:text-accent hover:bg-accent/10"
+                                      "text-slate-400 dark:text-slate-500 hover:text-accent hover:bg-accent/10"
                                     }`}
                                     title="Edit User Profile"
                                   >
@@ -853,7 +853,7 @@ export default function UserMasterPage() {
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
                                     className={`p-1.5 rounded transition-all ${
-                                      "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                      "text-slate-400 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
                                     }`}
                                     title="Remove User"
                                   >

@@ -147,11 +147,7 @@ export default function CustomFieldsConfigurator() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveModule(tab.id)}
-                    className={`w-full p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${
-                      isActive 
-                        ? "bg-surface/[0.06] border-accent/40 text-white shadow-md font-bold" 
-                        : "bg-surface/[0.01] border-white/5 hover:border-white/10 text-gray-400 hover:text-gray-200"
-                    }`}
+                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural /[0.06] border-accent/40 text-white shadow-md font-bold" : "/[0.01] border-white/5 hover:border-white/10 text-gray-400 hover:text-gray-200" }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <div className={`p-1.5 rounded-lg ${isActive ? "bg-accent text-white" : "bg-surface/5 text-gray-500"}`}>
@@ -159,7 +155,7 @@ export default function CustomFieldsConfigurator() {
                       </div>
                       <span className="text-xs truncate">{tab.label}</span>
                     </div>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-surface/5 text-gray-400 border border-white/5">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /5 text-gray-400 border-white/5">
                       {tab.count} fields
                     </span>
                   </AppButton>
@@ -206,7 +202,7 @@ export default function CustomFieldsConfigurator() {
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg bg-surface/5 border border-white/5 text-[14px] text-gray-200 focus:outline-none focus:border-accent/50"
+                    className="w-full h-10 px-3 rounded-lg theme-card-structural /5 border-white/5 text-[14px] text-gray-200 focus:outline-none focus:border-accent/50"
                   >
                     <option value="text" className="bg-[#0f172a]">Text String</option>
                     <option value="number" className="bg-[#0f172a]">Numeric Scalar</option>
@@ -216,7 +212,7 @@ export default function CustomFieldsConfigurator() {
                 </div>
 
                 <div className="space-y-1 flex flex-col justify-end">
-                  <label className="flex items-center gap-2 h-10 px-3 rounded-lg bg-surface/[0.02] border border-white/5 cursor-pointer select-none hover:bg-surface/5">
+                  <label className="flex items-center gap-2 h-10 px-3 rounded-lg theme-card-structural /[0.02] border-white/5 cursor-pointer select-none hover:/5">
                     <input 
                       type="checkbox" 
                       checked={newRequired}
@@ -259,7 +255,7 @@ export default function CustomFieldsConfigurator() {
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-gray-400">Values ingest seamlessly via runtime custom form mutators.</p>
               </div>
-              <span className="text-xs font-mono font-bold bg-surface/5 px-2 py-0.5 rounded text-gray-400 border border-white/5">
+              <span className="text-xs font-mono font-bold theme-card-structural /5 px-2 py-0.5 rounded text-gray-400 border-white/5">
                 Target Schema: JSONB Map
               </span>
             </AppCardHeader>
@@ -293,7 +289,7 @@ export default function CustomFieldsConfigurator() {
                           {fItem.field_key}
                         </AppTableCell>
                         <AppTableCell>
-                          <span className="text-xs font-mono px-2 py-0.5 rounded bg-surface/[0.03] text-gray-300 border border-white/5 capitalize">
+                          <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /[0.03] text-gray-300 border-white/5 capitalize">
                             {fItem.field_type}
                           </span>
                         </AppTableCell>
@@ -325,7 +321,7 @@ export default function CustomFieldsConfigurator() {
               )}
             </div>
 
-            <div className="p-4 bg-surface/[0.01] border-t border-white/5 space-y-2">
+            <div className="p-4 theme-card-structural /[0.01] border-t border-white/5 space-y-2">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">End-to-End JSONB Data Capture Simulation</span>
               <p className="text-[0.8rem] text-gray-500 leading-snug">
                 Records inside the active view render dynamic input strips matching these declared payload parameters. Storage calls append directly to PostgreSQL database tuples automatically.

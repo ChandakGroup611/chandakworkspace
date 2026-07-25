@@ -56,7 +56,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[10px] font-normal px-2 py-1 rounded bg-surface dark:bg-black/40 border border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-gray-400"
+            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-black/40 border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-gray-400"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}

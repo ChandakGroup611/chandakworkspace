@@ -1116,7 +1116,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               <Popover.Content
                                 align="center"
                                 sideOffset={4}
-                                className="z-[100] bg-surface dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl flex flex-col py-1 min-w-[150px] outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+                                className="z-[100] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 rounded-lg shadow-xl flex flex-col py-1 min-w-[150px] outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
                                 onInteractOutside={() => setOpenMenuTaskId(null)}
                                 onClick={(e) => e.stopPropagation()}
                               >
@@ -1415,8 +1415,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       {selectedTask && (
         <>
           <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setSelectedTask(null)} />
-          <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] bg-surface dark:bg-[#0B0F19] shadow-2xl border-l border-gray-200 dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="p-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50 dark:bg-surface/[0.02]">
+          <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] theme-card-structural dark:bg-[#0B0F19] shadow-2xl border-l border-gray-200 dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="p-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50 dark:theme-card-structural /[0.02]">
               <div>
                 <h2 className="text-[14px] font-bold text-gray-900 dark:text-white truncate pr-4">{selectedTask.title}</h2>
                 <div className="text-[11px] font-mono text-gray-500 mt-1">{selectedTask.code} • {selectedTask.workspace?.name}</div>
@@ -1433,21 +1433,21 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Priority</span>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.priority?.name || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Priority</span>
+                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.priority?.name || 'N/A'}</div>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Department</span>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.department?.name || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Department</span>
+                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.department?.name || 'N/A'}</div>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Status</span>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.status?.name || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Status</span>
+                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.status?.name || 'N/A'}</div>
                 </div>
-                <div className="space-y-1">
-                  <span className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Due Date</span>
-                  <div className="text-[13px] font-medium text-gray-900 dark:text-gray-100">{selectedTask.end_date || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Due Date</span>
+                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.end_date || 'N/A'}</div>
                 </div>
               </div>
               
@@ -1459,7 +1459,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   {selectedTask.custom_fields.checklist && Array.isArray(selectedTask.custom_fields.checklist) && (
                     <div className="space-y-2 mb-4">
                       {selectedTask.custom_fields.checklist.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-start gap-2 bg-gray-50 dark:bg-surface/[0.02] p-2 rounded-lg border border-gray-100 dark:border-white/5">
+                        <div key={idx} className="flex items-start gap-2 bg-gray-50 dark:theme-card-structural /[0.02] p-2 rounded-lg border-gray-100 dark:border-white/5">
                           <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-gray-300 text-accent focus:ring-accent" />
                           <span className={`text-[13px] ${item.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{item.title}</span>
                         </div>
@@ -1481,7 +1481,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               )}
             </div>
 
-            <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-surface/[0.02] flex items-center gap-2">
+            <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:theme-card-structural /[0.02] flex items-center gap-2">
               <Link href={`/tasks/${selectedTask.id}`} className="w-full flex-1">
                 <AppButton variant="primary" className="w-full bg-accent hover:bg-accent-secondary">Open Execution Workspace</AppButton>
               </Link>
@@ -1493,7 +1493,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Floating Action Bar for Bulk Actions */}
       {selectedTaskIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface dark:bg-[#0f111a] border border-gray-200 dark:border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 theme-card-structural dark:bg-[#0f111a] border-gray-200 dark:border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
           <div className="flex items-center gap-2">
             <div className="bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
               {selectedTaskIds.size}
@@ -1515,7 +1515,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Bulk Status Update Modal */}
       <Dialog open={bulkStatusModalOpen} onOpenChange={setBulkStatusModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-surface dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
+        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-gray-900 dark:text-gray-100">Bulk Update Tasks</DialogTitle>
           </DialogHeader>
@@ -1528,7 +1528,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkOldStatus}
                   onChange={(e) => setBulkOldStatus(e.target.value)}
-                  className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Any Status</option>
                   {masterStatuses.map((st) => (
@@ -1542,7 +1542,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkNewStatus}
                   onChange={(e) => setBulkNewStatus(e.target.value)}
-                  className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Leave Unchanged</option>
                   {masterStatuses.map((st) => (
@@ -1558,7 +1558,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkOldDepartment}
                   onChange={(e) => setBulkOldDepartment(e.target.value)}
-                  className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Any Department</option>
                   {departments.map((dep) => (
@@ -1572,7 +1572,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkNewDepartment}
                   onChange={(e) => setBulkNewDepartment(e.target.value)}
-                  className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Leave Unchanged</option>
                   {departments.map((dep) => (
@@ -1588,7 +1588,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={bulkRemark}
                 onChange={(e) => setBulkRemark(e.target.value)}
                 placeholder="Why are you updating these tasks?"
-                className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
             <div className="text-[10px] text-amber-600">Note: Tasks you don't own will fail to update unless you are a super admin.</div>
@@ -1609,7 +1609,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Inline Status Update Modal */}
       <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-surface dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
+        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-gray-900 dark:text-gray-100">Update Status</DialogTitle>
           </DialogHeader>
@@ -1622,7 +1622,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={inlineNewStatus}
                   onChange={(e) => setInlineNewStatus(e.target.value)}
-                  className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="" disabled>Select Status</option>
                   {masterStatuses.map((st) => (
@@ -1642,7 +1642,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1662,7 +1662,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Inline Department Update Modal */}
       <Dialog open={departmentModalOpen} onOpenChange={setDepartmentModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-surface dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 shadow-xl">
+        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-gray-900 dark:text-gray-100">Update Department</DialogTitle>
           </DialogHeader>
@@ -1675,7 +1675,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={inlineNewDepartment}
                   onChange={(e) => setInlineNewDepartment(e.target.value)}
-                  className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">-- No Department --</option>
                   {departments.map((dep) => (
@@ -1695,7 +1695,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] bg-surface border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1714,7 +1714,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       </Dialog>
 
       <Dialog open={showWorkspaceSelector} onOpenChange={setShowWorkspaceSelector}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-surface dark:bg-[#0a0d14] border border-gray-200 dark:border-gray-800 shadow-xl">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden theme-card-structural dark:bg-[#0a0d14] border-gray-200 dark:border-gray-800 shadow-xl">
           <DialogHeader className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
             <DialogTitle>Select Workspace for Task</DialogTitle>
           </DialogHeader>
@@ -1727,7 +1727,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   setCreationWorkspaceId(e.target.value);
                   setCreationSubWorkspaceId("");
                 }}
-                className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
+                className="w-full text-sm p-2.5 border-gray-200 dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
               >
                 <option value="">-- Select Workspace --</option>
                 {allWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
@@ -1742,7 +1742,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-gray-200 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
+                  className="w-full text-sm p-2.5 border-gray-200 dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
                 >
                   <option value="">-- None --</option>
                   {allWorkspaces.filter(sw => sw.parent_workspace_id === creationWorkspaceId).map(sw => (
@@ -1752,7 +1752,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
             )}
           </div>
-          <DialogFooter className="px-6 py-4 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-surface/5">
+          <DialogFooter className="px-6 py-4 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:theme-card-structural /5">
             <AppButton variant="outline" onClick={() => setShowWorkspaceSelector(false)}>Cancel</AppButton>
             <AppButton 
               variant="primary" 

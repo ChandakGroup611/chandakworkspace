@@ -34,16 +34,14 @@ export function TicketListSidebar({
     <div className={`flex flex-col h-full overflow-hidden border-r transition-colors duration-300 ${ "theme-card-structural " }`}>
       {/* Filters Area */}
       <div className={`p-4 space-y-4 border-b ${
-        "border-border bg-elevated/50/50/30"
+        "border-border bg-elevated/50/50/50/30"
       }`}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <input 
             type="text"
             placeholder="Search tickets..."
-            className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-              "bg-surface border-border text-foreground placeholder:text-gray-400"
-            }`}
+            className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -101,7 +99,7 @@ export function TicketListSidebar({
                 className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border cursor-pointer ${
                   isSelected 
                     ? ("bg-accent/10 border-accent/30 shadow-sm")
-                    : ("hover:bg-elevated/50/50 border-transparent")
+                    : ("hover:bg-elevated/50/50/50 border-transparent")
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -169,7 +167,7 @@ export function TicketListSidebar({
 
       {/* Stats Summary */}
       <div className={`p-4 border-t transition-colors duration-300 ${
-        "border-border bg-elevated/50/50/30"
+        "border-border bg-elevated/50/50/50/30"
       } flex items-center justify-between`}>
         <span className="text-xs text-gray-500 font-medium">{tickets.length} Incidents Found</span>
         <div className="flex items-center gap-2">

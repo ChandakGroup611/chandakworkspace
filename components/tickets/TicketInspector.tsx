@@ -55,7 +55,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
       "bg-surface"
     }`}>
       {/* Header Banner */}
-      <div className={`p-8 border-b space-y-6 border-border bg-surface`}>
+      <div className={`p-8 border-b space-y-6 theme-card-structural`}>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -113,7 +113,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
       </div>
 
       {/* Navigation Tabs */}
-      <div className={`px-8 border-b flex items-center gap-8 border-border bg-surface`}>
+      <div className={`px-8 border-b flex items-center gap-8 theme-card-structural`}>
         {(["DETAILS", "COLLAB", "TIMELINE"] as const).map((tab) => (
           <AppButton 
             variant={activeTab === tab ? "primary" : "secondary"}
@@ -144,7 +144,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Classification</h3>
-                <div className="p-6 bg-surface/[0.02] border border-white/5 rounded-2xl space-y-4">
+                <div className="p-6 theme-card-structural /[0.02] border-white/5 rounded-2xl space-y-4">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Category</span>
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.categoryObj?.name || "Unclassified"}</span>
@@ -162,7 +162,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Attachments</h3>
-                <div className="p-6 bg-surface/[0.02] border border-white/5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3 min-h-[140px]">
+                <div className="p-6 theme-card-structural /[0.02] border-white/5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3 min-h-[140px]">
                   <div className="p-3 bg-surface/5 rounded-full">
                     <Paperclip className="h-5 w-5 text-gray-600" />
                   </div>

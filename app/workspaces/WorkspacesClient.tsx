@@ -126,11 +126,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <React.Fragment key={w.id}>
         <AppButton variant="secondary" 
           onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
-          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${
-            isLightMode 
-              ? (activeWorkspace?.id === w.id ? 'bg-accent/10 border-gray-100' : 'hover:bg-gray-50 border-gray-100')
-              : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:bg-surface/5 border-white/5')
-          }`}
+          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-accent/10 border-gray-100' : 'hover:bg-gray-50 border-gray-100') : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:theme-card-structural /5 border-white/5') }`}
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
           <div className="flex items-center gap-2">

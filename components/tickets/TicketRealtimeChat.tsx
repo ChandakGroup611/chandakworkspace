@@ -341,7 +341,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
 
   return (
     <Profiler id={`TicketRealtimeChat-${ticketId}`} onRender={onRenderCallback}>
-    <AppCard className={`flex flex-col h-full overflow-hidden border-smooth bg-surface shadow-sm`}>
+    <AppCard className={`flex flex-col h-full overflow-hidden border-smooth theme-card-structural shadow-sm`}>
 
       {/* Header */}
       <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>
@@ -481,7 +481,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                                     </div>
                                   </div>
                                 ) : (
-                                <div key={i} className={`flex items-center justify-between p-2 rounded border ${isSender ? 'bg-black/10 border-black/10' : 'bg-black/5 dark:bg-surface/5 border-black/5 dark:border-white/10'}`}>
+                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-black/10 border-black/10' : 'bg-black/5 dark:theme-card-structural /5 border-black/5 dark:border-white/10'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden mr-3">
                                     <Paperclip className="h-4 w-4 shrink-0 opacity-70" />
                                     <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
@@ -565,7 +565,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 dark:bg-surface/5 rounded-lg">
             {selectedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center gap-1 bg-surface dark:bg-black/20 border border-gray-200 dark:border-white/10 px-2 py-1 rounded text-xs">
+              <div key={idx} className="flex items-center gap-1 theme-card-structural dark:bg-black/20 border-gray-200 dark:border-white/10 px-2 py-1 rounded text-xs">
                 <span className="truncate max-w-[120px]">{file.name}</span>
                 <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500 ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>

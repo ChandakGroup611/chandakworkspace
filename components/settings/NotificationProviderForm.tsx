@@ -55,7 +55,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
   };
 
   return (
-    <div className="bg-surface/5 border border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="theme-card-structural /5 border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
       <h2 className="text-xl font-bold text-foreground mb-2">Email Provider Setup</h2>
       <p className="text-sm text-gray-400 mb-6">Configure your primary outgoing email service. We recommend Gmail App Passwords or Resend for high deliverability.</p>
       
@@ -105,7 +105,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
           {message}
         </span>
         <div className="flex gap-3">
-          <AppButton onClick={handleTest} disabled={testing} className="px-5 py-2.5 bg-surface/5 hover:bg-surface/10 border border-white/10 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
+          <AppButton onClick={handleTest} disabled={testing} className="px-5 py-2.5 theme-card-structural /5 hover:/10 border-white/10 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
             {testing ? 'Testing...' : 'Test Connection'}
           </AppButton>
           <AppButton onClick={handleSave} disabled={loading} className="px-5 py-2.5 bg-accent hover:bg-accent text-white text-sm font-medium rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] disabled:opacity-50">

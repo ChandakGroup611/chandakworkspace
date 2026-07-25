@@ -162,37 +162,29 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
             </div>
 
             {/* Sidebar Metadata */}
-            <div className="col-span-1 space-y-6">
-              
-              <div className="bg-gray-900/40 rounded-2xl p-5 border border-white/5 space-y-5">
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Business Analyst</label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-200 border border-indigo-700">
-                      {requirement.analyst?.full_name?.charAt(0) || '?'}
-                    </div>
-                    <span className="text-sm text-gray-200 font-medium">{requirement.analyst?.full_name || 'Unassigned'}</span>
+            <div className="col-span-1 space-y-3">
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Business Analyst</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent border border-accent/50">
+                    {requirement.analyst?.full_name?.charAt(0) || '?'}
                   </div>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
                 </div>
-
-                <div className="h-px w-full bg-surface/5"></div>
-
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Department</label>
-                  <p className="text-sm text-gray-200 mt-1 font-medium">{requirement.department?.name || 'Enterprise Global'}</p>
-                </div>
-                
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Priority SLA</label>
-                  <p className="text-sm text-gray-200 mt-1 font-medium">{requirement.priority?.priority_name || 'Standard'}</p>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-widest">Estimations</label>
-                  <div className="mt-2 space-y-2 text-sm text-gray-300">
-                    <div className="flex justify-between"><span>Hours:</span> <span className="font-bold">{requirement.estimated_hours || 0}</span></div>
-                    <div className="flex justify-between"><span>Cost:</span> <span className="font-bold">${requirement.estimated_cost || 0}</span></div>
-                  </div>
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Department</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{requirement.department?.name || 'Enterprise Global'}</span>
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Priority SLA</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{requirement.priority?.priority_name || 'Standard'}</span>
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Estimations</span>
+                <div className="space-y-1 text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">
+                  <div className="flex justify-between"><span>Hours:</span> <span>{requirement.estimated_hours || 0}</span></div>
+                  <div className="flex justify-between"><span>Cost:</span> <span>${requirement.estimated_cost?.toLocaleString() || 0}</span></div>
                 </div>
               </div>
 

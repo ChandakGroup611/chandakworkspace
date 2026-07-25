@@ -73,7 +73,7 @@ export function SelfServicePortal() {
       />
       <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full gap-6">
         
-        <div className="bg-surface dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-gray-200 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">How can we help you today?</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">Track your existing requests or submit a new one.</p>
@@ -90,7 +90,7 @@ export function SelfServicePortal() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 bg-surface dark:bg-[#1a1c23] rounded-2xl shadow-sm border border-gray-200 dark:border-white/5 overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 theme-card-structural dark:bg-[#1a1c23] rounded-2xl shadow-sm border-gray-200 dark:border-white/5 overflow-hidden flex flex-col">
           <div className="p-4 border-b border-gray-200 dark:border-white/5">
             <h3 className="font-bold text-gray-800 dark:text-gray-200">Recent Requests</h3>
           </div>

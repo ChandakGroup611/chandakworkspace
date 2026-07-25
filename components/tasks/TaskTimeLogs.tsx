@@ -65,7 +65,7 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
         <div className="flex justify-between items-end mb-2">
           <div className="space-y-1">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Logged</p>
-            <p className={`text-2xl font-bold text-slate-900`}>{totalLogged.toFixed(1)}h</p>
+            <p className={`text-2xl font-bold text-slate-900 dark:text-slate-100`}>{totalLogged.toFixed(1)}h</p>
           </div>
           <div className="space-y-1 text-right">
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Estimated</p>
@@ -118,7 +118,7 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
           <p className="text-xs text-gray-500 text-center py-4">No time logged yet.</p>
         ) : (
           logs.slice().reverse().map(log => (
-            <div key={log.id} className={`p-3 rounded-lg border text-sm flex gap-3 border-border bg-surface`}>
+            <div key={log.id} className={`p-3 rounded-lg text-sm flex gap-3 theme-card-structural`}>
               <div className="shrink-0 font-bold text-emerald-600 dark:text-emerald-400 w-12">{log.hours}h</div>
               <div className="flex-1 min-w-0">
                 <p className={`truncate text-foreground`}>{log.description}</p>

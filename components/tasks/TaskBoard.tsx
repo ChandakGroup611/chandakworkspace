@@ -46,7 +46,7 @@ function SortableTask({ task }: { task: Task }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} 
-      className="p-3 mb-2 bg-surface/5 border border-white/10 rounded-xl shadow-sm text-sm cursor-grab active:cursor-grabbing hover:bg-surface/10 transition-colors">
+      className="p-3 mb-2 theme-card-structural /5 border-white/10 rounded-xl shadow-sm text-sm cursor-grab active:cursor-grabbing hover:/10 transition-colors">
       {task.subject}
     </div>
   );

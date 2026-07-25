@@ -173,7 +173,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
           <X className="h-5 w-5" />
         </AppButton>
 
-        <AppCardHeader className={`border-b shrink-0 pb-4 border-border bg-surface`}>
+        <AppCardHeader className={`border-b shrink-0 pb-4 theme-card-structural`}>
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg bg-accent/10 text-accent`}>
               <LayoutDashboard className="h-5 w-5" />
@@ -285,7 +285,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
               <div className="space-y-2">
                 <label className={labelClass}>Impacted Departments (Approval Sequence) <span className="text-red-500">*</span></label>
-                <div className={`p-4 rounded-xl border flex flex-wrap gap-2 bg-surface border-border`}>
+                <div className={`p-4 rounded-xl flex flex-wrap gap-2 theme-card-structural`}>
                   {(masters?.departments || []).map((d: any) => {
                     const isSelected = formData.impacted_departments.includes(d.id);
                     const index = formData.impacted_departments.indexOf(d.id);
@@ -338,11 +338,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                       }
                                     });
                                   }}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
-                                    isUserSelected 
-                                      ? "bg-accent border-accent text-white" 
-                                      : "bg-surface border-border text-muted hover:bg-elevated"
-                                  }`}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${ isUserSelected ? "bg-accent border-accent text-white" : "theme-card-structural text-muted hover:bg-elevated" }`}
                                 >
                                   {isUserSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
                                   {u.full_name}

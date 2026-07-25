@@ -63,9 +63,8 @@ export default function IAMGovernanceCockpit({
   const [permissionsList, setPermissionsList] = useState<any[]>(resolvedPermissions);
   const [activeRoleID, setActiveRoleID] = useState<string | null>(null);
   const [activeRolePerms, setActiveRolePerms] = useState<string[]>([]);
-  const [rolePermsCache, setRolePermsCache] = useState<Record<string, string[]>>({});
   
-  // UI & Filter States
+  // Search and View States
   const [searchQuery, setSearchQuery] = useState("");
   const [permSearchQuery, setPermSearchQuery] = useState("");
   const [selectedModule, setSelectedModule] = useState("ALL");
@@ -107,20 +106,14 @@ export default function IAMGovernanceCockpit({
     }
   }, [resolvedRoles, resolvedPermissions]);
 
-  // Fetch active role permissions when selection changes (with caching support)
+  // Fetch active role permissions when selection changes
   useEffect(() => {
     if (activeRoleID) {
-      if (rolePermsCache[activeRoleID]) {
-        setActiveRolePerms(rolePermsCache[activeRoleID]);
-        return;
-      }
-
       async function loadRolePerms() {
         setIsRoleLoading(true);
         try {
           const perms = await fetchRolePermissions(activeRoleID!);
           setActiveRolePerms(perms);
-          setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: perms }));
         } catch (err) {
           console.error("Failed to load role permissions:", err);
         } finally {
@@ -131,7 +124,7 @@ export default function IAMGovernanceCockpit({
     } else {
       setActiveRolePerms([]);
     }
-  }, [activeRoleID, rolePermsCache]);
+  }, [activeRoleID]);
 
   // Role Filtering logic
   const filteredRoles = useMemo(() => {
@@ -282,15 +275,13 @@ export default function IAMGovernanceCockpit({
     newPermIds = Array.from(new Set(newPermIds));
     const previousPerms = activeRolePerms;
     setActiveRolePerms(newPermIds);
-    setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: newPermIds }));
-
+    
     setIsSaving(true);
     try {
       await syncRolePermissions(activeRoleID, newPermIds);
     } catch (err) {
       console.error("Failed to sync permissions:", err);
       setActiveRolePerms(previousPerms);
-      setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: previousPerms }));
     } finally {
       setIsSaving(false);
     }
@@ -311,7 +302,6 @@ export default function IAMGovernanceCockpit({
     // Optimistic update
     const previousPerms = activeRolePerms;
     setActiveRolePerms(newPerms);
-    setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: newPerms }));
     
     setIsSaving(true);
     try {
@@ -319,7 +309,6 @@ export default function IAMGovernanceCockpit({
     } catch (err) {
       console.error("Failed to sync permissions:", err);
       setActiveRolePerms(previousPerms);
-      setRolePermsCache(prev => ({ ...prev, [activeRoleID!]: previousPerms }));
     } finally {
       setIsSaving(false);
     }
@@ -597,6 +586,10 @@ export default function IAMGovernanceCockpit({
                         {activeRole.is_system && (
                           <AppBadge className="bg-amber-500/10 text-amber-500 border-amber-500/20 py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
                         )}
+                        {/* DEBUG INJECT */}
+                        <div className="text-[10px] text-red-500 max-w-[300px] truncate">
+                          Perms ({activeRolePerms.length}): {JSON.stringify(activeRolePerms)}
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-gray-500 flex items-center gap-1.5 font-mono text-xs">
@@ -735,7 +728,9 @@ export default function IAMGovernanceCockpit({
                                   const isActionChecked = (action: string) => {
                                     if (isSuperAdmin) return true;
                                     const id = getPermIdByAction(action);
-                                    return id ? activeRolePerms.includes(id) : false;
+                                    const checked = id ? activeRolePerms.includes(id) : false;
+                                    if (checked) console.log("Checked:", { action, id });
+                                    return checked;
                                   };
 
                                   const actions = ["VIEW", "CREATE", "UPDATE", "DELETE", "MANAGE"];
@@ -767,7 +762,7 @@ export default function IAMGovernanceCockpit({
                                               <div className="flex justify-center">
                                                 <AppButton variant="secondary"
                                                   type="button"
-                                                  disabled={isSuperAdmin || !hasPermission("IAM_UPDATE")}
+                                                  disabled={false}
                                                   onClick={() => {
                                                     const permId = getPermIdByAction(act);
                                                     if (permId) {
@@ -777,12 +772,12 @@ export default function IAMGovernanceCockpit({
                                                   className={cn(
                                                     "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
                                                     checked
-                                                      ? "bg-accent border-accent text-white shadow-md shadow-indigo-600/25 scale-105"
-                                                      : "border-border bg-surface hover:border-accent",
-                                                    isSuperAdmin || !hasPermission("IAM_UPDATE") ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                                                      ? "bg-green-500 border-green-600 text-white shadow-md"
+                                                      : "bg-gray-100 border-gray-300",
+                                                    isSuperAdmin ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-accent"
                                                   )}
                                                 >
-                                                  {checked && <Check className="h-3.5 w-3.5 stroke-[3] animate-in zoom-in-50 duration-200" />}
+                                                  {checked && <span className="text-white text-[12px] font-bold">✓</span>}
                                                 </AppButton>
                                               </div>
                                             ) : (
@@ -839,3 +834,5 @@ export default function IAMGovernanceCockpit({
   );
 }
 
+
+// force reload

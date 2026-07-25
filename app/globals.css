@@ -59,6 +59,13 @@
   }
 
   /* Universal Field Styling (Inputs, Selects, Textareas) */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    background-color: var(--color-surface);
+    color: var(--color-foreground);
+  }
+
   input:not([type="checkbox"]):not([type="radio"]):not(:focus),
   select:not(:focus),
   textarea:not(:focus) {

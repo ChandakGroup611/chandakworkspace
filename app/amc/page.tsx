@@ -16,6 +16,9 @@ import { AMCAllocationsTab } from "@/components/amc/AMCAllocationsTab";
 import { AMCPaymentsTab } from "@/components/amc/AMCPaymentsTab";
 import { createClient } from "@/utils/supabase/client";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
+import { saveMasterEntity } from "@/lib/actions/masters";
+import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
+import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
 import Link from "next/link";
 import { 
   ShieldCheck, 
@@ -38,7 +41,9 @@ import {
   Eye,
   EyeOff,
   BarChart2,
-  PieChart
+  PieChart,
+  Check,
+  Settings
 } from "lucide-react";
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 
@@ -80,6 +85,7 @@ export default function AMCPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
+  const [masterContractTypes, setMasterContractTypes] = useState<string[]>(['AMC', 'Subscription', 'Perpetual License', 'Other']);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
@@ -186,8 +192,13 @@ export default function AMCPage() {
   const [bankState, setBankState] = useState("");
   const [bankCity, setBankCity] = useState("");
   
-  const [formIndustryType, setFormIndustryType] = useState("");
-  const [formVendorType, setFormVendorType] = useState("");
+  const [formIndustryType, setFormIndustryType] = useState<string[]>([]);
+  const [formVendorType, setFormVendorType] = useState<string[]>([]);
+  
+  const [masterIndustryTypes, setMasterIndustryTypes] = useState<any[]>([]);
+  const [masterVendorTypes, setMasterVendorTypes] = useState<any[]>([]);
+
+  const [manageModalType, setManageModalType] = useState<"industry" | "vendor" | null>(null);
   
   const [vendorAddrLine1, setVendorAddrLine1] = useState("");
   const [vendorAddrLine2, setVendorAddrLine2] = useState("");
@@ -241,6 +252,37 @@ export default function AMCPage() {
     }
   };
 
+  const handleAddContractType = async () => {
+    const newType = prompt("Enter new Contract Type:");
+    if (!newType || !newType.trim()) return;
+    const typeName = newType.trim();
+
+    if (masterContractTypes.includes(typeName)) {
+      alert("Contract Type already exists!");
+      setFormContractType(typeName);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.from('master_contract_types').insert({ name: typeName }).select().single();
+      if (error) {
+        if (error.code === '42P01') {
+          // Table doesn't exist yet (migration pending)
+          alert("Database migration for Contract Types is pending. Please run the migration first.");
+        } else {
+          alert("Failed to add Contract Type: " + error.message);
+        }
+        return;
+      }
+      setMasterContractTypes(prev => [...prev, typeName]);
+      setFormContractType(typeName);
+      setSuccessAlert(`Contract Type '${typeName}' added successfully.`);
+    } catch(e) {
+      console.error(e);
+      alert("Failed to add Contract Type.");
+    }
+  };
+
   const formatFileName = (rawName: string) => {
     const match = rawName.match(/^\[(.*?)\]_[^_]+_(.*)$/);
     if (match) {
@@ -258,16 +300,28 @@ export default function AMCPage() {
 
   const fetchDependencies = async () => {
     try {
-      const [{ data: usersData }, { data: deptsData }, { data: citiesData }, { data: vendorsData }] = await Promise.all([
+      const [{ data: usersData }, { data: deptsData }, { data: citiesData }, { data: vendorsData }, { data: contractTypesData }, { data: indData }, { data: venData }] = await Promise.all([
         supabase.from("user_master").select("id, full_name, email").eq("is_active", true),
         supabase.from("departments").select("id, name").eq("is_active", true),
         supabase.from("master_cities").select("*").order("city_name"),
-        supabase.from("vendor_master").select("*").order("name")
+        supabase.from("vendor_master").select("*").order("name"),
+        supabase.from("master_contract_types").select("name").eq("is_active", true).order("name"),
+        supabase.from("master_industry_types").select("*").eq("is_active", true).order("name"),
+        supabase.from("master_vendor_types").select("*").eq("is_active", true).order("name")
       ]);
       if (usersData) setUsers(usersData);
       if (deptsData) setDepartments(deptsData);
       if (citiesData) setMasterCities(citiesData);
       if (vendorsData) setVendors(vendorsData);
+      if (contractTypesData) {
+        const uniqueTypes = Array.from(new Set([
+          ...contractTypesData.map(c => c.name),
+          'AMC', 'Subscription', 'Perpetual License', 'Other'
+        ]));
+        setMasterContractTypes(uniqueTypes);
+      }
+      if (indData) setMasterIndustryTypes(indData);
+      if (venData) setMasterVendorTypes(venData);
     } catch (e) {
       console.error("Failed to load dependencies", e);
     }
@@ -366,8 +420,8 @@ export default function AMCPage() {
     setBankState("");
     setBankCity("");
     
-    setFormIndustryType("");
-    setFormVendorType("");
+    setFormIndustryType([]);
+    setFormVendorType([]);
     
     setVendorAddrLine1("");
     setVendorAddrLine2("");
@@ -404,8 +458,8 @@ export default function AMCPage() {
       setBankBranch(vendor.bank_branch || "");
       setBankState(vendor.bank_state || "");
       setBankCity(vendor.bank_city || "");
-      setFormIndustryType(vendor.industry_type || "");
-      setFormVendorType(vendor.vendor_type || "");
+      setFormIndustryType(vendor.industry_type ? vendor.industry_type.split(",").map((s: string) => s.trim()) : []);
+      setFormVendorType(vendor.vendor_type ? vendor.vendor_type.split(",").map((s: string) => s.trim()) : []);
     }
   };
 
@@ -461,8 +515,8 @@ export default function AMCPage() {
     setBankState(rec.bank_details_json?.state || "");
     setBankCity(rec.bank_details_json?.city || "");
     
-    setFormIndustryType(rec.industry_type || "");
-    setFormVendorType(rec.vendor_type || "");
+    setFormIndustryType(rec.industry_type ? rec.industry_type.split(",").map((s: string) => s.trim()) : []);
+    setFormVendorType(rec.vendor_type ? rec.vendor_type.split(",").map((s: string) => s.trim()) : []);
     
     setVendorAddrLine1(rec.vendor_address_json?.line1 || "");
     setVendorAddrLine2(rec.vendor_address_json?.line2 || "");
@@ -587,8 +641,8 @@ export default function AMCPage() {
       status: formStatus,
       po_number: formPoNumber || null,
       po_date: formPoDate || null,
-      industry_type: formIndustryType || null,
-      vendor_type: formVendorType || null,
+      industry_type: formIndustryType.length > 0 ? formIndustryType.join(", ") : null,
+      vendor_type: formVendorType.length > 0 ? formVendorType.join(", ") : null,
       msme_number: formMsmeNumber || null,
       specifications: formSpecifications || null,
       notes: formNotes,
@@ -879,6 +933,15 @@ export default function AMCPage() {
         />
       )}
 
+      {manageModalType && (
+        <MasterOptionsManager 
+          title={manageModalType === "industry" ? "Industry Types" : "Vendor Types"}
+          tableName={manageModalType === "industry" ? "master_industry_types" : "master_vendor_types"}
+          options={manageModalType === "industry" ? masterIndustryTypes : masterVendorTypes}
+          onClose={() => setManageModalType(null)}
+          onUpdate={fetchDependencies}
+        />
+      )}
 
 
       {/* Full-Screen Page View for Add/Edit */}
@@ -895,18 +958,23 @@ export default function AMCPage() {
           </div>
 
           {editRecordId && (
-            <div className={`flex flex-wrap items-center gap-3 p-4 border-b shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-border`}>
-              {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
-                <AppButton 
-                  variant={activeTab === tab ? "primary" : "secondary"}
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`py-2 px-5 text-sm font-bold transition-all shadow-sm ${activeTab === tab ? 'shadow-accent/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
-                >
-                  {tab}
-                </AppButton>
-              ))}
+            <div className={`p-4 border-b shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-border`}>
+              <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-gray-100/50 dark:bg-surface/30 border border-gray-200/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
+                {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
+                  <button 
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
+                      activeTab === tab 
+                        ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
+                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           
@@ -936,13 +1004,26 @@ export default function AMCPage() {
                 </div>
                 <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Contract Type <span className="text-red-500">*</span></label>
-                    <select value={formContractType} onChange={(e) => setFormContractType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
-                      <option value="AMC">Annual Maintenance Contract (AMC)</option>
-                      <option value="Subscription">SaaS Subscription</option>
-                      <option value="Perpetual License">Perpetual License</option>
-                      <option value="Other">Other</option>
-                    </select>
+                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Contract Type <span className="text-red-500">*</span></label>
+                    <div className="flex gap-2 h-11">
+                      <select 
+                        className={`flex-1 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}
+                        value={formContractType}
+                        onChange={e => setFormContractType(e.target.value)}
+                      >
+                        {masterContractTypes.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                      <button 
+                        type="button"
+                        onClick={handleAddContractType}
+                        className="w-11 h-11 flex items-center justify-center rounded-xl bg-accent text-white hover:bg-accent/90 transition-all flex-shrink-0"
+                        title="Add Contract Type"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase">Status <span className="text-red-500">*</span></label>
@@ -1222,42 +1303,77 @@ export default function AMCPage() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2 col-span-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Industry Type</label>
-                      <select disabled={!!formVendorId} value={formIndustryType} onChange={(e) => setFormIndustryType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
-                        <option value="">Select Industry Type</option>
-                        <option value="IT Software">IT Software</option>
-                        <option value="IT Hardware / Electronics">IT Hardware / Electronics</option>
-                        <option value="Manufacturing">Manufacturing</option>
-                        <option value="BFSI (Banking, Financial Services, Insurance)">BFSI (Banking, Financial Services, Insurance)</option>
-                        <option value="Retail & E-Commerce">Retail & E-Commerce</option>
-                        <option value="Healthcare & Pharma">Healthcare & Pharma</option>
-                        <option value="Telecommunications">Telecommunications</option>
-                        <option value="Education & EdTech">Education & EdTech</option>
-                        <option value="Construction & Real Estate">Construction & Real Estate</option>
-                        <option value="Logistics & Supply Chain">Logistics & Supply Chain</option>
-                        <option value="Government & PSU">Government & PSU</option>
-                        <option value="Other">Other</option>
-                        {formIndustryType && !["IT Software", "IT Hardware / Electronics", "Manufacturing", "BFSI (Banking, Financial Services, Insurance)", "Retail & E-Commerce", "Healthcare & Pharma", "Telecommunications", "Education & EdTech", "Construction & Real Estate", "Logistics & Supply Chain", "Government & PSU", "Other"].includes(formIndustryType) && (
-                          <option value={formIndustryType}>{formIndustryType}</option>
-                        )}
-                      </select>
+                      <div className="flex gap-2">
+                        <FormMultiSelect 
+                          options={masterIndustryTypes.map(i => ({ value: i.name, label: i.name }))}
+                          selectedValues={formIndustryType}
+                          onChange={(vals) => {
+                            setFormIndustryType(vals);
+                            // Only clear vendor types if they don't match the new industries
+                            const validIndustryNames = new Set(vals);
+                            const validVendorTypes = masterVendorTypes
+                              .filter(v => validIndustryNames.has(v.industry_name))
+                              .map(v => v.name);
+                            setFormVendorType(formVendorType.filter(vt => validVendorTypes.includes(vt)));
+                          }}
+                          placeholder="Select Industries..."
+                          className="flex-1"
+                          disabled={!!formVendorId}
+                        />
+                        <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={async () => {
+                          const newInd = prompt("Enter new Industry Type:");
+                          if (newInd && newInd.trim()) {
+                            await saveMasterEntity("master_industry_types", { name: newInd.trim() });
+                            await fetchDependencies();
+                            setFormIndustryType([...formIndustryType, newInd.trim()]);
+                          }
+                        }} className="h-11 w-11 px-0 shrink-0" title="Add New Industry">
+                          <Plus className="h-4 w-4" />
+                        </AppButton>
+                        <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={() => setManageModalType("industry")} className="h-11 w-11 px-0 shrink-0 text-gray-500" title="Manage Industry Types">
+                          <Settings className="h-4 w-4" />
+                        </AppButton>
+                      </div>
                     </div>
                     <div className="space-y-2 col-span-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type</label>
-                      <select disabled={!!formVendorId} value={formVendorType} onChange={(e) => setFormVendorType(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-gray-50 opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
-                        <option value="">Select Vendor Type</option>
-                        <option value="OEM (Original Equipment Manufacturer)">OEM (Original Equipment Manufacturer)</option>
-                        <option value="Authorized Distributor">Authorized Distributor</option>
-                        <option value="Value Added Reseller (VAR)">Value Added Reseller (VAR)</option>
-                        <option value="System Integrator (SI)">System Integrator (SI)</option>
-                        <option value="Managed Service Provider (MSP)">Managed Service Provider (MSP)</option>
-                        <option value="Implementation Partner">Implementation Partner</option>
-                        <option value="Consultant / Advisory">Consultant / Advisory</option>
-                        <option value="Direct Retailer">Direct Retailer</option>
-                        <option value="Other">Other</option>
-                        {formVendorType && !["OEM (Original Equipment Manufacturer)", "Authorized Distributor", "Value Added Reseller (VAR)", "System Integrator (SI)", "Managed Service Provider (MSP)", "Implementation Partner", "Consultant / Advisory", "Direct Retailer", "Other"].includes(formVendorType) && (
-                          <option value={formVendorType}>{formVendorType}</option>
+                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type (Multi-Select)</label>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <FormMultiSelect 
+                            options={masterVendorTypes
+                              .filter(v => formIndustryType.length === 0 || formIndustryType.includes(v.industry_name))
+                              .map(v => ({ value: v.name, label: `${v.name} (${v.industry_name})` }))}
+                            selectedValues={formVendorType}
+                            onChange={setFormVendorType}
+                            placeholder={formIndustryType.length > 0 ? "Select Vendor Types..." : "Select Industry First"}
+                            disabled={!!formVendorId || formIndustryType.length === 0}
+                          />
+                        </div>
+                        {formIndustryType.length > 0 && (
+                          <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={async () => {
+                            let targetIndustry = formIndustryType[0];
+                            if (formIndustryType.length > 1) {
+                               const choice = prompt(`Which industry does this new Vendor Type belong to?\nAvailable: ${formIndustryType.join(", ")}`);
+                               if (!choice || !formIndustryType.includes(choice.trim())) {
+                                 alert("Invalid industry selected. Creation cancelled.");
+                                 return;
+                               }
+                               targetIndustry = choice.trim();
+                            }
+                            const newVen = prompt(`Enter new Vendor Type for ${targetIndustry}:`);
+                            if (newVen && newVen.trim()) {
+                              await saveMasterEntity("master_vendor_types", { name: newVen.trim(), industry_name: targetIndustry });
+                              await fetchDependencies();
+                              setFormVendorType([...formVendorType, newVen.trim()]);
+                            }
+                          }} className="h-11 w-11 px-0 shrink-0" title="Add New Vendor Type">
+                            <Plus className="h-4 w-4" />
+                          </AppButton>
                         )}
-                      </select>
+                        <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={() => setManageModalType("vendor")} className="h-11 w-11 px-0 shrink-0 text-gray-500" title="Manage Vendor Types">
+                          <Settings className="h-4 w-4" />
+                        </AppButton>
+                      </div>
                     </div>
                   </div>
                 </div>

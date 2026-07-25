@@ -251,3 +251,52 @@ export async function executeMasterMutation(table: string, payload: any, action:
     return { success: false, error: err.message || JSON.stringify(err) };
   }
 }
+
+export async function fetchBusinessValues() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { data, error } = await supabase
+    .from('business_values')
+    .select('*')
+    .eq('is_deleted', false)
+    .order('name');
+  if (error) {
+    console.error('Error fetching business values:', error);
+    return [];
+  }
+  return data;
+}
+
+export async function createBusinessValue(name: string) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data, error } = await supabase
+    .from('business_values')
+    .insert([{ name }])
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating business value:', error);
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+export async function createIssueType(name: string) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  
+  const { data, error } = await supabase
+    .from('issue_types')
+    .insert([{ name, code: name.toUpperCase().replace(/[^A-Z0-9]/g, '_').substring(0, 30) }])
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating issue type:', error);
+    throw new Error(error.message);
+  }
+  return data;
+}

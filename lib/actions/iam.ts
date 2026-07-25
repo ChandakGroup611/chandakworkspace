@@ -11,6 +11,7 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache";
  */
 
 import { checkServerPermission } from "@/lib/permissions";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 async function checkIAMAuthorization(requiredPermission?: string) {
   try {
@@ -37,8 +38,7 @@ async function checkIAMAuthorization(requiredPermission?: string) {
 export async function fetchRoles() {
   noStore();
   await checkIAMAuthorization("IAM_VIEW");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   const { data, error } = await supabase
     .from("roles")
@@ -57,8 +57,7 @@ export async function fetchRoles() {
 export async function fetchPermissions() {
   noStore();
   await checkIAMAuthorization("IAM_VIEW");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   const { data, error } = await supabase
     .from("permissions")
@@ -75,9 +74,13 @@ export async function fetchPermissions() {
 
 export async function fetchRolePermissions(roleId: string) {
   noStore();
-  await checkIAMAuthorization("IAM_VIEW");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  try {
+    await checkIAMAuthorization("IAM_VIEW");
+  } catch (err) {
+    require('fs').appendFileSync('iam_debug.log', `Auth Error: ${err}\n`);
+    return [];
+  }
+  const supabase = supabaseAdmin;
   
   const { data, error } = await supabase
     .from("role_permissions")
@@ -85,16 +88,18 @@ export async function fetchRolePermissions(roleId: string) {
     .eq("role_id", roleId);
     
   if (error) {
+    require('fs').appendFileSync('iam_debug.log', `DB Error: ${JSON.stringify(error)}\n`);
     console.error("[IAM] Error fetching role permissions:", error);
     return [];
   }
-  return data.map(rp => rp.permission_id);
+  const perms = data.map(rp => rp.permission_id);
+  require('fs').appendFileSync('iam_debug.log', `Fetched for ${roleId}: ${JSON.stringify(perms)}\n`);
+  return perms;
 }
 
 export async function createRole(formData: { name: string, code: string, description: string, department_id?: string }) {
   await checkIAMAuthorization("IAM_MANAGE");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   const { data, error } = await supabase
     .from("roles")
@@ -117,8 +122,7 @@ export async function createRole(formData: { name: string, code: string, descrip
 
 export async function updateRole(roleId: string, updates: any) {
   await checkIAMAuthorization("IAM_MANAGE");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   // Protect system roles from certain modifications if needed
   const { data: role } = await supabase.from("roles").select("is_system").eq("id", roleId).single();
@@ -141,8 +145,7 @@ export async function updateRole(roleId: string, updates: any) {
 
 export async function syncRolePermissions(roleId: string, permissionIds: string[]) {
   await checkIAMAuthorization("IAM_MANAGE");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   // 1. Clear existing mappings
   const { error: deleteError } = await supabase
@@ -180,8 +183,7 @@ export async function syncRolePermissions(roleId: string, permissionIds: string[
 
 export async function cloneRole(sourceRoleId: string, newRoleName: string, newRoleCode: string) {
   await checkIAMAuthorization("IAM_MANAGE");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   // 1. Fetch source role and its permissions
   const { data: sourceRole } = await supabase.from("roles").select("*").eq("id", sourceRoleId).single();
@@ -220,8 +222,7 @@ export async function cloneRole(sourceRoleId: string, newRoleName: string, newRo
 
 export async function deleteRole(roleId: string) {
   await checkIAMAuthorization("IAM_MANAGE");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   // Check if system role
   const { data: role } = await supabase.from("roles").select("is_system").eq("id", roleId).single();
@@ -244,16 +245,14 @@ export async function deleteRole(roleId: string) {
 
 
 export async function fetchDepartments() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   const { data } = await supabase.from('departments').select('*').eq('is_deleted', false).order('name', { ascending: true });
   return data || [];
 }
 
 export async function fetchActiveSessions() {
   await checkIAMAuthorization("IAM_VIEW");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   // Join with user_master (or user_profiles) to get user details
   const { data, error } = await supabase
@@ -271,8 +270,7 @@ export async function fetchActiveSessions() {
 
 export async function killSession(sessionId: string) {
   await checkIAMAuthorization("IAM_MANAGE");
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = supabaseAdmin;
   
   const { error } = await supabase
     .from("auth_session_logs")

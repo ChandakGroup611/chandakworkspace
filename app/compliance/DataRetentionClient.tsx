@@ -290,26 +290,27 @@ export default function DataRetentionClient() {
       )}
 
       {/* Module Tabs (Scrollable for many tabs) */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-4 overflow-x-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <AppButton 
-              variant={isActive ? "primary" : "secondary"}
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-5 py-2 text-sm font-bold transition-all whitespace-nowrap shadow-sm ${
-                isActive 
-                  ? "shadow-accent/20" 
-                  : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </AppButton>
-          );
-        })}
+      <div className="pb-4">
+        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-gray-100/50 dark:bg-surface/30 border border-gray-200/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
+                  isActive 
+                    ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
+                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* View Toggle (Active vs Deleted) */}

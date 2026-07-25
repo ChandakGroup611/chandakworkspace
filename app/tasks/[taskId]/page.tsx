@@ -110,7 +110,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
                       <ClipboardList className="w-3.5 h-3.5" /> Description
                     </span>
                     <SafeHtml 
-                      className="text-[13px] sm:text-sm text-gray-700 dark:text-gray-300 w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-gray-50/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-gray-200/60 dark:border-white/10 shadow-sm"
+                      className="whitespace-pre-wrap text-[13px] sm:text-sm text-gray-700 dark:text-gray-300 w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-gray-50/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-gray-200/60 dark:border-white/10 shadow-sm"
                       html={task.description} 
                     />
                   </div>

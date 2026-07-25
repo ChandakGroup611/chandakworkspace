@@ -117,9 +117,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Type</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-surface border-border text-foreground"
-                }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.issueTypeId}
                 onChange={(e) => setFormData({ ...formData, issueTypeId: e.target.value, issueSubtypeId: "" })}
                 required
@@ -151,9 +149,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Asset Category</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-surface border-border text-foreground"
-                }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value, subcategoryId: "" })}
                 required
@@ -185,9 +181,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Affected Asset</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-surface border-border text-foreground"
-                }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.assetId}
                 onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
                 required
@@ -202,9 +196,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-surface border-border text-foreground"
-                }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.priorityId}
                 onChange={(e) => handlePriorityChange(e.target.value)}
                 required
@@ -231,9 +223,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
           <div className="space-y-2">
             <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Incident Description & Technical Details</label>
             <textarea 
-              className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
-                "bg-surface border-border text-foreground placeholder:text-gray-400"
-              }`}
+              className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
               placeholder="Describe the hardware fault, server impact, or network outage in detail..."
               value={formData.remark}
               onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
@@ -248,9 +238,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <div className="space-y-2">
                 <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${
-                    "bg-surface border-border text-foreground placeholder:text-gray-400"
-                  }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
                   value={formData.business_reason}
                   onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
@@ -261,9 +249,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <div className="space-y-2">
                 <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${
-                    "bg-surface border-border text-foreground placeholder:text-gray-400"
-                  }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
                   value={formData.requirement_description}
                   onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}

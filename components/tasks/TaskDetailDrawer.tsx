@@ -85,36 +85,32 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
             </div>
 
             {/* Sidebar Metadata */}
-            <div className="col-span-1 space-y-6">
-              <div className="bg-gray-900/40 rounded-xl p-4 border border-white/5 space-y-4">
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Status</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.status?.status_color || 'gray' }}></div>
-                    <span className="text-sm text-gray-200">{task.status?.status_name || 'Unknown'}</span>
+            <div className="col-span-1 space-y-3">
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Status</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: task.status?.status_color || 'gray' }}></div>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{task.status?.status_name || 'Unknown'}</span>
+                </div>
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Priority</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{task.priority?.priority_name || 'None'}</span>
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Task Owner</span>
+                {task.assignee ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent border border-accent/50 shrink-0">
+                      {task.assignee.full_name?.charAt(0)}
+                    </div>
+                    <span className="truncate">{task.assignee.full_name}</span>
                   </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Priority</label>
-                  <p className="text-sm text-gray-200 mt-1">{task.priority?.priority_name || 'None'}</p>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">Task Owner</label>
-                  <div className="mt-2 space-y-2">
-                    {task.assignee ? (
-                      <div className="flex items-center gap-2 text-sm text-gray-300">
-                        <div className="w-6 h-6 rounded-full bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-200">
-                          {task.assignee.full_name?.charAt(0)}
-                        </div>
-                        {task.assignee.full_name}
-                      </div>
-                    ) : <span className="text-xs text-gray-500">Unassigned</span>}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 uppercase font-bold tracking-wider">SLA Target</label>
-                  <p className="text-sm text-gray-200 mt-1">{task.priority?.max_sla_hours ? `${task.priority.max_sla_hours} Hours` : 'N/A'}</p>
-                </div>
+                ) : <span className="text-sm font-semibold text-gray-500 italic">Unassigned</span>}
+              </div>
+              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">SLA Target</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{task.priority?.max_sla_hours ? `${task.priority.max_sla_hours} Hours` : 'N/A'}</span>
               </div>
 
               {/* Custom Fields Placeholder */}

@@ -10,8 +10,10 @@ import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { createClient } from "@/utils/supabase/client";
-import { Building2, Search, Plus, Edit, Trash2, X, RefreshCw, FileText, Briefcase, Landmark, Settings } from "lucide-react";
+import { Building2, Search, Plus, Edit, Trash2, X, RefreshCw, FileText, Briefcase, Landmark, Settings, Check } from "lucide-react";
 import { CityManagerModal } from "@/components/shared/CityManagerModal";
+import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
+import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
@@ -66,12 +68,31 @@ export default function VendorMasterPage() {
   const [formBankState, setFormBankState] = useState("");
   const [formBankCity, setFormBankCity] = useState("");
 
-  const [formIndustryType, setFormIndustryType] = useState("");
-  const [formVendorType, setFormVendorType] = useState("");
+  const [formIndustryType, setFormIndustryType] = useState<string[]>([]);
+  const [formVendorType, setFormVendorType] = useState<string[]>([]);
+  
+  const [masterIndustryTypes, setMasterIndustryTypes] = useState<any[]>([]);
+  const [masterVendorTypes, setMasterVendorTypes] = useState<any[]>([]);
+
+  const [manageModalType, setManageModalType] = useState<"industry" | "vendor" | null>(null);
 
   useEffect(() => {
     fetchVendors();
+    fetchDependencies();
   }, []);
+
+  const fetchDependencies = async () => {
+    try {
+      const [indRes, venRes] = await Promise.all([
+        supabase.from("master_industry_types").select("*").eq("is_active", true).order("name"),
+        supabase.from("master_vendor_types").select("*").eq("is_active", true).order("name")
+      ]);
+      if (indRes.data) setMasterIndustryTypes(indRes.data);
+      if (venRes.data) setMasterVendorTypes(venRes.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     if (formState) {
@@ -199,8 +220,8 @@ export default function VendorMasterPage() {
     setFormBankBranch("");
     setFormBankState("");
     setFormBankCity("");
-    setFormIndustryType("");
-    setFormVendorType("");
+    setFormIndustryType([]);
+    setFormVendorType([]);
     setErrorMsg(null);
   };
 
@@ -237,8 +258,8 @@ export default function VendorMasterPage() {
     setFormBankState(vendor.bank_state || "");
     setFormBankCity(vendor.bank_city || "");
     
-    setFormIndustryType(vendor.industry_type || "");
-    setFormVendorType(vendor.vendor_type || "");
+    setFormIndustryType(vendor.industry_type ? vendor.industry_type.split(",").map((s: string) => s.trim()) : []);
+    setFormVendorType(vendor.vendor_type ? vendor.vendor_type.split(",").map((s: string) => s.trim()) : []);
 
     setShowModal(true);
   };
@@ -287,8 +308,8 @@ export default function VendorMasterPage() {
         bank_branch: formBankBranch.trim(),
         bank_state: formBankState.trim(),
         bank_city: formBankCity.trim(),
-        industry_type: formIndustryType.trim(),
-        vendor_type: formVendorType.trim()
+        industry_type: formIndustryType.length > 0 ? formIndustryType.join(", ") : null,
+        vendor_type: formVendorType.length > 0 ? formVendorType.join(", ") : null
       };
 
       let res;
@@ -445,37 +466,77 @@ export default function VendorMasterPage() {
                       <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Microsoft Corporation" className="h-11 font-semibold" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Industry Type</label>
-                      <select value={formIndustryType} onChange={e => setFormIndustryType(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border">
-                        <option value="">-- Select Industry --</option>
-                        <option value="IT Software">IT Software</option>
-                        <option value="IT Hardware / Electronics">IT Hardware / Electronics</option>
-                        <option value="Manufacturing">Manufacturing</option>
-                        <option value="BFSI (Banking, Financial Services, Insurance)">BFSI (Banking, Financial Services, Insurance)</option>
-                        <option value="Retail & E-Commerce">Retail & E-Commerce</option>
-                        <option value="Healthcare & Pharma">Healthcare & Pharma</option>
-                        <option value="Telecommunications">Telecommunications</option>
-                        <option value="Education & EdTech">Education & EdTech</option>
-                        <option value="Construction & Real Estate">Construction & Real Estate</option>
-                        <option value="Logistics & Supply Chain">Logistics & Supply Chain</option>
-                        <option value="Government & PSU">Government & PSU</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <label className="text-xs font-bold text-gray-500 uppercase">Industry Type (Multi-Select)</label>
+                      <div className="flex gap-2">
+                        <FormMultiSelect 
+                          options={masterIndustryTypes.map(i => ({ value: i.name, label: i.name }))}
+                          selectedValues={formIndustryType}
+                          onChange={(vals) => {
+                            setFormIndustryType(vals);
+                            // Only clear vendor types if they don't match the new industries
+                            const validIndustryNames = new Set(vals);
+                            const validVendorTypes = masterVendorTypes
+                              .filter(v => validIndustryNames.has(v.industry_name))
+                              .map(v => v.name);
+                            setFormVendorType(formVendorType.filter(vt => validVendorTypes.includes(vt)));
+                          }}
+                          placeholder="Select Industries..."
+                          className="flex-1"
+                        />
+                        <AppButton type="button" variant="outline" onClick={async () => {
+                          const newInd = prompt("Enter new Industry Type:");
+                          if (newInd && newInd.trim()) {
+                            await saveMasterEntity("master_industry_types", { name: newInd.trim() });
+                            await fetchDependencies();
+                            setFormIndustryType([...formIndustryType, newInd.trim()]);
+                          }
+                        }} className="h-11 w-11 px-0 shrink-0" title="Add New Industry">
+                          <Plus className="h-4 w-4" />
+                        </AppButton>
+                        <AppButton type="button" variant="outline" onClick={() => setManageModalType("industry")} className="h-11 w-11 px-0 shrink-0 text-gray-500" title="Manage Industry Types">
+                          <Settings className="h-4 w-4" />
+                        </AppButton>
+                      </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type</label>
-                      <select value={formVendorType} onChange={e => setFormVendorType(e.target.value)} className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border">
-                        <option value="">-- Select Type --</option>
-                        <option value="OEM (Original Equipment Manufacturer)">OEM (Original Equipment Manufacturer)</option>
-                        <option value="Authorized Distributor">Authorized Distributor</option>
-                        <option value="Value Added Reseller (VAR)">Value Added Reseller (VAR)</option>
-                        <option value="System Integrator (SI)">System Integrator (SI)</option>
-                        <option value="Managed Service Provider (MSP)">Managed Service Provider (MSP)</option>
-                        <option value="Implementation Partner">Implementation Partner</option>
-                        <option value="Consultant / Advisory">Consultant / Advisory</option>
-                        <option value="Direct Retailer">Direct Retailer</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type (Multi-Select)</label>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <FormMultiSelect 
+                            options={masterVendorTypes
+                              .filter(v => formIndustryType.length === 0 || formIndustryType.includes(v.industry_name))
+                              .map(v => ({ value: v.name, label: `${v.name} (${v.industry_name})` }))}
+                            selectedValues={formVendorType}
+                            onChange={setFormVendorType}
+                            placeholder={formIndustryType.length > 0 ? "Select Vendor Types..." : "Select Industry First"}
+                            disabled={formIndustryType.length === 0}
+                          />
+                        </div>
+                        {formIndustryType.length > 0 && (
+                          <AppButton type="button" variant="outline" onClick={async () => {
+                            let targetIndustry = formIndustryType[0];
+                            if (formIndustryType.length > 1) {
+                               const choice = prompt(`Which industry does this new Vendor Type belong to?\nAvailable: ${formIndustryType.join(", ")}`);
+                               if (!choice || !formIndustryType.includes(choice.trim())) {
+                                 alert("Invalid industry selected. Creation cancelled.");
+                                 return;
+                               }
+                               targetIndustry = choice.trim();
+                            }
+                            const newVen = prompt(`Enter new Vendor Type for ${targetIndustry}:`);
+                            if (newVen && newVen.trim()) {
+                              await saveMasterEntity("master_vendor_types", { name: newVen.trim(), industry_name: targetIndustry });
+                              await fetchDependencies();
+                              setFormVendorType([...formVendorType, newVen.trim()]);
+                            }
+                          }} className="h-11 w-11 px-0 shrink-0" title="Add New Vendor Type">
+                            <Plus className="h-4 w-4" />
+                          </AppButton>
+                        )}
+                        <AppButton type="button" variant="outline" onClick={() => setManageModalType("vendor")} className="h-11 w-11 px-0 shrink-0 text-gray-500" title="Manage Vendor Types">
+                          <Settings className="h-4 w-4" />
+                        </AppButton>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-500 uppercase">Contact Person Name <span className="text-red-500">*</span></label>
@@ -685,6 +746,16 @@ export default function VendorMasterPage() {
             if (formState === managingStateName) fetchCitiesForState(formState);
             if (formBankState === managingStateName) fetchBankCitiesForState(formBankState);
           }}
+        />
+      )}
+
+      {manageModalType && (
+        <MasterOptionsManager 
+          title={manageModalType === "industry" ? "Industry Types" : "Vendor Types"}
+          tableName={manageModalType === "industry" ? "master_industry_types" : "master_vendor_types"}
+          options={manageModalType === "industry" ? masterIndustryTypes : masterVendorTypes}
+          onClose={() => setManageModalType(null)}
+          onUpdate={fetchDependencies}
         />
       )}
     </PageContainer>

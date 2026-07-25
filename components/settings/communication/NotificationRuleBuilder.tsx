@@ -159,7 +159,7 @@ export default function NotificationRuleBuilder() {
           return (
             <div key={rule.id} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl">
               {/* Header IF block */}
-              <div className="bg-surface/5 px-6 py-4 border-b border-white/5 flex flex-wrap items-center gap-4">
+              <div className="theme-card-structural /5 px-6 py-4 border-b border-white/5 flex flex-wrap items-center gap-4">
                 <span className="font-mono text-emerald-400 font-bold text-lg">IF</span>
                 
                 <div className="flex items-center gap-2">
@@ -215,11 +215,7 @@ export default function NotificationRuleBuilder() {
                         <AppButton
                           key={type}
                           onClick={() => toggleArrayItem(rule.id, "recipient_type", type)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
-                            isSelected 
-                              ? 'bg-accent/20 border-accent/50 text-blue-300' 
-                              : 'bg-surface/5 border-transparent text-gray-400 hover:bg-surface/10'
-                          }`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${ isSelected ? 'bg-accent/20 border-accent/50 text-blue-300' : 'theme-card-structural /5 border-transparent text-gray-400 hover:/10' }`}
                         >
                           {type}
                         </AppButton>
@@ -278,7 +274,7 @@ export default function NotificationRuleBuilder() {
                   </AppButton>
                   <AppButton 
                     onClick={() => handleSaveRule(rule)}
-                    className="flex items-center gap-2 bg-surface/5 hover:bg-surface/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
+                    className="flex items-center gap-2 theme-card-structural /5 hover:/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border-white/10"
                   >
                     <Save className="w-4 h-4" /> Save
                   </AppButton>

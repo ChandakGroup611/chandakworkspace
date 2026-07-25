@@ -150,7 +150,7 @@ export default function TemplateDesigner() {
         {templates.map((tpl) => (
           <div key={tpl.id} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl flex flex-col">
             {/* Header Configuration */}
-            <div className="p-6 border-b border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6 bg-surface/5">
+            <div className="p-6 border-b border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6 theme-card-structural /5">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Template Name</label>
                 <input 
@@ -218,13 +218,13 @@ export default function TemplateDesigner() {
             <div className="flex border-b border-white/5 bg-[#0A0D14]">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent bg-surface/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent bg-surface/5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview (Dynamic)
               </AppButton>
@@ -267,7 +267,7 @@ export default function TemplateDesigner() {
                 </AppButton>
                 <AppButton 
                   onClick={() => handleSave(tpl)}
-                  className="flex items-center gap-2 bg-surface/5 hover:bg-surface/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
+                  className="flex items-center gap-2 theme-card-structural /5 hover:/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border-white/10"
                 >
                   <Save className="w-4 h-4" /> Save
                 </AppButton>

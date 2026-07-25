@@ -173,7 +173,7 @@ export function WorkspaceMasterTable({
               const uInfo = usersMap.get(uid);
               const isOnline = onlineUsers.has(uid);
               return (
-                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-surface/5">
+                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-surface/40 backdrop-blur/5">
                   <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
                   <span className={`text-[11px] truncate ${isOnline ? ("text-foreground") : 'text-red-500 font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
                 </div>
@@ -292,7 +292,7 @@ export function WorkspaceMasterTable({
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
                     className={`p-1 rounded-md transition-colors relative z-20 ${
-                      "hover:bg-gray-200 text-muted bg-surface/40 backdrop-blur/40 backdrop-blur"
+                      "hover:bg-gray-200 text-muted bg-surface/40 backdrop-blur/40 backdrop-blur/40 backdrop-blur"
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (

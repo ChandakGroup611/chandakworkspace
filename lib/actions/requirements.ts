@@ -160,7 +160,7 @@ export async function fetchRequirements(workspaceId?: string | null) {
     query = query.contains('custom_fields', { workspace_id: workspaceId });
   }
 
-  const { data, error } = await query;
+  const { data, error } = await query; console.log('FETCH REQS RESULT:', error, data ? data.length : 0);
 
   if (error) {
     console.error("Error fetching requirements:", error);
@@ -198,6 +198,14 @@ export async function createRequirement(payload: {
   custom_fields?: any;
   created_by: string;
   status_id?: string;
+  software_system_id?: string | null;
+  module_id?: string | null;
+  sub_module_id?: string | null;
+  category_id?: string | null;
+  sub_category_id?: string | null;
+  priority_id?: string | null;
+  scope?: string;
+  department_id?: string | null;
 }) {
   const { hasPermission } = await import('@/lib/permissions');
   const isAuthorized = await hasPermission(payload.created_by, 'REQUIREMENTS_CREATE');
@@ -232,9 +240,18 @@ export async function createRequirement(payload: {
     }
   }
 
-  // Find a valid department_id since the schema requires it and it's missing from the UI payload
-  const { data: dept } = await supabaseAdmin.from('departments').select('id').limit(1).single();
-  const departmentId = dept?.id;
+  // Ensure a valid department_id is set
+  let departmentId = payload.department_id;
+  if (!departmentId && payload.created_by) {
+    const { data: userDept } = await supabaseAdmin.from('user_master').select('department_id').eq('id', payload.created_by).single();
+    if (userDept?.department_id) {
+      departmentId = userDept.department_id;
+    }
+  }
+  if (!departmentId) {
+    const { data: dept } = await supabaseAdmin.from('departments').select('id').limit(1).single();
+    departmentId = dept?.id;
+  }
 
   let code = payload.requirement_code;
   
@@ -283,7 +300,14 @@ export async function createRequirement(payload: {
       custom_fields: customFields,
       creator_id: payload.created_by,
       status_id: (statusId && statusId.trim()) ? statusId : null,
-      department_id: departmentId
+      department_id: departmentId,
+      scope: payload.scope || reqScope || null,
+      software_system_id: payload.software_system_id || null,
+      module_id: payload.module_id || null,
+      sub_module_id: payload.sub_module_id || null,
+      category_id: payload.category_id || null,
+      sub_category_id: payload.sub_category_id || null,
+      priority_id: payload.priority_id || null
     }])
     .select()
     .single();
@@ -921,7 +945,7 @@ export async function syncAmendmentToTasks(reqId: string, performedBy: string) {
   }
 }
 
-export async function amendRequirement(reqId: string, revisedDetails: string, needsReapproval: boolean) {
+export async function amendRequirement(reqId: string, revisedDetails: string, needsReapproval: boolean, attachmentData?: { file_name: string, file_size: number, mime_type: string, storage_path: string }) {
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   if (!user) return { error: 'Unauthenticated' };
@@ -936,7 +960,42 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
      revised_details: revisedDetails
   }).eq('id', reqId);
 
-  await logActivityEvent('REQUIREMENT', reqId, 'AMENDMENT_CREATED', null, { version: newVersion, revised_details: revisedDetails, needsReapproval }, user.id);
+  await logActivityEvent('REQUIREMENT', reqId, 'AMENDMENT_CREATED', null, { version: newVersion, revised_details: revisedDetails, needsReapproval, has_attachment: !!attachmentData }, user.id);
+
+  if (attachmentData) {
+    // Add attachment to Requirement
+    const { error: attachmentError } = await supabaseAdmin.from('attachments').insert({
+      module_type: 'requirement',
+      record_id: reqId,
+      file_name: attachmentData.storage_path, // Actually usually file_name stores the path in requirement attachments as seen earlier, but either way...
+      original_file_name: attachmentData.file_name,
+      storage_path: attachmentData.storage_path,
+      file_size: attachmentData.file_size,
+      mime_type: attachmentData.mime_type,
+      uploaded_by: user.id
+    });
+    
+    if (attachmentError) console.error("Failed to insert requirement attachment:", attachmentError);
+    
+    // Sync to linked tasks
+    const { data: linkedTasks } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
+    if (linkedTasks && linkedTasks.length > 0) {
+      const taskAttachments = linkedTasks.map(lt => ({
+        task_id: lt.task_id,
+        file_name: attachmentData.file_name,
+        file_url: 'storage:requirement-files:' + attachmentData.storage_path, // Maintain convention
+        size: attachmentData.file_size,
+        file_type: attachmentData.mime_type,
+        uploaded_by: user.id
+      }));
+      await supabaseAdmin.from('task_attachments').insert(taskAttachments);
+      
+      // Log for each task
+      for (const lt of linkedTasks) {
+        await logActivityEvent('TASK', lt.task_id, 'AMENDMENT_ATTACHMENT_SYNCED', null, { source_requirement: reqId, file_name: attachmentData.file_name }, user.id);
+      }
+    }
+  }
 
   if (needsReapproval) {
      await supabaseAdmin.from('requirements').update({ approval_status: 'Pending' }).eq('id', reqId);

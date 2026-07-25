@@ -97,7 +97,7 @@ export function QuickApprovalModal({
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full text-sm p-3 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-accent focus:border-accent shadow-inner min-h-[100px]"
+                className="w-full text-sm p-3 border-gray-300 dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-accent focus:border-accent shadow-inner min-h-[100px]"
                 rows={3}
                 placeholder="Enter your approval, rejection, or hold remarks here..."
               />

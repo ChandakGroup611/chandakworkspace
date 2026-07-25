@@ -38,7 +38,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
           {escalations.length > 0 ? escalations.map((esc) => (
             <div 
               key={esc.id} 
-              className="p-3 rounded-xl bg-surface/[0.02] border border-white/5 hover:border-white/10 flex items-center justify-between transition-colors duration-200"
+              className="p-3 rounded-xl theme-card-structural /[0.02] border-white/5 hover:border-white/10 flex items-center justify-between transition-colors duration-200"
             >
               <div className="space-y-1 truncate pr-2">
                 <div className="flex items-center gap-1.5">
@@ -63,7 +63,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
               </div>
             </div>
           )) : (
-            <div className="p-4 text-center text-xs text-gray-500 rounded-xl bg-surface/[0.01] border border-white/5">
+            <div className="p-4 text-center text-xs text-gray-500 rounded-xl theme-card-structural /[0.01] border-white/5">
               No active escalations or critical SLA breaches detected.
             </div>
           )}
