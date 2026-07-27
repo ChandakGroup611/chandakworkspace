@@ -283,8 +283,9 @@ export default function ClientSessionManager() {
             }
 
             // Subscribe to concurrent login changes
+            const channelName = `active_sessions_${user.id}_${Math.random().toString(36).substring(7)}`;
             const channel = supabase
-              .channel(`active_sessions_${user.id}`)
+              .channel(channelName)
               .on(
                 "postgres_changes",
                 { event: "UPDATE", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },

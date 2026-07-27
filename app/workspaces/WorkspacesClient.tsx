@@ -38,7 +38,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const router = useRouter();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [workspaces, setWorkspaces] = useState<any[]>(initialData?.workspaces || []);
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);

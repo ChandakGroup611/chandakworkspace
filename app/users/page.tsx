@@ -103,7 +103,7 @@ export default function UserMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

@@ -24,7 +24,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const router = useRouter();
   const { hasPermission } = usePermissions();

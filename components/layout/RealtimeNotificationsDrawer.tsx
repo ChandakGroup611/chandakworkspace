@@ -48,7 +48,7 @@ export default function RealtimeNotificationsDrawer() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"ALL" | "UNREAD" | "CRITICAL">("UNREAD");

@@ -16,7 +16,7 @@ export default function CompanyMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

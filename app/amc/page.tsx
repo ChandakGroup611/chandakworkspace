@@ -78,7 +78,7 @@ export default function AMCPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme();
-    isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+    isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
   } catch (e) {}
 
   const [records, setRecords] = useState<any[]>([]);

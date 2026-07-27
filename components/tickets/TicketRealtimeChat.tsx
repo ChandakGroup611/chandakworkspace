@@ -14,7 +14,7 @@ import { fetchTicketMacros } from "@/lib/actions/tickets";
 export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
   useRenderLog("TicketRealtimeChat", { ticketId });
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
   // Create client once with useRef so it's stable across renders
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;

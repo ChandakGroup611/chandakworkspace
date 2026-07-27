@@ -112,6 +112,17 @@ export default function SettingsGallery() {
       accentColor: "bg-blue-600",
     },
     {
+      id: "pure-white-neumorphic",
+      name: "Pure White Neumorphic",
+      tagline: "Dedicated Pure White UI",
+      benefit: "Maximized brightness",
+      sentiment: "Clean & Modern",
+      icon: Sun,
+      previewBg: "bg-[#ffffff] text-slate-900",
+      previewBorder: "border-gray-100",
+      accentColor: "bg-indigo-600",
+    },
+    {
       id: "industrial-control",
       name: "Industrial Control",
       tagline: "Frosted Glass Elements",

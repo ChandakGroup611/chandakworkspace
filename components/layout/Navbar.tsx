@@ -39,7 +39,7 @@ export default function Navbar() {
   const [loggingOut, setLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isLight = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLight = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   useEffect(() => {
     setMounted(true);

@@ -9,7 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 export default function TaskTimeLogs({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
   
   const [logs, setLogs] = useState<any[]>([]);
   const [estimatedHours, setEstimatedHours] = useState<number>(0);

@@ -6,7 +6,7 @@ import { AppButton } from "@/components/ui/AppButton";
 
 export function RequirementQueue({ requirements }: { requirements: any[] }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
   const [filter, setFilter] = useState('ALL');
 
   const filtered = filter === 'ALL' 

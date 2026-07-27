@@ -8,6 +8,7 @@
 @import '../src/styles/themes/cyberpunk-v2.css';
 @import '../src/styles/themes/glassmorphism-v2.css';
 @import '../src/styles/themes/pure-white-v2.css';
+@import '../src/styles/themes/pure-white-neumorphic-v2.css';
 
 /* Force Tailwind v4 to use class-based dark mode instead of media queries */
 @custom-variant dark (&:where(.dark, .dark *));

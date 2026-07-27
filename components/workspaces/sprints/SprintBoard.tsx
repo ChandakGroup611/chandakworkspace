@@ -12,7 +12,7 @@ import { Filter } from "lucide-react";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [sprints, setSprints] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);

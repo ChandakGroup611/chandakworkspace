@@ -15,7 +15,7 @@ interface TicketFormERPProps {
 
 export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white"].includes(theme);
+  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [masters, setMasters] = useState<any>({});
