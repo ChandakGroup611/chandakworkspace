@@ -58,6 +58,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const [showPutToUseDialog, setShowPutToUseDialog] = useState(false);
   const [putToUseDate, setPutToUseDate] = useState("");
   const [submittingPutToUse, setSubmittingPutToUse] = useState(false);
+  const [showReadyNotification, setShowReadyNotification] = useState(false);
 
   const [showAmendmentDialog, setShowAmendmentDialog] = useState(false);
   const [amendmentDetails, setAmendmentDetails] = useState("");
@@ -255,19 +256,32 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         users: userRes.data || [],
         business_values: bvRes.data || []
       });
-
-    } catch (e) {
-      console.error(e);
+      setError(null);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to load requirement details.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (reqId) {
-      loadData();
-    }
+    loadData();
   }, [reqId]);
+
+  useEffect(() => {
+    if (requirement?.approval_status === 'Ready to Put to Use') {
+      const notifiedKey = `req-ready-notified-${requirement.id}`;
+      if (!localStorage.getItem(notifiedKey)) {
+        setShowReadyNotification(true);
+        localStorage.setItem(notifiedKey, 'true');
+      }
+    }
+  }, [requirement]);
+
+  const handleUpdateField = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handlePutToUse = async () => {
     if (!putToUseDate) return alert("Please select a put to use date");
@@ -659,6 +673,31 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <DialogFooter className="px-6 py-4 bg-gray-50 border-t border-gray-100 dark:bg-slate-950 dark:border-white/5">
             <AppButton variant="outline" onClick={() => setShowAmendmentDialog(false)}>Cancel</AppButton>
             <AppButton variant="primary" onClick={handleAmendment} isLoading={submittingAmendment} disabled={!amendmentDetails.trim()}>Submit Amendment</AppButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showReadyNotification} onOpenChange={setShowReadyNotification}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-accent/5">
+            <DialogTitle className="flex items-center gap-2 text-accent">
+              <CheckCircle className="h-5 w-5" />
+              Tasks Completed
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              All linked tasks for this requirement have been successfully closed. The requirement is now <strong>Ready to Put to Use</strong>.
+            </p>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-gray-50 border-t border-gray-100 dark:bg-slate-950 dark:border-white/5">
+            <AppButton variant="outline" onClick={() => setShowReadyNotification(false)}>Close</AppButton>
+            <AppButton variant="primary" onClick={() => {
+              setShowReadyNotification(false);
+              setShowPutToUseDialog(true);
+            }}>
+              Proceed to Put to Use
+            </AppButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
