@@ -32,7 +32,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.14.0",
-    "next": "^16.2.6",
+    "next": "16.3.0-preview.9",
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0",
     "react": "^19.2.6",
@@ -66,6 +66,8 @@
   },
   "overrides": {
     "uuid": "^11.1.1",
-    "postcss": "^8.5.14"
+    "postcss": "^8.5.14",
+    "brace-expansion": "^5.0.8",
+    "sharp": "^0.35.0"
   }
 }

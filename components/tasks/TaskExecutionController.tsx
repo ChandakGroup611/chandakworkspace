@@ -72,6 +72,27 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   
   // Assignee Editing
   const [isEditingAssignees, setIsEditingAssignees] = useState(false);
+  const [isAcknowledging, setIsAcknowledging] = useState(false);
+  
+  const handleAcknowledgeAmendment = async () => {
+    if (!task?.id) return;
+    setIsAcknowledging(true);
+    setError(null);
+    try {
+      const { acknowledgeTaskAmendment } = await import("@/lib/actions/tasks");
+      const res = await acknowledgeTaskAmendment(task.id);
+      if (res.error) throw new Error(res.error);
+      
+      triggerToast("Amendment acknowledged and task updated successfully.");
+      // Refresh task details
+      await loadTaskDetails(true);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to acknowledge amendment.");
+    } finally {
+      setIsAcknowledging(false);
+    }
+  };
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [editingAssigneesList, setEditingAssigneesList] = useState<string[]>([]);
   const [isSavingAssignees, setIsSavingAssignees] = useState(false);
@@ -1554,6 +1575,59 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {successToast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <span className="text-xs font-semibold">{successToast}</span>
+        </div>
+      )}
+
+      {/* Pending Amendment Popup Modal */}
+      {task?.custom_fields?.pending_amendment && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <AppCard className="w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-200 border border-accent/20">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-accent/10 rounded-full text-accent shrink-0 mt-1">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div className="space-y-4 w-full">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Requirement Update Notification</h3>
+                  <p className="text-sm text-muted mt-1">
+                    The requirement associated with this task has been amended (Version {task.custom_fields.pending_amendment.version}).
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-surface rounded-xl border border-border">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Revised Details</h4>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{task.custom_fields.pending_amendment.revised_details}</p>
+                  
+                  {task.custom_fields.pending_amendment.attachment && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">New Attachment</h4>
+                      <div className="flex items-center gap-2 text-sm text-foreground">
+                        <Paperclip className="w-4 h-4 text-accent" />
+                        <span>{task.custom_fields.pending_amendment.attachment.file_name}</span>
+                        <span className="text-xs text-muted">({(task.custom_fields.pending_amendment.attachment.size / 1024 / 1024).toFixed(2)} MB)</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="pt-2">
+                  <AppButton 
+                    className="w-full justify-center shadow-lg shadow-accent/20" 
+                    onClick={handleAcknowledgeAmendment}
+                    disabled={isAcknowledging}
+                  >
+                    {isAcknowledging ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Applying Update...
+                      </>
+                    ) : (
+                      "Acknowledge & Update Task"
+                    )}
+                  </AppButton>
+                </div>
+              </div>
+            </div>
+          </AppCard>
         </div>
       )}
     </AppCard>

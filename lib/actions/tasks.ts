@@ -1565,3 +1565,48 @@ export async function getTransferableWorkspaces() {
   }
 }
 
+export async function acknowledgeTaskAmendment(taskId: string) {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Unauthenticated" };
+
+    const { data: task } = await supabaseAdmin.from('tasks').select('id, description, custom_fields').eq('id', taskId).single();
+    if (!task) return { error: "Task not found" };
+
+    const pendingAmendment = task.custom_fields?.pending_amendment;
+    if (!pendingAmendment) return { error: "No pending amendment found on this task." };
+
+    const newDescription = (task.description || '') + `\n\n**Amendment Version ${pendingAmendment.version}**: ${pendingAmendment.revised_details}`;
+    const updatedCustomFields = { ...task.custom_fields };
+    delete updatedCustomFields.pending_amendment;
+
+    await supabaseAdmin.from('tasks').update({ 
+      description: newDescription,
+      custom_fields: updatedCustomFields
+    }).eq('id', taskId);
+
+    if (pendingAmendment.attachment) {
+      await supabaseAdmin.from('task_attachments').insert({
+        task_id: taskId,
+        file_name: pendingAmendment.attachment.file_name,
+        file_url: pendingAmendment.attachment.file_url,
+        size: pendingAmendment.attachment.size,
+        file_type: pendingAmendment.attachment.file_type,
+        uploaded_by: user.id
+      });
+      await logActivityEvent('TASK', taskId, 'AMENDMENT_ATTACHMENT_SYNCED', null, { file_name: pendingAmendment.attachment.file_name }, user.id);
+    }
+
+    await logActivityEvent('TASK', taskId, 'REQUIREMENT_AMENDMENT_ACKNOWLEDGED', null, { 
+       message: `Requirement amendment (Version ${pendingAmendment.version}) was acknowledged and applied.`,
+    }, user.id);
+
+    revalidatePath(`/tasks/${taskId}`);
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error acknowledging task amendment:", err);
+    return { error: err.message || "Failed to acknowledge amendment." };
+  }
+}

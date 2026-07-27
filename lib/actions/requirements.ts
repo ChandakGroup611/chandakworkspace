@@ -909,8 +909,8 @@ export async function markRequirementPutToUse(reqId: string, putToUseDate: strin
   return { success: true };
 }
 
-export async function syncAmendmentToTasks(reqId: string, performedBy: string) {
-  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, revised_details').eq('id', reqId).single();
+export async function syncAmendmentToTasks(reqId: string, performedBy: string, attachmentData?: { file_name: string, file_size: number, mime_type: string, storage_path: string }) {
+  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, revised_details, custom_fields').eq('id', reqId).single();
   if (!req || req.amendment_version === 0 || !req.revised_details) return;
 
   const { data: linkedTasks } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
@@ -919,7 +919,7 @@ export async function syncAmendmentToTasks(reqId: string, performedBy: string) {
 
   // Filter out closed tasks
   const { data: activeTasks } = await supabaseAdmin.from('tasks')
-    .select('id, description, assigned_to')
+    .select('id, description, assigned_to, custom_fields')
     .in('id', taskIds)
     .not('status_id', 'in', (
        await supabaseAdmin.from('status_master').select('id').in('status_code', ['CLOSED', 'RESOLVED']).then(res => res.data?.map(s => s.id) || [])
@@ -928,19 +928,40 @@ export async function syncAmendmentToTasks(reqId: string, performedBy: string) {
   if (!activeTasks || activeTasks.length === 0) return;
 
   const { dispatchNotification } = await import('@/lib/actions/notifications');
+  
+  // Retrieve attachmentData from requirement custom_fields if not explicitly passed
+  let resolvedAttachmentData = attachmentData;
+  if (!resolvedAttachmentData && req.custom_fields?.pending_amendment_attachment) {
+    resolvedAttachmentData = req.custom_fields.pending_amendment_attachment;
+    
+    // Clear the pending attachment from requirement custom_fields now that it's being synced
+    const newReqCustomFields = { ...req.custom_fields };
+    delete newReqCustomFields.pending_amendment_attachment;
+    await supabaseAdmin.from('requirements').update({ custom_fields: newReqCustomFields }).eq('id', reqId);
+  }
 
   for (const task of activeTasks) {
-    const newDescription = (task.description || '') + `\n\n**Amendment Version ${req.amendment_version}**: ${req.revised_details}`;
+    const customFields = task.custom_fields || {};
+    customFields.pending_amendment = {
+      version: req.amendment_version,
+      revised_details: req.revised_details,
+      attachment: resolvedAttachmentData ? {
+        file_name: resolvedAttachmentData.file_name,
+        file_url: 'storage:requirement-files:' + resolvedAttachmentData.storage_path,
+        size: resolvedAttachmentData.file_size,
+        file_type: resolvedAttachmentData.mime_type
+      } : null
+    };
     
-    await supabaseAdmin.from('tasks').update({ description: newDescription }).eq('id', task.id);
+    await supabaseAdmin.from('tasks').update({ custom_fields: customFields }).eq('id', task.id);
     
-    await logActivityEvent('TASK', task.id, 'REQUIREMENT_AMENDED', null, { 
-       message: `Requirement amended to version ${req.amendment_version}.`,
-       revised_details: req.revised_details 
+    // We log that an amendment is pending on the task
+    await logActivityEvent('TASK', task.id, 'REQUIREMENT_AMENDED_PENDING', null, { 
+       message: `Requirement amended to version ${req.amendment_version}. Pending acknowledgement.`,
     }, performedBy);
 
     if (task.assigned_to) {
-       await dispatchNotification(task.assigned_to, 'Requirement Revised', `The requirement for your task has been revised. Please check the updated details.`, `/tasks/${task.id}`, 'TASK', 'REQUIREMENT_AMENDED').catch(() => {});
+       await dispatchNotification(task.assigned_to, 'Requirement Revised', `The requirement for your task has been revised (Version ${req.amendment_version}). Please open the task to acknowledge the updated details.`, `/tasks/${task.id}`, 'TASK', 'REQUIREMENT_AMENDED').catch(() => {});
     }
   }
 }
@@ -967,7 +988,7 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
     const { error: attachmentError } = await supabaseAdmin.from('attachments').insert({
       module_type: 'requirement',
       record_id: reqId,
-      file_name: attachmentData.storage_path, // Actually usually file_name stores the path in requirement attachments as seen earlier, but either way...
+      file_name: attachmentData.storage_path, 
       original_file_name: attachmentData.file_name,
       storage_path: attachmentData.storage_path,
       file_size: attachmentData.file_size,
@@ -977,23 +998,10 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
     
     if (attachmentError) console.error("Failed to insert requirement attachment:", attachmentError);
     
-    // Sync to linked tasks
-    const { data: linkedTasks } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
-    if (linkedTasks && linkedTasks.length > 0) {
-      const taskAttachments = linkedTasks.map(lt => ({
-        task_id: lt.task_id,
-        file_name: attachmentData.file_name,
-        file_url: 'storage:requirement-files:' + attachmentData.storage_path, // Maintain convention
-        size: attachmentData.file_size,
-        file_type: attachmentData.mime_type,
-        uploaded_by: user.id
-      }));
-      await supabaseAdmin.from('task_attachments').insert(taskAttachments);
-      
-      // Log for each task
-      for (const lt of linkedTasks) {
-        await logActivityEvent('TASK', lt.task_id, 'AMENDMENT_ATTACHMENT_SYNCED', null, { source_requirement: reqId, file_name: attachmentData.file_name }, user.id);
-      }
+    if (needsReapproval) {
+       // Save to requirement custom fields to be picked up during sign-off
+       const newReqCustomFields = { ...(req as any).custom_fields, pending_amendment_attachment: attachmentData };
+       await supabaseAdmin.from('requirements').update({ custom_fields: newReqCustomFields }).eq('id', reqId);
     }
   }
 
@@ -1002,7 +1010,7 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
      await generateApprovalFlow(reqId, user.id);
   } else {
      // If no re-approval needed, auto-approve and immediately sync tasks
-     await syncAmendmentToTasks(reqId, user.id);
+     await syncAmendmentToTasks(reqId, user.id, attachmentData);
   }
 
   revalidatePath(`/requirements/${reqId}`);
