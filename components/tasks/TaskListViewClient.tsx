@@ -363,10 +363,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     const completed = filtered.filter(t => t.status?.is_closed || t.status?.name?.toLowerCase().includes('done')).length;
     
     return [
-      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
-      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
-      { label: "In Progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-amber-500/10", iconColorClass: "text-amber-600" },
-      { label: "Completed", value: completed, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-emerald-500/10", iconColorClass: "text-emerald-600" },
+      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-sky-500/10", iconColorClass: "text-sky-600 dark:text-sky-400" },
+      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-purple-500/10", iconColorClass: "text-purple-600 dark:text-purple-400" },
+      { label: "In Progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-amber-500/10", iconColorClass: "text-amber-600 dark:text-amber-400" },
+      { label: "Completed", value: completed, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-emerald-500/10", iconColorClass: "text-emerald-600 dark:text-emerald-400" },
     ];
   }, [filtered]);
 

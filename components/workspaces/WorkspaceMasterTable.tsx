@@ -491,7 +491,7 @@ export function WorkspaceMasterTable({
     };
 
   return (
-    <div className="w-full font-sharp overflow-visible">
+    <div className="w-full font-sans overflow-visible">
       <div className="w-full flex flex-col min-w-[1050px]">
         {/* Header */}
         <div className={`sticky top-0 z-20 grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${

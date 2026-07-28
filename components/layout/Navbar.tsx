@@ -85,7 +85,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`bg-surface border-b border-border/60 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] sticky top-0 z-40 flex h-16 w-full shrink-0 font-sharp items-center justify-between transition-all duration-300 px-6`}
+        className={`bg-surface border-b border-border/60 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] sticky top-0 z-40 flex h-16 w-full shrink-0 font-sans items-center justify-between transition-all duration-300 px-6`}
       >
         <div className="flex items-center gap-4 flex-1 max-w-md">
           <div className="relative flex items-center w-full">

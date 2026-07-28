@@ -13,7 +13,7 @@ export function PageContainer({ children, className, strict = false, ...props }:
   return (
     <div
       className={cn(
-        "w-full mx-auto px-6 py-6 md:px-8 md:py-8 max-w-[1600px]",
+        "w-full mx-auto max-w-[1600px]",
         strict ? "h-full max-h-full flex flex-col min-h-0 min-w-0 overflow-hidden" : "min-h-full flex flex-col",
         className
       )}

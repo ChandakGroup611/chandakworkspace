@@ -96,9 +96,9 @@ export default function SettingsGallery() {
       benefit: "Reduced cognitive load",
       sentiment: "Calm & Focused",
       icon: Sun,
-      previewBg: "bg-[#ffffff] text-slate-800",
-      previewBorder: "border-gray-200",
-      accentColor: "bg-blue-600",
+      previewBg: "bg-[#f8fafc] text-[#334155]",
+      previewBorder: "border-[#ddd6fe]",
+      accentColor: "bg-[#fb923c]",
     },
     {
       id: "pure-white-neumorphic",

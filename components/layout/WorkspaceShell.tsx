@@ -49,7 +49,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         {!isAuthRoute && <Navbar />}
 
         {/* Dynamic Scrollable Content Workspace */}
-        <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${isAuthRoute ? 'p-0' : 'bg-transparent'}`}>
+        <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${isAuthRoute ? 'p-0' : 'p-6 md:p-8 bg-transparent'}`}>
           {children}
         </main>
       </div>

@@ -209,7 +209,7 @@ export default function Sidebar() {
       <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative z-40 flex flex-col h-full shrink-0 font-sharp transition-all duration-300 select-none bg-surface border-r border-border/60 shadow-[4px_0_24px_-4px_rgba(0,0,0,0.04)] ${ isCompact ? "w-20" : "w-64" }`}
+      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-surface border-r border-border/60 shadow-[4px_0_24px_-4px_rgba(0,0,0,0.04)] ${ isCompact ? "w-20" : "w-64" }`}
     >
       {/* Sidebar Top Master Header */}
       <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
@@ -266,23 +266,25 @@ export default function Sidebar() {
                 {group.items.map((item) => {
                 const IconComponent = item.icon;
                 
-                const getItemColor = (href: string) => {
-                  if (href === "/") return "text-blue-500";
-                  if (href === "/support") return "text-cyan-500";
-                  if (href === "/tickets") return "text-rose-500";
-                  if (href === "/requirements") return "text-emerald-500";
-                  if (href === "/workspaces") return "text-purple-500";
-                  if (href === "/sla") return "text-cyan-500";
-                  if (href === "/amc") return "text-amber-500";
-                  if (href === "/users") return "text-indigo-500";
-                  if (href === "/iam") return "text-violet-500";
-                  if (href === "/learning") return "text-teal-500";
-                  if (href === "/settings") return "text-rose-500";
-                  if (href === "/masters") return "text-emerald-500";
-                  return "text-accent";
+                const getModuleTheme = (href: string) => {
+                  switch (href) {
+                    case "/": return { text: "text-blue-500", activeBg: "from-blue-500/25 via-blue-500/15", border: "border-blue-500/50", shadow: "shadow-blue-500/20", line: "bg-blue-500 shadow-blue-500/40", hover: "hover:bg-blue-500/15 hover:border-blue-500/30 hover:text-blue-600" };
+                    case "/support": return { text: "text-cyan-500", activeBg: "from-cyan-500/25 via-cyan-500/15", border: "border-cyan-500/50", shadow: "shadow-cyan-500/20", line: "bg-cyan-500 shadow-cyan-500/40", hover: "hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:text-cyan-600" };
+                    case "/tickets": return { text: "text-rose-500", activeBg: "from-rose-500/25 via-rose-500/15", border: "border-rose-500/50", shadow: "shadow-rose-500/20", line: "bg-rose-500 shadow-rose-500/40", hover: "hover:bg-rose-500/15 hover:border-rose-500/30 hover:text-rose-600" };
+                    case "/requirements": return { text: "text-emerald-500", activeBg: "from-emerald-500/25 via-emerald-500/15", border: "border-emerald-500/50", shadow: "shadow-emerald-500/20", line: "bg-emerald-500 shadow-emerald-500/40", hover: "hover:bg-emerald-500/15 hover:border-emerald-500/30 hover:text-emerald-600" };
+                    case "/workspaces": return { text: "text-purple-500", activeBg: "from-purple-500/25 via-purple-500/15", border: "border-purple-500/50", shadow: "shadow-purple-500/20", line: "bg-purple-500 shadow-purple-500/40", hover: "hover:bg-purple-500/15 hover:border-purple-500/30 hover:text-purple-600" };
+                    case "/sla": return { text: "text-cyan-500", activeBg: "from-cyan-500/25 via-cyan-500/15", border: "border-cyan-500/50", shadow: "shadow-cyan-500/20", line: "bg-cyan-500 shadow-cyan-500/40", hover: "hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:text-cyan-600" };
+                    case "/amc": return { text: "text-amber-500", activeBg: "from-amber-500/25 via-amber-500/15", border: "border-amber-500/50", shadow: "shadow-amber-500/20", line: "bg-amber-500 shadow-amber-500/40", hover: "hover:bg-amber-500/15 hover:border-amber-500/30 hover:text-amber-600" };
+                    case "/users": return { text: "text-indigo-500", activeBg: "from-indigo-500/25 via-indigo-500/15", border: "border-indigo-500/50", shadow: "shadow-indigo-500/20", line: "bg-indigo-500 shadow-indigo-500/40", hover: "hover:bg-indigo-500/15 hover:border-indigo-500/30 hover:text-indigo-600" };
+                    case "/iam": return { text: "text-violet-500", activeBg: "from-violet-500/25 via-violet-500/15", border: "border-violet-500/50", shadow: "shadow-violet-500/20", line: "bg-violet-500 shadow-violet-500/40", hover: "hover:bg-violet-500/15 hover:border-violet-500/30 hover:text-violet-600" };
+                    case "/learning": return { text: "text-teal-500", activeBg: "from-teal-500/25 via-teal-500/15", border: "border-teal-500/50", shadow: "shadow-teal-500/20", line: "bg-teal-500 shadow-teal-500/40", hover: "hover:bg-teal-500/15 hover:border-teal-500/30 hover:text-teal-600" };
+                    case "/settings": return { text: "text-rose-500", activeBg: "from-rose-500/25 via-rose-500/15", border: "border-rose-500/50", shadow: "shadow-rose-500/20", line: "bg-rose-500 shadow-rose-500/40", hover: "hover:bg-rose-500/15 hover:border-rose-500/30 hover:text-rose-600" };
+                    case "/masters": return { text: "text-emerald-500", activeBg: "from-emerald-500/25 via-emerald-500/15", border: "border-emerald-500/50", shadow: "shadow-emerald-500/20", line: "bg-emerald-500 shadow-emerald-500/40", hover: "hover:bg-emerald-500/15 hover:border-emerald-500/30 hover:text-emerald-600" };
+                    default: return { text: "text-accent", activeBg: "from-accent/25 via-accent/15", border: "border-accent/50", shadow: "shadow-accent/20", line: "bg-accent shadow-accent/40", hover: "hover:bg-accent/15 hover:border-accent/30 hover:text-accent" };
+                  }
                 };
 
-                const iconColor = getItemColor(item.href);
+                const modTheme = getModuleTheme(item.href);
                 let isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
                 if (item.href === '/requirements' && searchParams?.get('from') === 'approvals') {
                   isBaseActive = false;
@@ -302,13 +304,13 @@ export default function Sidebar() {
                             : "flex-1 gap-3 rounded-xl py-2.5 px-3 text-sm font-medium overflow-hidden whitespace-nowrap"
                         } ${
                           isBaseActive 
-                            ? "bg-gradient-to-r from-accent/25 via-accent/15 to-transparent border border-accent/50 text-accent font-bold shadow-md shadow-accent/20 scale-[1.03]" 
-                            : "text-foreground font-semibold hover:bg-accent/15 hover:border-accent/30 hover:text-accent hover:shadow-xs hover:scale-[1.02] active:scale-[0.96] active:bg-accent/30 border border-transparent transition-all duration-150"
+                            ? `bg-gradient-to-r to-transparent font-bold shadow-md scale-[1.03] ${modTheme.activeBg} ${modTheme.border} ${modTheme.text} ${modTheme.shadow} border` 
+                            : `text-foreground font-semibold hover:shadow-xs hover:scale-[1.02] active:scale-[0.96] border border-transparent transition-all duration-150 ${modTheme.hover}`
                         }`}
                       >
                         {/* Active Indicator Line */}
                         {isBaseActive && (
-                          <div className={`absolute top-1/2 -translate-y-1/2 rounded-r bg-accent shadow-sm shadow-accent/40 ${
+                          <div className={`absolute top-1/2 -translate-y-1/2 rounded-r shadow-sm ${modTheme.line} ${
                             isCompact ? "-left-2 h-6 w-1.5" : "-left-3 h-6 w-1"
                           }`} />
                         )}
@@ -320,8 +322,8 @@ export default function Sidebar() {
                             isCompact ? "h-6 w-6" : "h-4 w-4"
                           } ${
                             isBaseActive 
-                              ? "text-accent font-bold drop-shadow-sm scale-110" 
-                              : `${iconColor} opacity-90 group-hover:opacity-100 group-hover:drop-shadow-xs`
+                              ? `${modTheme.text} font-bold drop-shadow-sm scale-110` 
+                              : `${modTheme.text} opacity-90 group-hover:opacity-100 group-hover:drop-shadow-xs`
                           }`} />
                           
                           {!isCompact && (
@@ -362,7 +364,7 @@ export default function Sidebar() {
 
                     {/* RENDER EXPANDED SUB-ITEMS TREE CONTAINER */}
                     {!isCompact && item.subItems && isTreeExpanded && (
-                      <div className="pl-2.5 pr-1 py-1.5 space-y-1.5 relative border-l-2 border-accent/30 ml-5">
+                      <div className={`pl-2.5 pr-1 py-1.5 space-y-1.5 relative border-l-2 ml-5 ${modTheme.border}`}>
                         {item.subItems.map((sub) => {
                           
                           let isSubActive = pathname === sub.href;
@@ -379,15 +381,15 @@ export default function Sidebar() {
                               onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
                               className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[0.8125rem] font-semibold transition-all duration-150 select-none cursor-pointer overflow-hidden ${
                                 isSubActive 
-                                  ? "bg-gradient-to-r from-accent/25 via-accent/15 to-transparent border border-accent/40 text-accent font-bold shadow-xs scale-[1.02]" 
-                                  : "text-muted-foreground hover:bg-accent/15 hover:border-accent/30 hover:text-accent hover:scale-[1.02] hover:shadow-xs active:scale-[0.96] active:bg-accent/30 border border-transparent"
+                                  ? `bg-gradient-to-r to-transparent font-bold shadow-xs scale-[1.02] border ${modTheme.activeBg} ${modTheme.border} ${modTheme.text}` 
+                                  : `text-muted-foreground hover:scale-[1.02] hover:shadow-xs active:scale-[0.96] border border-transparent ${modTheme.hover}`
                               }`}
                             >
                               {/* Submodule Bullet Indicator Dot */}
                               <div className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-200 ${
                                 isSubActive 
-                                  ? "bg-accent shadow-xs scale-125" 
-                                  : "bg-accent/40 group-hover:bg-accent group-hover:scale-125"
+                                  ? `shadow-xs scale-125 bg-current` 
+                                  : `opacity-40 group-hover:opacity-100 group-hover:scale-125 bg-current`
                               }`} />
                               
                               <span className="truncate flex-1 text-inherit">{sub.label}</span>

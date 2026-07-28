@@ -214,9 +214,9 @@ export default function RealtimeNotificationsDrawer() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative !h-10 !w-10 rounded-xl theme-card-structural text-muted hover:bg-muted hover:text-foreground"
       >
-        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-accent animate-bounce" : ""}`} />
+        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-amber-500 animate-bounce" : ""}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
             {unreadCount}
           </span>
         )}
@@ -238,15 +238,15 @@ export default function RealtimeNotificationsDrawer() {
               <div className="shrink-0 mt-0.5">
                 <div className={`p-2 rounded-xl ${
                   isCritical 
-                    ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" 
-                    : "bg-cyan-500/10 text-cyan-500 border border-cyan-500/20"
+                    ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-rose-500 border border-rose-500/20" 
+                    : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-500 border border-amber-500/20"
                 }`}>
                   {isCritical ? <ShieldAlert className="h-4 w-4 animate-pulse" /> : <Bell className="h-4 w-4" />}
                 </div>
               </div>
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider text-cyan-500">
+                  <span className={`text-[0.7rem] font-mono font-bold uppercase tracking-wider ${isCritical ? 'text-rose-500' : 'text-amber-500'}`}>
                     {toast.entity_id}
                   </span>
                   <AppButton 
@@ -269,7 +269,7 @@ export default function RealtimeNotificationsDrawer() {
                 </p>
                 <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-white/5 mt-1 text-gray-500">
                   <span>Actor: <strong>{toast.actor_name || toast.actor}</strong></span>
-                  <span className="text-cyan-500 font-bold group-hover:underline">View details →</span>
+                  <span className={`${isCritical ? 'text-rose-500' : 'text-amber-500'} font-bold group-hover:underline`}>View details →</span>
                 </div>
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function RealtimeNotificationsDrawer() {
         <EnterpriseDrawerShell
           title={
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 shrink-0">
+              <div className="p-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
               <span className={`text-lg font-bold tracking-wider ${"text-foreground"}`}>Enterprise Stream</span>
@@ -295,34 +295,34 @@ export default function RealtimeNotificationsDrawer() {
           footer={
             <div className={`w-full p-2 text-xs text-gray-500 flex items-center justify-between gap-2`}>
               <span>Auto-redirect anchors bound instantly</span>
-              <ExternalLink className="h-3 w-3 text-cyan-500" />
+              <ExternalLink className="h-3 w-3 text-amber-500" />
             </div>
           }
         >
           <div className="flex flex-col h-full space-y-4">
             <div className="flex items-center justify-between">
-              <div className={`p-1.5 rounded-xl flex items-center gap-1 bg-elevated`}>
+              <div className={`p-1.5 rounded-xl flex items-center gap-1 bg-elevated shadow-sm`}>
                 <AppButton
                   size="sm"
                   variant={activeFilter === "UNREAD" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("UNREAD")}
-                  className={activeFilter !== "UNREAD" ? "text-muted-foreground" : ""}
+                  className={activeFilter === "UNREAD" ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-amber-500/10"}
                 >
                   Unread ({unreadCount})
                 </AppButton>
                 <AppButton
                   size="sm"
-                  variant={activeFilter === "CRITICAL" ? "destructive" : "ghost"}
+                  variant={activeFilter === "CRITICAL" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("CRITICAL")}
-                  className={activeFilter !== "CRITICAL" ? "text-muted-foreground" : ""}
+                  className={activeFilter === "CRITICAL" ? "bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-rose-500/10"}
                 >
                   Escalations ({criticalCount})
                 </AppButton>
                 <AppButton
                   size="sm"
-                  variant={activeFilter === "ALL" ? "secondary" : "ghost"}
+                  variant={activeFilter === "ALL" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("ALL")}
-                  className={activeFilter !== "ALL" ? "text-muted-foreground" : ""}
+                  className={activeFilter === "ALL" ? "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-md border-none hover:scale-105" : "text-muted-foreground"}
                 >
                   All ({localNotifications.length})
                 </AppButton>
@@ -333,6 +333,7 @@ export default function RealtimeNotificationsDrawer() {
                   variant="outline"
                   size="sm"
                   onClick={markAllAsRead}
+                  className="hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400"
                 >
                   Clear Badges
                 </AppButton>
@@ -365,13 +366,13 @@ export default function RealtimeNotificationsDrawer() {
                       className={`p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer relative group flex gap-2.5 ${
                         !item.is_read 
                           ? isCritical 
-                            ? "bg-rose-50/80 border-rose-200" 
-                            : "bg-cyan-50/50 border-cyan-200"
-                          : "theme-card-structural border-border opacity-60"
+                            ? "bg-gradient-to-r from-rose-500/10 to-transparent border-rose-200 dark:border-rose-500/30" 
+                            : "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-200 dark:border-amber-500/30"
+                          : "theme-card-structural border-border opacity-60 hover:opacity-100"
                       }`}
                     >
                       <div className="shrink-0 mt-0.5">
-                        <div className={`p-1.5 rounded-lg ${isCritical ? "bg-rose-500/20 text-rose-500 border border-rose-500/30" : "bg-cyan-500/10 text-cyan-500"}`}>
+                        <div className={`p-1.5 rounded-lg ${isCritical ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-rose-500 border border-rose-500/30" : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-500 border border-amber-500/30"}`}>
                           {isCritical ? <ShieldAlert className="h-3 w-3" /> : <Layers className="h-3 w-3" />}
                         </div>
                       </div>
@@ -380,7 +381,7 @@ export default function RealtimeNotificationsDrawer() {
                           <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider truncate flex items-center gap-1">
                             <span className={"text-foreground"}>{item.entity_id}</span>
                             <span className="text-gray-400">•</span>
-                            <span className="text-cyan-600 dark:text-cyan-400/90">{item.module}</span>
+                            <span className={`${isCritical ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'}`}>{item.module}</span>
                           </span>
                           <AppButton 
                             variant="ghost" 
