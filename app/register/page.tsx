@@ -249,7 +249,7 @@ export default function RegisterPage() {
             <form onSubmit={handleRegistrationSubmit} className="space-y-6" autoComplete="off">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
                     Full Name
                   </label>
                   <AppInput 
@@ -264,7 +264,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
                     Email Address
                   </label>
                   <AppInput 
@@ -281,7 +281,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
                     Department
                   </label>
                   <div className="relative">
@@ -305,7 +305,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
                     Designation
                   </label>
                   <div className="relative">
@@ -331,7 +331,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
                   Identity Visual (Photo Upload)
                 </label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-white/20 bg-surface/[0.02]">
@@ -353,7 +353,7 @@ export default function RegisterPage() {
                     />
                     <label 
                       htmlFor="photo-upload"
-                      className="inline-block px-4 py-2 rounded-lg bg-accent/20 text-accent border border-accent/30 text-xs font-bold cursor-pointer hover:bg-accent/40 transition-colors"
+                      className="inline-block px-4 py-2 rounded-lg bg-accent/20 text-accent border border-accent/30 text-sm font-bold cursor-pointer hover:bg-accent/40 transition-colors"
                     >
                       Select Image
                     </label>
@@ -382,7 +382,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
                     Password
                   </label>
                   <AppInput 
@@ -397,7 +397,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
                     Confirm Password
                   </label>
                   <AppInput 

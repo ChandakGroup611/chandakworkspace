@@ -125,22 +125,22 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
         <form onSubmit={handleAddInvoice} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Description *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Description *</label>
               <AppInput value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="e.g. Q1 Installment" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Amount *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Amount *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <AppInput type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required className="pl-9" placeholder="0.00" />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Due Date *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Due Date *</label>
               <AppInput type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Invoice Number</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Invoice Number</label>
               <AppInput value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="e.g. INV-2026-001" />
             </div>
           </div>

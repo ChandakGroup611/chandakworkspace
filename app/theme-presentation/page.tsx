@@ -97,11 +97,6 @@ export default function ThemePresentationPage() {
           description="Deep matte dark surfaces with soft extruded UI elements and realistic shadows." 
         />
         <ThemePreviewBlock 
-          themeId="glassmorphism" 
-          themeName="3. Glassmorphism" 
-          description="Frosted glass translucent UI panels with heavy background blur and floating cards." 
-        />
-        <ThemePreviewBlock 
           themeId="industrial-control" 
           themeName="4. Industrial Control" 
           description="Utilitarian mechanical aesthetic with physical-looking panels and chunky inset buttons." 

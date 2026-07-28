@@ -108,26 +108,26 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
         <form onSubmit={handleAddRenewal} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Renewal Date *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Renewal Date *</label>
               <AppInput type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">New Expiry Date *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">New Expiry Date *</label>
               <AppInput type="date" value={newExpiry} onChange={(e) => setNewExpiry(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">PO Number</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">PO Number</label>
               <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2027" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Renewal Cost *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Renewal Cost *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <AppInput type="number" step="0.01" value={renewalCost} onChange={(e) => setRenewalCost(e.target.value)} required className="pl-9" placeholder="0.00" />
               </div>
             </div>
             <div className="space-y-2 lg:col-span-4">
-              <label className="text-xs font-bold text-gray-500 uppercase">Notes / Remarks</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Notes / Remarks</label>
               <AppInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="E.g., Price locked in for 3 years" />
             </div>
           </div>

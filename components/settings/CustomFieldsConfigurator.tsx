@@ -172,7 +172,7 @@ export default function CustomFieldsConfigurator() {
 
             <form onSubmit={handleAddField} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 block uppercase">Field Display Label</label>
+                <label className="text-sm font-bold text-gray-400 block uppercase">Field Display Label</label>
                 <AppInput 
                   placeholder="e.g. Server Kernel Patch ID" 
                   value={newLabel}
@@ -187,7 +187,7 @@ export default function CustomFieldsConfigurator() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 block uppercase">Internal Mapping Key</label>
+                <label className="text-sm font-bold text-gray-400 block uppercase">Internal Mapping Key</label>
                 <AppInput 
                   placeholder="e.g. kernel_patch_id" 
                   value={newKey}
@@ -198,7 +198,7 @@ export default function CustomFieldsConfigurator() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-400 block uppercase">Payload Type</label>
+                  <label className="text-sm font-bold text-gray-400 block uppercase">Payload Type</label>
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
@@ -226,7 +226,7 @@ export default function CustomFieldsConfigurator() {
 
               {newType === "select" && (
                 <div className="space-y-1 animate-in fade-in duration-200">
-                  <label className="text-xs font-bold text-gray-400 block uppercase">Dropdown Options String Array</label>
+                  <label className="text-sm font-bold text-gray-400 block uppercase">Dropdown Options String Array</label>
                   <AppInput 
                     placeholder="Comma-separated items..." 
                     value={newOptionsStr}

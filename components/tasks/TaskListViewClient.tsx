@@ -1498,7 +1498,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <div className="bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
               {selectedTaskIds.size}
             </div>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tasks Selected</span>
+            <span className="theme-data-value text-gray-700 dark:text-gray-300">Tasks Selected</span>
           </div>
           <div className="h-6 w-px bg-gray-300 dark:bg-surface/20"></div>
           <div className="flex items-center gap-2">
@@ -1524,7 +1524,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">From Status (Current)</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">From Status (Current)</label>
                 <select
                   value={bulkOldStatus}
                   onChange={(e) => setBulkOldStatus(e.target.value)}
@@ -1538,7 +1538,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
 
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">To Status (New)</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">To Status (New)</label>
                 <select
                   value={bulkNewStatus}
                   onChange={(e) => setBulkNewStatus(e.target.value)}
@@ -1554,7 +1554,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">From Department (Current)</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">From Department (Current)</label>
                 <select
                   value={bulkOldDepartment}
                   onChange={(e) => setBulkOldDepartment(e.target.value)}
@@ -1568,7 +1568,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
 
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">To Department (New)</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">To Department (New)</label>
                 <select
                   value={bulkNewDepartment}
                   onChange={(e) => setBulkNewDepartment(e.target.value)}
@@ -1583,7 +1583,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             </div>
             
             <div className="grid gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Remark (Optional)</label>
+              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Remark (Optional)</label>
               <textarea
                 value={bulkRemark}
                 onChange={(e) => setBulkRemark(e.target.value)}
@@ -1618,7 +1618,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             
             {true ? (
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Status</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">New Status</label>
                 <select
                   value={inlineNewStatus}
                   onChange={(e) => setInlineNewStatus(e.target.value)}
@@ -1637,7 +1637,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             )}
             
             <div className="grid gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
+              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
@@ -1671,7 +1671,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             
             {true ? (
               <div className="grid gap-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">New Department</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">New Department</label>
                 <select
                   value={inlineNewDepartment}
                   onChange={(e) => setInlineNewDepartment(e.target.value)}
@@ -1690,7 +1690,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             )}
             
             <div className="grid gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
+              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
@@ -1720,7 +1720,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Target Workspace <span className="text-red-500">*</span></label>
+              <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1">Target Workspace <span className="text-red-500">*</span></label>
               <select
                 value={creationWorkspaceId}
                 onChange={(e) => {
@@ -1738,7 +1738,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             
             {creationWorkspaceId && (
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Sub-Workspace (Optional)</label>
+                <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1">Sub-Workspace (Optional)</label>
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}

@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   const supabase = createClient();
   
   const [logs, setLogs] = useState<any[]>([]);

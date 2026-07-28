@@ -9,7 +9,8 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { 
   CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2, 
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
-  ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye
+  ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye, ActivitySquare, Link as LinkIcon, MessageCircle,
+  User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, Users
 } from "lucide-react";
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
@@ -22,9 +23,96 @@ import { useRouter } from "next/navigation";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 
+
+import dynamic from 'next/dynamic';
+import SafeHtml from "@/components/ui/SafeHtml";
+
+const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), { 
+  ssr: false, 
+  loading: () => <div className="p-6 text-center theme-data-value text-gray-400 animate-pulse">Loading Realtime Chat...</div> 
+});
+
+const TaskActivityTimeline = dynamic(() => import("@/components/tasks/TaskActivityTimeline"), { 
+  ssr: false,
+  loading: () => <div className="p-6 text-center theme-data-value text-gray-400 animate-pulse">Loading Audit Timeline...</div> 
+});
+
+const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), { 
+  ssr: false,
+  loading: () => <div className="p-6 text-center theme-data-value text-gray-400 animate-pulse">Loading Time Logs...</div> 
+});
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
+
+const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }: { value: string, onChange: (val: string) => void, readOnly?: boolean, placeholder?: string }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="p-4 border rounded-xl animate-pulse bg-gray-50/50 dark:bg-slate-900/50 h-36 text-xs font-semibold text-gray-400 flex items-center justify-center">Loading editor...</div>;
+  }
+
+  return (
+    <div className="quill-wrapper rounded-xl border border-border/60 bg-surface dark:bg-[#0B0F19] text-foreground overflow-hidden shadow-sm">
+      <style>{`
+        .quill-wrapper .ql-toolbar.ql-snow {
+          border: none;
+          border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+          background: rgba(243, 244, 246, 0.5);
+          border-top-left-radius: 0.75rem;
+          border-top-right-radius: 0.75rem;
+        }
+        .dark .quill-wrapper .ql-toolbar.ql-snow {
+          background: rgba(17, 24, 39, 0.8);
+        }
+        .dark .quill-wrapper .ql-stroke {
+          stroke: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-fill {
+          fill: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-picker {
+          color: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-picker-options {
+          background-color: #1F2937 !important;
+          border-color: #374151 !important;
+        }
+        .quill-wrapper .ql-container.ql-snow {
+          border: none;
+          min-height: 140px;
+          font-size: 0.875rem;
+        }
+        .quill-wrapper .ql-editor {
+          min-height: 140px;
+        }
+      `}</style>
+      <ReactQuill 
+        theme="snow" 
+        value={value} 
+        onChange={onChange}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        modules={{
+          toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['clean']
+          ]
+        }}
+      />
+    </div>
+  );
+};
+
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const router = useRouter();
   const { hasPermission } = usePermissions();
@@ -33,7 +121,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
   const [departments, setDepartments] = useState<any[]>(initialDepartments || []);
   const [loading, setLoading] = useState(!initialTask);
-  const [activeTab, setActiveTab] = useState<"checklist" | "attachments">("checklist");
+  const [activeTab, setActiveTab] = useState<"tags" | "links" | "checklist" | "attachments" | "chat" | "timeline" | "time">("checklist");
   
   // Lazy Load States
   const [isChecklistsLoaded, setIsChecklistsLoaded] = useState(false);
@@ -709,7 +797,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   return (
     <ExperienceProvider mode="operational">
-    <AppCard className="p-5 space-y-6 border-t-4 border-t-blue-500 shadow-sm">
+    <div className="space-y-6">
       
       {/* Sleek Error Notification Banner */}
       {error && (
@@ -721,213 +809,299 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* Title & Core Meta removed to avoid duplication with parent page layout */}
       
-      {/* Extended Metadata Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-4">
-        
-        {/* Timeline & Meta Block */}
-        <div className={`theme-card-structural p-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 space-y-4`}>
-          <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1 border-b border-gray-100 dark:border-white/5 pb-2 flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Timeline & Meta</h4>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Priority</span>
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border dark:border-white/10" style={{ backgroundColor: `var(--accent-primary)15` }}>
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
-                  <span className="text-xs font-semibold" style={{ color: task.priority?.color || ("#64748b") }}>{task.priority?.name || "Standard"}</span>
-                </div>
-              </div>
+     
+      {/* Extended Metadata Section - Dedicated Card with Background Header */}
+      <div>
+        <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
+          <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
+              <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <h3 className="font-bold text-sm tracking-wide text-foreground">Timeline & Meta</h3>
             </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Duration</span>
-              <div className="text-sm font-medium dark:text-gray-200 mt-1">
-                {task.currentUserIsSuperAdmin ? (
-                  <div className="flex items-center gap-1 text-xs">
-                    <input
-                      type="number"
-                      className="w-16 px-2 py-1 border border-gray-200 dark:border-white/10 rounded-md bg-transparent focus:outline-none focus:ring-1 focus:ring-accent text-center"
-                      value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
-                      onChange={(e) => {
-                        if (!task.start_date) return;
-                        const days = parseInt(e.target.value, 10);
-                        if (!isNaN(days) && days > 0) {
-                          const startDate = new Date(task.start_date);
-                          startDate.setDate(startDate.getDate() + (days - 1));
-                          const newEndDateStr = startDate.toISOString().split('T')[0];
-                          setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
-                          setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
-                        }
-                      }}
-                    /> <span className="text-gray-400">Days</span>
-                  </div>
-                ) : (
-                  <span>
-                    {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0} <span className="text-gray-400 font-normal text-xs">Days</span>
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Start Date <span className="text-red-500">*</span></span>
-              <div>
-                {task.currentUserIsSuperAdmin ? (
-                  <input
-                    type="date"
-                    className="px-2 py-1 w-full border border-gray-200 dark:border-white/10 rounded-md bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-accent"
-                    value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
-                    onChange={(e) => {
-                      const newStartDate = e.target.value;
-                      setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
-                      setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
-                    }}
-                  />
-                ) : (
-                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold bg-elevated text-muted`}>
-                    {task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Due Date <span className="text-red-500">*</span></span>
-              <div>
-                {task.currentUserIsSuperAdmin ? (
-                  <input
-                    type="date"
-                    className="px-2 py-1 w-full border border-gray-200 dark:border-white/10 rounded-md bg-transparent text-xs focus:outline-none focus:ring-1 focus:ring-accent"
-                    value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
-                    onChange={(e) => {
-                      const newEndDate = e.target.value;
-                      setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDate }));
-                      setTask((prev: any) => ({ ...prev, end_date: newEndDate }));
-                    }}
-                  />
-                ) : (
-                  <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold ${
-                    task.end_date && new Date(task.end_date) < new Date() ? "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400" : "bg-elevated text-muted"
-                  }`}>
-                    {task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"}
-                  </div>
-                )}
-              </div>
-            </div>
+            {task.priority?.name && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full theme-data-value border dark:border-white/10 bg-accent/10 text-accent">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || 'var(--accent-primary)' }} />
+                {task.priority.name}
+              </span>
+            )}
           </div>
-        </div>
-
-        {/* Execution Team Block */}
-        <div className={`theme-card-structural p-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40 space-y-4`}>
-          <h4 className="text-[10px] font-bold uppercase tracking-widest text-accent mb-1 border-b border-blue-100 dark:border-accent/10 pb-2 flex items-center gap-2"><Users2 className="w-3.5 h-3.5" /> Execution Team</h4>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Primary Assignee</span>
-              <div className="flex items-center gap-2 theme-card-structural /50 dark:bg-black/20 p-2 rounded-lg border-white/20 dark:border-white/5">
-                {task.assignee ? (
-                  (() => {
-                     const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
-                     if (!a) return null;
-                     return (
-                       <>
-                         {a.profile_photo ? (
-                           <img src={a.profile_photo} alt="" className="w-6 h-6 rounded-full object-cover bg-gray-200 shadow-sm" />
-                         ) : (
-                           <div className="w-6 h-6 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shadow-sm">
-                             {a.full_name?.substring(0, 2).toUpperCase() || "U"}
-                           </div>
-                         )}
-                         <span className="text-sm font-semibold dark:text-gray-200 truncate">{a.full_name}</span>
-                       </>
-                     );
-                  })()
-                ) : (
-                  <span className="text-xs font-medium text-gray-400 italic">Unassigned</span>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">Executors</span>
-                { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
-                  <AppButton variant="secondary" 
-                    onClick={async () => {
-                      if (!isEditingAssignees) {
-                        if (stakeholders.length === 0) {
-                          try {
-                            const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
-                            const res = await fetchWorkspaceStakeholders(task.workspace_id);
-                            setStakeholders(res);
-                          } catch (err) {
-                            console.error(err);
-                          }
-                        }
-                        setEditingAssigneesList(explicitExecutors.map((e: any) => e.id));
-                      }
-                      setIsEditingAssignees(!isEditingAssignees);
-                    }} 
-                    className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 hover:opacity-80 underline"
-                  >
-                    {isEditingAssignees ? 'Cancel' : 'Edit'}
-                  </AppButton>
-                )}
-              </div>
+          <div className="p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
               
-              {isEditingAssignees ? (
-                <div ref={assigneesRef} className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 theme-card-structural border-emerald-200`}>
-                  <div className="flex flex-col gap-1">
-                    {stakeholders.map(s => (
-                      <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-black/5 dark:hover:bg-surface/5 p-1 rounded-md transition-colors">
-                        <input type="checkbox" className="accent-emerald-500 h-3 w-3 rounded" checked={editingAssigneesList.includes(s.id)} onChange={e => {
-                          if (e.target.checked) setEditingAssigneesList([...editingAssigneesList, s.id]);
-                          else setEditingAssigneesList(editingAssigneesList.filter(id => id !== s.id));
-                        }} />
-                        <span className="truncate">{s.full_name}</span>
-                      </label>
-                    ))}
-                    {stakeholders.length === 0 && <span className="text-xs text-gray-500 p-1">Loading...</span>}
-                  </div>
-                  <AppButton 
-                    size="sm" 
-                    className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-[10px] h-7" 
-                    onClick={() => {
-                      setPendingAssignees(editingAssigneesList);
-                      setIsEditingAssignees(false);
-                    }}
-                  >
-                    Stage Assignees
-                  </AppButton>
+              {/* 1. Creator */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Creator</span>
+                </span>
+                <div className="theme-data-value text-foreground h-9 flex items-center truncate">
+                  {task.creator?.full_name || task.created_by?.full_name || task.created_by_user?.full_name || "System Actor"}
                 </div>
-              ) : (
-                <div className="text-sm font-medium dark:text-gray-200 theme-card-structural /50 dark:bg-black/20 p-2 rounded-lg border-white/20 dark:border-white/5 min-h-[42px] flex items-center">
-                  {pendingAssignees ? (
-                    <span className="text-emerald-500 font-bold italic animate-pulse text-xs">Pending save...</span>
+              </div>
+
+              {/* 2. Created At */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-slate-500/5 dark:bg-slate-500/10 border border-slate-200/60 dark:border-slate-800/40 hover:border-slate-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Created At</span>
+                </span>
+                <div className="theme-data-value text-foreground h-9 flex items-center">
+                  {task.created_at ? new Date(task.created_at).toLocaleString() : "Unknown"}
+                </div>
+              </div>
+
+              {/* 3. Last Status */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-200/60 dark:border-indigo-800/40 hover:border-indigo-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Last Status</span>
+                </span>
+                <div className="theme-data-value text-foreground h-9 flex items-center">
+                  {task.status?.name || task.status?.status_name || "Open"}
+                </div>
+              </div>
+
+              {/* 4. Last Updated */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-purple-500/5 dark:bg-purple-500/10 border border-purple-200/60 dark:border-purple-800/40 hover:border-purple-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Last Updated</span>
+                </span>
+                <div className="theme-data-value text-foreground h-9 flex items-center">
+                  {task.updated_at ? new Date(task.updated_at).toLocaleString() : (task.created_at ? new Date(task.created_at).toLocaleString() : "Unknown")}
+                </div>
+              </div>
+
+              {/* 5. Priority */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-rose-500/5 dark:bg-rose-500/10 border border-rose-200/60 dark:border-rose-800/40 hover:border-rose-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <Flag className="w-3.5 h-3.5 text-rose-500" /> <span className="text-rose-500 font-bold">Priority</span>
+                </span>
+                <div className="h-9 flex items-center">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border dark:border-white/10" style={{ backgroundColor: `var(--accent-primary)15` }}>
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || '#cbd5e1' }} />
+                    <span className="theme-data-value" style={{ color: task.priority?.color || ("#64748b") }}>{task.priority?.name || "Standard"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. Duration */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-cyan-500/5 dark:bg-cyan-500/10 border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> <span className="text-cyan-600 dark:text-cyan-400 font-bold">Duration</span>
+                </span>
+                <div className="theme-data-value text-foreground h-9 flex items-center">
+                  {task.currentUserIsSuperAdmin ? (
+                    <div className="flex items-center gap-1 text-xs">
+                      <input
+                        type="number"
+                        className="w-16 px-2 py-0.5 border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-center font-bold text-foreground"
+                        value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
+                        onChange={(e) => {
+                          if (!task.start_date) return;
+                          const days = parseInt(e.target.value, 10);
+                          if (!isNaN(days) && days > 0) {
+                            const startDate = new Date(task.start_date);
+                            startDate.setDate(startDate.getDate() + (days - 1));
+                            const newEndDateStr = startDate.toISOString().split('T')[0];
+                            setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
+                            setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
+                          }
+                        }}
+                      /> <span className="text-muted font-medium text-xs">Days</span>
+                    </div>
                   ) : (
-                    <span className="truncate">
-                      {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic text-xs">None</span>}
+                    <span>
+                      {task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0} <span className="text-muted font-medium text-xs">Days</span>
                     </span>
                   )}
                 </div>
-              )}
-            </div>
-            
-            <div className="space-y-1.5 col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">Watchers (Team)</span>
-              <div className="text-sm font-medium dark:text-gray-200 leading-relaxed theme-card-structural /50 dark:bg-black/20 p-2 rounded-lg border-white/20 dark:border-white/5">
-                {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-gray-400 italic text-xs">None</span>}
+              </div>
+
+              {/* 7. Start Date */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <CalendarDays className="w-3.5 h-3.5 text-emerald-500" /> <span className="text-emerald-600 dark:text-emerald-400 font-bold">Start Date</span> <span className="text-red-500">*</span>
+                </span>
+                <div className="h-9 flex items-center">
+                  {task.currentUserIsSuperAdmin ? (
+                    <input
+                      type="date"
+                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/40 dark:bg-accent/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
+                      value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
+                      onChange={(e) => {
+                        const newStartDate = e.target.value;
+                        setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
+                        setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
+                      }}
+                    />
+                  ) : (
+                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-surface border border-border text-foreground`}>
+                      {task.start_date ? new Date(task.start_date).toLocaleDateString() : "Not set"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 8. Due Date */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <CalendarCheck className="w-3.5 h-3.5 text-amber-500" /> <span className="text-amber-600 dark:text-amber-400 font-bold">Due Date</span> <span className="text-red-500">*</span>
+                </span>
+                <div className="h-9 flex items-center">
+                  {task.currentUserIsSuperAdmin ? (
+                    <input
+                      type="date"
+                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/40 dark:bg-accent/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
+                      value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
+                      onChange={(e) => {
+                        const newEndDate = e.target.value;
+                        setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDate }));
+                        setTask((prev: any) => ({ ...prev, end_date: newEndDate }));
+                      }}
+                    />
+                  ) : (
+                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold ${
+                      task.end_date && new Date(task.end_date) < new Date() ? "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400" : "bg-surface border border-border text-foreground"
+                    }`}>
+                      {task.end_date ? new Date(task.end_date).toLocaleDateString() : "Not set"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 9. Primary Assignee */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Primary Assignee</span>
+                </span>
+                <div className="flex items-center gap-2 h-9 overflow-hidden">
+                  {task.assignee ? (
+                    (() => {
+                       const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                       if (!a) return null;
+                       return (
+                         <>
+                           {a.profile_photo ? (
+                             <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200 shadow-xs" />
+                           ) : (
+                             <div className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-[10px] font-bold shadow-xs">
+                               {a.full_name?.substring(0, 2).toUpperCase() || "U"}
+                             </div>
+                           )}
+                           <span className="theme-data-value text-foreground truncate">{a.full_name}</span>
+                         </>
+                       );
+                    })()
+                  ) : (
+                    <span className="text-xs font-medium text-muted italic">Unassigned</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 10. Executors */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-400/80 transition-all duration-200 min-h-[76px] justify-center relative backdrop-blur-xs">
+                <div className="flex items-center justify-between">
+                  <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-emerald-500" /> <span className="text-emerald-600 dark:text-emerald-400 font-bold">Executors</span>
+                  </span>
+                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
+                    <AppButton variant="secondary" 
+                      onClick={async () => {
+                        if (!isEditingAssignees) {
+                          if (stakeholders.length === 0) {
+                            try {
+                              const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
+                              const res = await fetchWorkspaceStakeholders(task.workspace_id);
+                              setStakeholders(res);
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }
+                          setEditingAssigneesList(explicitExecutors.map((e: any) => e.id));
+                        }
+                        setIsEditingAssignees(!isEditingAssignees);
+                      }} 
+                      className="text-[10px] font-bold text-muted0 hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                    >
+                      {isEditingAssignees ? 'Cancel' : 'Edit'}
+                    </AppButton>
+                  )}
+                </div>
+                
+                {isEditingAssignees ? (
+                  <div ref={assigneesRef} className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 theme-card-structural border-emerald-200 absolute z-50 w-[240px] bg-surface left-0 top-full`}>
+                    <div className="flex flex-col gap-1">
+                      {stakeholders.map(s => (
+                        <label key={s.id} className="flex items-center gap-2 text-xs text-foreground cursor-pointer hover:bg-accent/10 p-1 rounded-md transition-colors">
+                          <input type="checkbox" className="accent-emerald-500 h-3 w-3 rounded" checked={editingAssigneesList.includes(s.id)} onChange={e => {
+                            if (e.target.checked) setEditingAssigneesList([...editingAssigneesList, s.id]);
+                            else setEditingAssigneesList(editingAssigneesList.filter(id => id !== s.id));
+                          }} />
+                          <span className="truncate font-semibold">{s.full_name}</span>
+                        </label>
+                      ))}
+                      {stakeholders.length === 0 && <span className="text-xs text-muted p-1">Loading...</span>}
+                    </div>
+                    <AppButton 
+                      size="sm" 
+                      className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-[10px] h-7 text-white" 
+                      onClick={() => {
+                        setPendingAssignees(editingAssigneesList);
+                        setIsEditingAssignees(false);
+                      }}
+                    >
+                      Stage Assignees
+                    </AppButton>
+                  </div>
+                ) : (
+                  <div className="text-xs sm:theme-data-value text-foreground h-9 flex items-center overflow-hidden">
+                    {pendingAssignees ? (
+                      <span className="text-accent font-bold italic animate-pulse text-xs">Pending save...</span>
+                    ) : (
+                      <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
+                        {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {/* 11. Watchers (Team) */}
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-400/80 transition-all duration-200 min-h-[76px] justify-center sm:col-span-2 lg:col-span-2 backdrop-blur-xs">
+                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-amber-500" /> <span className="text-amber-600 dark:text-amber-400 font-bold">Watchers (Team)</span>
+                </span>
+                <div className="text-xs sm:theme-data-value text-foreground h-9 flex items-center overflow-hidden">
+                  <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
+                     {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </AppCard>
       </div>
 
-      {/* Interactive Lifecycle State Transition Panel (MOVED TO TOP) */}
-      <div className={`p-4 rounded-xl shadow-sm space-y-3 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:border-accent/30 dark:hover:shadow-purple-500/20 dark:hover:border-accent/40 ${ "theme-card-structural /80" }`}>
+      
+      {/* 4. Remarks and Updates Group - Dedicated Card with Background-Colored Header */}
+      <div>
+        <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
+          <div className="bg-gradient-to-r from-amber-500/15 via-surface/90 to-surface/40 dark:from-amber-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="w-1.5 h-4 rounded-full bg-amber-500 shadow-xs" />
+              <MessageSquare className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-pulse" />
+              <h3 className="font-bold text-sm tracking-wide text-foreground">Remarks and Updates</h3>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-accent bg-accent/10 dark:bg-accent/20 px-2.5 py-0.5 rounded-full border border-accent/30 dark:shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+              Data Feeding Zone
+            </span>
+          </div>
+          
+          <div className="p-5 space-y-6">
+{/* Interactive Lifecycle State Transition Panel (MOVED TO TOP) */}
+      
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Status Field</label>
+            <label className="theme-data-value uppercase tracking-wider text-muted">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
               disabled={readOnly || (!canEditCore && !(isOwner || isExecutor))}
@@ -939,9 +1113,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingStatus(newCode);
                 }
               }}
-              className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-shadow ${
-                "bg-surface border-border text-foreground"
-              } ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-10 px-3 rounded-xl theme-data-value border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/50 dark:bg-accent/10 dark:shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
@@ -950,7 +1122,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           </div>
           
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Department Field</label>
+            <label className="theme-data-value uppercase tracking-wider text-muted">Department Field</label>
             <select
               value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
               disabled={readOnly || (!canEditCore && !(isOwner || isExecutor))}
@@ -962,9 +1134,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingDepartment(newDept);
                 }
               }}
-              className={`w-full p-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-accent transition-shadow ${
-                "bg-surface border-border text-foreground"
-              } ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-10 px-3 rounded-xl theme-data-value border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/50 dark:bg-accent/10 dark:shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="">-- No Department --</option>
               {departments.map(dept => (
@@ -974,7 +1144,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           </div>
           
           <div className="space-y-1.5 w-full">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 block text-right w-full">
+            <label className="theme-data-value uppercase tracking-wider text-muted block text-right w-full">
               Quick Action Operations
             </label>
             <div className="flex flex-wrap justify-end gap-2 pt-0.5 w-full">
@@ -1019,7 +1189,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <AppButton 
                     size="sm" 
                     variant="ghost" 
-                    className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                    className="text-accent hover:bg-rose-50 dark:hover:bg-rose-500/10"
                     leftIcon={<RotateCcw className="h-4 w-4" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("reopen")}
@@ -1044,7 +1214,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   variant="outline" 
                   size="sm" 
-                  className="text-rose-500 hover:bg-rose-50 border-rose-200 dark:border-rose-500/20 dark:hover:bg-rose-500/10" 
+                  className="text-accent hover:bg-rose-50 border-rose-200 dark:border-rose-500/20 dark:hover:bg-rose-500/10" 
                   onClick={handleDeleteTask} 
                   disabled={deleteLoading || actionLoading}
                   leftIcon={<Trash2 className="h-4 w-4" />}
@@ -1076,7 +1246,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">Destination Workspace <span className="text-red-500">*</span></label>
+                      <label className="theme-data-value text-gray-700 dark:text-gray-300 mb-1.5 block">Destination Workspace <span className="text-red-500">*</span></label>
                       <select
                         value={selectedTransferSubworkspace || selectedTransferWorkspace}
                         onChange={e => {
@@ -1129,7 +1299,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       
                       {isOwnerDropped && (
                         <div className="theme-card-structural /50 dark:bg-black/20 p-3 rounded border-amber-200 dark:border-amber-500/30">
-                          <label className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1.5 block">Assign New Primary Owner <span className="text-red-500">*</span></label>
+                          <label className="theme-data-value text-amber-800 dark:text-amber-300 mb-1.5 block">Assign New Primary Owner <span className="text-red-500">*</span></label>
                           <select
                             value={newAssigneeId}
                             onChange={e => setNewAssigneeId(e.target.value)}
@@ -1145,7 +1315,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       
                       {true && (
                         <div className="theme-card-structural /50 dark:bg-black/20 p-3 rounded border-amber-200 dark:border-amber-500/30 mt-2">
-                          <label className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1.5 block">Assign Additional Executives (Optional)</label>
+                          <label className="theme-data-value text-amber-800 dark:text-amber-300 mb-1.5 block">Assign Additional Executives (Optional)</label>
                           <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
                             {targetStakeholders.map(s => (
                               <label key={s.id} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 p-1 hover:bg-black/5 dark:hover:bg-surface/5 rounded cursor-pointer">
@@ -1168,7 +1338,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   )}
 
                   <div>
-                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 block">Transfer Remarks (Mandatory) <span className="text-red-500">*</span></label>
+                    <label className="theme-data-value text-gray-700 dark:text-gray-300 mb-1 block">Transfer Remarks (Mandatory) <span className="text-red-500">*</span></label>
                     <textarea 
                       value={transferRemarks}
                       onChange={e => setTransferRemarks(e.target.value)}
@@ -1187,7 +1357,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             )}
           </div>
         </div>
-      </div>
 
         {pendingStatus && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
@@ -1204,19 +1373,25 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         )}
 
         {pendingAssignees && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-accent text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
             <span>Executors change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <AppButton variant="secondary" onClick={() => setPendingAssignees(null)} className="text-xs text-emerald-500/60 hover:text-emerald-500 font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+            <AppButton variant="secondary" onClick={() => setPendingAssignees(null)} className="text-xs text-accent/60 hover:text-accent font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
  
-        <div className="space-y-3">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Task Remarks <span className="text-red-500">*</span></label>
-          <textarea
+        <div className="space-y-3 p-4 rounded-2xl bg-surface/40 dark:bg-accent/5 dark:border dark:border-accent/40 dark:shadow-[0_0_18px_rgba(99,102,241,0.12)] transition-all">
+          <div className="flex items-center justify-between">
+            <label className="theme-data-value uppercase tracking-wider text-foreground flex items-center gap-1.5">
+              Task Remarks <span className="text-rose-500 font-extrabold">*</span>
+            </label>
+            <span className="text-[10px] font-extrabold tracking-wider text-accent bg-accent/15 px-2 py-0.5 rounded-md border border-accent/30">
+              Required Handoff Input
+            </span>
+          </div>
+          <RichTextEditor
             value={remarksDraft}
-            onChange={e => setRemarksDraft(e.target.value)}
-            disabled={!canAddRemark}
-            className={`w-full min-h-[64px] p-2 rounded-md text-[13px] focus:outline-none focus:ring-1 focus:ring-accent transition-colors ${ "theme-card-structural text-foreground" } ${!canAddRemark ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onChange={setRemarksDraft}
+            readOnly={!canAddRemark}
             placeholder={!canAddRemark ? "Task is frozen/read-only." : "Add update notes or handoff remarks..."}
           />
           <div className="flex items-center justify-between gap-3">
@@ -1239,7 +1414,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             >
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-accent" />
-                <span className={`text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                <span className={`theme-data-value uppercase tracking-wider transition-colors ${
                   "text-muted group-hover:text-accent"
                 }`}>
                   Remarks History Queue
@@ -1309,7 +1484,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             {/* Content Block */}
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
-                                <span className={`text-xs font-bold transition-colors ${
+                                <span className={`theme-data-value transition-colors ${
                                   "text-foreground group-hover/item:text-accent"
                                 }`}>
                                   {item.user?.full_name || "System Actor"}
@@ -1336,302 +1511,188 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             )}
           </div>
         </div>
+      </div>
+        </AppCard>
+      </div>
 
-        {/* Editable Custom Fields */}
-        {localCustomFields && Object.keys(localCustomFields).length > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2"><Pin className="w-3.5 h-3.5" /> Custom Properties</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {Object.entries(localCustomFields).map(([key, val]) => {
-                const normalizedKey = key.toLowerCase().replace(/\s+/g, '_');
-                const isReadOnlyProp = readOnly;
+
+      {/* 5. Utilities & Communication Group - Dedicated Card with 7 Tabs */}
+      <div>
+        <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
+          <div className="bg-gradient-to-r from-emerald-500/15 via-surface/90 to-surface/40 dark:from-emerald-500/25 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center gap-2.5 rounded-t-2xl">
+            <div className="w-1.5 h-4 rounded-full bg-emerald-500 shadow-xs" />
+            <ActivitySquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="font-bold text-sm tracking-wide text-foreground">Utilities & Communication</h3>
+          </div>
+          
+          <div className="p-5">
+            {/* 7 Tab Navigation Buttons */}
+            <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-surface/80 dark:bg-elevated/40 border border-border/80 mb-6 shadow-xs">
+              {[
+                { id: 'tags', label: 'Tags', icon: Pin },
+                { id: 'links', label: 'Link URL', icon: LinkIcon },
+                { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: Math.max(task._meta?.checklistCount || 0, task.checklists?.length || 0) },
+                { id: 'attachments', label: 'Attachment', icon: Paperclip, count: Math.max(task._meta?.attachmentCount || 0, task.attachments?.length || 0) },
+                { id: 'chat', label: 'Chat', icon: MessageCircle },
+                { id: 'timeline', label: 'Audit (Timeline)', icon: ActivitySquare },
+                { id: 'time', label: 'Time Logs', icon: Clock }
+              ].map(t => {
+                const isActive = activeTab === t.id;
                 return (
-                  <div key={key} className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                      {key.replace(/_/g, ' ')}
-                    </label>
-                    {isReadOnlyProp || !canEditCore ? (
-                      <div className={`w-full p-2.5 rounded-lg text-sm border shadow-sm ${normalizedKey !== 'link_url' && 'cursor-not-allowed'} ${
-                        "bg-surface border-border text-muted"
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setActiveTab(t.id as any)}
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl theme-data-value transition-all duration-200 cursor-pointer select-none ${
+                      isActive 
+                        ? "bg-accent text-white shadow-md shadow-accent/25 border border-accent scale-[1.02]" 
+                        : "bg-surface hover:bg-elevated text-muted hover:text-foreground border border-border/60 hover:border-border"
+                    }`}
+                  >
+                    <t.icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-accent"}`} />
+                    <span>{t.label}</span>
+                    {t.count !== undefined && t.count > 0 && (
+                      <span className={`ml-1 px-1.5 py-0.2 text-[10px] font-extrabold rounded-full ${
+                        isActive 
+                          ? "bg-white/20 text-white" 
+                          : "bg-accent/10 text-accent border border-accent/20"
                       }`}>
-                        {normalizedKey === 'link_url' && val && val !== "null" ? (
-                          <a href={String(val).startsWith('http') ? String(val) : `https://${val}`} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{String(val)}</a>
-                        ) : (
-                          val === null || val === "null" ? "" : String(val)
-                        )}
-                      </div>
-                    ) : (
-                      <div className="relative flex items-center">
-                        <AppInput 
-                          value={val === null || val === "null" ? "" : String(val)} 
-                          onChange={e => handleCustomFieldChange(key, e.target.value)} 
-                          className={`shadow-sm ${normalizedKey === 'link_url' && val && val !== "null" ? "pr-8" : ""}`}
-                        />
-                        {normalizedKey === 'link_url' && val && val !== "null" && (
-                          <a 
-                            href={String(val).startsWith('http') ? String(val) : `https://${val}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            title="Open Link"
-                            className="absolute right-3 text-accent hover:text-accent transition-colors"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                      </div>
+                        {t.count}
+                      </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
-          </div>
-        )}
 
-
-      {/* Tabs Menu */}
-      <div className={`flex border-b border-gray-200 dark:border-white/5`}>
-        {(["checklist", "attachments"] as const).map((tab) => (
-          <AppButton variant="secondary"
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            onMouseEnter={() => {
-              // Intelligent Prefetching on Hover
-              if (tab === "checklist" && !isChecklistsLoaded) getTaskChecklists(taskId).then(d => { setTask((p:any) => ({...p, checklists: d})); setIsChecklistsLoaded(true); });
-              if (tab === "attachments" && !isAttachmentsLoaded) getTaskAttachments(taskId).then(d => { setTask((p:any) => ({...p, attachments: d})); setIsAttachmentsLoaded(true); });
-            }}
-            className={`px-4 py-2 text-[11px] uppercase tracking-wider font-bold transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
-              activeTab === tab
-                ? "border-accent text-accent"
-                : "border-transparent text-gray-500 hover:text-gray-400"
-            }`}
-          >
-            {tab === "checklist" && <CheckSquare className="h-3.5 w-3.5" />}
-            {tab === "attachments" && <Paperclip className="h-3.5 w-3.5" />}
-            <span>{tab}</span>
-            {tab === "checklist" && Math.max(task._meta?.checklistCount || 0, task.checklists?.length || 0) > 0 && (
-              <AppBadge className={`ml-1 px-1.5 py-0 text-[9px] ${activeTab === tab ? "bg-accent/10 text-accent border-accent/30" : "bg-gray-100 text-gray-500"}`}>
-                {Math.max(task._meta?.checklistCount || 0, task.checklists?.length || 0)}
-              </AppBadge>
-            )}
-            {tab === "attachments" && Math.max(task._meta?.attachmentCount || 0, task.attachments?.length || 0) > 0 && (
-              <AppBadge className={`ml-1 px-1.5 py-0 text-[9px] ${activeTab === tab ? "bg-accent/10 text-accent border-accent/30" : "bg-gray-100 text-gray-500"}`}>
-                {Math.max(task._meta?.attachmentCount || 0, task.attachments?.length || 0)}
-              </AppBadge>
-            )}
-          </AppButton>
-        ))}
-      </div>
-
-      {/* Dynamic Tab Body */}
-      <div className="min-h-[180px] pr-1">
-        
-        {/* Checklist Tab */}
-        {activeTab === "checklist" && (
-          <div className="space-y-4">
-            {canEditAux && (
-              <form onSubmit={handleAddChecklist} className="flex gap-2">
-                <AppInput 
-                  placeholder="New operational checkoff point..." 
-                  value={newChecklistLabel}
-                  onChange={e => setNewChecklistLabel(e.target.value)}
-                  className="h-9 text-xs"
-                />
-                <AppButton type="submit" variant="primary" size="sm" className="h-9 shrink-0"><Plus className="h-4 w-4"/></AppButton>
-              </form>
-            )}
-
-            <div className="space-y-2">
-              {(task.checklists || []).map((item: any) => (
-                <div 
-                  key={item.id} 
-                  onClick={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
-                  className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors ${canEditAux ? 'cursor-pointer' : 'cursor-default opacity-80'} ${ item.is_completed ? ("bg-emerald-50/40 border-emerald-100 opacity-60") : ("theme-card-structural ") }`}
-                >
-                  <input 
-                    type="checkbox" 
-                    checked={item.is_completed}
-                    onChange={() => {}} // Controlled by parent div click
-                    className="rounded border-gray-300 text-accent focus:ring-accent h-4 w-4 shrink-0 pointer-events-none"
-                  />
-                  <span className={`text-xs ${item.is_completed ? "line-through text-gray-500" : "text-foreground"}`}>
-                    {item.label}
-                  </span>
-                </div>
-              ))}
-              {(task.checklists || []).length === 0 && (
-                <div className="text-center py-8 text-xs text-gray-500">No checklists created yet.</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Attachments Tab */}
-        {activeTab === "attachments" && (
-          <div className="space-y-4">
-            {isLoadingTab && !isAttachmentsLoaded ? (
-              <div className="py-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-accent" /></div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Attachments</span>
-                  {canEditAux && (
-                    <AppButton variant="primary"
-                      type="button"
-                      onClick={triggerFileSelect}
-                      className="inline-flex items-center justify-center rounded-full border-gray-200 theme-card-structural p-2 text-gray-500 transition hover:bg-accent/10 hover:text-accent"
-                      aria-label="Upload file"
-                    >
-                      <Pin className="h-4 w-4" />
-                    </AppButton>
-                  )}
-                </div>
-
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  onChange={handleFileChange} 
-                />
-
-                {canEditAux && (
-                  <div 
-                    onClick={triggerFileSelect}
-                    className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                      "border-border bg-elevated hover:bg-elevated/50"
-                    }`}
-                  >
-                    {uploadingFile ? (
-                      <div className="space-y-2 flex flex-col items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-accent" />
-                        <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Uploading file...</span>
-                      </div>
-                    ) : (
-                      <div className="space-y-2 flex flex-col items-center justify-center">
-                        <Paperclip className="h-6 w-6 text-accent" />
-                        <span className="text-xs font-bold text-accent hover:text-accent block">Click to select and upload file</span>
-                        <span className="text-xs text-gray-500 block">Supports any document or image file</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  {(task.attachments || []).map((item: any) => {
-                    const isNativeViewable = !!item.file_name?.match(/\.(pdf|jpe?g|png|gif|webp|svg|txt|mp4|webm|mp3|wav|ogg)$/i);
-                    const isOfficeDoc = !!item.file_name?.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i);
-                    
-                    let viewUrl = item.file_url;
-                    if (!isNativeViewable && isOfficeDoc) {
-                      // Use window.location.origin to get the absolute path for the proxy so Microsoft can reach it
-                      const proxyUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/proxy-attachment/${item.id}` : '';
-                      viewUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(proxyUrl)}`;
-                    }
-                    
-                    return (
-                    <div 
-                      key={item.id} 
-                      className={`flex items-center justify-between p-3 rounded-xl ${ "theme-card-structural " }`}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <Paperclip className="h-4 w-4 text-accent shrink-0" />
-                        <div className="truncate space-y-0.5">
-                          <span className={`text-xs font-bold block truncate ${"text-foreground"}`}>{item.file_name}</span>
-                          <span className="text-[0.7rem] text-gray-500 block">{(item.size / 1024 / 1024).toFixed(2)} MB</span>
+            {/* Tab Contents */}
+            <div className="pt-4">
+              {/* Tags Tab */}
+              {activeTab === 'tags' && (
+                <div className="space-y-4">
+                  <h4 className="theme-data-value uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                    <Pin className="w-3.5 h-3.5 text-accent" /> Custom Properties & Tags
+                  </h4>
+                  {localCustomFields && Object.keys(localCustomFields).length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {Object.entries(localCustomFields).map(([key, val]) => (
+                        <div key={key} className="p-3 rounded-lg border border-border/40 bg-surface/40 space-y-1">
+                          <span className="text-[10px] font-bold uppercase text-gray-500">{key.replace(/_/g, ' ')}</span>
+                          <div className="text-xs font-semibold text-foreground">{val ? String(val) : "Not set"}</div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <a 
-                          href={viewUrl} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          title={(!isNativeViewable && isOfficeDoc) ? "View via Office Viewer" : "View Attachment"}
-                          className="p-1.5 rounded-lg theme-card-structural /5 border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </a>
-                        <a 
-                          href={`${item.file_url}?download=`} 
-                          download
-                          title="Download Attachment"
-                          className="p-1.5 rounded-lg theme-card-structural /5 border-white/5 hover:border-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </a>
-                      </div>
+                      ))}
                     </div>
-                  )})}
-                  {(task.attachments || []).length === 0 && (
-                    <div className="text-center py-8 text-xs text-gray-500">No attachments linked to this directive.</div>
+                  ) : (
+                    <div className="text-xs text-gray-400 italic py-4 text-center">No custom tags assigned to this task.</div>
                   )}
                 </div>
-              </>
-            )}
-          </div>
-        )}
+              )}
 
-      </div>
-      
-      {/* Toast Notification */}
-      {successToast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
-          <span className="text-xs font-semibold">{successToast}</span>
-        </div>
-      )}
-
-      {/* Pending Amendment Popup Modal */}
-      {task?.custom_fields?.pending_amendment && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <AppCard className="w-full max-w-lg p-6 shadow-2xl animate-in zoom-in-95 duration-200 border border-accent/20">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-accent/10 rounded-full text-accent shrink-0 mt-1">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div className="space-y-4 w-full">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Requirement Update Notification</h3>
-                  <p className="text-sm text-muted mt-1">
-                    The requirement associated with this task has been amended (Version {task.custom_fields.pending_amendment.version}).
-                  </p>
-                </div>
-                
-                <div className="p-4 bg-surface rounded-xl border border-border">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Revised Details</h4>
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{task.custom_fields.pending_amendment.revised_details}</p>
-                  
-                  {task.custom_fields.pending_amendment.attachment && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">New Attachment</h4>
-                      <div className="flex items-center gap-2 text-sm text-foreground">
-                        <Paperclip className="w-4 h-4 text-accent" />
-                        <span>{task.custom_fields.pending_amendment.attachment.file_name}</span>
-                        <span className="text-xs text-muted">({(task.custom_fields.pending_amendment.attachment.size / 1024 / 1024).toFixed(2)} MB)</span>
-                      </div>
+              {/* Link URL Tab */}
+              {activeTab === 'links' && (
+                <div className="space-y-4">
+                  <h4 className="theme-data-value uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                    <LinkIcon className="w-3.5 h-3.5 text-accent" /> Link URLs & External Resources
+                  </h4>
+                  {localCustomFields?.link_url ? (
+                    <div className="p-3 rounded-lg border border-border/40 bg-surface/40 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-accent underline truncate">{localCustomFields.link_url}</span>
+                      <a href={String(localCustomFields.link_url).startsWith('http') ? String(localCustomFields.link_url) : `https://${localCustomFields.link_url}`} target="_blank" rel="noopener noreferrer" className="theme-data-value text-accent hover:underline flex items-center gap-1">
+                        Open <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
                     </div>
+                  ) : (
+                    <div className="text-xs text-gray-400 italic py-4 text-center">No external links attached to this task.</div>
                   )}
                 </div>
-                
-                <div className="pt-2">
-                  <AppButton 
-                    className="w-full justify-center shadow-lg shadow-accent/20" 
-                    onClick={handleAcknowledgeAmendment}
-                    disabled={isAcknowledging}
-                  >
-                    {isAcknowledging ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Applying Update...
-                      </>
-                    ) : (
-                      "Acknowledge & Update Task"
-                    )}
-                  </AppButton>
+              )}
+
+              {/* Checklist Tab */}
+              {activeTab === 'checklist' && (
+                <div className="space-y-4">
+                  {!readOnly && canEditAux && (
+                    <form onSubmit={handleAddChecklist} className="flex gap-2">
+                      <AppInput
+                        placeholder="Add new item..."
+                        value={newChecklistLabel}
+                        onChange={e => setNewChecklistLabel(e.target.value)}
+                        className="text-xs"
+                      />
+                      <AppButton type="submit" variant="secondary" size="sm">Add</AppButton>
+                    </form>
+                  )}
+                  {task.checklists && task.checklists.length > 0 ? (
+                    <div className="space-y-2">
+                      {task.checklists.map((item: any) => (
+                        <div 
+                          key={item.id} 
+                          className="flex items-center gap-2.5 p-2 rounded-lg border border-border/30 hover:bg-surface/50 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={item.is_completed}
+                            onChange={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
+                            disabled={readOnly || !canEditAux}
+                            className="h-4 w-4 rounded accent-accent"
+                          />
+                          <span className={`text-xs ${item.is_completed ? "line-through text-gray-400" : "text-foreground"}`}>
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-400 italic py-4 text-center">No checklist items created.</div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* Attachments Tab */}
+              {activeTab === 'attachments' && (
+                <div className="space-y-4">
+                  {!readOnly && canEditAux && (
+                    <div className="flex items-center gap-2">
+                      <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                      <AppButton variant="secondary" size="sm" onClick={triggerFileSelect} leftIcon={<Paperclip className="w-3.5 h-3.5" />}>
+                        Upload Attachment
+                      </AppButton>
+                    </div>
+                  )}
+                  {task.attachments && task.attachments.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {task.attachments.map((item: any) => (
+                        <div key={item.id} className="p-3 rounded-lg border border-border/30 bg-surface/30 flex items-center justify-between">
+                          <span className="text-xs font-semibold truncate">{item.file_name}</span>
+                          {item.file_url && (
+                            <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
+                              <Download className="w-3.5 h-3.5" /> Download
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-400 italic py-4 text-center">No file attachments uploaded.</div>
+                  )}
+                </div>
+              )}
+
+              {/* Chat Tab */}
+              {activeTab === 'chat' && <TaskRealtimeChat taskId={taskId} />}
+
+              {/* Audit Timeline Tab */}
+              {activeTab === 'timeline' && <TaskActivityTimeline taskId={taskId} />}
+
+              {/* Time Logs Tab */}
+              {activeTab === 'time' && <TaskTimeLogs taskId={taskId} />}
             </div>
-          </AppCard>
-        </div>
-      )}
-    </AppCard>
+          </div>
+        </AppCard>
+      </div>
+    </div>
     </ExperienceProvider>
   );
 }
 
+
+// HMR Force Reload: 1785172251227

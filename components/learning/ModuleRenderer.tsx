@@ -17,7 +17,7 @@ import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow,
 
 export default function ModuleRenderer({ module }: { module: LearningModule }) {
   const { theme } = useTheme();
-  const isLight = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   if (!module) return null;
 

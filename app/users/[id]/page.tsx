@@ -50,7 +50,7 @@ export default function UserFormPage() {
   
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "industrial-control", "glassmorphism"].includes(theme);
+  const isLightMode = ["light-neumorphic", "industrial-control"].includes(theme);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -505,7 +505,7 @@ export default function UserFormPage() {
               <div className="pt-6 border-t border-border space-y-5">
                 <h4 className="text-sm font-semibold mb-2">Supabase Credentials</h4>
                 <div>
-                  <label className="text-xs font-semibold mb-1 block text-muted-foreground">New Password {isEditingMode && "(Leave empty to keep current)"}</label>
+                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">New Password {isEditingMode && "(Leave empty to keep current)"}</label>
                   <div className="relative">
                     <input 
                       type={showPassword ? "text" : "password"} 
@@ -521,7 +521,7 @@ export default function UserFormPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold mb-1 block text-muted-foreground">Confirm Password</label>
+                  <label className="text-sm font-semibold mb-1 block text-muted-foreground">Confirm Password</label>
                   <input 
                     type={showPassword ? "text" : "password"} 
                     value={formConfirmPassword} 

@@ -37,35 +37,43 @@ export default function TaskRightPanel({ taskId }: { taskId: string }) {
     <div className="h-full min-h-0" ref={panelRef}>
       <div className="h-full min-h-0 flex flex-col rounded-2xl p-4 theme-card-structural border-transparent transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40">
         <Tabs defaultValue="none" onValueChange={setActiveTab} value={activeTab} className="flex flex-col h-full min-h-0">
-          <TabsList className="w-full grid grid-cols-3 shrink-0 gap-2 bg-transparent p-0 h-auto">
-            <TabsTrigger 
-              value="chat" 
-              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl border border-accent/30 bg-accent/10 text-accent hover:bg-accent/10 hover:text-accent data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:border-accent data-[state=active]:shadow-md dark:border-accent/20 dark:bg-accent/10 dark:text-accent dark:hover:bg-accent/20 dark:data-[state=active]:bg-accent dark:data-[state=active]:text-white dark:data-[state=active]:border-accent transition-all"
-            >
-              <MessageCircle className="h-4 w-4" />
+          
+          <TabsList className="w-full flex flex-wrap gap-2 bg-transparent p-0 h-auto">
+            <TabsTrigger value="tags" className="py-2 px-3 text-xs font-bold rounded-xl border border-gray-200 data-[state=active]:bg-accent data-[state=active]:text-white">Tags</TabsTrigger>
+            <TabsTrigger value="links" className="py-2 px-3 text-xs font-bold rounded-xl border border-gray-200 data-[state=active]:bg-accent data-[state=active]:text-white">Links</TabsTrigger>
+            <TabsTrigger value="checklist" className="py-2 px-3 text-xs font-bold rounded-xl border border-gray-200 data-[state=active]:bg-accent data-[state=active]:text-white">Checklist</TabsTrigger>
+            <TabsTrigger value="attachment" className="py-2 px-3 text-xs font-bold rounded-xl border border-gray-200 data-[state=active]:bg-accent data-[state=active]:text-white">Attachment</TabsTrigger>
+            <TabsTrigger value="chat" className="py-2 px-3 text-xs font-bold rounded-xl border border-gray-200 data-[state=active]:bg-accent data-[state=active]:text-white">
               Chat
             </TabsTrigger>
-            <TabsTrigger 
-              value="timeline" 
-              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl border border-accent/30 bg-accent/10 text-accent hover:bg-accent/10 hover:text-accent data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:border-accent data-[state=active]:shadow-md dark:border-accent/20 dark:bg-accent/10 dark:text-accent dark:hover:bg-accent/20 dark:data-[state=active]:bg-accent dark:data-[state=active]:text-white dark:data-[state=active]:border-accent transition-all"
-            >
-              <ActivitySquare className="h-4 w-4" />
+            <TabsTrigger value="timeline" className="py-2 px-3 text-xs font-bold rounded-xl border border-gray-200 data-[state=active]:bg-accent data-[state=active]:text-white">
               Audit
             </TabsTrigger>
-            <TabsTrigger 
-              value="time" 
-              className="py-2.5 text-xs font-bold gap-1.5 px-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:border-emerald-600 data-[state=active]:shadow-md dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 dark:data-[state=active]:bg-emerald-600 dark:data-[state=active]:text-white dark:data-[state=active]:border-emerald-600 transition-all"
-            >
-              <Clock className="h-4 w-4" />
+            <TabsTrigger value="time" className="py-2 px-3 text-xs font-bold rounded-xl border border-gray-200 data-[state=active]:bg-accent data-[state=active]:text-white">
               Time
             </TabsTrigger>
           </TabsList>
+
           
           <TabsContent value="none" className="m-0">
             <div className="text-center py-4 text-xs text-gray-500 font-bold rounded-xl mt-4 dark:border-white/5 bg-gray-50/50 dark:theme-card-structural /[0.02]">
               Select a tab to view task Logs
             </div>
           </TabsContent>
+          
+          <TabsContent value="tags" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
+            <div className="text-center py-8 text-sm text-gray-500 font-bold border border-dashed border-gray-200 rounded-xl">Tags integration coming soon</div>
+          </TabsContent>
+          <TabsContent value="links" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
+            <div className="text-center py-8 text-sm text-gray-500 font-bold border border-dashed border-gray-200 rounded-xl">Links integration coming soon</div>
+          </TabsContent>
+          <TabsContent value="checklist" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
+            <div className="text-center py-8 text-sm text-gray-500 font-bold border border-dashed border-gray-200 rounded-xl">Checklist integration coming soon</div>
+          </TabsContent>
+          <TabsContent value="attachment" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
+            <div className="text-center py-8 text-sm text-gray-500 font-bold border border-dashed border-gray-200 rounded-xl">Attachments integration coming soon</div>
+          </TabsContent>
+
           <TabsContent value="chat" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
             {activeTab === "chat" && <TaskRealtimeChat taskId={taskId} />}
           </TabsContent>

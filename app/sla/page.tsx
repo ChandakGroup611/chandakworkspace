@@ -49,7 +49,7 @@ export default function SLAPage() {
   const canView = roleCode === "SUPER_ADMIN" || hasPermission("SLA_VIEW");
 
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   
   const [slas, setSlas] = useState<SLATracker[]>([]);
   const [loading, setLoading] = useState(true);

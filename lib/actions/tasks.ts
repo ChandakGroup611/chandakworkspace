@@ -441,7 +441,7 @@ export async function getTaskDetails(taskId: string) {
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   const userId = user?.id;
 
-  console.time("getTaskDetails - Parallel Fetch");
+  const t0 = performance.now();
   const [
     { data: task, error },
     { count: checklistCount },
@@ -461,7 +461,7 @@ export async function getTaskDetails(taskId: string) {
     supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId),
     userId ? import('@/lib/permissions') : Promise.resolve(null)
   ]);
-  console.timeEnd("getTaskDetails - Parallel Fetch");
+  const t1 = performance.now(); console.log(`[getTaskDetails] Parallel fetch took ${(t1 - t0).toFixed(2)}ms`);
 
   if (error || !task) return { error: error?.message || "Task not found" };
 
@@ -499,9 +499,7 @@ export async function getTaskDetails(taskId: string) {
 
   let usersMap = new Map<string, any>();
   if (uniqueUserIds.size > 0) {
-    console.time("getTaskDetails - Single User Query");
     const { data: allUsers } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo, user_code').in('id', Array.from(uniqueUserIds));
-    console.timeEnd("getTaskDetails - Single User Query");
     if (allUsers) allUsers.forEach(u => usersMap.set(u.id, u));
   }
 
@@ -1092,7 +1090,7 @@ export async function executeTaskBatchOperation(payload: {
 
   const { taskId, updates, statusChanges, departmentChange, checklistCreates, checklistUpdates, remarks, attachmentIds } = payload;
   
-  console.time("TaskBatch - Core Updates");
+  const tCore0 = performance.now();
   // Update Task Core
   const updatePayload = { ...updates };
   if (statusChanges) {
@@ -1106,11 +1104,10 @@ export async function executeTaskBatchOperation(payload: {
     const { error: updateError } = await supabaseAdmin.from('tasks').update(updatePayload).eq('id', taskId);
     if (updateError) return { error: updateError.message };
   }
-  console.timeEnd("TaskBatch - Core Updates");
+  const tCore1 = performance.now(); console.log(`[TaskBatch] Core Updates took ${(tCore1 - tCore0).toFixed(2)}ms`);
 
-  console.time("TaskBatch - Children Updates");
+  const tChild0 = performance.now();
   // Handle Checklists (parallel)
-  console.time("TaskBatch - Children Updates");
   // Handle Checklists (parallel)
   const checklistInsertPromise = (checklistCreates && checklistCreates.length > 0)
     ? supabaseAdmin.from('task_checklists').insert(checklistCreates.map(label => ({ task_id: taskId, label, is_completed: false }))).select()
@@ -1141,7 +1138,7 @@ export async function executeTaskBatchOperation(payload: {
     }
   }
 
-  console.timeEnd("TaskBatch - Children Updates");
+  const tChild1 = performance.now(); console.log(`[TaskBatch] Children Updates took ${(tChild1 - tChild0).toFixed(2)}ms`);
 
   // Background Side Effects (non-blocking - Phase T4)
   const sideEffects = [];

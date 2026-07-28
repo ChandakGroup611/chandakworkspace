@@ -105,7 +105,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
         <form onSubmit={handleAddTransaction} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Transaction Type *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Transaction Type *</label>
               <select value={type} onChange={(e) => setType(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none border bg-elevated border-border`}>
                 <option value="Add-on Licenses">Add-on Licenses</option>
                 <option value="Customization">Customization (OTC)</option>
@@ -114,15 +114,15 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Date *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Date *</label>
               <AppInput type="date" value={transactionDate} onChange={(e) => setTransactionDate(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">PO Number</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">PO Number</label>
               <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-1024" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Cost (Total) *</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Cost (Total) *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required className="pl-9" placeholder="0.00" />
@@ -130,12 +130,12 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
             </div>
             {type === 'Add-on Licenses' && (
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Licenses Added *</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Licenses Added *</label>
                 <AppInput type="number" value={licensesAdded} onChange={(e) => setLicensesAdded(e.target.value)} required />
               </div>
             )}
             <div className={`space-y-2 ${type !== 'Add-on Licenses' ? 'lg:col-span-4' : 'lg:col-span-3'}`}>
-              <label className="text-xs font-bold text-gray-500 uppercase">Notes / Remarks</label>
+              <label className="text-sm font-bold text-gray-500 uppercase">Notes / Remarks</label>
               <AppInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Description of the purchase" />
             </div>
           </div>

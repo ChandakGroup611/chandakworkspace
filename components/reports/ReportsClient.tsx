@@ -98,7 +98,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 export default function ReportsClient() {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canExport = roleCode === "SUPER_ADMIN" || hasPermission("REPORTS_EXPORT");
 

@@ -42,7 +42,7 @@ export default function LargeDesignMockupPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Design Category <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Design Category <span className="text-red-500">*</span></label>
                 <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
                   <option>Select Category</option>
                   <option>Architecture</option>
@@ -51,7 +51,7 @@ export default function LargeDesignMockupPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Priority Level <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Priority Level <span className="text-red-500">*</span></label>
                 <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
                   <option>High</option>
                   <option>Medium</option>
@@ -59,7 +59,7 @@ export default function LargeDesignMockupPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Target Value</label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Target Value</label>
                 <select className="w-full h-10 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white">
                   <option>Customer Experience</option>
                   <option>Operational Efficiency</option>
@@ -69,21 +69,21 @@ export default function LargeDesignMockupPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               <div className="space-y-2">
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Executive Summary</label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Executive Summary</label>
                 <textarea 
                   className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
                   placeholder="Provide a high-level summary of the design..."
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Key Constraints</label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Key Constraints</label>
                 <textarea 
                   className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
                   placeholder="Outline any budget, time, or technical constraints..."
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Design Rationale & Notes <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Design Rationale & Notes <span className="text-red-500">*</span></label>
                 <textarea 
                    className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
                    placeholder="Detailed justification and extra notes..."
@@ -100,14 +100,14 @@ export default function LargeDesignMockupPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Functional Scope <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Functional Scope <span className="text-red-500">*</span></label>
                 <textarea 
                   className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 min-h-[140px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
                   placeholder="Describe the functional features and user stories..."
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Technical Scope <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Technical Scope <span className="text-red-500">*</span></label>
                 <textarea 
                   className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 min-h-[140px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
                   placeholder="Describe APIs, database tables, and system components..."
@@ -117,15 +117,15 @@ export default function LargeDesignMockupPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Framework / Tech Stack</label>
+                  <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Framework / Tech Stack</label>
                   <input type="text" className="w-full h-10 px-3 rounded-md border text-sm bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" placeholder="e.g. Next.js, Postgres" />
                </div>
                <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Deployment Target</label>
+                  <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Deployment Target</label>
                   <input type="text" className="w-full h-10 px-3 rounded-md border text-sm bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" placeholder="e.g. AWS, Vercel" />
                </div>
                <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Integration Points</label>
+                  <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Integration Points</label>
                   <input type="text" className="w-full h-10 px-3 rounded-md border text-sm bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" placeholder="e.g. Stripe, Sendgrid" />
                </div>
             </div>
@@ -139,25 +139,25 @@ export default function LargeDesignMockupPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Start Date</label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Start Date</label>
                 <input type="date" className="w-full h-10 px-3 rounded-md border text-sm bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/50" />
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Target Due Date</label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Target Due Date</label>
                 <input type="date" className="w-full h-10 px-3 rounded-md border text-sm bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/50" />
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Estimated Effort (Days)</label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Estimated Effort (Days)</label>
                 <input type="number" className="w-full h-10 px-3 rounded-md border text-sm bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/50" placeholder="e.g. 10" />
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Est. Resources Needed</label>
+                <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Est. Resources Needed</label>
                 <input type="number" className="w-full h-10 px-3 rounded-md border text-sm bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500/50" placeholder="e.g. 2" />
               </div>
             </div>
             
             <div className="mt-4">
-              <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-gray-500">Budget Impact / Hardware Costs</label>
+              <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-gray-500">Budget Impact / Hardware Costs</label>
               <textarea 
                 className="w-full p-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500/50 min-h-[80px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white"
                 placeholder="List any software licenses, hardware, or third-party API costs expected..."

@@ -15,7 +15,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       const themeCtx = useTheme();
       theme = themeCtx.theme;
     } catch (e) {}
-    const isLight = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+    const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
     const variants = {
       success: isOutline 

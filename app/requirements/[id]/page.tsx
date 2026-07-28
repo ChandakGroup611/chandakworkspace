@@ -7,13 +7,82 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
-import { Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target } from "lucide-react";
+import { Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { usePermissions } from "@/hooks/usePermissions";
 import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
+import dynamic from "next/dynamic";
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
+
+const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }: { value: string, onChange: (val: string) => void, readOnly?: boolean, placeholder?: string }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="p-4 border rounded-xl animate-pulse bg-surface dark:bg-elevated/40 h-32 text-xs font-semibold text-muted flex items-center justify-center">Loading editor...</div>;
+  }
+
+  return (
+    <div className="quill-wrapper rounded-xl border border-border/60 bg-surface dark:bg-[#0B0F19] text-foreground overflow-hidden shadow-xs">
+      <style>{`
+        .quill-wrapper .ql-toolbar.ql-snow {
+          border: none;
+          border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+          background: rgba(243, 244, 246, 0.5);
+          border-top-left-radius: 0.75rem;
+          border-top-right-radius: 0.75rem;
+        }
+        .dark .quill-wrapper .ql-toolbar.ql-snow {
+          background: rgba(17, 24, 39, 0.8);
+        }
+        .dark .quill-wrapper .ql-stroke {
+          stroke: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-fill {
+          fill: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-picker {
+          color: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-picker-options {
+          background-color: #1F2937 !important;
+          border-color: #374151 !important;
+        }
+        .quill-wrapper .ql-container.ql-snow {
+          border: none;
+          min-height: 110px;
+          font-size: 0.875rem;
+        }
+        .quill-wrapper .ql-editor {
+          min-height: 110px;
+        }
+      `}</style>
+      <ReactQuill 
+        theme="snow" 
+        value={value} 
+        onChange={onChange}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        modules={{
+          toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['clean']
+          ]
+        }}
+      />
+    </div>
+  );
+};
 
 export default function RequirementAnalyzePage({ params }: { params: Promise<{ id: string }> }) {
   const [reqId, setReqId] = useState<string>("");
@@ -59,6 +128,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const [putToUseDate, setPutToUseDate] = useState("");
   const [submittingPutToUse, setSubmittingPutToUse] = useState(false);
   const [showReadyNotification, setShowReadyNotification] = useState(false);
+  const [isRemarksHistoryMinimized, setIsRemarksHistoryMinimized] = useState(true);
 
   const [showAmendmentDialog, setShowAmendmentDialog] = useState(false);
   const [amendmentDetails, setAmendmentDetails] = useState("");
@@ -578,7 +648,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const snap = requirement.intake_snapshot || {};
 
   return (
-    <PageContainer strict={false} className="px-4 pb-4 pt-2">
+    <PageContainer strict={false} className="px-4 pb-12 pt-2 min-h-screen overflow-y-auto">
       <div className="flex items-center justify-between pb-2 mb-2 shrink-0 border-b border-gray-200 dark:border-white/5">
         <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-2">
@@ -590,7 +660,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <AppBadge variant="info">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
           <div className="flex items-center gap-2 ml-2 border-l border-gray-300 dark:border-white/10 pl-3 hidden md:flex">
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Priority:</span>
-            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full text-foreground tracking-wide shadow-sm" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
+            <span className="theme-data-value px-2.5 py-0.5 rounded-full text-foreground tracking-wide shadow-sm" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
               {requirement.priority?.name || requirement.priority?.priority_name || '-'}
             </span>
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider ml-2">Created:</span>
@@ -633,7 +703,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Revised Details of Requirement</label>
+              <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Revised Details of Requirement</label>
               <textarea 
                 className="w-full flex min-h-[100px] rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-800 dark:focus-visible:ring-gray-300" 
                 placeholder="Describe what has changed in the requirement..."
@@ -642,7 +712,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Attachment (Optional)</label>
+              <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Attachment (Optional)</label>
               <input 
                 type="file" 
                 className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-white hover:file:bg-accent-secondary transition-all"
@@ -709,7 +779,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Select Put to Use Date</label>
+              <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wider">Select Put to Use Date</label>
               <AppInput type="date" value={putToUseDate} onChange={(e) => setPutToUseDate(e.target.value)} />
             </div>
             <p className="text-xs text-gray-500">
@@ -730,7 +800,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Target Workspace <span className="text-red-500">*</span></label>
+              <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1">Target Workspace <span className="text-red-500">*</span></label>
               <select
                 value={selectedWorkspaceId}
                 onChange={(e) => setSelectedWorkspaceId(e.target.value)}
@@ -743,7 +813,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             
             {selectedWorkspaceId && (
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Sub-Workspace (Optional)</label>
+                <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1">Sub-Workspace (Optional)</label>
                 <select
                   value={selectedSubWorkspaceId}
                   onChange={(e) => setSelectedSubWorkspaceId(e.target.value)}
@@ -801,7 +871,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         />
       )}
 
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pb-12">
         {/* Action Required Panel */}
         {isCurrentApprover && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
@@ -835,389 +905,548 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="flex gap-1.5 mb-4 overflow-x-auto p-1.5 bg-gray-100/50 dark:bg-surface/30 border border-gray-200/60 dark:border-white/5 rounded-xl w-max max-w-full shrink-0 shadow-sm">
+                {/* Tab Navigation */}
+        <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-surface/80 dark:bg-elevated/40 border border-border/80 mb-6 shadow-xs select-none">
           {[
-            { id: 'details', label: 'Requirement Details' },
-            { id: 'analysis', label: 'Business Analysis' },
-            { id: 'approval', label: 'Approval Workflow' },
-            { id: 'tasks', label: 'Tasks' },
-            { id: 'audit', label: 'Audit Trail' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
-                activeTab === tab.id 
-                  ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
-                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { id: 'details', label: 'Requirement Details', icon: FileText, color: 'text-blue-500', activeBg: 'bg-blue-600' },
+            { id: 'analysis', label: 'Business Analysis', icon: Target, color: 'text-purple-500', activeBg: 'bg-purple-600' },
+            { id: 'approval', label: 'Approval Workflow', icon: Shield, color: 'text-amber-500', activeBg: 'bg-amber-600' },
+            { id: 'tasks', label: 'Tasks', icon: Briefcase, count: linkedTasks.length, color: 'text-emerald-500', activeBg: 'bg-emerald-600' },
+            { id: 'audit', label: 'Audit Trail', icon: Clock, count: auditLogs.length, color: 'text-cyan-500', activeBg: 'bg-cyan-600' }
+          ].map(tab => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl theme-data-value transition-all duration-200 cursor-pointer select-none ${
+                  isActive 
+                    ? `${tab.activeBg} text-white shadow-md scale-[1.02] border border-white/20` 
+                    : "bg-surface hover:bg-elevated text-muted hover:text-foreground border border-border/60 hover:border-border"
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : tab.color}`} />
+                <span>{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={`ml-1 px-1.5 py-0.2 text-[10px] font-extrabold rounded-full ${
+                    isActive 
+                      ? "bg-white/25 text-white" 
+                      : `bg-surface ${tab.color} border border-current/30`
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="bg-surface dark:bg-[#050505] rounded-lg border border-gray-100 dark:border-white/5 p-3 shadow-sm mb-10">
-          {activeTab === 'details' && (
-            <div className="flex flex-col h-full animate-in fade-in duration-300 gap-3">
+        {/* TAB 1: Requirement Details */}
+        {activeTab === 'details' && (
+          <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
+            {/* DEDICATED CARD: Business Classification */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
+                  <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Business Classification</h3>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
+                    </span>
+                    <div>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                        {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || 'Standard Business Request'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span>
+                    </span>
+                    <div>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                        {requirement.business_criticality?.name || requirement.priority?.name || 'HIGH'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value
+                    </span>
+                    <span className="theme-data-value text-foreground break-all">
+                      {requirement.business_value?.name || requirement.custom_fields?.business_value || 'Cost Optimization & Efficiency'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
+                    </span>
+                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
+                    </span>
+                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_details || requirement.functional_scope || requirement.technical_scope || 'Functional & Technical details of the requirement workflow.'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span>
+                    </span>
+                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || 'Requires integration approval and system setup verification.'}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture <span className="text-red-500">*</span>
+                    </span>
+                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, schema specifications, and API integration scope.'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </AppCard>
+
+            {/* DEDICATED CARD: Scope & Classification Grid */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-5 mb-4">
+              <div className="text-xs font-extrabold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-emerald-500" /> Scope & System Classification
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Scope</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.scope || '-'}>{requirement.scope || '-'}</span>
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                    <Target className="w-3 h-3 text-accent" /> Scope
+                  </span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.scope || '-'}>{requirement.scope || '-'}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Software System</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.software_system?.name || snap.system || '-'}>{requirement.software_system?.name || snap.system || '-'}</span>
+
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                    <Server className="w-3 h-3 text-purple-500" /> System
+                  </span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.software_system?.name || snap.system || '-'}>{requirement.software_system?.name || snap.system || '-'}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Module</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.module?.name || snap.module || '-'}>{requirement.module?.name || snap.module || '-'}</span>
+
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                    <Briefcase className="w-3 h-3 text-emerald-500" /> Module
+                  </span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.module?.name || snap.module || '-'}>{requirement.module?.name || snap.module || '-'}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Submodule</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.sub_module?.name || snap.submodule || '-'}>{requirement.sub_module?.name || snap.submodule || '-'}</span>
+
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-cyan-500" /> Submodule
+                  </span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.sub_module?.name || snap.submodule || '-'}>{requirement.sub_module?.name || snap.submodule || '-'}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Category</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.category?.name || snap.category || '-'}>{requirement.category?.name || snap.category || '-'}</span>
+
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Category</span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.category?.name || snap.category || '-'}>{requirement.category?.name || snap.category || '-'}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Sub Category</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.sub_category?.name || snap.subcategory || '-'}>{requirement.sub_category?.name || snap.subcategory || '-'}</span>
+
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Sub Category</span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.sub_category?.name || snap.subcategory || '-'}>{requirement.sub_category?.name || snap.subcategory || '-'}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Created By</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.creator?.full_name || '-'}>{requirement.creator?.full_name || '-'}</span>
+
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Created By</span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.creator?.full_name || '-'}>{requirement.creator?.full_name || '-'}</span>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Department</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={requirement.department?.name || '-'}>{requirement.department?.name || '-'}</span>
+
+                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Department</span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.department?.name || '-'}>{requirement.department?.name || '-'}</span>
                 </div>
               </div>
-              
-              <div className="pt-2 border-t border-gray-100 dark:border-white/10 flex flex-col flex-1">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                  <div className="md:col-span-2 flex flex-col">
-                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider shrink-0">Description</div>
-                    <div className="text-sm p-3 rounded-xl whitespace-pre-wrap bg-gray-50 dark:bg-surface/5 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-white/10 shadow-sm flex-1 break-words">
-                      {requirement.objective || '-'}
+            </AppCard>
+
+            {/* DEDICATED CARD: Attachments */}
+            {attachments.length > 0 && (
+              <AppCard className="overflow-hidden border border-border/60 shadow-md p-5">
+                <div className="text-xs font-extrabold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+                  <Paperclip className="h-4 w-4 text-accent" /> Associated Files & Attachments ({attachments.length})
+                </div>
+                <div className="flex gap-3 flex-wrap">
+                  {attachments.map(att => (
+                    <div
+                      key={att.id}
+                      className="flex items-center gap-2 pl-3 pr-1 py-1.5 bg-surface dark:bg-elevated/40 border border-border/60 rounded-xl text-xs shadow-2xs hover:border-border transition-all"
+                    >
+                      <Paperclip className="h-4 w-4 text-accent" />
+                      <span className="text-foreground font-semibold truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
+                      <span className="text-[10px] text-muted mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
+                      <div className="flex items-center gap-1 border-l border-border/60 pl-2">
+                        <AppButton 
+                          variant="ghost" size="sm"
+                          onClick={() => handleAttachmentAction(att.id, 'view')}
+                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          title="View Attachment"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </AppButton>
+                        <AppButton 
+                          variant="ghost" size="sm"
+                          onClick={() => handleAttachmentAction(att.id, 'download')}
+                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          title="Download Attachment"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </AppButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AppCard>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: Business Analysis */}
+        {activeTab === 'analysis' && (
+          <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
+            {/* 1. CARD: Business Classification */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
+                  <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Business Classification</h3>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
+                    </span>
+                    <div>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                        {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || 'Standard Business Request'}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-col">
-                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider shrink-0">Requirement Reason</div>
-                    <div className="text-sm p-3 rounded-xl whitespace-pre-wrap bg-gray-50 dark:bg-surface/5 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-white/10 shadow-sm flex-1 break-words">
-                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || '-'}
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span>
+                    </span>
+                    <div>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                        {requirement.business_criticality?.name || requirement.priority?.name || 'HIGH'}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-col">
-                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 tracking-wider shrink-0">Requirement Details</div>
-                    <div className="text-sm p-3 rounded-xl whitespace-pre-wrap bg-gray-50 dark:bg-surface/5 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-white/10 shadow-sm flex-1 break-words">
-                      {requirement.requirement_details || requirement.functional_scope || '-'}
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value
+                    </span>
+                    <span className="theme-data-value text-foreground break-all">
+                      {requirement.business_value?.name || requirement.custom_fields?.business_value || 'Cost Optimization & Efficiency'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
+                    </span>
+                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
+                    </span>
+                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_details || requirement.functional_scope || requirement.technical_scope || 'Functional & Technical details of the requirement workflow.'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span>
+                    </span>
+                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || 'Requires integration approval and system setup verification.'}
                     </div>
                   </div>
                 </div>
               </div>
+            </AppCard>
 
-              {attachments.length > 0 && (
-                <div className="pt-3 border-t border-gray-100 dark:border-white/10 shrink-0">
-                  <div className="text-xs text-gray-500 uppercase font-bold mb-2 tracking-wider">Attachments</div>
-                  <div className="flex gap-3 flex-wrap">
-                    {attachments.map(att => (
-                      <div
-                        key={att.id}
-                        className="flex items-center gap-2 pl-3 pr-1 py-1 bg-gray-50 dark:bg-surface/5 border border-gray-200 dark:border-white/10 rounded-md text-sm shadow-sm"
-                      >
-                        <Paperclip className="h-4 w-4 text-accent" />
-                        <span className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
-                        <span className="text-xs text-gray-400 mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
-                        <div className="flex items-center gap-1 border-l border-gray-200 dark:border-white/10 pl-2">
-                          <AppButton 
-                            variant="ghost" size="sm"
-                            onClick={() => handleAttachmentAction(att.id, 'view')}
-                            className="p-1.5 text-gray-500 hover:text-accent hover:bg-accent/10 dark:hover:bg-accent/10 rounded transition-colors"
-                            title="View Attachment"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </AppButton>
-                          <AppButton 
-                            variant="ghost" size="sm"
-                            onClick={() => handleAttachmentAction(att.id, 'download')}
-                            className="p-1.5 text-gray-500 hover:text-accent hover:bg-accent/10 dark:hover:bg-accent/10 rounded transition-colors"
-                            title="Download Attachment"
-                          >
-                            <Download className="h-4 w-4" />
-                          </AppButton>
-                        </div>
-                      </div>
-                    ))}
+            {/* 2. CARD: Technical & Execution Scope */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              <div className="bg-gradient-to-r from-emerald-500/15 via-surface/90 to-surface/40 dark:from-emerald-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-emerald-500 shadow-xs" />
+                  <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Technical & Execution Scope *</h3>
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="flex flex-col p-4 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                    <Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture Details <span className="text-red-500">*</span>
+                  </span>
+                  <div className="text-xs md:text-sm font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    {requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, API integrations, database schemas, and infrastructure prerequisites.'}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            </AppCard>
 
-          {activeTab === 'analysis' && (
-            <div className="space-y-4 animate-in fade-in duration-300 pt-2 pb-10">
-              {error && (
-                <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm font-bold flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  {error}
+            {/* 3. CARD: Timelines & Resources */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              <div className="bg-gradient-to-r from-cyan-500/15 via-surface/90 to-surface/40 dark:from-cyan-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-cyan-500 shadow-xs" />
+                  <Clock className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Timelines & Resources</h3>
                 </div>
-              )}
-              
-              <div className="p-0 space-y-4">
-                <div className="space-y-2">
-                  <h3 className="text-xs font-bold flex items-center gap-2 pb-1 border-b text-accent dark:text-accent border-gray-200 dark:border-white/10">
-                    <Briefcase className="h-3 w-3" /> Business Classification
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">
-                        Requirement Type <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex gap-2 items-center">
-                        <select 
-                           className="flex-1 min-w-0 h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
-                           value={formData.requirement_type_id} 
-                           onChange={e => setFormData({...formData, requirement_type_id: e.target.value})} 
-                           disabled={!(isAdmin && (isEditable || isSuperAdmin))}
+              </div>
+
+              <div className="p-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-500" /> Start Date <span className="text-red-500">*</span>
+                    </span>
+                    <span className="theme-data-value text-foreground truncate">
+                      {requirement.start_date ? new Date(requirement.start_date).toLocaleDateString() : (requirement.created_at ? new Date(requirement.created_at).toLocaleDateString() : 'Not Set')}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-amber-500" /> Due Date <span className="text-red-500">*</span>
+                    </span>
+                    <span className="theme-data-value text-foreground truncate">
+                      {requirement.due_date || requirement.expected_completion_date ? new Date(requirement.due_date || requirement.expected_completion_date).toLocaleDateString() : 'Not Set'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> Estimated Effort (Days) <span className="text-red-500">*</span>
+                    </span>
+                    <span className="theme-data-value text-foreground truncate">
+                      {requirement.estimated_effort || requirement.custom_fields?.estimated_effort || (requirement.start_date && requirement.due_date ? Math.max(1, Math.round((new Date(requirement.due_date).getTime() - new Date(requirement.start_date).getTime()) / (1000 * 60 * 60 * 24))) : '5 Days')}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-indigo-500" /> Estimated Cost
+                    </span>
+                    <span className="theme-data-value text-foreground truncate">
+                      {requirement.estimated_cost ? `₹${requirement.estimated_cost}` : (requirement.custom_fields?.estimated_cost ? `₹${requirement.custom_fields.estimated_cost}` : 'Standard Budget')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </AppCard>
+
+            {/* 4. CARD: Impacted Departments & Define Approval Sequence * */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              <div className="bg-gradient-to-r from-indigo-500/15 via-surface/90 to-surface/40 dark:from-indigo-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-indigo-500 shadow-xs" />
+                  <Briefcase className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Impacted Departments & Define Approval Sequence *</h3>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-indigo-600 dark:text-indigo-400">
+                      Primary Impacted Department
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-full theme-data-value bg-indigo-600 text-white shadow-xs">
+                        {requirement.department?.name || snap.department || 'IT & Digital Transformation'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-800/60">
+                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-purple-600 dark:text-purple-400">
+                      Department Approvers & Stakeholders (Sequence Configured)
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {approvalFlow && approvalFlow.length > 0 ? (
+                        approvalFlow.map((flow: any, idx: number) => (
+                          <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
+                            <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
+                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs font-medium text-muted italic">Department Approver Sequence Configured</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Define Approval Sequence * Selector Matrix */}
+                <div className="p-4 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/60 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-purple-500" /> Select Impacted Departments & Define Approval Sequence <span className="text-red-500">*</span>
+                    </span>
+                    <span className="text-[10px] text-muted font-medium">Click departments to select, then assign approver order (1st, 2nd, etc).</span>
+                  </div>
+
+                  {/* 1. Impacted Department Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    {(masters.departments || []).map((d: any) => {
+                      const isSelected = formData.impacted_departments.includes(d.id);
+                      return (
+                        <button
+                          type="button"
+                          key={d.id}
+                          onClick={() => handleDepartmentToggle(d.id)}
+                          className={`px-3.5 py-2 rounded-xl theme-data-value transition-all border flex items-center gap-2 cursor-pointer ${
+                            isSelected 
+                              ? "bg-purple-600 border-purple-600 text-white shadow-sm scale-[1.02]" 
+                              : "bg-surface dark:bg-elevated/30 border-border text-muted hover:text-foreground hover:border-purple-400"
+                          }`}
                         >
-                          <option value="">Select Type</option>
-                          {masters.issue_types.map((t: any) => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
-                          ))}
-                        </select>
-                        {isAdmin && (isEditable || isSuperAdmin) && (
-                           <AppButton variant="outline" size="sm" type="button" className="h-9 w-9 p-0 shrink-0 border-dashed border-gray-300 dark:border-white/20" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }}>
-                             <Plus className="h-4 w-4 text-accent" />
-                           </AppButton>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Business Criticality <span className="text-red-500">*</span></label>
-                      <select 
-                         className="w-full h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
-                         value={formData.business_criticality_id} 
-                         onChange={e => setFormData({...formData, business_criticality_id: e.target.value})} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      >
-                        <option value="">Select Criticality</option>
-                        {masters.priority_master.map((p: any) => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">
-                        Business Value
-                      </label>
-                      <div className="flex gap-2 items-center">
-                        <select 
-                           className="flex-1 min-w-0 h-9 px-3 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
-                           value={formData.business_value_id} 
-                           onChange={e => setFormData({...formData, business_value_id: e.target.value})} 
-                           disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                        >
-                          <option value="">Select Business Value</option>
-                          {masters.business_values.map((bv: any) => (
-                            <option key={bv.id} value={bv.id}>{bv.name}</option>
-                          ))}
-                        </select>
-                        {isAdmin && (isEditable || isSuperAdmin) && (
-                           <AppButton variant="outline" size="sm" type="button" className="h-9 w-9 p-0 shrink-0 border-dashed border-gray-300 dark:border-white/20" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }}>
-                             <Plus className="h-4 w-4 text-accent" />
-                           </AppButton>
-                        )}
-                      </div>
-                    </div>
+                          <div className={`w-2 h-2 rounded-full ${isSelected ? "bg-white" : "bg-purple-500"}`} />
+                          <span>{d.name}</span>
+                          {isSelected && <span className="text-[10px] font-extrabold bg-white/20 px-1.5 py-0.2 rounded-full">Selected</span>}
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Requirement Reason</label>
-                      <div className="text-sm p-3 rounded-md bg-gray-50 dark:bg-[#0a0d14] border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 min-h-[60px] whitespace-pre-wrap">
-                        {requirement.requirement_reason || requirement.custom_fields?.business_reason || '-'}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Requirement Details</label>
-                      <div className="text-sm p-3 rounded-md bg-gray-50 dark:bg-[#0a0d14] border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 min-h-[60px] whitespace-pre-wrap">
-                        {requirement.requirement_details || requirement.functional_scope || '-'}
-                      </div>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Dependency Notes <span className="text-red-500">*</span></label>
-                      <textarea 
-                         className="w-full p-2 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[60px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
-                         value={formData.dependency_notes} 
-                         onChange={e => setFormData({...formData, dependency_notes: e.target.value})} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-xs font-bold flex items-center gap-2 pb-1 border-b text-emerald-500 dark:text-emerald-400 border-gray-200 dark:border-white/10">
-                    <Server className="h-3 w-3" /> Technical & Execution Scope
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Technical Scope / Architecture <span className="text-red-500">*</span></label>
-                      <textarea 
-                         className="w-full p-2 rounded-md border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[80px] bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-900 dark:text-white" 
-                         value={formData.technical_scope} 
-                         onChange={e => setFormData({...formData, technical_scope: e.target.value})} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-xs font-bold flex items-center gap-2 pb-1 border-b text-amber-500 dark:text-amber-400 border-gray-200 dark:border-white/10">
-                    <Calendar className="h-3 w-3" /> Timelines & Resources
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Start Date <span className="text-red-500">*</span></label>
-                      <AppInput 
-                         type="date" 
-                         value={formData.start_date ? formData.start_date.split('T')[0] : ''} 
-                         min={new Date().toISOString().split('T')[0]}
-                         onChange={e => handleDateChange('start_date', e.target.value)} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Due Date <span className="text-red-500">*</span></label>
-                      <AppInput 
-                         type="date" 
-                         value={formData.due_date ? formData.due_date.split('T')[0] : ''} 
-                         min={formData.start_date ? formData.start_date.split('T')[0] : new Date().toISOString().split('T')[0]}
-                         onChange={e => handleDateChange('due_date', e.target.value)} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Estimated Effort (Days) <span className="text-red-500">*</span></label>
-                      <AppInput 
-                         type="number"
-                         placeholder="e.g. 10" 
-                         value={formData.estimated_effort} 
-                         onChange={handleEffortChange} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Estimated Cost</label>
-                      <AppInput 
-                         type="number" 
-                         placeholder="Amount" 
-                         value={formData.estimated_cost} 
-                         onChange={e => setFormData({...formData, estimated_cost: e.target.value})} 
-                         disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-xs font-bold flex items-center gap-2 pb-1 border-b text-rose-500 dark:text-rose-400 border-gray-200 dark:border-white/10">
-                    <Shield className="h-3 w-3" /> Impacted Departments
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider text-gray-500">Select Impacted Departments (For Matrix Approval) <span className="text-red-500">*</span></label>
-                      <div className="mt-1 grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {(masters.departments || []).map((d: any) => {
-                          const isSelected = formData.impacted_departments.includes(d.id);
-                          return (
-                            <label key={d.id} className={`flex items-center p-2 rounded-md border cursor-pointer transition-all ${isSelected ? 'bg-accent/10 border-accent/30 shadow-inner' : 'bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-surface/[0.02]'}`}>
-                              <input 
-                                type="checkbox" 
-                                className="sr-only"
-                                checked={isSelected}
-                                onChange={() => handleDepartmentToggle(d.id)}
-                                disabled={!(isAdmin && (isEditable || isSuperAdmin))}
-                              />
-                              <div className={`w-4 h-4 rounded border mr-2 flex items-center justify-center ${isSelected ? 'bg-accent border-accent' : 'border-gray-300 dark:border-gray-600'}`}>
-                                {isSelected && <svg className="w-3 h-3 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                              </div>
-                              <span className={`text-xs font-medium ${isSelected ? 'text-accent dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'}`}>{d.name}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  
+                  {/* 2. Interactive Approval Sequence Builder per Selected Department */}
                   {formData.impacted_departments.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500">Define Approval Sequence <span className="text-red-500">*</span></label>
-                      {formData.impacted_departments.map((deptId) => {
-                        const deptName = masters.departments?.find((d: any) => d.id === deptId)?.name;
-                        const deptUsers = masters.users?.filter((u: any) => u.department_id === deptId) || [];
-                        const selectedApprovers = formData.department_approvers[deptId] || [];
+                    <div className="mt-4 space-y-4 pt-3 border-t border-border/60">
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-muted">
+                        Configure Department Approval Sequence <span className="text-red-500">*</span>
+                      </label>
+                      {formData.impacted_departments.map((deptId: string) => {
+                        const dept = masters.departments?.find((d: any) => d.id === deptId);
+                        const deptName = dept?.name || 'Department';
                         
+                        // Filter users for this department or fallback to all users if none found
+                        let deptUsers = (masters.users || []).filter((u: any) => u.department_id === deptId || u.department === deptName);
+                        if (deptUsers.length === 0) {
+                          deptUsers = masters.users || [];
+                        }
+
+                        const selectedApprovers = formData.department_approvers[deptId] || [];
+
                         return (
-                          <div key={deptId} className="p-3 border rounded-md border-accent/20 bg-accent/10/30 dark:bg-accent/5">
-                            <div className="text-xs font-semibold text-accent dark:text-indigo-300 mb-2">{deptName} Approvers</div>
-                            <div className="flex flex-wrap gap-2">
+                          <div key={deptId} className="p-4 rounded-xl border border-purple-500/30 bg-purple-500/5 dark:bg-purple-500/10 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="theme-data-value text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                                {deptName} Approvers
+                              </span>
+                              <span className="text-[10px] font-semibold text-muted">Select users in order (1st = Approver, 2nd = Executive, etc)</span>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 pt-1">
                               {deptUsers.map((u: any) => {
                                 const isUserSelected = selectedApprovers.includes(u.id);
                                 const orderIndex = selectedApprovers.indexOf(u.id) + 1;
-                                
+
                                 return (
-                                  <AppButton
+                                  <button
                                     type="button"
                                     key={u.id}
                                     onClick={() => {
-                                      setFormData(prev => {
+                                      setFormData((prev: any) => {
                                         const current = prev.department_approvers[deptId] || [];
                                         if (current.includes(u.id)) {
-                                          return { ...prev, department_approvers: { ...prev.department_approvers, [deptId]: current.filter(id => id !== u.id) } };
+                                          return { 
+                                            ...prev, 
+                                            department_approvers: { 
+                                              ...prev.department_approvers, 
+                                              [deptId]: current.filter((id: string) => id !== u.id) 
+                                            } 
+                                          };
                                         } else {
-                                          return { ...prev, department_approvers: { ...prev.department_approvers, [deptId]: [...current, u.id] } };
+                                          return { 
+                                            ...prev, 
+                                            department_approvers: { 
+                                              ...prev.department_approvers, 
+                                              [deptId]: [...current, u.id] 
+                                            } 
+                                          };
                                         }
                                       });
                                     }}
-                                    variant={isUserSelected ? "primary" : "outline"}
-                                    size="sm"
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-2 ${
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-2 cursor-pointer transition-all ${
                                       isUserSelected 
-                                        ? "bg-accent border-accent text-white" 
-                                        : "bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface/5"
+                                        ? "bg-purple-600 border-purple-600 text-white shadow-xs" 
+                                        : "bg-surface dark:bg-elevated/40 border-border text-foreground hover:border-purple-400"
                                     }`}
-                                    disabled={!(isAdmin && (isEditable || isSuperAdmin))}
                                   >
-                                    {isUserSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
-                                    {u.full_name}
-                                  </AppButton>
+                                    {isUserSelected && (
+                                      <span className="bg-white/25 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-extrabold">
+                                        {orderIndex}
+                                      </span>
+                                    )}
+                                    <span>{u.full_name || u.name || 'User'}</span>
+                                  </button>
                                 );
                               })}
-                              {deptUsers.length === 0 && <span className="text-xs text-gray-500">No users found in this department.</span>}
                             </div>
-                            <p className="text-[9px] text-gray-400 mt-2">Select users in the order they should approve (1st = Approver, 2nd = Executive, etc).</p>
+
+                            {/* Approval Sequence Preview Strip */}
                             {selectedApprovers.length > 0 && (
-                              <div className="mt-3 p-2 bg-accent/10/50 dark:bg-accent/10 border border-accent/30 dark:border-indigo-800/30 rounded-md">
-                                <div className="text-[10px] font-bold text-accent dark:text-accent uppercase tracking-wider mb-1">
-                                  {deptName} - Approval Sequence
+                              <div className="mt-2 p-2.5 rounded-lg bg-surface/90 dark:bg-elevated/60 border border-purple-500/20">
+                                <div className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
+                                  {deptName} - Configured Approval Sequence
                                 </div>
-                                <div className="text-xs text-accent-secondary dark:text-indigo-200">
+                                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-foreground">
                                   {selectedApprovers.map((id: string, index: number) => {
-                                    const user = deptUsers.find((u: any) => u.id === id);
-                                    const roleLabel = index === 0 ? "Approver" : index === 1 ? "Executive" : `Level ${index + 1}`;
+                                    const user = (masters.users || []).find((u: any) => u.id === id);
+                                    const roleLabel = index === 0 ? "1st (Approver)" : index === 1 ? "2nd (Executive)" : `${index + 1}th Level`;
                                     return (
-                                      <span key={id} className="inline-flex items-center">
-                                        <span className="font-semibold">{roleLabel}:</span>&nbsp;{user?.full_name || 'Unknown'}
-                                        {index < selectedApprovers.length - 1 && <span className="mx-2 text-accent">→</span>}
-                                      </span>
+                                      <div key={id} className="flex items-center gap-1.5">
+                                        <span className="text-purple-600 dark:text-purple-400 font-bold">{roleLabel}:</span>
+                                        <span className="bg-surface dark:bg-elevated px-2 py-0.5 rounded border border-border">{user?.full_name || user?.name || 'User'}</span>
+                                        {index < selectedApprovers.length - 1 && <span className="text-purple-500 font-bold">→</span>}
+                                      </div>
                                     );
                                   })}
                                 </div>
@@ -1229,150 +1458,252 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </div>
                   )}
                 </div>
+              </div>
+            </AppCard>
 
-                {/* Analysis Remarks (Mandatory) */}
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-                  {auditLogs.filter((log: any) => log.new_value?.remarks).length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                          Remarks History
-                        </label>
-                        <AppButton 
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowRemarksHistory(!showRemarksHistory)}
-                          className="text-[10px] font-semibold text-accent dark:text-accent hover:bg-accent/10 dark:hover:bg-accent/10 px-2 py-1 rounded transition-colors"
-                        >
-                          {showRemarksHistory ? 'Hide History ▲' : 'Show History ▼'}
-                        </AppButton>
+            {/* 5. CARD: Add New Analysis Remarks (Mandatory for Approvers) & Remarks History */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              {/* Card Header */}
+              <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-surface/40 dark:from-amber-600/30 dark:via-rose-900/20 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-amber-500 shadow-xs animate-pulse" />
+                  <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Analysis Remarks & Approver History</h3>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-5">
+                {/* SECTION 1: Add New Analysis Remarks (Always Visible & Accessible) */}
+                <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-800/60">
+                  <label className="theme-data-value uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Add New Analysis Remarks (Mandatory for Approvers) <span className="text-red-500">*</span>
+                  </label>
+                  <RichTextEditor
+                    value={approvalRemarks}
+                    onChange={setApprovalRemarks}
+                    placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback with rich text decorations..."
+                  />
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] font-medium text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
+                    {isCurrentApprover && (
+                      <div className="flex items-center gap-2">
+                        <AppButton variant="secondary" size="sm" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
+                        <AppButton variant="destructive" size="sm" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
+                        <AppButton variant="primary" size="sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
                       </div>
-                      
-                      {showRemarksHistory && (
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1 animate-in slide-in-from-top-2 fade-in duration-200">
-                          {auditLogs.filter((log: any) => log.new_value?.remarks).map((log: any) => (
-                            <div key={log.id} className="p-3 bg-gray-50 dark:bg-surface/5 rounded-md border border-gray-200 dark:border-white/10 text-xs">
-                              <div className="flex justify-between items-center mb-1.5 text-gray-500">
-                                <span className="font-semibold text-gray-800 dark:text-gray-200">{log.user?.full_name || 'System'}</span>
-                                <span>{new Date(log.performed_at).toLocaleString()}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* SECTION 2: Remarks History (Separated, Default Minimized) */}
+                <div className="pt-3 border-t border-border/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-accent" /> Remarks History ({auditLogs.length})
+                    </h4>
+                    
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsRemarksHistoryMinimized(!isRemarksHistoryMinimized)}
+                      className="theme-data-value text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all"
+                    >
+                      {isRemarksHistoryMinimized ? (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          <span>Show Remarks History ({auditLogs.length})</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronRight className="w-4 h-4" />
+                          <span>Hide Remarks History</span>
+                        </>
+                      )}
+                    </AppButton>
+                  </div>
+
+                  {!isRemarksHistoryMinimized && (
+                    <div className="transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+                      {auditLogs.length > 0 ? (
+                        <div className="space-y-2.5 max-h-60 overflow-y-auto scrollbar-thin pr-1">
+                          {auditLogs.map((log: any, idx: number) => (
+                            <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 hover:border-border transition-all">
+                              <div className="w-7 h-7 rounded-full bg-accent/20 text-accent font-bold text-xs flex items-center justify-center shrink-0">
+                                {log.user?.full_name?.substring(0, 2).toUpperCase() || 'U'}
                               </div>
-                              <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                                {log.new_value.remarks}
-                              </div>
-                              <div className="mt-1.5 pt-1.5 border-t border-gray-200/50 dark:border-white/5 text-[9px] text-gray-400 italic">
-                                Action: {log.event_type.replace(/_/g, ' ')}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <span className="theme-data-value text-foreground truncate">{log.user?.full_name || log.actor_name || 'System Actor'}</span>
+                                  <span className="text-[10px] font-semibold text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed break-words">
+                                  {log.action || log.remarks || log.message || 'Updated requirement parameters.'}
+                                </p>
                               </div>
                             </div>
                           ))}
                         </div>
+                      ) : (
+                        <div className="p-4 rounded-xl bg-surface border border-border/50 text-center text-xs text-muted font-medium italic">
+                          No previous remarks recorded. New entries will appear in the audit trail.
+                        </div>
                       )}
                     </div>
                   )}
+                </div>
+              </div>
+            </AppCard>
+</div>
+        )}
 
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Add New Analysis Remarks (Mandatory for Approvers)
-                  </label>
-                  <textarea
-                    className="w-full text-sm px-3 py-2 border rounded-md bg-surface dark:bg-[#0a0d14] border-gray-200 dark:border-white/10 focus:ring-1 focus:ring-accent min-h-[80px]"
-                    placeholder="Enter your remarks or justification here before saving or approving..."
-                    value={formData.analysis_remarks}
-                    onChange={(e) => {
-                      setFormData({ ...formData, analysis_remarks: e.target.value });
-                      setApprovalRemarks(e.target.value);
-                    }}
-                    disabled={!isAdmin && !isCurrentApprover}
-                  />
+        {/* TAB 3: Approval Workflow */}
+        {activeTab === 'approval' && (
+          <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
+            {/* DEDICATED CARD: Analysis Remarks & Approver History */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-surface/40 dark:from-amber-600/30 dark:via-rose-900/20 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-amber-500 shadow-xs animate-pulse" />
+                  <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Add New Analysis Remarks (Mandatory for Approvers) & History</h3>
+                  {auditLogs.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                      {auditLogs.length} Entries
+                    </span>
+                  )}
                 </div>
 
-                {/* Approver Actions */}
-                {isCurrentApprover && (
-                  <div className="flex items-center justify-end pt-4 gap-2 border-t border-gray-200 dark:border-white/10 mt-4">
-                    <div className="text-xs text-amber-600 dark:text-amber-400 font-bold mr-auto">
-                      Pending Your Approval
-                    </div>
-                    <AppButton 
-                      variant="destructive" 
-                      onClick={() => handleApprovalAction('Reject')} 
-                      disabled={savingApproval || !approvalRemarks.trim()}
-                      leftIcon={<XCircle className="h-4 w-4"/>}
-                    >
-                      Reject
-                    </AppButton>
-                    <AppButton 
-                      variant="secondary" 
-                      onClick={() => handleApprovalAction('Hold')} 
-                      disabled={savingApproval || !approvalRemarks.trim()}
-                      leftIcon={<PauseCircle className="h-4 w-4"/>}
-                    >
-                      Hold
-                    </AppButton>
-                    <AppButton 
-                      variant="primary" 
-                      onClick={() => handleApprovalAction('Approve')} 
-                      disabled={savingApproval || !approvalRemarks.trim()}
-                      leftIcon={<CheckCircle className="h-4 w-4"/>}
-                    >
-                      Approve
-                    </AppButton>
-                  </div>
-                )}
-
-                {isAdmin && (searchParams.get('from') !== 'approvals') && (
-                  <div className="flex items-center justify-end pt-4 gap-2">
-                    {(() => {
-                      const status = requirement.approval_status || 'Draft';
-                      const isPendingApproval = status === 'Pending Approval';
-                      const changedFlow = isApprovalFlowChanged();
-                      
-                      if (isPendingApproval && !changedFlow) return null;
-                      
-                      if (!['Draft', 'On Hold', 'Cancelled', 'Pending', 'Pending Approval', 'Rejected', 'Clarification'].includes(status)) return null;
-
-                      return (
-                        <AppButton 
-                          variant="primary" 
-                          onClick={() => handleAction('ACCEPT')} 
-                          isLoading={saving}
-                          leftIcon={<CheckCircle className="h-4 w-4"/>}
-                        >
-                          {isPendingApproval ? 'Update & Restart Flow' : 'Accept Requirement'}
-                        </AppButton>
-                      );
-                    })()}
-                    <AppButton 
-                      variant="outline" 
-                      onClick={() => handleAction('SAVE')} 
-                      disabled={saving}
-                      leftIcon={<Save className="h-4 w-4"/>}
-                    >
-                      Save Draft
-                    </AppButton>
-                    {(requirement.approval_status !== 'On Hold' && requirement.approval_status !== 'Cancelled') && (
-                      <AppButton 
-                        variant="secondary" 
-                        onClick={() => handleAction('HOLD')} 
-                        disabled={saving}
-                        leftIcon={<PauseCircle className="h-4 w-4"/>}
-                      >
-                        Hold Requirement
-                      </AppButton>
-                    )}
-                    {requirement.approval_status !== 'Cancelled' && (
-                      <AppButton 
-                        variant="destructive" 
-                        onClick={() => handleAction('CANCEL')} 
-                        disabled={saving}
-                        leftIcon={<XCircle className="h-4 w-4"/>}
-                      >
-                        Cancel Requirement
-                      </AppButton>
-                    )}
-                  </div>
-                )}
+                <AppButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsRemarksHistoryMinimized(!isRemarksHistoryMinimized)}
+                  className="theme-data-value text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all"
+                >
+                  {isRemarksHistoryMinimized ? (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      <span>Maximize</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronRight className="w-4 h-4" />
+                      <span>Minimize</span>
+                    </>
+                  )}
+                </AppButton>
               </div>
+
+              {!isRemarksHistoryMinimized && (
+                <div className="p-5 space-y-5 transition-all duration-300">
+                  <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-800/60">
+                    <label className="theme-data-value uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> New Analysis Remarks / Approver Feedback <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={approvalRemarks}
+                      onChange={(e) => setApprovalRemarks(e.target.value)}
+                      className="w-full text-xs font-medium p-3.5 rounded-xl border border-border bg-surface text-foreground placeholder:text-muted focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all leading-relaxed"
+                      rows={3}
+                      placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback..."
+                    />
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] font-medium text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
+                      {isCurrentApprover && (
+                        <div className="flex items-center gap-2">
+                          <AppButton variant="secondary" size="sm" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
+                          <AppButton variant="destructive" size="sm" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
+                          <AppButton variant="primary" size="sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-accent" /> Remark & Audit History ({auditLogs.length})
+                    </h4>
+                    
+                    {auditLogs.length > 0 ? (
+                      <div className="space-y-2.5 max-h-60 overflow-y-auto scrollbar-thin pr-1">
+                        {auditLogs.map((log: any, idx: number) => (
+                          <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 hover:border-border transition-all">
+                            <div className="w-7 h-7 rounded-full bg-accent/20 text-accent font-bold text-xs flex items-center justify-center shrink-0">
+                              {log.user?.full_name?.substring(0, 2).toUpperCase() || 'U'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="theme-data-value text-foreground truncate">{log.user?.full_name || log.actor_name || 'System Actor'}</span>
+                                <span className="text-[10px] font-semibold text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
+                              </div>
+                              <div 
+                                className="text-xs text-muted-foreground leading-relaxed break-words quill-rendered-content"
+                                dangerouslySetInnerHTML={{ __html: log.action || log.remarks || log.message || 'Updated requirement parameters.' }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-surface border border-border/50 text-center text-xs text-muted font-medium italic">
+                        No previous remarks recorded. New entries will appear in the audit trail.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </AppCard>
+          </div>
+        )}
+
+        <div className="bg-surface dark:bg-[#050505] rounded-lg border border-gray-100 dark:border-white/5 p-3 shadow-sm mb-10">
+          {activeTab === 'details' && (
+            <div className="flex flex-col h-full animate-in fade-in duration-300 gap-4 p-2">
+              <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-2">
+                  <Paperclip className="h-4 w-4 text-accent" /> Associated Files & Attachments ({attachments.length})
+                </h3>
+              </div>
+
+              {attachments.length > 0 ? (
+                <div className="flex gap-3 flex-wrap">
+                  {attachments.map(att => (
+                    <div
+                      key={att.id}
+                      className="flex items-center gap-2 pl-3 pr-1 py-1.5 bg-surface dark:bg-elevated/40 border border-border/60 rounded-xl text-xs shadow-2xs hover:border-border transition-all"
+                    >
+                      <Paperclip className="h-4 w-4 text-accent" />
+                      <span className="text-foreground font-semibold truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
+                      <span className="text-[10px] text-muted mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
+                      <div className="flex items-center gap-1 border-l border-border/60 pl-2">
+                        <AppButton 
+                          variant="ghost" size="sm"
+                          onClick={() => handleAttachmentAction(att.id, 'view')}
+                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          title="View Attachment"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </AppButton>
+                        <AppButton 
+                          variant="ghost" size="sm"
+                          onClick={() => handleAttachmentAction(att.id, 'download')}
+                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          title="Download Attachment"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </AppButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 rounded-xl bg-surface/50 border border-border/50 text-center text-xs text-muted font-medium italic">
+                  No attachments associated with this requirement.
+                </div>
+              )}
             </div>
           )}
+
+          
 
           {activeTab === 'approval' && (
             <div className="space-y-6 animate-in fade-in duration-300">
@@ -1577,7 +1908,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Name <span className="text-red-500">*</span></label>
+              <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1">Name <span className="text-red-500">*</span></label>
               <AppInput
                 autoFocus
                 placeholder="Enter name..."

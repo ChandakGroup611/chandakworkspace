@@ -26,7 +26,7 @@ export default function AMCReportsPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme();
-    isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   } catch (e) {}
   const supabase = createClient();
   const [loading, setLoading] = useState(true);

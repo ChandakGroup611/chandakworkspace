@@ -11,7 +11,7 @@ import { fetchTaskTemplates, createTaskTemplate, deleteTaskTemplate } from "@/li
 
 export default function TemplateManager({ workspaceId, onClose }: { workspaceId: string, onClose: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
 
@@ -96,15 +96,15 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
             <form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 bg-accent/10/50 border-indigo-100`}>
               <h3 className="font-semibold text-sm">Create New Template</h3>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Template Name</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Template Name</label>
                 <AppInput required value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="e.g. Monthly Server Patching" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Default Task Title</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Default Task Title</label>
                 <AppInput required value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. [MAINTENANCE] Patch Production Servers" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Default Description</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Default Description</label>
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}

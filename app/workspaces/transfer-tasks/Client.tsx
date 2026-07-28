@@ -337,7 +337,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                       </p>
                       
                       <div className="mt-3">
-                        <label className="block text-xs font-medium text-amber-600 dark:text-amber-500/90 mb-1">New Assignee (Owner)</label>
+                        <label className="block text-sm font-medium text-amber-600 dark:text-amber-500/90 mb-1">New Assignee (Owner)</label>
                         <select
                           className="w-full bg-background border border-amber-500/20 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-amber-500"
                           value={newOwnerId}
@@ -362,7 +362,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     {/* Executives Column */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-medium text-muted-foreground">Executives</label>
+                        <label className="block text-sm font-medium text-muted-foreground">Executives</label>
                         <AppButton variant="secondary" 
                           className="text-[10px] text-primary hover:underline"
                           onClick={() => {
@@ -375,7 +375,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                       </div>
                       <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
                         {targetWorkspaceUsers.map((s: any) => (
-                          <label key={s.id} className="flex items-center gap-2 text-xs text-foreground p-1 hover:bg-muted rounded cursor-pointer">
+                          <label key={s.id} className="flex items-center gap-2 text-sm text-foreground p-1 hover:bg-muted rounded cursor-pointer">
                             <input 
                               type="checkbox" 
                               checked={newExecutors.includes(s.id)}
@@ -394,7 +394,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     {/* Watchers Column */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-medium text-muted-foreground">Watchers</label>
+                        <label className="block text-sm font-medium text-muted-foreground">Watchers</label>
                         <AppButton variant="secondary" 
                           className="text-[10px] text-primary hover:underline"
                           onClick={() => {
@@ -407,7 +407,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                       </div>
                       <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin bg-background border border-border rounded-lg p-2">
                         {targetWorkspaceUsers.map((s: any) => (
-                          <label key={s.id} className="flex items-center gap-2 text-xs text-foreground p-1 hover:bg-muted rounded cursor-pointer">
+                          <label key={s.id} className="flex items-center gap-2 text-sm text-foreground p-1 hover:bg-muted rounded cursor-pointer">
                             <input 
                               type="checkbox" 
                               checked={newWatchers.includes(s.id)}

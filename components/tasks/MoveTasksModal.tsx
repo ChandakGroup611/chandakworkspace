@@ -127,7 +127,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
         <div className="py-4">
           {step === 1 && (
             <div className="space-y-4">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Workspace</label>
+              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Target Workspace</label>
               <select
                 value={targetWorkspaceId}
                 onChange={(e) => setTargetWorkspaceId(e.target.value)}
@@ -159,7 +159,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                       
                       {t.reqNewExec && (
                         <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase">New Executive</label>
+                          <label className="text-sm font-bold text-gray-500 uppercase">New Executive</label>
                           <select
                             value={mappings[t.id]?.newExecutive || ""}
                             onChange={(e) => setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newExecutive: e.target.value } }))}
@@ -175,7 +175,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
 
                       {t.reqNewWatchers && (
                         <div>
-                          <label className="text-xs font-bold text-gray-500 uppercase">New Watchers</label>
+                          <label className="text-sm font-bold text-gray-500 uppercase">New Watchers</label>
                           {/* simple multiple select for watchers */}
                           <select
                             multiple

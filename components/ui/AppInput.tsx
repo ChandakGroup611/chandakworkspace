@@ -38,7 +38,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
         {label && (
           <label 
             htmlFor={inputId} 
-            className="text-xs font-semibold tracking-wide select-none flex items-center justify-between text-foreground"
+            className="text-sm font-semibold tracking-wide select-none flex items-center justify-between text-foreground"
           >
             <span>{label}</span>
             {error && <span className="text-xs text-danger font-medium">{error}</span>}
@@ -59,7 +59,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             suppressHydrationWarning={true}
             className={cn(
               "theme-input-structural",
-              "h-10 w-full rounded-xl text-[14px] focus:outline-none transition-all duration-300",
+              "h-10 w-full rounded-xl theme-data-value focus:outline-none transition-all duration-300",
               "bg-surface text-foreground placeholder-muted",
               "focus:border-accent focus:ring-1 focus:ring-accent",
               leftIcon ? "pl-10" : "pl-3",

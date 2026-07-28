@@ -90,17 +90,6 @@ export default function SettingsGallery() {
       accentColor: "bg-pink-500",
     },
     {
-      id: "glassmorphism",
-      name: "Glassmorphism",
-      tagline: "Standard Clean Translucent",
-      benefit: "Luxurious soft contrast",
-      sentiment: "Premium & Refined",
-      icon: Sparkles,
-      previewBg: "bg-[#f8fafc] text-[#0f172a]",
-      previewBorder: "border-[#e2e8f0]",
-      accentColor: "bg-indigo-500",
-    },
-    {
       id: "light-neumorphic",
       name: "Light Neumorphic",
       tagline: "Standard Soft White UI",
@@ -221,7 +210,7 @@ export default function SettingsGallery() {
   ];
 
 
-  const isLightMode = theme === "light-neumorphic" || theme === "industrial-control" || theme === "glassmorphism";
+  const isLightMode = theme === "light-neumorphic" || theme === "pure-white" || theme === "pure-white-neumorphic";
 
   return (
     <div className="space-y-8 pb-12">
@@ -327,71 +316,6 @@ export default function SettingsGallery() {
         </div>
       </section>
 
-      {/* Row 1b: Color Combinations (Accents) */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Palette className={`h-4 w-4 text-blue-600`} />
-            <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
-              1B. Aesthetic Color Combinations
-            </h2>
-          </div>
-          <AppBadge variant="info">Global Accent Color</AppBadge>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-          {accentsList.map((a) => {
-            const isSelected = accentColor === a.id;
-            return (
-              <div
-                key={a.id}
-                onClick={() => {
-                  setAccentColor(a.id);
-                  triggerToast(`Accent color applied: ${a.name}`);
-                }}
-                className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
-                  isSelected 
-                    ? `ring-2 ring-blue-500 theme-card-structural border-blue-500 shadow-md`
-                    : `theme-card-structural opacity-80 border-border hover:opacity-100`
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full ${a.hex} ${isSelected ? "ring-2 ring-offset-2 ring-offset-background ring-current" : ""}`} />
-                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-center">{a.name}</span>
-              </div>
-            );
-          })}
-          
-          {/* Custom Color Picker Option */}
-          <div
-            className={`p-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-2 ${
-              accentColor.startsWith("#") 
-                ? `ring-2 ring-blue-500 theme-card-structural border-blue-500 shadow-md`
-                : `theme-card-structural opacity-80 border-border hover:opacity-100`
-            }`}
-          >
-            <div 
-              className={`w-8 h-8 rounded-full flex items-center justify-center relative overflow-hidden ${
-                accentColor.startsWith("#") ? "ring-2 ring-offset-2 ring-offset-background ring-current" : ""
-              }`} 
-              style={{ backgroundColor: accentColor.startsWith("#") ? accentColor : ("#e5e7eb") }}
-            >
-              <input
-                type="color"
-                value={accentColor.startsWith("#") ? accentColor : "#000000"}
-                onChange={(e) => {
-                  setAccentColor(e.target.value);
-                  triggerToast("Custom color applied");
-                }}
-                className="absolute inset-[-10px] w-12 h-12 cursor-pointer opacity-0"
-                title="Select Custom Color"
-              />
-              {!accentColor.startsWith("#") && <span className="absolute text-[14px] font-black mix-blend-difference text-foreground pointer-events-none">+</span>}
-            </div>
-            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-center">Custom</span>
-          </div>
-        </div>
-      </section>
-
       {/* Row 3: Typography Selection & Base Root Scale */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
@@ -408,7 +332,7 @@ export default function SettingsGallery() {
         <div className="space-y-2">
           <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Selector</span>
           <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
-            <label className={`block text-xs font-bold mb-2 ${"text-foreground"}`}>System Font Style</label>
+            <label className={`block text-sm font-bold mb-2 ${"text-foreground"}`}>System Font Style</label>
             <div className="relative">
               <select
                 value={fontFamily}

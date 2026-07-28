@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeType = "dark-neumorphic" | "light-neumorphic" | "industrial-control" | "cyberpunk" | "glassmorphism" | "pure-white" | "pure-white-neumorphic";
+export type ThemeType = "dark-neumorphic" | "light-neumorphic" | "industrial-control" | "cyberpunk" | "pure-white" | "pure-white-neumorphic";
 export type DensityType = "comfortable" | "compact" | "dense";
 export type FontFamilyType = "inter" | "outfit" | "roboto" | "arial" | "times" | "verdana" | "courier" | "georgia" | "trebuchet" | "comic-sans" | "impact";
 export type FontWeightProfileType = "heavy" | "standard" | "light";
@@ -53,7 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const storedSubtextSize = localStorage.getItem("app_subtext_font_size");
 
       const applyState = (state: any) => {
-        if (state.theme && ["dark-neumorphic", "light-neumorphic", "industrial-control", "cyberpunk", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(state.theme)) {
+        if (state.theme && ["dark-neumorphic", "light-neumorphic", "industrial-control", "cyberpunk", "pure-white", "pure-white-neumorphic"].includes(state.theme)) {
           setThemeState(state.theme);
         }
         if (state.density && ["comfortable", "compact", "dense"].includes(state.density)) {
@@ -121,7 +121,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     activeSubtextSize?: number
   ) => {
     if (typeof document === "undefined") return;
-    const isLight = activeTheme === "light-neumorphic" || activeTheme === "glassmorphism" || activeTheme === "pure-white" || activeTheme === "pure-white-neumorphic";
+    const isLight = activeTheme === "light-neumorphic" || activeTheme === "pure-white" || activeTheme === "pure-white-neumorphic";
     
     // Inject dynamic root classes to gracefully steer hardcoded container defaults
     if (isLight) {

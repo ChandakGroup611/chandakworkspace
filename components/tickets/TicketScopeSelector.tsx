@@ -13,7 +13,7 @@ interface TicketScopeSelectorProps {
 
 export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   const [dbScopes, setDbScopes] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 

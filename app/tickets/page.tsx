@@ -19,7 +19,7 @@ export default function TicketsPage() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   const { hasPermission, roleCode, userId, loading: permissionsLoading } = usePermissions();
   
   // Master Data

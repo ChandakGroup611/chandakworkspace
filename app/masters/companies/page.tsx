@@ -16,7 +16,7 @@ export default function CompanyMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -309,33 +309,33 @@ export default function CompanyMasterPage() {
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Company Code</label>
+                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Company Code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editId ? formCode : "[Auto-Generated]"} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Company Name *</label>
+                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Company Name *</label>
                   <AppInput required placeholder="Acme Corporation" value={formName} onChange={e => setFormName(e.target.value)} />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Short Name</label>
+                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Short Name</label>
                   <AppInput placeholder="Acme" value={formShortName} onChange={e => setFormShortName(e.target.value)} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Email Address</label>
+                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Email Address</label>
                   <AppInput type="email" placeholder="contact@acme.com" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Contact Number</label>
+                <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Contact Number</label>
                 <AppInput placeholder="+1 (555) 000-0000" value={formContact} onChange={e => setFormContact(e.target.value)} />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Physical Address</label>
+                <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Physical Address</label>
                 <textarea 
                   className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
                   rows={2}
@@ -345,7 +345,7 @@ export default function CompanyMasterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs uppercase tracking-wider text-gray-400 font-bold">Remarks</label>
+                <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Remarks</label>
                 <textarea 
                   className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
                   rows={2}

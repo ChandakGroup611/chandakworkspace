@@ -462,11 +462,11 @@ export default function VendorMasterPage() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor / Company Name <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Vendor / Company Name <span className="text-red-500">*</span></label>
                       <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Microsoft Corporation" className="h-11 font-semibold" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Industry Type (Multi-Select)</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Industry Type (Multi-Select)</label>
                       <div className="flex gap-2">
                         <FormMultiSelect 
                           options={masterIndustryTypes.map(i => ({ value: i.name, label: i.name }))}
@@ -499,7 +499,7 @@ export default function VendorMasterPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Vendor Type (Multi-Select)</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Vendor Type (Multi-Select)</label>
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <FormMultiSelect 
@@ -539,19 +539,19 @@ export default function VendorMasterPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Contact Person Name <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Contact Person Name <span className="text-red-500">*</span></label>
                       <AppInput value={formContactName} onChange={e => setFormContactName(e.target.value)} required placeholder="John Doe" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Contact Email <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Contact Email <span className="text-red-500">*</span></label>
                       <AppInput type="email" value={formContactEmail} onChange={e => setFormContactEmail(e.target.value)} required placeholder="john@example.com" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Phone Number <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Phone Number <span className="text-red-500">*</span></label>
                       <AppInput value={formPhone} onChange={e => setFormPhone(e.target.value)} required placeholder="+91 ..." className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Website</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Website</label>
                       <AppInput value={formWebsite} onChange={e => setFormWebsite(e.target.value)} placeholder="https://..." className="h-11" />
                     </div>
                   </div>
@@ -564,15 +564,15 @@ export default function VendorMasterPage() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Address Line 1</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Address Line 1</label>
                       <AppInput value={formAddr1} onChange={e => setFormAddr1(e.target.value)} placeholder="Suite, Building" className="h-11" />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Address Line 2</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Address Line 2</label>
                       <AppInput value={formAddr2} onChange={e => setFormAddr2(e.target.value)} placeholder="Street, Area" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">State</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">State</label>
                       <select 
                         value={formState} 
                         onChange={e => {
@@ -588,7 +588,7 @@ export default function VendorMasterPage() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">City</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">City</label>
                       <div className="flex gap-2">
                         <select 
                           value={formCity} 
@@ -613,7 +613,7 @@ export default function VendorMasterPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase">Pincode / Zip</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Pincode / Zip</label>
                       <AppInput value={formPincode} onChange={e => setFormPincode(e.target.value)} placeholder="Postal Code" className="h-11" />
                     </div>
                   </div>
@@ -627,15 +627,15 @@ export default function VendorMasterPage() {
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">GSTIN Number</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">GSTIN Number</label>
                         <AppInput value={formTaxGstin} onChange={e => setFormTaxGstin(e.target.value)} placeholder="22AAAAA0000A1Z5" className="h-11 uppercase" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">PAN Number</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">PAN Number</label>
                         <AppInput value={formTaxPan} onChange={e => setFormTaxPan(e.target.value)} placeholder="ABCDE1234F" className="h-11 uppercase" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Other Tax Code (MSME/LUT)</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Other Tax Code (MSME/LUT)</label>
                         <AppInput value={formTaxCode} onChange={e => setFormTaxCode(e.target.value)} placeholder="Tax Code" className="h-11" />
                       </div>
                     </div>
@@ -647,27 +647,27 @@ export default function VendorMasterPage() {
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Bank Name</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Bank Name</label>
                         <AppInput value={formBankName} onChange={e => setFormBankName(e.target.value)} placeholder="HDFC Bank" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Account Name</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Account Name</label>
                         <AppInput value={formBankAcctName} onChange={e => setFormBankAcctName(e.target.value)} placeholder="Beneficiary Name" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Account Number</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Account Number</label>
                         <AppInput value={formBankAcctNo} onChange={e => setFormBankAcctNo(e.target.value)} placeholder="00000000000" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">IFSC Code / Swift</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">IFSC Code / Swift</label>
                         <AppInput value={formBankIfsc} onChange={e => setFormBankIfsc(e.target.value)} placeholder="HDFC0000001" className="h-11 uppercase" />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Branch Name</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Branch Name</label>
                         <AppInput value={formBankBranch} onChange={e => setFormBankBranch(e.target.value)} placeholder="Branch Name" className="h-11" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Bank State</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Bank State</label>
                         <select 
                           value={formBankState} 
                           onChange={e => {
@@ -683,7 +683,7 @@ export default function VendorMasterPage() {
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Bank City</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Bank City</label>
                         <div className="flex gap-2">
                           <select 
                             value={formBankCity} 
@@ -713,7 +713,7 @@ export default function VendorMasterPage() {
 
                 {/* Section 4: Notes */}
                 <div className="space-y-2 pt-4">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Internal Notes</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase">Internal Notes</label>
                   <textarea 
                     value={formNotes} 
                     onChange={e => setFormNotes(e.target.value)} 

@@ -179,15 +179,15 @@ export default function IAMRoleBuilder() {
               </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Role Name</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase">Role Name</label>
                   <AppInput value={newRoleForm.name} onChange={e => setNewRoleForm({...newRoleForm, name: e.target.value})} placeholder="e.g. Regional Manager" className="mt-1" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Role Code</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase">Role Code</label>
                   <AppInput value={newRoleForm.code} onChange={e => setNewRoleForm({...newRoleForm, code: e.target.value.toUpperCase().replace(/\s+/g, '_')})} placeholder="e.g. REGIONAL_MANAGER" className="mt-1 font-mono uppercase" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Department (Optional)</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase">Department (Optional)</label>
                   <select 
                     className="w-full mt-1 p-2 border border-border rounded-md bg-transparent text-sm focus:ring-accent"
                     value={newRoleForm.department_id}
@@ -200,7 +200,7 @@ export default function IAMRoleBuilder() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase">Description</label>
                   <textarea 
                     className="w-full mt-1 p-3 border border-border rounded-md bg-transparent text-sm min-h-[100px] focus:ring-accent focus:border-accent outline-none transition-colors"
                     value={newRoleForm.description}

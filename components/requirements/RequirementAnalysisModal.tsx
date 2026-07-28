@@ -16,7 +16,7 @@ interface RequirementAnalysisModalProps {
 
 export default function RequirementAnalysisModal({ requirement, masters, onClose, onSubmit }: RequirementAnalysisModalProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [formData, setFormData] = useState({
     requirement_type_id: "",

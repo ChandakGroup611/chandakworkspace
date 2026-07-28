@@ -155,7 +155,7 @@ export default function KnowledgeBaseAuthoring() {
                 ) : (
                   <div className="p-6 space-y-6 max-w-4xl mx-auto">
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Article Title</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Article Title</label>
                       <AppInput 
                         value={activeArticle.title} 
                         onChange={e => setActiveArticle({...activeArticle, title: e.target.value})} 
@@ -166,7 +166,7 @@ export default function KnowledgeBaseAuthoring() {
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
+                        <label className="text-sm font-bold text-gray-500 uppercase">Category</label>
                         <select 
                           className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" 
                           value={activeArticle.category} 
@@ -180,7 +180,7 @@ export default function KnowledgeBaseAuthoring() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                        <label className="text-sm font-bold text-gray-500 uppercase flex items-center gap-1">
                           <Tag className="w-3 h-3" /> Search Tags (Comma separated)
                         </label>
                         <AppInput 
@@ -193,7 +193,7 @@ export default function KnowledgeBaseAuthoring() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Article Content</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase mb-1 block">Article Content</label>
                       <div className="border border-border rounded-lg overflow-hidden bg-surface dark:bg-transparent">
                         <RichTextEditor 
                           value={activeArticle.content} 

@@ -1,15 +1,10 @@
 import Link from "next/link";
-import { ArrowLeft, MessageCircle, ClipboardList } from "lucide-react";
+import { ArrowLeft, MessageCircle, ClipboardList, Type, AlignLeft } from "lucide-react";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
-import dynamic from "next/dynamic";
 import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/tasks";
 import { notFound } from "next/navigation";
-
-const TaskRightPanel = dynamic(() => import("@/components/tasks/TaskRightPanel"), {
-  loading: () => <div className="p-6 rounded-xl border border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-surface/[0.02] animate-pulse h-32 flex items-center justify-center text-gray-400 text-xs font-bold">Loading Panel...</div>
-});
-
 import SafeHtml from "@/components/ui/SafeHtml";
+import { AppCard } from "@/components/ui/AppCard";
 
 interface TaskPageProps {
   params: Promise<{
@@ -74,90 +69,56 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
       </div>
 
       <div className="space-y-6">
-        <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr] items-stretch">
-          <div className="rounded-3xl p-6 theme-card-structural border-transparent">
-            
-            {/* Top row: Tags and Button */}
-            <div className="flex items-start justify-between gap-4 w-full">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <p className="text-[11px] font-mono tracking-wider text-accent bg-accent/10 dark:bg-accent/10 px-2 py-0.5 rounded font-bold">
-                  {task.task_code || "TASK"}
-                </p>
-                <p className="text-[11px] tracking-wider text-gray-500 px-2 py-0.5 border border-gray-200 dark:border-white/10 rounded font-bold bg-surface dark:bg-transparent">
-                  WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
-                </p>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-2xl bg-accent/10 px-4 py-2 text-xs font-semibold text-accent dark:bg-accent/10 dark:text-purple-200 shrink-0">
-                <ClipboardList className="h-4 w-4" />
-                Full task page
-              </div>
-            </div>
-
-            {/* Content row: Title, description, etc. */}
-            <div className="min-w-0 w-full mt-1">
-                <div className="mt-3 w-full">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1.5">
-                    Subject
-                  </span>
-                  <div className="flex items-center gap-3 min-w-0 w-full">
-                    <h1 className="text-lg font-bold text-accent dark:text-accent break-words whitespace-normal w-full">{task.title}</h1>
-                  </div>
-                </div>
-                
-                {task.description && (
-                  <div className="mt-6 w-full">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1.5">
-                      <ClipboardList className="w-3.5 h-3.5" /> Description
-                    </span>
-                    <SafeHtml 
-                      className="whitespace-pre-wrap text-[13px] sm:text-sm text-gray-700 dark:text-gray-300 w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-gray-50/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-gray-200/60 dark:border-white/10 shadow-sm"
-                      html={task.description} 
-                    />
-                  </div>
-                )}
-                
-
-                {typeof task.custom_fields?.progress_percentage === 'number' && (
-                  <div className="mt-4 flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtask Progress</span>
-                    <div className="w-64 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
-                    </div>
-                    <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{task.custom_fields.progress_percentage}%</span>
-                  </div>
-                )}
-              </div>
-            
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-gray-100 pt-4 dark:border-white/5">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Creator</span>
-                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{task.creator?.full_name || "Unknown"}</p>
-              </div>
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Created At</span>
-                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{new Date(task.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</p>
-              </div>
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Last Status</span>
-                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">
-                  <span className="inline-flex items-center rounded-md bg-accent/10 px-1.5 py-0.5 text-xs font-medium text-accent ring-1 ring-inset ring-accent/10 dark:bg-accent/10 dark:text-accent dark:ring-accent/20">
-                    {task.status?.name || "Open"}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Last Updated</span>
-                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{task.updated_at ? new Date(task.updated_at).toLocaleDateString(undefined, { dateStyle: 'medium' }) : "Never"}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="relative w-full h-full xl:h-auto">
-            <div className="xl:absolute xl:inset-0 w-full h-full">
-              <TaskRightPanel taskId={taskId} />
-            </div>
-          </div>
+        {/* Header Tags */}
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <p className="text-[11px] font-mono tracking-wider text-accent bg-accent/10 dark:bg-accent/10 px-2 py-0.5 rounded font-bold">
+            {task.task_code || "TASK"}
+          </p>
+          <p className="text-[11px] tracking-wider text-gray-500 px-2 py-0.5 border border-gray-200 dark:border-white/10 rounded font-bold bg-surface dark:bg-transparent">
+            WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
+          </p>
         </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-accent dark:text-accent break-words whitespace-normal w-full">{task.title}</h1>
+        </div>
+
+        {/* DEDICATED CARD FOR SUBJECT AND DESCRIPTION */}
+        <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
+          <div className="bg-gradient-to-r from-blue-500/15 via-surface/90 to-surface/40 dark:from-blue-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="w-1.5 h-4 rounded-full bg-blue-500 shadow-xs" />
+              <Type className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <h3 className="font-bold text-sm tracking-wide text-foreground">Task Subject & Description</h3>
+            </div>
+            <span className="text-[10px] font-mono font-bold tracking-wider text-accent bg-accent/10 px-2.5 py-0.5 rounded-full border border-accent/20">
+              {task.task_code || "TASK"}
+            </span>
+          </div>
+          <div className="p-6 space-y-6">
+            
+            {task.description && (
+              <div className="w-full">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1.5">
+                  <AlignLeft className="w-3.5 h-3.5" /> Description
+                </span>
+                <SafeHtml 
+                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-gray-700 dark:text-gray-300 w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-gray-50/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-gray-200/60 dark:border-white/10 shadow-sm"
+                  html={task.description} 
+                />
+              </div>
+            )}
+            
+            {typeof task.custom_fields?.progress_percentage === 'number' && (
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtask Progress</span>
+                <div className="w-64 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                </div>
+                <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{task.custom_fields.progress_percentage}%</span>
+              </div>
+            )}
+          </div>
+        </AppCard>
 
         <div className="w-full">
           {isFrozen && (

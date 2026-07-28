@@ -38,7 +38,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const router = useRouter();
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [workspaces, setWorkspaces] = useState<any[]>(initialData?.workspaces || []);
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);
@@ -654,7 +654,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               {activeView === 'HIERARCHY' ? (
                 <div className="flex-1 overflow-auto min-h-0 scrollbar-thin pr-1">
                   <div className="flex justify-end mb-3 mr-2">
-                    <label className={`flex items-center gap-2 text-xs font-medium cursor-pointer text-muted`}>
+                    <label className={`flex items-center gap-2 text-sm font-medium cursor-pointer text-muted`}>
                       <input 
                         type="checkbox" 
                         checked={autoCollapse} 
@@ -801,7 +801,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               
               <div className="grid grid-cols-1 gap-5 mb-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Company / Entity Link *</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Company / Entity Link *</label>
                   <select 
                     className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                     value={newWS.company_id}
@@ -815,11 +815,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Name *</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Workspace Name *</label>
                   <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className={"bg-surface"} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? (newWS.code || "") : "[Auto-Generated]"} className={"bg-elevated"} />
                 </div>
               </div>
@@ -827,7 +827,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
                 <div className="grid grid-cols-1 mt-5">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Link</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Link</label>
                     <select 
                       className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                       value={newWS.parent_workspace_id}
@@ -861,17 +861,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-2 gap-5 mb-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
                   <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className={"bg-surface"} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target End Date</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Target End Date</label>
                   <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className={"bg-surface"} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
                 <textarea 
                   className={`w-full h-24 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-none ${ "theme-card-structural text-foreground" }`}
                   placeholder="Detailed project requirements, goals, and constraints..."

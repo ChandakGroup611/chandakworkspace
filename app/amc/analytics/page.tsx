@@ -23,7 +23,7 @@ export default function AMCAnalyticsPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme() as any;
-    isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   } catch (e) {}
   const supabase = createClient();
   const { hasPermission } = usePermissions();

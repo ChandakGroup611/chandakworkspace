@@ -249,7 +249,7 @@ export default function LoginPage() {
             <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
+                <label className="text-sm font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
                   Email Address
                 </label>
                 <AppInput 
@@ -266,7 +266,7 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
+                  <label className="text-sm font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
                     Password
                   </label>
                   <Link href="#" onClick={(e) => { e.preventDefault(); alert("Contact administrator to reset password."); }} className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors">

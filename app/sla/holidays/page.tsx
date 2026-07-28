@@ -80,15 +80,15 @@ export default function HolidayCalendar() {
                   <h3 className="font-bold text-lg mb-4">Add Holiday</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Holiday Name</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Holiday Name</label>
                       <AppInput value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="e.g. Thanksgiving" />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Date</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Date</label>
                       <AppInput type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Region / Office</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Region / Office</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
                         <option>Global</option>
                         <option>US Region</option>

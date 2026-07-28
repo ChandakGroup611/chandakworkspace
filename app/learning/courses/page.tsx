@@ -96,7 +96,7 @@ export default function LearningCourseBuilder() {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">Course Title</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Course Title</label>
                 <AppInput 
                   value={editingCourse.title} 
                   onChange={e => setEditingCourse({...editingCourse, title: e.target.value})} 
@@ -105,7 +105,7 @@ export default function LearningCourseBuilder() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Description</label>
                 <textarea 
                   className="w-full mt-1 p-3 bg-transparent border border-border rounded-lg focus:outline-none focus:border-accent text-sm min-h-[100px]"
                   placeholder="What will employees learn?"
@@ -153,7 +153,7 @@ export default function LearningCourseBuilder() {
                 <div className="p-6">
                   {mod.type === 'video' && (
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Video URL (MP4, YouTube, Vimeo)</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Video URL (MP4, YouTube, Vimeo)</label>
                       <AppInput 
                         value={mod.url || ""}
                         onChange={e => {
@@ -168,7 +168,7 @@ export default function LearningCourseBuilder() {
                   )}
                   {mod.type === 'article' && (
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Article Content</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Article Content</label>
                       <textarea 
                         className="w-full mt-1 p-3 bg-transparent border border-border rounded-lg focus:outline-none focus:border-blue-500 text-sm min-h-[150px]"
                         placeholder="Write lesson content here..."

@@ -26,7 +26,7 @@ const regex2 = /\['executive-light', 'material-ocean', 'aurora-breeze', 'pure-el
 const regex3 = /\["executive-light", "material-ocean", "aurora-breeze", "pure-elegance"\]\.includes\(theme\)/g;
 const regex4 = /\["executive-light", "material-ocean", "aurora-breeze"\]\.includes\(theme\)/g;
 
-const replacement = `["light-neumorphic", "industrial-control", "glassmorphism"].includes(theme)`;
+const replacement = `["light-neumorphic", "industrial-control"].includes(theme)`;
 
 files.forEach(file => {
   let content = fs.readFileSync(file, 'utf8');

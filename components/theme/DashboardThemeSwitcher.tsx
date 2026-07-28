@@ -16,8 +16,7 @@ export function DashboardThemeSwitcher() {
     { id: 'light-neumorphic', name: 'Light Soft-Neumorphic' },
     { id: 'industrial-control', name: 'Industrial Control Panel' },
     { id: 'cyberpunk', name: 'Cyberpunk Intelligence' },
-    { id: 'glassmorphism', name: 'Frosted Glassmorphism' },
-    { id: 'pure-white', name: 'Pure White (Clean)' }
+    { id: 'pure-white', name: 'Clean Minimalist (White)' }
   ];
 
   return (

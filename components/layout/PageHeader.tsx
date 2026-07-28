@@ -16,7 +16,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+    isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   } catch (e) {}
 
   return (

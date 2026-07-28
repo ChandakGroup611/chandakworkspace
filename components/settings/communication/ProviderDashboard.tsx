@@ -167,7 +167,7 @@ export default function ProviderDashboard() {
               {(prov.provider_name === "SMTP" || prov.provider_name === "Microsoft 365") && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">SMTP Host</label>
+                    <label className="text-sm font-bold text-muted-foreground uppercase">SMTP Host</label>
                     <input 
                       type="text" 
                       value={prov.config.host || ""}
@@ -177,7 +177,7 @@ export default function ProviderDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">SMTP Port</label>
+                    <label className="text-sm font-bold text-muted-foreground uppercase">SMTP Port</label>
                     <input 
                       type="number" 
                       value={prov.config.port || ""}
@@ -187,7 +187,7 @@ export default function ProviderDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Username / Email</label>
+                    <label className="text-sm font-bold text-muted-foreground uppercase">Username / Email</label>
                     <input 
                       type="text" 
                       value={prov.config.username || ""}
@@ -197,7 +197,7 @@ export default function ProviderDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase">Password / App Password</label>
+                    <label className="text-sm font-bold text-muted-foreground uppercase">Password / App Password</label>
                     <div className="relative">
                       <input 
                         type="password" 
@@ -214,7 +214,7 @@ export default function ProviderDashboard() {
 
               {(prov.provider_name === "Resend" || prov.provider_name === "SendGrid") && (
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase">API Key</label>
+                  <label className="text-sm font-bold text-muted-foreground uppercase">API Key</label>
                   <div className="relative">
                     <input 
                       type="password" 

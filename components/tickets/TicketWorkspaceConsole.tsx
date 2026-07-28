@@ -613,7 +613,7 @@ export function TicketWorkspaceConsole({
         )}
 
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Ticket Remarks <span className="text-red-500">*</span></label>
+          <label className="text-sm font-bold uppercase tracking-wider text-gray-500">Ticket Remarks <span className="text-red-500">*</span></label>
           
           {/* Quick Actions */}
           {canEditFields && (

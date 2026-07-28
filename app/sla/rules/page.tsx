@@ -138,30 +138,30 @@ export default function SLARuleBuilder() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Policy Name</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Policy Name</label>
                       <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. High Priority Issues" />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">System Code</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">System Code</label>
                       <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value})} className="font-mono" />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Response Target (Minutes)</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Response Target (Minutes)</label>
                       <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Resolution Target (Minutes)</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Resolution Target (Minutes)</label>
                       <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Working Hours Code</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Working Hours Code</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                         <option value="24x7">24x7 Continuous</option>
                         <option value="9x5">9x5 Business Hours</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-500 uppercase">Escalation Level</label>
+                      <label className="text-sm font-bold text-gray-500 uppercase">Escalation Level</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                         <option value="STANDARD">Standard</option>
                         <option value="PRIORITY">Priority Escalate</option>
@@ -215,30 +215,30 @@ export default function SLARuleBuilder() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Policy Name</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Policy Name</label>
                     <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Critical Outage" />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">System Code</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">System Code</label>
                     <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase().replace(/\s+/g, '_')})} className="font-mono" />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Response Target (Minutes)</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Response Target (Minutes)</label>
                     <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Resolution Target (Minutes)</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Resolution Target (Minutes)</label>
                     <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Working Hours Code</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Working Hours Code</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                       <option value="24x7">24x7 Continuous</option>
                       <option value="9x5">9x5 Business Hours</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Escalation Level</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Escalation Level</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                       <option value="STANDARD">Standard</option>
                       <option value="PRIORITY">Priority Escalate</option>

@@ -12,7 +12,7 @@ import { Filter } from "lucide-react";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [sprints, setSprints] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -148,15 +148,15 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       {isCreatingSprint && (
         <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-accent/10/50 border-indigo-100`}>
           <div className="space-y-1.5 flex-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Sprint Name</label>
+            <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Sprint Name</label>
             <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+            <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
             <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">End Date</label>
+            <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">End Date</label>
             <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="flex gap-2 h-9">

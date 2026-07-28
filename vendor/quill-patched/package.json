@@ -1,0 +1,54 @@
+{
+  "name": "quill",
+  "version": "2.0.4",
+  "description": "Your powerful, rich text editor",
+  "author": "Jason Chen <jhchen7@gmail.com>",
+  "homepage": "https://quilljs.com",
+  "main": "quill.js",
+  "type": "module",
+  "dependencies": {
+    "eventemitter3": "^5.0.1",
+    "lodash-es": "^4.17.21",
+    "parchment": "^3.0.0",
+    "quill-delta": "^5.1.0"
+  },
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slab/quill.git",
+    "directory": "packages/quill"
+  },
+  "bugs": {
+    "url": "https://github.com/slab/quill/issues"
+  },
+  "prettier": {
+    "singleQuote": true
+  },
+  "browserslist": [
+    "defaults"
+  ],
+  "scripts": {
+    "build": "./scripts/build production",
+    "lint": "run-s lint:*",
+    "lint:eslint": "eslint .",
+    "lint:tsc": "tsc --noEmit --skipLibCheck",
+    "start": "[[ -z \"$npm_package_config_ports_webpack\" ]] && webpack-dev-server || webpack-dev-server --port $npm_package_config_ports_webpack",
+    "test": "run-s test:*",
+    "test:unit": "vitest --config test/unit/vitest.config.ts",
+    "test:fuzz": "vitest --config test/fuzz/vitest.config.ts",
+    "test:e2e": "playwright test"
+  },
+  "keywords": [
+    "quill",
+    "editor",
+    "rich text",
+    "wysiwyg",
+    "operational transformation",
+    "ot",
+    "framework"
+  ],
+  "engines": {
+    "npm": ">=8.2.3"
+  },
+  "engineStrict": true
+}

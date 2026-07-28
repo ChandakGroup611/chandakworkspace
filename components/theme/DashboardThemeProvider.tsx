@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-type DashboardTheme = 'executive-light' | 'midnight-operations' | 'glass-intelligence' | 'enterprise-bento' | 'tactical-utility' | 'dark-neumorphic' | 'light-neumorphic' | 'industrial-control' | 'cyberpunk' | 'glassmorphism' | 'pure-white';
+type DashboardTheme = 'executive-light' | 'midnight-operations' | 'glass-intelligence' | 'enterprise-bento' | 'tactical-utility' | 'dark-neumorphic' | 'light-neumorphic' | 'industrial-control' | 'cyberpunk' | 'pure-white';
 
 interface DashboardThemeContextType {
   dashboardTheme: DashboardTheme;

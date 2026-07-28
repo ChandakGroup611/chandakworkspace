@@ -1,0 +1,32 @@
+diff --git a/node_modules/react-quill-new/node_modules/quill/formats/formula.js b/node_modules/react-quill-new/node_modules/quill/formats/formula.js
+index 1c1b1a5..b63c4c1 100644
+--- a/node_modules/react-quill-new/node_modules/quill/formats/formula.js
++++ b/node_modules/react-quill-new/node_modules/quill/formats/formula.js
+@@ -23,10 +23,9 @@ class Formula extends Embed {
+     return domNode.getAttribute('data-value');
+   }
+   html() {
+-    const {
+-      formula
+-    } = this.value();
+-    return `<span>${formula}</span>`;
++    const { formula } = this.value();
++    const escapedFormula = String(formula || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
++    return `<span>${escapedFormula}</span>`;
+   }
+ }
+ export default Formula;
+diff --git a/node_modules/react-quill-new/node_modules/quill/formats/video.js b/node_modules/react-quill-new/node_modules/quill/formats/video.js
+index 135a297..fbb33a3 100644
+--- a/node_modules/react-quill-new/node_modules/quill/formats/video.js
++++ b/node_modules/react-quill-new/node_modules/quill/formats/video.js
+@@ -41,7 +41,8 @@ class Video extends BlockEmbed {
+     const {
+       video
+     } = this.value();
+-    return `<a href="${video}">${video}</a>`;
++    const escapedVideo = String(video || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
++    return `<a href="${escapedVideo}">${escapedVideo}</a>`;
+   }
+ }
+ export default Video;

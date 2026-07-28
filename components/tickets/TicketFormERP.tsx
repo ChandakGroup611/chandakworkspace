@@ -15,7 +15,7 @@ interface TicketFormERPProps {
 
 export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [masters, setMasters] = useState<any>({});
@@ -118,7 +118,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             
             {/* Software Hierarchy */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Software System</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Software System</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.systemId}
@@ -133,7 +133,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.priorityId}
@@ -148,7 +148,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Module</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Module</label>
               <select 
                 className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.moduleId}
@@ -164,7 +164,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Submodule</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Submodule</label>
               <select 
                 className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.submoduleId}
@@ -181,7 +181,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
 
             {/* Categories */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Category</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Category</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.categoryId}
@@ -196,7 +196,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Sub Category</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Sub Category</label>
               <select 
                 className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.subcategoryId}
@@ -212,7 +212,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </div>
 
             <div className="md:col-span-2 lg:col-span-3 space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Subject</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Subject</label>
               <AppInput 
                 placeholder="Operational summary of the software issue"
                 value={formData.subject}
@@ -224,7 +224,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
           </div>
 
           <div className="space-y-2">
-            <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Description</label>
+            <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Description</label>
             <textarea 
               className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
               placeholder="Describe the application fault, bug behavior, or system error in detail..."
@@ -239,7 +239,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               <h4 className="text-sm font-bold text-accent mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
+                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
@@ -250,7 +250,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               </div>
 
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
+                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
@@ -264,7 +264,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
             <div className="flex-1 space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Technical Evidence (Screenshots / Logs)</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Technical Evidence (Screenshots / Logs)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
                 "border-border hover:border-accent/30 bg-elevated/50"
               } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-red-500/5' : ''}`}>

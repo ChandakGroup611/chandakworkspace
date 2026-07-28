@@ -92,22 +92,22 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">New Purchase Date *</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">New Purchase Date *</label>
                 <AppInput type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">New Expiry Date *</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">New Expiry Date *</label>
                 <AppInput type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Renewal Cost ({amcData.currency || 'INR'}) *</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Renewal Cost ({amcData.currency || 'INR'}) *</label>
                 <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required placeholder="e.g., 5000" />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">New PO Number</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">New PO Number</label>
                 <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="Optional" />
               </div>
             </div>

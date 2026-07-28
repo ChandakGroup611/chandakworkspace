@@ -152,7 +152,7 @@ export default function TemplateDesigner() {
             {/* Header Configuration */}
             <div className="p-6 border-b border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6 theme-card-structural /5">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Template Name</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Template Name</label>
                 <input 
                   type="text" 
                   value={tpl.template_name}
@@ -161,7 +161,7 @@ export default function TemplateDesigner() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Trigger Module</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Trigger Module</label>
                 <select 
                   value={tpl.module}
                   onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
@@ -171,7 +171,7 @@ export default function TemplateDesigner() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Trigger Event</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Trigger Event</label>
                 <select 
                   value={tpl.event}
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
@@ -181,7 +181,7 @@ export default function TemplateDesigner() {
                 </select>
               </div>
               <div className="md:col-span-3 space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">Email Subject Line</label>
+                <label className="text-sm font-bold text-gray-500 uppercase">Email Subject Line</label>
                 <input 
                   type="text" 
                   value={tpl.subject}

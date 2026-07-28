@@ -6,7 +6,7 @@
 @import '../src/styles/themes/light-neumorphic-v2.css';
 @import '../src/styles/themes/industrial-control-v2.css';
 @import '../src/styles/themes/cyberpunk-v2.css';
-@import '../src/styles/themes/glassmorphism-v2.css';
+
 @import '../src/styles/themes/pure-white-v2.css';
 @import '../src/styles/themes/pure-white-neumorphic-v2.css';
 
@@ -41,6 +41,21 @@
   /* Force inputs, buttons, and tables to inherit the font */
   input, textarea, select, button, table, th, td {
     font-family: inherit;
+  }
+
+  /* Universal Premium Typography for Labels & Data Fields */
+  label, .theme-label {
+    /* Bind directly to the user's selected subtext slider */
+    font-size: var(--subtext-font-size, 12px) !important;
+    font-weight: var(--ui-weight-bold, 700) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  .theme-data-value {
+    /* Data values sit between subtext and base, usually 14px default */
+    font-size: calc(var(--subtext-font-size, 12px) + 2px) !important;
+    font-weight: var(--ui-weight-semibold, 600) !important;
   }
 
   /* Premium Global Text Selection */

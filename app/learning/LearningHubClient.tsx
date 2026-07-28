@@ -9,7 +9,7 @@ import { GraduationCap, ChevronDown } from "lucide-react";
 
 export default function LearningHubClient() {
   const { theme } = useTheme();
-  const isLight = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   
   const [selectedModuleId, setSelectedModuleId] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

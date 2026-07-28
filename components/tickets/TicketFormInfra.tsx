@@ -15,7 +15,7 @@ interface TicketFormInfraProps {
 
 export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [masters, setMasters] = useState<any>({});
@@ -115,7 +115,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             
             {/* Issue Type & Subtype */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Type</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Type</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.issueTypeId}
@@ -130,7 +130,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Issue Subtype</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Subtype</label>
               <select 
                 className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.issueSubtypeId}
@@ -147,7 +147,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
 
             {/* Category & Subcategory */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Asset Category</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Asset Category</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.categoryId}
@@ -162,7 +162,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Sub-Category</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Sub-Category</label>
               <select 
                 className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
                 value={formData.subcategoryId}
@@ -179,7 +179,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
 
             {/* Asset Selection & Priority */}
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Affected Asset</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Affected Asset</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.assetId}
@@ -194,7 +194,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.priorityId}
@@ -209,7 +209,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             </div>
 
             <div className="md:col-span-2 lg:col-span-3 space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Subject</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Subject</label>
               <AppInput 
                 placeholder="Summarize the infrastructure fault..."
                 value={formData.subject}
@@ -221,7 +221,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
           </div>
 
           <div className="space-y-2">
-            <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Incident Description & Technical Details</label>
+            <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Incident Description & Technical Details</label>
             <textarea 
               className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
               placeholder="Describe the hardware fault, server impact, or network outage in detail..."
@@ -236,7 +236,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <h4 className="text-sm font-bold text-accent mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
+                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
@@ -247,7 +247,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               </div>
 
               <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
+                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
@@ -261,7 +261,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
             <div className="flex-1 space-y-2">
-              <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Operational Attachments (Log Files / Screenshots)</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Attachments (Log Files / Screenshots)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
                 "border-border hover:border-accent/30 bg-elevated/50"
               }`}>

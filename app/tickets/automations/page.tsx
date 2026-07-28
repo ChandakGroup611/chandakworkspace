@@ -141,7 +141,7 @@ export default function TicketAutomationsBuilder() {
             <div className="bg-surface dark:bg-[#121620] rounded-2xl border border-border shadow-xl overflow-hidden animate-in slide-in-from-right-8 duration-300">
               <div className="p-6 border-b border-border flex justify-between items-center bg-gray-50 dark:bg-surface/[0.02]">
                 <div className="flex-1 mr-4">
-                  <label className="text-xs font-bold text-gray-500 uppercase">Rule Name</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase">Rule Name</label>
                   <AppInput 
                     value={form.name} 
                     onChange={e => setForm({...form, name: e.target.value})} 

@@ -37,7 +37,7 @@ export default function RootLayout({
               document.documentElement.setAttribute("data-theme", theme);
               document.documentElement.setAttribute("data-density", density);
               
-              const lightThemes = ["light-neumorphic", "glassmorphism", "pure-white"];
+              const lightThemes = ["light-neumorphic", "pure-white"];
               if (lightThemes.includes(theme)) {
                 document.documentElement.classList.add("theme-light");
               } else {

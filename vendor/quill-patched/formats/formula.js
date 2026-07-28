@@ -1,0 +1,32 @@
+import Embed from '../blots/embed.js';
+class Formula extends Embed {
+  static blotName = 'formula';
+  static className = 'ql-formula';
+  static tagName = 'SPAN';
+  static create(value) {
+    // @ts-expect-error
+    if (window.katex == null) {
+      throw new Error('Formula module requires KaTeX.');
+    }
+    const node = super.create(value);
+    if (typeof value === 'string') {
+      // @ts-expect-error
+      window.katex.render(value, node, {
+        throwOnError: false,
+        errorColor: '#f00'
+      });
+      node.setAttribute('data-value', value);
+    }
+    return node;
+  }
+  static value(domNode) {
+    return domNode.getAttribute('data-value');
+  }
+  html() {
+    const { formula } = this.value();
+    const escapedFormula = String(formula || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return `<span>${escapedFormula}</span>`;
+  }
+}
+export default Formula;
+//# sourceMappingURL=formula.js.map

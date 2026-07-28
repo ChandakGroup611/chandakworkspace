@@ -255,17 +255,17 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Title *</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Task Title *</label>
                 <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required className={"bg-surface"} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Task Code</label>
                 <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={isLightMode ? "bg-gray-50" : "bg-white/5"} />
               </div>
             </div>
             
             <div className="mt-3 space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">External Link (Optional)</label>
+              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">External Link (Optional)</label>
               <AppInput placeholder="https://..." value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className={"bg-surface"} />
             </div>
           </div>
@@ -281,7 +281,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Start Date <span className="text-red-500">*</span></label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Start Date <span className="text-red-500">*</span></label>
                 <AppInput 
                   type="date" 
                   min={localTodayString} 
@@ -291,7 +291,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Due Date <span className="text-red-500">*</span></label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Target Due Date <span className="text-red-500">*</span></label>
                 <AppInput 
                   type="date" 
                   min={startDate || localTodayString} 
@@ -304,7 +304,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Task Priority</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
@@ -319,7 +319,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Department</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Department</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
@@ -334,7 +334,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Task Status</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
@@ -351,7 +351,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Task Link</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Parent Task Link</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
@@ -367,7 +367,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assign to Sprint</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Assign to Sprint</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors cursor-pointer ${
                     isLightMode ? "bg-white border-gray-200 text-gray-900" : "bg-black/30 border-white/10 text-white"
@@ -395,7 +395,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Assignees (Task Owners) *</label>
+                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Assignees (Task Owners) *</label>
                 <button type="button" onClick={() => {
                   if (assignees.length === stakeholders.length && stakeholders.length > 0) setAssignees([]);
                   else setAssignees(stakeholders.map(s => s.id));
@@ -406,7 +406,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className={`p-2 rounded-xl border max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent ${isLightMode ? "bg-white border-gray-200" : "bg-black/30 border-white/10"}`}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                   {stakeholders.map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
+                    <label key={s.id} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-md transition-colors">
                       <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={assignees.includes(s.id)} onChange={e => {
                         if (e.target.checked) setAssignees([...assignees, s.id]);
                         else setAssignees(assignees.filter(id => id !== s.id));
@@ -420,7 +420,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                 <AlignLeft className="h-3 w-3" /> Execution Notes (Rich Text) <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -436,7 +436,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
             
             <div className="space-y-1.5 mt-3">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
                 Tags & Labels
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -651,7 +651,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {customFields.map(f => (
                 <div key={f.field_key} className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
+                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">{f.field_name}</label>
                   <AppInput 
                     type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
                     value={fieldValues[f.field_key] || ""} 

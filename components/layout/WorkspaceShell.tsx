@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const pathname = usePathname();
-  const isLight = ["light-neumorphic", "glassmorphism", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   const isAuthRoute = pathname === "/login" || pathname === "/register";
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
 
@@ -31,7 +31,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
   return (
     <div 
-      className="h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-cyan-500/20 overflow-hidden bg-transparent"
+      className={`h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-accent/20 overflow-hidden bg-background`}
       style={{
         color: "var(--text-primary, #FFFFFF)"
       }}
@@ -44,14 +44,12 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
       )}
 
       {/* Main Orchestration Column */}
-      <div className="flex flex-1 flex-col min-w-0 h-screen relative">
-        {/* Removed Background Decorative Ambient Circles for Enterprise Discipline */}
-
+      <div className={`flex flex-1 flex-col min-w-0 h-full relative`}>
         {/* Global Action Top Navbar */}
         {!isAuthRoute && <Navbar />}
 
-        {/* Dynamic Scrollable Content Workspace - Zero Global Padding to allow Density Modes */}
-        <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative pb-4 overflow-y-auto ${isAuthRoute ? 'p-0' : 'bg-transparent p-4 md:p-6'}`}>
+        {/* Dynamic Scrollable Content Workspace */}
+        <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${isAuthRoute ? 'p-0' : 'bg-transparent'}`}>
           {children}
         </main>
       </div>

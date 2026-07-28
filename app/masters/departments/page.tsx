@@ -231,17 +231,17 @@ export default function DepartmentsMasterPage() {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Department Name <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Department Name <span className="text-red-500">*</span></label>
                     <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Human Resources" className="h-11" />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Department Code <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Department Code <span className="text-red-500">*</span></label>
                     <AppInput value={formCode} onChange={e => setFormCode(e.target.value)} required placeholder="e.g. HR" className="h-11 uppercase font-mono" />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                    <label className="text-sm font-bold text-gray-500 uppercase">Description</label>
                     <textarea 
                       value={formDesc} 
                       onChange={e => setFormDesc(e.target.value)} 

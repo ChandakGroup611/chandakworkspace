@@ -122,7 +122,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <div className="mt-4 space-y-3">
                   {Object.entries(task.custom_fields || {}).map(([key, val]: any) => (
                     <div key={key}>
-                      <label className="text-xs text-gray-500 uppercase">{key}</label>
+                      <label className="text-sm text-gray-500 uppercase">{key}</label>
                       <p className="text-sm text-gray-300">{val}</p>
                     </div>
                   ))}
