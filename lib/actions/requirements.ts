@@ -26,7 +26,7 @@ export async function transitionRequirementStatus(reqId: string, newStatusId: st
     .eq('from_status_id', req.status_id)
     .eq('to_status_id', newStatusId)
     .eq('is_active', true)
-    .single();
+    .maybeSingle();
 
   if (!transition) throw new Error("Invalid workflow transition.");
 
@@ -86,7 +86,13 @@ export async function recalculateRequirementCompletion(reqId: string) {
     .select('task_id')
     .eq('requirement_id', reqId);
 
-  if (!links || links.length === 0) return;
+  if (!links || links.length === 0) {
+    const { data: reqToUpdate } = await supabaseAdmin.from('requirements').select('custom_fields').eq('id', reqId).single();
+    const customFields = reqToUpdate?.custom_fields || {};
+    customFields.completion_percentage = 0;
+    await supabaseAdmin.from('requirements').update({ custom_fields: customFields }).eq('id', reqId);
+    return;
+  }
 
   const taskIds = links.map(l => l.task_id);
   const { data: tasks } = await supabaseAdmin
@@ -112,14 +118,14 @@ export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL
 
   if (result === 'PASS') {
     // Look up closed/completed state
-    const { data: closedState } = await supabaseAdmin.from('status_master').select('id').eq('status_code', 'CLOSED').eq('scope_type', 'REQUIREMENT').single();
+    const { data: closedState } = await supabaseAdmin.from('status_master').select('id').eq('status_code', 'CLOSED').eq('scope_type', 'REQUIREMENT').maybeSingle();
     if (closedState) {
       await supabaseAdmin.from('requirements').update({ status_id: closedState.id }).eq('id', reqId);
     }
     await logActivityEvent('REQUIREMENT', reqId, 'UAT_PASS', null, { comments }, performedBy);
   } else {
     // FAIL -> Reopen cascade
-    const { data: reopenState } = await supabaseAdmin.from('status_master').select('id').eq('is_reopen', true).eq('scope_type', 'REQUIREMENT').single();
+    const { data: reopenState } = await supabaseAdmin.from('status_master').select('id').eq('is_reopen', true).eq('scope_type', 'REQUIREMENT').maybeSingle();
     if (reopenState) {
       await supabaseAdmin.from('requirements').update({ status_id: reopenState.id }).eq('id', reqId);
     }
@@ -128,7 +134,7 @@ export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL
     const { data: links } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
     if (links && links.length > 0) {
       const taskIds = links.map(l => l.task_id);
-      const { data: taskReopenState } = await supabaseAdmin.from('status_master').select('id').eq('is_reopen', true).eq('scope_type', 'TASK').single();
+      const { data: taskReopenState } = await supabaseAdmin.from('status_master').select('id').eq('is_reopen', true).eq('scope_type', 'TASK').maybeSingle();
       if (taskReopenState) {
         await supabaseAdmin.from('tasks').update({ status_id: taskReopenState.id }).in('id', taskIds);
       }
@@ -398,16 +404,16 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
       }
     }
     if (flowInserts.length > 0) {
-      await supabaseAdmin.from('requirement_approval_flow').delete().eq('requirement_id', reqId);
-      const { error: flowErr } = await supabaseAdmin.from('requirement_approval_flow').insert(flowInserts);
-      if (flowErr) throw new Error("Failed to insert approval flow: " + flowErr.message);
-      
       updatePayload.approval_status = 'Pending Approval';
       const firstApprover = flowInserts.find((f: any) => f.level === 1);
       if (firstApprover) updatePayload.current_assignee_id = firstApprover.approver_id;
       
       const { error: reqErr } = await supabaseAdmin.from('requirements').update(updatePayload).eq('id', reqId);
       if (reqErr) throw new Error("Failed to update requirement details: " + reqErr.message);
+
+      await supabaseAdmin.from('requirement_approval_flow').delete().eq('requirement_id', reqId);
+      const { error: flowErr } = await supabaseAdmin.from('requirement_approval_flow').insert(flowInserts);
+      if (flowErr) throw new Error("Failed to insert approval flow: " + flowErr.message);
 
       const { dispatchNotification } = await import('@/lib/actions/notifications');
       const l1Approvers = flowInserts.filter((f: any) => f.level === 1);
@@ -441,6 +447,9 @@ export async function generateApprovalFlow(reqId: string, performedBy: string) {
 
   const { data: req } = await supabaseAdmin.from('requirements').select('*').eq('id', reqId).single();
   if (!req) throw new Error("Requirement not found");
+  if (['Approved', 'SignedOff', 'Closed', 'Cancelled', 'Rejected'].includes(req.approval_status)) {
+    throw new Error("Cannot alter approval flow on a closed or finalized requirement.");
+  }
   const { data: impacts } = await supabaseAdmin.from('requirement_impacted_departments').select('department_id').eq('requirement_id', reqId).order('selection_order');
   if (!impacts || impacts.length === 0) throw new Error("No impacted departments defined");
   const deptIds = impacts.map(i => i.department_id);
@@ -760,16 +769,10 @@ export async function createTaskFromRequirement(reqId: string, workspaceId: stri
        .eq('workspace_id', payload.workspace_id)
        .eq('user_id', payload.assigned_to)
        .limit(1)
-       .single();
+       .maybeSingle();
        
      if (!existingMember) {
-        await supabaseAdmin.from('workspace_members').insert({
-           workspace_id: payload.workspace_id,
-           user_id: payload.assigned_to,
-           role: 'member',
-           is_deleted: false,
-           is_active: true
-        });
+        throw new Error("Unauthorized: Assignee is not a member of the target workspace.");
      }
   }
 

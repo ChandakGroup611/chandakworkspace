@@ -64,12 +64,11 @@ export default function Navbar() {
     setProfileOpen(false);
     try {
       if (userData?.id) {
-        supabase.from("active_sessions").delete().eq("user_id", userData.id).then();
+        // Fire and forget delete so we don't block, but catch any errors
+        supabase.from("active_sessions").delete().eq("user_id", userData.id).then(undefined, () => {});
       }
-      await Promise.race([
-        supabase.auth.signOut(),
-        new Promise(resolve => setTimeout(resolve, 800))
-      ]);
+      // Await signout fully to ensure local storage and cookies are cleared
+      await supabase.auth.signOut();
     } catch (_) {}
     window.location.href = "/login?action=logout";
   };

@@ -161,26 +161,6 @@ export default function ClientSessionManager() {
     const handleVisibilityChange = async () => {
       try {
         if (document.visibilityState === "visible") {
-          // Tab became visible — check how long we've been away
-          const elapsed = Date.now() - lastActivityRef.current;
-
-          if (elapsed >= SESSION_IDLE_LIMIT_MS) {
-            // We've been idle longer than the session limit while hidden
-            // Check if the JWT is still valid before forcing logout
-            const isValid = await checkSessionValidity();
-            if (!isValid) {
-              // JWT expired — force redirect to login
-              console.warn("[SessionManager] Session expired while tab was hidden.");
-              const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
-              if (!isAuthPage) {
-                window.location.href = "/login?reason=timeout";
-              }
-              return;
-            }
-            // JWT is still valid — the user may have been active in another tab
-            // Reset activity and continue
-          }
-
           // Resume heartbeats
           lastActivityRef.current = Date.now();
           isLeaderRef.current = true;
@@ -288,15 +268,22 @@ export default function ClientSessionManager() {
               .channel(channelName)
               .on(
                 "postgres_changes",
-                { event: "UPDATE", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },
-                (payload) => {
-                  const newSessionToken = payload.new.session_token;
-                  if (newSessionToken && newSessionToken !== sessionToken) {
-                    // Another device logged in and took over the session
-                    alert("You have been logged out because your account was logged in on another device.");
+                { event: "*", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },
+                (payload: any) => {
+                  if (payload.eventType === "DELETE") {
+                    // Another tab logged out
                     supabase.auth.signOut().catch(()=>{}).finally(() => {
-                      window.location.href = "/login";
+                      window.location.href = "/login?reason=logout";
                     });
+                  } else if (payload.eventType === "UPDATE") {
+                    const newSessionToken = payload.new?.session_token;
+                    if (newSessionToken && newSessionToken !== sessionToken) {
+                      // Another device logged in and took over the session
+                      alert("You have been logged out because your account was logged in on another device.");
+                      supabase.auth.signOut().catch(()=>{}).finally(() => {
+                        window.location.href = "/login";
+                      });
+                    }
                   }
                 }
               )

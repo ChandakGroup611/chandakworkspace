@@ -1662,11 +1662,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {task.attachments.map((item: any) => (
                         <div key={item.id} className="p-3 rounded-lg border border-border/30 bg-surface/30 flex items-center justify-between">
-                          <span className="text-xs font-semibold truncate">{item.file_name}</span>
+                          <span className="text-xs font-semibold truncate pr-2" title={item.file_name}>{item.file_name}</span>
                           {item.file_url && (
-                            <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
-                              <Download className="w-3.5 h-3.5" /> Download
-                            </a>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
+                                <Eye className="w-3.5 h-3.5" /> View
+                              </a>
+                              <a href={item.file_url} download target="_blank" rel="noopener noreferrer" className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
+                                <Download className="w-3.5 h-3.5" /> Download
+                              </a>
+                            </div>
                           )}
                         </div>
                       ))}

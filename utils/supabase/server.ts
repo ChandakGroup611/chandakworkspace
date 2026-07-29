@@ -16,7 +16,9 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
+              const sessionOptions = { ...options };
+              delete sessionOptions.maxAge; // Force session cookie
+              cookieStore.set(name, value, sessionOptions);
             })
           } catch {
             // The `setAll` method was called from a Server Component.
