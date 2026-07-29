@@ -223,12 +223,31 @@ export default function ClientSessionManager() {
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     // ── 5. Initial session check & heartbeat start ──────────────
-    // On mount, verify the session is still valid (handles the case of
-    // opening a tab after a long time — e.g., next day)
-    (async () => {
+    // Enforce "Logout when all tabs closed" using BroadcastChannel
+    const tabTracker = new BroadcastChannel("adios_tab_tracker");
+    let isFirstTab = true;
+
+    tabTracker.onmessage = (e) => {
+      if (e.data === "ping") tabTracker.postMessage("pong");
+      else if (e.data === "pong") isFirstTab = false;
+    };
+    tabTracker.postMessage("ping");
+
+    const initTimer = setTimeout(async () => {
       try {
-        // Skip redirect if we are already on an auth page
         const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
+        
+        // If no other tabs responded and this tab has no session state, all tabs were closed!
+        if (isFirstTab && !sessionStorage.getItem("app_tab_session_active")) {
+          if (!isAuthPage) {
+            console.log("[SessionManager] All tabs were closed. Forcing fresh login.");
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            window.location.href = "/login?reason=session_cleared";
+            return;
+          }
+        }
+        sessionStorage.setItem("app_tab_session_active", "true");
         
         const isValid = await checkSessionValidity();
         if (!isValid) {
@@ -303,11 +322,13 @@ export default function ClientSessionManager() {
       } catch (err) {
         console.error("[SessionManager] Initialization error:", err);
       }
-    })();
+    }, 300); // 300ms delay to wait for pongs
 
     // ── Cleanup ─────────────────────────────────────────────────
     return () => {
       isMountedRef.current = false;
+      clearTimeout(initTimer);
+      tabTracker.close();
       stopHeartbeat();
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
 

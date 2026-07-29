@@ -1660,21 +1660,27 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   )}
                   {task.attachments && task.attachments.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {task.attachments.map((item: any) => (
-                        <div key={item.id} className="p-3 rounded-lg border border-border/30 bg-surface/30 flex items-center justify-between">
-                          <span className="text-xs font-semibold truncate pr-2" title={item.file_name}>{item.file_name}</span>
-                          {item.file_url && (
-                            <div className="flex items-center gap-3 shrink-0">
-                              <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
-                                <Eye className="w-3.5 h-3.5" /> View
-                              </a>
-                              <a href={item.file_url} download target="_blank" rel="noopener noreferrer" className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
-                                <Download className="w-3.5 h-3.5" /> Download
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      {task.attachments.map((item: any) => {
+                        const fileUrl = item.file_url?.startsWith('storage:') 
+                          ? `/api/proxy-attachment/${item.id}` 
+                          : item.file_url;
+
+                        return (
+                          <div key={item.id} className="p-3 rounded-lg border border-border/30 bg-surface/30 flex items-center justify-between">
+                            <span className="text-xs font-semibold truncate pr-2" title={item.file_name}>{item.file_name}</span>
+                            {fileUrl && (
+                              <div className="flex items-center gap-3 shrink-0">
+                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
+                                  <Eye className="w-3.5 h-3.5" /> View
+                                </a>
+                                <a href={fileUrl} download={item.file_name || "Attachment"} target="_blank" rel="noopener noreferrer" className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
+                                  <Download className="w-3.5 h-3.5" /> Download
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-xs text-gray-400 italic py-4 text-center">No file attachments uploaded.</div>

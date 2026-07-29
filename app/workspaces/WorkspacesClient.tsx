@@ -409,17 +409,34 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         setActiveWorkspace(null);
       }
       
-      // Optimistically remove from tree without resetting it
+      // Optimistically remove from tree and update parent counts
       setMasterHierarchy(curr => {
+        const nodeToDelete = findNodeInHierarchy(curr, id);
+        const parentId = nodeToDelete?.parent_workspace_id;
+        const tasksToSubtract = nodeToDelete?.total_hierarchy_task_count || 0;
+
+        let bubbled = curr;
+        if (parentId && tasksToSubtract > 0) {
+          const result = HierarchyStateManager.bubbleTaskCount(curr, parentId, -tasksToSubtract);
+          bubbled = result.nodes;
+        }
+
         const removeNode = (tree: any[]): any[] => {
           return tree.filter(n => n.id !== id).map(n => {
+            if (n.id === parentId) {
+              return {
+                ...n,
+                subworkspace_count: Math.max(0, (n.subworkspace_count || 0) - 1),
+                children: n.children ? removeNode(n.children) : undefined
+              };
+            }
             if (n.children) {
               return { ...n, children: removeNode(n.children) };
             }
             return n;
           });
         };
-        return removeNode(curr);
+        return removeNode(bubbled);
       });
     } catch (e: any) {
       console.warn("[Workspace Deletion] Intercepted:", e.message || e);
@@ -435,16 +452,28 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       triggerToast("Task deleted successfully");
       
-      // Remove from master hierarchy locally
-      const removeNode = (tree: any[]): any[] => {
-        return tree.filter(n => n.id !== nodeId).map(n => {
-          if (n.children) {
-            return { ...n, children: removeNode(n.children) };
-          }
-          return n;
-        });
-      };
-      setMasterHierarchy(prev => removeNode(prev));
+      // Optimistically remove from tree and bubble task count downwards
+      setMasterHierarchy(prev => {
+        const nodeToDelete = findNodeInHierarchy(prev, nodeId);
+        const parentId = nodeToDelete?.parent_workspace_id || nodeToDelete?.parent_task_id;
+        
+        let bubbled = prev;
+        if (parentId) {
+          const result = HierarchyStateManager.bubbleTaskCount(prev, parentId, -1);
+          bubbled = result.nodes;
+        }
+
+        const removeNode = (tree: any[]): any[] => {
+          return tree.filter(n => n.id !== nodeId).map(n => {
+            if (n.children) {
+              return { ...n, children: removeNode(n.children) };
+            }
+            return n;
+          });
+        };
+        
+        return removeNode(bubbled);
+      });
 
       // Remove from active tasks list if currently active
       setTasks(prev => prev.filter(t => t.id !== nodeId));
