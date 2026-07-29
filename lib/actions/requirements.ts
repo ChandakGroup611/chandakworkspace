@@ -100,7 +100,10 @@ export async function recalculateRequirementCompletion(reqId: string) {
   const completed = tasks.filter(t => (t.status_master as any)?.is_closed).length;
   const percentage = Math.round((completed / total) * 100);
 
-  await supabaseAdmin.from('requirements').update({ completion_percentage: percentage }).eq('id', reqId);
+  const { data: reqToUpdate } = await supabaseAdmin.from('requirements').select('custom_fields').eq('id', reqId).single();
+  const customFields = reqToUpdate?.custom_fields || {};
+  customFields.completion_percentage = percentage;
+  await supabaseAdmin.from('requirements').update({ custom_fields: customFields }).eq('id', reqId);
 }
 
 export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL', comments: string, performedBy: string) {
@@ -877,10 +880,23 @@ export async function evaluateRequirementReadyToUse(taskId: string) {
       const isAllClosed = statuses && statuses.every(s => s.is_closed === true);
 
       if (isAllClosed) {
-        const { data: req } = await supabaseAdmin.from('requirements').select('approval_status').eq('id', reqId).single();
+        const { data: req } = await supabaseAdmin.from('requirements').select('approval_status, code, requester_id, creator_id').eq('id', reqId).single();
         if (req && req.approval_status !== 'Ready to Put to Use' && req.approval_status !== 'Closed') {
           await supabaseAdmin.from('requirements').update({ approval_status: 'Ready to Put to Use' }).eq('id', reqId);
           await logActivityEvent('REQUIREMENT', reqId, 'STATUS_UPDATE', { status: req.approval_status }, { status: 'Ready to Put to Use' }, 'SYSTEM');
+          
+          const notifyUserId = req.requester_id || req.creator_id;
+          if (notifyUserId) {
+             const { dispatchNotification } = await import('@/lib/actions/notifications');
+             await dispatchNotification(
+               notifyUserId, 
+               'Requirement Ready to Use', 
+               `All tasks for Requirement ${req.code || reqId} are closed. It is now ready to be put to use.`, 
+               `/requirements/${reqId}`, 
+               'REQUIREMENT', 
+               'STATUS_READY_TO_USE'
+             ).catch(e => console.error(e));
+          }
         }
       }
     }
@@ -984,20 +1000,6 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
   await logActivityEvent('REQUIREMENT', reqId, 'AMENDMENT_CREATED', null, { version: newVersion, revised_details: revisedDetails, needsReapproval, has_attachment: !!attachmentData }, user.id);
 
   if (attachmentData) {
-    // Add attachment to Requirement
-    const { error: attachmentError } = await supabaseAdmin.from('attachments').insert({
-      module_type: 'requirement',
-      record_id: reqId,
-      file_name: attachmentData.storage_path, 
-      original_file_name: attachmentData.file_name,
-      storage_path: attachmentData.storage_path,
-      file_size: attachmentData.file_size,
-      mime_type: attachmentData.mime_type,
-      uploaded_by: user.id
-    });
-    
-    if (attachmentError) console.error("Failed to insert requirement attachment:", attachmentError);
-    
     if (needsReapproval) {
        // Save to requirement custom fields to be picked up during sign-off
        const newReqCustomFields = { ...(req as any).custom_fields, pending_amendment_attachment: attachmentData };

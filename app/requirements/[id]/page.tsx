@@ -248,7 +248,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           analysis_remarks: ""
         });
 
-        const attRes = await supabase.from('attachments').select('*').eq('module_type', 'requirement').eq('record_id', data.id);
+        const { fetchAttachments } = await import("@/lib/actions/attachments");
+        const attRes = await fetchAttachments('requirement', data.id);
+        
         const { data: approvalFlow } = await supabase
         .from('requirement_approval_flow')
         .select('*, approver:user_master!requirement_approval_flow_approver_id_fkey(id, full_name, role:user_roles(role_master(role_name))), department:departments!requirement_approval_flow_department_id_fkey(name)')
@@ -256,7 +258,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         .order('level', { ascending: true });
         
         setApprovalFlow(approvalFlow || []);
-        setAttachments(attRes.data || []);
+        setAttachments(attRes || []);
       }
 
       // Fetch audit logs
@@ -375,11 +377,18 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     try {
       let attachmentData = undefined;
       if (amendmentFile) {
-        const fileExt = amendmentFile.name.split('.').pop();
-        const fileName = `${reqId}_amendment_${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { initializeAttachmentUpload } = await import("@/lib/actions/attachments");
+        const uploadRes = await initializeAttachmentUpload({
+          module_type: 'requirement',
+          record_id: reqId,
+          file_name: amendmentFile.name,
+          mime_type: amendmentFile.type || 'application/octet-stream',
+          file_size: amendmentFile.size
+        });
+
+        const { error: uploadError } = await supabase.storage
           .from('requirement-files')
-          .upload(fileName, amendmentFile, { upsert: true });
+          .uploadToSignedUrl(uploadRes.path, uploadRes.token, amendmentFile);
 
         if (uploadError) throw new Error("Failed to upload attachment: " + uploadError.message);
         
@@ -387,7 +396,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           file_name: amendmentFile.name,
           file_size: amendmentFile.size,
           mime_type: amendmentFile.type,
-          storage_path: uploadData.path
+          storage_path: uploadRes.path
         };
       }
 
@@ -667,6 +676,14 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <span className="text-xs font-semibold text-gray-900 dark:text-gray-200">
               {new Date(requirement.created_at).toLocaleDateString()}
             </span>
+            {requirement.put_to_use_date && (
+              <>
+                <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider ml-2">Put to Use:</span>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  {new Date(requirement.put_to_use_date).toLocaleDateString()}
+                </span>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">

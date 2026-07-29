@@ -151,9 +151,29 @@ export async function getAttachmentDownloadUrl(attachmentId: string, forceDownlo
     .from(bucketName)
     .createSignedUrl(attachment.storage_path, 60 * 60, options); // 1 hour expiry
 
+
   if (storageError) {
     throw new Error("Failed to generate secure download URL.");
   }
 
   return { signedUrl: signedUrl.signedUrl };
+}
+
+/**
+ * Fetches attachments for a given module and record, bypassing RLS.
+ */
+export async function fetchAttachments(moduleType: string, recordId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('attachments')
+    .select('*')
+    .eq('module_type', moduleType)
+    .eq('record_id', recordId)
+    .eq('is_deleted', false)
+    .order('uploaded_at', { ascending: false });
+
+  if (error) {
+    console.error("Error fetching attachments:", error);
+    return [];
+  }
+  return data || [];
 }

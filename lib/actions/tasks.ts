@@ -324,13 +324,8 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
   }).catch(e => console.error("[NotificationEngine] Status change queue push failed", e));
 
-  // Trigger requirement evaluation
-  try {
-    const { evaluateRequirementReadyToUse } = await import('@/lib/actions/requirements');
-    await evaluateRequirementReadyToUse(taskId);
-  } catch (err) {
-    console.error('Failed to trigger requirement evaluation', err);
-  }
+  // Trigger requirement and parent progress evaluation
+  await propagateTaskDependencies(taskId);
 
   return { success: true };
 }
@@ -692,12 +687,7 @@ export async function updateTask(taskId: string, payload: any) {
   }
 
   if (payload.status_id) {
-    try {
-      const { evaluateRequirementReadyToUse } = await import('@/lib/actions/requirements');
-      await evaluateRequirementReadyToUse(taskId);
-    } catch (err) {
-      console.error('Failed to trigger requirement evaluation', err);
-    }
+    await propagateTaskDependencies(taskId);
   }
 
   return { success: true };
@@ -959,8 +949,8 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
     }
   }]);
 
-  if (newStatusId && newStatusId !== currentTask.status_id && currentTask.parent_task_id) {
-    recalculateParentProgress(currentTask.parent_task_id).catch(e => console.error('[recalculateParentProgress]', e));
+  if (newStatusId && newStatusId !== currentTask.status_id) {
+    await propagateTaskDependencies(taskId);
   }
 
   const { revalidatePath } = await import('next/cache');
@@ -1024,6 +1014,41 @@ export async function logTaskTime(taskId: string, hours: number, description: st
 // -----------------------------------------------------------------------------
 // ENHANCEMENTS: SUBTASK PROGRESS ROLLUPS
 // -----------------------------------------------------------------------------
+
+export async function propagateTaskDependencies(taskId: string) {
+  try {
+    // 1. Handle requirement updates
+    const { data: reqTask } = await supabaseAdmin
+      .from('requirement_tasks')
+      .select('requirement_id')
+      .eq('task_id', taskId)
+      .maybeSingle();
+
+    if (reqTask && reqTask.requirement_id) {
+      const { recalculateRequirementCompletion, evaluateRequirementReadyToUse } = await import('@/lib/actions/requirements');
+      await recalculateRequirementCompletion(reqTask.requirement_id);
+      await evaluateRequirementReadyToUse(taskId);
+
+      const { data: req } = await supabaseAdmin.from('requirements').select('custom_fields, status_id').eq('id', reqTask.requirement_id).single();
+      const completion_percentage = (req?.custom_fields as any)?.completion_percentage || 0;
+      if (req && completion_percentage === 100) {
+        const { data: uatStatus } = await supabaseAdmin.from('status_master').select('id').eq('status_code', 'UAT').eq('scope_type', 'REQUIREMENT').single();
+        if (uatStatus && req.status_id !== uatStatus.id) {
+          await supabaseAdmin.from('requirements').update({ status_id: uatStatus.id }).eq('id', reqTask.requirement_id);
+          await logActivityEvent('REQUIREMENT', reqTask.requirement_id, 'STATUS_CHANGE', { status_id: req.status_id }, { status_id: uatStatus.id, auto_transition: true }, 'system');
+        }
+      }
+    }
+
+    // 2. Handle parent task progress
+    const { data: task } = await supabaseAdmin.from('tasks').select('parent_task_id').eq('id', taskId).single();
+    if (task && task.parent_task_id) {
+      recalculateParentProgress(task.parent_task_id).catch(e => console.error('[recalculateParentProgress]', e));
+    }
+  } catch (error) {
+    console.error("[propagateTaskDependencies] Error:", error);
+  }
+}
 
 export async function recalculateParentProgress(parentTaskId: string) {
   // Fetch all child tasks

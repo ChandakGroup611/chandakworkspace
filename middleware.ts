@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  const isAuthRoute = pathname === "/login" || pathname === "/register";
+  const isAuthRoute = pathname === "/login" || pathname === "/register" || pathname.startsWith("/auth");
   const isApiRoute = pathname.startsWith("/api");
 
   // If user is not authenticated and trying to access protected routes, redirect to /login

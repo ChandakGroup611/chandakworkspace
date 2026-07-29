@@ -273,29 +273,27 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
           const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
           const filePath = `${ticketId}/${fileName}`;
           
-          const { error: uploadError, data: uploadData } = await supabase.storage
-            .from('ticket_attachments')
-            .upload(filePath, file, { contentType: file.type });
+          const { initializeAttachmentUpload } = await import("@/lib/actions/attachments");
+          const uploadRes = await initializeAttachmentUpload({
+            module_type: 'chat',
+            record_id: ticketId,
+            file_name: file.name,
+            mime_type: file.type || 'application/octet-stream',
+            file_size: file.size
+          });
+
+          const { error: uploadError } = await supabase.storage
+            .from('chat-attachments')
+            .uploadToSignedUrl(uploadRes.path, uploadRes.token, file);
             
-          if (uploadError || !uploadData) {
-            throw new Error(`Failed to upload ${file.name}: ${uploadError?.message || 'Unknown error'}`);
+          if (uploadError) {
+            throw new Error(`Failed to upload ${file.name}: ${uploadError.message || 'Unknown error'}`);
           }
 
-          // Create database record to enable secure proxy access
-          const res = await saveCollaborationEntity('ticket_attachments', {
-             ticket_id: ticketId,
-             file_name: file.name,
-             file_url: `storage:ticket_attachments:${filePath}`,
-             file_type: file.type,
-             size: file.size,
-             uploaded_by: userId
-          });
-          const dbData = res.data;
-
-          const fileUrl = dbData?.id ? `/api/proxy-attachment/${dbData.id}` : supabase.storage.from('ticket_attachments').getPublicUrl(filePath).data.publicUrl;
+          const fileUrl = `/api/proxy-attachment/${uploadRes.attachment_id}`;
 
           uploadedAttachments.push({
-            id: dbData?.id,
+            id: uploadRes.attachment_id,
             name: file.name,
             url: fileUrl,
             size: file.size,

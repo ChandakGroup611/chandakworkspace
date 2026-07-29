@@ -16,10 +16,19 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
   const handleUAT = (result: 'PASS' | 'FAIL') => {
     startTransition(async () => {
-      // In a real implementation, we fetch the current user's ID
-      const userId = 'current-user-uuid'; // Mock
-      await handleRequirementUAT(requirement.id, result, uatComment, userId);
-      setUatComment("");
+      const { createClient } = await import('@/utils/supabase/client');
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Authentication error: Please log in again.");
+        return;
+      }
+      try {
+        await handleRequirementUAT(requirement.id, result, uatComment, user.id);
+        setUatComment("");
+      } catch (err: any) {
+        alert(err.message || "Failed to submit UAT.");
+      }
     });
   };
 

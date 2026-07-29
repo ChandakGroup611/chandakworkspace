@@ -9,17 +9,28 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     if (!id) return new NextResponse('Missing ID', { status: 400 });
 
     let attachment = null;
-    let { data: taskAttachment } = await supabaseAdmin.from('task_attachments').select('*').eq('id', id).single();
     
-    if (taskAttachment && taskAttachment.file_url) {
-      attachment = taskAttachment;
+    // 1. Check unified attachments table first
+    let { data: unifiedAtt } = await supabaseAdmin.from('attachments').select('*').eq('id', id).single();
+    if (unifiedAtt && unifiedAtt.storage_path) {
+      attachment = {
+        file_name: unifiedAtt.original_file_name || unifiedAtt.file_name,
+        file_url: `storage:${unifiedAtt.module_type === 'ticket' ? 'ticket-attachments' : unifiedAtt.module_type === 'chat' ? 'chat-attachments' : unifiedAtt.module_type === 'requirement' ? 'requirement-files' : 'resolution-files'}:${unifiedAtt.storage_path}`,
+        file_type: unifiedAtt.mime_type
+      };
     } else {
-      let { data: ticketAttachment } = await supabaseAdmin.from('ticket_attachments').select('*').eq('id', id).single();
-      if (ticketAttachment && ticketAttachment.file_url) {
-        attachment = ticketAttachment;
+      let { data: taskAttachment } = await supabaseAdmin.from('task_attachments').select('*').eq('id', id).single();
+      
+      if (taskAttachment && taskAttachment.file_url) {
+        attachment = taskAttachment;
+      } else {
+        let { data: ticketAttachment } = await supabaseAdmin.from('ticket_attachments').select('*').eq('id', id).single();
+        if (ticketAttachment && ticketAttachment.file_url) {
+          attachment = ticketAttachment;
+        }
       }
     }
-
+    
     if (!attachment) {
       return new NextResponse('Attachment Not Found', { status: 404 });
     }
