@@ -8,11 +8,11 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       {workspaces.map(ws => (
-        <div key={ws.id} className="bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:shadow-xl transition-all group">
+        <div key={ws.id} className="bg-surface/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:shadow-xl transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="font-semibold text-lg text-foreground group-hover:text-accent transition-colors">{ws.workspace_name}</h3>
-              <p className="text-xs text-gray-400 mt-1">{ws.workspace_code}</p>
+              <p className="text-xs text-muted mt-1">{ws.workspace_code}</p>
             </div>
             {ws.status && (
               <span 
@@ -24,14 +24,14 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
             )}
           </div>
           
-          <p className="text-sm text-gray-500 line-clamp-2 mb-6">
+          <p className="text-sm text-muted line-clamp-2 mb-6">
             {ws.description || 'No description provided.'}
           </p>
 
-          <div className="flex justify-between items-center text-xs text-gray-500">
+          <div className="flex justify-between items-center text-xs text-muted">
             <div className="flex items-center gap-1.5">
               <span>Members:</span>
-              <span className="text-gray-300 font-medium">{ws.members?.length || 0}</span>
+              <span className="text-muted font-medium">{ws.members?.length || 0}</span>
             </div>
             <AppButton variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-indigo-300 font-medium text-xs">
               Enter Workspace <ArrowRight className="h-3 w-3 ml-1" />
@@ -46,11 +46,11 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
 export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: any[] }) {
   // A heavy enterprise execution context dashboard
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0b] text-gray-200">
-      <header className="p-6 border-b border-white/5 flex justify-between items-center bg-gray-900/20">
+    <div className="flex flex-col h-full bg-[#0a0a0b] text-muted">
+      <header className="p-6 border-b border-white/5 flex justify-between items-center bg-surface/20">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{workspace.workspace_name}</h1>
-          <p className="text-sm text-gray-500 mt-1">Workspace operations and execution center</p>
+          <p className="text-sm text-muted mt-1">Workspace operations and execution center</p>
         </div>
         <div className="flex gap-4">
           <AppButton variant="secondary" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors" leftIcon={<Activity className="h-4 w-4" />}>
@@ -65,18 +65,18 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
       <div className="flex-1 overflow-auto">
         {/* Placeholder for TaskBoard or TaskTimeline */}
         <div className="p-6">
-          <div className="bg-gray-900/40 border border-white/5 rounded-2xl p-6 mb-6 flex justify-around">
+          <div className="bg-surface/40 border border-white/5 rounded-2xl p-6 mb-6 flex justify-around">
             <div className="text-center">
               <p className="text-3xl font-bold text-foreground">{tasks.length}</p>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Total Tasks</p>
+              <p className="text-xs text-muted uppercase tracking-widest mt-1">Total Tasks</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-amber-500">{tasks.filter(t => !t.status?.is_closed).length}</p>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Active</p>
+              <p className="text-xs text-muted uppercase tracking-widest mt-1">Active</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-red-500">0</p>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">SLA Breached</p>
+              <p className="text-xs text-muted uppercase tracking-widest mt-1">SLA Breached</p>
             </div>
           </div>
           

@@ -13,7 +13,7 @@ export default function TestPage() {
         
         <h2 className="text-xl font-bold mt-8 mb-4">Test Checkbox</h2>
         <label className="flex items-center gap-2">
-          <input type="checkbox" className="rounded border-gray-600 bg-gray-700 text-accent focus:ring-accent" />
+          <input type="checkbox" className="rounded border-border bg-surface text-accent focus:ring-accent" />
           <span>Checkbox Label</span>
         </label>
       </AppCard>

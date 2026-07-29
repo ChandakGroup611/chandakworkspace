@@ -195,7 +195,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
         <div className="flex items-center gap-2 mt-1">
           <div className={`h-1.5 w-1.5 rounded-full ${step === "SCOPE" ? "bg-accent" : "bg-accent/30"}`} />
           <div className={`h-1.5 w-1.5 rounded-full ${step === "FORM" ? "bg-accent" : "bg-accent/30"}`} />
-          <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold ml-2">
+          <span className="text-xs text-muted uppercase tracking-widest font-semibold ml-2">
             {step === "SCOPE" ? "Step 1: Classification" : `Step 2: ${scope?.name || scope?.code || 'Form'} Intake`}
           </span>
         </div>

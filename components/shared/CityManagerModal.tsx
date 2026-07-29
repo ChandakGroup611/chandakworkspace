@@ -75,22 +75,22 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/50 p-4">
       <div className="theme-card-structural w-full max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between p-6 border-b border-border bg-gray-50/50 shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-border bg-surface/50 shrink-0">
           <h2 className="text-xl font-black text-foreground">
             Manage Cities for {stateName}
           </h2>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-muted hover:text-red-500 transition-colors">
             <X className="h-6 w-6" />
           </AppButton>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1">
           {loading ? (
-            <div className="text-center py-8 text-gray-500 font-medium">Loading cities...</div>
+            <div className="text-center py-8 text-muted font-medium">Loading cities...</div>
           ) : cities.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 font-medium">No cities registered for this state yet.</div>
+            <div className="text-center py-8 text-muted font-medium">No cities registered for this state yet.</div>
           ) : (
             <div className="space-y-3">
               {cities.map(c => (

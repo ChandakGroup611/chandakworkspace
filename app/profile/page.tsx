@@ -15,7 +15,7 @@ export default function ProfilePage() {
         <h1 id="profile-page-title" className="text-xl font-bold tracking-tight">
           My Profile Settings
         </h1>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-muted mt-1">
           View your account details and update your profile picture. Most of your profile information is managed centrally via Single Sign-On (SSO).
         </p>
       </header>

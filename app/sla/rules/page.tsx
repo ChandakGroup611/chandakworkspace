@@ -119,9 +119,9 @@ export default function SLARuleBuilder() {
         <div className="lg:col-span-2 space-y-4">
           {rules.length === 0 && editingId !== "new" && (
             <div className="text-center py-12 bg-surface dark:bg-[#0B0F19] border border-border rounded-2xl">
-              <ShieldAlert className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <ShieldAlert className="w-12 h-12 text-muted mx-auto mb-4" />
               <h3 className="text-lg font-bold">No SLA Policies Found</h3>
-              <p className="text-sm text-gray-500 mt-1">Create your first policy to start tracking SLA breaches.</p>
+              <p className="text-sm text-muted mt-1">Create your first policy to start tracking SLA breaches.</p>
             </div>
           )}
 
@@ -138,30 +138,30 @@ export default function SLARuleBuilder() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Policy Name</label>
+                      <label className="text-sm font-bold text-muted uppercase">Policy Name</label>
                       <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. High Priority Issues" />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">System Code</label>
+                      <label className="text-sm font-bold text-muted uppercase">System Code</label>
                       <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value})} className="font-mono" />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Response Target (Minutes)</label>
+                      <label className="text-sm font-bold text-muted uppercase">Response Target (Minutes)</label>
                       <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Resolution Target (Minutes)</label>
+                      <label className="text-sm font-bold text-muted uppercase">Resolution Target (Minutes)</label>
                       <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Working Hours Code</label>
+                      <label className="text-sm font-bold text-muted uppercase">Working Hours Code</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                         <option value="24x7">24x7 Continuous</option>
                         <option value="9x5">9x5 Business Hours</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Escalation Level</label>
+                      <label className="text-sm font-bold text-muted uppercase">Escalation Level</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                         <option value="STANDARD">Standard</option>
                         <option value="PRIORITY">Priority Escalate</option>
@@ -177,17 +177,17 @@ export default function SLARuleBuilder() {
                       <h3 className="font-bold text-lg">{rule.name}</h3>
                       <AppBadge variant="info">{rule.working_hours_code}</AppBadge>
                     </div>
-                    <div className="text-xs text-gray-500 font-mono mt-1">{rule.code}</div>
+                    <div className="text-xs text-muted font-mono mt-1">{rule.code}</div>
                     
                     <div className="flex gap-6 mt-4">
                       <div className="flex items-center gap-2 text-sm">
                         <Clock className="w-4 h-4 text-emerald-500" />
-                        <span className="text-gray-600 dark:text-gray-400">Response:</span>
+                        <span className="text-subtle dark:text-muted">Response:</span>
                         <span className="font-bold text-foreground">{rule.response_target_minutes}m</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Play className="w-4 h-4 text-amber-500" />
-                        <span className="text-gray-600 dark:text-gray-400">Resolution:</span>
+                        <span className="text-subtle dark:text-muted">Resolution:</span>
                         <span className="font-bold text-foreground">{rule.resolution_target_minutes}m</span>
                       </div>
                     </div>
@@ -215,30 +215,30 @@ export default function SLARuleBuilder() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-bold text-gray-500 uppercase">Policy Name</label>
+                    <label className="text-sm font-bold text-muted uppercase">Policy Name</label>
                     <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Critical Outage" />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-gray-500 uppercase">System Code</label>
+                    <label className="text-sm font-bold text-muted uppercase">System Code</label>
                     <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase().replace(/\s+/g, '_')})} className="font-mono" />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-gray-500 uppercase">Response Target (Minutes)</label>
+                    <label className="text-sm font-bold text-muted uppercase">Response Target (Minutes)</label>
                     <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-gray-500 uppercase">Resolution Target (Minutes)</label>
+                    <label className="text-sm font-bold text-muted uppercase">Resolution Target (Minutes)</label>
                     <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-gray-500 uppercase">Working Hours Code</label>
+                    <label className="text-sm font-bold text-muted uppercase">Working Hours Code</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                       <option value="24x7">24x7 Continuous</option>
                       <option value="9x5">9x5 Business Hours</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-gray-500 uppercase">Escalation Level</label>
+                    <label className="text-sm font-bold text-muted uppercase">Escalation Level</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                       <option value="STANDARD">Standard</option>
                       <option value="PRIORITY">Priority Escalate</option>
@@ -253,10 +253,10 @@ export default function SLARuleBuilder() {
 
         <div className="space-y-6">
           <AppCard>
-            <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02]">
+            <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
               <h3 className="font-bold text-sm">How SLA Governance Works</h3>
             </div>
-            <div className="p-4 space-y-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="p-4 space-y-4 text-sm text-subtle dark:text-muted">
               <p>SLA Policies are automatically attached to Tickets and internal Tasks based on their severity and priority configurations.</p>
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
                 <strong>Example Evaluation:</strong>

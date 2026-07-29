@@ -44,7 +44,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         {/* SLA Engine Block */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">SLA Performance</h3>
+            <h3 className="text-xs font-bold text-muted uppercase tracking-widest">SLA Performance</h3>
             <AppBadge variant={isStable ? "success" : "warning"} className="text-[0.65rem] py-0">STABLE</AppBadge>
           </div>
           <div className={`p-5 border rounded-2xl space-y-4 ${
@@ -53,20 +53,20 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <span className={`text-2xl font-bold tabular-nums ${"text-foreground"}`}>{timeLeft}m</span>
-                <p className="text-xs text-gray-500 font-medium">Until Resolution Breach</p>
+                <p className="text-xs text-muted font-medium">Until Resolution Breach</p>
               </div>
               <div className={`p-3 rounded-xl bg-accent/10`}>
                 <Clock className={`h-5 w-5 text-accent`} />
               </div>
             </div>
             <div className="space-y-2">
-              <div className={`h-1.5 w-full rounded-full overflow-hidden bg-gray-200`}>
+              <div className={`h-1.5 w-full rounded-full overflow-hidden bg-elevated`}>
                 <div 
                   className={`h-full transition-all duration-1000 ${isStable ? "bg-accent" : "bg-amber-500"}`}
                   style={{ width: `${slaPercentage}%` }}
                 />
               </div>
-              <div className="flex justify-between text-[0.65rem] text-gray-500 font-bold uppercase tracking-tighter">
+              <div className="flex justify-between text-[0.65rem] text-muted font-bold uppercase tracking-tighter">
                 <span>0m</span>
                 <span>{ticket.priorityObj?.sla_target_minutes || 240}m Target</span>
               </div>
@@ -76,7 +76,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
         {/* Workflow Actions */}
         <section className="space-y-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Workflow Actions</h3>
+          <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Workflow Actions</h3>
           <div className="grid grid-cols-1 gap-2">
             <AppButton 
               className={`w-full justify-start text-xs py-5 border ${
@@ -128,7 +128,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         {/* Watchers Registry */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Watchers</h3>
+            <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Watchers</h3>
             <span className="text-xs text-accent font-bold cursor-pointer">Manage</span>
           </div>
           <div className="flex -space-x-2">
@@ -140,7 +140,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
               </div>
             ))}
             <AppButton variant="secondary" className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
-              "border-border bg-elevated/50/50/50 text-gray-400 hover:bg-elevated/50/50/50"
+              "border-border bg-elevated/50/50/50 text-muted hover:bg-elevated/50/50/50"
             }`}>
               <UserPlus className="h-3 w-3" />
             </AppButton>
@@ -149,14 +149,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
         {/* Attachment Zone */}
         <section className="space-y-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Quick Attachments</h3>
+          <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Quick Attachments</h3>
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
             "border-border bg-elevated/50/50/50/50 hover:bg-elevated/50/50/50/50"
           }`}>
             <div className={`p-2 rounded-lg bg-surface group-hover:bg-accent/10`}>
-              <Eye className={`h-4 w-4 text-gray-400 group-hover:text-accent`} />
+              <Eye className={`h-4 w-4 text-muted group-hover:text-accent`} />
             </div>
-            <p className="text-[0.7rem] text-gray-500">Drop files to link</p>
+            <p className="text-[0.7rem] text-muted">Drop files to link</p>
           </div>
         </section>
       </div>
@@ -165,10 +165,10 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
       <div className={`p-4 border-t flex items-center justify-between ${
         "bg-elevated/50/50/50 border-border"
       }`}>
-        <AppButton variant="secondary" className={`p-2 rounded-lg transition-colors hover:bg-gray-200 text-gray-400`}>
+        <AppButton variant="secondary" className={`p-2 rounded-lg transition-colors hover:bg-elevated text-muted`}>
           <Workflow className="h-4 w-4" />
         </AppButton>
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Governance ID: 9910-E</span>
+        <span className="text-xs font-bold text-muted uppercase tracking-widest">Governance ID: 9910-E</span>
       </div>
     </div>
   );

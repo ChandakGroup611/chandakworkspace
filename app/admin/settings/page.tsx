@@ -111,7 +111,7 @@ export default function GlobalSettingsPage() {
             </AppCardHeader>
             <AppCardContent className="p-6 space-y-6">
               {loading ? (
-                <div className="text-gray-500 animate-pulse">Loading governance state...</div>
+                <div className="text-muted animate-pulse">Loading governance state...</div>
               ) : (
                 <>
                   <div className="flex items-center justify-between p-5 border border-border rounded-xl bg-surface hover:border-rose-200 transition-colors">
@@ -128,7 +128,7 @@ export default function GlobalSettingsPage() {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.disable_all_emails} onChange={() => toggleSetting('disable_all_emails')} className="sr-only peer" />
-                      <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500"></div>
+                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500"></div>
                     </label>
                   </div>
 
@@ -146,7 +146,7 @@ export default function GlobalSettingsPage() {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.disable_all_realtime} onChange={() => toggleSetting('disable_all_realtime')} className="sr-only peer" />
-                      <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-500"></div>
+                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-500"></div>
                     </label>
                   </div>
 
@@ -164,7 +164,7 @@ export default function GlobalSettingsPage() {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.disable_digests} onChange={() => toggleSetting('disable_digests')} className="sr-only peer" />
-                      <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
                     </label>
                   </div>
                 </>

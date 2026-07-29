@@ -97,7 +97,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-            <MessageSquare className={`h-10 w-10 mb-4 text-gray-400`} />
+            <MessageSquare className={`h-10 w-10 mb-4 text-muted`} />
             <p className={`text-sm font-medium ${"text-muted"}`}>No collaboration history yet.</p>
           </div>
         ) : (
@@ -124,7 +124,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
                       <Globe className="h-2.5 w-2.5" /> Public
                     </span>
                   )}
-                  <span className="text-[0.7rem] text-gray-500 font-medium ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[0.7rem] text-muted font-medium ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -175,7 +175,7 @@ export function TicketChat({ ticket }: TicketChatProps) {
 
           <div className="relative">
             <textarea 
-              className={`w-full h-24 p-4 pr-12 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none transition-all ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
+              className={`w-full h-24 p-4 pr-12 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none transition-all ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
               placeholder={isPrivate ? "Type a private internal message..." : "Type a reply to the customer..."}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}

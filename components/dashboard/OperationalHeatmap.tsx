@@ -136,34 +136,34 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         </div>
 
         {/* Dynamic Context Tooltip Frame */}
-        <div className="h-8 flex items-center justify-between px-3 rounded-lg bg-black/20 border border-white/5 text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
+        <div className="h-8 flex items-center justify-between px-3 rounded-lg bg-surface/20 border border-white/5 text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
           {hoveredCell ? (
-            <div className="flex items-center gap-2.5 text-gray-300 font-medium animate-in fade-in duration-150">
+            <div className="flex items-center gap-2.5 text-muted font-medium animate-in fade-in duration-150">
               <Activity className="h-3 w-3 text-accent shrink-0" />
               <span><strong className="text-foreground">{hoveredCell.day} @ {hoveredCell.hour}</strong></span>
-              <span className="text-gray-600">|</span>
+              <span className="text-subtle">|</span>
               <span className="text-xs">
                 Tasks: <strong className="text-foreground">{hoveredCell.data?.tasksCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.tasksResolved || 0}</strong> res
               </span>
-              <span className="text-gray-600">|</span>
+              <span className="text-subtle">|</span>
               <span className="text-xs">
                 Workspaces: <strong className="text-foreground">{hoveredCell.data?.workspacesCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.workspacesResolved || 0}</strong> res
               </span>
-              <span className="text-gray-600">|</span>
+              <span className="text-subtle">|</span>
               <span className="text-xs">
                 Tickets: <strong className="text-foreground">{hoveredCell.data?.ticketsCreated || 0}</strong> crt / <strong className="text-emerald-400">{hoveredCell.data?.ticketsResolved || 0}</strong> res
               </span>
             </div>
           ) : (
-            <span className="text-gray-500 italic flex items-center gap-1.5">
-              <Info className="h-3 w-3 text-gray-600" />
+            <span className="text-muted italic flex items-center gap-1.5">
+              <Info className="h-3 w-3 text-subtle" />
               <span>Hover cells to inspect timeline ingress matrices</span>
             </span>
           )}
 
           {/* Legend scale indicators */}
           <div className="flex items-center gap-1">
-            <span className="text-[0.7rem] text-gray-600 mr-1 select-none">Scale:</span>
+            <span className="text-[0.7rem] text-subtle mr-1 select-none">Scale:</span>
             <div className="w-2 h-2 rounded bg-surface/5" />
             <div className="w-2 h-2 rounded bg-accent/80" />
             <div className="w-2 h-2 rounded bg-amber-500" />

@@ -34,7 +34,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
         ? "bg-transparent text-accent border-accent"
         : "bg-accent/10 text-accent border-accent/20",
       neutral: isOutline
-        ? "bg-transparent text-gray-600 border-gray-400 dark:text-gray-300 dark:border-gray-500"
+        ? "bg-transparent text-subtle border-border dark:text-muted dark:border-gray-500"
         : ("bg-elevated text-muted border-border"),
       custom: "" // Handled dynamically via style prop
     };

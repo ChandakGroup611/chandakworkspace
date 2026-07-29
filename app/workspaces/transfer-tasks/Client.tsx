@@ -278,7 +278,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
       {/* Transfer Modal */}
       {isTransferModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/60 backdrop-blur-sm p-4">
           <div className="bg-card border border-border rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
             <div className="p-6 border-b border-border flex-shrink-0">
               <h2 className="text-xl font-bold text-foreground">Transfer Tasks</h2>

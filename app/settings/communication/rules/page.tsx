@@ -17,7 +17,7 @@ export default function NotificationRulesPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Notification Rule Engine
         </h1>
-        <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+        <p className="text-sm text-muted mt-2 max-w-2xl">
           Construct strict IF-THEN conditional routing mechanisms. Rules are evaluated asynchronously by the background processor when system events trigger.
         </p>
       </header>

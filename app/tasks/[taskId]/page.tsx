@@ -58,10 +58,10 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             <ArrowLeft className="h-4 w-4" />
             Back to {task.parent_task_id ? "Parent Task" : "Task List"}
           </Link>
-          <span className="hidden sm:inline text-gray-300 dark:text-gray-600">|</span>
+          <span className="hidden sm:inline text-muted dark:text-subtle">|</span>
           <Link
             href="/workspaces"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-subtle dark:text-muted dark:hover:text-muted transition-colors"
           >
             Back to Workspace List
           </Link>
@@ -74,7 +74,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
           <p className="text-[11px] font-mono tracking-wider text-accent bg-accent/10 dark:bg-accent/10 px-2 py-0.5 rounded font-bold">
             {task.task_code || "TASK"}
           </p>
-          <p className="text-[11px] tracking-wider text-gray-500 px-2 py-0.5 border border-gray-200 dark:border-white/10 rounded font-bold bg-surface dark:bg-transparent">
+          <p className="text-[11px] tracking-wider text-muted px-2 py-0.5 border border-border dark:border-white/10 rounded font-bold bg-surface dark:bg-transparent">
             WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
           </p>
         </div>
@@ -98,11 +98,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             
             {task.description && (
               <div className="w-full">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted mb-2 flex items-center gap-1.5">
                   <AlignLeft className="w-3.5 h-3.5" /> Description
                 </span>
                 <SafeHtml 
-                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-gray-700 dark:text-gray-300 w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-gray-50/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-gray-200/60 dark:border-white/10 shadow-sm"
+                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-subtle dark:text-muted w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-surface/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-border/60 dark:border-white/10 shadow-sm"
                   html={task.description} 
                 />
               </div>
@@ -110,11 +110,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             
             {typeof task.custom_fields?.progress_percentage === 'number' && (
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subtask Progress</span>
-                <div className="w-64 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Subtask Progress</span>
+                <div className="w-64 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                 </div>
-                <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{task.custom_fields.progress_percentage}%</span>
+                <span className="text-[10px] font-bold text-subtle dark:text-muted">{task.custom_fields.progress_percentage}%</span>
               </div>
             )}
           </div>

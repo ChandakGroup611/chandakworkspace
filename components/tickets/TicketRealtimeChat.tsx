@@ -385,12 +385,12 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         className="p-4 space-y-4 flex-1 overflow-y-auto"
       >
         {loading ? (
-          <div className="flex items-center justify-center py-10 gap-2 text-gray-500">
+          <div className="flex items-center justify-center py-10 gap-2 text-muted">
             <Loader2 className="h-5 w-5 animate-spin" />
             <span className="text-xs font-bold">Loading messages...</span>
           </div>
         ) : messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-2 opacity-50 py-8">
+          <div className="h-full flex flex-col items-center justify-center text-muted space-y-2 opacity-50 py-8">
             <MessageSquare className="h-8 w-8" />
             <p className="text-xs font-semibold">No messages yet. Start the conversation.</p>
           </div>
@@ -418,7 +418,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                       <span className={`text-xs font-bold text-foreground`}>
                         {m.user?.full_name || "..."}
                       </span>
-                      <span className="text-[0.7rem] text-gray-500">
+                      <span className="text-[0.7rem] text-muted">
                         {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
@@ -428,13 +428,13 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                       {Date.now() - new Date(m.created_at).getTime() < 5 * 60 * 1000 && (
                         <AppButton variant="secondary" 
                           onClick={() => handleDeleteMessage(m.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          className="text-muted hover:text-red-500 transition-colors"
                           title="Delete message"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                         </AppButton>
                       )}
-                      <span className="text-[0.7rem] text-gray-500">
+                      <span className="text-[0.7rem] text-muted">
                         {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
@@ -445,7 +445,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                       ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border border-accent/30"
                       : isMention
                         ? ("bg-accent/10 border border-indigo-100 text-accent-secondary rounded-tl-sm")
-                        : ("bg-gray-100 text-foreground rounded-tl-sm")
+                        : ("bg-surface text-foreground rounded-tl-sm")
                   }`}>
                     {(() => {
                       const parts = m.message.split("|||ATTACHMENTS|||");
@@ -462,8 +462,8 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                               {attachments.map((att, i) => (
                                 att.type?.startsWith('image/') ? (
                                   <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
-                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-black/5 dark:bg-surface/5 transition-transform duration-300 group-hover:scale-105" />
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
+                                    <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-surface/5 dark:bg-surface/5 transition-transform duration-300 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-surface/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
                                       <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="View Full Image">
                                         <div className="p-2 bg-surface/20 rounded-full backdrop-blur-sm shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -479,17 +479,17 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                                     </div>
                                   </div>
                                 ) : (
-                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-black/10 border-black/10' : 'bg-black/5 dark:theme-card-structural /5 border-black/5 dark:border-white/10'}`}>
+                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-surface/10 border-black/10' : 'bg-surface/5 dark:theme-card-structural /5 border-black/5 dark:border-white/10'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden mr-3">
                                     <Paperclip className="h-4 w-4 shrink-0 opacity-70" />
                                     <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
                                   </div>
                                   <div className="flex items-center gap-1.5 shrink-0">
-                                    <a href={att.name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(att.url.startsWith('http') ? att.url : `https://chandakgroup.tech${att.url}`)}` : att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="View Document">
+                                    <a href={att.name.match(/\.(doc|docx|xls|xlsx|ppt|pptx)$/i) ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(att.url.startsWith('http') ? att.url : `https://chandakgroup.tech${att.url}`)}` : att.url} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="View Document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                       <span>VIEW</span>
                                     </a>
-                                    <a href={att.url} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-black/10 hover:bg-black/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="Download Document">
+                                    <a href={att.url} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="Download Document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                       <span>DOWNLOAD</span>
                                     </a>
@@ -511,7 +511,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
       </div>
 
       {/* Chat Input Area */}
-      <div className={`p-3 border-t shrink-0 relative border-border bg-gray-50/50`}>
+      <div className={`p-3 border-t shrink-0 relative border-border bg-surface/50`}>
         
         {/* Mentions Dropdown */}
         {showMentions && (
@@ -554,18 +554,18 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
               }
               
               {stakeholders.filter(u => u.id !== currentUserId && u.full_name?.toLowerCase().includes(mentionFilter)).length === 0 && !("all".includes(mentionFilter)) && (
-                <div className="px-4 py-3 text-xs text-gray-500 text-center">No team members found</div>
+                <div className="px-4 py-3 text-xs text-muted text-center">No team members found</div>
               )}
             </div>
           </div>
         )}
 
         {selectedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 dark:bg-surface/5 rounded-lg">
+          <div className="flex flex-wrap gap-2 mb-2 p-2 bg-surface dark:bg-surface/5 rounded-lg">
             {selectedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center gap-1 theme-card-structural dark:bg-black/20 border-gray-200 dark:border-white/10 px-2 py-1 rounded text-xs">
+              <div key={idx} className="flex items-center gap-1 theme-card-structural dark:bg-surface/20 border-border dark:border-white/10 px-2 py-1 rounded text-xs">
                 <span className="truncate max-w-[120px]">{file.name}</span>
-                <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-gray-400 hover:text-red-500 ml-1">
+                <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-muted hover:text-red-500 ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </AppButton>
               </div>
@@ -576,7 +576,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         {/* Macros Dropdown */}
         {showMacros && macros.length > 0 && (
           <div className={`absolute bottom-full mb-2 left-16 w-64 rounded-xl shadow-xl overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
-            <div className="bg-gray-100 dark:bg-black/20 p-2 border-b border-gray-200 dark:border-white/10 text-xs font-bold uppercase text-gray-500">
+            <div className="bg-surface dark:bg-surface/20 p-2 border-b border-border dark:border-white/10 text-xs font-bold uppercase text-muted">
               Quick Responses (Macros)
             </div>
             <div className="max-h-48 overflow-y-auto py-1">
@@ -606,7 +606,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
           
-          <AppButton variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-accent transition-colors shrink-0" tabIndex={-1}>
+          <AppButton variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-muted hover:text-accent transition-colors shrink-0" tabIndex={-1}>
             <Paperclip className="h-4 w-4" />
           </AppButton>
           
@@ -622,14 +622,14 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
           <AppButton variant="secondary" 
             type="button" 
             onClick={() => setShowMacros(!showMacros)}
-            className={`p-2 transition-colors shrink-0 ${showMacros ? 'text-accent' : 'text-gray-400 hover:text-accent'}`} 
+            className={`p-2 transition-colors shrink-0 ${showMacros ? 'text-accent' : 'text-muted hover:text-accent'}`} 
             tabIndex={-1}
             title="Use Canned Response"
           >
             <Zap className="h-4 w-4" />
           </AppButton>
           
-          <AppButton variant="secondary" type="button" className="p-2 text-gray-400 hover:text-amber-500 transition-colors shrink-0" tabIndex={-1}>
+          <AppButton variant="secondary" type="button" className="p-2 text-muted hover:text-amber-500 transition-colors shrink-0" tabIndex={-1}>
             <Smile className="h-4 w-4" />
           </AppButton>
           

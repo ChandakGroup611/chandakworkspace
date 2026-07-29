@@ -56,7 +56,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
   if (timelineTasks.length === 0) {
     return (
       <div className="flex items-center justify-center h-full border-2 border-dashed border-border rounded-xl">
-        <p className="text-gray-500 font-medium">No tasks with start and end dates available for timeline.</p>
+        <p className="text-muted font-medium">No tasks with start and end dates available for timeline.</p>
       </div>
     );
   }
@@ -66,13 +66,13 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
       <div className="flex-1 overflow-auto relative">
         <div style={{ width: `${250 + totalDays * dayWidth}px` }} className="min-h-full">
           {/* Header Row */}
-          <div className="flex sticky top-0 z-20 bg-gray-50 dark:theme-card-structural /[0.02] border-b">
-            <div className="w-[250px] shrink-0 sticky left-0 z-30 bg-gray-50 dark:bg-[#0B0F19] border-r border-border p-3 font-bold text-xs uppercase text-gray-500">
+          <div className="flex sticky top-0 z-20 bg-surface dark:theme-card-structural /[0.02] border-b">
+            <div className="w-[250px] shrink-0 sticky left-0 z-30 bg-surface dark:bg-[#0B0F19] border-r border-border p-3 font-bold text-xs uppercase text-muted">
               Task Name
             </div>
             <div className="flex flex-1">
               {days.map((day: Date, i: number) => (
-                <div key={i} className={`shrink-0 border-r border-border/50 p-2 text-center text-xs ${isSameDay(day, new Date()) ? 'bg-accent/10 text-accent font-bold' : 'text-gray-500'}`} style={{ width: dayWidth }}>
+                <div key={i} className={`shrink-0 border-r border-border/50 p-2 text-center text-xs ${isSameDay(day, new Date()) ? 'bg-accent/10 text-accent font-bold' : 'text-muted'}`} style={{ width: dayWidth }}>
                   <div>{format(day, 'MMM')}</div>
                   <div className="font-bold text-foreground">{format(day, 'dd')}</div>
                 </div>
@@ -102,11 +102,11 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
               const isOverdue = end < new Date() && !task.status?.is_closed;
 
               return (
-                <div key={task.id} className="flex relative border-b /30 hover:bg-gray-50/50 dark:hover:theme-card-structural /[0.02] transition-colors group">
+                <div key={task.id} className="flex relative border-b /30 hover:bg-surface/50 dark:hover:theme-card-structural /[0.02] transition-colors group">
                   {/* Fixed left column */}
-                  <div className="w-[250px] shrink-0 sticky left-0 z-10 theme-card-structural dark:bg-[#0B0F19] border-r p-3 flex flex-col justify-center gap-1 cursor-pointer group-hover:bg-gray-50/80 dark:group-hover:/[0.02]" onClick={() => onTaskClick(task)}>
+                  <div className="w-[250px] shrink-0 sticky left-0 z-10 theme-card-structural dark:bg-[#0B0F19] border-r p-3 flex flex-col justify-center gap-1 cursor-pointer group-hover:bg-surface/80 dark:group-hover:/[0.02]" onClick={() => onTaskClick(task)}>
                     <div className="font-bold text-xs text-foreground truncate">{task.title}</div>
-                    <div className="text-[10px] text-gray-500 flex justify-between">
+                    <div className="text-[10px] text-muted flex justify-between">
                       <span className="truncate">{task.code}</span>
                       <span>{task.status?.name}</span>
                     </div>
@@ -121,7 +121,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
                     >
                       {task.progress_percentage !== undefined && (
                         <div 
-                          className="absolute left-0 top-0 bottom-0 bg-black/10 mix-blend-multiply" 
+                          className="absolute left-0 top-0 bottom-0 bg-surface/10 mix-blend-multiply" 
                           style={{ width: `${task.progress_percentage}%` }}
                         />
                       )}

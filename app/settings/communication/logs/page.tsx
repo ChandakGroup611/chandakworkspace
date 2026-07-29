@@ -17,7 +17,7 @@ export default function DeliveryLogsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Delivery Logs
         </h1>
-        <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+        <p className="text-sm text-muted mt-2 max-w-2xl">
           Complete audit trail of all automated communication dispatch attempts, provider fallbacks, and final delivery statuses.
         </p>
       </header>

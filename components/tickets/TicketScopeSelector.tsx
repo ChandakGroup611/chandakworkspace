@@ -46,7 +46,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-4 animate-pulse">
         <div className="h-12 w-12 rounded-full border-4 border-accent/20 border-t-indigo-500 animate-spin" />
-        <p className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Syncing Governance Matrix...</p>
+        <p className="text-xs text-muted font-bold tracking-[0.2em] uppercase">Syncing Governance Matrix...</p>
       </div>
     );
   }
@@ -55,7 +55,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
     <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
       <div className="text-center space-y-1">
         <h2 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Select Operational Scope</h2>
-        <p className="text-sm text-gray-400 max-w-md mx-auto">
+        <p className="text-sm text-muted max-w-md mx-auto">
           Choose the appropriate category to route your ticket correctly.
         </p>
       </div>

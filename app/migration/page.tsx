@@ -9,7 +9,7 @@ export default async function MigrationPage() {
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
-          <p className="text-gray-500">You do not have permission to view this page.</p>
+          <p className="text-muted">You do not have permission to view this page.</p>
         </div>
       </div>
     );
@@ -21,7 +21,7 @@ export default async function MigrationPage() {
         <h1 className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400">
           Data Migration
         </h1>
-        <p className="text-sm text-gray-400">Generate intelligent import templates and upload bulk data.</p>
+        <p className="text-sm text-muted">Generate intelligent import templates and upload bulk data.</p>
       </div>
       
       <MigrationClient />

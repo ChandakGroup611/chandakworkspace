@@ -37,11 +37,11 @@ export function TicketListSidebar({
         "border-border bg-elevated/50/50/50/30"
       }`}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
           <input 
             type="text"
             placeholder="Search tickets..."
-            className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
+            className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -83,9 +83,9 @@ export function TicketListSidebar({
         {tickets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
             <div className="p-3 bg-surface/5 rounded-full">
-              <Hash className="h-6 w-6 text-gray-600" />
+              <Hash className="h-6 w-6 text-subtle" />
             </div>
-            <p className="text-sm text-gray-500">No tickets found</p>
+            <p className="text-sm text-muted">No tickets found</p>
           </div>
         ) : (
           tickets.map(ticket => {
@@ -111,7 +111,7 @@ export function TicketListSidebar({
                       priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : 
                       priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-accent"
                     }`} />
-                    <span className="text-xs text-gray-500 font-medium">
+                    <span className="text-xs text-muted font-medium">
                       {priority?.name || "P3"}
                     </span>
                   </div>
@@ -125,7 +125,7 @@ export function TicketListSidebar({
                   {ticket.title}
                 </h4>
 
-                <div className="flex items-center gap-3 text-xs text-gray-500">
+                <div className="flex items-center gap-3 text-xs text-muted">
                   <div className="flex items-center gap-1">
                     <User className="h-3 w-3" />
                     <span className="truncate max-w-[80px]">{ticket.assignedTo || "Unassigned"}</span>
@@ -169,10 +169,10 @@ export function TicketListSidebar({
       <div className={`p-4 border-t transition-colors duration-300 ${
         "border-border bg-elevated/50/50/50/30"
       } flex items-center justify-between`}>
-        <span className="text-xs text-gray-500 font-medium">{tickets.length} Incidents Found</span>
+        <span className="text-xs text-muted font-medium">{tickets.length} Incidents Found</span>
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500" />
-          <span className="text-xs text-gray-500">Realtime Sync Active</span>
+          <span className="text-xs text-muted">Realtime Sync Active</span>
         </div>
       </div>
     </div>

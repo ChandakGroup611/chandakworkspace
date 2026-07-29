@@ -77,8 +77,8 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
               return (
                 <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer">
                   <AppTableCell>
-                    <div className="font-mono text-[0.7rem] font-bold text-gray-500 dark:text-gray-400 uppercase">{m.code || `TF-${shortId}`}</div>
-                    <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate max-w-[200px]" title={m.title}>{m.title || `${m.module} Assignment`}</div>
+                    <div className="font-mono text-[0.7rem] font-bold text-muted dark:text-muted uppercase">{m.code || `TF-${shortId}`}</div>
+                    <div className="text-xs font-semibold text-foreground dark:text-gray-100 truncate max-w-[200px]" title={m.title}>{m.title || `${m.module} Assignment`}</div>
                   </AppTableCell>
                   <AppTableCell><span className={tagClass}>{m.module.substring(0,4).toLowerCase()}</span></AppTableCell>
                   <AppTableCell>{renderPriority(m.priority || "")}</AppTableCell>
@@ -90,7 +90,7 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
                         {new Date(m.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </div>
                     ) : (
-                      <div className="due-date text-gray-400">N/A</div>
+                      <div className="due-date text-muted">N/A</div>
                     )}
                   </AppTableCell>
                 </AppTableRow>
@@ -98,7 +98,7 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
             })
           ) : (
             <AppTableRow>
-              <AppTableCell colSpan={6} className="text-center py-8 text-gray-500">
+              <AppTableCell colSpan={6} className="text-center py-8 text-muted">
                 No recent tickets found
               </AppTableCell>
             </AppTableRow>

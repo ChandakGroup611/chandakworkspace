@@ -106,7 +106,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
     }`}>
       {activities.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-sm text-gray-500">No activities recorded for this instance.</p>
+          <p className="text-sm text-muted">No activities recorded for this instance.</p>
         </div>
       ) : (
         activities.map((activity) => {
@@ -122,7 +122,7 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
               <div className="flex-1 pb-8">
                 <div className="flex items-center justify-between gap-4 mb-1">
                   <span className={`text-xs font-bold tracking-wide ${"text-foreground"}`}>{activity.actor_name || activity.actor}</span>
-                  <span className="text-xs text-gray-500 font-medium">
+                  <span className="text-xs text-muted font-medium">
                     {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -131,10 +131,10 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
                 </p>
                 {activity.event_type === "STATE_CHANGE" && (
                   <div className="mt-3 flex items-center gap-3">
-                    <span className="text-xs text-gray-500 font-mono line-through">
+                    <span className="text-xs text-muted font-mono line-through">
                       {activity.before_values?.name || "None"}
                     </span>
-                    <span className="text-gray-400">→</span>
+                    <span className="text-muted">→</span>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded ${
                       "bg-emerald-50 text-emerald-700"
                     }`}>

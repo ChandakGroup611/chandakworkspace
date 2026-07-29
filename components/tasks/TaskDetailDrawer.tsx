@@ -31,7 +31,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "details"
                       ? "shadow-accent/20"
-                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                      : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
                   }`}
                 >
                   <ListTodo className="w-4 h-4" />
@@ -43,7 +43,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "collaboration"
                       ? "shadow-accent/20"
-                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                      : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -54,16 +54,16 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
               {activeTab === "details" && (
                 <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
                   <section>
-                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Description</h3>
-                    <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
+                    <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">Description</h3>
+                    <div className="text-muted text-sm whitespace-pre-wrap leading-relaxed">
                       {task.description || "No description provided."}
                     </div>
                   </section>
 
                   {/* Checklists Placeholder */}
-                  <section className="bg-gray-900/20 rounded-xl p-4 border border-white/5">
+                  <section className="bg-surface/20 rounded-xl p-4 border border-white/5">
                     <h3 className="text-sm font-semibold text-foreground mb-3">Checklist</h3>
-                    <div className="text-xs text-gray-500">No checklist items yet.</div>
+                    <div className="text-xs text-muted">No checklist items yet.</div>
                   </section>
                 </div>
               )}
@@ -72,10 +72,10 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <div className="animate-in fade-in zoom-in-95 duration-200">
                   {/* Realtime Chat Engine - Lazy Loaded when tab active */}
                   <section className="h-[500px] flex flex-col border border-white/10 rounded-xl overflow-hidden">
-                    <div className="bg-gray-900/50 p-3 border-b border-white/5">
+                    <div className="bg-surface/50 p-3 border-b border-white/5">
                       <h3 className="text-sm font-semibold text-foreground">Collaboration & Audit</h3>
                     </div>
-                    <div className="flex-1 bg-black/20">
+                    <div className="flex-1 bg-surface/20">
                       <RealtimeChat recordId={task.id} moduleType="TASK" />
                     </div>
                   </section>
@@ -86,44 +86,44 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
 
             {/* Sidebar Metadata */}
             <div className="col-span-1 space-y-3">
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Status</span>
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: task.status?.status_color || 'gray' }}></div>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{task.status?.status_name || 'Unknown'}</span>
+                  <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{task.status?.status_name || 'Unknown'}</span>
                 </div>
               </div>
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Priority</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{task.priority?.priority_name || 'None'}</span>
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
+                <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{task.priority?.priority_name || 'None'}</span>
               </div>
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Task Owner</span>
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Task Owner</span>
                 {task.assignee ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground dark:text-gray-100">
                     <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent border border-accent/50 shrink-0">
                       {task.assignee.full_name?.charAt(0)}
                     </div>
                     <span className="truncate">{task.assignee.full_name}</span>
                   </div>
-                ) : <span className="text-sm font-semibold text-gray-500 italic">Unassigned</span>}
+                ) : <span className="text-sm font-semibold text-muted italic">Unassigned</span>}
               </div>
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">SLA Target</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{task.priority?.max_sla_hours ? `${task.priority.max_sla_hours} Hours` : 'N/A'}</span>
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">SLA Target</span>
+                <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{task.priority?.max_sla_hours ? `${task.priority.max_sla_hours} Hours` : 'N/A'}</span>
               </div>
 
               {/* Custom Fields Placeholder */}
-              <div className="bg-gray-900/40 rounded-xl p-4 border border-white/5">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider flex justify-between">
+              <div className="bg-surface/40 rounded-xl p-4 border border-white/5">
+                <h3 className="text-xs font-bold text-muted uppercase tracking-wider flex justify-between">
                   Custom Fields
                   <AppButton size="sm" variant="ghost" className="h-6 w-6 p-0 text-accent hover:text-indigo-300 bg-accent/10">+</AppButton>
                 </h3>
                 <div className="mt-4 space-y-3">
                   {Object.entries(task.custom_fields || {}).map(([key, val]: any) => (
                     <div key={key}>
-                      <label className="text-sm text-gray-500 uppercase">{key}</label>
-                      <p className="text-sm text-gray-300">{val}</p>
+                      <label className="text-sm text-muted uppercase">{key}</label>
+                      <p className="text-sm text-muted">{val}</p>
                     </div>
                   ))}
                 </div>

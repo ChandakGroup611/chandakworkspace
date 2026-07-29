@@ -67,17 +67,17 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-surface/60 backdrop-blur-sm" onClick={onClose} />
       <AppCard className={`relative w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
             <h3 className="text-xl font-bold text-accent">Renew Subscription</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted mt-1">
               {amcData.software_name} - {amcData.provider_name}
             </p>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
             <X className="h-5 w-5" />
           </AppButton>
         </div>
@@ -92,22 +92,22 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">New Purchase Date *</label>
+                <label className="text-sm font-bold text-muted uppercase">New Purchase Date *</label>
                 <AppInput type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">New Expiry Date *</label>
+                <label className="text-sm font-bold text-muted uppercase">New Expiry Date *</label>
                 <AppInput type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">Renewal Cost ({amcData.currency || 'INR'}) *</label>
+                <label className="text-sm font-bold text-muted uppercase">Renewal Cost ({amcData.currency || 'INR'}) *</label>
                 <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required placeholder="e.g., 5000" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">New PO Number</label>
+                <label className="text-sm font-bold text-muted uppercase">New PO Number</label>
                 <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="Optional" />
               </div>
             </div>

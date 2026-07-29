@@ -140,8 +140,8 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
   });
 
   return (
-    <div className="flex flex-col w-[320px] min-w-[320px] bg-gray-50 dark:theme-card-structural /[0.02] rounded-xl border-gray-200 dark:border-white/5 h-full max-h-full">
-      <div className="p-3 border-b border-gray-200 dark:border-white/5 flex items-center justify-between theme-card-structural dark:bg-[#0B0F19] rounded-t-xl shrink-0">
+    <div className="flex flex-col w-[320px] min-w-[320px] bg-surface dark:theme-card-structural /[0.02] rounded-xl border-border dark:border-white/5 h-full max-h-full">
+      <div className="p-3 border-b border-border dark:border-white/5 flex items-center justify-between theme-card-structural dark:bg-[#0B0F19] rounded-t-xl shrink-0">
         <div className="flex items-center gap-2">
           {column.color && (
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: column.color }} />
@@ -169,8 +169,8 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
         </SortableContext>
         
         {column.tasks.length === 0 && (
-          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-lg">
-            <span className="text-xs font-medium text-gray-400">Drop tasks here</span>
+          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border dark:border-white/10 rounded-lg">
+            <span className="text-xs font-medium text-muted">Drop tasks here</span>
           </div>
         )}
       </div>
@@ -238,11 +238,11 @@ function TaskCard({ task }: { task: any }) {
       )}
       <div className="p-3">
         <div className="flex justify-between items-start mb-2 gap-2">
-          <div className="font-mono text-[10px] font-bold text-gray-500">
+          <div className="font-mono text-[10px] font-bold text-muted">
             {task.code}
           </div>
           {task.department && (
-            <span className="text-[10px] font-semibold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded truncate max-w-[80px]" title={task.department.name}>
+            <span className="text-[10px] font-semibold bg-surface text-subtle px-1.5 py-0.5 rounded truncate max-w-[80px]" title={task.department.name}>
               {task.department.name}
             </span>
           )}
@@ -254,14 +254,14 @@ function TaskCard({ task }: { task: any }) {
         
         {task.progress_percentage !== undefined && task.progress_percentage > 0 && (
           <div className="mb-3 flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden">
               <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
             </div>
-            <span className="text-[10px] font-bold text-gray-500">{task.progress_percentage}%</span>
+            <span className="text-[10px] font-bold text-muted">{task.progress_percentage}%</span>
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
+        <div className="flex items-center justify-between pt-3 border-t border-border/50 dark:border-white/5">
           <div className="flex items-center gap-2">
             {task.assignee ? (
               <div className="flex items-center gap-1.5">
@@ -278,18 +278,18 @@ function TaskCard({ task }: { task: any }) {
                 })()}
               </div>
             ) : (
-              <div className="w-5 h-5 rounded-full border border-dashed border-gray-300 flex items-center justify-center text-[9px] text-gray-400" title="Unassigned">?</div>
+              <div className="w-5 h-5 rounded-full border border-dashed border-border flex items-center justify-center text-[9px] text-muted" title="Unassigned">?</div>
             )}
             
             {task.end_date && (
-              <div className={`flex items-center gap-1 text-[10px] font-semibold ${isOverdue ? 'text-red-500 bg-red-50 px-1.5 py-0.5 rounded' : 'text-gray-500'}`}>
+              <div className={`flex items-center gap-1 text-[10px] font-semibold ${isOverdue ? 'text-red-500 bg-red-50 px-1.5 py-0.5 rounded' : 'text-muted'}`}>
                 <Clock className="w-3 h-3" />
                 {new Date(task.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>
             )}
           </div>
           
-          <div className="flex items-center gap-2 text-gray-400">
+          <div className="flex items-center gap-2 text-muted">
             {task.description && <div title="Has Description"><AlignLeft className="w-3.5 h-3.5" /></div>}
             {task.attachmentCount > 0 && (
               <div className="flex items-center gap-0.5 text-[10px] font-medium" title={`${task.attachmentCount} Attachment(s)`}>

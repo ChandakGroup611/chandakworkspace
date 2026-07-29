@@ -117,9 +117,9 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
       onOpenChange(val);
       if (!val) { setStep(1); setTargetWorkspaceId(""); }
     }}>
-      <DialogContent className="sm:max-w-[500px] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 shadow-xl">
+      <DialogContent className="sm:max-w-[500px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-gray-100">
+          <DialogTitle className="text-foreground dark:text-gray-100">
             {step === 1 ? `Move ${taskIds.length} Task(s)` : "Map Assignees & Watchers"}
           </DialogTitle>
         </DialogHeader>
@@ -127,11 +127,11 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
         <div className="py-4">
           {step === 1 && (
             <div className="space-y-4">
-              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Target Workspace</label>
+              <label className="text-sm font-bold text-muted uppercase tracking-wider">Target Workspace</label>
               <select
                 value={targetWorkspaceId}
                 onChange={(e) => setTargetWorkspaceId(e.target.value)}
-                className="w-full text-sm theme-card-structural dark:bg-[#151923] text-gray-900 dark:text-gray-100 border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                className="w-full text-sm theme-card-structural dark:bg-[#151923] text-foreground dark:text-gray-100 border-border dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
               >
                 <option value="">Select a Workspace...</option>
                 {workspaces.map(w => (
@@ -154,16 +154,16 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                   </div>
                   
                   {taskDetails.map((t) => (
-                    <div key={t.id} className="p-3 border-gray-200 dark:border-white/10 rounded-lg space-y-3 bg-gray-50 dark:theme-card-structural /[0.02]">
+                    <div key={t.id} className="p-3 border-border dark:border-white/10 rounded-lg space-y-3 bg-surface dark:theme-card-structural /[0.02]">
                       <div className="font-semibold text-sm">{t.subject || t.id}</div>
                       
                       {t.reqNewExec && (
                         <div>
-                          <label className="text-sm font-bold text-gray-500 uppercase">New Executive</label>
+                          <label className="text-sm font-bold text-muted uppercase">New Executive</label>
                           <select
                             value={mappings[t.id]?.newExecutive || ""}
                             onChange={(e) => setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newExecutive: e.target.value } }))}
-                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-gray-300 dark:border-white/10 rounded px-2 py-1.5"
+                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-border dark:border-white/10 rounded px-2 py-1.5"
                           >
                             <option value="">Select Executive...</option>
                             {stakeholders.map(s => (
@@ -175,7 +175,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
 
                       {t.reqNewWatchers && (
                         <div>
-                          <label className="text-sm font-bold text-gray-500 uppercase">New Watchers</label>
+                          <label className="text-sm font-bold text-muted uppercase">New Watchers</label>
                           {/* simple multiple select for watchers */}
                           <select
                             multiple
@@ -185,13 +185,13 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                               const opts = Array.from(e.target.selectedOptions, option => option.value);
                               setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newWatchers: opts } }));
                             }}
-                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-gray-300 dark:border-white/10 rounded px-2 py-1.5"
+                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-border dark:border-white/10 rounded px-2 py-1.5"
                           >
                             {stakeholders.map(s => (
                               <option key={s.user_id} value={s.user_id}>{s.full_name || s.email}</option>
                             ))}
                           </select>
-                          <p className="text-[10px] text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple.</p>
+                          <p className="text-[10px] text-muted mt-1">Hold Ctrl/Cmd to select multiple.</p>
                         </div>
                       )}
                     </div>

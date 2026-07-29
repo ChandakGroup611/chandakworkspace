@@ -12,7 +12,7 @@ export default function CompliancePage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4">
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view Trash Data.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view Trash Data.</p>
       </div>
     );
   }
@@ -25,7 +25,7 @@ export default function CompliancePage() {
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-foreground">Trash Data</h1>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted">
             Securely manage, recover, or permanently purge soft-deleted records across the platform.
           </p>
         </div>

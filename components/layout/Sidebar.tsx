@@ -118,7 +118,8 @@ const navGroups: NavGroup[] = [
           { label: "Design Gallery", href: "/settings", permission: "SETTINGS_THEME_VIEW" },
           { label: "Identity & Access", href: "/settings/identity", permission: "SETTINGS_IDENTITY_VIEW" },
           { label: "Communication Center", href: "/settings/communication", permission: "SETTINGS_COMMUNICATION_VIEW" },
-          { label: "Notifications", href: "/settings/notifications", permission: "SETTINGS_NOTIFICATIONS_VIEW" }
+          { label: "Notifications", href: "/settings/notifications", permission: "SETTINGS_NOTIFICATIONS_VIEW" },
+          { label: "Billing & Subscription", href: "/subscription", permission: "SETTINGS_MANAGE" }
         ]
       },
     ]

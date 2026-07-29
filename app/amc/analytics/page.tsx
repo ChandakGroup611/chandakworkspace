@@ -105,7 +105,7 @@ export default function AMCAnalyticsPage() {
   };
 
   const getUtilizationColor = (used: number, total: number) => {
-    if (total === 0) return 'text-gray-500';
+    if (total === 0) return 'text-muted';
     const percent = (used / total) * 100;
     if (percent >= 90) return 'text-emerald-500';
     if (percent >= 50) return 'text-accent';
@@ -143,7 +143,7 @@ export default function AMCAnalyticsPage() {
               <DollarSign className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-500">Total Active Spend</p>
+              <p className="text-sm font-semibold text-muted">Total Active Spend</p>
               <h4 className="text-2xl font-black mt-1">
                 {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(metrics.totalSpend)}
               </h4>
@@ -155,7 +155,7 @@ export default function AMCAnalyticsPage() {
               <Calendar className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-500">Active Contracts</p>
+              <p className="text-sm font-semibold text-muted">Active Contracts</p>
               <h4 className="text-2xl font-black mt-1">{metrics.activeContracts}</h4>
             </div>
           </AppCard>
@@ -165,7 +165,7 @@ export default function AMCAnalyticsPage() {
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-500">Total Licenses</p>
+              <p className="text-sm font-semibold text-muted">Total Licenses</p>
               <h4 className="text-2xl font-black mt-1">{metrics.totalLicenses}</h4>
             </div>
           </AppCard>
@@ -175,11 +175,11 @@ export default function AMCAnalyticsPage() {
               <BarChart2 className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-500">Overall Utilization</p>
+              <p className="text-sm font-semibold text-muted">Overall Utilization</p>
               <h4 className={`text-2xl font-black mt-1 ${getUtilizationColor(metrics.usedLicenses, metrics.totalLicenses)}`}>
                 {metrics.totalLicenses > 0 ? Math.round((metrics.usedLicenses / metrics.totalLicenses) * 100) : 0}%
               </h4>
-              <p className="text-xs text-gray-400 mt-1">{metrics.usedLicenses} allocated</p>
+              <p className="text-xs text-muted mt-1">{metrics.usedLicenses} allocated</p>
             </div>
           </AppCard>
         </div>
@@ -193,7 +193,7 @@ export default function AMCAnalyticsPage() {
             </div>
             <div className="p-4 flex-1 overflow-y-auto max-h-[400px]">
               {upcomingRenewals.length === 0 ? (
-                <div className="text-center p-8 text-gray-500 italic">No upcoming renewals!</div>
+                <div className="text-center p-8 text-muted italic">No upcoming renewals!</div>
               ) : (
                 <div className="space-y-3">
                   {upcomingRenewals.map(rec => {
@@ -202,13 +202,13 @@ export default function AMCAnalyticsPage() {
                       <div key={rec.id} className={`p-4 rounded-xl border flex items-center justify-between border-border bg-elevated`}>
                         <div>
                           <div className="font-bold text-sm">{rec.software_name}</div>
-                          <div className="text-xs text-gray-500 mt-1">{rec.provider_name}</div>
+                          <div className="text-xs text-muted mt-1">{rec.provider_name}</div>
                         </div>
                         <div className="text-right">
                           <div className={`text-sm font-black ${daysLeft <= 15 ? 'text-rose-500' : 'text-amber-500'}`}>
                             {daysLeft} days left
                           </div>
-                          <div className="text-xs text-gray-400 mt-1">{new Date(rec.expiry_date).toLocaleDateString()}</div>
+                          <div className="text-xs text-muted mt-1">{new Date(rec.expiry_date).toLocaleDateString()}</div>
                         </div>
                       </div>
                     )
@@ -226,7 +226,7 @@ export default function AMCAnalyticsPage() {
             </div>
             <div className="p-4 flex-1 overflow-y-auto max-h-[400px]">
               {departmentSpend.length === 0 ? (
-                <div className="text-center p-8 text-gray-500 italic">No financial data available.</div>
+                <div className="text-center p-8 text-muted italic">No financial data available.</div>
               ) : (
                 <div className="space-y-4">
                   {departmentSpend.map((dept, idx) => {
@@ -234,18 +234,18 @@ export default function AMCAnalyticsPage() {
                     return (
                       <div key={idx} className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="font-semibold text-gray-300">{dept.name}</span>
+                          <span className="font-semibold text-muted">{dept.name}</span>
                           <span className="font-black">
                             {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(dept.spend)}
                           </span>
                         </div>
-                        <div className="w-full h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-surface/10">
+                        <div className="w-full h-2 rounded-full overflow-hidden bg-elevated dark:bg-surface/10">
                           <div 
                             className="h-full bg-accent"
                             style={{ width: `${percent}%` }}
                           />
                         </div>
-                        <div className="text-[10px] text-gray-500 text-right">{percent}% of total</div>
+                        <div className="text-[10px] text-muted text-right">{percent}% of total</div>
                       </div>
                     )
                   })}

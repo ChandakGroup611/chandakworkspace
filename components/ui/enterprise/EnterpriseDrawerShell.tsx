@@ -52,7 +52,7 @@ export function EnterpriseDrawerShell({
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm animate-in fade-in duration-300 ${
-          "bg-gray-900/40"
+          "bg-surface/40"
         }`} 
         onClick={onClose} 
       />
@@ -65,13 +65,13 @@ export function EnterpriseDrawerShell({
         <div className={`shrink-0 p-6 border-b flex items-start justify-between gap-4 ${ " theme-card-structural " }`}>
           <div>
             {title && <h2 className={`text-xl font-extrabold tracking-tight ${"text-foreground"}`}>{title}</h2>}
-            {subtitle && <div className="text-sm text-gray-500 mt-1">{subtitle}</div>}
+            {subtitle && <div className="text-sm text-muted mt-1">{subtitle}</div>}
           </div>
           <AppButton 
             onClick={onClose}
             type="button"
             className={`p-2 rounded-xl transition-colors shrink-0 ${
-              "hover:bg-gray-200 text-muted hover:text-foreground"
+              "hover:bg-elevated text-muted hover:text-foreground"
             }`}
           >
             <X className="h-6 w-6" />
@@ -86,7 +86,7 @@ export function EnterpriseDrawerShell({
         {/* Footer */}
         {footer && (
           <div className={`shrink-0 p-6 border-t flex items-center justify-end gap-3 ${
-            "border-border bg-gray-50"
+            "border-border bg-surface"
           }`}>
             {footer}
           </div>

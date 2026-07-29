@@ -320,7 +320,7 @@ export default function UserProfileEditor() {
                       )}
                       {/* Loading Overlay */}
                       {photoUploading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                        <div className="absolute inset-0 flex items-center justify-center bg-surface/40 backdrop-blur-sm">
                           <Loader2 className="h-8 w-8 text-white animate-spin" />
                         </div>
                       )}

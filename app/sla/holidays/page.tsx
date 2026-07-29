@@ -46,14 +46,14 @@ export default function HolidayCalendar() {
         badge={<AppBadge variant="info">Governance Engine</AppBadge>}
       />
 
-      <div className="p-4 border-b shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-border mt-6">
-        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-gray-100/50 dark:bg-surface/30 border border-gray-200/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
+      <div className="p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border mt-6">
+        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
           <button 
             onClick={() => setActiveTab("holidays")}
             className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
               activeTab === 'holidays' 
-                ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
-                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+                ? 'bg-surface dark:bg-surface text-accent dark:text-accent shadow-sm border border-border/50 dark:border-white/10' 
+                : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
             }`}
           >
             <Calendar className="w-4 h-4 mr-2" /> Holiday Calendar
@@ -62,8 +62,8 @@ export default function HolidayCalendar() {
             onClick={() => setActiveTab("working_hours")}
             className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
               activeTab === 'working_hours' 
-                ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
-                : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+                ? 'bg-surface dark:bg-surface text-accent dark:text-accent shadow-sm border border-border/50 dark:border-white/10' 
+                : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
             }`}
           >
             <Clock className="w-4 h-4 mr-2" /> Working Hours (Business Schedules)
@@ -80,15 +80,15 @@ export default function HolidayCalendar() {
                   <h3 className="font-bold text-lg mb-4">Add Holiday</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Holiday Name</label>
+                      <label className="text-sm font-bold text-muted uppercase">Holiday Name</label>
                       <AppInput value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="e.g. Thanksgiving" />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Date</label>
+                      <label className="text-sm font-bold text-muted uppercase">Date</label>
                       <AppInput type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Region / Office</label>
+                      <label className="text-sm font-bold text-muted uppercase">Region / Office</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
                         <option>Global</option>
                         <option>US Region</option>
@@ -115,16 +115,16 @@ export default function HolidayCalendar() {
             
             <div className="lg:col-span-2">
               <AppCard>
-                <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02]">
+                <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
                   <h3 className="font-bold text-sm">Upcoming Holidays (2026)</h3>
                 </div>
                 <div className="divide-y divide-border">
                   {holidays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(holiday => (
-                    <div key={holiday.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-surface/[0.02] transition-colors">
+                    <div key={holiday.id} className="p-4 flex items-center justify-between hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors">
                       <div className="flex flex-col">
                         <span className="font-bold text-foreground">{holiday.name}</span>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                          <span className="font-mono bg-gray-100 dark:bg-surface/10 px-1.5 py-0.5 rounded">{holiday.date}</span>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted">
+                          <span className="font-mono bg-surface dark:bg-surface/10 px-1.5 py-0.5 rounded">{holiday.date}</span>
                           <span>•</span>
                           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {holiday.region}</span>
                         </div>
@@ -135,7 +135,7 @@ export default function HolidayCalendar() {
                     </div>
                   ))}
                   {holidays.length === 0 && (
-                    <div className="p-8 text-center text-gray-500 text-sm">
+                    <div className="p-8 text-center text-muted text-sm">
                       No holidays configured. SLA timers will run continuously.
                     </div>
                   )}
@@ -155,8 +155,8 @@ export default function HolidayCalendar() {
                     </div>
                     <AppBadge variant="info">{wh.timezone}</AppBadge>
                   </div>
-                  <div className="p-4 bg-gray-50 dark:bg-surface/5 rounded-xl border border-border">
-                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <div className="p-4 bg-surface dark:bg-surface/5 rounded-xl border border-border">
+                    <div className="text-sm font-semibold text-subtle dark:text-muted flex items-center gap-2">
                       <Clock className="w-4 h-4 text-accent" /> Schedule
                     </div>
                     <div className="text-sm font-mono mt-2 text-foreground">
@@ -170,10 +170,10 @@ export default function HolidayCalendar() {
                 </div>
               </AppCard>
             ))}
-            <AppCard className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-gray-50 dark:hover:bg-surface/[0.02] transition-colors">
+            <AppCard className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors">
               <div className="text-center">
-                <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <span className="font-bold text-gray-500">Create Working Hours Profile</span>
+                <Plus className="w-8 h-8 text-muted mx-auto mb-2" />
+                <span className="font-bold text-muted">Create Working Hours Profile</span>
               </div>
             </AppCard>
           </div>

@@ -140,7 +140,7 @@ export default function IAMRoleBuilder() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6 h-[calc(100vh-200px)]">
         {/* Left Sidebar: Roles List */}
         <div className="lg:col-span-1 border border-border bg-surface dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
+          <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
             <h3 className="font-bold text-sm">Enterprise Roles</h3>
             <AppButton size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => { setIsCreating(true); setSelectedRole(null); }}>
               <Plus className="w-4 h-4" />
@@ -154,7 +154,7 @@ export default function IAMRoleBuilder() {
                 className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                   selectedRole?.id === r.id && !isCreating 
                     ? "border-accent bg-accent/5 dark:bg-accent/10 shadow-sm" 
-                    : "border-transparent hover:bg-gray-50 dark:hover:bg-surface/5"
+                    : "border-transparent hover:bg-surface dark:hover:bg-surface/5"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -163,7 +163,7 @@ export default function IAMRoleBuilder() {
                   </span>
                   {r.is_system && <AppBadge variant="warning" className="text-[9px] px-1.5 py-0">SYS</AppBadge>}
                 </div>
-                <div className="text-[10px] text-gray-500 font-mono mt-1">{r.code}</div>
+                <div className="text-[10px] text-muted font-mono mt-1">{r.code}</div>
               </div>
             ))}
           </div>
@@ -179,15 +179,15 @@ export default function IAMRoleBuilder() {
               </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-bold text-gray-500 uppercase">Role Name</label>
+                  <label className="text-sm font-bold text-muted uppercase">Role Name</label>
                   <AppInput value={newRoleForm.name} onChange={e => setNewRoleForm({...newRoleForm, name: e.target.value})} placeholder="e.g. Regional Manager" className="mt-1" />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-500 uppercase">Role Code</label>
+                  <label className="text-sm font-bold text-muted uppercase">Role Code</label>
                   <AppInput value={newRoleForm.code} onChange={e => setNewRoleForm({...newRoleForm, code: e.target.value.toUpperCase().replace(/\s+/g, '_')})} placeholder="e.g. REGIONAL_MANAGER" className="mt-1 font-mono uppercase" />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-500 uppercase">Department (Optional)</label>
+                  <label className="text-sm font-bold text-muted uppercase">Department (Optional)</label>
                   <select 
                     className="w-full mt-1 p-2 border border-border rounded-md bg-transparent text-sm focus:ring-accent"
                     value={newRoleForm.department_id}
@@ -200,7 +200,7 @@ export default function IAMRoleBuilder() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-500 uppercase">Description</label>
+                  <label className="text-sm font-bold text-muted uppercase">Description</label>
                   <textarea 
                     className="w-full mt-1 p-3 border border-border rounded-md bg-transparent text-sm min-h-[100px] focus:ring-accent focus:border-accent outline-none transition-colors"
                     value={newRoleForm.description}
@@ -218,14 +218,14 @@ export default function IAMRoleBuilder() {
             </div>
           ) : selectedRole ? (
             <>
-              <div className="p-6 border-b border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
+              <div className="p-6 border-b border-border bg-surface dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
                 <div>
                   <div className="flex items-center gap-3">
                     <h2 className="text-xl font-bold">{selectedRole.name}</h2>
                     {selectedRole.is_system && <AppBadge variant="warning">System Role</AppBadge>}
                   </div>
-                  <p className="text-xs text-gray-500 font-mono mt-1">{selectedRole.code} • {selectedRole.department?.name || 'Global Scope'}</p>
-                  {selectedRole.description && <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{selectedRole.description}</p>}
+                  <p className="text-xs text-muted font-mono mt-1">{selectedRole.code} • {selectedRole.department?.name || 'Global Scope'}</p>
+                  {selectedRole.description && <p className="text-sm text-subtle dark:text-muted mt-2">{selectedRole.description}</p>}
                 </div>
                 <div className="flex items-center gap-3">
                   <AppButton variant="primary" onClick={handleSavePermissions} disabled={saving} leftIcon={saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}>
@@ -234,7 +234,7 @@ export default function IAMRoleBuilder() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50 dark:bg-transparent">
+              <div className="flex-1 overflow-y-auto p-6 bg-surface/50 dark:bg-transparent">
                 <div className="grid gap-6">
                   {Object.entries(groupedPermissions).map(([module, perms]) => {
                     const modulePermIds = perms.map(p => p.id);
@@ -243,18 +243,18 @@ export default function IAMRoleBuilder() {
                     
                     return (
                       <AppCard key={module} className="overflow-hidden">
-                        <div className="p-4 border-b border-border bg-gray-50/80 dark:bg-surface/[0.02] flex items-center justify-between cursor-pointer" onClick={() => toggleModulePermissions(module, modulePermIds)}>
+                        <div className="p-4 border-b border-border bg-surface/80 dark:bg-surface/[0.02] flex items-center justify-between cursor-pointer" onClick={() => toggleModulePermissions(module, modulePermIds)}>
                           <div className="flex items-center gap-3">
                             <input 
                               type="checkbox" 
                               checked={allSelected} 
                               ref={input => { if (input) input.indeterminate = someSelected && !allSelected; }}
                               readOnly 
-                              className="w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent"
+                              className="w-4 h-4 text-accent border-border rounded focus:ring-accent"
                             />
-                            <h3 className="font-bold text-sm tracking-wide uppercase text-gray-700 dark:text-gray-300">{module}</h3>
+                            <h3 className="font-bold text-sm tracking-wide uppercase text-subtle dark:text-muted">{module}</h3>
                           </div>
-                          <span className="text-xs font-medium text-gray-500 bg-surface dark:bg-[#0B0F19] px-2 py-0.5 rounded shadow-sm border border-border">
+                          <span className="text-xs font-medium text-muted bg-surface dark:bg-[#0B0F19] px-2 py-0.5 rounded shadow-sm border border-border">
                             {perms.filter(p => selectedRolePerms.includes(p.id)).length} / {perms.length}
                           </span>
                         </div>
@@ -268,20 +268,20 @@ export default function IAMRoleBuilder() {
                                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                                   isChecked 
                                     ? "bg-accent/5 border-accent/30 dark:bg-accent/10 dark:border-accent/40" 
-                                    : "bg-surface dark:bg-[#0B0F19] border-gray-200 dark:border-white/10 hover:border-accent/50"
+                                    : "bg-surface dark:bg-[#0B0F19] border-border dark:border-white/10 hover:border-accent/50"
                                 }`}
                               >
                                 <input 
                                   type="checkbox" 
                                   checked={isChecked} 
                                   readOnly 
-                                  className="mt-1 shrink-0 w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent"
+                                  className="mt-1 shrink-0 w-4 h-4 text-accent border-border rounded focus:ring-accent"
                                 />
                                 <div>
-                                  <div className={`text-sm font-semibold ${isChecked ? "text-accent dark:text-accent-secondary" : "text-gray-800 dark:text-gray-200"}`}>
+                                  <div className={`text-sm font-semibold ${isChecked ? "text-accent dark:text-accent-secondary" : "text-foreground dark:text-muted"}`}>
                                     {p.name}
                                   </div>
-                                  <div className="text-[10px] text-gray-500 font-mono mt-0.5">{p.code}</div>
+                                  <div className="text-[10px] text-muted font-mono mt-0.5">{p.code}</div>
                                 </div>
                               </div>
                             );
@@ -294,7 +294,7 @@ export default function IAMRoleBuilder() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400">
+            <div className="flex-1 flex items-center justify-center text-muted">
               Select a role to configure permissions
             </div>
           )}

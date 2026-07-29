@@ -92,7 +92,7 @@ export default function IdentityProviderForm() {
           <Shield className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view Identity Settings.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view Identity Settings.</p>
       </div>
     );
   }
@@ -109,14 +109,14 @@ export default function IdentityProviderForm() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-foreground">Microsoft Entra ID (Azure AD)</h2>
-              <p className="text-sm text-gray-400">Configure Microsoft 365 Single Sign-On and auto-provisioning.</p>
+              <p className="text-sm text-muted">Configure Microsoft 365 Single Sign-On and auto-provisioning.</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-400">Status</span>
+            <span className="text-sm font-medium text-muted">Status</span>
             <AppButton 
               onClick={() => setConfig({ ...config, is_active: !config.is_active })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-accent' : 'bg-gray-700'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-accent' : 'bg-surface'}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
             </AppButton>
@@ -125,7 +125,7 @@ export default function IdentityProviderForm() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Tenant ID</label>
+            <label className="text-sm font-medium text-muted">Tenant ID</label>
             <input 
               type="text" 
               value={config.tenant_id || ""}
@@ -136,7 +136,7 @@ export default function IdentityProviderForm() {
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Client ID (Application ID)</label>
+            <label className="text-sm font-medium text-muted">Client ID (Application ID)</label>
             <input 
               type="text" 
               value={config.client_id || ""}
@@ -147,7 +147,7 @@ export default function IdentityProviderForm() {
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-gray-300">Client Secret (Encrypted)</label>
+            <label className="text-sm font-medium text-muted">Client Secret (Encrypted)</label>
             <div className="relative">
               <input 
                 type="password" 
@@ -156,13 +156,13 @@ export default function IdentityProviderForm() {
                 className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
                 placeholder="Enter client secret value"
               />
-              <Key className="w-4 h-4 text-gray-500 absolute left-3 top-3.5" />
+              <Key className="w-4 h-4 text-muted absolute left-3 top-3.5" />
             </div>
-            <p className="text-xs text-gray-500 mt-1">This value is encrypted at rest and never exposed to the frontend after saving.</p>
+            <p className="text-xs text-muted mt-1">This value is encrypted at rest and never exposed to the frontend after saving.</p>
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-gray-300">Authority URL</label>
+            <label className="text-sm font-medium text-muted">Authority URL</label>
             <div className="relative">
               <input 
                 type="text" 
@@ -171,7 +171,7 @@ export default function IdentityProviderForm() {
                 className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
                 placeholder="https://login.microsoftonline.com/common"
               />
-              <Link2 className="w-4 h-4 text-gray-500 absolute left-3 top-3.5" />
+              <Link2 className="w-4 h-4 text-muted absolute left-3 top-3.5" />
             </div>
           </div>
         </div>
@@ -185,7 +185,7 @@ export default function IdentityProviderForm() {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-foreground">Auto-Provisioning Settings</h2>
-            <p className="text-sm text-gray-400">Control how users are mapped when they log in via SSO for the first time.</p>
+            <p className="text-sm text-muted">Control how users are mapped when they log in via SSO for the first time.</p>
           </div>
         </div>
 
@@ -193,26 +193,26 @@ export default function IdentityProviderForm() {
           <label className="flex items-center space-x-3 cursor-pointer group">
             <AppButton 
               onClick={() => setConfig({ ...config, auto_provision_users: !config.auto_provision_users })}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-accent' : 'bg-gray-700'}`}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-accent' : 'bg-surface'}`}
             >
               <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
             </AppButton>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
-              <span className="text-xs text-gray-500">Automatically create user accounts in the system if they authenticate successfully via Azure AD.</span>
+              <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
+              <span className="text-xs text-muted">Automatically create user accounts in the system if they authenticate successfully via Azure AD.</span>
             </div>
           </label>
 
           <label className="flex items-center space-x-3 cursor-pointer group">
             <AppButton 
               onClick={() => setConfig({ ...config, force_sso: !config.force_sso })}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-red-500' : 'bg-gray-700'}`}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-red-500' : 'bg-surface'}`}
             >
               <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
             </AppButton>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">Force SSO (Disable Password Login)</span>
-              <span className="text-xs text-gray-500">If enabled, standard password login will be hidden and all users MUST use Microsoft SSO.</span>
+              <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Force SSO (Disable Password Login)</span>
+              <span className="text-xs text-muted">If enabled, standard password login will be hidden and all users MUST use Microsoft SSO.</span>
             </div>
           </label>
         </div>

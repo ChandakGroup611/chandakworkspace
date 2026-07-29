@@ -92,18 +92,18 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
         {messages.map((msg, i) => {
           const isChat = msg.event_type === 'CHAT' || msg.event_type === 'COMMENT';
           return (
-            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-indigo-900/30 border-accent/30' : 'bg-gray-800/40 border-gray-600/30'} border rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
+            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-indigo-900/30 border-accent/30' : 'bg-surface/40 border-border/30'} border rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-bold text-xs text-gray-300">
+                <span className="font-bold text-xs text-muted">
                   {msg.performed_by?.full_name || 'System User'}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted">
                   {new Date(msg.performed_at).toLocaleTimeString()}
                 </span>
               </div>
-              <div className="text-gray-200">
+              <div className="text-muted">
                 {isChat ? msg.new_value?.content : (
-                  <span className="text-gray-400 italic">
+                  <span className="text-muted italic">
                     Changed {msg.event_type} from {JSON.stringify(msg.old_value)} to {JSON.stringify(msg.new_value)}
                   </span>
                 )}
@@ -113,13 +113,13 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
         })}
       </div>
       
-      <form onSubmit={handleSend} className="p-3 bg-gray-900 border-t border-white/5 flex gap-2">
+      <form onSubmit={handleSend} className="p-3 bg-surface border-t border-white/5 flex gap-2">
         <input 
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message or @mention someone..."
-          className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-accent"
+          className="flex-1 bg-surface/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-accent"
         />
         <AppButton type="submit" className="bg-accent hover:bg-accent-secondary text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
           Send

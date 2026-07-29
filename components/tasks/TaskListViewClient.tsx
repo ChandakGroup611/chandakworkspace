@@ -797,7 +797,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <Shield className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view Workspace Tasks.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view Workspace Tasks.</p>
       </div>
     );
   }
@@ -902,7 +902,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </div>
 
           {/* Bottom Row: Priority, Escalated, Date Range, Search, Actions */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 dark:bg-surface/[0.02]">
+          <div className="flex items-center gap-3 px-4 py-3 bg-surface/50 dark:bg-surface/[0.02]">
             <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-10 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
               <option value="">All Priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
@@ -966,7 +966,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {viewMode === "list" ? (
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-gray-200 dark:border-white/5 bg-elevated shadow-sm relative">
+        <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-border dark:border-white/5 bg-elevated shadow-sm relative">
           <AppTable className="w-full min-w-max border-separate border-spacing-0 table-fixed">
             <AppTableHeader className="sticky top-0 z-40 bg-elevated">
               <AppTableRow>
@@ -1010,7 +1010,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   key={task.id} 
                   data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}
                   onClick={() => router.push(`/tasks/${task.id}`)}
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  className="cursor-pointer hover:bg-surface dark:hover:bg-surface/50"
                 >
                   <AppTableCell className="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-surface group-hover:bg-surface transition-colors" onClick={(e) => e.stopPropagation()}>
                     <input 
@@ -1038,10 +1038,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           </div>
                           {task.custom_fields?.progress_percentage !== undefined && (
                             <div className="mt-1.5 flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                              <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
                                 <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                               </div>
-                              <span className="text-[10px] font-bold text-gray-500">{task.custom_fields.progress_percentage}%</span>
+                              <span className="text-[10px] font-bold text-muted">{task.custom_fields.progress_percentage}%</span>
                             </div>
                           )}
                         </AppTableCell>
@@ -1116,13 +1116,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               <Popover.Content
                                 align="center"
                                 sideOffset={4}
-                                className="z-[100] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 rounded-lg shadow-xl flex flex-col py-1 min-w-[150px] outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+                                className="z-[100] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border rounded-lg shadow-xl flex flex-col py-1 min-w-[150px] outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
                                 onInteractOutside={() => setOpenMenuTaskId(null)}
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <Link 
                                   href={`/tasks/${task.id}`}
-                                  className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-surface/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
+                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle dark:text-muted flex items-center gap-2 font-medium"
                                   onClick={(e) => {
                                      e.stopPropagation();
                                      setOpenMenuTaskId(null);
@@ -1131,7 +1131,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                   <Eye className="w-3.5 h-3.5" /> View Task
                                 </Link>
                                 <AppButton variant="secondary" 
-                                  className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-surface/5 transition-colors text-gray-700 dark:text-gray-300 flex items-center gap-2 font-medium"
+                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle dark:text-muted flex items-center gap-2 font-medium"
                                   onClick={(e) => {
                                      e.stopPropagation();
                                      setOpenMenuTaskId(null);
@@ -1155,7 +1155,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                  return (
                                    <>
                                      {a.profile_photo ? (
-                                       <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200" />
+                                       <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-elevated" />
                                      ) : (
                                        <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
                                          {a.full_name?.substring(0, 2).toUpperCase() || "U"}
@@ -1183,16 +1183,16 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
                           text = `${diff} day(s)`;
                         }
-                        return <AppTableCell className="text-xs text-gray-600 dark:text-gray-400">{text}</AppTableCell>;
+                        return <AppTableCell className="text-xs text-subtle dark:text-muted">{text}</AppTableCell>;
                       }
                       case "progress": return (
                         <AppTableCell className="w-[120px]">
                           {task.progress_percentage !== undefined ? (
                             <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                              <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
                                 <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
                               </div>
-                              <span className="text-[10px] font-bold text-gray-500 w-6 text-right">{task.progress_percentage}%</span>
+                              <span className="text-[10px] font-bold text-muted w-6 text-right">{task.progress_percentage}%</span>
                             </div>
                           ) : "—"}
                         </AppTableCell>
@@ -1211,12 +1211,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                 )
                               ))}
                               {task.executors.length > 3 && (
-                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-gray-100 text-gray-500 text-[8px] font-bold z-10">
+                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
                                   +{task.executors.length - 3}
                                 </div>
                               )}
                             </div>
-                          ) : <span className="text-gray-400 text-xs">—</span>}
+                          ) : <span className="text-muted text-xs">—</span>}
                         </AppTableCell>
                       );
                       case "reviewers": return (
@@ -1233,12 +1233,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                 )
                               ))}
                               {task.reviewers.length > 3 && (
-                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-gray-100 text-gray-500 text-[8px] font-bold z-10">
+                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
                                   +{task.reviewers.length - 3}
                                 </div>
                               )}
                             </div>
-                          ) : <span className="text-gray-400 text-xs">—</span>}
+                          ) : <span className="text-muted text-xs">—</span>}
                         </AppTableCell>
                       );
                       case "attachments": return (
@@ -1248,7 +1248,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               <Paperclip className="h-3 w-3" />
                               {task.attachmentCount}
                             </div>
-                          ) : <span className="text-gray-400 text-xs">—</span>}
+                          ) : <span className="text-muted text-xs">—</span>}
                         </AppTableCell>
                       );
                       case "comments": return (
@@ -1258,7 +1258,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               <MessageSquare className="h-3 w-3" />
                               {task.commentCount}
                             </div>
-                          ) : <span className="text-gray-400 text-xs">—</span>}
+                          ) : <span className="text-muted text-xs">—</span>}
                         </AppTableCell>
                       );
                       case "external_link": return (
@@ -1268,14 +1268,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               <ExternalLink className="h-3 w-3 flex-shrink-0" />
                               <span className="truncate">{task.custom_fields.link_url}</span>
                             </a>
-                          ) : <span className="text-gray-400">—</span>}
+                          ) : <span className="text-muted">—</span>}
                         </AppTableCell>
                       );
                       case "created_at": return (
-                        <AppTableCell className="text-right text-gray-500 text-[13px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                        <AppTableCell className="text-right text-muted text-[13px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
                       );
                       case "updated_at": return (
-                        <AppTableCell className="text-right text-gray-500 text-[13px] whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
+                        <AppTableCell className="text-right text-muted text-[13px] whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
                       );
                       case "actions": return (
                         <AppTableCell className="text-right">
@@ -1326,7 +1326,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         else if (col.data_type === "date") val = formatDate(val);
                         
                         return (
-                          <AppTableCell className="text-[13px] text-gray-600 dark:text-gray-400">
+                          <AppTableCell className="text-[13px] text-subtle dark:text-muted">
                             <div className="truncate max-w-[200px]" title={String(val)}>
                               {col.data_type === "link" && val !== "—" ? (
                                 <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
@@ -1399,11 +1399,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   )}
 
         {filtered.length === 0 && !loading && (
-          <div className="text-center py-10 text-gray-500">No tasks found for this filter.</div>
+          <div className="text-center py-10 text-muted">No tasks found for this filter.</div>
         )}
         
         {hasMore && filtered.length > 0 && (
-          <div className="flex justify-center py-4 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0B0F19]">
+          <div className="flex justify-center py-4 border-t border-border dark:border-white/5 bg-surface dark:bg-[#0B0F19]">
             <AppButton variant="outline" size="sm" onClick={loadMore} disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Load More Tasks
@@ -1414,54 +1414,54 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       {/* Side Drawer Component */}
       {selectedTask && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setSelectedTask(null)} />
-          <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] theme-card-structural dark:bg-[#0B0F19] shadow-2xl border-l border-gray-200 dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="p-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50 dark:theme-card-structural /[0.02]">
+          <div className="fixed inset-0 z-40 bg-surface/40 backdrop-blur-sm transition-opacity" onClick={() => setSelectedTask(null)} />
+          <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] theme-card-structural dark:bg-[#0B0F19] shadow-2xl border-l border-border dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
+            <div className="p-4 border-b border-border dark:border-white/10 flex items-center justify-between bg-surface dark:theme-card-structural /[0.02]">
               <div>
-                <h2 className="text-[14px] font-bold text-gray-900 dark:text-white truncate pr-4">{selectedTask.title}</h2>
-                <div className="text-[11px] font-mono text-gray-500 mt-1">{selectedTask.code} • {selectedTask.workspace?.name}</div>
+                <h2 className="text-[14px] font-bold text-foreground dark:text-white truncate pr-4">{selectedTask.title}</h2>
+                <div className="text-[11px] font-mono text-muted mt-1">{selectedTask.code} • {selectedTask.workspace?.name}</div>
               </div>
               <AppButton variant="ghost" size="sm" onClick={() => setSelectedTask(null)} className="h-8 w-8 p-0 shrink-0">✕</AppButton>
             </div>
             
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
               <div className="space-y-2">
-                <h4 className="text-[11px] uppercase font-bold text-gray-500 tracking-wider">Description</h4>
-                <p className="text-[13px] text-gray-800 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                <h4 className="text-[11px] uppercase font-bold text-muted tracking-wider">Description</h4>
+                <p className="text-[13px] text-foreground dark:text-muted leading-relaxed whitespace-pre-wrap">
                   {selectedTask.description || 'No description provided.'}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Priority</span>
-                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.priority?.name || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
+                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.priority?.name || 'N/A'}</div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Department</span>
-                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.department?.name || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Department</span>
+                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.department?.name || 'N/A'}</div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Status</span>
-                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.status?.name || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
+                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.status?.name || 'N/A'}</div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Due Date</span>
-                  <div className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedTask.end_date || 'N/A'}</div>
+                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Due Date</span>
+                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.end_date || 'N/A'}</div>
                 </div>
               </div>
               
               {/* Checklists and Custom Fields */}
               {selectedTask.custom_fields && Object.keys(selectedTask.custom_fields).length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-white/5">
+                <div className="space-y-3 pt-4 border-t border-border/50 dark:border-white/5">
                   <h4 className="text-[11px] uppercase font-bold text-accent tracking-wider mb-2">Checklists & Details</h4>
                   
                   {selectedTask.custom_fields.checklist && Array.isArray(selectedTask.custom_fields.checklist) && (
                     <div className="space-y-2 mb-4">
                       {selectedTask.custom_fields.checklist.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-start gap-2 bg-gray-50 dark:theme-card-structural /[0.02] p-2 rounded-lg border-gray-100 dark:border-white/5">
-                          <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-gray-300 text-accent focus:ring-accent" />
-                          <span className={`text-[13px] ${item.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{item.title}</span>
+                        <div key={idx} className="flex items-start gap-2 bg-surface dark:theme-card-structural /[0.02] p-2 rounded-lg border-border/50 dark:border-white/5">
+                          <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-border text-accent focus:ring-accent" />
+                          <span className={`text-[13px] ${item.completed ? 'line-through text-muted' : 'text-foreground dark:text-muted'}`}>{item.title}</span>
                         </div>
                       ))}
                     </div>
@@ -1470,8 +1470,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   <div className="grid gap-3">
                     {Object.entries(selectedTask.custom_fields).filter(([k]) => k !== 'checklist' && k !== 'progress_percentage').map(([key, value]) => (
                       <div key={key} className="flex flex-col gap-1">
-                        <span className="text-[11px] uppercase font-bold text-gray-400 tracking-wider">{key.replace(/_/g, ' ')}</span>
-                        <div className="text-[13px] text-gray-800 dark:text-gray-200">
+                        <span className="text-[11px] uppercase font-bold text-muted tracking-wider">{key.replace(/_/g, ' ')}</span>
+                        <div className="text-[13px] text-foreground dark:text-muted">
                           {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
                         </div>
                       </div>
@@ -1481,7 +1481,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               )}
             </div>
 
-            <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:theme-card-structural /[0.02] flex items-center gap-2">
+            <div className="p-4 border-t border-border dark:border-white/10 bg-surface dark:theme-card-structural /[0.02] flex items-center gap-2">
               <Link href={`/tasks/${selectedTask.id}`} className="w-full flex-1">
                 <AppButton variant="primary" className="w-full bg-accent hover:bg-accent-secondary">Open Execution Workspace</AppButton>
               </Link>
@@ -1493,14 +1493,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Floating Action Bar for Bulk Actions */}
       {selectedTaskIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 theme-card-structural dark:bg-[#0f111a] border-gray-200 dark:border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 theme-card-structural dark:bg-[#0f111a] border-border dark:border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
           <div className="flex items-center gap-2">
             <div className="bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
               {selectedTaskIds.size}
             </div>
-            <span className="theme-data-value text-gray-700 dark:text-gray-300">Tasks Selected</span>
+            <span className="theme-data-value text-subtle dark:text-muted">Tasks Selected</span>
           </div>
-          <div className="h-6 w-px bg-gray-300 dark:bg-surface/20"></div>
+          <div className="h-6 w-px bg-elevated dark:bg-surface/20"></div>
           <div className="flex items-center gap-2">
             {canUpdate && (
               <AppButton variant="outline" size="sm" onClick={() => setBulkStatusModalOpen(true)}>Update Tasks</AppButton>
@@ -1515,20 +1515,20 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Bulk Status Update Modal */}
       <Dialog open={bulkStatusModalOpen} onOpenChange={setBulkStatusModalOpen}>
-        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 shadow-xl">
+        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-100">Bulk Update Tasks</DialogTitle>
+            <DialogTitle className="text-foreground dark:text-gray-100">Bulk Update Tasks</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Updating {selectedTaskIds.size} Tasks</div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">From Status (Current)</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">From Status (Current)</label>
                 <select
                   value={bulkOldStatus}
                   onChange={(e) => setBulkOldStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Any Status</option>
                   {masterStatuses.map((st) => (
@@ -1538,11 +1538,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
 
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">To Status (New)</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">To Status (New)</label>
                 <select
                   value={bulkNewStatus}
                   onChange={(e) => setBulkNewStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Leave Unchanged</option>
                   {masterStatuses.map((st) => (
@@ -1554,11 +1554,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">From Department (Current)</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">From Department (Current)</label>
                 <select
                   value={bulkOldDepartment}
                   onChange={(e) => setBulkOldDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Any Department</option>
                   {departments.map((dep) => (
@@ -1568,11 +1568,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
 
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">To Department (New)</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">To Department (New)</label>
                 <select
                   value={bulkNewDepartment}
                   onChange={(e) => setBulkNewDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">Leave Unchanged</option>
                   {departments.map((dep) => (
@@ -1583,12 +1583,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             </div>
             
             <div className="grid gap-2">
-              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Remark (Optional)</label>
+              <label className="text-sm font-bold text-muted uppercase tracking-wider">Remark (Optional)</label>
               <textarea
                 value={bulkRemark}
                 onChange={(e) => setBulkRemark(e.target.value)}
                 placeholder="Why are you updating these tasks?"
-                className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
             <div className="text-[10px] text-amber-600">Note: Tasks you don't own will fail to update unless you are a super admin.</div>
@@ -1609,20 +1609,20 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Inline Status Update Modal */}
       <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
-        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 shadow-xl">
+        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-100">Update Status</DialogTitle>
+            <DialogTitle className="text-foreground dark:text-gray-100">Update Status</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
             
             {true ? (
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">New Status</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">New Status</label>
                 <select
                   value={inlineNewStatus}
                   onChange={(e) => setInlineNewStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="" disabled>Select Status</option>
                   {masterStatuses.map((st) => (
@@ -1637,12 +1637,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             )}
             
             <div className="grid gap-2">
-              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
+              <label className="text-sm font-bold text-muted uppercase tracking-wider">Remark (Required)</label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1662,20 +1662,20 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       {/* Inline Department Update Modal */}
       <Dialog open={departmentModalOpen} onOpenChange={setDepartmentModalOpen}>
-        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-gray-200 dark:border-gray-800 shadow-xl">
+        <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-100">Update Department</DialogTitle>
+            <DialogTitle className="text-foreground dark:text-gray-100">Update Department</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
             
             {true ? (
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">New Department</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">New Department</label>
                 <select
                   value={inlineNewDepartment}
                   onChange={(e) => setInlineNewDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 >
                   <option value="">-- No Department --</option>
                   {departments.map((dep) => (
@@ -1690,12 +1690,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             )}
             
             <div className="grid gap-2">
-              <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Remark (Required)</label>
+              <label className="text-sm font-bold text-muted uppercase tracking-wider">Remark (Required)</label>
               <textarea
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] theme-card-structural border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1714,20 +1714,20 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       </Dialog>
 
       <Dialog open={showWorkspaceSelector} onOpenChange={setShowWorkspaceSelector}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden theme-card-structural dark:bg-[#0a0d14] border-gray-200 dark:border-gray-800 shadow-xl">
-          <DialogHeader className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden theme-card-structural dark:bg-[#0a0d14] border-border dark:border-border shadow-xl">
+          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5">
             <DialogTitle>Select Workspace for Task</DialogTitle>
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1">Target Workspace <span className="text-red-500">*</span></label>
+              <label className="block theme-data-value text-subtle dark:text-muted mb-1">Target Workspace <span className="text-red-500">*</span></label>
               <select
                 value={creationWorkspaceId}
                 onChange={(e) => {
                   setCreationWorkspaceId(e.target.value);
                   setCreationSubWorkspaceId("");
                 }}
-                className="w-full text-sm p-2.5 border-gray-200 dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
+                className="w-full text-sm p-2.5 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-accent focus:border-accent"
               >
                 <option value="">-- Select Workspace --</option>
                 {allWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
@@ -1738,11 +1738,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             
             {creationWorkspaceId && (
               <div>
-                <label className="block theme-data-value text-gray-700 dark:text-gray-300 mb-1">Sub-Workspace (Optional)</label>
+                <label className="block theme-data-value text-subtle dark:text-muted mb-1">Sub-Workspace (Optional)</label>
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border-gray-200 dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-gray-900 dark:text-white focus:ring-accent focus:border-accent"
+                  className="w-full text-sm p-2.5 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-accent focus:border-accent"
                 >
                   <option value="">-- None --</option>
                   {allWorkspaces.filter(sw => sw.parent_workspace_id === creationWorkspaceId).map(sw => (
@@ -1752,7 +1752,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
             )}
           </div>
-          <DialogFooter className="px-6 py-4 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:theme-card-structural /5">
+          <DialogFooter className="px-6 py-4 border-t border-border/50 dark:border-white/5 bg-surface dark:theme-card-structural /5">
             <AppButton variant="outline" onClick={() => setShowWorkspaceSelector(false)}>Cancel</AppButton>
             <AppButton 
               variant="primary" 

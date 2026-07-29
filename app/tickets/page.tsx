@@ -141,7 +141,7 @@ export default function TicketsPage() {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
         <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
           Verifying Capabilities...
         </span>
       </div>
@@ -155,7 +155,7 @@ export default function TicketsPage() {
           <Database className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view Operations Tickets.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view Operations Tickets.</p>
       </div>
     );
   }
@@ -171,9 +171,9 @@ export default function TicketsPage() {
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className={`text-[0.65rem] font-bold uppercase tracking-widest text-muted`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
             </div>
-            <div className={`h-4 w-px bg-gray-300`} />
+            <div className={`h-4 w-px bg-elevated`} />
             <div className="flex items-center gap-4 text-xs">
-              <span className="font-semibold text-gray-500 uppercase tracking-wide">Active: <span className="text-gray-900 dark:text-white">{tickets.length}</span></span>
+              <span className="font-semibold text-muted uppercase tracking-wide">Active: <span className="text-foreground dark:text-white">{tickets.length}</span></span>
               <span className="font-semibold text-emerald-500 uppercase tracking-wide">SLA Stability: 98.4%</span>
             </div>
           </div>
@@ -221,12 +221,12 @@ export default function TicketsPage() {
         }`}>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="relative w-full sm:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
                 type="text"
                 placeholder="Search tickets by ID or title..."
                 className={`w-full h-10 pl-10 pr-4 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                  "bg-elevated border-border text-foreground placeholder:text-gray-400"
+                  "bg-elevated border-border text-foreground placeholder:text-muted"
                 }`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -235,8 +235,8 @@ export default function TicketsPage() {
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 hidden md:inline">Status:</span>
+                <Filter className="h-4 w-4 text-muted" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted hidden md:inline">Status:</span>
               </div>
               <select 
                 value={selectedStatus}

@@ -80,7 +80,7 @@ export default function ThemePresentationPage() {
     <div className="min-h-screen bg-[#050505] p-8 md:p-12 space-y-12">
       <div className="max-w-6xl mx-auto space-y-4 text-center pb-8">
         <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">3D UI Presentation Showcase</h1>
-        <p className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto">
+        <p className="text-muted text-lg md:text-xl max-w-3xl mx-auto">
           Here are the 5 fully implemented 3D UI structural themes. You can use these live rendered samples directly in your presentation.
         </p>
       </div>

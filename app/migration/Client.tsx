@@ -234,7 +234,7 @@ export default function MigrationClient() {
           
           <div className="space-y-5 relative z-10">
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">Module Type</label>
+              <label className="block text-sm font-medium text-muted mb-1.5">Module Type</label>
               <select 
                 value={selectedModule}
                 onChange={e => {
@@ -260,7 +260,7 @@ export default function MigrationClient() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-1.5">Target Workspace (Root) <span className="text-red-400">*</span></label>
+                  <label className="block text-sm font-semibold text-muted mb-1.5">Target Workspace (Root) <span className="text-red-400">*</span></label>
                   <select
                     className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
                     value={targetWorkspaceId}
@@ -277,7 +277,7 @@ export default function MigrationClient() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-300 mb-1.5">Target Subworkspace (Optional)</label>
+                  <label className="block text-sm font-semibold text-muted mb-1.5">Target Subworkspace (Optional)</label>
                   <select
                     className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent disabled:opacity-50"
                     value={targetSubworkspaceId}
@@ -357,9 +357,9 @@ export default function MigrationClient() {
                  </>
                ) : (
                  <>
-                   <Upload className="w-10 h-10 text-gray-500 mb-3 group-hover:text-accent transition-colors" />
-                   <h3 className="text-sm font-semibold text-gray-300 mb-1">Click to browse or drag file here</h3>
-                   <p className="text-xs text-gray-500">Only .xlsx files are supported</p>
+                   <Upload className="w-10 h-10 text-muted mb-3 group-hover:text-accent transition-colors" />
+                   <h3 className="text-sm font-semibold text-muted mb-1">Click to browse or drag file here</h3>
+                   <p className="text-xs text-muted">Only .xlsx files are supported</p>
                    <AppButton 
                      variant="secondary" 
                      size="sm" 

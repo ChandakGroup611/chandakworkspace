@@ -88,14 +88,14 @@ export default function Navbar() {
       >
         <div className="flex items-center gap-4 flex-1 max-w-md">
           <div className="relative flex items-center w-full">
-            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 h-4 w-4 text-muted" />
             <input 
               type="text" 
               placeholder="Search tickets, documentation, quick masters..." 
               className={`h-10 w-full rounded-xl pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${ "theme-input-structural text-foreground placeholder-gray-400 focus:theme-card-structural /50 focus:border-accent" }`}
             />
             <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold pointer-events-none ${
-              "bg-gray-200/60 text-muted"
+              "bg-elevated/60 text-muted"
             }`}>
               <Command className="h-2.5 w-2.5" />
               <span>K</span>
@@ -141,7 +141,7 @@ export default function Navbar() {
                 <div className={`absolute right-0 top-12 mt-2 w-56 rounded-xl p-1.5 shadow-md z-50 animate-in fade-in zoom-in-95 duration-150 theme-card-structural text-foreground`}>
                   <div className={`px-2 py-2 border-b space-y-0.5 border-border`}>
                     <span className="text-sm font-medium block truncate">{userData?.full_name || 'System Operator'}</span>
-                    <span className="text-xs text-gray-500 block truncate">{userData?.email}</span>
+                    <span className="text-xs text-muted block truncate">{userData?.email}</span>
                   </div>
 
                   <div className="py-2 space-y-1">

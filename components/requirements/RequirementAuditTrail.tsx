@@ -30,7 +30,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
   }, [requirementId, supabase]);
 
   if (loading) {
-    return <div className="animate-pulse h-32 bg-gray-100 dark:bg-gray-800 rounded-xl"></div>;
+    return <div className="animate-pulse h-32 bg-surface dark:bg-surface rounded-xl"></div>;
   }
 
   const getEventIcon = (type: string) => {

@@ -48,7 +48,7 @@ export function EnterpriseModalShell({
       {/* Backdrop */}
       <div 
         className={`absolute inset-0 backdrop-blur-sm animate-in fade-in duration-300 ${
-          "bg-gray-900/40"
+          "bg-surface/40"
         }`} 
         onClick={onClose} 
       />
@@ -67,13 +67,13 @@ export function EnterpriseModalShell({
           }`}>
             <div>
               {title && <h2 className={`text-lg font-bold tracking-tight ${"text-foreground"}`}>{title}</h2>}
-              {subtitle && <div className="text-xs text-gray-500 mt-1">{subtitle}</div>}
+              {subtitle && <div className="text-xs text-muted mt-1">{subtitle}</div>}
             </div>
             <AppButton 
               onClick={onClose}
               type="button"
               className={`p-2 rounded-xl transition-colors ${
-                "hover:bg-gray-200 text-muted hover:text-foreground"
+                "hover:bg-elevated text-muted hover:text-foreground"
               }`}
             >
               <X className="h-5 w-5" />
@@ -89,7 +89,7 @@ export function EnterpriseModalShell({
         {/* Footer */}
         {footer && (
           <div className={`shrink-0 p-5 border-t flex items-center justify-end gap-3 ${
-            "border-border bg-gray-50"
+            "border-border bg-surface"
           }`}>
             {footer}
           </div>

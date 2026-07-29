@@ -117,7 +117,7 @@ export default function SLAPage() {
             <h1 className={`text-xl font-bold tracking-tight ${"text-foreground"}`}>SLA Governance & Surveillance Engine</h1>
             <AppBadge variant="danger">Realtime Tracking</AppBadge>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             Continuous timeout computation monitoring active workflow tuples to enforce multi-level escalation routing protocols.
           </p>
         </div>
@@ -165,11 +165,11 @@ export default function SLAPage() {
       {/* Interactive SLA Governance Heatmap Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-gray-50/50 dark:hover:bg-surface/5'} bg-surface`}
+          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Total Records</span>
+            <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1">Total Records</span>
             <span className="text-3xl font-bold text-accent dark:text-accent">{loading ? '-' : totalRecords}</span>
           </AppCardContent>
         </AppCard>
@@ -179,7 +179,7 @@ export default function SLAPage() {
           onClick={() => setFilter('UPCOMING')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
+            <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
             <span className="text-3xl font-bold text-amber-500">{loading ? '-' : upcomingRecords}</span>
           </AppCardContent>
         </AppCard>
@@ -189,7 +189,7 @@ export default function SLAPage() {
           onClick={() => setFilter('ESCALATED')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
+            <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
             <span className="text-3xl font-bold text-rose-600 dark:text-rose-400">{loading ? '-' : escalatedRecords}</span>
           </AppCardContent>
         </AppCard>
@@ -205,7 +205,7 @@ export default function SLAPage() {
                   <ShieldAlert className="h-4 w-4" />
                   <span>Monitored Operational Timeouts</span>
                 </AppCardTitle>
-                <p className="text-[0.8rem] text-gray-500">Reactive task timers updating background worker task queue parameters.</p>
+                <p className="text-[0.8rem] text-muted">Reactive task timers updating background worker task queue parameters.</p>
               </div>
               <span className={`text-xs px-2 py-0.5 rounded font-mono font-bold uppercase border ${
                 "bg-rose-50 text-rose-700 border-rose-200"
@@ -234,7 +234,7 @@ export default function SLAPage() {
                               <span className={`font-mono text-xs font-bold text-accent`}>{item.displayId || item.id}</span>
                               <AppBadge variant="neutral" className="text-[0.65rem] py-0">{item.module}</AppBadge>
                             </div>
-                            <span className="text-[0.8rem] text-gray-500 block truncate max-w-[150px]">{item.targetEntity}</span>
+                            <span className="text-[0.8rem] text-muted block truncate max-w-[150px]">{item.targetEntity}</span>
                             <span className={`text-xs font-semibold text-accent`}>{item.type}</span>
                           </div>
                         </AppTableCell>
@@ -249,12 +249,12 @@ export default function SLAPage() {
                             <AppBadge variant={item.status === "Healthy" ? "success" : item.status === "Warning" ? "warning" : "danger"}>
                               {item.status}
                             </AppBadge>
-                            <span className="text-xs text-gray-500 block font-bold tracking-wider uppercase">{item.escalationTier}</span>
+                            <span className="text-xs text-muted block font-bold tracking-wider uppercase">{item.escalationTier}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell className="text-right">
                           <div className="space-y-1 flex flex-col items-end">
-                            <span className="text-xs text-gray-500 italic block truncate max-w-[120px]">{item.actionRecipient}</span>
+                            <span className="text-xs text-muted italic block truncate max-w-[120px]">{item.actionRecipient}</span>
                             <div className="flex items-center gap-1 mt-1 justify-end">
                               <AppButton 
                                 variant="ghost" 
@@ -291,7 +291,7 @@ export default function SLAPage() {
               </AppTableContainer>
             </div>
 
-            <div className={`p-4 border-t text-[0.8rem] text-gray-500 flex items-center justify-between bg-elevated border-border`}>
+            <div className={`p-4 border-t text-[0.8rem] text-muted flex items-center justify-between bg-elevated border-border`}>
               <span>Powered by Real-Time Database Tracking Triggers & Dynamic Target Computations.</span>
               <span className={`cursor-pointer hover:underline text-rose-600`} onClick={refreshLiveTracking}>Force Re-sync</span>
             </div>
@@ -322,13 +322,13 @@ export default function SLAPage() {
                       {lvl.scope}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 font-medium">{lvl.action}</p>
+                  <p className="text-xs text-muted font-medium">{lvl.action}</p>
                 </div>
               ))}
             </div>
 
             <div className={`pt-2 border-t text-center ${"border-border"}`}>
-              <span className="text-xs text-gray-500 italic">
+              <span className="text-xs text-muted italic">
                 Higher level breaches instantly stack downstream action notifications automatically.
               </span>
             </div>
@@ -341,7 +341,7 @@ export default function SLAPage() {
             <span className={`text-xs font-bold uppercase tracking-wider block text-emerald-700`}>
               SLA Trust Assurance
             </span>
-            <p className="text-xs text-gray-500 leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               Zero ticket leakage past allocated thresholds without strict activity entry logs appended to master audit trails.
             </p>
           </AppCard>

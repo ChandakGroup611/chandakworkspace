@@ -264,10 +264,10 @@ export default function RealtimeNotificationsDrawer() {
                 <h4 className="text-[0.8rem] font-bold uppercase tracking-wider leading-none">
                   {toast.action_type.toUpperCase().replace('_', ' ')}
                 </h4>
-                <p className="text-[0.8rem] text-gray-400 leading-snug line-clamp-2">
+                <p className="text-[0.8rem] text-muted leading-snug line-clamp-2">
                   {displayMessage}
                 </p>
-                <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-white/5 mt-1 text-gray-500">
+                <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-white/5 mt-1 text-muted">
                   <span>Actor: <strong>{toast.actor_name || toast.actor}</strong></span>
                   <span className={`${isCritical ? 'text-rose-500' : 'text-amber-500'} font-bold group-hover:underline`}>View details →</span>
                 </div>
@@ -293,7 +293,7 @@ export default function RealtimeNotificationsDrawer() {
           onClose={() => setIsOpen(false)}
           size="sm"
           footer={
-            <div className={`w-full p-2 text-xs text-gray-500 flex items-center justify-between gap-2`}>
+            <div className={`w-full p-2 text-xs text-muted flex items-center justify-between gap-2`}>
               <span>Auto-redirect anchors bound instantly</span>
               <ExternalLink className="h-3 w-3 text-amber-500" />
             </div>
@@ -350,7 +350,7 @@ export default function RealtimeNotificationsDrawer() {
                   ))}
                 </div>
               ) : filteredItems.length === 0 ? (
-                <div className="text-center py-12 space-y-1.5 text-gray-500">
+                <div className="text-center py-12 space-y-1.5 text-muted">
                   <CheckCircle2 className="h-6 w-6 mx-auto text-emerald-500/40" />
                   <span className="text-xs font-semibold block">Zero Pending Items</span>
                 </div>
@@ -380,7 +380,7 @@ export default function RealtimeNotificationsDrawer() {
                         <div className="flex items-center justify-between gap-1.5">
                           <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider truncate flex items-center gap-1">
                             <span className={"text-foreground"}>{item.entity_id}</span>
-                            <span className="text-gray-400">•</span>
+                            <span className="text-muted">•</span>
                             <span className={`${isCritical ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'}`}>{item.module}</span>
                           </span>
                           <AppButton 
@@ -392,10 +392,10 @@ export default function RealtimeNotificationsDrawer() {
                             <Trash2 className="h-3 w-3" />
                           </AppButton>
                         </div>
-                        <p className={`text-[0.8rem] leading-snug break-words ${!item.is_read ? ("text-foreground font-medium") : "text-gray-500"}`}>
+                        <p className={`text-[0.8rem] leading-snug break-words ${!item.is_read ? ("text-foreground font-medium") : "text-muted"}`}>
                           {displayMessage}
                         </p>
-                        <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 border-border text-gray-400`}>
+                        <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 border-border text-muted`}>
                           <span>Actor: <strong className={"text-muted"}>{item.actor_name || item.actor}</strong></span>
                           <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>

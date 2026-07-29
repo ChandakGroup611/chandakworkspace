@@ -142,7 +142,7 @@ export default function RequirementsPage() {
           <ShieldAlert className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view the Requirement Module.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view the Requirement Module.</p>
       </div>
     );
   }
@@ -223,7 +223,7 @@ export default function RequirementsPage() {
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-6 gap-3 px-1">
         <div>
-          <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Search</div>
+          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Search</div>
           <AppInput 
             placeholder="Search by Title or Req #..." 
             value={filter.search}
@@ -231,9 +231,9 @@ export default function RequirementsPage() {
           />
         </div>
         <div>
-          <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">System</div>
+          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
           >
@@ -244,9 +244,9 @@ export default function RequirementsPage() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
+          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
             value={filter.status}
             onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
           >
@@ -257,9 +257,9 @@ export default function RequirementsPage() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
+          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
             value={filter.priority}
             onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
           >
@@ -270,9 +270,9 @@ export default function RequirementsPage() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
+          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
             value={filter.department}
             onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
           >
@@ -283,9 +283,9 @@ export default function RequirementsPage() {
           </select>
         </div>
         <div>
-          <div className="text-[10px] text-gray-500 uppercase font-bold mb-1 ml-1 tracking-wider">Flow/Stage</div>
+          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Flow/Stage</div>
           <select 
-            className="w-full text-sm p-2 border border-gray-300 dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-gray-900 dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
             value={filter.stage}
             onChange={(e: any) => setFilter(f => ({ ...f, stage: e.target.value }))}
           >
@@ -327,7 +327,7 @@ export default function RequirementsPage() {
                 return true;
               }).length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={12} className="text-center py-8 text-gray-500">
+                  <AppTableCell colSpan={12} className="text-center py-8 text-muted">
                     {loadingReqs ? "Loading requirements..." : "No requirements found."}
                   </AppTableCell>
                 </AppTableRow>
@@ -361,7 +361,7 @@ export default function RequirementsPage() {
                           {r.priority}
                         </span>
                       ) : (
-                        <span className="text-gray-500">-</span>
+                        <span className="text-muted">-</span>
                       )}
                     </AppTableCell>
                     <AppTableCell className="text-xs">{r.department}</AppTableCell>
@@ -405,7 +405,7 @@ export default function RequirementsPage() {
                             variant="ghost" 
                             size="sm" 
                             title="Delete"
-                            className="h-7 w-7 p-0 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10"
+                            className="h-7 w-7 p-0 text-muted hover:text-rose-500 hover:bg-rose-500/10"
                             onClick={(e) => handleDelete(e, r.dbId)}
                           >
                             <Trash2 className="h-4 w-4" />

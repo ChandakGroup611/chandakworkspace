@@ -29,17 +29,17 @@ import SafeHtml from "@/components/ui/SafeHtml";
 
 const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), { 
   ssr: false, 
-  loading: () => <div className="p-6 text-center theme-data-value text-gray-400 animate-pulse">Loading Realtime Chat...</div> 
+  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading Realtime Chat...</div> 
 });
 
 const TaskActivityTimeline = dynamic(() => import("@/components/tasks/TaskActivityTimeline"), { 
   ssr: false,
-  loading: () => <div className="p-6 text-center theme-data-value text-gray-400 animate-pulse">Loading Audit Timeline...</div> 
+  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading Audit Timeline...</div> 
 });
 
 const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), { 
   ssr: false,
-  loading: () => <div className="p-6 text-center theme-data-value text-gray-400 animate-pulse">Loading Time Logs...</div> 
+  loading: () => <div className="p-6 text-center theme-data-value text-muted animate-pulse">Loading Time Logs...</div> 
 });
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -52,7 +52,7 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
   }, []);
 
   if (!mounted) {
-    return <div className="p-4 border rounded-xl animate-pulse bg-gray-50/50 dark:bg-slate-900/50 h-36 text-xs font-semibold text-gray-400 flex items-center justify-center">Loading editor...</div>;
+    return <div className="p-4 border rounded-xl animate-pulse bg-surface/50 dark:bg-slate-900/50 h-36 text-xs font-semibold text-muted flex items-center justify-center">Loading editor...</div>;
   }
 
   return (
@@ -559,7 +559,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     return (
       <AppCard className="p-8 flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
-        <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Hydrating Task details...</p>
+        <p className="text-xs text-muted font-bold uppercase tracking-wider">Hydrating Task details...</p>
       </AppCard>
     );
   }
@@ -981,7 +981,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                        return (
                          <>
                            {a.profile_photo ? (
-                             <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-gray-200 shadow-xs" />
+                             <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-elevated shadow-xs" />
                            ) : (
                              <div className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-[10px] font-bold shadow-xs">
                                {a.full_name?.substring(0, 2).toUpperCase() || "U"}
@@ -1246,7 +1246,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="theme-data-value text-gray-700 dark:text-gray-300 mb-1.5 block">Destination Workspace <span className="text-red-500">*</span></label>
+                      <label className="theme-data-value text-subtle dark:text-muted mb-1.5 block">Destination Workspace <span className="text-red-500">*</span></label>
                       <select
                         value={selectedTransferSubworkspace || selectedTransferWorkspace}
                         onChange={e => {
@@ -1298,7 +1298,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       </div>
                       
                       {isOwnerDropped && (
-                        <div className="theme-card-structural /50 dark:bg-black/20 p-3 rounded border-amber-200 dark:border-amber-500/30">
+                        <div className="theme-card-structural /50 dark:bg-surface/20 p-3 rounded border-amber-200 dark:border-amber-500/30">
                           <label className="theme-data-value text-amber-800 dark:text-amber-300 mb-1.5 block">Assign New Primary Owner <span className="text-red-500">*</span></label>
                           <select
                             value={newAssigneeId}
@@ -1314,11 +1314,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       )}
                       
                       {true && (
-                        <div className="theme-card-structural /50 dark:bg-black/20 p-3 rounded border-amber-200 dark:border-amber-500/30 mt-2">
+                        <div className="theme-card-structural /50 dark:bg-surface/20 p-3 rounded border-amber-200 dark:border-amber-500/30 mt-2">
                           <label className="theme-data-value text-amber-800 dark:text-amber-300 mb-1.5 block">Assign Additional Executives (Optional)</label>
                           <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
                             {targetStakeholders.map(s => (
-                              <label key={s.id} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 p-1 hover:bg-black/5 dark:hover:bg-surface/5 rounded cursor-pointer">
+                              <label key={s.id} className="flex items-center gap-2 text-xs text-subtle dark:text-muted p-1 hover:bg-surface/5 dark:hover:bg-surface/5 rounded cursor-pointer">
                                 <input 
                                   type="checkbox" 
                                   checked={newExecutors.includes(s.id)}
@@ -1338,7 +1338,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   )}
 
                   <div>
-                    <label className="theme-data-value text-gray-700 dark:text-gray-300 mb-1 block">Transfer Remarks (Mandatory) <span className="text-red-500">*</span></label>
+                    <label className="theme-data-value text-subtle dark:text-muted mb-1 block">Transfer Remarks (Mandatory) <span className="text-red-500">*</span></label>
                     <textarea 
                       value={transferRemarks}
                       onChange={e => setTransferRemarks(e.target.value)}
@@ -1395,7 +1395,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             placeholder={!canAddRemark ? "Task is frozen/read-only." : "Add update notes or handoff remarks..."}
           />
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-500">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
+            <span className="text-xs text-muted">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
             {canAddRemark && (
               <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
                 {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingDepartment || pendingAssignees) ? "Commit Updates & Save Remark" : "Save Remarks"}
@@ -1429,7 +1429,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <AppButton variant="secondary" 
                 type="button"
                 className={`p-1 rounded-lg transition-colors ${
-                  "hover:bg-gray-200 text-muted hover:text-foreground"
+                  "hover:bg-elevated text-muted hover:text-foreground"
                 }`}
               >
                 {isHistoryCollapsed ? (
@@ -1446,10 +1446,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 {remarksHistoryLoading ? (
                   <div className="flex items-center justify-center py-6 gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-accent" />
-                    <span className="text-xs text-gray-400">Loading history queue...</span>
+                    <span className="text-xs text-muted">Loading history queue...</span>
                   </div>
                 ) : remarksHistory.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-gray-500 italic">
+                  <div className="text-center py-6 text-xs text-muted italic">
                     No remark history entries. Create a new remark above to start the queue.
                   </div>
                 ) : (
@@ -1489,7 +1489,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 }`}>
                                   {item.user?.full_name || "System Actor"}
                                 </span>
-                                <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+                                <div className="flex items-center gap-1 text-xs text-muted font-medium">
                                   <Clock className="h-3 w-3" />
                                   <span>{new Date(item.created_at).toLocaleString()}</span>
                                 </div>
@@ -1554,7 +1554,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     {t.count !== undefined && t.count > 0 && (
                       <span className={`ml-1 px-1.5 py-0.2 text-[10px] font-extrabold rounded-full ${
                         isActive 
-                          ? "bg-white/20 text-white" 
+                          ? "bg-surface/20 text-white" 
                           : "bg-accent/10 text-accent border border-accent/20"
                       }`}>
                         {t.count}
@@ -1570,20 +1570,20 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* Tags Tab */}
               {activeTab === 'tags' && (
                 <div className="space-y-4">
-                  <h4 className="theme-data-value uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                  <h4 className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
                     <Pin className="w-3.5 h-3.5 text-accent" /> Custom Properties & Tags
                   </h4>
                   {localCustomFields && Object.keys(localCustomFields).length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {Object.entries(localCustomFields).map(([key, val]) => (
                         <div key={key} className="p-3 rounded-lg border border-border/40 bg-surface/40 space-y-1">
-                          <span className="text-[10px] font-bold uppercase text-gray-500">{key.replace(/_/g, ' ')}</span>
+                          <span className="text-[10px] font-bold uppercase text-muted">{key.replace(/_/g, ' ')}</span>
                           <div className="text-xs font-semibold text-foreground">{val ? String(val) : "Not set"}</div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 italic py-4 text-center">No custom tags assigned to this task.</div>
+                    <div className="text-xs text-muted italic py-4 text-center">No custom tags assigned to this task.</div>
                   )}
                 </div>
               )}
@@ -1591,7 +1591,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* Link URL Tab */}
               {activeTab === 'links' && (
                 <div className="space-y-4">
-                  <h4 className="theme-data-value uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                  <h4 className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
                     <LinkIcon className="w-3.5 h-3.5 text-accent" /> Link URLs & External Resources
                   </h4>
                   {localCustomFields?.link_url ? (
@@ -1602,7 +1602,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       </a>
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 italic py-4 text-center">No external links attached to this task.</div>
+                    <div className="text-xs text-muted italic py-4 text-center">No external links attached to this task.</div>
                   )}
                 </div>
               )}
@@ -1635,14 +1635,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             disabled={readOnly || !canEditAux}
                             className="h-4 w-4 rounded accent-accent"
                           />
-                          <span className={`text-xs ${item.is_completed ? "line-through text-gray-400" : "text-foreground"}`}>
+                          <span className={`text-xs ${item.is_completed ? "line-through text-muted" : "text-foreground"}`}>
                             {item.label}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 italic py-4 text-center">No checklist items created.</div>
+                    <div className="text-xs text-muted italic py-4 text-center">No checklist items created.</div>
                   )}
                 </div>
               )}
@@ -1683,7 +1683,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       })}
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 italic py-4 text-center">No file attachments uploaded.</div>
+                    <div className="text-xs text-muted italic py-4 text-center">No file attachments uploaded.</div>
                   )}
                 </div>
               )}

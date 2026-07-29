@@ -30,7 +30,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
       </AppCardHeader>
 
       <AppCardContent className="space-y-3 pt-2">
-        <p className="text-[0.8rem] text-gray-400 font-medium">
+        <p className="text-[0.8rem] text-muted font-medium">
           Automated event listener routing active operational bottlenecks before target timeout expiration.
         </p>
 
@@ -49,7 +49,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
                     {esc.level}
                   </span>
                 </div>
-                <p className="text-xs font-semibold text-gray-200 truncate">{esc.title}</p>
+                <p className="text-xs font-semibold text-muted truncate">{esc.title}</p>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
@@ -57,21 +57,21 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
                   <Clock className="h-3 w-3" />
                   <span>{esc.timeRemaining}</span>
                 </div>
-                <div className="p-1 rounded-lg bg-surface/5 text-gray-400 hover:text-white hover:bg-surface/10 cursor-pointer transition-colors">
+                <div className="p-1 rounded-lg bg-surface/5 text-muted hover:text-white hover:bg-surface/10 cursor-pointer transition-colors">
                   <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
             </div>
           )) : (
-            <div className="p-4 text-center text-xs text-gray-500 rounded-xl theme-card-structural /[0.01] border-white/5">
+            <div className="p-4 text-center text-xs text-muted rounded-xl theme-card-structural /[0.01] border-white/5">
               No active escalations or critical SLA breaches detected.
             </div>
           )}
         </div>
 
-        <div className="pt-1 flex items-center justify-between text-xs text-gray-500">
+        <div className="pt-1 flex items-center justify-between text-xs text-muted">
           <span>Worker dispatch status: <strong className="text-emerald-500 font-bold">ONLINE</strong></span>
-          <span className="underline hover:text-gray-300 cursor-pointer">SLA Escalation Matrix</span>
+          <span className="underline hover:text-muted cursor-pointer">SLA Escalation Matrix</span>
         </div>
       </AppCardContent>
     </AppCard>

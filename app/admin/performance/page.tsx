@@ -67,7 +67,7 @@ export default function PerformanceCommandCenter() {
       <div className="flex h-[80vh] w-full items-center justify-center">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
-          <p className="text-gray-500">Super Admin privileges are required to view the Performance Command Center.</p>
+          <p className="text-muted">Super Admin privileges are required to view the Performance Command Center.</p>
         </div>
       </div>
     );
@@ -92,7 +92,7 @@ export default function PerformanceCommandCenter() {
             className={`px-4 py-2 font-bold rounded-lg transition-colors ${
               killSwitchEnabled 
                 ? "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.6)]" 
-                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                : "bg-elevated text-foreground hover:bg-elevated"
             }`}
           >
             {killSwitchEnabled ? "KILL SWITCH ENGAGED (Realtime Paused)" : "Engage Realtime Kill Switch"}
@@ -102,11 +102,11 @@ export default function PerformanceCommandCenter() {
       
       {/* ENTERPRISE SCORE & GOVERNANCE */}
       {govMetrics && (
-        <div className="bg-gray-900 text-white rounded-xl p-6 shadow-xl border border-gray-800">
+        <div className="bg-surface text-white rounded-xl p-6 shadow-xl border border-border">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-200">Weighted Enterprise Health Score</h2>
-              <p className="text-sm text-gray-400">Aggregated via Passive Governance Engine</p>
+              <h2 className="text-xl font-bold text-muted">Weighted Enterprise Health Score</h2>
+              <p className="text-sm text-muted">Aggregated via Passive Governance Engine</p>
             </div>
             <div className={`text-4xl font-black ${govMetrics.totalEnterpriseScore > 90 ? 'text-green-400' : govMetrics.totalEnterpriseScore > 75 ? 'text-yellow-400' : 'text-red-500'}`}>
               {govMetrics.totalEnterpriseScore.toFixed(1)} / 100
@@ -114,18 +114,18 @@ export default function PerformanceCommandCenter() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
-            <div className="bg-black/30 p-3 rounded-lg"><div className="text-xs text-gray-500">Hydration</div><div className="font-bold">{govMetrics.hydrationScore.toFixed(0)}</div></div>
-            <div className="bg-black/30 p-3 rounded-lg"><div className="text-xs text-gray-500">Queries</div><div className="font-bold">{govMetrics.queryLatencyScore.toFixed(0)}</div></div>
-            <div className="bg-black/30 p-3 rounded-lg"><div className="text-xs text-gray-500">Websockets</div><div className="font-bold">{govMetrics.websocketHealthScore.toFixed(0)}</div></div>
-            <div className="bg-black/30 p-3 rounded-lg"><div className="text-xs text-gray-500">Memory</div><div className="font-bold">{govMetrics.memoryPressureScore.toFixed(0)}</div></div>
-            <div className="bg-black/30 p-3 rounded-lg"><div className="text-xs text-gray-500">Payload</div><div className="font-bold">{govMetrics.payloadSizeScore.toFixed(0)}</div></div>
-            <div className="bg-black/30 p-3 rounded-lg"><div className="text-xs text-gray-500">Rerenders</div><div className="font-bold">{govMetrics.rerenderStormScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Hydration</div><div className="font-bold">{govMetrics.hydrationScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Queries</div><div className="font-bold">{govMetrics.queryLatencyScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Websockets</div><div className="font-bold">{govMetrics.websocketHealthScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Memory</div><div className="font-bold">{govMetrics.memoryPressureScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Payload</div><div className="font-bold">{govMetrics.payloadSizeScore.toFixed(0)}</div></div>
+            <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Rerenders</div><div className="font-bold">{govMetrics.rerenderStormScore.toFixed(0)}</div></div>
           </div>
 
-          <div className="mt-6 p-4 rounded-lg bg-black/50 border border-white/10 flex items-center justify-between">
+          <div className="mt-6 p-4 rounded-lg bg-surface/50 border border-white/10 flex items-center justify-between">
             <div>
-              <div className="font-bold text-gray-300">Degradation Stage</div>
-              <div className="text-sm text-gray-500">Current Self-Protection Level</div>
+              <div className="font-bold text-muted">Degradation Stage</div>
+              <div className="text-sm text-muted">Current Self-Protection Level</div>
             </div>
             <div className="text-lg font-bold text-amber-500">
               {govMetrics.currentStage === DegradationStage.STAGE_0_NORMAL && <span className="text-green-400">STAGE 0: NORMAL</span>}
@@ -151,7 +151,7 @@ export default function PerformanceCommandCenter() {
         <MetricCard title="Time to First Byte (TTFB)" value={`${hydrationData.ttqb.toFixed(0)} ms`} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-200 pt-6 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border pt-6 mt-6">
         <MetricCard title="Total JSON Payload" value={`${totalPayloadKB.toFixed(1)} KB`} isWarning={totalPayloadKB > 1024} isCritical={totalPayloadKB > 5120} />
         <MetricCard title="Total Rows Hydrated" value={totalRowsReturned} isWarning={totalRowsReturned > 1000} />
         <MetricCard title="Master Cache Hits" value={serverMetrics.cacheHits} />
@@ -162,7 +162,7 @@ export default function PerformanceCommandCenter() {
         <MetricCard title="Cache Hit Ratio" value={`${serverMetrics.cacheRatio.toFixed(1)}%`} isCritical={serverMetrics.cacheRatio < 80} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-200 pt-6 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-border pt-6 mt-6">
         <MetricCard title="Queue Depth (Pending)" value={serverMetrics.queue.pending} isWarning={serverMetrics.queue.pending > 50} isCritical={serverMetrics.queue.pending > 200} />
         <MetricCard title="Processing Events" value={serverMetrics.queue.processing} />
         <MetricCard title="Failed/Dead-letter Events" value={serverMetrics.queue.failed} isCritical={serverMetrics.queue.failed > 0} />
@@ -186,8 +186,8 @@ export default function PerformanceCommandCenter() {
                   <AppTableRow key={i} className="bg-surface">
                     <AppTableCell className="px-4 py-3 font-medium">{v.route}</AppTableCell>
                     <AppTableCell className="px-4 py-3 text-right font-bold text-red-600">{v.count}</AppTableCell>
-                    <AppTableCell className="px-4 py-3 text-right text-gray-500">{v.budget}</AppTableCell>
-                    <AppTableCell className="px-4 py-3 text-gray-500">{new Date(v.timestamp).toLocaleTimeString()}</AppTableCell>
+                    <AppTableCell className="px-4 py-3 text-right text-muted">{v.budget}</AppTableCell>
+                    <AppTableCell className="px-4 py-3 text-muted">{new Date(v.timestamp).toLocaleTimeString()}</AppTableCell>
                   </AppTableRow>
                 ))}
               </AppTableBody>
@@ -200,7 +200,7 @@ export default function PerformanceCommandCenter() {
         <h2 className="text-xl font-semibold">Query Log</h2>
         <div className="overflow-x-auto">
           <AppTableContainer><AppTable className="min-w-full divide-y divide-gray-200 text-base">
-            <AppTableHeader className="bg-gray-50">
+            <AppTableHeader className="bg-surface">
               <AppTableRow>
                 <AppTableHead className="px-4 py-3 text-left">Time</AppTableHead>
                 <AppTableHead className="px-4 py-3 text-left">Type</AppTableHead>
@@ -215,7 +215,7 @@ export default function PerformanceCommandCenter() {
             <AppTableBody className="divide-y divide-gray-200">
               {metrics.slice(0, 50).map((m) => (
                 <AppTableRow key={m.id} className={m.severity === 'critical' ? 'bg-red-50' : m.severity === 'slow' ? 'bg-orange-50' : m.severity === 'warning' ? 'bg-yellow-50' : ''}>
-                  <AppTableCell className="px-4 py-3 text-gray-500">{new Date(m.timestamp).toLocaleTimeString()}</AppTableCell>
+                  <AppTableCell className="px-4 py-3 text-muted">{new Date(m.timestamp).toLocaleTimeString()}</AppTableCell>
                   <AppTableCell className="px-4 py-3 font-medium">{m.queryType.toUpperCase()}</AppTableCell>
                   <AppTableCell className="px-4 py-3">{m.tableOrFunction}</AppTableCell>
                   <AppTableCell className="px-4 py-3 text-right font-mono">{m.durationMs.toFixed(1)} ms</AppTableCell>
@@ -244,8 +244,8 @@ export default function PerformanceCommandCenter() {
 
 function MetricCard({ title, value, isWarning, isCritical }: { title: string, value: string | number, isWarning?: boolean, isCritical?: boolean }) {
   let bgColor = 'bg-surface';
-  let textColor = 'text-gray-900';
-  let borderColor = 'border-gray-200';
+  let textColor = 'text-foreground';
+  let borderColor = 'border-border';
 
   if (isCritical) {
     bgColor = 'bg-red-50';
@@ -259,7 +259,7 @@ function MetricCard({ title, value, isWarning, isCritical }: { title: string, va
 
   return (
     <div className={`p-6 rounded-xl border shadow-sm ${bgColor} ${borderColor}`}>
-      <h3 className="text-sm font-medium text-gray-500 mb-1">{title}</h3>
+      <h3 className="text-sm font-medium text-muted mb-1">{title}</h3>
       <p className={`text-3xl font-bold ${textColor}`}>{value}</p>
     </div>
   );

@@ -14,7 +14,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
     : requirements.filter(r => r.current_stage === filter || r.approval_status === filter);
 
   return (
-    <div className={`flex flex-col h-full p-6 bg-gray-50 text-foreground`}>
+    <div className={`flex flex-col h-full p-6 bg-surface text-foreground`}>
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className={`text-2xl font-bold tracking-tight text-foreground`}>Requirement Queue</h1>
@@ -53,7 +53,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
                   {req.approval_status || 'Draft'}
                 </span>
                 <span className={`text-[9px] font-bold uppercase ${
-                  req.tat_status === 'Overdue' ? 'text-red-500' : "text-gray-400"
+                  req.tat_status === 'Overdue' ? 'text-red-500' : "text-muted"
                 }`}>
                   {req.tat_status || 'On Time'}
                 </span>
@@ -76,7 +76,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
                 <span>{req.current_stage || 'Unknown Stage'}</span>
                 <span>{req.completion_percentage || 0}%</span>
               </div>
-              <div className={`h-1.5 w-full rounded-full overflow-hidden bg-gray-100`}>
+              <div className={`h-1.5 w-full rounded-full overflow-hidden bg-surface`}>
                 <div 
                   className="h-full bg-accent transition-all duration-500" 
                   style={{ width: `${req.completion_percentage || 0}%` }}
@@ -87,7 +87,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
             <div className={`flex items-center justify-between pt-4 border-t border-border`}>
               <div className="flex items-center gap-2">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                  "bg-gray-100 border border-border text-muted"
+                  "bg-surface border border-border text-muted"
                 }`}>
                   {req.owner?.full_name?.charAt(0) || req.analyst?.full_name?.charAt(0) || '?'}
                 </div>
@@ -95,7 +95,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
                   {req.owner?.full_name || req.analyst?.full_name || 'Unassigned'}
                 </span>
               </div>
-              <span className={`text-[10px] font-bold uppercase text-gray-400`}>
+              <span className={`text-[10px] font-bold uppercase text-muted`}>
                 {new Date(req.created_at).toLocaleDateString()}
               </span>
             </div>
@@ -103,7 +103,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
         ))}
         
         {filtered.length === 0 && (
-          <div className={`col-span-full py-12 text-center border-dashed rounded-2xl text-sm ${ "text-gray-400 theme-card-structural " }`}>
+          <div className={`col-span-full py-12 text-center border-dashed rounded-2xl text-sm ${ "text-muted theme-card-structural " }`}>
             No requirements found in this view.
           </div>
         )}

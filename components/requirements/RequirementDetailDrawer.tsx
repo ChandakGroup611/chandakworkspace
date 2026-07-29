@@ -37,7 +37,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
       title={requirement.title}
       subtitle={
         <div className="flex items-center gap-3 mt-2">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{requirement.requirement_code || 'REQ-0000'}</span>
+          <span className="text-xs font-bold text-muted uppercase tracking-widest">{requirement.requirement_code || 'REQ-0000'}</span>
           <span className="px-2 py-0.5 rounded-md text-xs font-bold" style={{ backgroundColor: `${requirement.status?.status_color}20`, color: requirement.status?.status_color }}>
             {requirement.status?.status_name || 'UNKNOWN'}
           </span>
@@ -59,7 +59,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "details"
                       ? "shadow-accent/20"
-                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                      : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
                   }`}
                 >
                   <ListTodo className="w-4 h-4" />
@@ -71,7 +71,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "collaboration"
                       ? "shadow-accent/20"
-                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                      : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -81,42 +81,42 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
               {activeTab === "details" && (
                 <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
-                  <section className="bg-gray-900/20 rounded-2xl p-6 border border-white/5">
+                  <section className="bg-surface/20 rounded-2xl p-6 border border-white/5">
                     <h3 className="text-xs font-bold text-accent uppercase tracking-widest mb-3">Business Justification</h3>
-                    <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
+                    <div className="text-muted text-sm whitespace-pre-wrap leading-relaxed">
                       {requirement.business_justification}
                     </div>
                   </section>
 
                   <section className="space-y-4">
                     <h3 className="text-sm font-semibold text-foreground">Technical Description & Scope</h3>
-                    <div className="text-gray-400 text-sm whitespace-pre-wrap leading-relaxed bg-black/20 rounded-xl p-4 border border-white/5">
+                    <div className="text-muted text-sm whitespace-pre-wrap leading-relaxed bg-surface/20 rounded-xl p-4 border border-white/5">
                       {requirement.description}
                     </div>
                   </section>
 
                   {/* Implementation Progress */}
-                  <section className="bg-gray-900/40 rounded-2xl p-6 border border-white/5">
+                  <section className="bg-surface/40 rounded-2xl p-6 border border-white/5">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-sm font-bold text-foreground">Implementation Progress</h3>
                       <span className="text-2xl font-bold text-accent">{requirement.completion_percentage}%</span>
                     </div>
-                    <div className="h-2 w-full bg-black rounded-full overflow-hidden mb-6">
+                    <div className="h-2 w-full bg-surface rounded-full overflow-hidden mb-6">
                       <div 
                         className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 transition-all duration-700" 
                         style={{ width: `${requirement.completion_percentage}%` }}
                       />
                     </div>
                     
-                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Linked Execution Tasks</h4>
+                    <h4 className="text-xs font-bold text-muted uppercase tracking-widest mb-3">Linked Execution Tasks</h4>
                     <div className="space-y-2">
                       {/* Mock Tasks. In real usage, fetch requirement_tasks via component or pass down */}
-                      <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-                        <span className="text-sm text-gray-300">Database Schema Migration</span>
+                      <div className="flex justify-between items-center bg-surface/40 p-3 rounded-xl border border-white/5">
+                        <span className="text-sm text-muted">Database Schema Migration</span>
                         <span className="text-xs font-bold text-green-400 uppercase">Completed</span>
                       </div>
-                      <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
-                        <span className="text-sm text-gray-300">API Layer Implementation</span>
+                      <div className="flex justify-between items-center bg-surface/40 p-3 rounded-xl border border-white/5">
+                        <span className="text-sm text-muted">API Layer Implementation</span>
                         <span className="text-xs font-bold text-amber-400 uppercase">In Progress</span>
                       </div>
                     </div>
@@ -126,9 +126,9 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   {requirement.status?.status_name === 'UAT' && (
                     <section className="bg-amber-900/20 rounded-2xl p-6 border border-amber-500/20">
                       <h3 className="text-sm font-bold text-amber-500 mb-2">User Acceptance Testing (UAT)</h3>
-                      <p className="text-xs text-gray-400 mb-4">Implementation complete. Please verify the requirement meets the business justification.</p>
+                      <p className="text-xs text-muted mb-4">Implementation complete. Please verify the requirement meets the business justification.</p>
                       <textarea 
-                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500"
+                        className="w-full bg-surface/40 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500"
                         placeholder="Enter UAT feedback or rejection reasons..."
                         value={uatComment}
                         onChange={e => setUatComment(e.target.value)}
@@ -158,10 +158,10 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                 <div className="animate-in fade-in zoom-in-95 duration-200">
                   {/* Realtime Chat Engine */}
                   <section className="h-[500px] flex flex-col border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="bg-gray-900/80 p-4 border-b border-white/5 backdrop-blur-xl">
+                    <div className="bg-surface/80 p-4 border-b border-white/5 backdrop-blur-xl">
                       <h3 className="text-sm font-bold text-foreground">Execution Collaboration</h3>
                     </div>
-                    <div className="flex-1 bg-black/20">
+                    <div className="flex-1 bg-surface/20">
                       <RealtimeChat recordId={requirement.id} moduleType="REQUIREMENT" />
                     </div>
                   </section>
@@ -172,42 +172,42 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
             {/* Sidebar Metadata */}
             <div className="col-span-1 space-y-3">
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Business Analyst</span>
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Business Analyst</span>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent border border-accent/50">
                     {requirement.analyst?.full_name?.charAt(0) || '?'}
                   </div>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
+                  <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
                 </div>
               </div>
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Department</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{requirement.department?.name || 'Enterprise Global'}</span>
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Department</span>
+                <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{requirement.department?.name || 'Enterprise Global'}</span>
               </div>
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Priority SLA</span>
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{requirement.priority?.priority_name || 'Standard'}</span>
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority SLA</span>
+                <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{requirement.priority?.priority_name || 'Standard'}</span>
               </div>
-              <div className="flex flex-col p-3 rounded-lg bg-gray-100/50 dark:bg-surface/10 border border-gray-200/60 dark:border-white/10 shadow-sm transition-colors">
-                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Estimations</span>
-                <div className="space-y-1 text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1">
+              <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
+                <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Estimations</span>
+                <div className="space-y-1 text-sm font-semibold text-foreground dark:text-gray-100 mt-1">
                   <div className="flex justify-between"><span>Hours:</span> <span>{requirement.estimated_hours || 0}</span></div>
                   <div className="flex justify-between"><span>Cost:</span> <span>${requirement.estimated_cost?.toLocaleString() || 0}</span></div>
                 </div>
               </div>
 
               {/* Attachments Placeholder */}
-              <div className="bg-gray-900/40 rounded-2xl p-5 border border-white/5">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex justify-between items-center mb-4">
+              <div className="bg-surface/40 rounded-2xl p-5 border border-white/5">
+                <h3 className="text-xs font-bold text-muted uppercase tracking-widest flex justify-between items-center mb-4">
                   Attachments
                   <AppButton size="sm" variant="ghost" className="text-accent hover:text-indigo-300 p-1 bg-accent/10">+</AppButton>
                 </h3>
                 <div className="space-y-3">
-                  <div className="text-sm text-gray-400 flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/5">
+                  <div className="text-sm text-muted flex items-center gap-2 bg-surface/40 p-2 rounded-lg border border-white/5">
                     📄 <span className="truncate">BRD_v1.2.pdf</span>
                   </div>
-                  <div className="text-sm text-gray-400 flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/5">
+                  <div className="text-sm text-muted flex items-center gap-2 bg-surface/40 p-2 rounded-lg border border-white/5">
                     📊 <span className="truncate">Cost_Analysis.xlsx</span>
                   </div>
                 </div>

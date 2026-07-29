@@ -183,19 +183,19 @@ export default function AMCReportsPage() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <AppCard className={`p-6 border-l-4 border-l-blue-500 bg-surface`}>
-              <p className="text-sm font-semibold text-gray-500">Total Contract Value</p>
+              <p className="text-sm font-semibold text-muted">Total Contract Value</p>
               <h4 className="text-2xl font-black mt-1">{formatCurrency(globalMetrics.totalContractValue)}</h4>
             </AppCard>
             <AppCard className={`p-6 border-l-4 border-l-emerald-500 bg-surface`}>
-              <p className="text-sm font-semibold text-gray-500">Total Cash Paid</p>
+              <p className="text-sm font-semibold text-muted">Total Cash Paid</p>
               <h4 className="text-2xl font-black mt-1 text-emerald-500">{formatCurrency(globalMetrics.totalPaid)}</h4>
             </AppCard>
             <AppCard className={`p-6 border-l-4 border-l-amber-500 bg-surface`}>
-              <p className="text-sm font-semibold text-gray-500">Upcoming / Pending</p>
+              <p className="text-sm font-semibold text-muted">Upcoming / Pending</p>
               <h4 className="text-2xl font-black mt-1 text-amber-500">{formatCurrency(globalMetrics.totalPending - globalMetrics.totalOverdue)}</h4>
             </AppCard>
             <AppCard className={`p-6 border-l-4 border-l-rose-500 bg-surface`}>
-              <p className="text-sm font-semibold text-gray-500">Overdue Payments</p>
+              <p className="text-sm font-semibold text-muted">Overdue Payments</p>
               <h4 className="text-2xl font-black mt-1 text-rose-500">{formatCurrency(globalMetrics.totalOverdue)}</h4>
             </AppCard>
           </div>
@@ -214,8 +214,8 @@ export default function AMCReportsPage() {
                   <h4 className="font-bold text-accent">{dept.name}</h4>
                   <div className="text-sm font-black">{formatCurrency(dept.contracted)}</div>
                 </div>
-                <div className="flex justify-between items-end mt-auto pt-4 border-t border-gray-200 dark:border-white/10">
-                  <div className="text-xs text-gray-500 uppercase font-semibold">Utilization</div>
+                <div className="flex justify-between items-end mt-auto pt-4 border-t border-border dark:border-white/10">
+                  <div className="text-xs text-muted uppercase font-semibold">Utilization</div>
                   <div className="text-sm font-bold">
                     {dept.used} / {dept.licenses} ({dept.licenses > 0 ? Math.round((dept.used/dept.licenses)*100) : 0}%)
                   </div>
@@ -235,7 +235,7 @@ export default function AMCReportsPage() {
             <div className="overflow-x-auto">
               <AppTable className="w-full text-left border-collapse">
                 <AppTableHeader>
-                  <AppTableRow className={`text-xs uppercase tracking-wider text-gray-500 border-b bg-elevated border-border`}>
+                  <AppTableRow className={`text-xs uppercase tracking-wider text-muted border-b bg-elevated border-border`}>
                     <AppTableHead className="p-4 font-bold">Status</AppTableHead>
                     <AppTableHead className="p-4 font-bold">Due Date</AppTableHead>
                     <AppTableHead className="p-4 font-bold">Software</AppTableHead>
@@ -247,12 +247,12 @@ export default function AMCReportsPage() {
                 <AppTableBody className="divide-y divide-gray-200 dark:divide-white/5 text-sm">
                   {invoices.length === 0 ? (
                     <AppTableRow>
-                      <AppTableCell colSpan={6} className="p-8 text-center text-gray-500 italic">No payment records found.</AppTableCell>
+                      <AppTableCell colSpan={6} className="p-8 text-center text-muted italic">No payment records found.</AppTableCell>
                     </AppTableRow>
                   ) : invoices.map(inv => {
                     const isOverdue = inv.status === 'Pending' && new Date(inv.due_date) < new Date();
                     return (
-                      <AppTableRow key={inv.id} className={`hover:bg-black/5 dark:hover:bg-surface/5 transition-colors ${isOverdue ? 'bg-rose-500/5' : ''}`}>
+                      <AppTableRow key={inv.id} className={`hover:bg-surface/5 dark:hover:bg-surface/5 transition-colors ${isOverdue ? 'bg-rose-500/5' : ''}`}>
                         <AppTableCell className="p-4">
                           {inv.status === 'Paid' ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 flex items-center gap-1 w-max"><CheckCircle className="h-3 w-3" /> PAID</span>
@@ -268,7 +268,7 @@ export default function AMCReportsPage() {
                         <AppTableCell className="p-4 font-medium text-accent">
                           {inv.software_amc?.software_name}
                         </AppTableCell>
-                        <AppTableCell className="p-4 text-gray-500">
+                        <AppTableCell className="p-4 text-muted">
                           {inv.description}
                         </AppTableCell>
                         <AppTableCell className="p-4">

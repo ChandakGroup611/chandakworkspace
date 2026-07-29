@@ -17,7 +17,7 @@ export default function EmailTemplatesPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Template Designer
         </h1>
-        <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+        <p className="text-sm text-muted mt-2 max-w-2xl">
           Construct dynamic HTML templates. The Notification Rule Engine will hydrate the merge tags `{"{{example}}"}` dynamically when a business event occurs.
         </p>
       </header>

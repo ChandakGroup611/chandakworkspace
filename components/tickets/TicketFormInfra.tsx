@@ -99,7 +99,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
-        <p className="text-sm text-gray-500 font-medium tracking-widest uppercase">Fetching Infrastructure Matrix...</p>
+        <p className="text-sm text-muted font-medium tracking-widest uppercase">Fetching Infrastructure Matrix...</p>
       </div>
     );
   }
@@ -223,7 +223,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
           <div className="space-y-2">
             <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Incident Description & Technical Details</label>
             <textarea 
-              className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
+              className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
               placeholder="Describe the hardware fault, server impact, or network outage in detail..."
               value={formData.remark}
               onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
@@ -238,7 +238,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <div className="space-y-2">
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
                   value={formData.business_reason}
                   onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
@@ -249,7 +249,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <div className="space-y-2">
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-gray-400" }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
                   value={formData.requirement_description}
                   onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
@@ -279,7 +279,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                       <p className={`text-xs font-medium ${"text-foreground"}`}>
                         {formData.attachment ? formData.attachment.name : "Select or Drop Technical Evidence"}
                       </p>
-                      <p className="text-xs text-gray-500 uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
+                      <p className="text-xs text-muted uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
                     </div>
                   </div>
                   {formData.attachment && (

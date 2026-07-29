@@ -87,7 +87,7 @@ export default function LearningCourseBuilder() {
       {editingCourse ? (
         <div className="mt-6 space-y-6 animate-in fade-in">
           <AppCard className="ring-2 ring-accent">
-            <div className="p-6 border-b border-border flex justify-between items-center bg-gray-50 dark:bg-surface/[0.02]">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-surface dark:bg-surface/[0.02]">
               <h3 className="font-bold text-lg text-accent">Course Settings</h3>
               <div className="flex gap-2">
                 <AppButton variant="outline" onClick={() => setEditingCourse(null)}>Cancel</AppButton>
@@ -96,7 +96,7 @@ export default function LearningCourseBuilder() {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm font-bold text-gray-500 uppercase">Course Title</label>
+                <label className="text-sm font-bold text-muted uppercase">Course Title</label>
                 <AppInput 
                   value={editingCourse.title} 
                   onChange={e => setEditingCourse({...editingCourse, title: e.target.value})} 
@@ -105,7 +105,7 @@ export default function LearningCourseBuilder() {
                 />
               </div>
               <div>
-                <label className="text-sm font-bold text-gray-500 uppercase">Description</label>
+                <label className="text-sm font-bold text-muted uppercase">Description</label>
                 <textarea 
                   className="w-full mt-1 p-3 bg-transparent border border-border rounded-lg focus:outline-none focus:border-accent text-sm min-h-[100px]"
                   placeholder="What will employees learn?"
@@ -128,9 +128,9 @@ export default function LearningCourseBuilder() {
           <div className="space-y-4">
             {editingCourse.modules.map((mod: any, index: number) => (
               <AppCard key={mod.id} className="border-l-4 overflow-hidden" style={{ borderLeftColor: mod.type === 'quiz' ? '#10b981' : mod.type === 'video' ? '#a855f7' : '#3b82f6' }}>
-                <div className="p-4 bg-gray-50 dark:bg-[#0A0D14] flex items-center justify-between border-b border-border">
+                <div className="p-4 bg-surface dark:bg-[#0A0D14] flex items-center justify-between border-b border-border">
                   <div className="flex items-center gap-3">
-                    <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
+                    <GripVertical className="w-5 h-5 text-muted cursor-move" />
                     <AppBadge variant={mod.type === 'quiz' ? 'success' : mod.type === 'video' ? 'neutral' : 'info'} className="uppercase text-[10px]">
                       {mod.type}
                     </AppBadge>
@@ -145,7 +145,7 @@ export default function LearningCourseBuilder() {
                       }}
                     />
                   </div>
-                  <AppButton variant="secondary" onClick={() => removeModule(index)} className="text-gray-400 hover:text-red-500 transition-colors">
+                  <AppButton variant="secondary" onClick={() => removeModule(index)} className="text-muted hover:text-red-500 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </AppButton>
                 </div>
@@ -153,7 +153,7 @@ export default function LearningCourseBuilder() {
                 <div className="p-6">
                   {mod.type === 'video' && (
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Video URL (MP4, YouTube, Vimeo)</label>
+                      <label className="text-sm font-bold text-muted uppercase">Video URL (MP4, YouTube, Vimeo)</label>
                       <AppInput 
                         value={mod.url || ""}
                         onChange={e => {
@@ -168,7 +168,7 @@ export default function LearningCourseBuilder() {
                   )}
                   {mod.type === 'article' && (
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Article Content</label>
+                      <label className="text-sm font-bold text-muted uppercase">Article Content</label>
                       <textarea 
                         className="w-full mt-1 p-3 bg-transparent border border-border rounded-lg focus:outline-none focus:border-blue-500 text-sm min-h-[150px]"
                         placeholder="Write lesson content here..."
@@ -184,8 +184,8 @@ export default function LearningCourseBuilder() {
                   {mod.type === 'quiz' && (
                     <div className="text-center p-8 border-2 border-dashed border-border rounded-lg">
                       <HelpCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm text-gray-500 font-bold">Quiz Builder UI</p>
-                      <p className="text-xs text-gray-400 mt-1">Questions will be added via modal in full implementation.</p>
+                      <p className="text-sm text-muted font-bold">Quiz Builder UI</p>
+                      <p className="text-xs text-muted mt-1">Questions will be added via modal in full implementation.</p>
                       <AppButton variant="outline" size="sm" className="mt-4 text-emerald-600 border-emerald-200">
                         Add Question
                       </AppButton>
@@ -196,8 +196,8 @@ export default function LearningCourseBuilder() {
             ))}
             
             {editingCourse.modules.length === 0 && (
-              <div className="text-center p-12 border-2 border-dashed border-border rounded-2xl text-gray-500">
-                <GraduationCap className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+              <div className="text-center p-12 border-2 border-dashed border-border rounded-2xl text-muted">
+                <GraduationCap className="w-12 h-12 text-muted dark:text-subtle mx-auto mb-4" />
                 <p>This course is empty. Add modules to build your curriculum.</p>
               </div>
             )}
@@ -212,10 +212,10 @@ export default function LearningCourseBuilder() {
                   <GraduationCap className="w-5 h-5 text-accent" />
                 </div>
                 <h3 className="font-bold text-lg leading-tight mb-2">{course.title}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
+                <p className="text-sm text-muted line-clamp-2">{course.description}</p>
               </div>
-              <div className="p-4 border-t border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-400">{course.modules.length} Modules</span>
+              <div className="p-4 border-t border-border bg-surface dark:bg-surface/[0.02] flex items-center justify-between">
+                <span className="text-xs font-bold text-muted">{course.modules.length} Modules</span>
                 <span className="text-xs font-bold text-accent">Edit Course &rarr;</span>
               </div>
             </AppCard>

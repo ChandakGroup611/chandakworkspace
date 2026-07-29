@@ -136,7 +136,7 @@ export default function TemplateDesigner() {
       <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-foreground">Dynamic Template Designer</h2>
-          <p className="text-xs text-gray-400">Construct HTML payloads with runtime merge tag hydration.</p>
+          <p className="text-xs text-muted">Construct HTML payloads with runtime merge tag hydration.</p>
         </div>
         <AppButton
           onClick={handleAddTemplate}
@@ -152,7 +152,7 @@ export default function TemplateDesigner() {
             {/* Header Configuration */}
             <div className="p-6 border-b border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6 theme-card-structural /5">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">Template Name</label>
+                <label className="text-sm font-bold text-muted uppercase">Template Name</label>
                 <input 
                   type="text" 
                   value={tpl.template_name}
@@ -161,7 +161,7 @@ export default function TemplateDesigner() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">Trigger Module</label>
+                <label className="text-sm font-bold text-muted uppercase">Trigger Module</label>
                 <select 
                   value={tpl.module}
                   onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
@@ -171,7 +171,7 @@ export default function TemplateDesigner() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">Trigger Event</label>
+                <label className="text-sm font-bold text-muted uppercase">Trigger Event</label>
                 <select 
                   value={tpl.event}
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
@@ -181,7 +181,7 @@ export default function TemplateDesigner() {
                 </select>
               </div>
               <div className="md:col-span-3 space-y-2">
-                <label className="text-sm font-bold text-gray-500 uppercase">Email Subject Line</label>
+                <label className="text-sm font-bold text-muted uppercase">Email Subject Line</label>
                 <input 
                   type="text" 
                   value={tpl.subject}
@@ -194,7 +194,7 @@ export default function TemplateDesigner() {
 
             {/* Merge Tags Helper */}
             <div className="px-6 py-3 border-b border-white/5 bg-[#0A0D14] flex flex-wrap gap-2 items-center">
-              <span className="text-xs font-bold text-gray-500 mr-2">AVAILABLE TAGS:</span>
+              <span className="text-xs font-bold text-muted mr-2">AVAILABLE TAGS:</span>
               {MERGE_TAGS.map(tag => (
                 <AppButton 
                   key={tag} 
@@ -218,13 +218,13 @@ export default function TemplateDesigner() {
             <div className="flex border-b border-white/5 bg-[#0A0D14]">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-muted hover:text-muted'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-muted hover:text-muted'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview (Dynamic)
               </AppButton>
@@ -241,7 +241,7 @@ export default function TemplateDesigner() {
               />
             ) : (
               <div 
-                className="w-full h-64 bg-surface text-black p-6 overflow-y-auto"
+                className="w-full h-64 bg-surface text-foreground p-6 overflow-y-auto"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewContent[tpl.id] || "Loading preview...") }}
               />
             )}
@@ -258,11 +258,11 @@ export default function TemplateDesigner() {
                   checked={tpl.is_active} 
                   onChange={(e) => updateLocal(tpl.id, "is_active", e.target.checked)}
                 />
-                <span className="text-xs font-bold text-gray-400 uppercase">Template Active</span>
+                <span className="text-xs font-bold text-muted uppercase">Template Active</span>
               </label>
 
               <div className="flex items-center gap-3">
-                <AppButton onClick={() => handleDelete(tpl.id)} className="text-gray-500 hover:text-rose-400 transition-colors">
+                <AppButton onClick={() => handleDelete(tpl.id)} className="text-muted hover:text-rose-400 transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </AppButton>
                 <AppButton 
@@ -279,9 +279,9 @@ export default function TemplateDesigner() {
 
         {templates.length === 0 && (
           <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-xl">
-            <LayoutTemplate className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-gray-400">No Templates Designed</h3>
-            <p className="text-sm text-gray-500 mt-1">Create HTML email payloads to attach to routing rules.</p>
+            <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-muted">No Templates Designed</h3>
+            <p className="text-sm text-muted mt-1">Create HTML email payloads to attach to routing rules.</p>
           </div>
         )}
       </div>

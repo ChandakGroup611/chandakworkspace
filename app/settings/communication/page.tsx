@@ -62,7 +62,7 @@ export default function CommunicationCenterHub() {
           <Shield className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view Communication Settings.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view Communication Settings.</p>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function CommunicationCenterHub() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Communication Center
         </h1>
-        <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+        <p className="text-sm text-muted mt-2 max-w-2xl">
           Enterprise routing engine for automated notifications. All communications are processed asynchronously via background queues to ensure zero performance degradation.
         </p>
       </header>

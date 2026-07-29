@@ -65,7 +65,7 @@ export default function KnowledgeBaseAuthoring() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6 h-[calc(100vh-200px)]">
         {/* Left Sidebar: Article List */}
         <div className="lg:col-span-1 border border-border bg-surface dark:bg-[#0B0F19] rounded-2xl flex flex-col overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02]">
+          <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
             <h3 className="font-bold text-sm">Library</h3>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -76,14 +76,14 @@ export default function KnowledgeBaseAuthoring() {
                 className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                   activeArticle?.id === article.id
                     ? "border-accent bg-accent/5 dark:bg-accent/10 shadow-sm" 
-                    : "border-transparent hover:bg-gray-50 dark:hover:bg-surface/5"
+                    : "border-transparent hover:bg-surface dark:hover:bg-surface/5"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <AppBadge variant={article.isPublished ? "success" : "warning"} className="text-[9px] px-1.5 py-0">
                     {article.isPublished ? "PUBLISHED" : "DRAFT"}
                   </AppBadge>
-                  <span className="text-[10px] text-gray-400">{article.category}</span>
+                  <span className="text-[10px] text-muted">{article.category}</span>
                 </div>
                 <h4 className={`text-sm font-bold truncate ${activeArticle?.id === article.id ? "text-accent" : "text-foreground"}`}>
                   {article.title || "Untitled Article"}
@@ -91,7 +91,7 @@ export default function KnowledgeBaseAuthoring() {
               </div>
             ))}
             {articles.length === 0 && (
-              <div className="text-center p-6 text-gray-500 text-sm">
+              <div className="text-center p-6 text-muted text-sm">
                 No articles yet.
               </div>
             )}
@@ -103,7 +103,7 @@ export default function KnowledgeBaseAuthoring() {
           {activeArticle ? (
             <>
               {/* Editor Header */}
-              <div className="p-4 border-b border-border bg-gray-50 dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
+              <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <AppButton 
                     variant={previewMode ? "outline" : "primary"} 
@@ -122,7 +122,7 @@ export default function KnowledgeBaseAuthoring() {
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer text-sm">
-                    <span className="text-gray-500 font-medium">Status:</span>
+                    <span className="text-muted font-medium">Status:</span>
                     <select 
                       className="bg-transparent border border-border rounded px-2 py-1 text-sm focus:ring-accent"
                       value={activeArticle.isPublished ? "published" : "draft"}
@@ -155,7 +155,7 @@ export default function KnowledgeBaseAuthoring() {
                 ) : (
                   <div className="p-6 space-y-6 max-w-4xl mx-auto">
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase">Article Title</label>
+                      <label className="text-sm font-bold text-muted uppercase">Article Title</label>
                       <AppInput 
                         value={activeArticle.title} 
                         onChange={e => setActiveArticle({...activeArticle, title: e.target.value})} 
@@ -166,7 +166,7 @@ export default function KnowledgeBaseAuthoring() {
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-sm font-bold text-gray-500 uppercase">Category</label>
+                        <label className="text-sm font-bold text-muted uppercase">Category</label>
                         <select 
                           className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" 
                           value={activeArticle.category} 
@@ -180,7 +180,7 @@ export default function KnowledgeBaseAuthoring() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-sm font-bold text-gray-500 uppercase flex items-center gap-1">
+                        <label className="text-sm font-bold text-muted uppercase flex items-center gap-1">
                           <Tag className="w-3 h-3" /> Search Tags (Comma separated)
                         </label>
                         <AppInput 
@@ -193,7 +193,7 @@ export default function KnowledgeBaseAuthoring() {
                     </div>
 
                     <div>
-                      <label className="text-sm font-bold text-gray-500 uppercase mb-1 block">Article Content</label>
+                      <label className="text-sm font-bold text-muted uppercase mb-1 block">Article Content</label>
                       <div className="border border-border rounded-lg overflow-hidden bg-surface dark:bg-transparent">
                         <RichTextEditor 
                           value={activeArticle.content} 
@@ -206,8 +206,8 @@ export default function KnowledgeBaseAuthoring() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-              <LayoutTemplate className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
+            <div className="flex-1 flex flex-col items-center justify-center text-muted">
+              <LayoutTemplate className="w-16 h-16 text-muted dark:text-subtle mb-4" />
               <h3 className="text-lg font-bold text-foreground">No Article Selected</h3>
               <p className="text-sm mt-1">Select an article from the library or create a new one.</p>
               <AppButton variant="primary" className="mt-6" onClick={handleCreateNew}>Create New Article</AppButton>

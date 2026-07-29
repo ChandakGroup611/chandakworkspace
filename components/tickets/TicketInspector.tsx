@@ -36,11 +36,11 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
         "bg-elevated/50"
       }`}>
         <div className={`p-4 rounded-3xl bg-elevated`}>
-          <Activity className={`h-10 w-10 text-gray-400`} />
+          <Activity className={`h-10 w-10 text-muted`} />
         </div>
         <div className="space-y-1">
           <h3 className={`text-xl font-bold ${"text-foreground"}`}>Select a Ticket to Inspect</h3>
-          <p className="text-sm text-gray-500 max-w-xs">Select an operational record from the sidebar to view full diagnostic data and collaboration history.</p>
+          <p className="text-sm text-muted max-w-xs">Select an operational record from the sidebar to view full diagnostic data and collaboration history.</p>
         </div>
       </div>
     );
@@ -64,7 +64,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
               }`}>
                 {ticket.id}
               </span>
-              <div className={`h-4 w-px bg-gray-200`} />
+              <div className={`h-4 w-px bg-elevated`} />
               <AppBadge variant={status?.code === "ST_OPEN" ? "info" : "success"} className="rounded-full">
                 {status?.name || "Active"}
               </AppBadge>
@@ -76,7 +76,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
         {/* Bento Metadata Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <ShieldCheck className="h-3 w-3" /> Priority
             </div>
             <div className="flex items-center gap-2">
@@ -88,21 +88,21 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <Building className="h-3 w-3" /> Department
             </div>
             <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{dept?.name || "General"}</span>
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <User className="h-3 w-3" /> Assignee
             </div>
             <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{ticket.assignedTo || "Unassigned"}</span>
           </div>
 
           <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <Clock className="h-3 w-3" /> Created
             </div>
             <span className={`text-sm font-semibold ${"text-foreground"}`}>
@@ -122,7 +122,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             className={`py-2 px-5 text-sm font-bold uppercase tracking-widest transition-all shadow-sm ${
               activeTab === tab 
                 ? "shadow-accent/20" 
-                : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
             }`}
           >
             {tab === "COLLAB" ? "Collaboration" : tab === "DETAILS" ? "Technical Data" : "Audit Trail"}
@@ -135,7 +135,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
         {activeTab === "DETAILS" && (
           <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-2">
             <section className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Subject Overview</h3>
+              <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Subject Overview</h3>
               <div className={`p-6 border rounded-2xl bg-elevated border-border`}>
                 <p className={`leading-relaxed whitespace-pre-wrap text-muted font-medium`}>{ticket.description}</p>
               </div>
@@ -143,30 +143,30 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
 
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Classification</h3>
+                <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Classification</h3>
                 <div className="p-6 theme-card-structural /[0.02] border-white/5 rounded-2xl space-y-4">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Category</span>
+                    <span className="text-muted">Category</span>
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.categoryObj?.name || "Unclassified"}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Sub-Category</span>
+                    <span className="text-muted">Sub-Category</span>
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.subcategoryObj?.name || "Unclassified"}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Issue Type</span>
+                    <span className="text-muted">Issue Type</span>
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.issueTypeObj?.name || "General"}</span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Attachments</h3>
+                <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Attachments</h3>
                 <div className="p-6 theme-card-structural /[0.02] border-white/5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3 min-h-[140px]">
                   <div className="p-3 bg-surface/5 rounded-full">
-                    <Paperclip className="h-5 w-5 text-gray-600" />
+                    <Paperclip className="h-5 w-5 text-subtle" />
                   </div>
-                  <p className="text-xs text-gray-600">No diagnostic files attached</p>
+                  <p className="text-xs text-subtle">No diagnostic files attached</p>
                   <AppButton variant="ghost" size="sm" className="text-xs text-accent hover:text-indigo-300 hover:bg-surface/5">
                     Upload File
                   </AppButton>

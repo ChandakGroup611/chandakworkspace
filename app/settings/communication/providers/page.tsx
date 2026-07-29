@@ -17,7 +17,7 @@ export default function ProvidersPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Provider Management
         </h1>
-        <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+        <p className="text-sm text-muted mt-2 max-w-2xl">
           Setup your primary outbound email gateway and designate secondary fallbacks. The async worker queue will automatically failover to secondary providers if the primary is unreachable.
         </p>
       </header>

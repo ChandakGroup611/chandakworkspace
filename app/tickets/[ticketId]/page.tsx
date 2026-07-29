@@ -163,7 +163,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                         setIsEditing(false);
                         setEditTitle(ticketData.title || "");
                         setEditDescription(ticketData.description || "");
-                      }} className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-600">
+                      }} className="text-[10px] font-bold uppercase tracking-widest text-muted hover:text-subtle">
                         Cancel
                       </AppButton>
                       <AppButton variant="secondary" onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-green-500 hover:text-green-600">

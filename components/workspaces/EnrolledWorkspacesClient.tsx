@@ -58,7 +58,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
           <FolderKanban className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view Enrolled Workspaces.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view Enrolled Workspaces.</p>
       </div>
     );
   }
@@ -67,7 +67,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
 
   return (
     <div className={`p-8 w-full max-w-7xl mx-auto space-y-6 ${"text-foreground"}`}>
-      <div className="flex items-center justify-between border-b pb-4 border-gray-200 dark:border-white/10">
+      <div className="flex items-center justify-between border-b pb-4 border-border dark:border-white/10">
         <div className="flex items-center gap-3">
           <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
             Back
@@ -77,7 +77,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
             <FolderKanban className="h-6 w-6 text-emerald-500" />
             Enrolled Workspaces
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted">
             A list of all explicit workspace and sub-workspace nodes you are a member of.
           </p>
           </div>
@@ -85,9 +85,9 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
       </div>
 
       <AppCard className="bg-surface">
-        <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-b border-gray-100 dark:border-white/5">
+        <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border/50 dark:border-white/5">
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <AppInput 
               placeholder="Search by name or code..." 
               value={searchQuery}
@@ -95,7 +95,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
               className="pl-9 h-10 text-sm"
             />
           </div>
-          <div className="text-sm text-gray-500 font-medium">
+          <div className="text-sm text-muted font-medium">
             {filteredItems.length} Enrolled Nodes Found
           </div>
         </AppCardHeader>
@@ -114,7 +114,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
               <AppTableBody>
                 {filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-gray-500 text-sm">
+                    <td colSpan={5} className="py-8 text-center text-muted text-sm">
                       No enrolled workspaces found.
                     </td>
                   </tr>

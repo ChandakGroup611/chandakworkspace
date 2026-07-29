@@ -155,7 +155,7 @@ export default function DataRetentionClient() {
     <div className="space-y-4">
       {selectedIds.size > 0 && (
         <div className="bg-surface/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
-          <span className="text-sm font-bold text-gray-300">{selectedIds.size} record(s) selected</span>
+          <span className="text-sm font-bold text-muted">{selectedIds.size} record(s) selected</span>
           <div className="flex gap-2">
             {activeView === "deleted" ? (
               <>
@@ -188,7 +188,7 @@ export default function DataRetentionClient() {
             <tr>
               {(activeView === "deleted" || activeTab === "tasks") && (
                 <AppTableHead className="w-[40px]">
-                  <input type="checkbox" checked={selectedIds.size === records.length && records.length > 0} onChange={() => toggleAll(records.map(r => r.id))} className="rounded border-gray-600 bg-black/20" />
+                  <input type="checkbox" checked={selectedIds.size === records.length && records.length > 0} onChange={() => toggleAll(records.map(r => r.id))} className="rounded border-border bg-surface/20" />
                 </AppTableHead>
               )}
               <AppTableHead>Code / ID</AppTableHead>
@@ -202,12 +202,12 @@ export default function DataRetentionClient() {
             <AppTableRow key={record.id}>
               {(activeView === "deleted" || activeTab === "tasks") && (
                 <AppTableCell>
-                  <input type="checkbox" checked={selectedIds.has(record.id)} onChange={() => toggleSelection(record.id)} className="rounded border-gray-600 bg-black/20" />
+                  <input type="checkbox" checked={selectedIds.has(record.id)} onChange={() => toggleSelection(record.id)} className="rounded border-border bg-surface/20" />
                 </AppTableCell>
               )}
               <AppTableCell className="font-mono text-xs">{record[currentTabConfig.codeKey] || record.id.split('-')[0]}</AppTableCell>
               <AppTableCell className="font-semibold">{record[currentTabConfig.nameKey] || 'N/A'}</AppTableCell>
-              <AppTableCell className="text-xs text-gray-500">{new Date(record.updated_at).toLocaleString()}</AppTableCell>
+              <AppTableCell className="text-xs text-muted">{new Date(record.updated_at).toLocaleString()}</AppTableCell>
               <AppTableCell className="text-right">
                 {activeView === "deleted" ? (
                   <div className="flex justify-end gap-2">
@@ -230,7 +230,7 @@ export default function DataRetentionClient() {
           ))}
           {records.length === 0 && (
             <AppTableRow>
-              <AppTableCell colSpan={(activeView === "deleted" || activeTab === "tasks") ? 5 : 4} className="text-center py-8 text-gray-500">
+              <AppTableCell colSpan={(activeView === "deleted" || activeTab === "tasks") ? 5 : 4} className="text-center py-8 text-muted">
                 {isLoading ? "Loading records..." : "No records found in this view."}
               </AppTableCell>
             </AppTableRow>
@@ -246,7 +246,7 @@ export default function DataRetentionClient() {
       
       {/* Error Popup Modal */}
       {showErrorModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/60 backdrop-blur-sm">
           <div className="bg-rose-950 border border-rose-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-rose-900/20">
             <div className="flex items-center gap-3 text-rose-500 mb-4">
               <ShieldAlert className="h-8 w-8" />
@@ -291,7 +291,7 @@ export default function DataRetentionClient() {
 
       {/* Module Tabs (Scrollable for many tabs) */}
       <div className="pb-4">
-        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-gray-100/50 dark:bg-surface/30 border border-gray-200/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -301,8 +301,8 @@ export default function DataRetentionClient() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
                   isActive 
-                    ? 'bg-white dark:bg-surface text-accent dark:text-accent shadow-sm border border-gray-200/50 dark:border-white/10' 
-                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'
+                    ? 'bg-surface dark:bg-surface text-accent dark:text-accent shadow-sm border border-border/50 dark:border-white/10' 
+                    : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -322,11 +322,11 @@ export default function DataRetentionClient() {
               <span>{currentTabConfig.label} Registry</span>
             </AppCardTitle>
             
-            <div className="flex bg-black/40 rounded-lg p-1 border border-white/10">
+            <div className="flex bg-surface/40 rounded-lg p-1 border border-white/10">
               <AppButton variant="secondary"
                 onClick={() => setActiveView("active")}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                  activeView === "active" ? "bg-surface/20 text-white shadow-sm" : "text-gray-500 hover:text-gray-300"
+                  activeView === "active" ? "bg-surface/20 text-white shadow-sm" : "text-muted hover:text-muted"
                 }`}
               >
                 Active Records
@@ -334,7 +334,7 @@ export default function DataRetentionClient() {
               <AppButton variant="secondary"
                 onClick={() => setActiveView("deleted")}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeView === "deleted" ? "bg-rose-500/20 text-rose-400 shadow-sm border border-rose-500/30" : "text-gray-500 hover:text-gray-300"
+                  activeView === "deleted" ? "bg-rose-500/20 text-rose-400 shadow-sm border border-rose-500/30" : "text-muted hover:text-muted"
                 }`}
               >
                 <ShieldAlert className="h-3.5 w-3.5" />

@@ -126,14 +126,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <React.Fragment key={w.id}>
         <AppButton variant="secondary" 
           onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
-          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-accent/10 border-gray-100' : 'hover:bg-gray-50 border-gray-100') : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:theme-card-structural /5 border-white/5') }`}
+          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-accent/10 border-border/50' : 'hover:bg-surface border-border/50') : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:theme-card-structural /5 border-white/5') }`}
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
           <div className="flex items-center gap-2">
-            {depth > 0 && <span className={"text-gray-400"}>↳</span>}
+            {depth > 0 && <span className={"text-muted"}>↳</span>}
             <div className={`font-bold ${"text-foreground"}`}>{w.code}</div>
           </div>
-          <div className={`text-[10px] text-gray-500 truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
+          <div className={`text-[10px] text-muted truncate ${depth > 0 ? "ml-4" : ""}`}>{w.name}</div>
         </AppButton>
         {w.subWorkspaces && w.subWorkspaces.length > 0 && renderWorkspaceTree(w.subWorkspaces, depth + 1)}
       </React.Fragment>
@@ -586,7 +586,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         "bg-surface text-foreground"
       }`}>
         <Loader2 className="h-10 w-10 animate-spin text-accent" />
-        <p className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Hydrating Enterprise Workspaces...</p>
+        <p className="text-xs text-muted font-bold tracking-[0.2em] uppercase">Hydrating Enterprise Workspaces...</p>
       </div>
     );
   }
@@ -600,7 +600,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           <ShieldAlert className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view the Workspace & Task Engine Dashboard.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view the Workspace & Task Engine Dashboard.</p>
       </div>
     );
   }
@@ -615,7 +615,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         actions={
           <>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
                 type="text" 
                 placeholder="Search workspaces..." 
@@ -659,11 +659,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             
             {/* Hierarchical Task Matrix */}
             <AppCard className="flex-1 p-2 flex flex-col min-h-0 overflow-hidden">
-              <div className="flex items-center justify-between border-b pb-3 mb-4 border-gray-200 dark:border-white/5">
+              <div className="flex items-center justify-between border-b pb-3 mb-4 border-border dark:border-white/5">
                 <div className="flex items-center gap-4">
                   <AppButton variant="secondary" 
                     onClick={() => setActiveView('HIERARCHY')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? ("border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? ("border-accent text-accent") : "border-transparent text-muted hover:text-foreground dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <GitMerge className="h-4 w-4" />
@@ -671,7 +671,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   </AppButton>
                   <AppButton variant="secondary" 
                     onClick={() => setActiveView('SPRINTS')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? ("border-accent text-accent") : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? ("border-accent text-accent") : "border-transparent text-muted hover:text-foreground dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <Calendar className="h-4 w-4" />
@@ -793,9 +793,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
-          <FolderKanban className="h-12 w-12 text-gray-400 opacity-50" />
+          <FolderKanban className="h-12 w-12 text-muted opacity-50" />
           <h2 className={`text-lg font-bold ${"text-foreground"}`}>No Active Workspaces Found</h2>
-          <p className="text-xs text-gray-500">Initialize a new enterprise workspace to begin orchestrating tasks.</p>
+          <p className="text-xs text-muted">Initialize a new enterprise workspace to begin orchestrating tasks.</p>
           <AppButton variant="primary" onClick={() => setWsModalMode('ROOT')} disabled={!hasPermission("WORKSPACES_CREATE")}>Create Workspace</AppButton>
         </div>
       )}
@@ -830,7 +830,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               
               <div className="grid grid-cols-1 gap-5 mb-5">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Company / Entity Link *</label>
+                  <label className="text-sm font-bold text-muted uppercase tracking-wider">Company / Entity Link *</label>
                   <select 
                     className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                     value={newWS.company_id}
@@ -844,11 +844,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Workspace Name *</label>
+                  <label className="text-sm font-bold text-muted uppercase tracking-wider">Workspace Name *</label>
                   <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className={"bg-surface"} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Workspace Code</label>
+                  <label className="text-sm font-bold text-muted uppercase tracking-wider">Workspace Code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? (newWS.code || "") : "[Auto-Generated]"} className={"bg-elevated"} />
                 </div>
               </div>
@@ -856,7 +856,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
                 <div className="grid grid-cols-1 mt-5">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Parent Workspace Link</label>
+                    <label className="text-sm font-bold text-muted uppercase tracking-wider">Parent Workspace Link</label>
                     <select 
                       className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                       value={newWS.parent_workspace_id}
@@ -890,17 +890,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-2 gap-5 mb-5">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+                  <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date</label>
                   <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className={"bg-surface"} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Target End Date</label>
+                  <label className="text-sm font-bold text-muted uppercase tracking-wider">Target End Date</label>
                   <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className={"bg-surface"} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Objective Description</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">Objective Description</label>
                 <textarea 
                   className={`w-full h-24 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-none ${ "theme-card-structural text-foreground" }`}
                   placeholder="Detailed project requirements, goals, and constraints..."
@@ -920,7 +920,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
 
               <div className="space-y-1.5 relative mb-6">
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-1.5 mb-2">
+                <div className="flex items-center justify-between border-b border-border dark:border-white/10 pb-1.5 mb-2">
                   <label className="text-[10px] font-bold text-accent uppercase tracking-wider block">Workspace Assignees (Users)</label>
                   <AppButton variant="secondary" 
                     type="button" 
@@ -940,7 +940,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 </div>
 
                 <div className="relative mb-2 shrink-0">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
                   <input 
                     type="text" 
                     placeholder="Search personnel..." 
@@ -968,7 +968,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                           if (e.target.checked) setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
                           else setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
                         }} 
-                        className="rounded border-gray-300 text-accent focus:ring-accent h-4 w-4" 
+                        className="rounded border-border text-accent focus:ring-accent h-4 w-4" 
                       />
                       <div className="flex flex-col">
                         <span className={"text-foreground font-medium"}>{u.full_name}</span>
@@ -976,7 +976,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       </div>
                     </label>
                   ))}
-                  {availableUsers.length === 0 && <p className="text-xs text-gray-500 p-3 text-center">No users available.</p>}
+                  {availableUsers.length === 0 && <p className="text-xs text-muted p-3 text-center">No users available.</p>}
                 </div>
               </div>
 
@@ -998,11 +998,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       setNewWS({...newWS, is_public: false});
                     }
                   }} 
-                  className="rounded border-gray-300 text-accent focus:ring-accent h-5 w-5 cursor-pointer"
+                  className="rounded border-border text-accent focus:ring-accent h-5 w-5 cursor-pointer"
                 />
                 <label htmlFor="is_public" className="cursor-pointer flex flex-col">
                   <span className={`text-sm font-bold ${"text-foreground"}`}>Public Visibility</span>
-                  <span className="text-xs text-gray-500">Allow any authenticated personnel to view and join this workspace.</span>
+                  <span className="text-xs text-muted">Allow any authenticated personnel to view and join this workspace.</span>
                 </label>
               </div>
             </div>

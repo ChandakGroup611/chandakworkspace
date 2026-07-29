@@ -55,7 +55,7 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
   const progressPercent = estimatedHours > 0 ? Math.min(100, (totalLogged / estimatedHours) * 100) : 0;
 
   if (loading) {
-    return <div className="p-8 text-center text-xs text-gray-500 flex justify-center"><Loader2 className="animate-spin h-5 w-5" /></div>;
+    return <div className="p-8 text-center text-xs text-muted flex justify-center"><Loader2 className="animate-spin h-5 w-5" /></div>;
   }
 
   return (
@@ -64,16 +64,16 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
       <div className={`p-4 rounded-xl ${"theme-card-structural "}`}>
         <div className="flex justify-between items-end mb-2">
           <div className="space-y-1">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Logged</p>
+            <p className="text-xs font-bold text-muted uppercase tracking-wider">Total Logged</p>
             <p className={`text-2xl font-bold text-slate-900 dark:text-slate-100`}>{totalLogged.toFixed(1)}h</p>
           </div>
           <div className="space-y-1 text-right">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Estimated</p>
-            <p className="text-sm font-bold text-gray-400">{estimatedHours > 0 ? `${estimatedHours}h` : "Not set"}</p>
+            <p className="text-xs font-bold text-muted uppercase tracking-wider">Estimated</p>
+            <p className="text-sm font-bold text-muted">{estimatedHours > 0 ? `${estimatedHours}h` : "Not set"}</p>
           </div>
         </div>
         {estimatedHours > 0 && (
-          <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 mt-4 overflow-hidden">
+          <div className="w-full bg-elevated dark:bg-surface rounded-full h-2 mt-4 overflow-hidden">
             <div 
               className={`h-2 rounded-full ${progressPercent > 100 ? "bg-rose-500" : "bg-emerald-500"}`}
               style={{ width: `${Math.min(100, progressPercent)}%` }}
@@ -83,8 +83,8 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
       </div>
 
       {/* Log Form */}
-      <form onSubmit={handleSubmit} className={`p-4 rounded-xl border bg-gray-50 border-border`}>
-        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
+      <form onSubmit={handleSubmit} className={`p-4 rounded-xl border bg-surface border-border`}>
+        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
           <Clock className="h-4 w-4" /> Log New Time
         </h4>
         <div className="flex gap-2 mb-3">
@@ -113,16 +113,16 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
 
       {/* Log History */}
       <div className="space-y-3">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">History</h4>
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted">History</h4>
         {logs.length === 0 ? (
-          <p className="text-xs text-gray-500 text-center py-4">No time logged yet.</p>
+          <p className="text-xs text-muted text-center py-4">No time logged yet.</p>
         ) : (
           logs.slice().reverse().map(log => (
             <div key={log.id} className={`p-3 rounded-lg text-sm flex gap-3 theme-card-structural`}>
               <div className="shrink-0 font-bold text-emerald-600 dark:text-emerald-400 w-12">{log.hours}h</div>
               <div className="flex-1 min-w-0">
                 <p className={`truncate text-foreground`}>{log.description}</p>
-                <p className="text-[10px] text-gray-500 mt-1">{new Date(log.logged_at).toLocaleString()}</p>
+                <p className="text-[10px] text-muted mt-1">{new Date(log.logged_at).toLocaleString()}</p>
               </div>
             </div>
           ))

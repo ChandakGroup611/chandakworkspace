@@ -56,7 +56,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-black/40 border-gray-200 dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-gray-400"
+            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-muted"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -551,7 +551,7 @@ export default function ReportsClient() {
                           else if (typeof val === "object") val = JSON.stringify(val);
                           
                           return (
-                            <AppTableCell key={col.field_id} className="text-[13px] text-gray-600 dark:text-gray-400">
+                            <AppTableCell key={col.field_id} className="text-[13px] text-subtle dark:text-muted">
                               <div className="truncate max-w-[200px]" title={String(val)}>
                                 {col.data_type === "link" && val !== "—" ? (
                                   <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>

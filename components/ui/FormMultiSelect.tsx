@@ -38,7 +38,7 @@ export function FormMultiSelect({
   };
 
   const displayValue = selectedValues.length === 0 
-    ? <span className="text-gray-400">{placeholder}</span>
+    ? <span className="text-muted">{placeholder}</span>
     : selectedValues.length <= 2
       ? selectedValues.join(", ")
       : `${selectedValues.length} Selected`;
@@ -51,7 +51,7 @@ export function FormMultiSelect({
           disabled={disabled}
           className={cn(
             "flex w-full items-center justify-between h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none border border-border text-foreground focus:border-accent focus:ring-accent/20",
-            disabled ? "bg-gray-50 dark:bg-slate-800 opacity-70 cursor-not-allowed" : "bg-surface hover:border-gray-300",
+            disabled ? "bg-surface dark:bg-slate-800 opacity-70 cursor-not-allowed" : "bg-surface hover:border-border",
             className
           )}
         >
@@ -68,7 +68,7 @@ export function FormMultiSelect({
           onInteractOutside={() => setIsOpen(false)}
         >
           {options.length === 0 ? (
-            <div className="p-3 text-center text-xs text-gray-500 italic">No options available</div>
+            <div className="p-3 text-center text-xs text-muted italic">No options available</div>
           ) : (
             options.map((option) => (
               <button
@@ -79,7 +79,7 @@ export function FormMultiSelect({
               >
                 <div className={cn(
                   "w-4 h-4 mr-3 border rounded-[4px] flex items-center justify-center transition-colors",
-                  selectedValues.includes(option.value) ? "bg-accent border-accent text-white" : "border-gray-300 group-hover:border-accent"
+                  selectedValues.includes(option.value) ? "bg-accent border-accent text-white" : "border-border group-hover:border-accent"
                 )}>
                   {selectedValues.includes(option.value) && <Check className="w-3 h-3" />}
                 </div>

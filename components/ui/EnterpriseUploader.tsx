@@ -123,7 +123,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
     if (mime.startsWith('image/')) return <ImageIcon className="h-5 w-5 text-accent" />;
     if (mime.includes('pdf')) return <FileText className="h-5 w-5 text-red-500" />;
     if (mime.includes('zip') || mime.includes('compressed')) return <FileArchive className="h-5 w-5 text-yellow-500" />;
-    return <File className="h-5 w-5 text-gray-500" />;
+    return <File className="h-5 w-5 text-muted" />;
   };
 
   return (
@@ -187,7 +187,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                 </div>
                 {/* Progress bar */}
                 {fileObj.status === 'uploading' && (
-                  <div className="w-full h-1 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
+                  <div className="w-full h-1 bg-elevated rounded-full mt-1.5 overflow-hidden">
                     <div className="h-full bg-accent transition-all duration-300" style={{ width: `${fileObj.progress}%` }} />
                   </div>
                 )}

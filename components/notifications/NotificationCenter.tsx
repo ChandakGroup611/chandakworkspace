@@ -105,11 +105,11 @@ export default function NotificationCenter() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className={`absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl z-50 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200 ${ "theme-card-structural " }`}>
-            <div className={`p-4 border-b flex items-center justify-between border-border bg-gray-50/50`}>
+            <div className={`p-4 border-b flex items-center justify-between border-border bg-surface/50`}>
               <div className="flex items-center gap-2">
                 <h3 className={`font-bold ${"text-foreground"}`}>Notifications</h3>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                  unreadCount > 0 ? "bg-rose-500/10 text-rose-500" : "bg-gray-500/10 text-gray-500"
+                  unreadCount > 0 ? "bg-rose-500/10 text-rose-500" : "bg-gray-500/10 text-muted"
                 }`}>
                   {unreadCount} New
                 </span>
@@ -139,8 +139,8 @@ export default function NotificationCenter() {
                   <div className="flex items-start justify-between gap-3 pr-6">
                     <div className="space-y-1">
                       <h4 className={`text-xs font-bold ${"text-foreground"}`}>{n.title}</h4>
-                      <p className="text-[0.8rem] text-gray-500 leading-snug line-clamp-2">{n.message}</p>
-                      <span className="text-[0.7rem] text-gray-400 font-mono mt-2 block">
+                      <p className="text-[0.8rem] text-muted leading-snug line-clamp-2">{n.message}</p>
+                      <span className="text-[0.7rem] text-muted font-mono mt-2 block">
                         {new Date(n.created_at).toLocaleString()}
                       </span>
                     </div>
@@ -148,13 +148,13 @@ export default function NotificationCenter() {
                   <div className="absolute right-4 top-4 flex flex-col items-center gap-2">
                     <AppButton
                       onClick={(e) => handleDelete(e, n.id)}
-                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                      className="text-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                       title="Delete Notification"
                     >
                       <X className="h-4 w-4" />
                     </AppButton>
                     {n.link && (
-                      <ExternalLink className="h-3.5 w-3.5 text-gray-400 group-hover:text-accent shrink-0" />
+                      <ExternalLink className="h-3.5 w-3.5 text-muted group-hover:text-accent shrink-0" />
                     )}
                   </div>
                 </div>
@@ -162,8 +162,8 @@ export default function NotificationCenter() {
               
               {notifications.length === 0 && (
                 <div className="p-8 text-center flex flex-col items-center justify-center opacity-60">
-                  <Bell className="h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-xs font-medium text-gray-500">You're all caught up!</p>
+                  <Bell className="h-8 w-8 text-muted mb-2" />
+                  <p className="text-xs font-medium text-muted">You're all caught up!</p>
                 </div>
               )}
             </div>

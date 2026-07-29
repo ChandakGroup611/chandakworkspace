@@ -134,7 +134,7 @@ export default function LoginPage() {
           scopes: 'email profile User.Read',
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
-            prompt: 'select_account'
+            prompt: 'consent'
           }
         }
       });

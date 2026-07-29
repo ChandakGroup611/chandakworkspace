@@ -18,7 +18,7 @@ export default async function NotificationsSettingsPage() {
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center p-8">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
-          <p className="text-gray-500">You do not have permission to view this page.</p>
+          <p className="text-muted">You do not have permission to view this page.</p>
         </div>
       </div>
     );
@@ -32,7 +32,7 @@ export default async function NotificationsSettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Notification Triggers
         </h1>
-        <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+        <p className="text-sm text-muted mt-2 max-w-2xl">
           Granularly define which system events trigger notifications. Disabling events here provides a performance boost by bypassing the routing engine entirely. Note: Set up your email provider first in the Email settings.
         </p>
       </header>

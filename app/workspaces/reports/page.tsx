@@ -12,7 +12,7 @@ export default function ReportsPage() {
       <div className="flex h-[80vh] w-full items-center justify-center">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
-          <p className="text-gray-500">You do not have permission to view workspace reports.</p>
+          <p className="text-muted">You do not have permission to view workspace reports.</p>
         </div>
       </div>
     );
@@ -22,7 +22,7 @@ export default function ReportsPage() {
     <div className="w-full space-y-3 animate-in fade-in-50 duration-500">
       <header className="pb-1">
         <h1 className="text-xl font-bold">Reports & Analytics</h1>
-        <p className="text-xs text-gray-500 mt-0.5">Generate filtered analytical reports for workspaces and tasks with export capabilities.</p>
+        <p className="text-xs text-muted mt-0.5">Generate filtered analytical reports for workspaces and tasks with export capabilities.</p>
       </header>
 
       <main>

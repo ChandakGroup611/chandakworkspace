@@ -572,7 +572,7 @@ export default function UserMasterPage() {
         "bg-surface text-foreground"
       }`}>
         <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
           Verifying Credentials...
         </span>
       </div>
@@ -626,7 +626,7 @@ export default function UserMasterPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
             <span className="font-medium">{successAlert}</span>
           </div>
-          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-gray-400 hover:text-gray-600">
+          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-subtle">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -641,7 +641,7 @@ export default function UserMasterPage() {
             <strong className="font-bold block mb-0.5">Validation Constraint Notice:</strong>
             {errorAlert}
           </div>
-          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-gray-400 hover:text-gray-600">
+          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-subtle">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -655,19 +655,19 @@ export default function UserMasterPage() {
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-gray-50 dark:bg-surface/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
+            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-white/10 flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-foreground dark:text-white">
                     Personnel Registry
                   </h2>
-                  <span className="text-[11px] text-gray-500">
+                  <span className="text-[11px] text-muted">
                     {filteredUsers.length} Users Found
                   </span>
                 </div>
 
                 {/* Status Switcher Tabs */}
-                <div className="flex items-center gap-1 p-1 rounded-lg bg-surface dark:bg-[#0f111a] border border-gray-200 dark:border-white/10">
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-surface dark:bg-[#0f111a] border border-border dark:border-white/10">
                   {(["ALL", "ACTIVE", "DISABLED"] as const).map(flt => (
                     <AppButton variant="secondary"
                       key={flt}
@@ -676,7 +676,7 @@ export default function UserMasterPage() {
                       className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
                         statusFilter === flt 
                           ? "bg-accent text-white shadow-sm" 
-                          : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-surface/5"
+                          : "text-subtle hover:text-foreground dark:text-muted dark:hover:text-white hover:bg-surface dark:hover:bg-surface/5"
                       }`}
                     >
                       {flt}
@@ -686,19 +686,19 @@ export default function UserMasterPage() {
               </div>
 
               {/* Dynamic Quick Text Search bar and Department Filter */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 mt-1 border-t border-border dark:border-white/10">
                 <div className="relative w-full sm:w-1/4 max-w-[200px] shrink-0">
                   <select 
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface dark:bg-[#0f111a] border-gray-200 dark:border-white/10 appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 text-gray-700 dark:text-gray-300"
+                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface dark:bg-[#0f111a] border-border dark:border-white/10 appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 text-subtle dark:text-muted"
                   >
                     <option value="ALL">All Departments</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name || d.code}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none" />
                 </div>
                 <AppInput
                   placeholder="Search across all fields (Name, UIN, Email, Dept, Designation, Role, Manager)..."
@@ -715,17 +715,17 @@ export default function UserMasterPage() {
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-16 space-y-4">
                   <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-                  <p className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+                  <p className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
                     Syncing Enterprise Directory...
                   </p>
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-16 px-4 space-y-2">
-                  <Users className="h-8 w-8 text-gray-400 mx-auto stroke-1" />
+                  <Users className="h-8 w-8 text-muted mx-auto stroke-1" />
                   <p className={`text-xs font-medium text-muted`}>
                     No active staff personnel correspond to selected keyword tags.
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted">
                     Click 'Register User Account' above to input authentic credentials.
                   </p>
                 </div>
@@ -892,7 +892,7 @@ export default function UserMasterPage() {
                 <p className={`text-xs font-semibold ${"text-foreground"}`}>
                   Performing Security Integrity Checks...
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   Scanning Tickets, Workspace Tasks, and Requirements creator and assignee records.
                 </p>
               </div>
@@ -916,45 +916,45 @@ export default function UserMasterPage() {
                 <div className={`p-4 rounded-xl border space-y-2.5 text-xs ${
                   "bg-elevated/50 border-border"
                 }`}>
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
+                  <span className="text-xs font-bold text-muted uppercase tracking-wider block">
                     Active Reference Summary
                   </span>
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 flex items-center gap-1.5">
+                      <span className="text-muted flex items-center gap-1.5">
                         ðŸŽ« Active Tickets:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.tickets > 0 
                           ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" 
-                          : "bg-gray-500/10 text-gray-400"
+                          : "bg-gray-500/10 text-muted"
                       }`}>
                         {deleteWarningData.tickets}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 flex items-center gap-1.5">
+                      <span className="text-muted flex items-center gap-1.5">
                         ðŸ“‹ Workspace Tasks:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.tasks > 0 
                           ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" 
-                          : "bg-gray-500/10 text-gray-400"
+                          : "bg-gray-500/10 text-muted"
                       }`}>
                         {deleteWarningData.tasks}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 flex items-center gap-1.5">
+                      <span className="text-muted flex items-center gap-1.5">
                         ðŸ› ï¸ Requirements:
                       </span>
                       <span className={`font-mono font-bold px-2 py-0.5 rounded ${
                         deleteWarningData.requirements > 0 
                           ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" 
-                          : "bg-gray-500/10 text-gray-400"
+                          : "bg-gray-500/10 text-muted"
                       }`}>
                         {deleteWarningData.requirements}
                       </span>

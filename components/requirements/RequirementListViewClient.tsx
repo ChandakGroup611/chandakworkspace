@@ -339,7 +339,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           <Shield className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view Requirement Analytics.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view Requirement Analytics.</p>
       </div>
     );
   }
@@ -391,7 +391,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
             </div>
           </div>
 
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 dark:bg-surface/[0.02]">
+          <div className="flex items-center gap-3 px-4 py-3 bg-surface/50 dark:bg-surface/[0.02]">
             <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
               <option value="">All Priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}

@@ -48,7 +48,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
           <Users className="h-4 w-4 text-accent" />
           <AppCardTitle>Workload Saturation Engine</AppCardTitle>
         </div>
-        <span className="text-xs theme-card-structural /5 border-white/10 px-2 py-0.5 rounded text-gray-400 font-semibold uppercase">
+        <span className="text-xs theme-card-structural /5 border-white/10 px-2 py-0.5 rounded text-muted font-semibold uppercase">
           Live Pool
         </span>
       </AppCardHeader>
@@ -56,10 +56,10 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
       <AppCardContent className="space-y-4 pt-2">
         <div className="grid grid-cols-2 gap-3 mb-2">
           <div className="p-3 rounded-xl theme-card-structural /[0.01] border-white/5 flex flex-col justify-between">
-            <span className="text-xs text-gray-500 font-medium tracking-wide">Total Concurrency</span>
+            <span className="text-xs text-muted font-medium tracking-wide">Total Concurrency</span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-xl font-bold text-foreground">{metrics.totalConcurrency}</span>
-              <span className="text-[0.7rem] text-gray-600 font-bold uppercase">active</span>
+              <span className="text-[0.7rem] text-subtle font-bold uppercase">active</span>
             </div>
           </div>
           <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 flex flex-col justify-between">
@@ -76,7 +76,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
           {metrics.modules.map((dept) => (
             <div key={dept.name} className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-300 font-medium truncate max-w-[140px]">{dept.name} ({dept.active})</span>
+                <span className="text-muted font-medium truncate max-w-[140px]">{dept.name} ({dept.active})</span>
                 <div className="flex items-center gap-2 text-[0.8rem]">
                   {dept.overdue > 0 && (
                     <span className="text-rose-400 font-bold flex items-center gap-0.5">
@@ -84,12 +84,12 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
                       {dept.overdue}
                     </span>
                   )}
-                  <span className="text-gray-400 font-bold">{dept.capacity}%</span>
+                  <span className="text-muted font-bold">{dept.capacity}%</span>
                 </div>
               </div>
 
               {/* Advanced track layout */}
-              <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 p-[1px]">
+              <div className="h-2 w-full bg-surface/40 rounded-full overflow-hidden border border-white/5 p-[1px]">
                 <div 
                   className={`h-full rounded-full bg-gradient-to-r ${dept.color} transition-all duration-500 shadow-sm`} 
                   style={{ width: `${dept.capacity}%` }} 

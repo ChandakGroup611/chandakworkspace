@@ -160,14 +160,14 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
   const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/60 backdrop-blur-sm p-4 overflow-y-auto">
       <AppCard className={`w-full max-w-5xl border shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col ${
-        "bg-gray-50 border-border"
+        "bg-surface border-border"
       }`}>
         <AppButton variant="secondary" 
           onClick={onClose}
           className={`absolute top-4 right-4 p-2 rounded-full transition-colors z-10 ${
-            "hover:bg-gray-200 text-muted"
+            "hover:bg-elevated text-muted"
           }`}
         >
           <X className="h-5 w-5" />
@@ -345,9 +345,9 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                 </AppButton>
                               );
                             })}
-                            {deptUsers.length === 0 && <span className="text-xs text-gray-500">No users found in this department.</span>}
+                            {deptUsers.length === 0 && <span className="text-xs text-muted">No users found in this department.</span>}
                           </div>
-                          <p className="text-[9px] text-gray-400 mt-2">Select users in the order they should approve (1st = Approver, 2nd = Executive, etc).</p>
+                          <p className="text-[9px] text-muted mt-2">Select users in the order they should approve (1st = Approver, 2nd = Executive, etc).</p>
                         </div>
                       );
                     })}

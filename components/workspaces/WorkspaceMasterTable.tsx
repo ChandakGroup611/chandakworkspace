@@ -136,7 +136,7 @@ export function WorkspaceMasterTable({
       else if (node.owner_id) members = [{ user_id: node.owner_id }];
     }
     
-    if (!members || members.length === 0) return <span className="text-gray-500 text-[10px]">Unassigned</span>;
+    if (!members || members.length === 0) return <span className="text-muted text-[10px]">Unassigned</span>;
 
     const displayMembers = members.slice(0, 3);
     const extraCount = members.length - 3;
@@ -158,7 +158,7 @@ export function WorkspaceMasterTable({
             );
           })}
           {extraCount > 0 && (
-            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-gray-600 bg-gray-200 border-2 border-white`}>
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-subtle bg-elevated border-2 border-white`}>
               +{extraCount}
             </div>
           )}
@@ -166,14 +166,14 @@ export function WorkspaceMasterTable({
 
         {/* Hover Tooltip */}
         <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] theme-card-structural`}>
-          <div className="text-[10px] font-bold uppercase text-gray-500 mb-2 px-1 border-b pb-1 border-gray-200 dark:border-white/10">Assigned Users ({members.length})</div>
+          <div className="text-[10px] font-bold uppercase text-muted mb-2 px-1 border-b pb-1 border-border dark:border-white/10">Assigned Users ({members.length})</div>
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {
               const uid = m.user_id || m.id;
               const uInfo = usersMap.get(uid);
               const isOnline = onlineUsers.has(uid);
               return (
-                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-black/5 dark:hover:bg-surface/40 backdrop-blur/5">
+                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-surface/5 dark:hover:bg-surface/40 backdrop-blur/5">
                   <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
                   <span className={`text-[11px] truncate ${isOnline ? ("text-foreground") : 'text-red-500 font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
                 </div>
@@ -292,7 +292,7 @@ export function WorkspaceMasterTable({
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
                     className={`p-1 rounded-md transition-colors relative z-20 ${
-                      "hover:bg-gray-200 text-muted bg-surface/40 backdrop-blur/40 backdrop-blur/40 backdrop-blur"
+                      "hover:bg-elevated text-muted bg-surface/40 backdrop-blur/40 backdrop-blur/40 backdrop-blur"
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
@@ -371,7 +371,7 @@ export function WorkspaceMasterTable({
           </div>
           
           {/* Created Date */}
-          <div className="py-1 px-2 text-xs text-slate-900 dark:text-gray-300 whitespace-nowrap" title={fullDate}>
+          <div className="py-1 px-2 text-xs text-slate-900 dark:text-muted whitespace-nowrap" title={fullDate}>
             {shortDate}
           </div>
 
@@ -424,7 +424,7 @@ export function WorkspaceMasterTable({
                   e.stopPropagation();
                   router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                 }}
-                className={`h-7 w-7 p-0 text-muted hover:bg-gray-200`}
+                className={`h-7 w-7 p-0 text-muted hover:bg-elevated`}
                 title="Open Task List"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -510,7 +510,7 @@ export function WorkspaceMasterTable({
           {hierarchy.length > 0 ? (
             renderTree(hierarchy)
           ) : (
-            <div className="py-12 text-center text-sm text-gray-500">
+            <div className="py-12 text-center text-sm text-muted">
               No Execution Hierarchy Available.
             </div>
           )}

@@ -108,26 +108,26 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
         <form onSubmit={handleAddRenewal} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500 uppercase">Renewal Date *</label>
+              <label className="text-sm font-bold text-muted uppercase">Renewal Date *</label>
               <AppInput type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500 uppercase">New Expiry Date *</label>
+              <label className="text-sm font-bold text-muted uppercase">New Expiry Date *</label>
               <AppInput type="date" value={newExpiry} onChange={(e) => setNewExpiry(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500 uppercase">PO Number</label>
+              <label className="text-sm font-bold text-muted uppercase">PO Number</label>
               <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2027" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-500 uppercase">Renewal Cost *</label>
+              <label className="text-sm font-bold text-muted uppercase">Renewal Cost *</label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                 <AppInput type="number" step="0.01" value={renewalCost} onChange={(e) => setRenewalCost(e.target.value)} required className="pl-9" placeholder="0.00" />
               </div>
             </div>
             <div className="space-y-2 lg:col-span-4">
-              <label className="text-sm font-bold text-gray-500 uppercase">Notes / Remarks</label>
+              <label className="text-sm font-bold text-muted uppercase">Notes / Remarks</label>
               <AppInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="E.g., Price locked in for 3 years" />
             </div>
           </div>
@@ -145,7 +145,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
         {loading ? (
           <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
         ) : renewals.length === 0 ? (
-          <div className={`p-8 text-center text-gray-500 italic rounded-xl border bg-elevated border-border`}>
+          <div className={`p-8 text-center text-muted italic rounded-xl border bg-elevated border-border`}>
             No renewals logged for this subscription yet.
           </div>
         ) : (
@@ -159,7 +159,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
                     </span>
                     <span className="font-semibold text-sm">{rn.po_number || 'No PO'}</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-2 flex items-center gap-4">
+                  <div className="text-xs text-muted mt-2 flex items-center gap-4">
                     <span>Renewed On: {new Date(rn.renewal_date).toLocaleDateString()}</span>
                     <span>New Expiry: {new Date(rn.new_expiry).toLocaleDateString()}</span>
                     {rn.notes && <span>Notes: {rn.notes}</span>}
@@ -170,7 +170,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
                     <div className="font-black text-lg text-emerald-500">
                       {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(rn.renewal_cost)}
                     </div>
-                    <div className="text-[10px] text-gray-400">Processed by {rn.user_master?.full_name}</div>
+                    <div className="text-[10px] text-muted">Processed by {rn.user_master?.full_name}</div>
                   </div>
                   <AppButton variant="secondary" onClick={() => handleDelete(rn.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                     <Trash2 className="h-4 w-4" />

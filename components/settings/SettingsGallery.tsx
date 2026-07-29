@@ -108,7 +108,7 @@ export default function SettingsGallery() {
       sentiment: "Clean & Modern",
       icon: Sun,
       previewBg: "bg-[#ffffff] text-slate-900",
-      previewBorder: "border-gray-100",
+      previewBorder: "border-border/50",
       accentColor: "bg-indigo-600",
     },
     {
@@ -269,7 +269,7 @@ export default function SettingsGallery() {
                         <div className={`h-2.5 w-2.5 rounded-full ${t.accentColor}`} />
                         <span className="text-xs font-bold opacity-80">{t.name}</span>
                       </div>
-                      <span className="text-[0.7rem] px-1 py-0.2 rounded bg-black/10 font-mono">CSS var</span>
+                      <span className="text-[0.7rem] px-1 py-0.2 rounded bg-surface/10 font-mono">CSS var</span>
                     </div>
 
                     {/* Simulated content metrics */}
@@ -288,7 +288,7 @@ export default function SettingsGallery() {
                   {/* Descriptions matching exact requirement mappings */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <IconComponent className={`h-4 w-4 ${isSelected ? "text-blue-500" : "text-gray-400"}`} />
+                      <IconComponent className={`h-4 w-4 ${isSelected ? "text-blue-500" : "text-muted"}`} />
                       <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
                         {t.name}
                       </h3>
@@ -302,11 +302,11 @@ export default function SettingsGallery() {
                 {/* Benefits / Sentiment blocks */}
                 <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${"border-border"}`}>
                   <div className="flex justify-between">
-                    <span className="text-gray-400 font-medium">Primary Benefit:</span>
+                    <span className="text-muted font-medium">Primary Benefit:</span>
                     <span className={`font-semibold text-right text-foreground`}>{t.benefit}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400 font-medium">User Sentiment:</span>
+                    <span className="text-muted font-medium">User Sentiment:</span>
                     <span className="text-indigo-400 font-semibold text-right">{t.sentiment}</span>
                   </div>
                 </div>
@@ -330,7 +330,7 @@ export default function SettingsGallery() {
 
         {/* Sub-grid A: Font Families Selection */}
         <div className="space-y-2">
-          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">A. Base Typeface Selector</span>
+          <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">A. Base Typeface Selector</span>
           <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
             <label className={`block text-sm font-bold mb-2 ${"text-foreground"}`}>System Font Style</label>
             <div className="relative">
@@ -355,16 +355,16 @@ export default function SettingsGallery() {
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <Type className={`h-4 w-4 text-gray-400`} />
+                <Type className={`h-4 w-4 text-muted`} />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3 font-medium">Choose a font family from standard system styles or loaded web fonts, just like in a word processor.</p>
+            <p className="text-xs text-muted mt-3 font-medium">Choose a font family from standard system styles or loaded web fonts, just like in a word processor.</p>
           </div>
         </div>
 
         {/* Sub-grid B: Custom Font Sizer */}
         <div className="space-y-2 pt-2">
-          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">B. Custom Numeric Sizing</span>
+          <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">B. Custom Numeric Sizing</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
@@ -379,7 +379,7 @@ export default function SettingsGallery() {
                   max="24" 
                   value={baseFontSize} 
                   onChange={(e) => setBaseFontSize(Number(e.target.value))}
-                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-1 bg-elevated rounded-lg appearance-none cursor-pointer"
                 />
                 <input 
                   type="number"
@@ -390,7 +390,7 @@ export default function SettingsGallery() {
                   className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2 font-medium">Controls the root scaling of the entire application.</p>
+              <p className="text-xs text-muted mt-2 font-medium">Controls the root scaling of the entire application.</p>
             </div>
 
             <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
@@ -405,7 +405,7 @@ export default function SettingsGallery() {
                   max="18" 
                   value={subtextFontSize} 
                   onChange={(e) => setSubtextFontSize(Number(e.target.value))}
-                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-1 bg-elevated rounded-lg appearance-none cursor-pointer"
                 />
                 <input 
                   type="number"
@@ -416,7 +416,7 @@ export default function SettingsGallery() {
                   className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2 font-medium">Controls the sizes of secondary labels and badges.</p>
+              <p className="text-xs text-muted mt-2 font-medium">Controls the sizes of secondary labels and badges.</p>
             </div>
 
           </div>
@@ -424,7 +424,7 @@ export default function SettingsGallery() {
 
         {/* Sub-grid C: Font Weight Intensity */}
         <div className="space-y-2 pt-2">
-          <span className="text-[0.8rem] font-bold tracking-wider text-gray-400 uppercase">C. Global Font Weight Intensity</span>
+          <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">C. Global Font Weight Intensity</span>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {weightProfilesList.map((w) => {
               const isSelected = fontWeightProfile === w.id;

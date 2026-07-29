@@ -102,7 +102,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                     {field.isRequired ? (
                       <span className="text-[10px] font-bold uppercase text-rose-500 bg-rose-500/10 px-2 py-1 rounded">Required</span>
                     ) : (
-                      <span className="text-[10px] font-bold uppercase text-gray-500 bg-gray-500/10 px-2 py-1 rounded">Optional</span>
+                      <span className="text-[10px] font-bold uppercase text-muted bg-gray-500/10 px-2 py-1 rounded">Optional</span>
                     )}
                   </AppTableCell>
                   <AppTableCell className={`px-6 py-4 leading-relaxed text-muted`}>{field.description}</AppTableCell>
@@ -130,7 +130,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                 <p className={`text-sm mt-1 leading-relaxed text-muted`}>{step.instruction}</p>
               </div>
               {idx < module.steps.length - 1 && (
-                <div className="absolute left-8 top-12 bottom-0 w-px bg-gray-200 dark:bg-surface/10 -ml-px h-8 hidden sm:block" />
+                <div className="absolute left-8 top-12 bottom-0 w-px bg-elevated dark:bg-surface/10 -ml-px h-8 hidden sm:block" />
               )}
             </div>
           ))}
@@ -154,7 +154,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                 <span className="font-semibold mr-1">Outcome:</span>
                 {result.outcome}
               </p>
-              <div className={`p-3 rounded-xl border text-[11px] font-mono leading-relaxed mt-auto bg-gray-800 text-gray-300 border-gray-900`}>
+              <div className={`p-3 rounded-xl border text-[11px] font-mono leading-relaxed mt-auto bg-surface text-muted border-border`}>
                 <span className="text-accent mr-2">$</span>
                 {result.technicalDetail}
               </div>

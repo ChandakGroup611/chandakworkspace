@@ -175,14 +175,14 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
             {loading ? (
               <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
             ) : allocations.length === 0 ? (
-              <div className="text-center p-8 text-gray-500 italic">No licenses allocated yet.</div>
+              <div className="text-center p-8 text-muted italic">No licenses allocated yet.</div>
             ) : (
               allocations.map(a => (
                 <div key={a.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural`}>
                   <div>
                     <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
-                    <div className="text-xs text-gray-500">{a.user_master?.email}</div>
-                    <div className="text-[10px] text-gray-400 mt-1">Allocated: {new Date(a.allocated_at).toLocaleDateString()}</div>
+                    <div className="text-xs text-muted">{a.user_master?.email}</div>
+                    <div className="text-[10px] text-muted mt-1">Allocated: {new Date(a.allocated_at).toLocaleDateString()}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {transferringId === a.id ? (
@@ -196,7 +196,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                             <option key={u.id} value={u.id}>{u.full_name}</option>
                           ))}
                         </select>
-                        <AppButton variant="ghost" size="sm" onClick={() => setTransferringId(null)} className="text-gray-500 hover:text-gray-700">Cancel</AppButton>
+                        <AppButton variant="ghost" size="sm" onClick={() => setTransferringId(null)} className="text-muted hover:text-subtle">Cancel</AppButton>
                       </div>
                     ) : (
                       <>
@@ -231,7 +231,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
         <AppCard className={`flex-1 flex flex-col theme-card-structural`}>
           <div className={`p-4 border-b bg-elevated border-border`}>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
                 type="text" 
                 placeholder="Search users to allocate..." 
@@ -245,13 +245,13 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
             {loading ? (
               <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
             ) : filteredUsers.length === 0 ? (
-              <div className="text-center p-8 text-gray-500 italic">No unassigned users found.</div>
+              <div className="text-center p-8 text-muted italic">No unassigned users found.</div>
             ) : (
               filteredUsers.map(u => (
                 <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-accent/50 transition-colors`}>
                   <div>
                     <div className="font-semibold text-sm">{u.full_name}</div>
-                    <div className="text-xs text-gray-500">{u.email}</div>
+                    <div className="text-xs text-muted">{u.email}</div>
                   </div>
                   <AppButton 
                     variant="primary" 

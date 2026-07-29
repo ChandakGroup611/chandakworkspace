@@ -63,7 +63,7 @@ export default function SessionManagement() {
         badge={<AppBadge variant="info">Governance</AppBadge>}
         actions={
           <div className="relative w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input 
               type="text" 
               placeholder="Search users or IP..." 
@@ -93,18 +93,18 @@ export default function SessionManagement() {
                 <AppTableRow>
                   <AppTableCell colSpan={6} className="text-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-accent mx-auto" />
-                    <p className="text-gray-500 mt-2">Loading active sessions...</p>
+                    <p className="text-muted mt-2">Loading active sessions...</p>
                   </AppTableCell>
                 </AppTableRow>
               ) : filteredSessions.length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={6} className="text-center py-12 text-gray-500">
+                  <AppTableCell colSpan={6} className="text-center py-12 text-muted">
                     No active sessions found matching your criteria.
                   </AppTableCell>
                 </AppTableRow>
               ) : (
                 filteredSessions.map(session => (
-                  <AppTableRow key={session.id} className="hover:bg-gray-50 dark:hover:bg-surface/[0.02]">
+                  <AppTableRow key={session.id} className="hover:bg-surface dark:hover:bg-surface/[0.02]">
                     <AppTableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-xs">
@@ -112,26 +112,26 @@ export default function SessionManagement() {
                         </div>
                         <div>
                           <div className="font-bold text-foreground text-sm">{session.user?.full_name || 'Unknown User'}</div>
-                          <div className="text-[11px] text-gray-500 font-mono">{session.user?.email || 'N/A'}</div>
+                          <div className="text-[11px] text-muted font-mono">{session.user?.email || 'N/A'}</div>
                         </div>
                       </div>
                     </AppTableCell>
                     <AppTableCell>
                       <div className="flex items-center gap-2">
-                        <Globe className="w-3.5 h-3.5 text-gray-400" />
+                        <Globe className="w-3.5 h-3.5 text-muted" />
                         <span className="font-mono text-xs">{session.ip_address || 'Unknown'}</span>
                       </div>
                     </AppTableCell>
                     <AppTableCell>
                       <div className="flex items-center gap-2">
-                        <MonitorSmartphone className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-xs text-gray-600 dark:text-gray-300 max-w-[200px] truncate" title={session.user_agent}>
+                        <MonitorSmartphone className="w-3.5 h-3.5 text-muted" />
+                        <span className="text-xs text-subtle dark:text-muted max-w-[200px] truncate" title={session.user_agent}>
                           {session.user_agent || 'Unknown Device'}
                         </span>
                       </div>
                     </AppTableCell>
                     <AppTableCell>
-                      <div className="text-xs text-gray-700 dark:text-gray-300">
+                      <div className="text-xs text-subtle dark:text-muted">
                         {new Date(session.login_time).toLocaleString()}
                       </div>
                     </AppTableCell>

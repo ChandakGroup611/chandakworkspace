@@ -135,13 +135,13 @@ function BoardColumn({ column, onClick }: { column: any, onClick: (req: any) => 
   });
 
   return (
-    <div className="flex flex-col w-[350px] min-w-[350px] bg-gray-50 dark:bg-surface/[0.02] rounded-2xl border border-gray-200 dark:border-white/5 h-full">
-      <div className="p-4 border-b border-gray-200 dark:border-white/5 flex items-center justify-between bg-surface dark:bg-[#0B0F19] rounded-t-2xl shrink-0 shadow-sm">
+    <div className="flex flex-col w-[350px] min-w-[350px] bg-surface dark:bg-surface/[0.02] rounded-2xl border border-border dark:border-white/5 h-full">
+      <div className="p-4 border-b border-border dark:border-white/5 flex items-center justify-between bg-surface dark:bg-[#0B0F19] rounded-t-2xl shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: column.color }} />
           <h3 className="font-bold text-[15px] text-foreground tracking-tight">{column.name}</h3>
         </div>
-        <div className="bg-gray-100 dark:bg-surface/10 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs font-bold">
+        <div className="bg-surface dark:bg-surface/10 text-subtle dark:text-muted px-2 py-0.5 rounded-full text-xs font-bold">
           {column.items.length}
         </div>
       </div>
@@ -154,8 +154,8 @@ function BoardColumn({ column, onClick }: { column: any, onClick: (req: any) => 
         </SortableContext>
         
         {column.items.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl m-2">
-            <span className="text-sm font-medium text-gray-400">Empty Queue</span>
+          <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-border dark:border-white/10 rounded-xl m-2">
+            <span className="text-sm font-medium text-muted">Empty Queue</span>
           </div>
         )}
       </div>
@@ -185,11 +185,11 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
 
 function ReqCard({ req }: { req: any }) {
   return (
-    <AppCard className="hover:shadow-lg hover:border-accent/40 transition-all group overflow-hidden bg-surface dark:bg-[#0f111a] border-gray-200 dark:border-white/10">
+    <AppCard className="hover:shadow-lg hover:border-accent/40 transition-all group overflow-hidden bg-surface dark:bg-[#0f111a] border-border dark:border-white/10">
       <div className="p-4">
         <div className="flex justify-between items-start mb-3 gap-2">
           <div className="flex items-center gap-2">
-            <GripVertical className="h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <GripVertical className="h-4 w-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="font-mono text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
               {req.code || req.requirement_code || req.id?.substring(0, 8)}
             </div>
@@ -206,20 +206,20 @@ function ReqCard({ req }: { req: any }) {
         </h4>
         
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Module:</span>
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">{req.module?.name || '-'}</span>
+          <span className="text-[10px] uppercase font-bold text-muted tracking-wider">Module:</span>
+          <span className="text-xs font-semibold text-subtle dark:text-muted truncate">{req.module?.name || '-'}</span>
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/5">
+        <div className="flex items-center justify-between pt-3 border-t border-border/50 dark:border-white/5">
           <div className="flex items-center gap-2">
              <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold" title={req.creator?.full_name || 'Requester'}>
                {(req.creator?.full_name || req.requester?.full_name || 'U').substring(0, 2).toUpperCase()}
              </div>
-             <div className="text-[10px] font-medium text-gray-500">{new Date(req.created_at).toLocaleDateString()}</div>
+             <div className="text-[10px] font-medium text-muted">{new Date(req.created_at).toLocaleDateString()}</div>
           </div>
           
-          <div className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 bg-gray-50 dark:bg-surface/5 rounded text-gray-600 dark:text-gray-400">
-             {req.approval_status?.includes('Pending') ? <Clock className="w-3.5 h-3.5 text-amber-500" /> : req.approval_status === 'Approved' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <AlertCircle className="w-3.5 h-3.5 text-gray-400" />}
+          <div className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 bg-surface dark:bg-surface/5 rounded text-subtle dark:text-muted">
+             {req.approval_status?.includes('Pending') ? <Clock className="w-3.5 h-3.5 text-amber-500" /> : req.approval_status === 'Approved' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <AlertCircle className="w-3.5 h-3.5 text-muted" />}
              {req.approval_status || 'Draft'}
           </div>
         </div>

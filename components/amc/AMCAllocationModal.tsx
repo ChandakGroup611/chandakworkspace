@@ -128,17 +128,17 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-surface/60 backdrop-blur-sm" onClick={onClose} />
       <AppCard className={`relative w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
             <h3 className="text-xl font-bold text-accent">License Allocation</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted mt-1">
               {allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'} Licenses Assigned
             </p>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
             <X className="h-5 w-5" />
           </AppButton>
         </div>
@@ -153,14 +153,14 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
               {loading ? (
                 <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
               ) : allocations.length === 0 ? (
-                <div className="text-center p-8 text-gray-500 italic">No licenses allocated yet.</div>
+                <div className="text-center p-8 text-muted italic">No licenses allocated yet.</div>
               ) : (
                 allocations.map(a => (
                   <div key={a.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural`}>
                     <div>
                       <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
-                      <div className="text-xs text-gray-500">{a.user_master?.email}</div>
-                      <div className="text-[10px] text-gray-400 mt-1">Allocated: {new Date(a.allocated_at).toLocaleDateString()}</div>
+                      <div className="text-xs text-muted">{a.user_master?.email}</div>
+                      <div className="text-[10px] text-muted mt-1">Allocated: {new Date(a.allocated_at).toLocaleDateString()}</div>
                     </div>
                     <AppButton 
                       variant="outline" 
@@ -181,7 +181,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
           <div className="flex-1 flex flex-col">
             <div className={`p-4 border-b bg-elevated border-border`}>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                 <input 
                   type="text" 
                   placeholder="Search users to allocate..." 
@@ -195,13 +195,13 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
               {loading ? (
                 <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
               ) : filteredUsers.length === 0 ? (
-                <div className="text-center p-8 text-gray-500 italic">No unassigned users found.</div>
+                <div className="text-center p-8 text-muted italic">No unassigned users found.</div>
               ) : (
                 filteredUsers.map(u => (
                   <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-accent/50 transition-colors`}>
                     <div>
                       <div className="font-semibold text-sm">{u.full_name}</div>
-                      <div className="text-xs text-gray-500">{u.email}</div>
+                      <div className="text-xs text-muted">{u.email}</div>
                     </div>
                     <AppButton 
                       variant="primary" 

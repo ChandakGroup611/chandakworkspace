@@ -118,11 +118,11 @@ export default function CustomFieldsConfigurator() {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Database className="h-4 w-4 text-accent animate-pulse" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-300">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
               Global Custom Fields Configuration Engine
             </h2>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             Define typed schema extension dictionaries mapped to JSONB storage layers directly in PostgreSQL backend records.
           </p>
         </div>
@@ -134,7 +134,7 @@ export default function CustomFieldsConfigurator() {
         {/* Left Side Span 4: Module selection tabs & form definition addition */}
         <div className="lg:col-span-4 space-y-6 flex flex-col">
           <AppCard className="p-4 space-y-3">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">
+            <span className="text-xs font-bold text-muted uppercase tracking-wider block">
               Target Entity Scope
             </span>
 
@@ -147,15 +147,15 @@ export default function CustomFieldsConfigurator() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveModule(tab.id)}
-                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural /[0.06] border-accent/40 text-white shadow-md font-bold" : "/[0.01] border-white/5 hover:border-white/10 text-gray-400 hover:text-gray-200" }`}
+                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural /[0.06] border-accent/40 text-white shadow-md font-bold" : "/[0.01] border-white/5 hover:border-white/10 text-muted hover:text-muted" }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <div className={`p-1.5 rounded-lg ${isActive ? "bg-accent text-white" : "bg-surface/5 text-gray-500"}`}>
+                      <div className={`p-1.5 rounded-lg ${isActive ? "bg-accent text-white" : "bg-surface/5 text-muted"}`}>
                         <IconComponent className="h-3.5 w-3.5" />
                       </div>
                       <span className="text-xs truncate">{tab.label}</span>
                     </div>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /5 text-gray-400 border-white/5">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /5 text-muted border-white/5">
                       {tab.count} fields
                     </span>
                   </AppButton>
@@ -172,7 +172,7 @@ export default function CustomFieldsConfigurator() {
 
             <form onSubmit={handleAddField} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-sm font-bold text-gray-400 block uppercase">Field Display Label</label>
+                <label className="text-sm font-bold text-muted block uppercase">Field Display Label</label>
                 <AppInput 
                   placeholder="e.g. Server Kernel Patch ID" 
                   value={newLabel}
@@ -187,7 +187,7 @@ export default function CustomFieldsConfigurator() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-bold text-gray-400 block uppercase">Internal Mapping Key</label>
+                <label className="text-sm font-bold text-muted block uppercase">Internal Mapping Key</label>
                 <AppInput 
                   placeholder="e.g. kernel_patch_id" 
                   value={newKey}
@@ -198,11 +198,11 @@ export default function CustomFieldsConfigurator() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-sm font-bold text-gray-400 block uppercase">Payload Type</label>
+                  <label className="text-sm font-bold text-muted block uppercase">Payload Type</label>
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg theme-card-structural /5 border-white/5 text-[14px] text-gray-200 focus:outline-none focus:border-accent/50"
+                    className="w-full h-10 px-3 rounded-lg theme-card-structural /5 border-white/5 text-[14px] text-muted focus:outline-none focus:border-accent/50"
                   >
                     <option value="text" className="bg-[#0f172a]">Text String</option>
                     <option value="number" className="bg-[#0f172a]">Numeric Scalar</option>
@@ -219,21 +219,21 @@ export default function CustomFieldsConfigurator() {
                       onChange={(e) => setNewRequired(e.target.checked)}
                       className="rounded accent-blue-500" 
                     />
-                    <span className="text-[0.8rem] font-bold text-gray-300">Mandatory</span>
+                    <span className="text-[0.8rem] font-bold text-muted">Mandatory</span>
                   </label>
                 </div>
               </div>
 
               {newType === "select" && (
                 <div className="space-y-1 animate-in fade-in duration-200">
-                  <label className="text-sm font-bold text-gray-400 block uppercase">Dropdown Options String Array</label>
+                  <label className="text-sm font-bold text-muted block uppercase">Dropdown Options String Array</label>
                   <AppInput 
                     placeholder="Comma-separated items..." 
                     value={newOptionsStr}
                     onChange={(e) => setNewOptionsStr(e.target.value)}
                     className="h-10 text-[14px]"
                   />
-                  <span className="text-[0.7rem] text-gray-500 block">Separate multiple lookup keys using standard commas.</span>
+                  <span className="text-[0.7rem] text-muted block">Separate multiple lookup keys using standard commas.</span>
                 </div>
               )}
 
@@ -253,9 +253,9 @@ export default function CustomFieldsConfigurator() {
                 <AppCardTitle className="text-foreground">
                   Active Dictionaries: <strong className="text-accent capitalize">{activeModule}</strong>
                 </AppCardTitle>
-                <p className="text-[0.8rem] text-gray-400">Values ingest seamlessly via runtime custom form mutators.</p>
+                <p className="text-[0.8rem] text-muted">Values ingest seamlessly via runtime custom form mutators.</p>
               </div>
-              <span className="text-xs font-mono font-bold theme-card-structural /5 px-2 py-0.5 rounded text-gray-400 border-white/5">
+              <span className="text-xs font-mono font-bold theme-card-structural /5 px-2 py-0.5 rounded text-muted border-white/5">
                 Target Schema: JSONB Map
               </span>
             </AppCardHeader>
@@ -279,7 +279,7 @@ export default function CustomFieldsConfigurator() {
                           <div className="space-y-0.5">
                             <span className="font-bold text-xs text-foreground block">{fItem.field_label}</span>
                             {fItem.field_type === "select" && fItem.options.length > 0 && (
-                              <span className="text-xs text-gray-500 italic block truncate max-w-[180px]">
+                              <span className="text-xs text-muted italic block truncate max-w-[180px]">
                                 Ops: {fItem.options.join(", ")}
                               </span>
                             )}
@@ -289,7 +289,7 @@ export default function CustomFieldsConfigurator() {
                           {fItem.field_key}
                         </AppTableCell>
                         <AppTableCell>
-                          <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /[0.03] text-gray-300 border-white/5 capitalize">
+                          <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /[0.03] text-muted border-white/5 capitalize">
                             {fItem.field_type}
                           </span>
                         </AppTableCell>
@@ -302,7 +302,7 @@ export default function CustomFieldsConfigurator() {
                           <AppButton variant="secondary"
                             type="button"
                             onClick={() => handleDeleteField(fItem.id)}
-                            className="p-1 rounded text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="p-1 rounded text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                             title="Drop field dictionary key"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -315,15 +315,15 @@ export default function CustomFieldsConfigurator() {
               </AppTableContainer>
 
               {filteredFields.length === 0 && (
-                <div className="text-center py-12 text-xs text-gray-500">
-                  Zero customized field definitions allocated to <strong className="text-gray-400">{activeModule}</strong> schemas.
+                <div className="text-center py-12 text-xs text-muted">
+                  Zero customized field definitions allocated to <strong className="text-muted">{activeModule}</strong> schemas.
                 </div>
               )}
             </div>
 
             <div className="p-4 theme-card-structural /[0.01] border-t border-white/5 space-y-2">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">End-to-End JSONB Data Capture Simulation</span>
-              <p className="text-[0.8rem] text-gray-500 leading-snug">
+              <span className="text-xs font-bold text-muted uppercase tracking-wider block">End-to-End JSONB Data Capture Simulation</span>
+              <p className="text-[0.8rem] text-muted leading-snug">
                 Records inside the active view render dynamic input strips matching these declared payload parameters. Storage calls append directly to PostgreSQL database tuples automatically.
               </p>
             </div>

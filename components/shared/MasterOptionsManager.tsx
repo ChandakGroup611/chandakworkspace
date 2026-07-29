@@ -36,15 +36,15 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm bg-surface/40">
       <div className="theme-card-structural shadow-2xl rounded-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between p-5 border-b border-border shrink-0 bg-gray-50/50 rounded-t-2xl">
+        <div className="flex items-center justify-between p-5 border-b border-border shrink-0 bg-surface/50 rounded-t-2xl">
           <h2 className="text-base font-black text-foreground flex items-center gap-2">
             <Settings className="w-5 h-5 text-accent" />
             Manage {title}
           </h2>
-          <AppButton variant="secondary" onClick={onClose} className="p-1.5 h-auto rounded-full hover:bg-black/5">
-            <X className="h-4 w-4 text-gray-500" />
+          <AppButton variant="secondary" onClick={onClose} className="p-1.5 h-auto rounded-full hover:bg-surface/5">
+            <X className="h-4 w-4 text-muted" />
           </AppButton>
         </div>
 
@@ -57,7 +57,7 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
 
         <div className="flex-1 overflow-y-auto p-2">
           {options.length === 0 ? (
-            <div className="text-center p-8 text-sm text-gray-500">No options found.</div>
+            <div className="text-center p-8 text-sm text-muted">No options found.</div>
           ) : (
             <ul className="space-y-1 p-2">
               {options.map((opt) => (
@@ -65,7 +65,7 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-foreground">{opt.name}</span>
                     {opt.industry_name && (
-                      <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Under: {opt.industry_name}</span>
+                      <span className="text-[10px] text-muted uppercase tracking-wider font-semibold">Under: {opt.industry_name}</span>
                     )}
                   </div>
                   <AppButton 

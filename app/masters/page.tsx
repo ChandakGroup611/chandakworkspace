@@ -514,7 +514,7 @@ export default function MastersPage() {
         "bg-surface text-foreground"
       }`}>
         <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-gray-500">
+        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
           Verifying Credentials...
         </span>
       </div>
@@ -530,7 +530,7 @@ export default function MastersPage() {
           <Lock className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view the Master Data Configuration Directory.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view the Master Data Configuration Directory.</p>
       </div>
     );
   }
@@ -573,7 +573,7 @@ export default function MastersPage() {
             <strong className="font-semibold block text-rose-300">Governance Integrity Notice:</strong>
             {errorAlert}
           </div>
-          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-gray-500 hover:text-white">
+          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-white">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -585,7 +585,7 @@ export default function MastersPage() {
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             <span>{successAlert}</span>
           </div>
-          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-gray-500 hover:text-white">
+          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-white">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -604,7 +604,7 @@ export default function MastersPage() {
               }`}>
                 Configuration Groups
               </span>
-              <span className="text-xs text-gray-500 font-mono font-semibold">{MASTER_TABLES.length} Registered</span>
+              <span className="text-xs text-muted font-mono font-semibold">{MASTER_TABLES.length} Registered</span>
             </div>
 
             {/* Category Tier Selector Tabs */}
@@ -659,7 +659,7 @@ export default function MastersPage() {
                       }`}>
                         ■ {groupCategory} CATEGORY
                       </span>
-                      <div className={`h-[1px] flex-1 bg-gray-200`} />
+                      <div className={`h-[1px] flex-1 bg-elevated`} />
                     </div>
 
                     {groupItems.map((tab) => {
@@ -674,11 +674,11 @@ export default function MastersPage() {
                             setSearchQuery("");
                           }}
                           className={`w-full p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-3 ${
-                            (isActive ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-surface border-gray-100 hover:border-gray-300 hover:bg-gray-50")
+                            (isActive ? "bg-accent/10 border-accent/30 shadow-sm" : "bg-surface border-border/50 hover:border-border hover:bg-surface")
                           }`}
                         >
                           <div className={`p-2 rounded-lg mt-0.5 ${
-                            (isActive ? "bg-accent/10 text-accent" : "bg-gray-100 text-muted")
+                            (isActive ? "bg-accent/10 text-accent" : "bg-surface text-muted")
                           }`}>
                             <IconComponent className="h-4 w-4 shrink-0" />
                           </div>
@@ -691,7 +691,7 @@ export default function MastersPage() {
                               </span>
                               {isActive && <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
                             </div>
-                            <p className="text-xs text-gray-500 font-medium line-clamp-1">{tab.desc}</p>
+                            <p className="text-xs text-muted font-medium line-clamp-1">{tab.desc}</p>
                             {tab.parentTable && (
                               <span className={`text-[0.65rem] font-mono px-1 py-0.2 rounded border inline-block mt-1 ${
                                 "text-accent bg-accent/10 border-accent/30"
@@ -717,25 +717,25 @@ export default function MastersPage() {
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-gray-50 dark:bg-surface/5 p-3 rounded-t-xl border-b border-gray-200 dark:border-white/10 flex flex-col gap-3 shadow-sm">
+            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-white/10 flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+                    <h2 className="text-sm font-bold text-foreground dark:text-white">
                       {currentConfig.label}
                     </h2>
                     <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider py-0 px-1.5 h-4 min-h-0 border border-accent/30">
                       {activeTab.replace(/_/g, ' ')}
                     </AppBadge>
                   </div>
-                  <p className="text-[10px] text-gray-500 font-medium">
+                  <p className="text-[10px] text-muted font-medium">
                     Active configuration choices currently live for staff use across the platform.
                   </p>
                 </div>
               </div>
 
               {/* Dynamic Quick Text Search bar */}
-              <div className="flex items-center pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
+              <div className="flex items-center pt-2 mt-1 border-t border-border dark:border-white/10">
                 <AppInput 
                   placeholder="Filter records by string parameters..." 
                   value={searchQuery}
@@ -751,7 +751,7 @@ export default function MastersPage() {
               {loading ? (
                 <div className="py-16 flex flex-col items-center justify-center space-y-3">
                   <RefreshCw className="h-6 w-6 animate-spin text-accent" />
-                  <span className="text-xs text-gray-500 font-medium">Resolving normalized records live from database schema...</span>
+                  <span className="text-xs text-muted font-medium">Resolving normalized records live from database schema...</span>
                 </div>
               ) : (
                 <>
@@ -807,7 +807,7 @@ export default function MastersPage() {
                               <AppTableCell>
                                 <div className="space-y-0.5">
                                   <span className={`font-mono text-xs font-bold block text-accent`}>{rec.code}</span>
-                                  <span className="text-[0.7rem] text-gray-500 font-mono block truncate max-w-[120px]">{rec.id}</span>
+                                  <span className="text-[0.7rem] text-muted font-mono block truncate max-w-[120px]">{rec.id}</span>
                                 </div>
                               </AppTableCell>
                               <AppTableCell>
@@ -859,7 +859,7 @@ export default function MastersPage() {
                                       </div>
                                     </div>
                                   ) : (
-                                    <span className="text-gray-500">-</span>
+                                    <span className="text-muted">-</span>
                                   )}
                                 </AppTableCell>
                               )}
@@ -890,7 +890,7 @@ export default function MastersPage() {
                                   className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
                                       ? ("bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100")
-                                      : ("bg-elevated border-border text-gray-400 line-through hover:bg-elevated")
+                                      : ("bg-elevated border-border text-muted line-through hover:bg-elevated")
                                   }`}
                                 >
                                   {rec.is_active ? "Active" : "Disabled"}
@@ -915,7 +915,7 @@ export default function MastersPage() {
                                     onClick={() => handleDelete(rec)}
                                     disabled={!hasPermission("MASTERS_DELETE")}
                                     className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      "bg-surface border-border text-gray-400 hover:text-rose-600 hover:border-rose-300"
+                                      "bg-surface border-border text-muted hover:text-rose-600 hover:border-rose-300"
                                     }`}
                                     title="Delete Record"
                                   >
@@ -934,12 +934,12 @@ export default function MastersPage() {
             </div>
 
             {/* Pagination / Context Footer */}
-            <div className="p-4 bg-surface/[0.005] border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500">
+            <div className="p-4 bg-surface/[0.005] border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
                 <span>Auditing active: all status updates automatically export JSONB snapshots.</span>
               </div>
-              <span className="text-gray-400 font-mono">Visible entities: {filteredDataset.length} of {records.length}</span>
+              <span className="text-muted font-mono">Visible entities: {filteredDataset.length} of {records.length}</span>
             </div>
           </AppCard>
         </div>
@@ -970,7 +970,7 @@ export default function MastersPage() {
               <AppButton variant="secondary" 
                 type="button" 
                 onClick={() => setShowModal(false)}
-                className="p-1.5 rounded-lg text-gray-500 hover:text-white"
+                className="p-1.5 rounded-lg text-muted hover:text-white"
               >
                 <X className="h-4 w-4" />
               </AppButton>
@@ -980,7 +980,7 @@ export default function MastersPage() {
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               {/* Code */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
                   Short Code <span className="text-rose-400">*</span>
                 </label>
                 <AppInput 
@@ -990,12 +990,12 @@ export default function MastersPage() {
                   className="font-mono text-xs uppercase"
                   required
                 />
-                <span className="text-[0.7rem] text-gray-500 block">A unique short abbreviation used to quickly reference this item.</span>
+                <span className="text-[0.7rem] text-muted block">A unique short abbreviation used to quickly reference this item.</span>
               </div>
 
               {/* Full Display Name */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
                   Display Name <span className="text-rose-400">*</span>
                 </label>
                 <AppInput 
@@ -1009,7 +1009,7 @@ export default function MastersPage() {
 
               {/* Description Context */}
               <div className="space-y-1.5">
-                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
                   Description & Internal Notes
                 </label>
                 <textarea 
@@ -1026,7 +1026,7 @@ export default function MastersPage() {
               {/* Color Assignment */}
               {(currentConfig.table === "status_master" || currentConfig.table === "priority_master") && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
                     Display Color <span className="text-rose-400">*</span>
                   </label>
                   <div className="flex items-center gap-3">
@@ -1042,7 +1042,7 @@ export default function MastersPage() {
                       className="font-mono text-xs w-32 uppercase"
                     />
                   </div>
-                  <span className="text-[0.7rem] text-gray-500 block">Globally used to style this tag across all dashboards and boards.</span>
+                  <span className="text-[0.7rem] text-muted block">Globally used to style this tag across all dashboards and boards.</span>
                 </div>
               )}
 
@@ -1062,7 +1062,7 @@ export default function MastersPage() {
                   >
                     {!currentConfig.parentRequired && <option value="" className={"bg-surface text-muted"}>-- Optional (Global Scope) --</option>}
                     {parentOptions.length === 0 ? (
-                      currentConfig.parentRequired && <option value="" className="bg-[#0A0D14] text-gray-500">-- No available parent records --</option>
+                      currentConfig.parentRequired && <option value="" className="bg-[#0A0D14] text-muted">-- No available parent records --</option>
                     ) : (
                       parentOptions.map(p => (
                         <option key={p.id} value={p.id} className={"bg-surface text-foreground"}>
@@ -1071,7 +1071,7 @@ export default function MastersPage() {
                       ))
                     )}
                   </select>
-                  <span className="text-[0.7rem] text-gray-500 block">Select the top-level parent record this item falls under.</span>
+                  <span className="text-[0.7rem] text-muted block">Select the top-level parent record this item falls under.</span>
                 </div>
               )}
 
@@ -1118,7 +1118,7 @@ export default function MastersPage() {
 
               {/* Operational Scope Flag (1=INFRA, 2=ERP) */}
               <div className="space-y-1.5 p-3 rounded-xl bg-surface/[0.02] border border-white/5">
-                <label className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-wider block">
+                <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
                   Operational Governance Scope <span className="text-rose-400">*</span>
                 </label>
                 <select
@@ -1134,7 +1134,7 @@ export default function MastersPage() {
                   <option value="e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3" className={"bg-surface"}>[Flag 3] OTHERS / GENERAL</option>
                   <option value="" className={"bg-surface"}>[Flag 0] UNIVERSAL / SHARED</option>
                 </select>
-                <span className="text-[0.7rem] text-gray-500 block">Determines which operational flow this master record appears in.</span>
+                <span className="text-[0.7rem] text-muted block">Determines which operational flow this master record appears in.</span>
               </div>
               {/* Custom asset tags */}
               {activeTab === "assets" && (

@@ -43,26 +43,26 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
   }, [userId]);
 
   return (
-    <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-6 rounded-xl animate-in fade-in-50">
+    <div className="absolute inset-0 bg-surface/80 backdrop-blur-md z-[200] flex items-center justify-center p-6 rounded-xl animate-in fade-in-50">
       <AppCard className={`w-full max-w-md p-6 shadow-2xl theme-card-structural border-accent/30`}>
         
-        <div className="flex items-center justify-between border-b pb-4 mb-5 border-gray-200 dark:border-white/5">
+        <div className="flex items-center justify-between border-b pb-4 mb-5 border-border dark:border-white/5">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-accent/10 rounded-lg">
               <Activity className="h-5 w-5 text-accent" />
             </div>
             <div>
               <h3 className={`font-bold text-accent`}>Workload Intelligence</h3>
-              <p className="text-xs text-gray-500">Capacity & bandwidth analysis</p>
+              <p className="text-xs text-muted">Capacity & bandwidth analysis</p>
             </div>
           </div>
-          <AppButton onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-surface/10 text-gray-400 transition-colors">
+          <AppButton onClick={onClose} className="p-1 rounded hover:bg-surface dark:hover:bg-surface/10 text-muted transition-colors">
             <X className="h-4 w-4" />
           </AppButton>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-xs text-gray-500 animate-pulse font-mono">
+          <div className="py-12 text-center text-xs text-muted animate-pulse font-mono">
             Analyzing operational bandwidth matrix...
           </div>
         ) : (
@@ -98,7 +98,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 mb-2" />
                 <span className="block text-2xl font-bold text-accent mb-1">{metrics.active_tasks}</span>
-                <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Active Directives</span>
+                <span className="text-xs text-muted uppercase tracking-wider font-bold">Active Directives</span>
               </div>
               <div className={`p-4 rounded-xl border bg-rose-50 border-rose-100`}>
                 <AlertTriangle className="h-4 w-4 text-rose-500 mb-2" />
@@ -108,7 +108,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <Clock className="h-4 w-4 text-accent mb-2" />
                 <span className="block text-2xl font-bold text-accent mb-1">{metrics.estimated_hours}h</span>
-                <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Estimated Load</span>
+                <span className="text-xs text-muted uppercase tracking-wider font-bold">Estimated Load</span>
               </div>
               <div className={`p-4 rounded-xl border flex flex-col justify-center bg-accent/10 border-blue-100`}>
                 <span className="text-xs text-accent dark:text-accent uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
@@ -119,7 +119,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             <AppButton 
               onClick={onClose}
               className={`w-full py-2 rounded-lg text-sm font-bold transition-colors ${
-                "bg-elevated text-muted hover:bg-gray-200"
+                "bg-elevated text-muted hover:bg-elevated"
               }`}
             >
               Close Analysis

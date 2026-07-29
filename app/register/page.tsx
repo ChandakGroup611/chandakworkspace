@@ -215,7 +215,7 @@ export default function RegisterPage() {
               <h2 className="text-3xl font-bold text-white mb-2">
                 Create an Account
               </h2>
-              <p className="text-gray-400 mb-4">
+              <p className="text-muted mb-4">
                 Register new personnel records to enable authenticated platform access.
               </p>
               
@@ -249,7 +249,7 @@ export default function RegisterPage() {
             <form onSubmit={handleRegistrationSubmit} className="space-y-6" autoComplete="off">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-muted block uppercase tracking-wider">
                     Full Name
                   </label>
                   <AppInput 
@@ -264,7 +264,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-muted block uppercase tracking-wider">
                     Email Address
                   </label>
                   <AppInput 
@@ -281,11 +281,11 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-muted block uppercase tracking-wider">
                     Department
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
                       <Building2 className="h-4 w-4" />
                     </span>
                     <select
@@ -305,11 +305,11 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-muted block uppercase tracking-wider">
                     Designation
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
                       <Briefcase className="h-4 w-4" />
                     </span>
                     <select
@@ -331,7 +331,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
+                <label className="text-sm font-bold text-muted block uppercase tracking-wider">
                   Identity Visual (Photo Upload)
                 </label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-white/20 bg-surface/[0.02]">
@@ -343,7 +343,7 @@ export default function RegisterPage() {
                     )}
                   </div>
                   <div className="flex-1 space-y-2">
-                    <p className="text-xs text-gray-400">Upload a professional portrait or choose a preset below.</p>
+                    <p className="text-xs text-muted">Upload a professional portrait or choose a preset below.</p>
                     <input 
                       type="file" 
                       accept="image/*"
@@ -382,7 +382,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-muted block uppercase tracking-wider">
                     Password
                   </label>
                   <AppInput 
@@ -397,7 +397,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-400 block uppercase tracking-wider">
+                  <label className="text-sm font-bold text-muted block uppercase tracking-wider">
                     Confirm Password
                   </label>
                   <AppInput 
@@ -437,7 +437,7 @@ export default function RegisterPage() {
 
             {/* Back navigation context */}
             <div className="mt-8 text-center">
-              <span className="text-sm font-medium text-gray-400">
+              <span className="text-sm font-medium text-muted">
                 Already have an account? <Link href="/login" className="text-accent font-semibold hover:underline transition-colors">Sign In</Link>
               </span>
             </div>

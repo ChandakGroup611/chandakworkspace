@@ -101,7 +101,7 @@ export default function LearningHubClient() {
         {selectedModule ? (
           <ModuleRenderer module={selectedModule} />
         ) : (
-          <div className={`flex flex-col items-center justify-center py-20 animate-in fade-in duration-1000 text-gray-400`}>
+          <div className={`flex flex-col items-center justify-center py-20 animate-in fade-in duration-1000 text-muted`}>
             <div className="relative">
               <GraduationCap className="h-24 w-24 opacity-20" />
               <div className="absolute inset-0 flex items-center justify-center">

@@ -9,8 +9,8 @@ export default function TaskLoading() {
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
       <div className="flex flex-col items-center space-y-1">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Decrypting Task Data...</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">Fetching operational intel</p>
+        <h3 className="text-lg font-bold text-foreground dark:text-white">Decrypting Task Data...</h3>
+        <p className="text-sm text-muted dark:text-muted font-mono">Fetching operational intel</p>
       </div>
     </div>
   );

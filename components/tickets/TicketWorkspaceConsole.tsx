@@ -358,7 +358,7 @@ export function TicketWorkspaceConsole({
                                   setIsLinking(false);
                                 }
                               }}
-                              className="p-3 border-b hover:bg-black/5 dark:hover:theme-card-structural /5 cursor-pointer transition-colors"
+                              className="p-3 border-b hover:bg-surface/5 dark:hover:theme-card-structural /5 cursor-pointer transition-colors"
                             >
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs font-bold text-pink-500">{t.code}</span>
@@ -613,7 +613,7 @@ export function TicketWorkspaceConsole({
         )}
 
         <div className="flex items-center justify-between">
-          <label className="text-sm font-bold uppercase tracking-wider text-gray-500">Ticket Remarks <span className="text-red-500">*</span></label>
+          <label className="text-sm font-bold uppercase tracking-wider text-muted">Ticket Remarks <span className="text-red-500">*</span></label>
           
           {/* Quick Actions */}
           {canEditFields && (
@@ -655,7 +655,7 @@ export function TicketWorkspaceConsole({
           placeholder={!canEditFields ? "Ticket is frozen/read-only." : "Add update notes or operational remarks..."}
         />
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-gray-500">Last updated: {ticket.updated_at ? new Date(ticket.updated_at).toLocaleString() : "Not yet"}</span>
+          <span className="text-xs text-muted">Last updated: {ticket.updated_at ? new Date(ticket.updated_at).toLocaleString() : "Not yet"}</span>
           {canEditFields && (
             <AppButton type="button" variant="primary" size="sm" onClick={commitChanges} disabled={isSaving || (Object.keys(pendingChanges).length > 0 && !updateRemark.trim())}>
               {isSaving ? "Saving..." : (Object.keys(pendingChanges).length > 0) ? "Commit Updates & Save Remark" : "Save Remarks"}
@@ -684,7 +684,7 @@ export function TicketWorkspaceConsole({
             
             <AppButton 
               type="button"
-              className="p-1 rounded-lg transition-colors hover:bg-black/5 dark:hover:theme-card-structural/10 text-muted-foreground"
+              className="p-1 rounded-lg transition-colors hover:bg-surface/5 dark:hover:theme-card-structural/10 text-muted-foreground"
             >
               {isHistoryCollapsed ? (
                 <ChevronDown className="h-4 w-4" />

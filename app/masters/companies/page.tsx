@@ -165,7 +165,7 @@ export default function CompanyMasterPage() {
   if (permsLoading) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-gray-50"
+        "bg-surface"
       }`}>
         <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
@@ -175,20 +175,20 @@ export default function CompanyMasterPage() {
   if (!hasPermission("COMPANIES_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-gray-50"
+        "bg-surface"
       }`}>
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Lock className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
-        <p className="text-xs text-gray-500">You do not have capabilities to view the Company Master.</p>
+        <p className="text-xs text-muted">You do not have capabilities to view the Company Master.</p>
       </div>
     );
   }
 
   return (
     <div className={`h-screen overflow-y-auto flex flex-col font-sans p-6 space-y-6 ${
-      "bg-gray-50"
+      "bg-surface"
     }`}>
       <div className="flex items-center justify-between pb-4 border-b border-white/5">
         <div className="space-y-1">
@@ -197,7 +197,7 @@ export default function CompanyMasterPage() {
             <h1 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Company Master</h1>
             <AppBadge variant="info">Global Enterprise</AppBadge>
           </div>
-          <p className="text-xs text-gray-500">Manage client engagements, sister organizations, and enterprise structures.</p>
+          <p className="text-xs text-muted">Manage client engagements, sister organizations, and enterprise structures.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -230,7 +230,7 @@ export default function CompanyMasterPage() {
       <AppCard className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <AppInput 
               placeholder="Search by code or name..." 
               value={searchQuery}
@@ -238,7 +238,7 @@ export default function CompanyMasterPage() {
               className="pl-9"
             />
           </div>
-          <span className="text-xs text-gray-500 font-semibold">{filteredData.length} records found</span>
+          <span className="text-xs text-muted font-semibold">{filteredData.length} records found</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -261,10 +261,10 @@ export default function CompanyMasterPage() {
                   <AppTableCell className="py-3 px-4">
                     <div className="flex flex-col">
                       <span className={`text-sm font-bold ${"text-foreground"}`}>{c.name}</span>
-                      <span className="text-xs text-gray-500">{c.short_name}</span>
+                      <span className="text-xs text-muted">{c.short_name}</span>
                     </div>
                   </AppTableCell>
-                  <AppTableCell className="py-3 px-4 text-xs text-gray-400">
+                  <AppTableCell className="py-3 px-4 text-xs text-muted">
                     <div className="flex flex-col">
                       <span>{c.email}</span>
                       <span>{c.contact}</span>
@@ -283,7 +283,7 @@ export default function CompanyMasterPage() {
                       <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-accent hover:bg-accent/10 transition-colors">
                         Edit
                       </AppButton>
-                      <AppButton variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
+                      <AppButton variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </AppButton>
                     </div>
@@ -292,7 +292,7 @@ export default function CompanyMasterPage() {
               ))}
               {filteredData.length === 0 && (
                 <AppTableRow>
-                  <AppTableCell colSpan={5} className="py-12 text-center text-sm text-gray-500">
+                  <AppTableCell colSpan={5} className="py-12 text-center text-sm text-muted">
                     No company records found. Ensure database migrations are synced.
                   </AppTableCell>
                 </AppTableRow>
@@ -303,39 +303,39 @@ export default function CompanyMasterPage() {
       </AppCard>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
+        <div className="fixed inset-0 z-50 bg-surface/60 backdrop-blur-sm flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
           <AppCard className="w-full max-w-xl p-6 shadow-2xl border-accent/20">
             <h2 className="text-xl font-bold text-foreground mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Company Code</label>
+                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Company Code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editId ? formCode : "[Auto-Generated]"} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Company Name *</label>
+                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Company Name *</label>
                   <AppInput required placeholder="Acme Corporation" value={formName} onChange={e => setFormName(e.target.value)} />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Short Name</label>
+                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Short Name</label>
                   <AppInput placeholder="Acme" value={formShortName} onChange={e => setFormShortName(e.target.value)} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Email Address</label>
+                  <label className="text-sm uppercase tracking-wider text-muted font-bold">Email Address</label>
                   <AppInput type="email" placeholder="contact@acme.com" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Contact Number</label>
+                <label className="text-sm uppercase tracking-wider text-muted font-bold">Contact Number</label>
                 <AppInput placeholder="+1 (555) 000-0000" value={formContact} onChange={e => setFormContact(e.target.value)} />
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Physical Address</label>
+                <label className="text-sm uppercase tracking-wider text-muted font-bold">Physical Address</label>
                 <textarea 
                   className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
                   rows={2}
@@ -345,7 +345,7 @@ export default function CompanyMasterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm uppercase tracking-wider text-gray-400 font-bold">Remarks</label>
+                <label className="text-sm uppercase tracking-wider text-muted font-bold">Remarks</label>
                 <textarea 
                   className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
                   rows={2}

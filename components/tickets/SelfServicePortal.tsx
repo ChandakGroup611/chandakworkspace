@@ -51,7 +51,7 @@ export function SelfServicePortal() {
     const lower = statusName?.toLowerCase() || '';
     if (lower.includes('resolv') || lower.includes('clos')) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
     if (lower.includes('progress') || lower.includes('doing')) return "bg-accent/10 text-accent border-accent/20";
-    return "bg-gray-500/10 text-gray-600 border-gray-500/20";
+    return "bg-gray-500/10 text-subtle border-gray-500/20";
   };
 
   return (
@@ -73,26 +73,26 @@ export function SelfServicePortal() {
       />
       <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full gap-6">
         
-        <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-gray-200 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-border dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">How can we help you today?</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Track your existing requests or submit a new one.</p>
+            <h2 className="text-lg font-bold text-foreground dark:text-white">How can we help you today?</h2>
+            <p className="text-sm text-muted dark:text-muted">Track your existing requests or submit a new one.</p>
           </div>
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <input 
               type="text"
               placeholder="Search your tickets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-surface/20 border border-border dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 theme-card-structural dark:bg-[#1a1c23] rounded-2xl shadow-sm border-gray-200 dark:border-white/5 overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-gray-200 dark:border-white/5">
-            <h3 className="font-bold text-gray-800 dark:text-gray-200">Recent Requests</h3>
+        <div className="flex-1 min-h-0 theme-card-structural dark:bg-[#1a1c23] rounded-2xl shadow-sm border-border dark:border-white/5 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border dark:border-white/5">
+            <h3 className="font-bold text-foreground dark:text-muted">Recent Requests</h3>
           </div>
           
           <div className="flex-1 overflow-y-auto">
@@ -114,7 +114,7 @@ export function SelfServicePortal() {
                   </AppTableHeader>
                   <AppTableBody>
                     {tickets.map(ticket => (
-                      <AppTableRow key={ticket.dbId} onClick={() => router.push(`/tickets/${ticket.dbId}`)} className="cursor-pointer group hover:bg-gray-50 dark:hover:bg-surface/5">
+                      <AppTableRow key={ticket.dbId} onClick={() => router.push(`/tickets/${ticket.dbId}`)} className="cursor-pointer group hover:bg-surface dark:hover:bg-surface/5">
                         <AppTableCell className="font-mono text-xs font-bold text-accent dark:text-accent">
                           {ticket.id}
                         </AppTableCell>
@@ -126,7 +126,7 @@ export function SelfServicePortal() {
                             {ticket.statusObj?.name || "Unknown"}
                           </span>
                         </AppTableCell>
-                        <AppTableCell className="text-xs text-gray-500 flex items-center gap-1">
+                        <AppTableCell className="text-xs text-muted flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {new Date(ticket.created_at).toLocaleDateString()}
                         </AppTableCell>
@@ -141,7 +141,7 @@ export function SelfServicePortal() {
                 </AppTable>
               </AppTableContainer>
             ) : (
-              <div className="flex flex-col items-center justify-center h-48 text-gray-500 gap-3">
+              <div className="flex flex-col items-center justify-center h-48 text-muted gap-3">
                 <MessageSquare className="h-8 w-8 opacity-20" />
                 <span className="text-sm">You haven't submitted any requests yet.</span>
                 <AppButton variant="outline" size="sm" onClick={() => setShowWizard(true)}>Create One Now</AppButton>

@@ -148,15 +148,15 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       {isCreatingSprint && (
         <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-accent/10/50 border-indigo-100`}>
           <div className="space-y-1.5 flex-1">
-            <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Sprint Name</label>
+            <label className="text-sm font-bold text-muted uppercase tracking-wider">Sprint Name</label>
             <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
-            <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+            <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date</label>
             <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
-            <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">End Date</label>
+            <label className="text-sm font-bold text-muted uppercase tracking-wider">End Date</label>
             <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
           </div>
           <div className="flex gap-2 h-9">
@@ -183,7 +183,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 onDragStart={(e) => handleDragStart(e, t.id)}
                 className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 theme-card-structural shadow-sm`}
               >
-                <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />
                 <div>
                   <div className="text-xs font-bold">{t.title || t.subject}</div>
                   <div 
@@ -200,7 +200,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
               </div>
             ))}
             {filteredTasks.filter(t => !t.sprint_id).length === 0 && (
-              <div className="p-4 text-center text-xs text-gray-500 border border-dashed rounded-lg">Backlog is empty</div>
+              <div className="p-4 text-center text-xs text-muted border border-dashed rounded-lg">Backlog is empty</div>
             )}
           </div>
         </div>
@@ -238,7 +238,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                     />
                   </div>
                   <div className="flex justify-end gap-1">
-                    <AppButton variant="secondary" onClick={() => setEditingSprintId(null)} className="p-1 text-gray-500 hover:bg-gray-200 rounded transition-colors"><X className="h-3.5 w-3.5" /></AppButton>
+                    <AppButton variant="secondary" onClick={() => setEditingSprintId(null)} className="p-1 text-muted hover:bg-elevated rounded transition-colors"><X className="h-3.5 w-3.5" /></AppButton>
                     <AppButton variant="secondary" onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} className="p-1 text-emerald-600 hover:bg-emerald-100 rounded transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></AppButton>
                   </div>
                 </div>
@@ -253,13 +253,13 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                         setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
                         setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
                       }} 
-                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-gray-400 hover:theme-input-structural hover:text-accent`}
+                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-muted hover:theme-input-structural hover:text-accent`}
                       title="Edit Sprint"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </AppButton>
                   </div>
-                  <div className="text-[10px] text-gray-500 mt-0.5">
+                  <div className="text-[10px] text-muted mt-0.5">
                     {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : '?'} - {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : '?'}
                   </div>
                 </>
@@ -273,7 +273,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   onDragStart={(e) => handleDragStart(e, t.id)}
                   className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 theme-card-structural shadow-sm`}
                 >
-                  <GripVertical className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                  <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />
                   <div>
                     <div className="text-xs font-bold">{t.title || t.subject}</div>
                     <div 
@@ -290,7 +290,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 </div>
               ))}
               {filteredTasks.filter(t => t.sprint_id === sprint.id).length === 0 && (
-                <div className="p-4 text-center text-xs text-gray-500 border border-dashed rounded-lg">Drag tasks here</div>
+                <div className="p-4 text-center text-xs text-muted border border-dashed rounded-lg">Drag tasks here</div>
               )}
             </div>
           </div>

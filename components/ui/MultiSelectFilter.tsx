@@ -50,7 +50,7 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
           type="button"
           className={cn(
             iconOnly 
-              ? "flex items-center justify-center p-1 rounded-sm hover:bg-accent/10 text-gray-400 hover:text-accent data-[active=true]:text-accent data-[active=true]:bg-accent/10 transition-colors" 
+              ? "flex items-center justify-center p-1 rounded-sm hover:bg-accent/10 text-muted hover:text-accent data-[active=true]:text-accent data-[active=true]:bg-accent/10 transition-colors" 
               : "tb-btn flex items-center justify-between gap-2 px-3 py-1.5 min-w-[140px] text-sm bg-surface hover:bg-elevated border border-border rounded-md transition-colors"
           )}
           data-active={selectedValues.length > 0}
