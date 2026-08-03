@@ -34,8 +34,10 @@ export default function LoginPage() {
       if (typeof window === "undefined") return;
       
       const searchParams = new URLSearchParams(window.location.search);
-      const isLogout = searchParams.get("action") === "logout";
+      const isLogout = searchParams.get("action") === "logout" || searchParams.get("reason") === "logout";
       const isTimeout = searchParams.get("reason") === "timeout";
+      const isTerminated = searchParams.get("reason") === "terminated";
+      const isConcurrent = searchParams.get("reason") === "concurrent_login";
       const urlError = searchParams.get("error");
       const urlErrorDesc = searchParams.get("error_description");
 
@@ -54,12 +56,26 @@ export default function LoginPage() {
         }
         setSuccessMsg("You have been successfully logged out.");
         window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (isTerminated) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
+        }
+        setErrorMsg("Your session was terminated by an administrator or remotely.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (isConcurrent) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
+        }
+        setErrorMsg("Your account was logged into on another device.");
+        window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isTimeout) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
         }
-        setErrorMsg("Your session expired due to inactivity. Please sign in again.");
+        setErrorMsg("Your session expired. Please sign in again.");
         window.history.replaceState({}, document.title, window.location.pathname);
       } else {
         const { data: { session } } = await supabase.auth.getSession();
@@ -94,17 +110,21 @@ export default function LoginPage() {
 
       if (data.user) {
         try {
+          const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
           const { data: sessionData } = await supabase
             .from("active_sessions")
-            .select("last_active_at")
+            .select("session_token, last_active_at")
             .eq("user_id", data.user.id)
-            .single();
+            .maybeSingle();
 
           if (sessionData && sessionData.last_active_at) {
             const lastActive = new Date(sessionData.last_active_at).getTime();
             const now = Date.now();
-            if (now - lastActive < 5 * 60 * 1000) {
-              const proceed = window.confirm("Your ID is already logged in on another device. Do you want to continue? (This will log out the other device)");
+            const isRecent = (now - lastActive) < 5 * 60 * 1000;
+            const isDifferentSession = currentToken ? sessionData.session_token !== currentToken : true;
+
+            if (isRecent && isDifferentSession) {
+              const proceed = window.confirm("Your account is currently active on another device or browser. Continuing will terminate your other session. Do you want to continue?");
               if (!proceed) {
                 await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
                 setLoading(false);

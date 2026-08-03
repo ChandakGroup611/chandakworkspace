@@ -4,6 +4,8 @@ import { useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
+import { registerUserSession } from "@/lib/actions/iam";
+
 // =========================================================================
 // Production-Grade Session Manager
 //
@@ -13,6 +15,7 @@ import { useRouter } from "next/navigation";
 // 3. Tab close — navigator.sendBeacon for reliable close detection
 // 4. Session resume — on tab reopen, checks JWT validity instead of fragile localStorage
 // 5. Cross-tab coordination — BroadcastChannel so multiple tabs share one heartbeat
+// 6. Multi-device / Concurrent login protection via Realtime active_sessions
 // =========================================================================
 
 const HEARTBEAT_INTERVAL_MS = 60_000; // 60 seconds
@@ -76,8 +79,7 @@ export default function ClientSessionManager() {
       } catch (e) {}
 
     } catch (err) {
-      // Network error — silently ignore; the server will mark user offline
-      // after 2 minutes of no heartbeats anyway
+      // Network error — silently ignore
     }
   }, [router]);
 
@@ -167,7 +169,6 @@ export default function ClientSessionManager() {
           startHeartbeat();
         } else {
           // Tab is now hidden — stop heartbeats to save resources
-          // The server will see no heartbeats and eventually mark user as offline
           stopHeartbeat();
         }
       } catch (err) {
@@ -178,17 +179,9 @@ export default function ClientSessionManager() {
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // ── 3. User activity tracking ───────────────────────────────
-    // Any user interaction resets the idle timer
-    // (inactivityTimerRef is declared at the top of the component)
-
-    const resetInactivityTimer = () => {
-      // Inactivity timeout functionality has been removed per user request.
-    };
-
     const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
     const handleActivity = () => {
       lastActivityRef.current = Date.now();
-      resetInactivityTimer();
 
       // Broadcast activity to other tabs
       try {
@@ -198,9 +191,6 @@ export default function ClientSessionManager() {
         });
       } catch {}
     };
-
-    // Initial timer setup
-    resetInactivityTimer();
 
     activityEvents.forEach((evt) => {
       window.addEventListener(evt, handleActivity, { passive: true });
@@ -223,31 +213,9 @@ export default function ClientSessionManager() {
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     // ── 5. Initial session check & heartbeat start ──────────────
-    // Enforce "Logout when all tabs closed" using BroadcastChannel
-    const tabTracker = new BroadcastChannel("adios_tab_tracker");
-    let isFirstTab = true;
-
-    tabTracker.onmessage = (e) => {
-      if (e.data === "ping") tabTracker.postMessage("pong");
-      else if (e.data === "pong") isFirstTab = false;
-    };
-    tabTracker.postMessage("ping");
-
     const initTimer = setTimeout(async () => {
       try {
         const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
-        
-        // If no other tabs responded and this tab has no session state, all tabs were closed!
-        if (isFirstTab && !sessionStorage.getItem("app_tab_session_active")) {
-          if (!isAuthPage) {
-            console.log("[SessionManager] All tabs were closed. Forcing fresh login.");
-            const supabase = createClient();
-            await supabase.auth.signOut();
-            window.location.href = "/login?reason=session_cleared";
-            return;
-          }
-        }
-        sessionStorage.setItem("app_tab_session_active", "true");
         
         const isValid = await checkSessionValidity();
         if (!isValid) {
@@ -258,11 +226,11 @@ export default function ClientSessionManager() {
           return;
         }
 
-        // Initialize session token for active_sessions tracking
-        let sessionToken = sessionStorage.getItem("app_session_token");
+        // Shared session token across all tabs in this browser instance
+        let sessionToken = localStorage.getItem("app_session_token");
         if (!sessionToken) {
           sessionToken = crypto.randomUUID();
-          sessionStorage.setItem("app_session_token", sessionToken);
+          localStorage.setItem("app_session_token", sessionToken);
         }
 
         try {
@@ -270,16 +238,8 @@ export default function ClientSessionManager() {
           const { data: { user } } = await supabase.auth.getUser();
           
           if (user) {
-            // Send initial session token to active_sessions
-            const { error } = await supabase.from("active_sessions").upsert({
-              user_id: user.id,
-              session_token: sessionToken,
-              last_active_at: new Date().toISOString()
-            }, { onConflict: "user_id" });
-            
-            if (error) {
-              console.error("Failed to update active sessions:", JSON.stringify(error, null, 2));
-            }
+            // Register current session with user_master, active_sessions, and auth_session_logs
+            await registerUserSession(sessionToken, navigator.userAgent);
 
             // Subscribe to concurrent login changes
             const channelName = `active_sessions_${user.id}_${Math.random().toString(36).substring(7)}`;
@@ -290,17 +250,17 @@ export default function ClientSessionManager() {
                 { event: "*", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },
                 (payload: any) => {
                   if (payload.eventType === "DELETE") {
-                    // Another tab logged out
-                    supabase.auth.signOut().catch(()=>{}).finally(() => {
-                      window.location.href = "/login?reason=logout";
+                    // Admin killed session from IAM
+                    supabase.auth.signOut().catch(() => {}).finally(() => {
+                      window.location.href = "/login?reason=terminated";
                     });
                   } else if (payload.eventType === "UPDATE") {
                     const newSessionToken = payload.new?.session_token;
                     if (newSessionToken && newSessionToken !== sessionToken) {
                       // Another device logged in and took over the session
                       alert("You have been logged out because your account was logged in on another device.");
-                      supabase.auth.signOut().catch(()=>{}).finally(() => {
-                        window.location.href = "/login";
+                      supabase.auth.signOut().catch(() => {}).finally(() => {
+                        window.location.href = "/login?reason=concurrent_login";
                       });
                     }
                   }
@@ -312,7 +272,6 @@ export default function ClientSessionManager() {
             (window as any).__active_session_channel = channel;
           }
         } catch (e) {
-          // active_sessions table might not exist yet if migration pending
           console.error("Concurrent session tracking error:", e);
         }
 
@@ -322,13 +281,12 @@ export default function ClientSessionManager() {
       } catch (err) {
         console.error("[SessionManager] Initialization error:", err);
       }
-    }, 300); // 300ms delay to wait for pongs
+    }, 100);
 
     // ── Cleanup ─────────────────────────────────────────────────
     return () => {
       isMountedRef.current = false;
       clearTimeout(initTimer);
-      tabTracker.close();
       stopHeartbeat();
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
 

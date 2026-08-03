@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 
 /**
@@ -29,14 +29,11 @@ async function checkIAMAuthorization(requiredPermission?: string) {
       throw new Error("Unauthorized: You do not have capabilities to perform this IAM operation.");
     }
   } catch (err: any) {
-    const msg = err?.message || String(err);
-    console.error(`[checkIAMAuthorization] Error: ${msg}`);
-    throw new Error(msg);
+    throw new Error(err.message || "IAM Authorization failed");
   }
 }
 
 export async function fetchRoles() {
-  noStore();
   await checkIAMAuthorization("IAM_VIEW");
   const supabase = supabaseAdmin;
   
@@ -44,7 +41,6 @@ export async function fetchRoles() {
     .from("roles")
     .select("*, department:departments(name)")
     .eq("is_deleted", false)
-    .order("is_system", { ascending: false })
     .order("name", { ascending: true });
     
   if (error) {
@@ -55,7 +51,6 @@ export async function fetchRoles() {
 }
 
 export async function fetchPermissions() {
-  noStore();
   await checkIAMAuthorization("IAM_VIEW");
   const supabase = supabaseAdmin;
   
@@ -63,7 +58,7 @@ export async function fetchPermissions() {
     .from("permissions")
     .select("*")
     .order("module", { ascending: true })
-    .order("submodule", { ascending: true });
+    .order("name", { ascending: true });
     
   if (error) {
     console.error("[IAM] Error fetching permissions:", error);
@@ -73,11 +68,9 @@ export async function fetchPermissions() {
 }
 
 export async function fetchRolePermissions(roleId: string) {
-  noStore();
   try {
     await checkIAMAuthorization("IAM_VIEW");
   } catch (err) {
-    require('fs').appendFileSync('iam_debug.log', `Auth Error: ${err}\n`);
     return [];
   }
   const supabase = supabaseAdmin;
@@ -88,12 +81,10 @@ export async function fetchRolePermissions(roleId: string) {
     .eq("role_id", roleId);
     
   if (error) {
-    require('fs').appendFileSync('iam_debug.log', `DB Error: ${JSON.stringify(error)}\n`);
     console.error("[IAM] Error fetching role permissions:", error);
     return [];
   }
   const perms = data.map(rp => rp.permission_id);
-  require('fs').appendFileSync('iam_debug.log', `Fetched for ${roleId}: ${JSON.stringify(perms)}\n`);
   return perms;
 }
 
@@ -250,14 +241,126 @@ export async function fetchDepartments() {
   return data || [];
 }
 
+/**
+ * Register or update active user session with device metadata and log
+ */
+export async function registerUserSession(sessionToken: string, userAgent?: string) {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) return { success: false, error: "Unauthenticated" };
+    
+    const headersList = await headers();
+    const ipAddress = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                      headersList.get("x-real-ip") || 
+                      "127.0.0.1";
+    const clientUserAgent = userAgent || headersList.get("user-agent") || "Unknown Device";
+    
+    const now = new Date().toISOString();
+    
+    // 1. Upsert into active_sessions table
+    await supabaseAdmin
+      .from("active_sessions")
+      .upsert({
+        user_id: user.id,
+        session_token: sessionToken,
+        last_active_at: now
+      }, { onConflict: "user_id" });
+      
+    // 2. Mark previous different session tokens for this user as inactive in auth_session_logs
+    await supabaseAdmin
+      .from("auth_session_logs")
+      .update({ is_active: false })
+      .eq("user_id", user.id)
+      .neq("session_token", sessionToken);
+
+    // 3. Upsert / insert active session log
+    const { data: existingLog } = await supabaseAdmin
+      .from("auth_session_logs")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("session_token", sessionToken)
+      .maybeSingle();
+
+    if (existingLog) {
+      await supabaseAdmin
+        .from("auth_session_logs")
+        .update({
+          ip_address: ipAddress,
+          user_agent: clientUserAgent,
+          last_activity: now,
+          is_active: true
+        })
+        .eq("id", existingLog.id);
+    } else {
+      await supabaseAdmin
+        .from("auth_session_logs")
+        .insert([{
+          user_id: user.id,
+          session_token: sessionToken,
+          ip_address: ipAddress,
+          user_agent: clientUserAgent,
+          login_time: now,
+          last_activity: now,
+          is_active: true
+        }]);
+    }
+    
+    // 4. Update user_master last_login_at and last_active_at
+    await supabaseAdmin
+      .from("user_master")
+      .update({
+        last_login_at: now,
+        last_active_at: now
+      })
+      .eq("id", user.id);
+      
+    return { success: true };
+  } catch (err: any) {
+    console.error("[IAM] registerUserSession error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Check if the user is actively logged in on another device (within last 5 minutes with a different session token)
+ */
+export async function checkActiveSessionConflict(userId: string, currentSessionToken?: string) {
+  try {
+    const { data: activeSession } = await supabaseAdmin
+      .from("active_sessions")
+      .select("session_token, last_active_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+      
+    if (!activeSession || !activeSession.last_active_at) {
+      return { hasConflict: false };
+    }
+    
+    const lastActive = new Date(activeSession.last_active_at).getTime();
+    const now = Date.now();
+    const isRecent = (now - lastActive) < 5 * 60 * 1000; // Active within last 5 minutes
+    const isDifferentSession = currentSessionToken ? activeSession.session_token !== currentSessionToken : true;
+    
+    return {
+      hasConflict: isRecent && isDifferentSession,
+      lastActiveAt: activeSession.last_active_at
+    };
+  } catch (err) {
+    return { hasConflict: false };
+  }
+}
+
 export async function fetchActiveSessions() {
   await checkIAMAuthorization("IAM_VIEW");
   const supabase = supabaseAdmin;
   
-  // Join with user_master (or user_profiles) to get user details
+  // Join with user_master to get user details
   const { data, error } = await supabase
     .from("auth_session_logs")
-    .select("*, user:user_profiles(full_name, email, employee_code)")
+    .select("*, user:user_master(id, full_name, email, user_code)")
     .eq("is_active", true)
     .order("last_activity", { ascending: false });
     
@@ -272,6 +375,12 @@ export async function killSession(sessionId: string) {
   await checkIAMAuthorization("IAM_MANAGE");
   const supabase = supabaseAdmin;
   
+  const { data: sessionLog } = await supabase
+    .from("auth_session_logs")
+    .select("user_id, session_token")
+    .eq("id", sessionId)
+    .maybeSingle();
+    
   const { error } = await supabase
     .from("auth_session_logs")
     .update({ is_active: false })
@@ -281,10 +390,11 @@ export async function killSession(sessionId: string) {
     throw new Error(`Failed to kill session: ${error.message}`);
   }
   
-  // In a real implementation, we would also revoke the JWT or delete from active_sessions table if it exists
-  const { data: sessionLog } = await supabase.from("auth_session_logs").select("user_id, session_token").eq("id", sessionId).single();
   if (sessionLog) {
-     await supabase.from("active_sessions").delete().eq("user_id", sessionLog.user_id).eq("session_token", sessionLog.session_token);
+    await supabase
+      .from("active_sessions")
+      .delete()
+      .eq("user_id", sessionLog.user_id);
   }
   
   revalidatePath("/iam/sessions");

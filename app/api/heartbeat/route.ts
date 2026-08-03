@@ -73,6 +73,18 @@ export async function POST(request: NextRequest) {
         })
         .eq("id", user.id);
 
+      // Also update active_sessions and auth_session_logs
+      await supabaseAdmin
+        .from("active_sessions")
+        .update({ last_active_at: forcedOfflineTime })
+        .eq("user_id", user.id);
+
+      await supabaseAdmin
+        .from("auth_session_logs")
+        .update({ last_activity: now, is_active: false })
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
       if (error) {
         console.error("[Heartbeat] tab_close update error:", error.message);
         return NextResponse.json(
@@ -81,11 +93,22 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      // Regular heartbeat — only update last_active_at
+      // Regular heartbeat — update last_active_at in user_master, active_sessions, and auth_session_logs
       const { error } = await supabaseAdmin
         .from("user_master")
         .update({ last_active_at: now })
         .eq("id", user.id);
+
+      await supabaseAdmin
+        .from("active_sessions")
+        .update({ last_active_at: now })
+        .eq("user_id", user.id);
+
+      await supabaseAdmin
+        .from("auth_session_logs")
+        .update({ last_activity: now, is_active: true })
+        .eq("user_id", user.id)
+        .eq("is_active", true);
 
       if (error) {
         console.error("[Heartbeat] update error:", error.message);
