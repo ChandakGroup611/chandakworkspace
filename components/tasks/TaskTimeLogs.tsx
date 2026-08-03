@@ -7,7 +7,7 @@ import { Clock, Plus, Loader2 } from "lucide-react";
 import { logTaskTime, getTaskDetails } from "@/lib/actions/tasks";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
-export default function TaskTimeLogs({ taskId }: { taskId: string }) {
+export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; onLogAdded?: () => void }) {
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
   
@@ -44,6 +44,7 @@ export default function TaskTimeLogs({ taskId }: { taskId: string }) {
       setLogs([...logs, newLog]);
       setHours("");
       setDescription("");
+      if (onLogAdded) onLogAdded();
     } catch (e: any) {
       alert("Failed to log time: " + e.message);
     } finally {

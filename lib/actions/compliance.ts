@@ -217,7 +217,7 @@ export async function moveTasksBatchOperation(
           newWatchers.map(uid => ({
             task_id: taskId,
             user_id: uid,
-            participation_role: 'watcher'
+            participation_role: 'WATCHER'
           }))
         );
       }

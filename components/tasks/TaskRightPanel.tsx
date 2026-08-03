@@ -19,60 +19,37 @@ const TaskTimeLogs = dynamic(() => import("@/components/tasks/TaskTimeLogs"), {
   loading: () => <div className="p-6 rounded-xl border-border/50 bg-surface/50 dark:border-white/5 dark:theme-card-structural /[0.02] animate-pulse h-96 flex items-center justify-center text-muted text-xs font-bold">Loading Time Logs...</div> 
 });
 
-export default function TaskRightPanel({ taskId }: { taskId: string }) {
-  const [activeTab, setActiveTab] = useState("none"); // Default to no heavy module loaded
+export default function TaskRightPanel({ taskId, onUpdate }: { taskId: string; onUpdate?: () => void }) {
+  const [activeTab, setActiveTab] = useState("chat");
   const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (activeTab !== "none" && panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        setActiveTab("none");
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [activeTab]);
 
   return (
     <div className="h-full min-h-0" ref={panelRef}>
       <div className="h-full min-h-0 flex flex-col rounded-2xl p-4 theme-card-structural border-transparent transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40">
-        <Tabs defaultValue="none" onValueChange={setActiveTab} value={activeTab} className="flex flex-col h-full min-h-0">
-          
-          <TabsList className="w-full flex flex-wrap gap-2 bg-transparent p-0 h-auto">
-            <TabsTrigger value="tags" className="py-2 px-3 text-xs font-bold rounded-xl border border-border data-[state=active]:bg-accent data-[state=active]:text-white">Tags</TabsTrigger>
-            <TabsTrigger value="links" className="py-2 px-3 text-xs font-bold rounded-xl border border-border data-[state=active]:bg-accent data-[state=active]:text-white">Links</TabsTrigger>
-            <TabsTrigger value="checklist" className="py-2 px-3 text-xs font-bold rounded-xl border border-border data-[state=active]:bg-accent data-[state=active]:text-white">Checklist</TabsTrigger>
-            <TabsTrigger value="attachment" className="py-2 px-3 text-xs font-bold rounded-xl border border-border data-[state=active]:bg-accent data-[state=active]:text-white">Attachment</TabsTrigger>
-            <TabsTrigger value="chat" className="py-2 px-3 text-xs font-bold rounded-xl border border-border data-[state=active]:bg-accent data-[state=active]:text-white">
-              Chat
+        <Tabs defaultValue="chat" onValueChange={setActiveTab} value={activeTab} className="flex flex-col h-full min-h-0">
+          <TabsList className="grid grid-cols-3 bg-surface/50 border border-border/50 dark:border-white/5 dark:bg-[#0B0F19] rounded-xl p-1 shrink-0">
+            <TabsTrigger 
+              value="chat" 
+              className="text-xs font-semibold py-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm flex items-center justify-center gap-1.5 transition-all text-muted hover:text-foreground"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>Chat</span>
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="py-2 px-3 text-xs font-bold rounded-xl border border-border data-[state=active]:bg-accent data-[state=active]:text-white">
-              Audit
+            <TabsTrigger 
+              value="timeline" 
+              className="text-xs font-semibold py-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm flex items-center justify-center gap-1.5 transition-all text-muted hover:text-foreground"
+            >
+              <ActivitySquare className="w-3.5 h-3.5" />
+              <span>History</span>
             </TabsTrigger>
-            <TabsTrigger value="time" className="py-2 px-3 text-xs font-bold rounded-xl border border-border data-[state=active]:bg-accent data-[state=active]:text-white">
-              Time
+            <TabsTrigger 
+              value="time" 
+              className="text-xs font-semibold py-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm flex items-center justify-center gap-1.5 transition-all text-muted hover:text-foreground"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Logs</span>
             </TabsTrigger>
           </TabsList>
-
-          
-          <TabsContent value="none" className="m-0">
-            <div className="text-center py-4 text-xs text-muted font-bold rounded-xl mt-4 dark:border-white/5 bg-surface/50 dark:theme-card-structural /[0.02]">
-              Select a tab to view task Logs
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="tags" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
-            <div className="text-center py-8 text-sm text-muted font-bold border border-dashed border-border rounded-xl">Tags integration coming soon</div>
-          </TabsContent>
-          <TabsContent value="links" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
-            <div className="text-center py-8 text-sm text-muted font-bold border border-dashed border-border rounded-xl">Links integration coming soon</div>
-          </TabsContent>
-          <TabsContent value="checklist" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
-            <div className="text-center py-8 text-sm text-muted font-bold border border-dashed border-border rounded-xl">Checklist integration coming soon</div>
-          </TabsContent>
-          <TabsContent value="attachment" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
-            <div className="text-center py-8 text-sm text-muted font-bold border border-dashed border-border rounded-xl">Attachments integration coming soon</div>
-          </TabsContent>
 
           <TabsContent value="chat" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
             {activeTab === "chat" && <TaskRealtimeChat taskId={taskId} />}
@@ -81,7 +58,7 @@ export default function TaskRightPanel({ taskId }: { taskId: string }) {
             {activeTab === "timeline" && <TaskActivityTimeline taskId={taskId} />}
           </TabsContent>
           <TabsContent value="time" className="mt-4 flex-1 min-h-0 overflow-y-auto pr-2">
-            {activeTab === "time" && <TaskTimeLogs taskId={taskId} />}
+            {activeTab === "time" && <TaskTimeLogs taskId={taskId} onLogAdded={onUpdate} />}
           </TabsContent>
         </Tabs>
       </div>

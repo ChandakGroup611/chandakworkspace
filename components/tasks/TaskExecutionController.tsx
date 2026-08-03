@@ -1695,7 +1695,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {activeTab === 'timeline' && <TaskActivityTimeline taskId={taskId} />}
 
               {/* Time Logs Tab */}
-              {activeTab === 'time' && <TaskTimeLogs taskId={taskId} />}
+              {activeTab === 'time' && <TaskTimeLogs taskId={taskId} onLogAdded={onUpdate} />}
             </div>
           </div>
         </AppCard>
