@@ -152,11 +152,17 @@ export async function getAttachmentDownloadUrl(attachmentId: string, forceDownlo
     .createSignedUrl(attachment.storage_path, 60 * 60, options); // 1 hour expiry
 
 
-  if (storageError) {
-    throw new Error("Failed to generate secure download URL.");
-  }
+  const proxyUrl = forceDownload 
+    ? `/api/proxy-attachment/${attachmentId}?download=1` 
+    : `/api/proxy-attachment/${attachmentId}`;
 
-  return { signedUrl: signedUrl.signedUrl };
+  return { 
+    signedUrl: proxyUrl,
+    proxyUrl,
+    directSignedUrl: signedUrl?.signedUrl || proxyUrl,
+    fileName: attachment.original_file_name || attachment.file_name,
+    mimeType: attachment.mime_type
+  };
 }
 
 /**

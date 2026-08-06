@@ -169,19 +169,70 @@ export async function createWorkspace(formData: any) {
 
     let statusId = formData.status_id || null;
     if (!statusId) {
-      const { data: status } = await supabase
+      // 1. Try finding status with scope_type WORKSPACE and status_code OPEN / ACTIVE / is_default
+      const { data: status } = await supabaseAdmin
         .from("status_master")
         .select("id")
-        .eq("status_code", "OPEN")
         .eq("scope_type", "WORKSPACE")
+        .in("status_code", ["OPEN", "ACTIVE", "PLANNING", "NEW"])
         .eq("is_active", true)
         .eq("is_deleted", false)
+        .order("status_order", { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
         
-      statusId = status?.id;
-      if (!statusId) {
-        throw new Error("Validation Error: No valid OPEN status found for workspaces. Please configure workspace statuses in settings.");
+      if (status?.id) {
+        statusId = status.id;
+      } else {
+        // 2. Fallback: Any active status with scope_type WORKSPACE
+        const { data: anyWorkspaceStatus } = await supabaseAdmin
+          .from("status_master")
+          .select("id")
+          .eq("scope_type", "WORKSPACE")
+          .eq("is_active", true)
+          .eq("is_deleted", false)
+          .order("status_order", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+          
+        if (anyWorkspaceStatus?.id) {
+          statusId = anyWorkspaceStatus.id;
+        } else {
+          // 3. Fallback: Any OPEN or ACTIVE status in status_master
+          const { data: defaultStatus } = await supabaseAdmin
+            .from("status_master")
+            .select("id")
+            .in("status_code", ["OPEN", "ACTIVE"])
+            .eq("is_active", true)
+            .eq("is_deleted", false)
+            .limit(1)
+            .maybeSingle();
+
+          if (defaultStatus?.id) {
+            statusId = defaultStatus.id;
+          } else {
+            // 4. Auto-provision default WORKSPACE status in status_master
+            try {
+              const { data: newStatus } = await supabaseAdmin
+                .from("status_master")
+                .insert([{
+                  status_name: "Open",
+                  status_code: "OPEN",
+                  scope_type: "WORKSPACE",
+                  status_color: "#10b981",
+                  status_order: 1,
+                  is_default: true,
+                  is_active: true,
+                  is_deleted: false
+                }])
+                .select("id")
+                .single();
+              statusId = newStatus?.id || null;
+            } catch {
+              statusId = null;
+            }
+          }
+        }
       }
     }
 

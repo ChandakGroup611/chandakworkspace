@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';
-import { UploadCloud, X, File, FileText, FileArchive, Image as ImageIcon, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-import { initializeAttachmentUpload } from "@/lib/actions/attachments";
+import { UploadCloud, X, File, FileText, FileArchive, Image as ImageIcon, Loader2, CheckCircle2, AlertCircle, Eye, Download } from "lucide-react";
+import { initializeAttachmentUpload, fetchAttachments } from "@/lib/actions/attachments";
 import { createClient } from "@/utils/supabase/client";
 
 interface EnterpriseUploaderProps {
@@ -16,7 +16,22 @@ interface EnterpriseUploaderProps {
 export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isLightMode = false }: EnterpriseUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<{ file: File; status: 'pending' | 'uploading' | 'success' | 'error'; progress: number; errorMsg?: string }[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadExisting = async () => {
+    if (!recordId) return;
+    try {
+      const atts = await fetchAttachments(moduleType, recordId);
+      setExistingAttachments(atts || []);
+    } catch (e) {
+      console.error("Failed to load attachments:", e);
+    }
+  };
+
+  useEffect(() => {
+    loadExisting();
+  }, [moduleType, recordId]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -117,6 +132,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
     }
     
     if (onUploadComplete) onUploadComplete();
+    loadExisting();
   };
 
   const getFileIcon = (mime: string) => {
@@ -134,7 +150,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+        className={`relative border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
           isDragging 
             ? "border-accent bg-accent/10"
             : "border-border hover:border-accent bg-elevated"
@@ -147,31 +163,31 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
           className="hidden" 
           onChange={handleFileSelect} 
         />
-        <div className={`p-3 rounded-xl mb-3 bg-surface shadow-sm`}>
-          <UploadCloud className={`h-6 w-6 text-accent`} />
+        <div className={`p-2.5 rounded-xl mb-2 bg-surface shadow-sm`}>
+          <UploadCloud className={`h-5 w-5 text-accent`} />
         </div>
-        <h4 className={`text-sm font-bold mb-1 ${"text-foreground"}`}>
+        <h4 className={`text-xs font-bold mb-1 text-foreground`}>
           Click or drag files to upload
         </h4>
-        <p className={`text-xs ${"text-muted"}`}>
+        <p className={`text-[11px] text-muted`}>
           Max 50MB per file. Prohibited: .exe, .bat, .cmd, .sh
         </p>
       </div>
 
-      {/* File List */}
+      {/* File Upload Queue */}
       {files.length > 0 && (
         <div className="space-y-2">
           {files.map((fileObj, index) => (
-            <div key={index} className={`flex items-center gap-3 p-3 rounded-xl ${ "theme-card-structural " }`}>
+            <div key={index} className={`flex items-center gap-3 p-3 rounded-xl theme-card-structural`}>
               <div className="flex-shrink-0">
                 {getFileIcon(fileObj.file.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-semibold truncate ${"text-foreground"}`}>
+                <p className={`text-xs font-semibold truncate text-foreground`}>
                   {fileObj.file.name}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-xs ${"text-muted"}`}>
+                  <span className={`text-xs text-muted`}>
                     {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
                   </span>
                   {fileObj.status === 'error' && (
@@ -216,6 +232,38 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
             >
               Upload Pending Files
             </AppButton>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Attachments Listing */}
+      {existingAttachments.length > 0 && (
+        <div className="space-y-2 pt-2 border-t border-border/50">
+          <h5 className="text-[11px] font-bold text-muted uppercase tracking-wider">Existing Attachments ({existingAttachments.length})</h5>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {existingAttachments.map((att) => {
+              const fileName = att.original_file_name || att.file_name;
+              const viewUrl = `/api/proxy-attachment/${att.id}`;
+              const downloadUrl = `/api/proxy-attachment/${att.id}?download=1`;
+              return (
+                <div key={att.id} className="flex items-center justify-between p-2.5 rounded-xl theme-card-structural border border-border/50 text-xs">
+                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                    {getFileIcon(att.mime_type || '')}
+                    <span className="truncate font-medium text-foreground text-xs" title={fileName}>{fileName}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors flex items-center gap-1" title="View Attachment">
+                      <Eye className="h-3.5 w-3.5" />
+                      <span className="text-[10px] font-bold">View</span>
+                    </a>
+                    <a href={downloadUrl} download={fileName} className="p-1.5 rounded-lg text-accent hover:bg-accent/10 transition-colors flex items-center gap-1" title="Download Attachment">
+                      <Download className="h-3.5 w-3.5" />
+                      <span className="text-[10px] font-bold">Download</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

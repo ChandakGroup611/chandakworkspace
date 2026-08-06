@@ -462,7 +462,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                                         </div>
                                         <span className="text-[10px] font-semibold uppercase tracking-wider">View</span>
                                       </a>
-                                      <a href={att.url} download={att.name} className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="Download Image">
+                                      <a href={`${att.url}${att.url.includes('?') ? '&' : '?'}download=1`} download={att.name} className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="Download Image">
                                         <div className="p-2 bg-surface/20 rounded-full backdrop-blur-sm shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                         </div>
@@ -481,7 +481,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                       <span>VIEW</span>
                                     </a>
-                                    <a href={att.url} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="Download Document">
+                                    <a href={`${att.url}${att.url.includes('?') ? '&' : '?'}download=1`} download={att.name} className={`flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded transition-colors ${isSender ? 'bg-surface/20 hover:bg-surface/30 text-white' : 'bg-surface/10 hover:bg-surface/20 dark:bg-surface/10 dark:hover:bg-surface/20 text-foreground'}`} title="Download Document">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                       <span>DOWNLOAD</span>
                                     </a>

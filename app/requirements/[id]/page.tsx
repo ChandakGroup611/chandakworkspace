@@ -593,20 +593,22 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     }
   };
 
-  const handleAttachmentAction = async (attId: string, action: 'view' | 'download') => {
+  const handleAttachmentAction = (attId: string, action: 'view' | 'download') => {
     try {
-      const { getAttachmentDownloadUrl } = await import("@/lib/actions/attachments");
-      const { signedUrl } = await getAttachmentDownloadUrl(attId, action === 'download');
+      const isDownload = action === 'download';
+      const targetUrl = isDownload 
+        ? `/api/proxy-attachment/${attId}?download=1` 
+        : `/api/proxy-attachment/${attId}`;
       
-      if (action === 'download') {
+      if (isDownload) {
         const link = document.createElement('a');
-        link.href = signedUrl;
-        link.download = ''; // Supabase backend logic will inject the attachment's filename into the Content-Disposition headers via createSignedUrl
+        link.href = targetUrl;
+        link.setAttribute('download', '');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       } else {
-        window.open(signedUrl, '_blank');
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (e: any) {
       alert(`Failed to ${action} attachment: ` + (e.message || "Unknown error"));

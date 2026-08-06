@@ -1660,19 +1660,23 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {task.attachments && task.attachments.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {task.attachments.map((item: any) => {
-                        const fileUrl = item.file_url?.startsWith('storage:') 
+                        const isProxied = item.id && (item.file_url?.startsWith('storage:') || !item.file_url?.startsWith('http'));
+                        const viewUrl = isProxied 
                           ? `/api/proxy-attachment/${item.id}` 
                           : item.file_url;
+                        const downloadUrl = isProxied
+                          ? `/api/proxy-attachment/${item.id}?download=1`
+                          : (item.file_url ? `${item.file_url}${item.file_url.includes('?') ? '&' : '?'}download=1` : item.file_url);
 
                         return (
                           <div key={item.id} className="p-3 rounded-lg border border-border/30 bg-surface/30 flex items-center justify-between">
                             <span className="text-xs font-semibold truncate pr-2" title={item.file_name}>{item.file_name}</span>
-                            {fileUrl && (
+                            {viewUrl && (
                               <div className="flex items-center gap-3 shrink-0">
-                                <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
+                                <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 dark:text-blue-400 font-bold hover:underline flex items-center gap-1" title="View Attachment">
                                   <Eye className="w-3.5 h-3.5" /> View
                                 </a>
-                                <a href={fileUrl} download={item.file_name || "Attachment"} target="_blank" rel="noopener noreferrer" className="text-xs text-accent font-bold hover:underline flex items-center gap-1">
+                                <a href={downloadUrl} download={item.file_name || "Attachment"} className="text-xs text-accent font-bold hover:underline flex items-center gap-1" title="Download Attachment">
                                   <Download className="w-3.5 h-3.5" /> Download
                                 </a>
                               </div>
