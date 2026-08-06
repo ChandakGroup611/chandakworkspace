@@ -195,7 +195,7 @@ export default function LoginPage() {
           
           {/* Logo - Pushed to Absolute Top */}
           <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
-            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-surface/95 rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 flex items-center justify-center">
+            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-white rounded-2xl p-4 shadow-2xl border border-white/30 flex items-center justify-center">
               <img 
                 src="/Chandak-Group-Final-Logo.svg" 
                 alt="Chandak Logo" 
@@ -229,7 +229,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
             
             <div className="lg:hidden flex flex-col items-center justify-center mb-10">
-              <div className="relative h-20 w-56 flex items-center justify-center">
+              <div className="relative h-20 w-56 flex items-center justify-center bg-white rounded-xl p-3 shadow-lg border border-white/20">
                 <img 
                   src="/Chandak-Group-Final-Logo.svg" 
                   alt="Chandak Logo" 
