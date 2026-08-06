@@ -417,14 +417,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setRemarksHistoryLoading(true);
     try {
       const comments = await getTaskComments(taskId, 20, 0);
-      if (comments && !Array.isArray(comments) && 'error' in comments) {
-        throw new Error("Comments Error: " + comments.error);
+      if (Array.isArray(comments)) {
+        setRemarksHistory(comments);
+        setIsCommentsLoaded(true);
       }
-      setRemarksHistory(Array.isArray(comments) ? comments : []);
-      setIsCommentsLoaded(true);
     } catch (e: any) {
-      console.error(e);
-      setError(e.message || "Failed to load comments.");
+      console.warn("[loadComments] Error fetching comments:", e);
     } finally {
       setRemarksHistoryLoading(false);
     }
@@ -802,7 +800,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Sleek Error Notification Banner */}
       {error && (
         <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
-          <span>{error}</span>
+          <span>{error.includes("react.dev/errors") ? "A temporary network or server error occurred. Please try again." : error}</span>
           <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-rose-400/60 hover:text-rose-400 font-bold px-2">Dismiss</AppButton>
         </div>
       )}
@@ -1495,11 +1493,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 </div>
                               </div>
                               
-                              <p className={`text-xs rounded-lg p-2.5 leading-relaxed break-words whitespace-pre-wrap border ${
+                              <div className={`text-xs rounded-lg p-2.5 leading-relaxed break-words border ${
                                 "bg-elevated border-border/50 text-muted"
                               }`}>
-                                {item.message || item.content}
-                              </p>
+                                <SafeHtml html={item.message || item.content || ""} />
+                              </div>
                             </div>
                           </div>
                         </div>

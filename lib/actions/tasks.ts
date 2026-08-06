@@ -799,27 +799,44 @@ export async function fetchTeams() { return []; }
 export async function assignTeamToTask(taskId: string, teamId: string) { return {}; }
 
 export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
-  const { data: comments, error } = await supabaseAdmin
-    .from('task_comments')
-    .select('*')
-    .eq('task_id', taskId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
-    
-  if (error) return { error: error.message };
-  if (!comments || comments.length === 0) return [];
+  try {
+    if (!taskId || taskId === "new") return [];
 
-  const userIds = Array.from(new Set(comments.map((c: any) => c.author_id).filter(Boolean)));
-  let users: any[] = [];
-  if (userIds.length > 0) {
-    const { data: userData } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo').in('id', userIds);
-    if (userData) users = userData;
+    const { data: comments, error } = await supabaseAdmin
+      .from('task_comments')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+      
+    if (error) {
+      console.error("[getTaskComments] Supabase error:", error);
+      return [];
+    }
+    if (!comments || comments.length === 0) return [];
+
+    const userIds = Array.from(new Set(comments.map((c: any) => c.author_id).filter(Boolean)));
+    let users: any[] = [];
+    if (userIds.length > 0) {
+      try {
+        const { data: userData } = await supabaseAdmin
+          .from('user_master')
+          .select('id, full_name, profile_photo')
+          .in('id', userIds);
+        if (userData) users = userData;
+      } catch (uErr) {
+        console.error("[getTaskComments] Error fetching user master:", uErr);
+      }
+    }
+
+    return comments.map((c: any) => ({
+      ...c,
+      user: users.find(u => u.id === c.author_id) || null
+    }));
+  } catch (err: any) {
+    console.error("[getTaskComments] Unexpected error:", err);
+    return [];
   }
-
-  return comments.map((c: any) => ({
-    ...c,
-    user: users.find(u => u.id === c.author_id) || null
-  }));
 }
 
 export async function addTaskRemark(taskId: string, content: string) {

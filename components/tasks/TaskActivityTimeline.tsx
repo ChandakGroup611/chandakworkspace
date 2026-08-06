@@ -6,6 +6,8 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { Activity, Clock, CheckSquare, Edit, MessageSquare, AlertCircle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
+import SafeHtml from "@/components/ui/SafeHtml";
+
 export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
@@ -111,8 +113,8 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
                   </strong> {getActionText(log)}
                 </p>
                 {log.action === 'COMMENT' && log.new_state?.message && (
-                  <div className={`mt-2 p-2 rounded-md text-xs whitespace-pre-wrap ${ "theme-card-structural text-muted" }`}>
-                    {log.new_state.message}
+                  <div className={`mt-2 p-2 rounded-md text-xs ${ "theme-card-structural text-muted" }`}>
+                    <SafeHtml html={log.new_state.message} />
                   </div>
                 )}
                 <span className="text-xs text-muted font-mono mt-1 block">
