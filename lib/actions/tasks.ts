@@ -880,6 +880,43 @@ export async function createTaskAttachment(taskId: string, fileName: string, bas
   }
 }
 
+export async function deleteTaskAttachment(taskId: string, attachmentId: string) {
+  try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    if (!user) return { error: "Unauthenticated" };
+
+    // Verify role is SUPER_ADMIN
+    const { data: profile } = await supabaseAdmin.from('user_master').select('role:roles(code)').eq('id', user.id).single();
+    const roleCode = (profile?.role as any)?.[0]?.code || (profile?.role as any)?.code;
+    if (roleCode !== 'SUPER_ADMIN') {
+      return { error: "Unauthorized: Only super admins can delete attachments." };
+    }
+
+    // Get attachment to record its name
+    const { data: att } = await supabaseAdmin.from('task_attachments').select('file_name').eq('id', attachmentId).single();
+    if (!att) return { error: "Attachment not found" };
+
+    // Delete attachment
+    const { error: delError } = await supabaseAdmin.from('task_attachments').delete().eq('id', attachmentId);
+    if (delError) throw delError;
+
+    // Create Audit Log
+    const log = {
+      task_id: taskId,
+      activity_type: 'ATTACHMENT_DELETED',
+      activity_details: `Deleted attachment: ${att.file_name}`,
+      performed_by: user.id
+    };
+    await supabaseAdmin.from('task_activity_logs').insert([log]);
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[deleteTaskAttachment] Error:", err);
+    return { error: err.message || "Failed to delete attachment" };
+  }
+}
+
 export async function fetchTeams() { return []; }
 export async function assignTeamToTask(taskId: string, teamId: string) { return {}; }
 

@@ -10,12 +10,14 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { 
   FolderKanban, Users, Activity, Plus, Send, 
   Layers, GitMerge, ChevronDown, Building2, Calendar, Target,
-  Loader2, ShieldAlert, Sparkles, ShieldCheck, Search, Filter
+  Loader2, ShieldAlert, Sparkles, ShieldCheck, Search, Filter,
+  X, Check, ChevronsDownUp, ChevronsUpDown, UserCheck, RefreshCw
 } from "lucide-react";
 import { 
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
   fetchWorkspaceStakeholders, createWorkspace, fetchCompanies, fetchPriorities,
-  updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData, fetchHierarchyChildren
+  updateWorkspace, deleteWorkspace, fetchWorkspaceDashboardData, fetchHierarchyChildren,
+  searchHierarchyDeep, fetchAllHierarchyBranches, type HierarchyFilterOptions
 } from "@/lib/actions/workspaces";
 import { usePermissions } from "@/hooks/usePermissions";
 import { LifecycleManager } from "@/lib/services/LifecycleManager";
@@ -37,18 +39,22 @@ import { PageHeader } from "@/components/layout/PageHeader";
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
   const { theme } = useTheme();
-  const { hasPermission, loading: permsLoading } = usePermissions();
+  const { hasPermission, loading: permsLoading, roleCode } = usePermissions();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const [workspaces, setWorkspaces] = useState<any[]>(initialData?.workspaces || []);
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);
   const [priorities, setPriorities] = useState<any[]>(initialData?.priorities || []);
+  const [taskStatuses, setTaskStatuses] = useState<any[]>(initialData?.taskStatuses || []);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<any>(initialData?.workspaces?.find((w: any) => w.id === initialData?.prefetchWorkspaceId) || null);
   const [tasks, setTasks] = useState<any[]>(initialData?.prefetchTasks || []);
   const [stakeholders, setStakeholders] = useState<any[]>(initialData?.prefetchStakeholders || []);
   const [masterHierarchy, setMasterHierarchy] = useState<any[]>(initialData?.masterHierarchy || []);
+  const [initialMasterHierarchy] = useState<any[]>(initialData?.masterHierarchy || []);
   const [loading, setLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isExpandingAll, setIsExpandingAll] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
 
@@ -64,6 +70,122 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [currentUser, setCurrentUser] = useState<any>(initialData?.userProfile || null);
   const [mounted, setMounted] = useState(false);
   const lastFetchedWorkspaceId = React.useRef<string | null>(initialData?.prefetchWorkspaceId || null);
+
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<HierarchyFilterOptions>({
+    entityType: 'ALL',
+    statusId: '',
+    priorityId: '',
+    assigneeId: '',
+    myTasksOnly: false
+  });
+
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 280);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Deep Search Execution Effect
+  useEffect(() => {
+    let isCancelled = false;
+    const hasActiveFilters = !!(
+      debouncedSearchQuery.trim() || 
+      filters.statusId || 
+      filters.priorityId || 
+      filters.assigneeId || 
+      filters.myTasksOnly || 
+      (filters.entityType && filters.entityType !== 'ALL')
+    );
+
+    if (!hasActiveFilters) {
+      if (initialMasterHierarchy.length > 0) {
+        setMasterHierarchy(initialMasterHierarchy);
+      }
+      return;
+    }
+
+    setIsSearching(true);
+    searchHierarchyDeep(debouncedSearchQuery, filters)
+      .then(res => {
+        if (!isCancelled) {
+          setMasterHierarchy(res.hierarchy);
+          if (res.expandedNodeIds.length > 0) {
+            setExpandedNodes(prev => {
+              const next = { ...prev };
+              res.expandedNodeIds.forEach((id: string) => {
+                next[id] = true;
+              });
+              return next;
+            });
+          }
+        }
+      })
+      .catch(err => {
+        console.error("Deep search failed:", err);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsSearching(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedSearchQuery, filters]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.entityType && filters.entityType !== 'ALL') count++;
+    if (filters.statusId) count++;
+    if (filters.priorityId) count++;
+    if (filters.assigneeId) count++;
+    if (filters.myTasksOnly) count++;
+    return count;
+  }, [filters]);
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilters({
+      entityType: 'ALL',
+      statusId: '',
+      priorityId: '',
+      assigneeId: '',
+      myTasksOnly: false
+    });
+  };
+
+  const handleExpandAllBranches = async () => {
+    setIsExpandingAll(true);
+    try {
+      const fullBranches = await fetchAllHierarchyBranches();
+      if (fullBranches && fullBranches.length > 0) {
+        setMasterHierarchy(fullBranches);
+        // Expand all ids
+        const allIds: Record<string, boolean> = {};
+        const collectIds = (nodes: any[]) => {
+          nodes.forEach(n => {
+            allIds[n.id] = true;
+            if (n.children) collectIds(n.children);
+          });
+        };
+        collectIds(fullBranches);
+        setExpandedNodes(allIds);
+      }
+    } catch (e) {
+      console.error("Expand all failed", e);
+    } finally {
+      setIsExpandingAll(false);
+    }
+  };
+
+  const handleCollapseAllBranches = () => {
+    setExpandedNodes({});
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -167,8 +289,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       localStorage.setItem('workspace_auto_collapse', JSON.stringify(autoCollapse));
     } catch (e) {}
   }, [autoCollapse]);
-
-  const [searchQuery, setSearchQuery] = useState("");
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
@@ -614,19 +734,40 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         badge={<AppBadge variant="info">Enterprise Tier</AppBadge>}
         actions={
           <>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <div className="relative flex items-center">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isSearching ? 'text-accent animate-spin' : 'text-muted'}`} />
               <input 
                 type="text" 
-                placeholder="Search workspaces..." 
+                placeholder="Deep search tasks & workspaces..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`pl-9 pr-4 py-1.5 text-sm rounded-lg outline-none focus:ring-2 focus:ring-accent w-48 transition-all ${ "theme-card-structural text-foreground focus:w-64" }`}
+                className={`pl-9 pr-8 py-1.5 text-sm rounded-lg outline-none focus:ring-2 focus:ring-accent w-56 sm:w-72 transition-all ${ "theme-card-structural text-foreground" }`}
               />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-surface/50 text-muted hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
-            <AppButton variant="outline" size="sm" leftIcon={<Filter className="h-4 w-4" />}>
+
+            <AppButton 
+              variant={showFilters || activeFilterCount > 0 ? "primary" : "outline"} 
+              size="sm" 
+              leftIcon={<Filter className="h-4 w-4" />}
+              onClick={() => setShowFilters(!showFilters)}
+              className="relative"
+            >
               Filters
+              {activeFilterCount > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white text-accent">
+                  {activeFilterCount}
+                </span>
+              )}
             </AppButton>
+
             <AppButton 
               variant="primary" 
               size="sm" 
@@ -653,6 +794,111 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         }
       />
 
+      {/* Deep Search & Multi-Level Filtering Ribbon */}
+      {showFilters && (
+        <div className="mb-4 p-4 rounded-xl border border-border bg-card/60 backdrop-blur-md shadow-sm space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted">Filter By Scope:</span>
+              <div className="flex items-center bg-surface/50 p-0.5 rounded-lg border border-border">
+                {[
+                  { id: 'ALL', label: 'All Items' },
+                  { id: 'WORKSPACES', label: 'Workspaces' },
+                  { id: 'SUB_WORKSPACES', label: 'Sub-Workspaces' },
+                  { id: 'TASKS', label: 'Tasks' },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setFilters(prev => ({ ...prev, entityType: tab.id as any }))}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                      filters.entityType === tab.id 
+                        ? 'bg-accent text-white shadow-sm font-semibold' 
+                        : 'text-muted hover:text-foreground'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Toggle: My Assigned Tasks Only */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
+                  filters.myTasksOnly 
+                    ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/40 shadow-sm' 
+                    : 'bg-surface/50 text-muted border-border hover:text-foreground'
+                }`}
+              >
+                <UserCheck className="h-3.5 w-3.5" />
+                <span>My Assigned Tasks Only</span>
+                {filters.myTasksOnly && <Check className="h-3 w-3 ml-0.5" />}
+              </button>
+
+              {activeFilterCount > 0 && (
+                <AppButton 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="h-7 text-xs text-muted hover:text-danger"
+                >
+                  Clear All
+                </AppButton>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* Status Filter */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Status</label>
+              <select
+                value={filters.statusId || ""}
+                onChange={(e) => setFilters(prev => ({ ...prev, statusId: e.target.value }))}
+                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-accent outline-none"
+              >
+                <option value="">All Statuses</option>
+                {(taskStatuses || []).map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.name || s.status_name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Priority Filter */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Priority</label>
+              <select
+                value={filters.priorityId || ""}
+                onChange={(e) => setFilters(prev => ({ ...prev, priorityId: e.target.value }))}
+                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-accent outline-none"
+              >
+                <option value="">All Priorities</option>
+                {(priorities || []).map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.name || p.priority_name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Assignee Filter */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Assignee</label>
+              <select
+                value={filters.assigneeId || ""}
+                onChange={(e) => setFilters(prev => ({ ...prev, assigneeId: e.target.value }))}
+                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-accent outline-none"
+              >
+                <option value="">All Assignees</option>
+                {allUsers.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.full_name} ({u.user_code || 'User'})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Full Width Master Table Layout */}
       {workspaces.length > 0 ? (
         <div className="flex-1 flex flex-col min-h-0">
@@ -678,6 +924,37 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     <span>Sprint Planning</span>
                   </AppButton>
                 </div>
+
+                {activeView === 'HIERARCHY' && (
+                  <div className="flex items-center gap-2">
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExpandAllBranches}
+                      disabled={isExpandingAll}
+                      className="h-7 text-xs px-2.5 text-muted hover:text-foreground border-border"
+                      title="Fetch and expand all workspace and task branches"
+                    >
+                      {isExpandingAll ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1 text-accent" />
+                      ) : (
+                        <ChevronsUpDown className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      Expand All
+                    </AppButton>
+
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCollapseAllBranches}
+                      className="h-7 text-xs px-2.5 text-muted hover:text-foreground border-border"
+                      title="Collapse all branches"
+                    >
+                      <ChevronsDownUp className="h-3.5 w-3.5 mr-1" />
+                      Collapse All
+                    </AppButton>
+                  </div>
+                )}
               </div>
 
               {activeView === 'HIERARCHY' ? (
@@ -694,29 +971,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     </label>
                   </div>
               <WorkspaceMasterTable 
-                hierarchy={
-                  searchQuery.trim() 
-                    ? (function filterTree(nodes: any[], query: string): any[] {
-                        const lower = query.toLowerCase();
-                        return nodes.map(node => {
-                          const children = node.children ? filterTree(node.children, query) : [];
-                          const matches = 
-                            node.name?.toLowerCase().includes(lower) || 
-                            node.code?.toLowerCase().includes(lower) ||
-                            node.subject?.toLowerCase().includes(lower) ||
-                            node.task_code?.toLowerCase().includes(lower);
-                          if (matches || children.length > 0) {
-                            return { ...node, children: matches && children.length === 0 ? node.children : children };
-                          }
-                          return null;
-                        }).filter(Boolean);
-                      })(masterHierarchy, searchQuery.trim())
-                    : masterHierarchy
-                } 
+                hierarchy={masterHierarchy} 
                 expandedNodes={expandedNodes}
                 setExpandedNodes={setExpandedNodes}
                 autoCollapse={autoCollapse}
-                forceExpandAll={!!searchQuery.trim()}
+                forceExpandAll={!!(debouncedSearchQuery.trim() || activeFilterCount > 0)}
+                searchQuery={debouncedSearchQuery}
                 isLightMode={isLightMode}
                 taskStatuses={initialData?.taskStatuses || []}
                 allUsers={allUsers}

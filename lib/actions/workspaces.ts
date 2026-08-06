@@ -454,7 +454,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
     let subWsQuery = supabaseAdmin
         .from('workspaces')
-        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), hierarchy_task_count, hierarchy_subws_count, members:workspace_members(user_id, role), parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code)')
+        .select('id, name:workspace_name, code:workspace_code, description, owner_id:workspace_owner_id, parent_workspace_id, company_id, status_id, start_date, end_date, created_at, company:company_master(name:company_name), status:status_master(name:status_name, status_color), hierarchy_task_count, hierarchy_subws_count, members:workspace_members(user_id, role), parent:workspaces!parent_workspace_id(name:workspace_name, code:workspace_code), stats:workspace_statistics(task_count, subtask_count)')
         .eq('parent_workspace_id', parentId)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
@@ -473,7 +473,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
       subWsQuery,
       supabaseAdmin
         .from('tasks')
-        .select('id, name:subject, code:task_code, description, owner_id, assigned_to, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code), assignees:task_participants(user_id, participation_role)')
+        .select('id, name:subject, code:task_code, description, owner_id, assigned_to, workspace_id, parent_task_id, status_id, priority_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code), assignees:task_participants(user_id, participation_role)')
         .eq('workspace_id', parentId)
         .is('parent_task_id', null)
         .eq('is_deleted', false)
@@ -510,7 +510,7 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   if (parentType === 'TASK' || parentType === 'SUB_TASK') {
     const { data: subTasks } = await supabaseAdmin
       .from('tasks')
-      .select('id, name:subject, code:task_code, description, owner_id, assigned_to, workspace_id, parent_task_id, status_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code), assignees:task_participants(user_id, participation_role)')
+      .select('id, name:subject, code:task_code, description, owner_id, assigned_to, workspace_id, parent_task_id, status_id, priority_id, start_date, end_date, created_at, created_by, status:status_master!tasks_status_id_fkey(name:status_name, status_color), priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color), subtasks:tasks!parent_task_id(count), parent:tasks!parent_task_id(name:subject, code:task_code), assignees:task_participants(user_id, participation_role)')
       .eq('parent_task_id', parentId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
@@ -527,6 +527,432 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
   }
 
   return [];
+}
+
+export interface HierarchyFilterOptions {
+  entityType?: 'ALL' | 'WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS';
+  statusId?: string;
+  priorityId?: string;
+  assigneeId?: string;
+  myTasksOnly?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+/**
+ * Deep search across the entire Execution Hierarchy (Workspaces, Sub-Workspaces, Tasks, Sub-Tasks)
+ * Scopes tasks strictly to user assignment / visible workspaces as required.
+ */
+export async function searchHierarchyDeep(query?: string, filters?: HierarchyFilterOptions) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { user } = await getCachedUser();
+  if (!user) return { hierarchy: [], matchedNodeIds: [], expandedNodeIds: [] };
+
+  const canManageAll = await checkServerPermission(supabase, user.id, "WORKSPACES_MANAGE");
+
+  // 1. Fetch visible workspaces
+  const visibleWorkspaces = await getVisibleWorkspaces(user.id, canManageAll);
+  const visibleWsMap = new Map<string, any>(visibleWorkspaces.map((w: any) => [w.id, w]));
+  const visibleWsIds = Array.from(visibleWsMap.keys());
+  if (visibleWsIds.length === 0) return { hierarchy: [], matchedNodeIds: [], expandedNodeIds: [] };
+
+  // Fetch task IDs where current user is a participant
+  const { data: userPartData } = await supabaseAdmin
+    .from("task_participants")
+    .select("task_id")
+    .eq("user_id", user.id);
+  const myParticipantTaskIds = new Set<string>((userPartData || []).map((p: any) => p.task_id));
+
+  // If a specific assignee filter is passed, fetch task IDs for that assignee
+  let targetAssigneeTaskIds = new Set<string>();
+  if (filters?.assigneeId) {
+    const { data: targetPartData } = await supabaseAdmin
+      .from("task_participants")
+      .select("task_id")
+      .eq("user_id", filters.assigneeId);
+    targetAssigneeTaskIds = new Set<string>((targetPartData || []).map((p: any) => p.task_id));
+  }
+
+  const cleanQuery = query ? query.trim() : "";
+  const matchedNodeIds = new Set<string>();
+  const expandedNodeIds = new Set<string>();
+
+  // If no search query and no filters provided, return roots
+  const hasFilters = !!(filters?.statusId || filters?.priorityId || filters?.assigneeId || filters?.myTasksOnly || (filters?.entityType && filters.entityType !== 'ALL') || filters?.dateFrom || filters?.dateTo);
+  if (!cleanQuery && !hasFilters) {
+    const masterHierarchy = await fetchHierarchyRoots(user.id, visibleWorkspaces);
+    return { hierarchy: masterHierarchy, matchedNodeIds: [], expandedNodeIds: [] };
+  }
+
+  // 2. Query Tasks across all visible workspaces
+  let tasks: any[] = [];
+  if (filters?.entityType !== 'WORKSPACES' && filters?.entityType !== 'SUB_WORKSPACES') {
+    let taskQuery = supabaseAdmin
+      .from('tasks')
+      .select(`
+        id,
+        name:subject,
+        code:task_code,
+        description,
+        owner_id,
+        assigned_to,
+        workspace_id,
+        parent_task_id,
+        status_id,
+        priority_id,
+        start_date,
+        end_date,
+        created_at,
+        created_by,
+        status:status_master!tasks_status_id_fkey(name:status_name, status_color),
+        priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color),
+        subtasks:tasks!parent_task_id(count),
+        parent:tasks!parent_task_id(id, name:subject, code:task_code),
+        assignees:task_participants(user_id, participation_role)
+      `)
+      .in('workspace_id', visibleWsIds)
+      .eq('is_deleted', false);
+
+    if (cleanQuery) {
+      taskQuery = taskQuery.or(`subject.ilike.%${cleanQuery}%,task_code.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`);
+    }
+
+    if (filters?.statusId) {
+      taskQuery = taskQuery.eq('status_id', filters.statusId);
+    }
+    if (filters?.priorityId) {
+      taskQuery = taskQuery.eq('priority_id', filters.priorityId);
+    }
+    if (filters?.dateFrom) {
+      taskQuery = taskQuery.gte('created_at', filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      taskQuery = taskQuery.lte('created_at', filters.dateTo);
+    }
+
+    const { data: fetchedTasks, error: taskErr } = await taskQuery.order('created_at', { ascending: false }).limit(200);
+    if (!taskErr && fetchedTasks) {
+      tasks = fetchedTasks;
+    }
+  }
+
+  // Strictly enforce user assignment filtering
+  tasks = tasks.filter((t: any) => {
+    if (filters?.assigneeId) {
+      const isAssigned = t.assigned_to === filters.assigneeId || 
+                         t.owner_id === filters.assigneeId || 
+                         t.created_by === filters.assigneeId || 
+                         targetAssigneeTaskIds.has(t.id) ||
+                         t.assignees?.some((a: any) => a.user_id === filters.assigneeId);
+      if (!isAssigned) return false;
+    } else if (filters?.myTasksOnly || !canManageAll) {
+      const isMyTask = t.assigned_to === user.id || 
+                       t.owner_id === user.id || 
+                       t.created_by === user.id || 
+                       myParticipantTaskIds.has(t.id) ||
+                       t.assignees?.some((a: any) => a.user_id === user.id);
+      if (!isMyTask) return false;
+    }
+    return true;
+  });
+
+  // 3. Query Workspaces & Sub-Workspaces
+  let workspaces: any[] = [];
+  if (filters?.entityType !== 'TASKS') {
+    let wsQuery = supabaseAdmin
+      .from('workspaces')
+      .select(`
+        id,
+        name:workspace_name,
+        code:workspace_code,
+        description,
+        owner_id:workspace_owner_id,
+        parent_workspace_id,
+        company_id,
+        status_id,
+        start_date,
+        end_date,
+        created_at,
+        company:company_master(name:company_name),
+        status:status_master(name:status_name, status_color),
+        hierarchy_task_count,
+        hierarchy_subws_count,
+        members:workspace_members(user_id, role),
+        stats:workspace_statistics(task_count, subtask_count)
+      `)
+      .in('id', visibleWsIds)
+      .eq('is_deleted', false);
+
+    if (cleanQuery) {
+      wsQuery = wsQuery.or(`workspace_name.ilike.%${cleanQuery}%,workspace_code.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`);
+    }
+    if (filters?.statusId) {
+      wsQuery = wsQuery.eq('status_id', filters.statusId);
+    }
+    if (filters?.dateFrom) {
+      wsQuery = wsQuery.gte('created_at', filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      wsQuery = wsQuery.lte('created_at', filters.dateTo);
+    }
+
+    const { data: fetchedWs, error: wsErr } = await wsQuery.order('created_at', { ascending: false });
+    if (!wsErr && fetchedWs) {
+      workspaces = fetchedWs;
+    }
+  }
+
+  if (filters?.entityType === 'WORKSPACES') {
+    workspaces = workspaces.filter(w => !w.parent_workspace_id);
+  } else if (filters?.entityType === 'SUB_WORKSPACES') {
+    workspaces = workspaces.filter(w => !!w.parent_workspace_id);
+  }
+
+  // Record direct matches
+  tasks.forEach(t => matchedNodeIds.add(t.id));
+  workspaces.forEach(w => matchedNodeIds.add(w.id));
+
+  // 4. Resolve complete lineage branches
+  const requiredWorkspaceIds = new Set<string>();
+  const allTasksMap = new Map<string, any>();
+
+  tasks.forEach(t => {
+    allTasksMap.set(t.id, {
+      ...t,
+      type: t.parent_task_id ? 'SUB_TASK' : 'TASK',
+      child_task_count: (Array.isArray(t.subtasks) ? t.subtasks[0]?.count : t.subtasks?.count) || 0,
+      children: [],
+      childrenFetched: true,
+      isMatched: true
+    });
+    if (t.workspace_id) requiredWorkspaceIds.add(t.workspace_id);
+    if (t.parent_task_id) expandedNodeIds.add(t.parent_task_id);
+  });
+
+  // Fetch missing parent tasks if any matched tasks are sub-tasks
+  const missingParentTaskIds = tasks
+    .map(t => t.parent_task_id)
+    .filter((id): id is string => !!id && !allTasksMap.has(id));
+
+  if (missingParentTaskIds.length > 0) {
+    const { data: parentTasks } = await supabaseAdmin
+      .from('tasks')
+      .select(`
+        id,
+        name:subject,
+        code:task_code,
+        description,
+        owner_id,
+        assigned_to,
+        workspace_id,
+        parent_task_id,
+        status_id,
+        priority_id,
+        start_date,
+        end_date,
+        created_at,
+        created_by,
+        status:status_master!tasks_status_id_fkey(name:status_name, status_color),
+        priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color),
+        subtasks:tasks!parent_task_id(count),
+        parent:tasks!parent_task_id(id, name:subject, code:task_code),
+        assignees:task_participants(user_id, participation_role)
+      `)
+      .in('id', missingParentTaskIds)
+      .eq('is_deleted', false);
+
+    (parentTasks || []).forEach((pt: any) => {
+      allTasksMap.set(pt.id, {
+        ...pt,
+        type: pt.parent_task_id ? 'SUB_TASK' : 'TASK',
+        child_task_count: (Array.isArray(pt.subtasks) ? pt.subtasks[0]?.count : pt.subtasks?.count) || 0,
+        children: [],
+        childrenFetched: true,
+        isMatched: false
+      });
+      if (pt.workspace_id) requiredWorkspaceIds.add(pt.workspace_id);
+      expandedNodeIds.add(pt.id);
+    });
+  }
+
+  workspaces.forEach(w => requiredWorkspaceIds.add(w.id));
+
+  // Walk up workspace tree to include all ancestor workspaces up to root
+  const allWorkspaceNodesMap = new Map<string, any>();
+  const processWorkspaceId = (wsId: string) => {
+    let curr = visibleWsMap.get(wsId);
+    while (curr) {
+      if (!allWorkspaceNodesMap.has(curr.id)) {
+        allWorkspaceNodesMap.set(curr.id, {
+          ...curr,
+          type: curr.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
+          subworkspace_count: curr.hierarchy_subws_count || 0,
+          direct_task_count: (Array.isArray(curr.stats) ? curr.stats[0] : curr.stats)?.task_count || 0,
+          total_hierarchy_task_count: curr.hierarchy_task_count || 0,
+          children: [],
+          childrenFetched: true,
+          isMatched: matchedNodeIds.has(curr.id)
+        });
+      }
+      if (curr.parent_workspace_id) {
+        expandedNodeIds.add(curr.parent_workspace_id);
+        curr = visibleWsMap.get(curr.parent_workspace_id);
+      } else {
+        curr = null;
+      }
+    }
+  };
+
+  requiredWorkspaceIds.forEach(id => processWorkspaceId(id));
+
+  // Auto-expand any workspace that contains matched items
+  tasks.forEach(t => {
+    if (t.workspace_id) expandedNodeIds.add(t.workspace_id);
+  });
+  workspaces.forEach(w => {
+    if (w.parent_workspace_id) expandedNodeIds.add(w.parent_workspace_id);
+  });
+
+  // 5. Assemble the Hierarchy Tree
+  allTasksMap.forEach(task => {
+    if (task.parent_task_id && allTasksMap.has(task.parent_task_id)) {
+      const parent = allTasksMap.get(task.parent_task_id);
+      if (!parent.children.some((c: any) => c.id === task.id)) {
+        parent.children.push(task);
+      }
+    }
+  });
+
+  allTasksMap.forEach(task => {
+    if (!task.parent_task_id && task.workspace_id && allWorkspaceNodesMap.has(task.workspace_id)) {
+      const wsNode = allWorkspaceNodesMap.get(task.workspace_id);
+      if (!wsNode.children.some((c: any) => c.id === task.id)) {
+        wsNode.children.push(task);
+      }
+    }
+  });
+
+  allWorkspaceNodesMap.forEach(wsNode => {
+    if (wsNode.parent_workspace_id && allWorkspaceNodesMap.has(wsNode.parent_workspace_id)) {
+      const parentWsNode = allWorkspaceNodesMap.get(wsNode.parent_workspace_id);
+      if (!parentWsNode.children.some((c: any) => c.id === wsNode.id)) {
+        parentWsNode.children.push(wsNode);
+      }
+    }
+  });
+
+  const roots: any[] = [];
+  allWorkspaceNodesMap.forEach(wsNode => {
+    if (!wsNode.parent_workspace_id || !allWorkspaceNodesMap.has(wsNode.parent_workspace_id)) {
+      roots.push(wsNode);
+    }
+  });
+
+  return {
+    hierarchy: roots,
+    matchedNodeIds: Array.from(matchedNodeIds),
+    expandedNodeIds: Array.from(expandedNodeIds)
+  };
+}
+
+/**
+ * Loads all levels of visible hierarchy (workspaces, sub-workspaces, tasks, subtasks)
+ * for instant 1-click Expand All.
+ */
+export async function fetchAllHierarchyBranches() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const { user } = await getCachedUser();
+  if (!user) return [];
+
+  const canManageAll = await checkServerPermission(supabase, user.id, "WORKSPACES_MANAGE");
+  const visibleWorkspaces = await getVisibleWorkspaces(user.id, canManageAll);
+  const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
+  if (visibleWsIds.length === 0) return [];
+
+  // Fetch all tasks for visible workspaces
+  const { data: allTasks } = await supabaseAdmin
+    .from('tasks')
+    .select(`
+      id,
+      name:subject,
+      code:task_code,
+      description,
+      owner_id,
+      assigned_to,
+      workspace_id,
+      parent_task_id,
+      status_id,
+      priority_id,
+      start_date,
+      end_date,
+      created_at,
+      created_by,
+      status:status_master!tasks_status_id_fkey(name:status_name, status_color),
+      priority:priority_master!tasks_priority_id_fkey(name:priority_name, priority_color),
+      subtasks:tasks!parent_task_id(count),
+      parent:tasks!parent_task_id(id, name:subject, code:task_code),
+      assignees:task_participants(user_id, participation_role)
+    `)
+    .in('workspace_id', visibleWsIds)
+    .eq('is_deleted', false)
+    .order('created_at', { ascending: false });
+
+  const tasksMap = new Map<string, any>();
+  (allTasks || []).forEach((t: any) => {
+    tasksMap.set(t.id, {
+      ...t,
+      type: t.parent_task_id ? 'SUB_TASK' : 'TASK',
+      child_task_count: (Array.isArray(t.subtasks) ? t.subtasks[0]?.count : t.subtasks?.count) || 0,
+      children: [],
+      childrenFetched: true
+    });
+  });
+
+  // Link sub-tasks
+  tasksMap.forEach(task => {
+    if (task.parent_task_id && tasksMap.has(task.parent_task_id)) {
+      tasksMap.get(task.parent_task_id).children.push(task);
+    }
+  });
+
+  const wsMap = new Map<string, any>();
+  visibleWorkspaces.forEach((ws: any) => {
+    wsMap.set(ws.id, {
+      ...ws,
+      type: ws.parent_workspace_id ? 'SUB_WORKSPACE' : 'WORKSPACE',
+      subworkspace_count: ws.hierarchy_subws_count || 0,
+      direct_task_count: (Array.isArray(ws.stats) ? ws.stats[0] : ws.stats)?.task_count || 0,
+      total_hierarchy_task_count: ws.hierarchy_task_count || 0,
+      children: [],
+      childrenFetched: true
+    });
+  });
+
+  // Link top-level tasks to workspaces
+  tasksMap.forEach(task => {
+    if (!task.parent_task_id && task.workspace_id && wsMap.has(task.workspace_id)) {
+      wsMap.get(task.workspace_id).children.push(task);
+    }
+  });
+
+  // Link sub-workspaces to parent workspaces
+  wsMap.forEach(wsNode => {
+    if (wsNode.parent_workspace_id && wsMap.has(wsNode.parent_workspace_id)) {
+      wsMap.get(wsNode.parent_workspace_id).children.push(wsNode);
+    }
+  });
+
+  // Collect root workspaces
+  const roots: any[] = [];
+  wsMap.forEach(wsNode => {
+    if (!wsNode.parent_workspace_id || !wsMap.has(wsNode.parent_workspace_id)) {
+      roots.push(wsNode);
+    }
+  });
+
+  return roots;
 }
 
 export async function updateWorkspace(id: string, formData: any) {

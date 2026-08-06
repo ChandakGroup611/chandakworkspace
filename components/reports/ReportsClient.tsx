@@ -29,6 +29,13 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+const getSafeExternalUrl = (url: string | undefined | null) => {
+  if (!url) return '#';
+  const str = String(url).trim();
+  if (/^(https?|file|ftp|smb|mailto|tel):/i.test(str)) return str;
+  return `https://${str}`;
+};
+
 function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; filterValue?: string; onFilterChange?: (v: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
   const style = { 
@@ -556,7 +563,7 @@ export default function ReportsClient() {
                             <AppTableCell key={col.field_id} className="text-[13px] text-subtle dark:text-muted">
                               <div className="truncate max-w-[200px]" title={String(val)}>
                                 {col.data_type === "link" && val !== "—" ? (
-                                  <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
+                                  <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
                                 ) : col.data_type === "badge" && val !== "—" ? (
                                   <AppBadge variant="neutral">{val}</AppBadge>
                                 ) : (

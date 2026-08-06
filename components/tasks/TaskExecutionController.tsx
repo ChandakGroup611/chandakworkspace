@@ -15,7 +15,7 @@ import {
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
   approveTask, reopenTask, createChecklistItem, 
-  createTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses,
+  createTaskAttachment, deleteTaskAttachment, getTaskComments, addTaskRemark, getTaskStatuses,
   getTaskChecklists, getTaskAttachments, executeTaskBatchOperation
 } from "@/lib/actions/tasks";
 import { toggleChecklistItem } from "@/lib/actions/workspaces";
@@ -27,6 +27,13 @@ import { usePermissions } from "@/hooks/usePermissions";
 import dynamic from 'next/dynamic';
 import SafeHtml from "@/components/ui/SafeHtml";
 import { sanitizeErrorMessage } from "@/lib/utils";
+
+const getSafeExternalUrl = (url: string | undefined | null) => {
+  if (!url) return '#';
+  const str = String(url).trim();
+  if (/^(https?|file|ftp|smb|mailto|tel):/i.test(str)) return str;
+  return `https://${str}`;
+};
 
 const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), { 
   ssr: false, 
@@ -116,7 +123,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const router = useRouter();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, roleCode } = usePermissions();
   const canDelete = !readOnly && hasPermission("TASKS_DELETE");
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
@@ -581,6 +588,26 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       attachments: [...(prev.attachments || []), { id: `temp-file-${Date.now()}`, file_name: file.name, is_temp: true }]
     }));
   };
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!window.confirm("Are you sure you want to delete this attachment? This action cannot be undone.")) return;
+    try {
+      setSaveRemarksLoading(true);
+      const res = await deleteTaskAttachment(taskId, attachmentId);
+      if (res.error) throw new Error(res.error);
+      
+      // Update UI
+      setTask((prev: any) => ({
+        ...prev,
+        attachments: prev.attachments?.filter((a: any) => a.id !== attachmentId)
+      }));
+      alert("Attachment deleted successfully");
+    } catch (err: any) {
+      alert(`Failed to delete attachment: ${err.message}`);
+    } finally {
+      setSaveRemarksLoading(false);
+    }
+  };
+
   const handleCustomFieldChange = (key: string, value: string) => {
     setLocalCustomFields(prev => ({ ...prev, [key]: value }));
 
@@ -1622,7 +1649,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {localCustomFields?.link_url ? (
                     <div className="p-4 rounded-xl border border-border/40 bg-surface/40 flex items-center justify-between gap-4">
                       <a 
-                        href={String(localCustomFields.link_url).startsWith('http') ? String(localCustomFields.link_url) : `https://${localCustomFields.link_url}`} 
+                        href={getSafeExternalUrl(localCustomFields.link_url)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="text-xs font-semibold text-accent hover:underline truncate flex-1"
@@ -1631,7 +1658,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         {localCustomFields.link_url}
                       </a>
                       <a 
-                        href={String(localCustomFields.link_url).startsWith('http') ? String(localCustomFields.link_url) : `https://${localCustomFields.link_url}`} 
+                        href={getSafeExternalUrl(localCustomFields.link_url)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="px-3 py-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
@@ -1718,6 +1745,18 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 <a href={downloadUrl} download={item.file_name || "Attachment"} className="text-xs text-accent font-bold hover:underline flex items-center gap-1" title="Download Attachment">
                                   <Download className="w-3.5 h-3.5" /> Download
                                 </a>
+                                {roleCode === 'SUPER_ADMIN' && !item.is_temp && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleDeleteAttachment(item.id);
+                                    }}
+                                    className="text-xs text-red-500 hover:text-red-600 font-bold hover:underline flex items-center gap-1 ml-2"
+                                    title="Delete Attachment"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>

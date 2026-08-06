@@ -31,9 +31,18 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportConfig";
 import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
 import { Settings2, MessageSquare, ExternalLink, Plus, Upload, RotateCcw, LayoutList, Layers, CheckCircle2 } from "lucide-react";
+import { HierarchyManager } from "@/lib/services/HierarchyManager";
+import { HierarchyStateManager } from "@/lib/services/HierarchyStateManager";
 import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
 import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
 import * as Popover from "@radix-ui/react-popover";
+
+const getSafeExternalUrl = (url: string | undefined | null) => {
+  if (!url) return '#';
+  const str = String(url).trim();
+  if (/^(https?|file|ftp|smb|mailto|tel):/i.test(str)) return str;
+  return `https://${str}`;
+};
 
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -1265,7 +1274,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       case "external_link": return (
                         <AppTableCell className="text-xs">
                           {task.custom_fields?.link_url ? (
-                            <a href={task.custom_fields.link_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
+                            <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
                               <ExternalLink className="h-3 w-3 flex-shrink-0" />
                               <span className="truncate">{task.custom_fields.link_url}</span>
                             </a>
@@ -1330,7 +1339,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           <AppTableCell className="text-[13px] text-subtle dark:text-muted">
                             <div className="truncate max-w-[200px]" title={String(val)}>
                               {col.data_type === "link" && val !== "—" ? (
-                                <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
+                                <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
                               ) : col.data_type === "badge" && val !== "—" ? (
                                 <AppBadge variant="neutral">{val}</AppBadge>
                               ) : (

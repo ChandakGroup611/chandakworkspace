@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronRight, ChevronDown, ExternalLink, Edit2, Share2, Trash2, MoreVertical, Folder, FolderTree, CheckSquare, CornerDownRight, CheckCircle2, CircleDashed, Paperclip } from "lucide-react";
+import { ChevronRight, ChevronDown, ExternalLink, Edit2, Share2, Trash2, MoreVertical, Folder, FolderTree, CheckSquare, CornerDownRight, CheckCircle2, CircleDashed, Paperclip, Eye } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { useRouter } from "next/navigation";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -24,7 +24,8 @@ export function WorkspaceMasterTable({
   expandedNodes,
   setExpandedNodes,
   autoCollapse = true,
-  forceExpandAll = false
+  forceExpandAll = false,
+  searchQuery = ""
 }: { 
   hierarchy: any[]; 
   isLightMode: boolean;
@@ -44,6 +45,7 @@ export function WorkspaceMasterTable({
   setExpandedNodes: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   autoCollapse?: boolean;
   forceExpandAll?: boolean;
+  searchQuery?: string;
 }) {
   const { hasPermission, roleCode } = usePermissions();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -112,14 +114,21 @@ export function WorkspaceMasterTable({
   };
 
   const getStatusColor = (node: any) => {
-    return node.status?.status_color || ("#6b7280");
+    return node.status?.status_color || node.status?.color || ("#6b7280");
   };
 
   const getStatusName = (node: any) => {
     if (node.status?.status_name) return node.status.status_name;
     if (node.status?.name) return node.status.name;
+    if (node.status_name) return node.status_name;
     if (node.status_id) return "Active";
     return "Unknown";
+  };
+
+  const getPriorityInfo = (node: any) => {
+    const name = node.priority?.priority_name || node.priority?.name || node.priority_name;
+    const color = node.priority?.priority_color || node.priority?.color || "#f59e0b";
+    return name ? { name, color } : null;
   };
 
   const getUserName = (userId: string) => {
@@ -186,15 +195,13 @@ export function WorkspaceMasterTable({
   };
 
   // Perfectly balanced layout matrix:
-  // Using minmax(minPixels, fr) for ALL columns allows the previously locked right-side columns (Assign/Create/Actions)
-  // to expand proportionally on wide screens, aggressively stealing and absorbing the massive blank space from the left side,
-  const gridCols = 'minmax(250px, 4fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(130px, 1fr)';
-
+  const gridCols = 'minmax(250px, 4fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(140px, 1fr)';
 
   const renderHierarchyRow = (node: any, parentNode: any, depth: number, isExpanded: boolean) => {
     const hasChildren = node.children && node.children.length > 0;
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
     const isSubWorkspace = node.type === 'SUB_WORKSPACE';
+    const isTask = node.type === 'TASK' || node.type === 'SUB_TASK';
     
     // Distinct icons based on depth and type
     let TypeIcon = Folder;
@@ -202,19 +209,6 @@ export function WorkspaceMasterTable({
     else if (node.type === 'SUB_WORKSPACE') TypeIcon = FolderTree;
     else if (node.type === 'TASK') TypeIcon = CheckSquare;
     else if (node.type === 'SUB_TASK') TypeIcon = CheckCircle2;
-
-    // Background tinting based on entity type to visually segregate the hierarchy
-    let rowBg = '';
-    let hoverBg = '';
-    
-    // Inherit from global theme structural classes
-    if (isLightMode) {
-      rowBg = '';
-      hoverBg = '';
-    } else {
-      rowBg = '';
-      hoverBg = '';
-    }
     
     let subWsCount = node.subworkspace_count || 0;
     let directTaskCount = node.direct_task_count || 0;
@@ -222,15 +216,15 @@ export function WorkspaceMasterTable({
     let totalTaskCount = node.total_hierarchy_task_count || 0;
 
     if (isWorkspaceType && hasChildren && node.childrenFetched) {
-      // Re-calculate live if we fetched children, to keep it accurate if user creates something locally
       subWsCount = node.children.filter((c: any) => c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE').length;
     }
-    
 
     const creatorId = node.created_by || node.owner_id || node.workspace_owner_id;
-
     const fullDate = node.created_at ? new Date(node.created_at).toLocaleString() : '---';
     const shortDate = node.created_at ? new Date(node.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '---';
+    const priority = isTask ? getPriorityInfo(node) : null;
+    const statusName = getStatusName(node);
+    const statusColor = getStatusColor(node);
 
     return (
       <div 
@@ -238,20 +232,21 @@ export function WorkspaceMasterTable({
           e.stopPropagation();
           if (isWorkspaceType) {
             router.push(`/workspaces/tasks?workspaceId=${node.id}`);
+          } else {
+            router.push(`/tasks/${node.id}`);
           }
         }}
         onClick={(e) => {
-          if (node.type === 'TASK' || node.type === 'SUB_TASK') {
-            // Open full task page on single click for tasks
-            router.push(`/tasks/${node.id}`);
+          if (isTask && onOpenTask) {
+            onOpenTask(node);
           }
         }}
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
         className={`theme-table-row grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
-        "border-border"
-      }`} style={{ gridTemplateColumns: gridCols }}>
+        node.isMatched ? 'bg-accent/5 ring-1 ring-inset ring-accent/30' : ''
+      } border-border`} style={{ gridTemplateColumns: gridCols }}>
 
           {/* VS Code Style Guide Lines for Nested Items */}
           {depth > 0 && Array.from({ length: depth }).map((_, i) => {
@@ -292,7 +287,7 @@ export function WorkspaceMasterTable({
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
                     className={`p-1 rounded-md transition-colors relative z-20 ${
-                      "hover:bg-elevated text-muted bg-surface/40 backdrop-blur/40 backdrop-blur/40 backdrop-blur"
+                      "hover:bg-elevated text-muted bg-surface/40 backdrop-blur"
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
@@ -314,21 +309,52 @@ export function WorkspaceMasterTable({
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
                       isWorkspaceType ? (depth === 0 ? 'text-accent dark:text-accent' : 'text-accent/80') : 'text-success'
                     }`} />
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
                       <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold shrink-0">
-                        {node.workspace_code || node.task_code || ""}
+                        {node.workspace_code || node.task_code || node.code || ""}
                       </span>
                       <span className={`whitespace-normal break-words ${
                         isWorkspaceType ? 'font-semibold tracking-tight text-[14px]' : 
                         isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
-                        'text-[13px]'
+                        'text-[13px] font-medium'
                       } ${
-                        (depth === 0 ? 'text-foreground' : 'text-muted')
+                        (depth === 0 ? 'text-foreground' : 'text-foreground/90')
                       }`}>
                         {isSubWorkspace && parentNode && (parentNode.workspace_name || parentNode.name) && !(node.workspace_name || node.name || '').startsWith((parentNode.workspace_name || parentNode.name) + ' -')
                           ? `${parentNode.workspace_name || parentNode.name} - ${node.workspace_name || node.name}`
                           : (node.workspace_name || node.name || node.subject || node.title)}
                       </span>
+
+                      {/* Task Status & Priority Badges */}
+                      {isTask && (
+                        <div className="inline-flex items-center gap-1.5 ml-1">
+                          <span 
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-sm"
+                            style={{ 
+                              borderColor: `${statusColor}40`, 
+                              backgroundColor: `${statusColor}15`,
+                              color: statusColor
+                            }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
+                            {statusName}
+                          </span>
+
+                          {priority && (
+                            <span 
+                              className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border"
+                              style={{ 
+                                borderColor: `${priority.color}40`,
+                                backgroundColor: `${priority.color}15`,
+                                color: priority.color
+                              }}
+                            >
+                              {priority.name}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {node.attachmentCount > 0 && (
                         <div className={`flex items-center justify-center p-0.5 px-1 rounded-md ml-1 bg-accent/10 text-accent`} title={`${node.attachmentCount} Attachment(s)`}>
                           <Paperclip className="h-3 w-3" />
@@ -415,7 +441,23 @@ export function WorkspaceMasterTable({
             </div>
           </div>
 
+          {/* Actions */}
           <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap">
+            {isTask && onOpenTask && (
+              <AppButton 
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenTask(node);
+                }}
+                className={`h-7 w-7 p-0 text-muted hover:text-accent hover:bg-elevated`}
+                title="Quick View Details"
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </AppButton>
+            )}
+
             {isWorkspaceType && totalTaskCount > 0 && (
               <AppButton 
                 variant="ghost"
@@ -426,6 +468,21 @@ export function WorkspaceMasterTable({
                 }}
                 className={`h-7 w-7 p-0 text-muted hover:bg-elevated`}
                 title="Open Task List"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </AppButton>
+            )}
+
+            {isTask && (
+              <AppButton 
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/tasks/${node.id}`);
+                }}
+                className={`h-7 w-7 p-0 text-muted hover:bg-elevated`}
+                title="Open Dedicated Task Page"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </AppButton>
