@@ -1312,7 +1312,7 @@ export async function executeTaskBatchOperation(payload: {
   };
 }
 
-export async function updateTaskAssignees(taskId: string, workspaceId: string, assignees: string[]) {
+export async function updateTaskAssignees(taskId: string, workspaceId: string, assignees: string[], primaryAssigneeId?: string) {
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   const userId = user?.id;
@@ -1333,8 +1333,9 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     return { error: "You do not have permission to edit assignees. Only the Primary Assignee or a Super Admin can do this." };
   }
 
-  if (assignees.length === 0) {
-    return { error: "At least one assignee must be selected." };
+  const finalPrimaryId = primaryAssigneeId || assignees[0] || task.assigned_to;
+  if (!finalPrimaryId && assignees.length === 0) {
+    return { error: "At least one assignee or primary assignee must be selected." };
   }
 
   // Fetch all workspace members
@@ -1342,35 +1343,40 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   const stakeholders = await fetchWorkspaceStakeholders(workspaceId);
 
   // Prepare participants array
+  const uniqueAssigneeIds = Array.from(new Set(assignees));
   const participants: any[] = [];
-  assignees.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'EXECUTOR' }));
+  uniqueAssigneeIds.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'EXECUTOR' }));
 
-  // Add Watchers (Team) ONLY if they are not already participants?
-  // Actually, to prevent timeouts on large workspaces, we will NOT bulk re-insert watchers.
-  // The system will just swap the EXECUTORS. Watchers can remain as they are or be handled by other flows.
-  
-  // Perform the swap transactionally (via sequential queries in this case)
+  // Perform the swap transactionally
   // ONLY delete executors, leave explicit watchers alone!
   const { error: deleteError } = await supabaseAdmin.from('task_participants').delete().eq('task_id', taskId).eq('participation_role', 'EXECUTOR');
   if (deleteError) return { error: deleteError.message };
 
-  const { error: insertError } = await supabaseAdmin.from('task_participants').insert(participants);
-  if (insertError) return { error: insertError.message };
+  if (participants.length > 0) {
+    const { error: insertError } = await supabaseAdmin.from('task_participants').insert(participants);
+    if (insertError) return { error: insertError.message };
+  }
 
-  const { error: updateError } = await supabaseAdmin.from('tasks').update({ assigned_to: assignees[0] }).eq('id', taskId);
-  if (updateError) return { error: updateError.message };
+  if (finalPrimaryId) {
+    const { error: updateError } = await supabaseAdmin.from('tasks').update({ assigned_to: finalPrimaryId }).eq('id', taskId);
+    if (updateError) return { error: updateError.message };
+  }
 
   // Log the assignment change in audit trail
-  const newExecutorNames = assignees
+  const newExecutorNames = uniqueAssigneeIds
     .map(id => stakeholders.find((s: any) => s.id === id)?.full_name)
     .filter(Boolean)
     .join(', ');
+  const primaryName = stakeholders.find((s: any) => s.id === finalPrimaryId)?.full_name || 'Unassigned';
     
   await supabaseAdmin.from('task_activity_logs').insert([{
     task_id: taskId,
     actor_id: userId,
     action: 'ASSIGNMENT_CHANGE',
-    new_state: { executors_text: newExecutorNames }
+    new_state: { 
+      primary_assignee: primaryName,
+      executors_text: newExecutorNames || 'None' 
+    }
   }]);
 
   return { success: true };

@@ -10,7 +10,7 @@ import {
   CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2, 
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
   ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye, ActivitySquare, Link as LinkIcon, MessageCircle,
-  User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, Users
+  User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, Users, X, Search, Check, UserCheck
 } from "lucide-react";
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
@@ -158,8 +158,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingTaskUpdates, setPendingTaskUpdates] = useState<Record<string, any>>({});
   const [pendingAssignees, setPendingAssignees] = useState<string[] | null>(null);
+  const [pendingPrimaryAssignee, setPendingPrimaryAssignee] = useState<string | null>(null);
   
-  // Assignee Editing
+  // Assignee & Executor Modal State
+  const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
+  const [assigneeModalTab, setAssigneeModalTab] = useState<'primary' | 'executors'>('primary');
+  const [selectedPrimaryAssignee, setSelectedPrimaryAssignee] = useState<string>("");
+  const [selectedExecutors, setSelectedExecutors] = useState<string[]>([]);
+  const [stakeholderSearch, setStakeholderSearch] = useState<string>("");
   const [isEditingAssignees, setIsEditingAssignees] = useState(false);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
   
@@ -185,6 +191,36 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [editingAssigneesList, setEditingAssigneesList] = useState<string[]>([]);
   const [isSavingAssignees, setIsSavingAssignees] = useState(false);
+  
+  const openAssigneeModal = async (tab: 'primary' | 'executors' = 'primary') => {
+    setAssigneeModalTab(tab);
+    setSelectedPrimaryAssignee(pendingPrimaryAssignee || task?.assigned_to || "");
+    const currentExecutorIds = pendingAssignees || (task?.task_assignees || []).map((e: any) => e.id);
+    setSelectedExecutors(currentExecutorIds);
+    setStakeholderSearch("");
+    setIsAssigneeModalOpen(true);
+    
+    if (stakeholders.length === 0 && task?.workspace_id) {
+      try {
+        const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
+        const res = await fetchWorkspaceStakeholders(task.workspace_id);
+        setStakeholders(res || []);
+      } catch (err) {
+        console.error("[openAssigneeModal] Error fetching stakeholders:", err);
+      }
+    }
+  };
+
+  const handleStageAssignees = () => {
+    if (!selectedPrimaryAssignee && selectedExecutors.length === 0) {
+      setError("Please select at least a Primary Assignee or an Executor.");
+      return;
+    }
+    setPendingPrimaryAssignee(selectedPrimaryAssignee);
+    setPendingAssignees(selectedExecutors);
+    setIsAssigneeModalOpen(false);
+    triggerToast("Assignee changes staged! Provide remarks and save updates.");
+  };
   
   // Click-outside reference for Executors Edit Panel
   const assigneesRef = useRef<HTMLDivElement>(null);
@@ -635,11 +671,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       
       if (res?.error) throw new Error("Batch Save Error: " + res.error);
 
-      if (pendingAssignees) {
+      if (pendingAssignees !== null || pendingPrimaryAssignee !== null) {
         const { updateTaskAssignees } = await import("@/lib/actions/tasks");
-        const assigneesRes = await updateTaskAssignees(taskId, task.workspace_id, pendingAssignees);
-        if (assigneesRes.error) throw new Error(assigneesRes.error);
+        const executorsToUpdate = pendingAssignees !== null ? pendingAssignees : explicitExecutors.map((e: any) => e.id);
+        const primaryToUpdate = pendingPrimaryAssignee !== null ? pendingPrimaryAssignee : task.assigned_to;
+        const assigneesRes = await updateTaskAssignees(taskId, task.workspace_id, executorsToUpdate, primaryToUpdate);
+        if (assigneesRes?.error) throw new Error(assigneesRes.error);
         setPendingAssignees(null);
+        setPendingPrimaryAssignee(null);
         // Force hydration since assignment changed
         await loadTaskDetails(true);
       }
@@ -969,11 +1008,32 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
               {/* 9. Primary Assignee */}
               <div className="flex flex-col space-y-1 p-3 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
-                <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Primary Assignee</span>
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Primary Assignee</span>
+                  </span>
+                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
+                    <AppButton 
+                      variant="secondary" 
+                      onClick={() => openAssigneeModal('primary')}
+                      className="text-[10px] font-bold text-accent hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                    >
+                      Edit
+                    </AppButton>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 h-9 overflow-hidden">
-                  {task.assignee ? (
+                  {pendingPrimaryAssignee ? (
+                    (() => {
+                      const pUser = stakeholders.find(s => s.id === pendingPrimaryAssignee);
+                      return (
+                        <div className="flex items-center gap-1.5 text-xs text-accent font-bold">
+                          <span className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse" />
+                          <span className="truncate">{pUser?.full_name || "New Primary"} (Pending save)</span>
+                        </div>
+                      );
+                    })()
+                  ) : task.assignee ? (
                     (() => {
                        const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
                        if (!a) return null;
@@ -986,7 +1046,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                {a.full_name?.substring(0, 2).toUpperCase() || "U"}
                              </div>
                            )}
-                           <span className="theme-data-value text-foreground truncate">{a.full_name}</span>
+                           <span className="theme-data-value text-foreground truncate font-semibold">{a.full_name}</span>
                          </>
                        );
                     })()
@@ -1001,67 +1061,33 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <div className="flex items-center justify-between">
                   <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-emerald-500" /> <span className="text-emerald-600 dark:text-emerald-400 font-bold">Executors</span>
+                    <span className="text-[10px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full font-bold">
+                      {pendingAssignees ? pendingAssignees.length : explicitExecutors.length}
+                    </span>
                   </span>
                   { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
-                    <AppButton variant="secondary" 
-                      onClick={async () => {
-                        if (!isEditingAssignees) {
-                          if (stakeholders.length === 0) {
-                            try {
-                              const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
-                              const res = await fetchWorkspaceStakeholders(task.workspace_id);
-                              setStakeholders(res);
-                            } catch (err) {
-                              console.error(err);
-                            }
-                          }
-                          setEditingAssigneesList(explicitExecutors.map((e: any) => e.id));
-                        }
-                        setIsEditingAssignees(!isEditingAssignees);
-                      }} 
-                      className="text-[10px] font-bold text-muted0 hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                    <AppButton 
+                      variant="secondary" 
+                      onClick={() => openAssigneeModal('executors')}
+                      className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
                     >
-                      {isEditingAssignees ? 'Cancel' : 'Edit'}
+                      Edit
                     </AppButton>
                   )}
                 </div>
                 
-                {isEditingAssignees ? (
-                  <div ref={assigneesRef} className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin mt-1 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/30 dark:shadow-emerald-500/20 theme-card-structural border-emerald-200 absolute z-50 w-[240px] bg-surface left-0 top-full`}>
-                    <div className="flex flex-col gap-1">
-                      {stakeholders.map(s => (
-                        <label key={s.id} className="flex items-center gap-2 text-xs text-foreground cursor-pointer hover:bg-accent/10 p-1 rounded-md transition-colors">
-                          <input type="checkbox" className="accent-emerald-500 h-3 w-3 rounded" checked={editingAssigneesList.includes(s.id)} onChange={e => {
-                            if (e.target.checked) setEditingAssigneesList([...editingAssigneesList, s.id]);
-                            else setEditingAssigneesList(editingAssigneesList.filter(id => id !== s.id));
-                          }} />
-                          <span className="truncate font-semibold">{s.full_name}</span>
-                        </label>
-                      ))}
-                      {stakeholders.length === 0 && <span className="text-xs text-muted p-1">Loading...</span>}
+                <div className="text-xs sm:theme-data-value text-foreground h-9 flex items-center overflow-hidden">
+                  {pendingAssignees ? (
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="truncate">{pendingAssignees.length} executor(s) (Pending save)</span>
                     </div>
-                    <AppButton 
-                      size="sm" 
-                      className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-[10px] h-7 text-white" 
-                      onClick={() => {
-                        setPendingAssignees(editingAssigneesList);
-                        setIsEditingAssignees(false);
-                      }}
-                    >
-                      Stage Assignees
-                    </AppButton>
-                  </div>
-                ) : (
-                  <div className="text-xs sm:theme-data-value text-foreground h-9 flex items-center overflow-hidden">
-                    {pendingAssignees ? (
-                      <span className="text-accent font-bold italic animate-pulse text-xs">Pending save...</span>
-                    ) : (
-                      <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
-                        {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
-                      </span>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
+                      {explicitExecutors.length > 0 ? explicitExecutors.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
+                    </span>
+                  )}
+                </div>
               </div>
               
               {/* 11. Watchers (Team) */}
@@ -1703,6 +1729,272 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           </div>
         </AppCard>
       </div>
+
+      {/* Dedicated High-Clarity Assignee & Executor Management Modal */}
+      {isAssigneeModalOpen && (
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsAssigneeModalOpen(false)}
+        >
+          <div 
+            className="bg-surface dark:bg-elevated border border-border shadow-2xl rounded-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[88vh] animate-in zoom-in-95 duration-200 text-foreground"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-surface/90 dark:bg-elevated/90 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center text-accent">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Manage Task Ownership & Executors</h3>
+                  <p className="text-xs text-muted">Assign the Primary Owner and collaborating Executors for this task.</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsAssigneeModalOpen(false)} 
+                className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface/80 transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Tabs */}
+            <div className="flex border-b border-border bg-surface/50 dark:bg-elevated/50 px-6 pt-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setAssigneeModalTab('primary')}
+                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
+                  assigneeModalTab === 'primary' 
+                    ? 'border-accent text-accent bg-surface dark:bg-elevated shadow-xs' 
+                    : 'border-transparent text-muted hover:text-foreground'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Primary Assignee</span>
+                {selectedPrimaryAssignee && (
+                  <span className="w-2 h-2 rounded-full bg-accent" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAssigneeModalTab('executors')}
+                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
+                  assigneeModalTab === 'executors' 
+                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-surface dark:bg-elevated shadow-xs' 
+                    : 'border-transparent text-muted hover:text-foreground'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>Executors</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full font-bold">
+                  {selectedExecutors.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-4 border-b border-border bg-surface/30 dark:bg-elevated/30">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search workspace members by name or email..."
+                  value={stakeholderSearch}
+                  onChange={(e) => setStakeholderSearch(e.target.value)}
+                  className="w-full h-10 pl-9 pr-9 rounded-xl border border-border bg-surface dark:bg-elevated text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-muted"
+                />
+                {stakeholderSearch && (
+                  <button 
+                    type="button"
+                    onClick={() => setStakeholderSearch("")}
+                    className="absolute right-3 top-3 text-muted hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* User Selection List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[380px] scrollbar-thin">
+              {(() => {
+                const filteredStakeholders = stakeholders.filter(s => {
+                  if (!stakeholderSearch) return true;
+                  const term = stakeholderSearch.toLowerCase();
+                  return (
+                    s.full_name?.toLowerCase().includes(term) ||
+                    s.email?.toLowerCase().includes(term) ||
+                    s.department?.toLowerCase().includes(term)
+                  );
+                });
+
+                if (filteredStakeholders.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-xs text-muted">
+                      {stakeholders.length === 0 ? "Loading workspace members..." : "No matching members found."}
+                    </div>
+                  );
+                }
+
+                if (assigneeModalTab === 'primary') {
+                  return (
+                    <div className="space-y-1.5">
+                      <div className="text-[11px] font-semibold text-muted px-1 pb-1">
+                        Choose the single primary lead responsible for this task:
+                      </div>
+                      {filteredStakeholders.map(s => {
+                        const isSelected = selectedPrimaryAssignee === s.id;
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => setSelectedPrimaryAssignee(s.id)}
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'border-accent bg-accent/10 dark:bg-accent/15 shadow-xs' 
+                                : 'border-border/60 hover:border-accent/40 hover:bg-surface/60 dark:hover:bg-elevated/60'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {s.profile_photo ? (
+                                <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold shrink-0">
+                                  {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
+                                  <span>{s.full_name}</span>
+                                  {isSelected && (
+                                    <span className="text-[10px] bg-accent text-white px-2 py-0.2 rounded-full font-semibold shrink-0">
+                                      Primary
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
+                              </div>
+                            </div>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                              isSelected ? 'border-accent bg-accent text-white' : 'border-border'
+                            }`}>
+                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                // Executors Multi-Select Tab
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-1 pb-1">
+                      <span className="text-[11px] font-semibold text-muted">
+                        Select all collaborators who will execute this directive:
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedExecutors(stakeholders.map(s => s.id))}
+                          className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                        >
+                          Select All
+                        </button>
+                        <span className="text-muted text-xs">•</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedExecutors([])}
+                          className="text-[10px] text-muted hover:text-foreground font-bold hover:underline"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                    </div>
+                    {filteredStakeholders.map(s => {
+                      const isSelected = selectedExecutors.includes(s.id);
+                      return (
+                        <div
+                          key={s.id}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedExecutors(selectedExecutors.filter(id => id !== s.id));
+                            } else {
+                              setSelectedExecutors([...selectedExecutors, s.id]);
+                            }
+                          }}
+                          className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                            isSelected 
+                              ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 shadow-xs' 
+                              : 'border-border/60 hover:border-emerald-400/40 hover:bg-surface/60 dark:hover:bg-elevated/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {s.profile_photo ? (
+                              <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
+                                <span>{s.full_name}</span>
+                                {s.id === selectedPrimaryAssignee && (
+                                  <span className="text-[10px] bg-accent/15 text-accent border border-accent/30 px-1.5 py-0.2 rounded-full font-semibold shrink-0">
+                                    Primary Owner
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                            isSelected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-border'
+                          }`}>
+                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-surface/90 dark:bg-elevated/90 border-t border-border flex items-center justify-between">
+              <div className="text-xs text-muted">
+                <span className="font-semibold text-foreground">
+                  {selectedPrimaryAssignee ? (stakeholders.find(s => s.id === selectedPrimaryAssignee)?.full_name || "Primary Selected") : "No Primary"}
+                </span>
+                {" • "}
+                <span>{selectedExecutors.length} executor(s)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AppButton 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsAssigneeModalOpen(false)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton 
+                  variant="primary" 
+                  size="sm" 
+                  onClick={handleStageAssignees}
+                  className="bg-accent hover:bg-accent-secondary"
+                >
+                  Stage Assignment
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </ExperienceProvider>
   );

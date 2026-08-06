@@ -2,41 +2,71 @@
 
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
-import { hasPermission } from "@/lib/permissions";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 
-const ALLOWED_MIME_TYPES = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
-  "text/csv",
-  "text/plain",
-  "application/zip",
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "video/mp4"
+const BLOCKED_EXTENSIONS = [
+  ".exe", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", 
+  ".msi", ".dll", ".com", ".pif", ".jar", ".apk", ".bin", ".wsf"
 ];
 
-const BLOCKED_EXTENSIONS = [".exe", ".bat", ".cmd", ".sh"];
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+function resolveMimeFromExtension(fileName: string, clientMime?: string): string {
+  if (clientMime && clientMime !== 'application/octet-stream' && clientMime !== '') {
+    return clientMime;
+  }
+  const ext = fileName.split('.').pop()?.toLowerCase() || '';
+  const map: Record<string, string> = {
+    pdf: 'application/pdf',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    csv: 'text/csv',
+    txt: 'text/plain',
+    log: 'text/plain',
+    json: 'application/json',
+    xml: 'application/xml',
+    html: 'text/html',
+    htm: 'text/html',
+    md: 'text/markdown',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+    gif: 'image/gif',
+    svg: 'image/svg+xml',
+    bmp: 'image/bmp',
+    ico: 'image/x-icon',
+    tiff: 'image/tiff',
+    tif: 'image/tiff',
+    zip: 'application/zip',
+    rar: 'application/x-rar-compressed',
+    '7z': 'application/x-7z-compressed',
+    tar: 'application/x-tar',
+    gz: 'application/gzip',
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+    mp3: 'audio/mpeg',
+    wav: 'audio/wav'
+  };
+  return map[ext] || 'application/octet-stream';
+}
 
 /**
  * Validates file security parameters
  */
 function validateFileSecurity(fileName: string, mimeType: string, fileSize: number) {
   if (fileSize > MAX_FILE_SIZE) {
-    throw new Error("File exceeds maximum allowed size (50MB).");
-  }
-
-  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
-    throw new Error(`Unsupported file type: ${mimeType}`);
+    throw new Error("File exceeds maximum allowed size (100MB).");
   }
 
   const lowerName = fileName.toLowerCase();
   for (const ext of BLOCKED_EXTENSIONS) {
     if (lowerName.endsWith(ext)) {
-      throw new Error(`Executable files are strictly prohibited.`);
+      throw new Error(`Executable/script files (${ext}) are strictly prohibited for security.`);
     }
   }
 }
@@ -45,7 +75,7 @@ function validateFileSecurity(fileName: string, mimeType: string, fileSize: numb
  * Prepares an upload request, registers in DB, and returns a signed upload URL
  */
 export async function initializeAttachmentUpload(payload: {
-  module_type: 'ticket' | 'chat' | 'resolution' | 'requirement';
+  module_type: 'ticket' | 'chat' | 'resolution' | 'requirement' | 'task';
   record_id: string;
   file_name: string;
   mime_type: string;
@@ -57,9 +87,8 @@ export async function initializeAttachmentUpload(payload: {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("Unauthenticated.");
 
-  // Relaxed: Allow all authenticated members to upload attachments
-
-  validateFileSecurity(payload.file_name, payload.mime_type, payload.file_size);
+  const sanitizedMime = resolveMimeFromExtension(payload.file_name, payload.mime_type);
+  validateFileSecurity(payload.file_name, sanitizedMime, payload.file_size);
 
   const bucketName = payload.module_type === 'chat' ? 'chat-attachments' 
                    : payload.module_type === 'resolution' ? 'resolution-files' 
@@ -67,7 +96,8 @@ export async function initializeAttachmentUpload(payload: {
                    : 'ticket-attachments';
 
   // Generate unique storage path
-  const storagePath = `${payload.record_id}/${Date.now()}_${payload.file_name}`;
+  const cleanName = payload.file_name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `${payload.record_id}/${Date.now()}_${cleanName}`;
 
   // Insert DB record using Service Role to ensure it succeeds safely
   const { data: attachmentRecord, error: dbError } = await supabaseAdmin
@@ -75,9 +105,9 @@ export async function initializeAttachmentUpload(payload: {
     .insert({
       module_type: payload.module_type,
       record_id: payload.record_id,
-      file_name: storagePath, // Storing the full path as file_name in storage
+      file_name: storagePath,
       original_file_name: payload.file_name,
-      mime_type: payload.mime_type,
+      mime_type: sanitizedMime,
       file_size: payload.file_size,
       storage_path: storagePath,
       uploaded_by: user.id
@@ -87,10 +117,10 @@ export async function initializeAttachmentUpload(payload: {
 
   if (dbError) {
     console.error("DB Error initializing attachment:", dbError);
-    throw new Error("Failed to register attachment in database.");
+    throw new Error(`Failed to register attachment: ${dbError.message}`);
   }
 
-  // Generate signed upload URL using Service Role to bypass standard client RLS on buckets
+  // Generate signed upload URL using Service Role
   const { data: signedUploadUrl, error: storageError } = await supabaseAdmin
     .storage
     .from(bucketName)
@@ -98,9 +128,8 @@ export async function initializeAttachmentUpload(payload: {
 
   if (storageError) {
     console.error("Storage Error generating upload URL:", storageError);
-    // Cleanup DB record
     await supabaseAdmin.from('attachments').delete().eq('id', attachmentRecord.id);
-    throw new Error("Failed to generate secure upload URL.");
+    throw new Error(`Failed to generate upload URL: ${storageError.message}`);
   }
 
   return {
@@ -121,9 +150,6 @@ export async function getAttachmentDownloadUrl(attachmentId: string, forceDownlo
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new Error("Unauthenticated.");
 
-  // Relaxed: Allow all authenticated members to view attachments
-
-  // Fetch attachment details
   const { data: attachment, error: fetchError } = await supabaseAdmin
     .from('attachments')
     .select('*')
@@ -132,12 +158,37 @@ export async function getAttachmentDownloadUrl(attachmentId: string, forceDownlo
     .single();
 
   if (fetchError || !attachment) {
+    // Check fallback in legacy tables
+    const { data: taskAtt } = await supabaseAdmin.from('task_attachments').select('*').eq('id', attachmentId).single();
+    if (taskAtt) {
+      const proxyUrl = forceDownload 
+        ? `/api/proxy-attachment/${attachmentId}?download=1` 
+        : `/api/proxy-attachment/${attachmentId}`;
+      return {
+        signedUrl: proxyUrl,
+        proxyUrl,
+        directSignedUrl: taskAtt.file_url || proxyUrl,
+        fileName: taskAtt.file_name,
+        mimeType: taskAtt.file_type || resolveMimeFromExtension(taskAtt.file_name)
+      };
+    }
+
+    const { data: ticketAtt } = await supabaseAdmin.from('ticket_attachments').select('*').eq('id', attachmentId).single();
+    if (ticketAtt) {
+      const proxyUrl = forceDownload 
+        ? `/api/proxy-attachment/${attachmentId}?download=1` 
+        : `/api/proxy-attachment/${attachmentId}`;
+      return {
+        signedUrl: proxyUrl,
+        proxyUrl,
+        directSignedUrl: ticketAtt.file_url || proxyUrl,
+        fileName: ticketAtt.file_name,
+        mimeType: ticketAtt.file_type || resolveMimeFromExtension(ticketAtt.file_name)
+      };
+    }
+
     throw new Error("Attachment not found or deleted.");
   }
-
-  // NOTE: In a true zero-trust model, we should verify the user canAccessTicket(attachment.record_id).
-  // For brevity, assuming the central module gatekeeper `hasPermission` and parent component UI hides it if they can't see the ticket.
-  // We'll enforce parent visibility here using a quick repository check if needed.
 
   const bucketName = attachment.module_type === 'chat' ? 'chat-attachments' 
                    : attachment.module_type === 'resolution' ? 'resolution-files' 
@@ -146,11 +197,10 @@ export async function getAttachmentDownloadUrl(attachmentId: string, forceDownlo
 
   const options = forceDownload ? { download: attachment.original_file_name || attachment.file_name } : undefined;
 
-  const { data: signedUrl, error: storageError } = await supabaseAdmin
+  const { data: signedUrl } = await supabaseAdmin
     .storage
     .from(bucketName)
-    .createSignedUrl(attachment.storage_path, 60 * 60, options); // 1 hour expiry
-
+    .createSignedUrl(attachment.storage_path, 60 * 60, options);
 
   const proxyUrl = forceDownload 
     ? `/api/proxy-attachment/${attachmentId}?download=1` 
@@ -166,20 +216,110 @@ export async function getAttachmentDownloadUrl(attachmentId: string, forceDownlo
 }
 
 /**
- * Fetches attachments for a given module and record, bypassing RLS.
+ * Fetches attachments for a given module and record, bypassing RLS and supporting dual IDs (UUID & Code).
  */
 export async function fetchAttachments(moduleType: string, recordId: string) {
-  const { data, error } = await supabaseAdmin
+  if (!recordId) return [];
+
+  const candidateIds = new Set<string>([recordId]);
+
+  try {
+    if (moduleType === 'ticket') {
+      const { data: t } = await supabaseAdmin
+        .from('tickets')
+        .select('id, code')
+        .or(`id.eq.${recordId},code.eq.${recordId}`)
+        .limit(1)
+        .maybeSingle();
+      if (t) {
+        if (t.id) candidateIds.add(t.id);
+        if (t.code) candidateIds.add(t.code);
+      }
+    } else if (moduleType === 'requirement') {
+      const { data: r } = await supabaseAdmin
+        .from('requirements')
+        .select('id, code')
+        .or(`id.eq.${recordId},code.eq.${recordId}`)
+        .limit(1)
+        .maybeSingle();
+      if (r) {
+        if (r.id) candidateIds.add(r.id);
+        if (r.code) candidateIds.add(r.code);
+      }
+    } else if (moduleType === 'task') {
+      const { data: tk } = await supabaseAdmin
+        .from('tasks')
+        .select('id, task_code')
+        .or(`id.eq.${recordId},task_code.eq.${recordId}`)
+        .limit(1)
+        .maybeSingle();
+      if (tk) {
+        if (tk.id) candidateIds.add(tk.id);
+        if (tk.task_code) candidateIds.add(tk.task_code);
+      }
+    }
+  } catch (e) {
+    console.error("[Attachments] Candidate ID resolution:", e);
+  }
+
+  const idsArray = Array.from(candidateIds);
+
+  const { data: unifiedData } = await supabaseAdmin
     .from('attachments')
     .select('*')
     .eq('module_type', moduleType)
-    .eq('record_id', recordId)
+    .in('record_id', idsArray)
     .eq('is_deleted', false)
     .order('uploaded_at', { ascending: false });
 
-  if (error) {
-    console.error("Error fetching attachments:", error);
-    return [];
+  let results: any[] = unifiedData ? [...unifiedData] : [];
+
+  // Module-specific fallback for tickets and tasks
+  if (moduleType === 'ticket') {
+    const { data: ticketAtts } = await supabaseAdmin
+      .from('ticket_attachments')
+      .select('*')
+      .in('ticket_id', idsArray);
+    if (ticketAtts && ticketAtts.length > 0) {
+      ticketAtts.forEach(ta => {
+        if (!results.some(r => r.id === ta.id || r.file_name === ta.file_name)) {
+          results.push({
+            id: ta.id,
+            module_type: 'ticket',
+            record_id: ta.ticket_id,
+            file_name: ta.file_name,
+            original_file_name: ta.file_name,
+            mime_type: ta.file_type || resolveMimeFromExtension(ta.file_name),
+            file_size: ta.file_size || 0,
+            storage_path: ta.file_url,
+            uploaded_at: ta.created_at
+          });
+        }
+      });
+    }
+  } else if (moduleType === 'task') {
+    const { data: taskAtts } = await supabaseAdmin
+      .from('task_attachments')
+      .select('*')
+      .in('task_id', idsArray);
+    if (taskAtts && taskAtts.length > 0) {
+      taskAtts.forEach(ta => {
+        if (!results.some(r => r.id === ta.id || r.file_name === ta.file_name)) {
+          results.push({
+            id: ta.id,
+            module_type: 'task',
+            record_id: ta.task_id,
+            file_name: ta.file_name,
+            original_file_name: ta.file_name,
+            mime_type: ta.file_type || resolveMimeFromExtension(ta.file_name),
+            file_size: ta.file_size || 0,
+            storage_path: ta.file_url,
+            uploaded_at: ta.created_at
+          });
+        }
+      });
+    }
   }
-  return data || [];
+
+  return results;
 }

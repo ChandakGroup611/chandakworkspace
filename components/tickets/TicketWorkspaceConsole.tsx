@@ -595,7 +595,7 @@ export function TicketWorkspaceConsole({
             <div className="p-4">
               <EnterpriseUploader 
                 moduleType="ticket" 
-                recordId={ticket.dbId} 
+                recordId={ticket.dbId || ticket.id || ticket.code} 
                 isLightMode={false} 
                 onUploadComplete={() => {}}
               />
