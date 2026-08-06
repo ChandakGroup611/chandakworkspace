@@ -1583,8 +1583,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {[
                 { id: 'tags', label: 'Tags', icon: Pin },
                 { id: 'links', label: 'Link URL', icon: LinkIcon },
-                { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: Math.max(task._meta?.checklistCount || 0, task.checklists?.length || 0) },
-                { id: 'attachments', label: 'Attachment', icon: Paperclip, count: Math.max(task._meta?.attachmentCount || 0, task.attachments?.length || 0) },
+                { id: 'checklist', label: 'Checklist', icon: CheckSquare, count: task.checklists !== undefined ? task.checklists.length : (task._meta?.checklistCount || 0) },
+                { id: 'attachments', label: 'Attachment', icon: Paperclip, count: task.attachments !== undefined ? task.attachments.length : (task._meta?.attachmentCount || 0) },
                 { id: 'chat', label: 'Chat', icon: MessageCircle },
                 { id: 'timeline', label: 'Audit (Timeline)', icon: ActivitySquare },
                 { id: 'time', label: 'Time Logs', icon: Clock }
