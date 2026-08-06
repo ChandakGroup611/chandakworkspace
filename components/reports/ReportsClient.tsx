@@ -479,7 +479,9 @@ export default function ReportsClient() {
                         );
                         case "description": return (
                           <AppTableCell key={col.field_id} className="text-[13px] text-subtle">
-                            <div className="truncate max-w-[300px]" title={item.description}>{item.description}</div>
+                            <div className="truncate max-w-[300px]" title={item.description ? item.description.replace(/<[^>]*>?/gm, '') : ''}>
+                              {item.description ? item.description.replace(/<[^>]*>?/gm, '') : '—'}
+                            </div>
                           </AppTableCell>
                         );
                         case "workspace": return (

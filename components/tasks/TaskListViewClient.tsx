@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import SafeHtml from "@/components/ui/SafeHtml";
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -1427,9 +1428,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
               <div className="space-y-2">
                 <h4 className="text-[11px] uppercase font-bold text-muted tracking-wider">Description</h4>
-                <p className="text-[13px] text-foreground dark:text-muted leading-relaxed whitespace-pre-wrap">
-                  {selectedTask.description || 'No description provided.'}
-                </p>
+                <div className="text-[13px] text-foreground dark:text-muted leading-relaxed">
+                  <SafeHtml html={selectedTask.description || 'No description provided.'} />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

@@ -15,6 +15,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import Link from "next/link";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import dynamic from "next/dynamic";
+import SafeHtml from "@/components/ui/SafeHtml";
+import { sanitizeErrorMessage } from "@/lib/utils";
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
 
@@ -1553,9 +1555,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                   <span className="theme-data-value text-foreground truncate">{log.user?.full_name || log.actor_name || 'System Actor'}</span>
                                   <span className="text-[10px] font-semibold text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground leading-relaxed break-words">
-                                  {log.action || log.remarks || log.message || 'Updated requirement parameters.'}
-                                </p>
+                                <div className="text-xs text-muted-foreground leading-relaxed break-words">
+                                  <SafeHtml html={log.action || log.remarks || log.message || 'Updated requirement parameters.'} />
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -1786,7 +1788,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                   )}
                                   {flow.remarks && (
                                     <div className="text-xs bg-surface/60 dark:bg-surface/30 p-2 rounded text-subtle dark:text-muted italic border border-black/5 dark:border-white/5">
-                                      "{flow.remarks}"
+                                      <SafeHtml html={flow.remarks} />
                                     </div>
                                   )}
                                 </div>

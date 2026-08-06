@@ -3,6 +3,7 @@
 import React from 'react';
 import { AppButton } from "@/components/ui/AppButton";
 import { ArrowRight, Plus, Activity } from "lucide-react";
+import SafeHtml from "@/components/ui/SafeHtml";
 
 export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
   return (
@@ -24,9 +25,9 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
             )}
           </div>
           
-          <p className="text-sm text-muted line-clamp-2 mb-6">
-            {ws.description || 'No description provided.'}
-          </p>
+          <div className="text-sm text-muted line-clamp-2 mb-6">
+            <SafeHtml html={ws.description || 'No description provided.'} />
+          </div>
 
           <div className="flex justify-between items-center text-xs text-muted">
             <div className="flex items-center gap-1.5">

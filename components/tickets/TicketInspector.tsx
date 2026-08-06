@@ -19,6 +19,7 @@ import {
 import { TicketActivityStream } from "@/components/tickets/TicketActivityStream";
 import { TicketChat } from "@/components/tickets/TicketChat";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import SafeHtml from "@/components/ui/SafeHtml";
 
 interface TicketInspectorProps {
   ticket: any;
@@ -137,7 +138,9 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             <section className="space-y-4">
               <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Subject Overview</h3>
               <div className={`p-6 border rounded-2xl bg-elevated border-border`}>
-                <p className={`leading-relaxed whitespace-pre-wrap text-muted font-medium`}>{ticket.description}</p>
+                <div className="leading-relaxed text-muted font-medium">
+                  <SafeHtml html={ticket.description || "No description provided."} />
+                </div>
               </div>
             </section>
 

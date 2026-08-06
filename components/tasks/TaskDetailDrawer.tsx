@@ -5,6 +5,7 @@ import { RealtimeChat } from '../collaboration/RealtimeChat';
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { CheckSquare, MessageSquare, ListTodo } from 'lucide-react';
 import { AppButton } from "@/components/ui/AppButton";
+import SafeHtml from "@/components/ui/SafeHtml";
 
 export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<"details" | "collaboration">("details");
@@ -55,8 +56,8 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
                   <section>
                     <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">Description</h3>
-                    <div className="text-muted text-sm whitespace-pre-wrap leading-relaxed">
-                      {task.description || "No description provided."}
+                    <div className="text-muted text-sm leading-relaxed">
+                      <SafeHtml html={task.description || "No description provided."} />
                     </div>
                   </section>
 

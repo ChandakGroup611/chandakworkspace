@@ -26,6 +26,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 import dynamic from 'next/dynamic';
 import SafeHtml from "@/components/ui/SafeHtml";
+import { sanitizeErrorMessage } from "@/lib/utils";
 
 const TaskRealtimeChat = dynamic(() => import("@/components/tasks/TaskRealtimeChat"), { 
   ssr: false, 
@@ -800,7 +801,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Sleek Error Notification Banner */}
       {error && (
         <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
-          <span>{error.includes("react.dev/errors") ? "A temporary network or server error occurred. Please try again." : error}</span>
+          <span>{sanitizeErrorMessage(error)}</span>
           <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-rose-400/60 hover:text-rose-400 font-bold px-2">Dismiss</AppButton>
         </div>
       )}

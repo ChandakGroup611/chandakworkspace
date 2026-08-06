@@ -6,6 +6,7 @@ import { handleRequirementUAT } from '@/lib/actions/requirements';
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { ListTodo, MessageSquare } from 'lucide-react';
 import { AppButton } from "@/components/ui/AppButton";
+import SafeHtml from "@/components/ui/SafeHtml";
 
 export function RequirementDetailDrawer({ requirement, onClose }: { requirement: any, onClose: () => void }) {
   const [isPending, startTransition] = useTransition();
@@ -83,15 +84,15 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                 <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
                   <section className="bg-surface/20 rounded-2xl p-6 border border-white/5">
                     <h3 className="text-xs font-bold text-accent uppercase tracking-widest mb-3">Business Justification</h3>
-                    <div className="text-muted text-sm whitespace-pre-wrap leading-relaxed">
-                      {requirement.business_justification}
+                    <div className="text-muted text-sm leading-relaxed">
+                      <SafeHtml html={requirement.business_justification} />
                     </div>
                   </section>
 
                   <section className="space-y-4">
                     <h3 className="text-sm font-semibold text-foreground">Technical Description & Scope</h3>
-                    <div className="text-muted text-sm whitespace-pre-wrap leading-relaxed bg-surface/20 rounded-xl p-4 border border-white/5">
-                      {requirement.description}
+                    <div className="text-muted text-sm leading-relaxed bg-surface/20 rounded-xl p-4 border border-white/5">
+                      <SafeHtml html={requirement.description} />
                     </div>
                   </section>
 

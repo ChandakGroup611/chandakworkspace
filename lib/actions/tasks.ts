@@ -432,155 +432,199 @@ export async function fetchUsers() {
 }
 
 export async function getTaskDetails(taskId: string) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id;
+  try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    const userId = user?.id;
 
-  const t0 = performance.now();
-  const [
-    { data: task, error },
-    { count: checklistCount },
-    { count: attachmentCount },
-    { data: participants },
-    permissionsModule
-  ] = await Promise.all([
-    supabaseAdmin.from('tasks').select(`
-      *,
-      status:status_master(id, name:status_name, code:status_code, is_closed),
-      priority:priority_master(id, name:priority_name, color:priority_color),
-      department:departments(id, name),
-      workspace:workspaces(id, name:workspace_name, members:workspace_members(user_id, role))
-    `).eq('id', taskId).single(),
-    supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
-    supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
-    supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId),
-    userId ? import('@/lib/permissions') : Promise.resolve(null)
-  ]);
-  const t1 = performance.now(); console.log(`[getTaskDetails] Parallel fetch took ${(t1 - t0).toFixed(2)}ms`);
+    const t0 = performance.now();
+    const [
+      { data: task, error },
+      { count: checklistCount },
+      { count: attachmentCount },
+      { data: participants },
+      permissionsModule
+    ] = await Promise.all([
+      supabaseAdmin.from('tasks').select(`
+        *,
+        status:status_master(id, name:status_name, code:status_code, is_closed),
+        priority:priority_master(id, name:priority_name, color:priority_color),
+        department:departments(id, name),
+        workspace:workspaces(id, name:workspace_name, members:workspace_members(user_id, role))
+      `).eq('id', taskId).single(),
+      supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
+      supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
+      supabaseAdmin.from('task_participants').select('user_id, participation_role').eq('task_id', taskId),
+      userId ? import('@/lib/permissions').catch(() => null) : Promise.resolve(null)
+    ]);
+    const t1 = performance.now(); console.log(`[getTaskDetails] Parallel fetch took ${(t1 - t0).toFixed(2)}ms`);
 
-  if (error || !task) return { error: error?.message || "Task not found" };
+    if (error || !task) return { error: error?.message || "Task not found" };
 
-  let isSuperAdmin = false;
-  if (userId && permissionsModule) {
-    isSuperAdmin = await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE");
-  }
+    let isSuperAdmin = false;
+    if (userId && permissionsModule) {
+      try {
+        isSuperAdmin = await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE");
+      } catch (permErr) {
+        console.warn("[getTaskDetails] Error checking permissions:", permErr);
+      }
+    }
 
-  let wsMembers: any[] = [];
-  let isWorkspaceMember = isSuperAdmin;
-  
-  if (task.workspace_id) {
-    wsMembers = task.workspace?.members || [];
+    let wsMembers: any[] = [];
+    let isWorkspaceMember = isSuperAdmin;
     
-    if (userId && !isSuperAdmin) {
-      if (wsMembers.some(m => m.user_id === userId)) {
-        isWorkspaceMember = true;
-      } else {
-        const { data: userTeams } = await supabaseAdmin.from('team_members').select('team_id').eq('user_id', userId);
-        if (userTeams && userTeams.length > 0) {
-          const teamIds = userTeams.map((t: any) => t.team_id);
-          const { data: wsTeams } = await supabaseAdmin.from('workspace_teams').select('id').eq('workspace_id', task.workspace_id).in('team_id', teamIds).limit(1);
-          if (wsTeams && wsTeams.length > 0) isWorkspaceMember = true;
+    if (task.workspace_id) {
+      wsMembers = task.workspace?.members || [];
+      
+      if (userId && !isSuperAdmin) {
+        if (wsMembers.some(m => m.user_id === userId)) {
+          isWorkspaceMember = true;
+        } else {
+          try {
+            const { data: userTeams } = await supabaseAdmin.from('team_members').select('team_id').eq('user_id', userId);
+            if (userTeams && userTeams.length > 0) {
+              const teamIds = userTeams.map((t: any) => t.team_id);
+              const { data: wsTeams } = await supabaseAdmin.from('workspace_teams').select('id').eq('workspace_id', task.workspace_id).in('team_id', teamIds).limit(1);
+              if (wsTeams && wsTeams.length > 0) isWorkspaceMember = true;
+            }
+          } catch (teamErr) {
+            console.warn("[getTaskDetails] Error checking workspace teams:", teamErr);
+          }
         }
       }
     }
+
+    // User Lookup Consolidation
+    const uniqueUserIds = new Set<string>();
+    if (task.created_by) uniqueUserIds.add(task.created_by);
+    if (task.assigned_to) uniqueUserIds.add(task.assigned_to);
+    if (participants) participants.forEach(p => uniqueUserIds.add(p.user_id));
+    wsMembers.forEach(m => uniqueUserIds.add(m.user_id));
+
+    let usersMap = new Map<string, any>();
+    if (uniqueUserIds.size > 0) {
+      try {
+        const { data: allUsers } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo, user_code').in('id', Array.from(uniqueUserIds));
+        if (allUsers) allUsers.forEach(u => usersMap.set(u.id, u));
+      } catch (uErr) {
+        console.warn("[getTaskDetails] Error fetching user_master records:", uErr);
+      }
+    }
+
+    task.creator = task.created_by ? usersMap.get(task.created_by) || null : null;
+    task.assignee = task.assigned_to ? usersMap.get(task.assigned_to) || null : null;
+    
+    task.task_assignees = [];
+    task.task_reviewers = [];
+    task.task_watchers = [];
+    
+    if (participants) {
+      participants.forEach(p => {
+        const u = usersMap.get(p.user_id);
+        if (!u) return;
+        if (p.participation_role === 'EXECUTOR') task.task_assignees.push(u);
+        else if (p.participation_role === 'REVIEWER') task.task_reviewers.push(u);
+        else if (p.participation_role === 'WATCHER') task.task_watchers.push(u);
+      });
+    }
+
+    task.inherited_users = wsMembers.map(m => {
+      const u = usersMap.get(m.user_id);
+      return u ? { ...u, workspace_role: m.role } : null;
+    }).filter(Boolean);
+
+    task._meta = {
+      checklistCount: checklistCount || 0,
+      attachmentCount: attachmentCount || 0
+    };
+    
+    task.currentUserIsSuperAdmin = isSuperAdmin;
+    task.currentUserCanAct = task.assigned_to === userId || (participants && participants.some(p => p.user_id === userId));
+    task.currentUserId = userId || null;
+    task.title = task.subject;
+    task.checklists = [];
+    task.attachments = [];
+    task.task_teams = [];
+
+    return task;
+  } catch (err: any) {
+    console.error("[getTaskDetails] Unhandled Exception:", err);
+    return { error: err.message || "Failed to load task details" };
   }
-
-  // User Lookup Consolidation
-  const uniqueUserIds = new Set<string>();
-  if (task.created_by) uniqueUserIds.add(task.created_by);
-  if (task.assigned_to) uniqueUserIds.add(task.assigned_to);
-  if (participants) participants.forEach(p => uniqueUserIds.add(p.user_id));
-  wsMembers.forEach(m => uniqueUserIds.add(m.user_id));
-
-  let usersMap = new Map<string, any>();
-  if (uniqueUserIds.size > 0) {
-    const { data: allUsers } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo, user_code').in('id', Array.from(uniqueUserIds));
-    if (allUsers) allUsers.forEach(u => usersMap.set(u.id, u));
-  }
-
-  task.creator = task.created_by ? usersMap.get(task.created_by) || null : null;
-  task.assignee = task.assigned_to ? usersMap.get(task.assigned_to) || null : null;
-  
-  task.task_assignees = [];
-  task.task_reviewers = [];
-  task.task_watchers = [];
-  
-  if (participants) {
-    participants.forEach(p => {
-      const u = usersMap.get(p.user_id);
-      if (!u) return;
-      if (p.participation_role === 'EXECUTOR') task.task_assignees.push(u);
-      else if (p.participation_role === 'REVIEWER') task.task_reviewers.push(u);
-      else if (p.participation_role === 'WATCHER') task.task_watchers.push(u);
-    });
-  }
-
-  task.inherited_users = wsMembers.map(m => {
-    const u = usersMap.get(m.user_id);
-    return u ? { ...u, workspace_role: m.role } : null;
-  }).filter(Boolean);
-
-  task._meta = {
-    checklistCount: checklistCount || 0,
-    attachmentCount: attachmentCount || 0
-  };
-  
-  task.currentUserIsSuperAdmin = isSuperAdmin;
-  task.currentUserCanAct = task.assigned_to === userId || (participants && participants.some(p => p.user_id === userId));
-  task.currentUserId = userId || null;
-  task.title = task.subject;
-  task.checklists = [];
-  task.attachments = [];
-  task.task_teams = [];
-
-  return task;
 }
 
 export async function getTaskChecklists(taskId: string) {
-  const { data, error } = await supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true });
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await supabaseAdmin.from('task_checklists').select('*').eq('task_id', taskId).order('created_at', { ascending: true });
+    if (error) {
+      console.warn("[getTaskChecklists] Query error:", error);
+      return [];
+    }
+    return data || [];
+  } catch (err: any) {
+    console.error("[getTaskChecklists] Exception:", err);
+    return [];
+  }
 }
 
 export async function getTaskAttachments(taskId: string) {
-  const { data, error } = await supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await supabaseAdmin.from('task_attachments').select('*').eq('task_id', taskId).order('created_at', { ascending: false });
+    if (error) {
+      console.warn("[getTaskAttachments] Query error:", error);
+      return [];
+    }
+    return data || [];
+  } catch (err: any) {
+    console.error("[getTaskAttachments] Exception:", err);
+    return [];
+  }
 }
 
 export async function getWorkloadSnapshot(userId: string) {
-  const { getVisibleWorkspaces } = await import('@/lib/repositories/workspaces');
-  const visibleWorkspaces = await getVisibleWorkspaces(userId);
-  const workspaceIds = visibleWorkspaces.map((w: any) => w.id);
+  try {
+    const { getVisibleWorkspaces } = await import('@/lib/repositories/workspaces');
+    const visibleWorkspaces = await getVisibleWorkspaces(userId);
+    const workspaceIds = visibleWorkspaces.map((w: any) => w.id);
 
-  let activeTasks: any[] = [];
-  
-  if (workspaceIds.length > 0) {
-    const { data } = await supabaseAdmin
-      .from('tasks')
-      .select('id, end_date, estimated_hours, status:status_master(is_closed)')
-      .in('workspace_id', workspaceIds)
-      .eq('is_deleted', false);
-      
-    if (data) {
-      activeTasks = data.filter((t: any) => !t.status?.is_closed);
+    let activeTasks: any[] = [];
+    
+    if (workspaceIds.length > 0) {
+      const { data } = await supabaseAdmin
+        .from('tasks')
+        .select('id, end_date, estimated_hours, status:status_master(is_closed)')
+        .in('workspace_id', workspaceIds)
+        .eq('is_deleted', false);
+        
+      if (data) {
+        activeTasks = data.filter((t: any) => !t.status?.is_closed);
+      }
     }
+    
+    const now = new Date();
+    const overdueTasks = activeTasks.filter(t => t.end_date && new Date(t.end_date) < now).length;
+    const estimatedHours = activeTasks.reduce((acc, t) => acc + (t.estimated_hours || 0), 0);
+
+    const standardCapacity = 40;
+    const capacityPercentage = Math.min(100, Math.round((estimatedHours / standardCapacity) * 100));
+
+    return {
+      active_tasks: activeTasks.length,
+      overdue_tasks: overdueTasks,
+      capacity_percentage: capacityPercentage,
+      estimated_hours: estimatedHours,
+      available_capacity: 100 - capacityPercentage
+    };
+  } catch (err: any) {
+    console.error("[getWorkloadSnapshot] Error:", err);
+    return {
+      active_tasks: 0,
+      overdue_tasks: 0,
+      capacity_percentage: 0,
+      estimated_hours: 0,
+      available_capacity: 100
+    };
   }
-  
-  const now = new Date();
-  const overdueTasks = activeTasks.filter(t => t.end_date && new Date(t.end_date) < now).length;
-  const estimatedHours = activeTasks.reduce((acc, t) => acc + (t.estimated_hours || 0), 0);
-
-  const standardCapacity = 40;
-  const capacityPercentage = Math.min(100, Math.round((estimatedHours / standardCapacity) * 100));
-
-  return {
-    active_tasks: activeTasks.length,
-    overdue_tasks: overdueTasks,
-    capacity_percentage: capacityPercentage,
-    estimated_hours: estimatedHours,
-    available_capacity: 100 - capacityPercentage
-  };
 }
 
 export async function updateTask(taskId: string, payload: any) {
@@ -756,43 +800,57 @@ export async function reopenTask(taskId: string) {
 }
 
 export async function createChecklistItem(taskId: string, label: string) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id;
-  if (!userId) throw new Error("Unauthenticated");
+  try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    const userId = user?.id;
+    if (!userId) return { error: "Unauthenticated" };
 
-  const { data, error } = await supabaseAdmin
-    .from('task_checklists')
-    .insert([{ task_id: taskId, label, is_completed: false }])
-    .select()
-    .single();
-  if (error) throw error;
-  
-  if (data) {
-    await supabaseAdmin.from('task_activity_logs').insert([{
-      task_id: taskId,
-      actor_id: userId,
-      action: 'CHECKLIST_UPDATE',
-      new_state: { label: data.label, is_completed: false, action: 'added' }
-    }]);
+    const { data, error } = await supabaseAdmin
+      .from('task_checklists')
+      .insert([{ task_id: taskId, label, is_completed: false }])
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    
+    if (data) {
+      try {
+        await supabaseAdmin.from('task_activity_logs').insert([{
+          task_id: taskId,
+          actor_id: userId,
+          action: 'CHECKLIST_UPDATE',
+          new_state: { label: data.label, is_completed: false, action: 'added' }
+        }]);
+      } catch (logErr) {
+        console.warn("[createChecklistItem] Log error:", logErr);
+      }
+    }
+    
+    return data;
+  } catch (err: any) {
+    console.error("[createChecklistItem] Error:", err);
+    return { error: err.message || "Failed to create checklist item" };
   }
-  
-  return data;
 }
 
 export async function createTaskAttachment(taskId: string, fileName: string, base64Url: string, size: number) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id;
-  if (!userId) throw new Error("Unauthenticated");
+  try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    const userId = user?.id;
+    if (!userId) return { error: "Unauthenticated" };
 
-  const { data, error } = await supabaseAdmin
-    .from('task_attachments')
-    .insert([{ task_id: taskId, file_name: fileName, file_url: base64Url, size, uploaded_by: userId, file_type: 'file' }])
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+    const { data, error } = await supabaseAdmin
+      .from('task_attachments')
+      .insert([{ task_id: taskId, file_name: fileName, file_url: base64Url, size, uploaded_by: userId, file_type: 'file' }])
+      .select()
+      .single();
+    if (error) return { error: error.message };
+    return data;
+  } catch (err: any) {
+    console.error("[createTaskAttachment] Error:", err);
+    return { error: err.message || "Failed to attach file" };
+  }
 }
 
 export async function fetchTeams() { return []; }
@@ -840,42 +898,63 @@ export async function getTaskComments(taskId: string, limit = 20, offset = 0) {
 }
 
 export async function addTaskRemark(taskId: string, content: string) {
-  const cookieStore = await cookies();
-  const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  const userId = user?.id;
-  if (!userId) return { error: "Unauthenticated" };
+  try {
+    const cookieStore = await cookies();
+    const { data: { user } } = await createClient(cookieStore).auth.getUser();
+    const userId = user?.id;
+    if (!userId) return { error: "Unauthenticated" };
 
-  const { data, error } = await supabaseAdmin
-    .from('task_comments')
-    .insert([{ task_id: taskId, author_id: userId, content }])
-    .select('*')
-    .single();
-  
-  if (error) return { error: error.message || JSON.stringify(error) };
-  
-  if (data) {
-    await supabaseAdmin.from('task_activity_logs').insert([{
-      task_id: taskId,
-      actor_id: userId,
-      action: 'COMMENT',
-      new_state: { message: content }
-    }]);
+    const { data, error } = await supabaseAdmin
+      .from('task_comments')
+      .insert([{ task_id: taskId, author_id: userId, content }])
+      .select('*')
+      .single();
+    
+    if (error) return { error: error.message || JSON.stringify(error) };
+    
+    if (data) {
+      try {
+        await supabaseAdmin.from('task_activity_logs').insert([{
+          task_id: taskId,
+          actor_id: userId,
+          action: 'COMMENT',
+          new_state: { message: content }
+        }]);
+      } catch (logErr) {
+        console.warn("[addTaskRemark] Log error:", logErr);
+      }
 
-    const { data: user } = await supabaseAdmin.from('user_master').select('full_name, profile_photo').eq('id', userId).single();
-    data.user = user || null;
+      try {
+        const { data: user } = await supabaseAdmin.from('user_master').select('full_name, profile_photo').eq('id', userId).single();
+        data.user = user || null;
+      } catch (uErr) {
+        console.warn("[addTaskRemark] User fetch error:", uErr);
+      }
+    }
+    
+    return { success: true, data };
+  } catch (err: any) {
+    console.error("[addTaskRemark] Error:", err);
+    return { error: err.message || "Failed to add remark" };
   }
-  
-  return { success: true, data };
 }
 
 export async function getTaskStatuses() {
-  const { data, error } = await supabaseAdmin
-    .from('status_master')
-    .select('id, name:status_name, code:status_code, color:status_color, is_closed, is_reopen')
-    .eq('scope_type', 'TASK')
-    .order('status_order', { ascending: true });
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('status_master')
+      .select('id, name:status_name, code:status_code, color:status_color, is_closed, is_reopen')
+      .eq('scope_type', 'TASK')
+      .order('status_order', { ascending: true });
+    if (error) {
+      console.warn("[getTaskStatuses] Query error:", error);
+      return [];
+    }
+    return data || [];
+  } catch (err: any) {
+    console.error("[getTaskStatuses] Error:", err);
+    return [];
+  }
 }
 
 export async function updateTaskStatusInline(taskId: string, newStatusId: string, remark: string) {

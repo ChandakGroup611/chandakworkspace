@@ -10,6 +10,8 @@ import { createClient } from "@/utils/supabase/client";
 import { useRenderLog } from "@/hooks/use-render-log";
 import { onRenderCallback } from "@/utils/performance/profiler-utils";
 import { fetchTicketMacros } from "@/lib/actions/tickets";
+import SafeHtml from "@/components/ui/SafeHtml";
+import { sanitizeErrorMessage } from "@/lib/utils";
 
 export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
   useRenderLog("TicketRealtimeChat", { ticketId });
@@ -372,7 +374,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
       {/* Error Banner */}
       {error && (
         <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[0.8rem] shrink-0 font-medium flex items-center justify-between animate-in slide-in-from-top-1">
-          <span>{error}</span>
+          <span>{sanitizeErrorMessage(error)}</span>
           <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-1">
             Dismiss
           </AppButton>
@@ -456,7 +458,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                       }
                       return (
                         <div className="flex flex-col gap-2">
-                          {text && <div>{text}</div>}
+                          {text && <SafeHtml html={text} />}
                           {attachments.length > 0 && (
                             <div className="flex flex-col gap-1.5 mt-1 border-t border-white/20 pt-2">
                               {attachments.map((att, i) => (
