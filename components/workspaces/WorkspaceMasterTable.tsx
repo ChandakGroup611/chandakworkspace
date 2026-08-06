@@ -228,17 +228,18 @@ export function WorkspaceMasterTable({
 
     return (
       <div 
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          if (isWorkspaceType) {
-            router.push(`/workspaces/tasks?workspaceId=${node.id}`);
-          } else {
-            router.push(`/tasks/${node.id}`);
-          }
-        }}
         onClick={(e) => {
-          if (isTask && onOpenTask) {
-            onOpenTask(node);
+          e.stopPropagation();
+          // Find any interactive element (button, link, etc) that might have been clicked
+          const target = e.target as HTMLElement;
+          const isInteractive = target.closest('button, a, input, [role="button"]');
+          
+          if (!isInteractive) {
+            if (isWorkspaceType) {
+              router.push(`/workspaces/tasks?workspaceId=${node.id}`);
+            } else {
+              router.push(`/tasks/${node.id}`);
+            }
           }
         }}
         onMouseEnter={() => {
