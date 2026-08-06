@@ -3,58 +3,65 @@ import { supabaseAdmin } from '@/lib/supabase/service_role';
 
 export const dynamic = 'force-dynamic';
 
+const MIME_MAP: Record<string, string> = {
+  // Images
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  svg: 'image/svg+xml',
+  bmp: 'image/bmp',
+  ico: 'image/x-icon',
+  tiff: 'image/tiff',
+  tif: 'image/tiff',
+  // Documents
+  pdf: 'application/pdf',
+  txt: 'text/plain; charset=utf-8',
+  csv: 'text/csv; charset=utf-8',
+  log: 'text/plain; charset=utf-8',
+  json: 'application/json',
+  xml: 'application/xml',
+  html: 'text/html; charset=utf-8',
+  htm: 'text/html; charset=utf-8',
+  md: 'text/markdown; charset=utf-8',
+  // Office
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // Audio / Video
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  ogv: 'video/ogg',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  // Archives
+  zip: 'application/zip',
+  rar: 'application/x-rar-compressed',
+  '7z': 'application/x-7z-compressed',
+  tar: 'application/x-tar',
+  gz: 'application/gzip'
+};
+
 function getMimeType(fileName?: string, providedMime?: string | null): string {
-  if (providedMime && providedMime !== 'application/octet-stream' && !providedMime.includes('octet-stream')) {
+  // 1. Prioritize file extension if fileName is present
+  if (fileName) {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (ext && MIME_MAP[ext]) {
+      return MIME_MAP[ext];
+    }
+  }
+
+  // 2. Validate provided MIME type (must contain '/' and not be generic octet-stream)
+  if (providedMime && providedMime.includes('/') && !providedMime.includes('octet-stream')) {
     return providedMime;
   }
-  if (!fileName) return 'application/octet-stream';
 
-  const ext = fileName.split('.').pop()?.toLowerCase();
-  const mimeMap: Record<string, string> = {
-    // Images
-    png: 'image/png',
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    webp: 'image/webp',
-    gif: 'image/gif',
-    svg: 'image/svg+xml',
-    bmp: 'image/bmp',
-    ico: 'image/x-icon',
-    tiff: 'image/tiff',
-    tif: 'image/tiff',
-    // Documents
-    pdf: 'application/pdf',
-    txt: 'text/plain; charset=utf-8',
-    csv: 'text/csv; charset=utf-8',
-    log: 'text/plain; charset=utf-8',
-    json: 'application/json',
-    xml: 'application/xml',
-    html: 'text/html; charset=utf-8',
-    htm: 'text/html; charset=utf-8',
-    md: 'text/markdown; charset=utf-8',
-    // Office
-    doc: 'application/msword',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    xls: 'application/vnd.ms-excel',
-    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ppt: 'application/vnd.ms-powerpoint',
-    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    // Audio / Video
-    mp4: 'video/mp4',
-    webm: 'video/webm',
-    ogv: 'video/ogg',
-    mp3: 'audio/mpeg',
-    wav: 'audio/wav',
-    ogg: 'audio/ogg',
-    // Archives
-    zip: 'application/zip',
-    rar: 'application/x-rar-compressed',
-    '7z': 'application/x-7z-compressed',
-    tar: 'application/x-tar',
-    gz: 'application/gzip'
-  };
-
-  return (ext && mimeMap[ext]) || providedMime || 'application/octet-stream';
+  return 'application/octet-stream';
 }
 
 function escapeHtml(str: string) {
@@ -126,6 +133,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         headers.set('Content-Type', resolvedMime);
         headers.set('Content-Disposition', `${dispositionType}; filename="${cleanFileName}"; filename*=UTF-8''${safeEncodedFileName}`);
         headers.set('Content-Length', buffer.length.toString());
+        headers.set('Accept-Ranges', 'bytes');
         headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
 
         return new NextResponse(buffer, {

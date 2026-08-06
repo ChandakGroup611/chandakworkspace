@@ -200,6 +200,33 @@ export async function createTask(payload: {
       }
     }
     
+    // In-app & realtime notifications
+    if (task.assigned_to && task.assigned_to !== creatorId) {
+      dispatchNotification(
+        task.assigned_to,
+        'Task Assigned',
+        `You have been assigned as primary assignee to task "${task.subject}".`,
+        `/tasks/${task.id}`,
+        'TASK',
+        'ASSIGNED'
+      ).catch(e => console.error("[createTask] dispatchNotification primary failed", e));
+    }
+
+    if (payload.participants && payload.participants.length > 0) {
+      for (const p of payload.participants) {
+        if (p.user_id && p.user_id !== creatorId && p.user_id !== task.assigned_to) {
+          dispatchNotification(
+            p.user_id,
+            'Task Assignment',
+            `You have been assigned as ${p.participation_role?.toLowerCase() || 'executor'} to task "${task.subject}".`,
+            `/tasks/${task.id}`,
+            'TASK',
+            'ASSIGNED'
+          ).catch(e => console.error("[createTask] dispatchNotification participant failed", e));
+        }
+      }
+    }
+
     // ENTERPRISE NOTIFICATION ROUTING
     // Fire-and-forget: Push to async background queue
     queueBusinessEvent("Task", "Created", {
@@ -1378,6 +1405,36 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
       executors_text: newExecutorNames || 'None' 
     }
   }]);
+
+  // Fetch task subject for notifications
+  const { data: taskDetails } = await supabaseAdmin.from('tasks').select('subject').eq('id', taskId).single();
+  const taskSubject = taskDetails?.subject || 'Task';
+
+  // Notify newly assigned primary assignee if changed
+  if (finalPrimaryId && finalPrimaryId !== userId && finalPrimaryId !== task.assigned_to) {
+    dispatchNotification(
+      finalPrimaryId,
+      'Task Assigned',
+      `You have been assigned as primary assignee to task "${taskSubject}".`,
+      `/tasks/${taskId}`,
+      'TASK',
+      'ASSIGNED'
+    ).catch(e => console.error("[updateTaskAssignees] dispatchNotification primary failed", e));
+  }
+
+  // Notify executors
+  uniqueAssigneeIds.forEach(execId => {
+    if (execId !== userId && execId !== task.assigned_to) {
+      dispatchNotification(
+        execId,
+        'Task Executor Assignment',
+        `You have been assigned as executor on task "${taskSubject}".`,
+        `/tasks/${taskId}`,
+        'TASK',
+        'ASSIGNED'
+      ).catch(e => console.error("[updateTaskAssignees] dispatchNotification executor failed", e));
+    }
+  });
 
   return { success: true };
 }

@@ -1620,9 +1620,22 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <LinkIcon className="w-3.5 h-3.5 text-accent" /> Link URLs & External Resources
                   </h4>
                   {localCustomFields?.link_url ? (
-                    <div className="p-3 rounded-lg border border-border/40 bg-surface/40 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-accent underline truncate">{localCustomFields.link_url}</span>
-                      <a href={String(localCustomFields.link_url).startsWith('http') ? String(localCustomFields.link_url) : `https://${localCustomFields.link_url}`} target="_blank" rel="noopener noreferrer" className="theme-data-value text-accent hover:underline flex items-center gap-1">
+                    <div className="p-4 rounded-xl border border-border/40 bg-surface/40 flex items-center justify-between gap-4">
+                      <a 
+                        href={String(localCustomFields.link_url).startsWith('http') ? String(localCustomFields.link_url) : `https://${localCustomFields.link_url}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-xs font-semibold text-accent hover:underline truncate flex-1"
+                        title={localCustomFields.link_url}
+                      >
+                        {localCustomFields.link_url}
+                      </a>
+                      <a 
+                        href={String(localCustomFields.link_url).startsWith('http') ? String(localCustomFields.link_url) : `https://${localCustomFields.link_url}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="px-3 py-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
+                      >
                         Open <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>

@@ -160,12 +160,19 @@ export async function saveCollaborationEntity(tableName: string, payload: any, e
 
   let res;
   if (editId) {
-    res = await supabase.from(tableName).update(payload).eq("id", editId).select().single();
+    res = await supabaseAdmin.from(tableName).update(payload).eq("id", editId).select().single();
   } else {
-    res = await supabase.from(tableName).insert([payload]).select().single();
+    const safePayload = {
+      ...payload,
+      user_id: payload.user_id || user.id
+    };
+    res = await supabaseAdmin.from(tableName).insert([safePayload]).select().single();
   }
 
-  if (res.error) return { success: false, error: res.error.message };
+  if (res.error) {
+    console.error(`[saveCollaborationEntity] Error in ${tableName}:`, res.error);
+    return { success: false, error: res.error.message };
+  }
   return { success: true, data: res.data };
 }
 
@@ -178,11 +185,14 @@ export async function deleteCollaborationEntity(tableName: string, id: string, h
 
   let res;
   if (hardDelete) {
-    res = await supabase.from(tableName).delete().eq("id", id);
+    res = await supabaseAdmin.from(tableName).delete().eq("id", id);
   } else {
-    res = await supabase.from(tableName).update({ is_deleted: true }).eq("id", id);
+    res = await supabaseAdmin.from(tableName).update({ is_deleted: true }).eq("id", id);
   }
 
-  if (res.error) return { success: false, error: res.error.message };
+  if (res.error) {
+    console.error(`[deleteCollaborationEntity] Error in ${tableName}:`, res.error);
+    return { success: false, error: res.error.message };
+  }
   return { success: true };
 }

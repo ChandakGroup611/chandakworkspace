@@ -323,7 +323,8 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
             messageId: data.id,
             mentionedUserIds: finalMentionedIds,
             isAll: finalIsAll,
-            senderId: userId
+            senderId: userId,
+            entityType: 'ticket'
           }),
         }).catch((e) => console.error("Mentions dispatch failed:", e));
       }

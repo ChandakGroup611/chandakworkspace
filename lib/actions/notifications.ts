@@ -83,12 +83,12 @@ export async function clearAllQueueNotifications() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  await supabaseAdmin.from("notification_queue").delete().eq("target_user_id", user.id);
+  await supabaseAdmin.from("notification_queue").delete().or(`target_user_id.eq.${user.id},recipient_id.eq.${user.id}`);
   
   // Try to clear GLOBAL_OPS if they are admin, fail silently if not
   try {
-     const { data: roleData } = await supabaseAdmin.from("user_master").select("roles!inner(code)").eq("id", user.id).single();
-     if ((roleData as any)?.roles?.code === 'SUPER_ADMIN') {
+     const { data: roleData } = await supabaseAdmin.from("user_master").select("role_master(role_code)").eq("id", user.id).single();
+     if ((roleData as any)?.role_master?.role_code === 'SUPER_ADMIN') {
         await supabaseAdmin.from("notification_queue").delete().eq("target_user_id", 'GLOBAL_OPS');
      }
   } catch (e) {}
@@ -141,18 +141,25 @@ export async function dispatchNotification(
     // Also insert into global notification queue for realtime stream consumers
     try {
       const isWorkspace = link?.includes('workspaces') && !link?.includes('task=');
+      const isTicket = link?.includes('tickets');
+      const entityType = isWorkspace ? 'workspace' : (isTicket ? 'ticket' : 'task');
+      const moduleType = isWorkspace ? 'workspaces' : (isTicket ? 'tickets' : 'tasks');
+      const extractedEntityId = link ? (link.includes('task=') ? link.split('task=')[1] : (link.includes('id=') ? link.split('id=')[1] : link.split('/').pop())) || 'SYS' : 'SYS';
+
       await supabaseAdmin.from('notification_queue').insert([{
         target_user_id: userId,
-        entity_type: isWorkspace ? 'workspace' : 'task',
-        entity_id: link ? (link.includes('task=') ? link.split('task=')[1] : link.split('/').pop()) || 'SYS' : 'SYS',
-        module: isWorkspace ? 'workspaces' : 'tasks',
-        action_type: 'assignment',
+        recipient_id: userId,
+        entity_type: entityType,
+        entity_id: extractedEntityId,
+        module: moduleType,
+        action_type: eventCode?.toLowerCase() || 'notification',
         actor: 'System',
         redirect_url: link || null,
-        priority_level: 'LOW',
+        priority_level: eventCode === 'CRITICAL' ? 'CRITICAL' : 'MEDIUM',
         is_read: false,
         payload: { 
           id: notif?.id || null,
+          title,
           message 
         }
       }]);
@@ -230,20 +237,36 @@ export async function dispatchNotification(
   }
 }
 
-export async function handleMentions(taskId: string, messageId: string, mentionedUserIds: string[] = [], isAll: boolean = false, senderId: string) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
+export async function handleMentions(
+  entityId: string, 
+  messageId: string, 
+  mentionedUserIds: string[] = [], 
+  isAll: boolean = false, 
+  senderId: string,
+  entityType: 'task' | 'ticket' = 'task'
+) {
   let targetUserIds = new Set<string>(mentionedUserIds);
+  let workspaceId: string | null = null;
+  let entityLabel = entityType === 'ticket' ? 'Ticket' : 'Task';
 
-  if (isAll) {
-    // Fetch all workspace members for this task's workspace
-    const { data: task } = await supabaseAdmin.from("tasks").select("workspace_id").eq("id", taskId).single();
-    if (task?.workspace_id) {
-      const { data: members } = await supabaseAdmin.from("workspace_members").select("user_id").eq("workspace_id", task.workspace_id);
-      if (members) {
-        members.forEach(m => targetUserIds.add(m.user_id));
-      }
+  if (entityType === 'ticket') {
+    const { data: ticket } = await supabaseAdmin.from("tickets").select("workspace_id, title, ticket_number").eq("id", entityId).single();
+    if (ticket) {
+      workspaceId = ticket.workspace_id;
+      entityLabel = ticket.ticket_number ? `Ticket #${ticket.ticket_number}` : (ticket.title || 'Ticket');
+    }
+  } else {
+    const { data: task } = await supabaseAdmin.from("tasks").select("workspace_id, subject, title").eq("id", entityId).single();
+    if (task) {
+      workspaceId = task.workspace_id;
+      entityLabel = task.subject || task.title || 'Task';
+    }
+  }
+
+  if (isAll && workspaceId) {
+    const { data: members } = await supabaseAdmin.from("workspace_members").select("user_id").eq("workspace_id", workspaceId);
+    if (members) {
+      members.forEach(m => targetUserIds.add(m.user_id));
     }
   }
 
@@ -256,21 +279,30 @@ export async function handleMentions(taskId: string, messageId: string, mentione
   if (matchedUserIds.length === 0) return;
 
   // Insert mentions into DB for tracking
-  const mentionsToInsert = matchedUserIds.map(uid => ({
-    message_id: messageId,
-    mentioned_user_id: uid
-  }));
-  
-  await supabaseAdmin.from("task_mentions").insert(mentionsToInsert);
+  if (entityType === 'task') {
+    const mentionsToInsert = matchedUserIds.map(uid => ({
+      message_id: messageId,
+      mentioned_user_id: uid
+    }));
+    try {
+      await supabaseAdmin.from("task_mentions").insert(mentionsToInsert);
+    } catch (e) {
+      console.warn("task_mentions insert notice:", e);
+    }
+  }
 
   // Fetch sender name for better notification
   const { data: sender } = await supabaseAdmin.from("user_master").select("full_name").eq("id", senderId).single();
-  const senderName = sender?.full_name || "Someone";
+  const senderName = sender?.full_name || "A team member";
 
-  const notifTitle = isAll ? `Workspace Announcement from ${senderName}` : `You were mentioned by ${senderName}`;
+  const notifTitle = isAll 
+    ? `Announcement in ${entityLabel} from ${senderName}` 
+    : `Mentioned in ${entityLabel} by ${senderName}`;
   const notifMessage = isAll 
-    ? `${senderName} mentioned @All in the task chat.`
-    : `${senderName} mentioned you in the task chat.`;
+    ? `${senderName} mentioned @All in ${entityLabel.toLowerCase()} chat.`
+    : `${senderName} mentioned you in ${entityLabel.toLowerCase()} chat.`;
+
+  const link = entityType === 'ticket' ? `/tickets?id=${entityId}` : `/tasks/${entityId}`;
 
   // Trigger Notifications for each mention
   for (const uid of matchedUserIds) {
@@ -278,7 +310,9 @@ export async function handleMentions(taskId: string, messageId: string, mentione
       uid,
       notifTitle,
       notifMessage,
-      `/tasks/${taskId}`
+      link,
+      entityType === 'ticket' ? 'TICKETS' : 'TASKS',
+      'MENTION'
     );
   }
 }
