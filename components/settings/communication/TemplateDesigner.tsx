@@ -147,11 +147,11 @@ export default function TemplateDesigner() {
       };
 
       if (template.is_new) {
-        const res = await saveSettingsEntity("email_templates", payload);
+        const res = await saveSettingsEntity("email_templates", payload, undefined, "/settings/communication/templates");
         if (!res.success) throw new Error(res.error);
         triggerToast("Template created successfully");
       } else {
-        const res = await saveSettingsEntity("email_templates", payload, template.id);
+        const res = await saveSettingsEntity("email_templates", payload, template.id, "/settings/communication/templates");
         if (!res.success) throw new Error(res.error);
         triggerToast("Template updated successfully");
       }
@@ -174,7 +174,7 @@ export default function TemplateDesigner() {
     }
     if (!confirm("Delete this template?")) return;
     try {
-      const res = await deleteSettingsEntity("email_templates", id, true);
+      const res = await deleteSettingsEntity("email_templates", id, true, "/settings/communication/templates");
       if (!res.success) throw new Error(res.error);
       triggerToast("Template deleted");
       if (editingTemplateId === id) setEditingTemplateId(null);

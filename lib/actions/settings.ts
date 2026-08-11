@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { checkServerPermission } from "@/lib/permissions";
 
 /**
@@ -9,7 +10,7 @@ import { checkServerPermission } from "@/lib/permissions";
  * Requires SUPER_ADMIN permissions.
  */
 
-export async function saveSettingsEntity(tableName: string, payload: any, editId?: string) {
+export async function saveSettingsEntity(tableName: string, payload: any, editId?: string, pathToRevalidate?: string) {
   const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
   const isSettingsManager = await checkServerPermission("SYSTEM_SETTINGS_MANAGE");
   const isAuthorized = isSuperAdmin || isSettingsManager;
@@ -34,6 +35,11 @@ export async function saveSettingsEntity(tableName: string, payload: any, editId
   }
 
   if (res.error) return { success: false, error: res.error.message };
+  
+  if (pathToRevalidate) {
+    revalidatePath(pathToRevalidate);
+  }
+  
   return { success: true, data: res.data };
 }
 
@@ -53,7 +59,7 @@ export async function getTemplates() {
   return { success: true, data };
 }
 
-export async function deleteSettingsEntity(tableName: string, id: string, hardDelete = false) {
+export async function deleteSettingsEntity(tableName: string, id: string, hardDelete = false, pathToRevalidate?: string) {
   const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
   const isSettingsManager = await checkServerPermission("SYSTEM_SETTINGS_MANAGE");
   const isAuthorized = isSuperAdmin || isSettingsManager;
@@ -69,6 +75,11 @@ export async function deleteSettingsEntity(tableName: string, id: string, hardDe
   }
 
   if (res.error) return { success: false, error: res.error.message };
+  
+  if (pathToRevalidate) {
+    revalidatePath(pathToRevalidate);
+  }
+  
   return { success: true };
 }
 
