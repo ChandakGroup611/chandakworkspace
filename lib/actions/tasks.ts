@@ -460,6 +460,7 @@ export async function fetchUsers() {
 
 export async function getTaskDetails(taskId: string) {
   try {
+    noStore();
     const cookieStore = await cookies();
     const { data: { user } } = await createClient(cookieStore).auth.getUser();
     const userId = user?.id;
