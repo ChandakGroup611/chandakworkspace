@@ -229,7 +229,7 @@ export async function createTask(payload: {
 
     // ENTERPRISE NOTIFICATION ROUTING
     // Fire-and-forget: Push to async background queue
-    queueBusinessEvent("Task", "Created", {
+    queueBusinessEvent("Task", "Assigned", {
       entity_id: task.id,
       triggering_user_id: creatorId,
       status: "NEW", // The default status logic applied it
@@ -1369,6 +1369,19 @@ export async function executeTaskBatchOperation(payload: {
   // Purge the cache for this task to ensure Next.js auto-refresh works on production
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath(`/workspaces/tasks`);
+  
+  // Fire-and-forget: Push to async background queue
+  // Attempt to fetch task name for notification
+  supabaseAdmin.from('tasks').select('subject, status_id').eq('id', taskId).single().then(({ data: taskData }) => {
+      queueBusinessEvent("Task", "Updated", {
+          entity_id: taskId,
+          triggering_user_id: userId,
+          status: statusChanges || taskData?.status_id || "UPDATED",
+          task_name: taskData?.subject || "Task Updated",
+          creator_name: user?.user_metadata?.full_name || "System",
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
+      }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+  }).then(undefined, () => {});
 
   return {
     success: true,
@@ -1433,6 +1446,18 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   // Purge the cache for this task to ensure Next.js auto-refresh works on production
   revalidatePath(`/tasks/${taskId}`);
   revalidatePath(`/workspaces/tasks`);
+
+  // Fire-and-forget: Push to async background queue
+  supabaseAdmin.from('tasks').select('subject, status_id').eq('id', taskId).single().then(({ data: taskData }) => {
+      queueBusinessEvent("Task", "Executors Changed", {
+          entity_id: taskId,
+          triggering_user_id: userId || "",
+          status: taskData?.status_id || "UPDATED",
+          task_name: taskData?.subject || "Task Assignment Changed",
+          creator_name: "System", // Or fetch current user
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
+      }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+  }).then(undefined, () => {});
 
   // Log the assignment change in audit trail
   const newExecutorNames = uniqueAssigneeIds
