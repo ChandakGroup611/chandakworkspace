@@ -1263,8 +1263,8 @@ export async function executeTaskBatchOperation(payload: {
   updates?: any;
   statusChanges?: string;
   departmentChange?: { old_id?: string | null, new_id?: string | null, old_name?: string | null, new_name?: string | null };
-  checklistCreates?: string[];
-  checklistUpdates?: Record<string, boolean>;
+  checklistCreates?: { label: string; assignee_id?: string }[];
+  checklistUpdates?: Record<string, { is_completed?: boolean; assignee_id?: string }>;
   remarks?: string;
   attachmentIds?: string[];
 }) {
@@ -1293,13 +1293,12 @@ export async function executeTaskBatchOperation(payload: {
 
   const tChild0 = performance.now();
   // Handle Checklists (parallel)
-  // Handle Checklists (parallel)
   const checklistInsertPromise = (checklistCreates && checklistCreates.length > 0)
-    ? supabaseAdmin.from('task_checklists').insert(checklistCreates.map(label => ({ task_id: taskId, label, is_completed: false }))).select()
+    ? supabaseAdmin.from('task_checklists').insert(checklistCreates.map(c => ({ task_id: taskId, label: c.label, assignee_id: c.assignee_id || null, is_completed: false }))).select()
     : Promise.resolve({ data: [] });
   
   const checklistUpdatePromises = (checklistUpdates && Object.keys(checklistUpdates).length > 0)
-    ? Object.entries(checklistUpdates).map(([id, is_completed]) => supabaseAdmin.from('task_checklists').update({ is_completed }).eq('id', id).select())
+    ? Object.entries(checklistUpdates).map(([id, updates]) => supabaseAdmin.from('task_checklists').update(updates).eq('id', id).select())
     : [];
 
   const commentPromise = (remarks && remarks.trim().length > 0)

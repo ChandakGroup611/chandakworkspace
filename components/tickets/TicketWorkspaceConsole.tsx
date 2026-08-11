@@ -60,7 +60,7 @@ export function TicketWorkspaceConsole({
   const [slaPercent, setSlaPercent] = useState(100);
 
   // Additional Enterprise States
-  const [subTasks, setSubTasks] = useState<{ id: string; text: string; completed: boolean }[]>(ticket?.custom_fields?.sub_tasks || []);
+  const [subTasks, setSubTasks] = useState<{ id: string; text: string; completed: boolean; assignee_id?: string }[]>(ticket?.custom_fields?.sub_tasks || []);
   const [newSubTask, setNewSubTask] = useState("");
   const [timeLogged, setTimeLogged] = useState<number>(ticket?.custom_fields?.time_logged_minutes || 0);
   const [newTimeLog, setNewTimeLog] = useState("");
@@ -220,6 +220,13 @@ export function TicketWorkspaceConsole({
     setSubTasks(updatedTasks);
   };
 
+  const setSubTaskAssignee = async (id: string, assignee_id: string) => {
+    const updatedTasks = subTasks.map(st => st.id === id ? { ...st, assignee_id } : st);
+    const newCustomFields = { ...ticket.custom_fields, sub_tasks: updatedTasks };
+    await executeFieldUpdate({ custom_fields: newCustomFields });
+    setSubTasks(updatedTasks);
+  };
+
   const getPriorityColor = () => {
     const code = ticket.priorityObj?.code;
     if (code === "PR_CRITICAL") return "bg-red-500/10 text-red-500 border-red-500/20";
@@ -247,17 +254,33 @@ export function TicketWorkspaceConsole({
             <div className="p-6 space-y-4">
               <div className="space-y-2">
                 {subTasks.map((st) => (
-                  <div key={st.id} className="flex items-center gap-3">
-                    <input 
-                      type="checkbox" 
-                      checked={st.completed}
-                      onChange={() => toggleSubTask(st.id)}
-                      disabled={!canEditFields}
-                      className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
-                    />
-                    <span className={`text-xs font-medium ${st.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                      {st.text}
-                    </span>
+                  <div key={st.id} className="flex items-center justify-between p-2 rounded-lg border border-border/50 bg-background/50 group hover:border-border transition-colors">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox" 
+                        checked={st.completed}
+                        onChange={() => toggleSubTask(st.id)}
+                        disabled={!canEditFields}
+                        className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
+                      />
+                      <span className={`text-xs font-medium ${st.completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                        {st.text}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                      <select
+                        value={st.assignee_id || ""}
+                        onChange={(e) => setSubTaskAssignee(st.id, e.target.value)}
+                        disabled={!canEditFields}
+                        className="text-[10px] bg-transparent border-none text-muted-foreground outline-none font-semibold focus:ring-0 cursor-pointer w-24"
+                      >
+                        <option value="">Unassigned</option>
+                        {assigneesList.map(a => (
+                          <option key={a.id} value={a.id}>{a.full_name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -454,7 +477,7 @@ export function TicketWorkspaceConsole({
             </div>
             <div className="p-6 space-y-6">
                <div>
-                <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Current Assignee</label>
+                <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Executive (Primary Assignee)</label>
                 <select 
                   value={pendingChanges.assignee_id !== undefined ? pendingChanges.assignee_id : (ticket.assignee_id || "")}
                   onChange={(e) => {

@@ -7,8 +7,74 @@ import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate, ArrowLef
 import { saveSettingsEntity, deleteSettingsEntity, getTemplates } from "@/lib/actions/settings";
 import { previewEmailTemplate } from "@/lib/actions/email-config";
 
-const MODULES = ["Task", "Workspace", "Ticket", "Requirement", "Approval"];
-const EVENTS = ["Created", "Updated", "Assigned", "Reassigned", "Status Changed", "Delayed", "Completed", "Closed"];
+const MODULES = [
+  "Task", 
+  "Workspace", 
+  "Ticket", 
+  "Requirement", 
+  "Approval",
+  "AMC (Contracts)",
+  "SLA Management",
+  "IAM (Users/Roles)",
+  "Knowledge Base",
+  "Learning (Courses)",
+  "System/Compliance",
+  "Masters (Vendors/Companies)"
+];
+
+const EVENTS = [
+  // General Lifecycle
+  "Created", 
+  "Updated", 
+  "Deleted/Archived",
+  "Transferred",
+  
+  // Assignment & Team
+  "Assigned (Primary)", 
+  "Reassigned",
+  "Executors Changed",
+  "Watchers Changed",
+  
+  // Status & Progress
+  "Status Changed", 
+  "Priority Changed",
+  "Due Date Changed",
+  "Delayed", 
+  "Completed", 
+  "Closed",
+  "Reopened",
+  
+  // Collaboration
+  "Comment Added",
+  "Attachment Added",
+  "Mentioned",
+  "Checklist Updated",
+  
+  // Approvals & Governance
+  "Approval Requested",
+  "Approved",
+  "Rejected",
+  
+  // SLA Specific
+  "SLA Warning",
+  "SLA Breached",
+  
+  // AMC Specific
+  "Payment Received",
+  "Payment Overdue",
+  "Contract Expiring",
+  "Contract Renewed",
+  
+  // IAM / Identity Specific
+  "User Onboarded",
+  "Role Changed",
+  "Password Reset Requested",
+  
+  // Learning / Knowledge
+  "Course Assigned",
+  "Course Completed",
+  "Article Published"
+];
 const MERGE_TAGS = ["{{ticket_no}}", "{{ticket_title}}", "{{task_name}}", "{{workspace_name}}", "{{assigned_user}}", "{{creator_name}}", "{{status}}", "{{priority}}", "{{due_date}}", "{{link}}"];
 
 export default function TemplateDesigner() {

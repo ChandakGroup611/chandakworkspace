@@ -160,8 +160,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [pendingDepartment, setPendingDepartment] = useState<string | null>(null);
   const [localCustomFields, setLocalCustomFields] = useState<Record<string, any>>({});
-  const [pendingChecklists, setPendingChecklists] = useState<string[]>([]);
-  const [editedChecklists, setEditedChecklists] = useState<Record<string, boolean>>({});
+  const [pendingChecklists, setPendingChecklists] = useState<{ label: string; assignee_id?: string }[]>([]);
+  const [editedChecklists, setEditedChecklists] = useState<Record<string, { is_completed?: boolean; assignee_id?: string }>>({});
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingTaskUpdates, setPendingTaskUpdates] = useState<Record<string, any>>({});
   const [pendingAssignees, setPendingAssignees] = useState<string[] | null>(null);
@@ -547,9 +547,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   const handleToggleChecklist = async (itemId: string, currentStatus: boolean) => {
     setError(null);
-    // Record edit locally; DB update will be performed on batch save
-    setEditedChecklists(prev => ({ ...prev, [itemId]: !currentStatus }));
-    // Optimistically update UI
+    setEditedChecklists(prev => ({ ...prev, [itemId]: { ...prev[itemId], is_completed: !currentStatus } }));
     setTask((prev: any) => ({
       ...prev,
       checklists: prev.checklists.map((item: any) =>
@@ -558,16 +556,31 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     }));
   };
 
+  const handleSetChecklistAssignee = (itemId: string, assignee_id: string) => {
+    // If it's a temp item, update pendingChecklists
+    if (itemId.startsWith("temp-")) {
+      const idx = pendingChecklists.findIndex(p => `temp-${p.label}` === itemId || p.label === itemId); // Rough match if needed, but better to update the task state and let batch save handle it.
+      // Actually, since pendingChecklists doesn't have an ID, we update the task state directly, and for saving we map over task.checklists that are temp.
+    }
+    
+    setEditedChecklists(prev => ({ ...prev, [itemId]: { ...prev[itemId], assignee_id } }));
+    setTask((prev: any) => ({
+      ...prev,
+      checklists: prev.checklists.map((item: any) =>
+        item.id === itemId ? { ...item, assignee_id } : item
+      )
+    }));
+  };
+
   const handleAddChecklist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChecklistLabel.trim()) return;
     setError(null);
-    // Queue new checklist label for batch creation
-    setPendingChecklists(prev => [...prev, newChecklistLabel.trim()]);
-    // Optimistically add placeholder to UI
+    const tempId = `temp-${Date.now()}`;
+    setPendingChecklists(prev => [...prev, { label: newChecklistLabel.trim() }]);
     setTask((prev: any) => ({
       ...prev,
-      checklists: [...(prev.checklists || []), { id: `temp-${Date.now()}`, label: newChecklistLabel.trim(), is_completed: false }]
+      checklists: [...(prev.checklists || []), { id: tempId, label: newChecklistLabel.trim(), is_completed: false }]
     }));
     setNewChecklistLabel("");
   };
@@ -683,12 +696,16 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       }
 
       const t1 = performance.now();
+      const newChecklistsPayload = task.checklists
+        ?.filter((c: any) => String(c.id).startsWith("temp-"))
+        .map((c: any) => ({ label: c.label, assignee_id: c.assignee_id })) || [];
+
       const res = await executeTaskBatchOperation({
         taskId,
         updates: updatePayload,
         statusChanges: finalStatusId,
         departmentChange: departmentChangeObj,
-        checklistCreates: pendingChecklists,
+        checklistCreates: newChecklistsPayload.length > 0 ? newChecklistsPayload : pendingChecklists,
         checklistUpdates: editedChecklists,
         remarks: remarksDraft.trim(),
         attachmentIds
@@ -1691,18 +1708,41 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {task.checklists.map((item: any) => (
                         <div 
                           key={item.id} 
-                          className="flex items-center gap-2.5 p-2 rounded-lg border border-border/30 hover:bg-surface/50 transition-colors"
+                          className="flex items-center justify-between p-2 rounded-lg border border-border/30 hover:bg-surface/50 transition-colors"
                         >
-                          <input
-                            type="checkbox"
-                            checked={item.is_completed}
-                            onChange={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
-                            disabled={readOnly || !canEditAux}
-                            className="h-4 w-4 rounded accent-accent"
-                          />
-                          <span className={`text-xs ${item.is_completed ? "line-through text-muted" : "text-foreground"}`}>
-                            {item.label}
-                          </span>
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={item.is_completed}
+                              onChange={() => canEditAux && handleToggleChecklist(item.id, item.is_completed)}
+                              disabled={readOnly || !canEditAux}
+                              className="h-4 w-4 rounded accent-accent"
+                            />
+                            <span className={`text-xs ${item.is_completed ? "line-through text-muted" : "text-foreground"}`}>
+                              {item.label}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                            <select
+                              value={item.assignee_id || ""}
+                              onChange={(e) => handleSetChecklistAssignee(item.id, e.target.value)}
+                              disabled={readOnly || !canEditAux}
+                              className="text-[10px] bg-transparent border-none text-muted-foreground outline-none font-semibold focus:ring-0 cursor-pointer w-24"
+                            >
+                              <option value="">Unassigned</option>
+                              {task.task_assignees?.map((a: any) => (
+                                <option key={a.id} value={a.id}>{a.full_name}</option>
+                              ))}
+                              {task.task_watchers?.map((w: any) => (
+                                <option key={w.id} value={w.id}>{w.full_name}</option>
+                              ))}
+                              {task.inherited_users?.map((u: any) => (
+                                <option key={u.id} value={u.id}>{u.full_name}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       ))}
                     </div>
