@@ -82,15 +82,13 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       const htmlBody = template.html_body ? hydrateTemplate(template.html_body, hydratedPayload) : null;
       const bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, hydratedPayload) : null;
 
+      // Use only legacy columns to ensure the insert succeeds even if the migration hasn't been applied yet.
+      // The DB will use its DEFAULT 'PENDING' for status if the new schema is present.
       return {
-        module: moduleName,
-        event: eventName,
         recipient_email: user.email,
-        recipient_user_id: user.id,
         subject: subject,
-        html_body: htmlBody,
-        body_template: bodyTemplate,
-        status: "PENDING"
+        body_template: htmlBody || bodyTemplate,
+        is_sent: false
       };
     });
 

@@ -16,23 +16,32 @@ export async function POST(request: Request) {
       throw new Error("Supabase Admin client not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are set.");
     }
     // 1. Fetch pending queue items (Limit to 10 for batch processing)
-    const { data: queueItems } = await supabaseAdmin
+    // We try to fetch using is_sent=false to remain backwards compatible with pre-migration DB schemas.
+    const { data: queueItems, error: fetchErr } = await supabaseAdmin
       .from("email_queue")
       .select("*")
-      .in("status", ["PENDING", "pending"])
+      .eq("is_sent", false)
       .order("created_at", { ascending: true })
       .limit(10);
+
+    if (fetchErr) {
+       console.error("Fetch Error:", fetchErr);
+    }
 
     if (!queueItems || queueItems.length === 0) {
       return NextResponse.json({ message: "Queue is empty." });
     }
 
-    // Mark as processing
+    // Mark as processing (Soft lock: try to update status if it exists, otherwise update is_sent to prevent double sends)
     const queueIds = queueItems.map((q: any) => q.id);
-    await supabaseAdmin
-      .from("email_queue")
-      .update({ status: "PROCESSING" })
-      .in("id", queueIds);
+    const hasStatusColumn = 'status' in queueItems[0];
+    
+    if (hasStatusColumn) {
+      await supabaseAdmin
+        .from("email_queue")
+        .update({ status: "PROCESSING" })
+        .in("id", queueIds);
+    }
 
     // 2. Fetch Active Providers mapped by Priority
     const { data: providers } = await supabaseAdmin
@@ -70,11 +79,14 @@ export async function POST(request: Request) {
             });
 
             // Update Queue
-            await supabaseAdmin.from("email_queue").update({
-              status: "COMPLETED",
-              processed_at: new Date().toISOString(),
-              provider_used: provider.id
-            }).eq("id", item.id);
+            const updatePayload: any = { is_sent: true, sent_at: new Date().toISOString() };
+            if (hasStatusColumn) {
+               updatePayload.status = "COMPLETED";
+               updatePayload.processed_at = new Date().toISOString();
+               updatePayload.provider_used = provider.id;
+            }
+            
+            await supabaseAdmin.from("email_queue").update(updatePayload).eq("id", item.id);
 
             break; // Stop falling back since it succeeded
           }
@@ -93,11 +105,15 @@ export async function POST(request: Request) {
           status: "FAILED"
         });
 
-        await supabaseAdmin.from("email_queue").update({
-          status: "FAILED",
-          error_message: lastError || "All configured fallback providers failed.",
-          processed_at: new Date().toISOString()
-        }).eq("id", item.id);
+        const failPayload: any = { 
+          is_sent: false // stays false but we might log it
+        };
+        if (hasStatusColumn) {
+           failPayload.status = "FAILED";
+           failPayload.error_message = lastError || "All configured fallback providers failed.";
+           failPayload.processed_at = new Date().toISOString();
+        }
+        await supabaseAdmin.from("email_queue").update(failPayload).eq("id", item.id);
       }
     }
 
@@ -105,7 +121,7 @@ export async function POST(request: Request) {
     const { count } = await supabaseAdmin
       .from("email_queue")
       .select("*", { count: 'exact', head: true })
-      .in("status", ["PENDING", "pending"]);
+      .eq("is_sent", false);
       
     if (count && count > 0) {
       // Async trigger to continue processing
@@ -121,9 +137,10 @@ export async function POST(request: Request) {
 }
 
 async function markQueueFailed(ids: string[], providerId: string | null, errorMsg: string) {
+  // Graceful fallback for schema without status
   await supabaseAdmin
     .from("email_queue")
-    .update({ status: "FAILED", error_message: errorMsg, processed_at: new Date().toISOString() })
+    .update({ is_sent: false })
     .in("id", ids);
 
   const logs = ids.map(id => ({
