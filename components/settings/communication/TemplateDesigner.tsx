@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';
 import DOMPurify from 'dompurify';
-import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate } from "lucide-react";
+import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate, ArrowLeft, Edit2 } from "lucide-react";
 import { saveSettingsEntity, deleteSettingsEntity, getTemplates } from "@/lib/actions/settings";
-import { createClient } from "@/utils/supabase/client";
 import { previewEmailTemplate } from "@/lib/actions/email-config";
 
 const MODULES = ["Task", "Workspace", "Ticket", "Requirement", "Approval"];
@@ -16,10 +15,11 @@ export default function TemplateDesigner() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState<{type: "success" | "error", text: string} | null>(null);
+  
+  // New Master-Detail state
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Record<string, "code" | "preview">>({});
   const [previewContent, setPreviewContent] = useState<Record<string, string>>({});
-  
-  const supabase = createClient();
 
   const triggerToast = (text: string, type: "success" | "error" = "success") => {
     setToastMsg({ text, type });
@@ -62,6 +62,7 @@ export default function TemplateDesigner() {
       ...prev
     ]);
     setActiveTab(prevTab => ({ ...prevTab, [newId]: "code" }));
+    setEditingTemplateId(newId); // Instantly open editor
   };
 
   const updateLocal = (id: string, field: string, value: any) => {
@@ -88,15 +89,21 @@ export default function TemplateDesigner() {
         if (!res.success) throw new Error(res.error);
         triggerToast("Template updated successfully");
       }
-      fetchTemplates();
+      
+      // Go back to list upon successful save
+      setEditingTemplateId(null);
+      await fetchTemplates();
     } catch (err: any) {
       triggerToast(err.message || "Failed to save template", "error");
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
     if (id.startsWith("temp_")) {
       setTemplates(prev => prev.filter(t => t.id !== id));
+      if (editingTemplateId === id) setEditingTemplateId(null);
       return;
     }
     if (!confirm("Delete this template?")) return;
@@ -104,6 +111,7 @@ export default function TemplateDesigner() {
       const res = await deleteSettingsEntity("email_templates", id, true);
       if (!res.success) throw new Error(res.error);
       triggerToast("Template deleted");
+      if (editingTemplateId === id) setEditingTemplateId(null);
       fetchTemplates();
     } catch (err: any) {
       triggerToast(err.message, "error");
@@ -128,24 +136,113 @@ export default function TemplateDesigner() {
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
 
+  // Active Template for Editor View
+  const tpl = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      
+      {/* Dynamic Header */}
       <div className="flex justify-between items-center bg-background border border-border p-4 rounded-xl shadow-lg">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Dynamic Template Designer</h2>
-          <p className="text-xs text-muted">Construct HTML payloads with runtime merge tag hydration.</p>
+          <h2 className="text-lg font-bold text-foreground">
+            {editingTemplateId ? "Edit Template" : "Dynamic Template Designer"}
+          </h2>
+          <p className="text-xs text-muted">
+            {editingTemplateId ? "Modify HTML and configuration." : "Construct HTML payloads with runtime merge tag hydration."}
+          </p>
         </div>
-        <AppButton
-          onClick={handleAddTemplate}
-          className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-accent/20 transition-all"
-        >
-          <Plus className="w-4 h-4" /> Add Template
-        </AppButton>
+        
+        {editingTemplateId ? (
+          <AppButton
+            onClick={() => {
+              // If it's a new unsaved template and we back out, we should probably remove it
+              if (tpl?.is_new) {
+                setTemplates(prev => prev.filter(t => t.id !== editingTemplateId));
+              }
+              setEditingTemplateId(null);
+            }}
+            className="flex items-center gap-2 bg-surface hover:bg-surface/80 text-foreground px-4 py-2 rounded-lg text-sm font-bold border border-border shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to List
+          </AppButton>
+        ) : (
+          <AppButton
+            onClick={handleAddTemplate}
+            className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-accent/20 transition-all"
+          >
+            <Plus className="w-4 h-4" /> Add Template
+          </AppButton>
+        )}
       </div>
 
+      {/* View Router */}
       <div className="space-y-8">
-        {templates.map((tpl) => (
-          <div key={tpl.id} className="bg-surface border border-border rounded-xl overflow-hidden shadow-xl flex flex-col">
+        
+        {/* LIST VIEW */}
+        {!editingTemplateId && (
+          <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xl">
+            {templates.length === 0 ? (
+              <div className="text-center py-12">
+                <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-muted">No Templates Designed</h3>
+                <p className="text-sm text-muted mt-1">Click 'Add Template' to create your first email payload.</p>
+              </div>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead className="bg-background border-b border-border">
+                  <tr>
+                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Template Name</th>
+                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Module</th>
+                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Event</th>
+                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider text-center">Status</th>
+                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {templates.map((item) => (
+                    <tr 
+                      key={item.id} 
+                      className="hover:bg-background/50 transition-colors cursor-pointer group"
+                      onClick={() => setEditingTemplateId(item.id)}
+                    >
+                      <td className="px-6 py-4 font-medium text-foreground">{item.template_name}</td>
+                      <td className="px-6 py-4 text-muted">{item.module}</td>
+                      <td className="px-6 py-4 text-muted">{item.event}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.is_active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          {item.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <AppButton 
+                            onClick={(e) => { e.stopPropagation(); setEditingTemplateId(item.id); }}
+                            className="p-2 text-muted hover:text-accent bg-background rounded-md border border-border shadow-sm"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </AppButton>
+                          <AppButton 
+                            onClick={(e) => handleDelete(item.id, e)} 
+                            className="p-2 text-muted hover:text-rose-500 bg-background rounded-md border border-border shadow-sm"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </AppButton>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* EDITOR VIEW */}
+        {editingTemplateId && tpl && (
+          <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xl flex flex-col animate-in slide-in-from-right-4 duration-300">
             {/* Header Configuration */}
             <div className="p-6 border-b border-border grid grid-cols-1 md:grid-cols-3 gap-6 bg-surface">
               <div className="space-y-2">
@@ -260,28 +357,31 @@ export default function TemplateDesigner() {
               </label>
 
               <div className="flex items-center gap-3">
-                <AppButton onClick={() => handleDelete(tpl.id)} className="text-muted hover:text-rose-500 transition-colors">
+                <AppButton onClick={(e) => handleDelete(tpl.id, e)} className="text-muted hover:text-rose-500 transition-colors mr-2">
                   <Trash2 className="w-4 h-4" />
                 </AppButton>
                 <AppButton 
-                  onClick={() => handleSave(tpl)}
-                  className="flex items-center gap-2 bg-surface hover:bg-surface/80 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border"
+                  onClick={() => {
+                    if (tpl?.is_new) {
+                      setTemplates(prev => prev.filter(t => t.id !== editingTemplateId));
+                    }
+                    setEditingTemplateId(null);
+                  }}
+                  className="bg-transparent hover:bg-surface text-muted px-4 py-1.5 rounded text-sm font-bold transition-colors"
                 >
-                  <Save className="w-4 h-4" /> Save
+                  Cancel
+                </AppButton>
+                <AppButton 
+                  onClick={() => handleSave(tpl)}
+                  className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-6 py-1.5 rounded text-sm font-bold transition-colors shadow-lg shadow-accent/20"
+                >
+                  <Save className="w-4 h-4" /> Save Template
                 </AppButton>
               </div>
             </div>
-
-          </div>
-        ))}
-
-        {templates.length === 0 && (
-          <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-xl">
-            <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-muted">No Templates Designed</h3>
-            <p className="text-sm text-muted mt-1">Create HTML email payloads to attach to routing rules.</p>
           </div>
         )}
+
       </div>
 
       {toastMsg && (
