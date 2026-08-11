@@ -15,19 +15,18 @@ export async function saveSettingsEntity(tableName: string, payload: any, editId
   const isAuthorized = isSuperAdmin || isSettingsManager;
   if (!isAuthorized) return { success: false, error: "Unauthorized." };
 
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const { supabaseAdmin } = await import("@/lib/supabase/service_role");
 
   let res;
   if (editId) {
-    res = await supabase
+    res = await supabaseAdmin
       .from(tableName)
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq("id", editId)
       .select()
       .single();
   } else {
-    res = await supabase
+    res = await supabaseAdmin
       .from(tableName)
       .insert([payload])
       .select()
@@ -44,14 +43,13 @@ export async function deleteSettingsEntity(tableName: string, id: string, hardDe
   const isAuthorized = isSuperAdmin || isSettingsManager;
   if (!isAuthorized) return { success: false, error: "Unauthorized." };
 
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const { supabaseAdmin } = await import("@/lib/supabase/service_role");
 
   let res;
   if (hardDelete) {
-    res = await supabase.from(tableName).delete().eq("id", id);
+    res = await supabaseAdmin.from(tableName).delete().eq("id", id);
   } else {
-    res = await supabase.from(tableName).update({ is_deleted: true, updated_at: new Date().toISOString() }).eq("id", id);
+    res = await supabaseAdmin.from(tableName).update({ is_deleted: true, updated_at: new Date().toISOString() }).eq("id", id);
   }
 
   if (res.error) return { success: false, error: res.error.message };
