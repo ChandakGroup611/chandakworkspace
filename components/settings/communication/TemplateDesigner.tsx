@@ -133,14 +133,14 @@ export default function TemplateDesigner() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between items-center bg-background border border-border p-4 rounded-xl shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-foreground">Dynamic Template Designer</h2>
           <p className="text-xs text-muted">Construct HTML payloads with runtime merge tag hydration.</p>
         </div>
         <AppButton
           onClick={handleAddTemplate}
-          className="flex items-center gap-2 bg-accent hover:bg-accent text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-purple-500/20 transition-all"
+          className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-accent/20 transition-all"
         >
           <Plus className="w-4 h-4" /> Add Template
         </AppButton>
@@ -148,16 +148,16 @@ export default function TemplateDesigner() {
 
       <div className="space-y-8">
         {templates.map((tpl) => (
-          <div key={tpl.id} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl flex flex-col">
+          <div key={tpl.id} className="bg-surface border border-border rounded-xl overflow-hidden shadow-xl flex flex-col">
             {/* Header Configuration */}
-            <div className="p-6 border-b border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6 bg-white/5">
+            <div className="p-6 border-b border-border grid grid-cols-1 md:grid-cols-3 gap-6 bg-surface">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Template Name</label>
                 <input 
                   type="text" 
                   value={tpl.template_name || ''}
                   onChange={(e) => updateLocal(tpl.id, "template_name", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white caret-white focus:outline-none focus:border-accent"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
                 />
               </div>
               <div className="space-y-2">
@@ -165,7 +165,7 @@ export default function TemplateDesigner() {
                 <select 
                   value={tpl.module || ''}
                   onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
                 >
                   {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
@@ -175,7 +175,7 @@ export default function TemplateDesigner() {
                 <select 
                   value={tpl.event || ''}
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
                 >
                   {EVENTS.map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
@@ -186,14 +186,14 @@ export default function TemplateDesigner() {
                   type="text" 
                   value={tpl.subject || ''}
                   onChange={(e) => updateLocal(tpl.id, "subject", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white caret-white focus:outline-none focus:border-accent font-mono"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent font-mono"
                   placeholder="e.g. Action Required: {{task_name}}"
                 />
               </div>
             </div>
 
             {/* Merge Tags Helper */}
-            <div className="px-6 py-3 border-b border-white/5 bg-[#0A0D14] flex flex-wrap gap-2 items-center">
+            <div className="px-6 py-3 border-b border-border bg-background flex flex-wrap gap-2 items-center">
               <span className="text-xs font-bold text-muted mr-2">AVAILABLE TAGS:</span>
               {MERGE_TAGS.map(tag => (
                 <AppButton 
@@ -208,7 +208,7 @@ export default function TemplateDesigner() {
                       updateLocal(tpl.id, "html_body", newBody);
                     }
                   }}
-                  className="px-2 py-1 bg-surface/5 hover:bg-accent/20 text-purple-300 text-xs font-mono rounded transition-colors"
+                  className="px-2 py-1 bg-accent text-white hover:bg-accent/90 text-xs font-mono rounded transition-colors shadow-sm"
                 >
                   {tag}
                 </AppButton>
@@ -216,16 +216,16 @@ export default function TemplateDesigner() {
             </div>
 
             {/* Editor vs Preview Tab */}
-            <div className="flex border-b border-white/5 bg-[#0A0D14]">
+            <div className="flex border-b border-border bg-background">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-muted hover:text-muted'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-muted hover:text-muted'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview (Dynamic)
               </AppButton>
@@ -237,7 +237,7 @@ export default function TemplateDesigner() {
                 id={`editor_${tpl.id}`}
                 value={tpl.html_body || ''}
                 onChange={(e) => updateLocal(tpl.id, "html_body", e.target.value)}
-                className="w-full h-64 bg-[#05070D] text-emerald-400 caret-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-accent/20 resize-y"
+                className="w-full h-64 bg-background text-emerald-600 dark:text-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-accent/20 resize-y"
                 spellCheck={false}
               />
             ) : (
@@ -248,10 +248,10 @@ export default function TemplateDesigner() {
             )}
 
             {/* Footer Actions */}
-            <div className="bg-[#0A0D14] px-6 py-3 border-t border-white/5 flex justify-between items-center">
+            <div className="bg-background px-6 py-3 border-t border-border flex justify-between items-center">
               <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-accent' : 'bg-gray-600'}`}>
-                  <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${tpl.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
+                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-accent' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                  <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${tpl.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                 </div>
                 <input 
                   type="checkbox" 
@@ -263,12 +263,12 @@ export default function TemplateDesigner() {
               </label>
 
               <div className="flex items-center gap-3">
-                <AppButton onClick={() => handleDelete(tpl.id)} className="text-muted hover:text-rose-400 transition-colors">
+                <AppButton onClick={() => handleDelete(tpl.id)} className="text-muted hover:text-rose-500 transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </AppButton>
                 <AppButton 
                   onClick={() => handleSave(tpl)}
-                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
+                  className="flex items-center gap-2 bg-surface hover:bg-surface/80 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border"
                 >
                   <Save className="w-4 h-4" /> Save
                 </AppButton>
