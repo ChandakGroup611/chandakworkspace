@@ -37,6 +37,22 @@ export async function saveSettingsEntity(tableName: string, payload: any, editId
   return { success: true, data: res.data };
 }
 
+export async function getTemplates() {
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  const isSettingsManager = await checkServerPermission("SYSTEM_SETTINGS_MANAGE");
+  const isAuthorized = isSuperAdmin || isSettingsManager;
+  if (!isAuthorized) return { success: false, error: "Unauthorized." };
+
+  const { supabaseAdmin } = await import("@/lib/supabase/service_role");
+  const { data, error } = await supabaseAdmin
+    .from("email_templates")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
 export async function deleteSettingsEntity(tableName: string, id: string, hardDelete = false) {
   const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
   const isSettingsManager = await checkServerPermission("SYSTEM_SETTINGS_MANAGE");

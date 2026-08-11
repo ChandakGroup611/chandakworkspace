@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';
 import DOMPurify from 'dompurify';
 import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate } from "lucide-react";
-import { saveSettingsEntity, deleteSettingsEntity } from "@/lib/actions/settings";
+import { saveSettingsEntity, deleteSettingsEntity, getTemplates } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
 import { previewEmailTemplate } from "@/lib/actions/email-config";
 
@@ -32,15 +32,12 @@ export default function TemplateDesigner() {
 
   const fetchTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setTemplates(data || []);
+      const res = await getTemplates();
+      if (!res.success) throw new Error(res.error);
+      setTemplates(res.data || []);
       
       const tabs: any = {};
-      (data || []).forEach(t => tabs[t.id] = "code");
+      (res.data || []).forEach((t: any) => tabs[t.id] = "code");
       setActiveTab(tabs);
     } catch (err) {
       console.error(err);
