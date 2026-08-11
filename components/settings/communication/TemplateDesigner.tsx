@@ -51,7 +51,7 @@ export default function TemplateDesigner() {
 
   const handleAddTemplate = () => {
     const newId = "temp_" + Date.now();
-    setTemplates([
+    setTemplates(prev => [
       {
         id: newId,
         module: "Task",
@@ -62,13 +62,13 @@ export default function TemplateDesigner() {
         is_active: true,
         is_new: true
       },
-      ...templates
+      ...prev
     ]);
-    setActiveTab(prev => ({ ...prev, [newId]: "code" }));
+    setActiveTab(prevTab => ({ ...prevTab, [newId]: "code" }));
   };
 
   const updateLocal = (id: string, field: string, value: any) => {
-    setTemplates(templates.map(t => t.id === id ? { ...t, [field]: value } : t));
+    setTemplates(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
   };
 
   const handleSave = async (template: any) => {
@@ -99,7 +99,7 @@ export default function TemplateDesigner() {
 
   const handleDelete = async (id: string) => {
     if (id.startsWith("temp_")) {
-      setTemplates(templates.filter(t => t.id !== id));
+      setTemplates(prev => prev.filter(t => t.id !== id));
       return;
     }
     if (!confirm("Delete this template?")) return;
@@ -150,20 +150,20 @@ export default function TemplateDesigner() {
         {templates.map((tpl) => (
           <div key={tpl.id} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl flex flex-col">
             {/* Header Configuration */}
-            <div className="p-6 border-b border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6 theme-card-structural /5">
+            <div className="p-6 border-b border-white/5 grid grid-cols-1 md:grid-cols-3 gap-6 bg-white/5">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Template Name</label>
                 <input 
                   type="text" 
-                  value={tpl.template_name}
+                  value={tpl.template_name || ''}
                   onChange={(e) => updateLocal(tpl.id, "template_name", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
+                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white caret-white focus:outline-none focus:border-accent"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Trigger Module</label>
                 <select 
-                  value={tpl.module}
+                  value={tpl.module || ''}
                   onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
                   className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none"
                 >
@@ -173,7 +173,7 @@ export default function TemplateDesigner() {
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Trigger Event</label>
                 <select 
-                  value={tpl.event}
+                  value={tpl.event || ''}
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
                   className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none"
                 >
@@ -184,9 +184,9 @@ export default function TemplateDesigner() {
                 <label className="text-sm font-bold text-muted uppercase">Email Subject Line</label>
                 <input 
                   type="text" 
-                  value={tpl.subject}
+                  value={tpl.subject || ''}
                   onChange={(e) => updateLocal(tpl.id, "subject", e.target.value)}
-                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-accent font-mono"
+                  className="w-full bg-[#0A0D14] border border-white/10 rounded-md px-3 py-2 text-sm text-white caret-white focus:outline-none focus:border-accent font-mono"
                   placeholder="e.g. Action Required: {{task_name}}"
                 />
               </div>
@@ -203,7 +203,8 @@ export default function TemplateDesigner() {
                     if (el) {
                       const start = el.selectionStart;
                       const end = el.selectionEnd;
-                      const newBody = tpl.html_body.substring(0, start) + tag + tpl.html_body.substring(end);
+                      const bodyStr = tpl.html_body || '';
+                      const newBody = bodyStr.substring(0, start) + tag + bodyStr.substring(end);
                       updateLocal(tpl.id, "html_body", newBody);
                     }
                   }}
@@ -218,13 +219,13 @@ export default function TemplateDesigner() {
             <div className="flex border-b border-white/5 bg-[#0A0D14]">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-muted hover:text-muted'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-muted hover:text-muted'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent theme-card-structural /5' : 'border-transparent text-muted hover:text-muted'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent bg-white/5' : 'border-transparent text-muted hover:text-muted'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview (Dynamic)
               </AppButton>
@@ -234,9 +235,9 @@ export default function TemplateDesigner() {
             {activeTab[tpl.id] === 'code' ? (
               <textarea
                 id={`editor_${tpl.id}`}
-                value={tpl.html_body}
+                value={tpl.html_body || ''}
                 onChange={(e) => updateLocal(tpl.id, "html_body", e.target.value)}
-                className="w-full h-64 bg-[#05070D] text-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-accent/20 resize-y"
+                className="w-full h-64 bg-[#05070D] text-emerald-400 caret-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-accent/20 resize-y"
                 spellCheck={false}
               />
             ) : (
@@ -267,7 +268,7 @@ export default function TemplateDesigner() {
                 </AppButton>
                 <AppButton 
                   onClick={() => handleSave(tpl)}
-                  className="flex items-center gap-2 theme-card-structural /5 hover:/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border-white/10"
+                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border border-white/10"
                 >
                   <Save className="w-4 h-4" /> Save
                 </AppButton>

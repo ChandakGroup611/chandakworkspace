@@ -10,7 +10,9 @@ import { checkServerPermission } from "@/lib/permissions";
  */
 
 export async function saveSettingsEntity(tableName: string, payload: any, editId?: string) {
-  const isAuthorized = await checkServerPermission("SUPER_ADMIN");
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  const isSettingsManager = await checkServerPermission("SYSTEM_SETTINGS_MANAGE");
+  const isAuthorized = isSuperAdmin || isSettingsManager;
   if (!isAuthorized) return { success: false, error: "Unauthorized." };
 
   const cookieStore = await cookies();
@@ -37,7 +39,9 @@ export async function saveSettingsEntity(tableName: string, payload: any, editId
 }
 
 export async function deleteSettingsEntity(tableName: string, id: string, hardDelete = false) {
-  const isAuthorized = await checkServerPermission("SUPER_ADMIN");
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  const isSettingsManager = await checkServerPermission("SYSTEM_SETTINGS_MANAGE");
+  const isAuthorized = isSuperAdmin || isSettingsManager;
   if (!isAuthorized) return { success: false, error: "Unauthorized." };
 
   const cookieStore = await cookies();
