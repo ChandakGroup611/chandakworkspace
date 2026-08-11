@@ -30,7 +30,8 @@ export default function ProviderDashboard() {
       const { data, error } = await supabase
         .from("email_providers")
         .select("*")
-        .order("priority_level", { ascending: true });
+        .order("priority_level", { ascending: true })
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
       
@@ -44,7 +45,9 @@ export default function ProviderDashboard() {
       if (data && data.length > 0) {
         data.forEach(p => {
           if (p.priority_level >= 1 && p.priority_level <= 3) {
-            slots[p.priority_level - 1] = p;
+            if (slots[p.priority_level - 1].id.startsWith("temp_")) {
+              slots[p.priority_level - 1] = p;
+            }
           }
         });
       }
