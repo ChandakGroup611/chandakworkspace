@@ -1366,6 +1366,10 @@ export async function executeTaskBatchOperation(payload: {
   // FIRE AND FORGET - DO NOT AWAIT SIDE EFFECTS
   Promise.allSettled(sideEffects).catch(e => console.error("[SideEffects Error]", e));
 
+  // Purge the cache for this task to ensure Next.js auto-refresh works on production
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath(`/workspaces/tasks`);
+
   return {
     success: true,
     data: {
@@ -1425,6 +1429,10 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     const { error: updateError } = await supabaseAdmin.from('tasks').update({ assigned_to: finalPrimaryId }).eq('id', taskId);
     if (updateError) return { error: updateError.message };
   }
+
+  // Purge the cache for this task to ensure Next.js auto-refresh works on production
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath(`/workspaces/tasks`);
 
   // Log the assignment change in audit trail
   const newExecutorNames = uniqueAssigneeIds
