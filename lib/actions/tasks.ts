@@ -1421,7 +1421,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   if (deleteError) return { error: deleteError.message };
 
   if (participants.length > 0) {
-    const { error: insertError } = await supabaseAdmin.from('task_participants').insert(participants);
+    const { error: insertError } = await supabaseAdmin.from('task_participants').upsert(participants, { onConflict: 'task_id, user_id' });
     if (insertError) return { error: insertError.message };
   }
 
