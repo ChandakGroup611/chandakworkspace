@@ -717,7 +717,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       if (pendingAssignees !== null || pendingPrimaryAssignee !== null) {
         const { updateTaskAssignees } = await import("@/lib/actions/tasks");
-        const executorsToUpdate = pendingAssignees !== null ? pendingAssignees : explicitExecutors.map((e: any) => e.id);
+        const executorsToUpdate = pendingAssignees !== null ? pendingAssignees : (task.task_assignees || []).map((e: any) => e.id);
         const primaryToUpdate = pendingPrimaryAssignee !== null ? pendingPrimaryAssignee : task.assigned_to;
         const assigneesRes = await updateTaskAssignees(taskId, task.workspace_id, executorsToUpdate, primaryToUpdate);
         if (assigneesRes?.error) throw new Error(assigneesRes.error);
@@ -795,7 +795,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       if (onUpdate) {
         onUpdate();
       }
-      // We no longer force navigation away to let the user stay on the same page
+      // Refresh the page data (server components) while keeping the user on the same page
+      router.refresh();
     } catch (e: any) {
       console.error(e);
       setError(e.message || "Failed to save changes.");

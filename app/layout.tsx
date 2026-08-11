@@ -4,6 +4,7 @@ import WorkspaceShell from '@/components/layout/WorkspaceShell'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import ClientSessionManager from '@/components/auth/ClientSessionManager'
 import QueryProvider from '@/components/providers/QueryProvider'
+import GlobalAutoRefresh from '@/components/layout/GlobalAutoRefresh'
 import { PermissionsProvider } from '@/components/providers/PermissionsProvider'
 import Script from 'next/script'
 import { ToastContainer } from 'react-toastify';
@@ -71,6 +72,7 @@ export default function RootLayout({
           <PermissionsProvider>
             <ThemeProvider>
               <ClientSessionManager />
+              <GlobalAutoRefresh />
               <WorkspaceShell>{children}</WorkspaceShell>
               <ToastContainer position="bottom-right" theme="colored" />
             </ThemeProvider>
