@@ -175,7 +175,20 @@ export async function dispatchNotification(
     if (!user?.email) return;
 
     // Build absolute URL for emails
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    let baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (!baseUrl) {
+      try {
+        const { headers } = await import('next/headers');
+        const headersList = await headers();
+        const host = headersList.get('host');
+        const protocol = headersList.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+        if (host) baseUrl = `${protocol}://${host}`;
+      } catch (e) {
+        // Fallback for background contexts
+      }
+    }
+    baseUrl = baseUrl || "http://localhost:3000";
+    
     const absoluteLink = link ? (link.startsWith('http') ? link : `${baseUrl}${link}`) : '';
 
     // Insert into corporate email_queue table
