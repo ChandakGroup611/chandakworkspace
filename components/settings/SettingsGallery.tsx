@@ -201,6 +201,7 @@ export default function SettingsGallery() {
   ];
 
   const accentsList: { id: AccentColorType; name: string; hex: string }[] = [
+    { id: "theme-default", name: "Theme Default", hex: "bg-gray-400" },
     { id: "blue", name: "Executive Blue", hex: "bg-blue-500" },
     { id: "emerald", name: "Secure Emerald", hex: "bg-emerald-500" },
     { id: "rose", name: "Alert Rose", hex: "bg-rose-500" },

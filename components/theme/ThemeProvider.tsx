@@ -6,7 +6,7 @@ export type ThemeType = "dark-neumorphic" | "light-neumorphic" | "industrial-con
 export type DensityType = "comfortable" | "compact" | "dense";
 export type FontFamilyType = "inter" | "outfit" | "roboto" | "arial" | "times" | "verdana" | "courier" | "georgia" | "trebuchet" | "comic-sans" | "impact";
 export type FontWeightProfileType = "heavy" | "standard" | "light";
-export type AccentColorType = "blue" | "emerald" | "rose" | "amber" | "purple" | "slate" | string;
+export type AccentColorType = "theme-default" | "blue" | "emerald" | "rose" | "amber" | "purple" | "slate" | string;
 
 interface ThemeContextType {
   theme: ThemeType;
@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [tactileFeedback, setTactileFeedbackState] = useState<boolean>(true);
   const [fontFamily, setFontFamilyState] = useState<FontFamilyType>("inter");
   const [fontWeightProfile, setFontWeightProfileState] = useState<FontWeightProfileType>("heavy");
-  const [accentColor, setAccentColorState] = useState<AccentColorType>("blue");
+  const [accentColor, setAccentColorState] = useState<AccentColorType>("theme-default");
   const [baseFontSize, setBaseFontSizeState] = useState<number>(16);
   const [subtextFontSize, setSubtextFontSizeState] = useState<number>(14);
   const [mounted, setMounted] = useState(false);
@@ -68,7 +68,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (state.fontWeightProfile && ["heavy", "standard", "light"].includes(state.fontWeightProfile)) {
           setFontWeightProfileState(state.fontWeightProfile);
         }
-        if (state.accentColor && (["blue", "emerald", "rose", "amber", "purple", "slate"].includes(state.accentColor) || state.accentColor.startsWith("#"))) {
+        if (state.accentColor && (["theme-default", "blue", "emerald", "rose", "amber", "purple", "slate"].includes(state.accentColor) || state.accentColor.startsWith("#"))) {
           setAccentColorState(state.accentColor);
         }
         if (state.baseFontSize) {
@@ -184,7 +184,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     const aColor = activeAccentColor || accentColor;
-    if (aColor === "blue") {
+    if (aColor === "theme-default") {
+      document.documentElement.style.removeProperty("--accent-primary");
+      document.documentElement.style.removeProperty("--accent-secondary");
+    } else if (aColor === "blue") {
       document.documentElement.style.setProperty("--accent-primary", "#3b82f6");
       document.documentElement.style.setProperty("--accent-secondary", "#60a5fa");
     } else if (aColor === "emerald") {
