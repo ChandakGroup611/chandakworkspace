@@ -522,6 +522,17 @@ export async function getTaskDetails(taskId: string) {
       }
     }
 
+    const isAuthorized = 
+      isSuperAdmin || 
+      isWorkspaceMember || 
+      task.created_by === userId || 
+      task.assigned_to === userId || 
+      (participants && participants.some(p => p.user_id === userId));
+
+    if (!isAuthorized) {
+      return { error: "Access Denied: You are not authorized to view this task." };
+    }
+
     // User Lookup Consolidation
     const uniqueUserIds = new Set<string>();
     if (task.created_by) uniqueUserIds.add(task.created_by);
