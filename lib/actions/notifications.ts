@@ -217,7 +217,7 @@ export async function dispatchNotification(
       
       // Async trigger the cron job so the email sends immediately via configured providers
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      fetch(`${baseUrl}/api/cron/process-email-queue`, { method: 'POST', signal: AbortSignal.timeout(100) }).catch(() => {});
+      fetch(`${baseUrl}/api/cron/process-email-queue`, { method: 'POST' }).catch(() => {});
       
     } catch (e) {
       console.error('Failed to insert into email_queue', e);
