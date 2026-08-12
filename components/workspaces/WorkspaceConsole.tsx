@@ -47,7 +47,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
 export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: any[] }) {
   // A heavy enterprise execution context dashboard
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0b] text-muted">
+    <div className="flex flex-col h-full bg-background dark:bg-[#0a0a0b] text-muted">
       <header className="p-6 border-b border-white/5 flex justify-between items-center bg-surface/20">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{workspace.workspace_name}</h1>

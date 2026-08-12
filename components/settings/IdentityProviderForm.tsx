@@ -101,7 +101,7 @@ export default function IdentityProviderForm() {
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Overview Card */}
-      <div className="bg-[#0A0D14] border border-white/10 rounded-xl p-6 shadow-2xl">
+      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-xl p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-accent/10 rounded-lg">
@@ -130,7 +130,7 @@ export default function IdentityProviderForm() {
               type="text" 
               value={config.tenant_id || ""}
               onChange={(e) => setConfig({ ...config, tenant_id: e.target.value })}
-              className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
               placeholder="e.g. 8eaef023-..."
             />
           </div>
@@ -141,7 +141,7 @@ export default function IdentityProviderForm() {
               type="text" 
               value={config.client_id || ""}
               onChange={(e) => setConfig({ ...config, client_id: e.target.value })}
-              className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
               placeholder="e.g. d2a2b023-..."
             />
           </div>
@@ -153,7 +153,7 @@ export default function IdentityProviderForm() {
                 type="password" 
                 value={config.client_secret_encrypted || ""}
                 onChange={(e) => setConfig({ ...config, client_secret_encrypted: e.target.value })}
-                className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
+                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
                 placeholder="Enter client secret value"
               />
               <Key className="w-4 h-4 text-muted absolute left-3 top-3.5" />
@@ -168,7 +168,7 @@ export default function IdentityProviderForm() {
                 type="text" 
                 value={config.authority_url || ""}
                 onChange={(e) => setConfig({ ...config, authority_url: e.target.value })}
-                className="w-full bg-[#121620] border border-white/5 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
+                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
                 placeholder="https://login.microsoftonline.com/common"
               />
               <Link2 className="w-4 h-4 text-muted absolute left-3 top-3.5" />
@@ -178,7 +178,7 @@ export default function IdentityProviderForm() {
       </div>
 
       {/* Auto Provisioning Settings */}
-      <div className="bg-[#0A0D14] border border-white/10 rounded-xl p-6 shadow-2xl">
+      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-xl p-6 shadow-2xl">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-accent/10 rounded-lg">
             <Users className="w-6 h-6 text-accent" />

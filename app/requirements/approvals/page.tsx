@@ -133,7 +133,7 @@ export default function RequirementsPage() {
 
   if (!mounted || permsLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-[#070913]">
+      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background dark:bg-[#070913]">
         <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
     );
@@ -141,7 +141,7 @@ export default function RequirementsPage() {
 
   if (!hasPermission("REQUIREMENTS_APPROVALS_VIEW")) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-[#070913] text-white">
+      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background dark:bg-[#070913] text-foreground dark:text-white">
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <ShieldAlert className="h-10 w-10" />
         </div>

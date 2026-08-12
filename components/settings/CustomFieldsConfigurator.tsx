@@ -204,10 +204,10 @@ export default function CustomFieldsConfigurator() {
                     onChange={(e: any) => setNewType(e.target.value)}
                     className="w-full h-10 px-3 rounded-lg theme-card-structural /5 border-white/5 text-[14px] text-muted focus:outline-none focus:border-accent/50"
                   >
-                    <option value="text" className="bg-[#0f172a]">Text String</option>
-                    <option value="number" className="bg-[#0f172a]">Numeric Scalar</option>
-                    <option value="select" className="bg-[#0f172a]">Dropdown Menu</option>
-                    <option value="boolean" className="bg-[#0f172a]">True / False Switch</option>
+                    <option value="text" className="bg-background dark:bg-[#0f172a]">Text String</option>
+                    <option value="number" className="bg-background dark:bg-[#0f172a]">Numeric Scalar</option>
+                    <option value="select" className="bg-background dark:bg-[#0f172a]">Dropdown Menu</option>
+                    <option value="boolean" className="bg-background dark:bg-[#0f172a]">True / False Switch</option>
                   </select>
                 </div>
 

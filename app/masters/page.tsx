@@ -1062,7 +1062,7 @@ export default function MastersPage() {
                   >
                     {!currentConfig.parentRequired && <option value="" className={"bg-surface text-muted"}>-- Optional (Global Scope) --</option>}
                     {parentOptions.length === 0 ? (
-                      currentConfig.parentRequired && <option value="" className="bg-[#0A0D14] text-muted">-- No available parent records --</option>
+                      currentConfig.parentRequired && <option value="" className="bg-surface dark:bg-[#0A0D14] text-muted">-- No available parent records --</option>
                     ) : (
                       parentOptions.map(p => (
                         <option key={p.id} value={p.id} className={"bg-surface text-foreground"}>

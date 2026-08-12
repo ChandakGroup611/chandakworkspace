@@ -139,7 +139,7 @@ export default function NotificationRuleBuilder() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-[#0A0D14] border border-white/10 p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between items-center bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 p-4 rounded-xl shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-foreground">Rule Engine</h2>
           <p className="text-xs text-muted">Configure declarative IF-THEN routing constraints.</p>
@@ -157,7 +157,7 @@ export default function NotificationRuleBuilder() {
           const config = MODULE_CONFIG[rule.module] || MODULE_CONFIG["Task"];
           
           return (
-            <div key={rule.id} className="bg-[#121620] border border-white/5 rounded-xl overflow-hidden shadow-xl">
+            <div key={rule.id} className="bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-xl overflow-hidden shadow-xl">
               {/* Header IF block */}
               <div className="theme-card-structural /5 px-6 py-4 border-b border-white/5 flex flex-wrap items-center gap-4">
                 <span className="font-mono text-emerald-400 font-bold text-lg">IF</span>
@@ -167,7 +167,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.module}
                     onChange={(e) => updateLocalRule(rule.id, "module", e.target.value)}
-                    className="bg-[#0A0D14] border border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-white focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground dark:text-white focus:outline-none"
                   >
                     {Object.keys(MODULE_CONFIG).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
@@ -180,7 +180,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.event}
                     onChange={(e) => updateLocalRule(rule.id, "event", e.target.value)}
-                    className="bg-[#0A0D14] border border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-white focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground dark:text-white focus:outline-none"
                   >
                     {config.events.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
@@ -193,7 +193,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.status_trigger || "ANY"}
                     onChange={(e) => updateLocalRule(rule.id, "status_trigger", e.target.value)}
-                    className="bg-[#0A0D14] border border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-white focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground dark:text-white focus:outline-none"
                   >
                     {config.statuses.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -254,7 +254,7 @@ export default function NotificationRuleBuilder() {
               </div>
 
               {/* Actions Footer */}
-              <div className="bg-[#0A0D14] px-6 py-3 border-t border-white/5 flex justify-between items-center">
+              <div className="bg-surface dark:bg-[#0A0D14] px-6 py-3 border-t border-border dark:border-white/5 flex justify-between items-center">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-emerald-500' : 'bg-gray-600'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />

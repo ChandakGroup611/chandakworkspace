@@ -565,7 +565,7 @@ export default function IAMGovernanceCockpit({
         <div className="lg:col-span-8 flex flex-col">
           <AppCard className={cn("flex-1 overflow-hidden flex flex-col relative")}>
             {isRoleLoading && (
-              <div className="absolute inset-0 bg-[#0A0D14]/30 backdrop-blur-[2px] dark:bg-[#0A0D14]/30 bg-surface/30 flex flex-col items-center justify-center space-y-3 z-50">
+              <div className="absolute inset-0 bg-surface/30 backdrop-blur-[2px] dark:bg-[#0A0D14]/30 flex flex-col items-center justify-center space-y-3 z-50">
                 <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
                 <span className={cn("text-xs font-bold uppercase tracking-widest animate-pulse", "text-muted")}>
                   Loading Capabilities...
