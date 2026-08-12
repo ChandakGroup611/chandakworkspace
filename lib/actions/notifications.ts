@@ -171,68 +171,57 @@ export async function dispatchNotification(
   // 2. Email Delivery Phase
   if (isEmailEnabled) {
     // Fetch User Email
-    const { data: user } = await supabaseAdmin.from("user_master").select("email").eq("id", userId).single();
+    const { data: user } = await supabaseAdmin.from("user_master").select("email, first_name").eq("id", userId).single();
     if (!user?.email) return;
 
     // Insert into corporate email_queue table
     try {
+      let finalSubject = title;
+      let finalBody = `${message}\n\nLink: ${link || 'N/A'}`;
+
+      if (moduleCode && eventCode) {
+        const { data: template } = await supabaseAdmin
+          .from("email_templates")
+          .select("subject, body_template, html_body")
+          .eq("module", moduleCode)
+          .eq("event", eventCode)
+          .eq("is_active", true)
+          .single();
+
+        if (template) {
+          const payload = { title, message, link, recipient_name: user.first_name || user.email };
+          const hydrate = (text: string) => {
+            if (!text) return text;
+            let hydrated = text;
+            const matches = hydrated.match(/{{(.*?)}}/g);
+            if (matches) {
+              matches.forEach(match => {
+                const key = match.replace(/[{}]/g, "").trim();
+                hydrated = hydrated.replace(match, String(payload[key as keyof typeof payload] || ""));
+              });
+            }
+            return hydrated;
+          };
+
+          if (template.subject) finalSubject = hydrate(template.subject);
+          if (template.html_body) finalBody = hydrate(template.html_body);
+          else if (template.body_template) finalBody = hydrate(template.body_template);
+        }
+      }
+
       await supabaseAdmin.from('email_queue').insert([{
         recipient_email: user.email,
-        subject: title,
-        body_template: `${message}\n\nLink: ${link || 'N/A'}`,
-        status: 'SENT'
+        subject: finalSubject,
+        body_template: finalBody,
+        is_sent: false
       }]);
+      
+      // Async trigger the cron job so the email sends immediately via configured providers
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      fetch(`${baseUrl}/api/cron/process-email-queue`, { method: 'POST', signal: AbortSignal.timeout(100) }).catch(() => {});
+      
     } catch (e) {
       console.error('Failed to insert into email_queue', e);
-    }
-
-    // 3. SMTP Trigger via DB Config (Fallback to .env.local if DB is empty)
-    const dbEmailConfig = await fetchSystemEmailConfig();
-    
-    const smtpHost = dbEmailConfig?.smtp_host || process.env.SMTP_HOST;
-    const smtpPort = dbEmailConfig?.smtp_port || Number(process.env.SMTP_PORT) || 587;
-    const smtpSecure = dbEmailConfig?.encryption_type === 'SSL/TLS' || process.env.SMTP_SECURE === 'true';
-    const smtpUser = dbEmailConfig?.smtp_username || process.env.SMTP_USER;
-    const smtpPass = dbEmailConfig?.smtp_password_encrypted || process.env.SMTP_PASS;
-    const smtpFrom = dbEmailConfig?.sender_email || process.env.SMTP_FROM || 'no-reply@enterprise.com';
-    const senderName = dbEmailConfig?.sender_name || 'Enterprise Platform';
-
-    if (smtpHost) {
-      try {
-    const nodemailer = (await import('nodemailer')).default;
-    
-    let transportConfig: any = {
-      host: smtpHost,
-      port: Number(smtpPort),
-      secure: smtpSecure,
-    };
-
-    if (smtpUser) {
-      transportConfig.auth = {
-        user: smtpUser,
-        pass: smtpPass,
-      };
-    } else {
-      // Direct Send Configuration (No Auth, TLS rejectUnauthorized false as fallback)
-      transportConfig.tls = { rejectUnauthorized: false };
-    }
-
-    const transporter = nodemailer.createTransport(transportConfig);
-
-        // Fire and forget SMTP so it doesn't block the HTTP request
-        transporter.sendMail({
-          from: `"${senderName}" <${smtpFrom}>`,
-          to: user.email,
-          subject: title,
-          text: `${message}\n\nLink: ${link || 'N/A'}`
-        }).then(() => console.log(`[Email Dispatch Success] To: ${user.email}`))
-          .catch(e => console.error(`[Email Dispatch Failed]`, e));
-
-      } catch (e) {
-        console.error(`[Email Dispatch Failed]`, e);
-      }
-    } else {
-      console.log(`[Email Mock Triggered - No SMTP Config] To User: ${userId} | Subject: ${title} | Body: ${message}`);
     }
   }
 }

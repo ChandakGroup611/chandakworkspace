@@ -178,6 +178,19 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
   return hydrated;
 }
 
+export async function fetchEmailProviders() {
+  const { data, error } = await supabaseAdmin
+    .from("email_providers")
+    .select("*")
+    .order("priority_level", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("Error fetching email providers:", error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function saveEmailProvider(payload: any) {
   const { data, error } = await supabaseAdmin.from("email_providers").insert([payload]).select().single();
   if (error) throw new Error(error.message);

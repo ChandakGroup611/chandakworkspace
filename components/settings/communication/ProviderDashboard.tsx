@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';
 import { Server, Save, Loader2, ShieldAlert, Key, Zap } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { saveEmailProvider, updateEmailProvider, testProviderConnection } from "@/lib/actions/email-config";
+import { saveEmailProvider, updateEmailProvider, testProviderConnection, fetchEmailProviders } from "@/lib/actions/email-config";
 
 const PROVIDER_TYPES = ["SMTP", "Microsoft 365", "Resend", "SendGrid"];
 
@@ -27,13 +27,7 @@ export default function ProviderDashboard() {
 
   const fetchProviders = async () => {
     try {
-      const { data, error } = await supabase
-        .from("email_providers")
-        .select("*")
-        .order("priority_level", { ascending: true })
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
+      const data = await fetchEmailProviders();
       
       // Ensure we have exactly 3 slots: Primary, Fallback 1, Fallback 2
       let slots = [
@@ -43,10 +37,10 @@ export default function ProviderDashboard() {
       ];
 
       if (data && data.length > 0) {
-        data.forEach(p => {
+        data.forEach((p: any) => {
           if (p.priority_level >= 1 && p.priority_level <= 3) {
             if (slots[p.priority_level - 1].id.startsWith("temp_")) {
-              slots[p.priority_level - 1] = p;
+              slots[p.priority_level - 1] = { ...p, config: p.config || {} };
             }
           }
         });

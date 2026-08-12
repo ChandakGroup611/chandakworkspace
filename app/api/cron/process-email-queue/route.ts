@@ -176,12 +176,16 @@ async function dispatchEmail(item: any, provider: any) {
 
     const senderEmail = provider.config.username || "no-reply@enterprise.com";
     
+    const hasHtml = item.html_body || (item.body_template && (item.body_template.includes('<p>') || item.body_template.includes('<div') || item.body_template.includes('<html')));
+    const textContent = hasHtml && !item.html_body ? "Please view this email in an HTML-compatible client." : (item.body_template || "You have a new notification.");
+    const htmlContent = item.html_body || (hasHtml ? item.body_template : undefined);
+
     await transporter.sendMail({
       from: `"Chandak Workspace" <${senderEmail}>`,
       to: item.recipient_email,
       subject: item.subject || "System Notification",
-      text: item.body_template || "You have a new notification.",
-      html: item.html_body || undefined
+      text: textContent,
+      html: htmlContent
     });
     
     return true;
