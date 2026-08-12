@@ -91,8 +91,8 @@ export async function fetchSpecificEventConfig(moduleCode: string, eventCode: st
   const { data, error } = await supabaseAdmin
     .from("notification_event_config")
     .select("is_email_enabled, is_inapp_enabled, allowed_roles, allowed_statuses")
-    .eq("module_code", moduleCode)
-    .eq("event_code", eventCode)
+    .ilike("module_code", moduleCode)
+    .ilike("event_code", eventCode)
     .single();
   if (error && error.code !== 'PGRST116') {
     console.error("Error fetching specific event config:", error);

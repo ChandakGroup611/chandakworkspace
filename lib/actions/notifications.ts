@@ -187,8 +187,8 @@ export async function dispatchNotification(
         const { data: template } = await supabaseAdmin
           .from("email_templates")
           .select("subject, html_body")
-          .eq("module", moduleCode)
-          .eq("event", eventCode)
+          .ilike("module", moduleCode)
+          .ilike("event", eventCode)
           .eq("is_active", true)
           .single();
 
