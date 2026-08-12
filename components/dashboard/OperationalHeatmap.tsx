@@ -99,7 +99,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
   const getCellBg = (intensity: number) => {
     if (intensity > 75) return "bg-rose-500 shadow-md shadow-rose-500/20";
     if (intensity > 50) return "bg-amber-500";
-    if (intensity > 25) return "bg-accent/80";
+    if (intensity > 25) return "bg-theme-btn-primary/80";
     return "bg-surface/5 hover:bg-surface/10";
   };
 
@@ -110,7 +110,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           <Flame className="h-4 w-4 text-rose-400" />
           <AppCardTitle>Operational Heatmap Matrix</AppCardTitle>
         </div>
-        <span className="text-xs text-accent font-bold">Ingress vs SLA Resolution</span>
+        <span className="text-xs text-theme-icon font-bold">Ingress vs SLA Resolution</span>
       </AppCardHeader>
 
       <AppCardContent className="flex-1 flex flex-col justify-between space-y-4 pt-2">
@@ -118,7 +118,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         <div className="flex-1 flex flex-col justify-between space-y-2">
           {heatmapData.map((dItem) => (
             <div key={dItem.day} className="flex items-center gap-2">
-              <span className="w-8 text-[0.8rem] font-bold text-accent select-none">
+              <span className="w-8 text-[0.8rem] font-bold text-theme-icon select-none">
                 {dItem.day}
               </span>
               <div className="flex-1 grid grid-cols-6 gap-1.5">
@@ -139,7 +139,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         <div className="h-8 flex items-center justify-between px-3 rounded-lg bg-surface/20 border border-white/5 text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
           {hoveredCell ? (
             <div className="flex items-center gap-2.5 text-muted font-medium animate-in fade-in duration-150">
-              <Activity className="h-3 w-3 text-accent shrink-0" />
+              <Activity className="h-3 w-3 text-theme-icon shrink-0" />
               <span><strong className="text-foreground">{hoveredCell.day} @ {hoveredCell.hour}</strong></span>
               <span className="text-subtle">|</span>
               <span className="text-xs">
@@ -165,7 +165,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
           <div className="flex items-center gap-1">
             <span className="text-[0.7rem] text-subtle mr-1 select-none">Scale:</span>
             <div className="w-2 h-2 rounded bg-surface/5" />
-            <div className="w-2 h-2 rounded bg-accent/80" />
+            <div className="w-2 h-2 rounded bg-theme-btn-primary/80" />
             <div className="w-2 h-2 rounded bg-amber-500" />
             <div className="w-2 h-2 rounded bg-rose-500" />
           </div>

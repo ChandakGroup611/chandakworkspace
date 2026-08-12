@@ -37,10 +37,10 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filtered.map(req => (
-          <div key={req.id} className={`rounded-2xl p-5 transition-all group cursor-pointer ${ "theme-card-structural hover:border-accent/30 shadow-[var(--shadow-ambient)]" }`}>
+          <div key={req.id} className={`rounded-2xl p-5 transition-all group cursor-pointer ${ "theme-card-structural hover:border-theme-btn-primary/30 shadow-[var(--shadow-ambient)]" }`}>
             <div className="flex justify-between items-start mb-3">
               <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
-                "bg-accent/10 text-accent"
+                "bg-theme-btn-primary/10 text-theme-icon"
               }`}>
                 {req.code || req.department?.name || 'REQ'}
               </span>
@@ -61,7 +61,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
             </div>
             
             <h3 className={`font-semibold text-lg leading-tight mb-2 transition-colors line-clamp-2 ${
-              "text-foreground group-hover:text-accent"
+              "text-theme-heading group-hover:text-theme-icon"
             }`}>
               {req.title}
             </h3>
@@ -78,7 +78,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
               </div>
               <div className={`h-1.5 w-full rounded-full overflow-hidden bg-surface`}>
                 <div 
-                  className="h-full bg-accent transition-all duration-500" 
+                  className="h-full bg-theme-btn-primary transition-all duration-500" 
                   style={{ width: `${req.completion_percentage || 0}%` }}
                 />
               </div>

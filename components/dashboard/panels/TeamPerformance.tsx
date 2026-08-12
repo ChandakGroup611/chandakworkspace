@@ -67,7 +67,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
       <AppCard className="mt-5">
         <div className="flex items-center justify-between p-4 border-b theme-card-structural">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-accent" />
+            <Users className="h-4 w-4 text-theme-icon" />
             <span className="text-sm font-bold text-foreground">Team Performance · Live Working Metrics</span>
           </div>
           <AppButton 
@@ -93,8 +93,8 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
             <AppTableBody>
               {teamStats.map((u: any, i: number) => {
                 const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-                const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-amber-500', 'bg-accent', 'bg-accent'];
-                const textColors = ['text-emerald-500', 'text-teal-500', 'text-amber-500', 'text-accent', 'text-accent'];
+                const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-amber-500', 'bg-theme-btn-primary', 'bg-theme-btn-primary'];
+                const textColors = ['text-emerald-500', 'text-teal-500', 'text-amber-500', 'text-theme-icon', 'text-theme-icon'];
                 const color = colors[i % colors.length];
                 const textColor = textColors[i % textColors.length];
 
@@ -119,7 +119,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                     <AppTableCell className={`text-center font-bold text-lg ${textColor}`}>
                       {u.closed}
                     </AppTableCell>
-                    <AppTableCell className="text-center font-bold text-lg text-accent">
+                    <AppTableCell className="text-center font-bold text-lg text-theme-icon">
                       {u.pts}
                     </AppTableCell>
                     <AppTableCell>

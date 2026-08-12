@@ -121,7 +121,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
     <div className="space-y-8">
       {/* Add Manual Invoice */}
       <AppCard className={`p-6 theme-card-structural`}>
-        <h3 className="text-lg font-bold text-accent mb-4">Add Custom Invoice</h3>
+        <h3 className="text-lg font-bold text-theme-icon mb-4">Add Custom Invoice</h3>
         <form onSubmit={handleAddInvoice} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
@@ -156,7 +156,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
       <div className="space-y-4">
         <h3 className="text-lg font-bold">Payment Schedule & Invoices</h3>
         {loading ? (
-          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
         ) : invoices.length === 0 ? (
           <div className={`p-8 text-center text-muted italic rounded-xl border bg-elevated border-border`}>
             No invoices scheduled for this subscription.

@@ -4,6 +4,17 @@
     --bg-surface: #0a0a10;
     --bg-elevated: #101018;
     --text-primary: #ffffff;
+    --btn-primary-bg: #00ffff;
+    --btn-primary-text: #000000;
+    --btn-secondary-bg: #050508;
+    --btn-secondary-text: #ff00ff;
+    --tab-active-bg: rgba(0, 255, 255, 0.15);
+    --tab-active-text: #00ffff;
+    --tab-inactive-bg: #050508;
+    --tab-inactive-text: #ff00ff;
+    --heading-text: #00ffff;
+    --icon-color: #ff00ff;
+
     --text-secondary: #f1f5f9;
     --text-muted: #e2e8f0;
     --border-subtle: rgba(0, 255, 255, 0.2);
@@ -108,9 +119,9 @@
   }
   
   [data-theme="cyberpunk"] .theme-button-structural.theme-btn-primary {
-    background: rgba(0, 255, 255, 0.2) !important;
+    background: var(--btn-primary-bg) !important;
     border: 1px solid #00ffff !important;
-    color: #ffffff !important;
+    color: var(--btn-primary-text) !important;
     box-shadow: 
       0 0 10px rgba(0, 255, 255, 0.5),
       inset 0 0 10px rgba(0, 255, 255, 0.5) !important;

@@ -4,6 +4,17 @@
     --bg-surface: #12141a;
     --bg-elevated: #12141a;
     --text-primary: #ffffff;
+    --btn-primary-bg: #10b981;
+    --btn-primary-text: #000000;
+    --btn-secondary-bg: #1e212b;
+    --btn-secondary-text: #10b981;
+    --tab-active-bg: rgba(16, 185, 129, 0.1);
+    --tab-active-text: #34d399;
+    --tab-inactive-bg: #12141a;
+    --tab-inactive-text: #94a3b8;
+    --heading-text: #ffffff;
+    --icon-color: #10b981;
+
     --text-secondary: #f1f5f9;
     --text-muted: #e2e8f0;
     --border-subtle: #1e212b;
@@ -80,8 +91,8 @@
   }
   
   [data-theme="dark-neumorphic"] .theme-button-structural.theme-btn-primary {
-    background: #10b981 !important;
-    color: #000000 !important;
+    background: var(--btn-primary-bg) !important;
+    color: var(--btn-primary-text) !important;
     box-shadow: 
       6px 6px 10px rgba(16, 185, 129, 0.15),
       -6px -6px 10px #1c1f28 !important;

@@ -40,7 +40,7 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
       <div className="theme-card-structural shadow-2xl rounded-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
         <div className="flex items-center justify-between p-5 border-b border-border shrink-0 bg-surface/50 rounded-t-2xl">
           <h2 className="text-base font-black text-foreground flex items-center gap-2">
-            <Settings className="w-5 h-5 text-accent" />
+            <Settings className="w-5 h-5 text-theme-icon" />
             Manage {title}
           </h2>
           <AppButton variant="secondary" onClick={onClose} className="p-1.5 h-auto rounded-full hover:bg-surface/5">
@@ -61,7 +61,7 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
           ) : (
             <ul className="space-y-1 p-2">
               {options.map((opt) => (
-                <li key={opt.id} className="flex items-center justify-between p-3 hover:bg-accent/5 rounded-xl group transition-colors border border-transparent hover:border-accent/10">
+                <li key={opt.id} className="flex items-center justify-between p-3 hover:opacity-90/5 rounded-xl group transition-colors border border-transparent hover:border-theme-btn-primary/10">
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-foreground">{opt.name}</span>
                     {opt.industry_name && (

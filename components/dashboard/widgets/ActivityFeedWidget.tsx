@@ -86,11 +86,11 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
             iconElement = <AlertCircle className="h-4 w-4 text-red-500" />;
             iconBg = "bg-red-500/10 border-red-500/20";
           } else if (act.type === 'comment') {
-            iconElement = <MessageSquare className="h-4 w-4 text-accent" />;
-            iconBg = "bg-accent/10 border-accent/20";
+            iconElement = <MessageSquare className="h-4 w-4 text-theme-icon" />;
+            iconBg = "bg-theme-btn-primary/10 border-theme-btn-primary/20";
           } else {
-            iconElement = <Plus className="h-4 w-4 text-accent" />;
-            iconBg = "bg-accent/10 border-accent/20";
+            iconElement = <Plus className="h-4 w-4 text-theme-icon" />;
+            iconBg = "bg-theme-btn-primary/10 border-theme-btn-primary/20";
           }
 
           return (

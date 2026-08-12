@@ -60,8 +60,8 @@ export function GlobalCommandCenter() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'TICKET': return <LayoutDashboard className="w-4 h-4 text-accent" />;
-      case 'TASK': return <Target className="w-4 h-4 text-accent" />;
+      case 'TICKET': return <LayoutDashboard className="w-4 h-4 text-theme-icon" />;
+      case 'TASK': return <Target className="w-4 h-4 text-theme-icon" />;
       case 'REQUIREMENT': return <Briefcase className="w-4 h-4 text-emerald-500" />;
       default: return <Search className="w-4 h-4" />;
     }

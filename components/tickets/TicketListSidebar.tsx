@@ -41,7 +41,7 @@ export function TicketListSidebar({
           <input 
             type="text"
             placeholder="Search tickets..."
-            className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+            className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -54,7 +54,7 @@ export function TicketListSidebar({
             size="sm"
             className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
               selectedDept === "ALL" 
-                ? "bg-accent text-white hover:bg-accent-secondary" 
+                ? "bg-theme-btn-primary text-theme-btn-primary-text hover:opacity-90" 
                 : ""
             }`}
           >
@@ -68,7 +68,7 @@ export function TicketListSidebar({
               size="sm"
               className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
                 selectedDept === dept.id 
-                  ? "bg-accent text-white hover:bg-accent-secondary" 
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text hover:opacity-90" 
                   : ""
               }`}
             >
@@ -98,18 +98,18 @@ export function TicketListSidebar({
                 onClick={() => onSelect(ticket)}
                 className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border cursor-pointer ${
                   isSelected 
-                    ? ("bg-accent/10 border-accent/30 shadow-sm")
+                    ? ("bg-theme-btn-primary/10 border-theme-btn-primary/30 shadow-sm")
                     : ("hover:bg-elevated/50/50/50 border-transparent")
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className={`text-xs font-mono font-bold uppercase tracking-wider text-accent`}>
+                  <span className={`text-xs font-mono font-bold uppercase tracking-wider text-theme-icon`}>
                     {ticket.id}
                   </span>
                   <div className="flex items-center gap-1">
                     <div className={`h-1.5 w-1.5 rounded-full ${
                       priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : 
-                      priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-accent"
+                      priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-theme-btn-primary"
                     }`} />
                     <span className="text-xs text-muted font-medium">
                       {priority?.name || "P3"}
@@ -119,8 +119,8 @@ export function TicketListSidebar({
 
                 <h4 className={`text-sm font-semibold mb-2 line-clamp-1 transition-colors ${
                   isSelected 
-                    ? ("text-accent-secondary") 
-                    : ("text-foreground group-hover:text-accent")
+                    ? ("text-theme-icon-secondary") 
+                    : ("text-theme-heading group-hover:text-theme-icon")
                 }`}>
                   {ticket.title}
                 </h4>
@@ -147,7 +147,7 @@ export function TicketListSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-accent/10 text-accent hover:bg-accent/20" title="View" onClick={(e) => e.stopPropagation()}>
+                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-theme-btn-primary/10 text-theme-icon hover:opacity-90/20" title="View" onClick={(e) => e.stopPropagation()}>
                         <Eye className="h-3.5 w-3.5" />
                       </AppButton>
                       <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" title="Update" onClick={(e) => e.stopPropagation()}>

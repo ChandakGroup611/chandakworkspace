@@ -174,8 +174,8 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
         onClick={() => fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
           isDragging 
-            ? "border-accent bg-accent/10 scale-[0.99]" 
-            : "border-border hover:border-accent bg-elevated/40 hover:bg-elevated/80"
+            ? "border-theme-btn-primary bg-theme-btn-primary/10 scale-[0.99]" 
+            : "border-border hover:border-theme-btn-primary bg-elevated/40 hover:bg-elevated/80"
         }`}
       >
         <input 
@@ -185,7 +185,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
           className="hidden" 
           onChange={handleFileSelect} 
         />
-        <div className={`p-3 rounded-2xl mb-2 bg-surface shadow-xs text-accent`}>
+        <div className={`p-3 rounded-2xl mb-2 bg-surface shadow-xs text-theme-icon`}>
           <UploadCloud className="h-6 w-6" />
         </div>
         <h4 className="text-xs font-bold mb-1 text-foreground">
@@ -213,7 +213,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                     {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
                   </span>
                   {fileObj.status === 'uploading' && (
-                    <span className="text-[11px] text-accent flex items-center gap-1 font-medium">
+                    <span className="text-[11px] text-theme-icon flex items-center gap-1 font-medium">
                       <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
                     </span>
                   )}
@@ -231,7 +231,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                 {/* Progress bar */}
                 {fileObj.status === 'uploading' && (
                   <div className="w-full h-1 bg-surface rounded-full mt-1.5 overflow-hidden">
-                    <div className="h-full bg-accent transition-all duration-300" style={{ width: `${fileObj.progress}%` }} />
+                    <div className="h-full bg-theme-btn-primary transition-all duration-300" style={{ width: `${fileObj.progress}%` }} />
                   </div>
                 )}
               </div>
@@ -242,7 +242,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                     variant="ghost"
                     size="sm"
                     onClick={() => retryUpload(fileObj)}
-                    className="text-xs text-accent hover:underline px-2"
+                    className="text-xs text-theme-icon hover:underline px-2"
                   >
                     Retry
                   </AppButton>
@@ -281,7 +281,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
               const viewUrl = `/api/proxy-attachment/${att.id}`;
               const downloadUrl = `/api/proxy-attachment/${att.id}?download=1`;
               return (
-                <div key={att.id} className="flex items-center justify-between p-2.5 rounded-xl theme-card-structural border border-border/50 text-xs hover:border-accent/40 transition-all">
+                <div key={att.id} className="flex items-center justify-between p-2.5 rounded-xl theme-card-structural border border-border/50 text-xs hover:border-theme-btn-primary/40 transition-all">
                   <div className="flex items-center gap-2 min-w-0 pr-2">
                     {getFileIcon(att.mime_type || '', fileName)}
                     <span className="truncate font-medium text-foreground text-xs" title={fileName}>{fileName}</span>
@@ -300,7 +300,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                     <a 
                       href={downloadUrl} 
                       download={fileName} 
-                      className="px-2 py-1 rounded-lg text-accent hover:bg-accent/10 transition-colors flex items-center gap-1" 
+                      className="px-2 py-1 rounded-lg text-theme-icon hover:opacity-90/10 transition-colors flex items-center gap-1" 
                       title="Download Attachment"
                     >
                       <Download className="h-3.5 w-3.5" />

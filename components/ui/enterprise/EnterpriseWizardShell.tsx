@@ -33,8 +33,8 @@ const ACCENT_MAP = {
 };
 
 const ACCENT_BORDER_MAP = {
-  purple: "border-accent/50",
-  indigo: "border-accent/50",
+  purple: "border-theme-btn-primary/50",
+  indigo: "border-theme-btn-primary/50",
   emerald: "border-emerald-500/50",
   amber: "border-amber-500/50",
   rose: "border-rose-500/50",
@@ -78,7 +78,7 @@ export function EnterpriseWizardShell({
         {/* Header - Solid and Sharp */}
         <div className="shrink-0 px-6 py-5 flex items-start justify-between gap-4 border-b border-border bg-background">
           <div className="relative z-10 flex flex-col justify-center">
-            {title && <div className={`text-xl font-semibold tracking-tight ${"text-foreground"}`}>{title}</div>}
+            {title && <div className={`text-xl font-semibold tracking-tight ${"text-theme-heading"}`}>{title}</div>}
             {subtitle && <div className={`mt-1 text-sm ${"text-muted"}`}>{subtitle}</div>}
           </div>
           <AppButton 

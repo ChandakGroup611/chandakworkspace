@@ -69,7 +69,7 @@ export default function SessionManagement() {
               placeholder="Search users or IP..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-[#0B0F19] border border-border rounded-lg text-sm focus:ring-accent outline-none"
+              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-[#0B0F19] border border-border rounded-lg text-sm focus:ring-theme-btn-primary outline-none"
             />
           </div>
         }
@@ -92,7 +92,7 @@ export default function SessionManagement() {
               {loading ? (
                 <AppTableRow>
                   <AppTableCell colSpan={6} className="text-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-accent mx-auto" />
+                    <Loader2 className="w-8 h-8 animate-spin text-theme-icon mx-auto" />
                     <p className="text-muted mt-2">Loading active sessions...</p>
                   </AppTableCell>
                 </AppTableRow>
@@ -107,7 +107,7 @@ export default function SessionManagement() {
                   <AppTableRow key={session.id} className="hover:bg-surface dark:hover:bg-surface/[0.02]">
                     <AppTableCell>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-xs">
+                        <div className="w-8 h-8 rounded-full bg-theme-btn-primary/10 flex items-center justify-center text-theme-icon font-bold text-xs">
                           {session.user?.full_name?.substring(0, 2).toUpperCase() || 'U'}
                         </div>
                         <div>

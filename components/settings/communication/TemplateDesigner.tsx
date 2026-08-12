@@ -200,7 +200,7 @@ export default function TemplateDesigner() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-theme-icon" /></div>;
 
   // Active Template for Editor View
   const tpl = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
@@ -235,7 +235,7 @@ export default function TemplateDesigner() {
         ) : (
           <AppButton
             onClick={handleAddTemplate}
-            className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-accent/20 transition-all"
+            className="flex items-center gap-2 bg-theme-btn-primary hover:opacity-90/90 text-theme-btn-primary-text px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-theme-btn-primary/20 transition-all"
           >
             <Plus className="w-4 h-4" /> Add Template
           </AppButton>
@@ -284,7 +284,7 @@ export default function TemplateDesigner() {
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <AppButton 
                             onClick={(e) => { e.stopPropagation(); setEditingTemplateId(item.id); }}
-                            className="p-2 text-muted hover:text-accent bg-background rounded-md border border-border shadow-sm"
+                            className="p-2 text-muted hover:text-theme-icon bg-background rounded-md border border-border shadow-sm"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -317,7 +317,7 @@ export default function TemplateDesigner() {
                   type="text" 
                   value={tpl.template_name || ''}
                   onChange={(e) => updateLocal(tpl.id, "template_name", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                 />
               </div>
               <div className="space-y-2">
@@ -325,7 +325,7 @@ export default function TemplateDesigner() {
                 <select 
                   value={tpl.module || ''}
                   onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                 >
                   {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
@@ -335,7 +335,7 @@ export default function TemplateDesigner() {
                 <select 
                   value={tpl.event || ''}
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                 >
                   {EVENTS.map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
@@ -346,7 +346,7 @@ export default function TemplateDesigner() {
                   type="text" 
                   value={tpl.subject || ''}
                   onChange={(e) => updateLocal(tpl.id, "subject", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent font-mono"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary font-mono"
                   placeholder="e.g. Action Required: {{task_name}}"
                 />
               </div>
@@ -368,7 +368,7 @@ export default function TemplateDesigner() {
                       updateLocal(tpl.id, "html_body", newBody);
                     }
                   }}
-                  className="px-2 py-1 bg-accent text-white hover:bg-accent/90 text-xs font-mono rounded transition-colors shadow-sm"
+                  className="px-2 py-1 bg-theme-btn-primary text-theme-btn-primary-text hover:opacity-90/90 text-xs font-mono rounded transition-colors shadow-sm"
                 >
                   {tag}
                 </AppButton>
@@ -379,13 +379,13 @@ export default function TemplateDesigner() {
             <div className="flex border-b border-border bg-background">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-accent text-accent bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-accent text-accent bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview (Dynamic)
               </AppButton>
@@ -397,7 +397,7 @@ export default function TemplateDesigner() {
                 id={`editor_${tpl.id}`}
                 value={tpl.html_body || ''}
                 onChange={(e) => updateLocal(tpl.id, "html_body", e.target.value)}
-                className="w-full h-64 bg-background text-emerald-600 dark:text-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-accent/20 resize-y"
+                className="w-full h-64 bg-background text-emerald-600 dark:text-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-theme-btn-primary/20 resize-y"
                 spellCheck={false}
               />
             ) : (
@@ -410,7 +410,7 @@ export default function TemplateDesigner() {
             {/* Footer Actions */}
             <div className="bg-background px-6 py-3 border-t border-border flex justify-between items-center">
               <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-accent' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tpl.is_active ? 'bg-theme-btn-primary' : 'bg-gray-400 dark:bg-gray-600'}`}>
                   <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${tpl.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                 </div>
                 <input 
@@ -439,7 +439,7 @@ export default function TemplateDesigner() {
                 </AppButton>
                 <AppButton 
                   onClick={() => handleSave(tpl)}
-                  className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-6 py-1.5 rounded text-sm font-bold transition-colors shadow-lg shadow-accent/20"
+                  className="flex items-center gap-2 bg-theme-btn-primary hover:opacity-90/90 text-theme-btn-primary-text px-6 py-1.5 rounded text-sm font-bold transition-colors shadow-lg shadow-theme-btn-primary/20"
                 >
                   <Save className="w-4 h-4" /> Save Template
                 </AppButton>

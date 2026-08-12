@@ -124,7 +124,7 @@ export default function IAMRoleBuilder() {
   if (loading) {
     return (
       <div className="h-[80vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        <Loader2 className="w-8 h-8 animate-spin text-theme-icon" />
       </div>
     );
   }
@@ -153,12 +153,12 @@ export default function IAMRoleBuilder() {
                 onClick={() => handleSelectRole(r)}
                 className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                   selectedRole?.id === r.id && !isCreating 
-                    ? "border-accent bg-accent/5 dark:bg-accent/10 shadow-sm" 
+                    ? "border-theme-btn-primary bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 shadow-sm" 
                     : "border-transparent hover:bg-surface dark:hover:bg-surface/5"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm font-bold ${selectedRole?.id === r.id && !isCreating ? "text-accent" : "text-foreground"}`}>
+                  <span className={`text-sm font-bold ${selectedRole?.id === r.id && !isCreating ? "text-theme-icon" : "text-foreground"}`}>
                     {r.name}
                   </span>
                   {r.is_system && <AppBadge variant="warning" className="text-[9px] px-1.5 py-0">SYS</AppBadge>}
@@ -174,7 +174,7 @@ export default function IAMRoleBuilder() {
           {isCreating ? (
             <div className="p-8 max-w-lg mx-auto w-full">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <Shield className="w-6 h-6 text-accent" />
+                <Shield className="w-6 h-6 text-theme-icon" />
                 Create New Role
               </h2>
               <div className="space-y-4">
@@ -189,7 +189,7 @@ export default function IAMRoleBuilder() {
                 <div>
                   <label className="text-sm font-bold text-muted uppercase">Department (Optional)</label>
                   <select 
-                    className="w-full mt-1 p-2 border border-border rounded-md bg-transparent text-sm focus:ring-accent"
+                    className="w-full mt-1 p-2 border border-border rounded-md bg-transparent text-sm focus:ring-theme-btn-primary"
                     value={newRoleForm.department_id}
                     onChange={e => setNewRoleForm({...newRoleForm, department_id: e.target.value})}
                   >
@@ -202,7 +202,7 @@ export default function IAMRoleBuilder() {
                 <div>
                   <label className="text-sm font-bold text-muted uppercase">Description</label>
                   <textarea 
-                    className="w-full mt-1 p-3 border border-border rounded-md bg-transparent text-sm min-h-[100px] focus:ring-accent focus:border-accent outline-none transition-colors"
+                    className="w-full mt-1 p-3 border border-border rounded-md bg-transparent text-sm min-h-[100px] focus:ring-theme-btn-primary focus:border-theme-btn-primary outline-none transition-colors"
                     value={newRoleForm.description}
                     onChange={e => setNewRoleForm({...newRoleForm, description: e.target.value})}
                     placeholder="Describe the responsibilities of this role..."
@@ -250,7 +250,7 @@ export default function IAMRoleBuilder() {
                               checked={allSelected} 
                               ref={input => { if (input) input.indeterminate = someSelected && !allSelected; }}
                               readOnly 
-                              className="w-4 h-4 text-accent border-border rounded focus:ring-accent"
+                              className="w-4 h-4 text-theme-icon border-border rounded focus:ring-theme-btn-primary"
                             />
                             <h3 className="font-bold text-sm tracking-wide uppercase text-subtle dark:text-muted">{module}</h3>
                           </div>
@@ -267,18 +267,18 @@ export default function IAMRoleBuilder() {
                                 onClick={() => togglePermission(p.id)}
                                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                                   isChecked 
-                                    ? "bg-accent/5 border-accent/30 dark:bg-accent/10 dark:border-accent/40" 
-                                    : "bg-surface dark:bg-[#0B0F19] border-border dark:border-white/10 hover:border-accent/50"
+                                    ? "bg-theme-btn-primary/5 border-theme-btn-primary/30 dark:bg-theme-btn-primary/10 dark:border-theme-btn-primary/40" 
+                                    : "bg-surface dark:bg-[#0B0F19] border-border dark:border-white/10 hover:border-theme-btn-primary/50"
                                 }`}
                               >
                                 <input 
                                   type="checkbox" 
                                   checked={isChecked} 
                                   readOnly 
-                                  className="mt-1 shrink-0 w-4 h-4 text-accent border-border rounded focus:ring-accent"
+                                  className="mt-1 shrink-0 w-4 h-4 text-theme-icon border-border rounded focus:ring-theme-btn-primary"
                                 />
                                 <div>
-                                  <div className={`text-sm font-semibold ${isChecked ? "text-accent dark:text-accent-secondary" : "text-foreground dark:text-muted"}`}>
+                                  <div className={`text-sm font-semibold ${isChecked ? "text-theme-icon dark:text-theme-icon-secondary" : "text-foreground dark:text-muted"}`}>
                                     {p.name}
                                   </div>
                                   <div className="text-[10px] text-muted font-mono mt-0.5">{p.code}</div>

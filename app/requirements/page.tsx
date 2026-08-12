@@ -130,7 +130,7 @@ export default function RequirementsPage() {
   if (!mounted || permsLoading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background dark:bg-[#070913]">
-        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
     );
   }
@@ -182,7 +182,7 @@ export default function RequirementsPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => router.push('/requirements/reports')}
-                className="border-accent/30 bg-accent/10 hover:bg-accent/10 text-accent-secondary dark:bg-accent/10 dark:text-indigo-100 dark:border-indigo-800/50"
+                className="border-theme-btn-primary/30 bg-theme-btn-primary/10 hover:bg-theme-btn-primary/10 text-theme-icon-secondary dark:bg-theme-btn-primary/10 dark:text-indigo-100 dark:border-indigo-800/50"
               >
                 Analysis & Reports
               </AppButton>
@@ -233,7 +233,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
           >
@@ -246,7 +246,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
             value={filter.status}
             onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
           >
@@ -259,7 +259,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
             value={filter.priority}
             onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
           >
@@ -272,7 +272,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
             value={filter.department}
             onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
           >
@@ -285,7 +285,7 @@ export default function RequirementsPage() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Flow/Stage</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-accent"
+            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
             value={filter.stage}
             onChange={(e: any) => setFilter(f => ({ ...f, stage: e.target.value }))}
           >
@@ -343,7 +343,7 @@ export default function RequirementsPage() {
                 }).map((r) => (
                   <AppTableRow 
                     key={r.id} 
-                    className="cursor-pointer hover:bg-accent/10/50 dark:hover:bg-surface/[0.02] transition-colors"
+                    className="cursor-pointer hover:bg-theme-btn-primary/10/50 dark:hover:bg-surface/[0.02] transition-colors"
                     onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
                   >
                     <AppTableCell className="font-mono text-xs font-bold text-amber-400">{r.id}</AppTableCell>
@@ -391,7 +391,7 @@ export default function RequirementsPage() {
                             variant="ghost" 
                             size="sm" 
                             title="Edit Business Analysis"
-                            className="h-7 w-7 p-0 text-accent hover:text-accent hover:bg-accent/10"
+                            className="h-7 w-7 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10"
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(`/requirements/${r.dbId}?tab=analysis`);

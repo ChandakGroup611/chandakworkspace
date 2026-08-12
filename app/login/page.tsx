@@ -188,7 +188,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/70 to-slate-900/40"></div>
         
         {/* Abstract Glow Effects */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-theme-btn-primary/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
@@ -289,7 +289,7 @@ export default function LoginPage() {
                   <label className="text-sm font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
                     Password
                   </label>
-                  <Link href="#" onClick={(e) => { e.preventDefault(); alert("Contact administrator to reset password."); }} className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors">
+                  <Link href="#" onClick={(e) => { e.preventDefault(); alert("Contact administrator to reset password."); }} className="text-xs font-semibold text-theme-icon hover:text-theme-icon/80 transition-colors">
                     Forgot password?
                   </Link>
                 </div>
@@ -309,7 +309,7 @@ export default function LoginPage() {
                 type="submit" 
                 variant="primary"
                 disabled={loading || !!successMsg}
-                className="w-full h-12 mt-4 text-base font-semibold shadow-lg shadow-accent/20 hover:shadow-accent/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                className="w-full h-12 mt-4 text-base font-semibold shadow-lg shadow-theme-btn-primary/20 hover:shadow-theme-btn-primary/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
@@ -328,7 +328,7 @@ export default function LoginPage() {
             {/* Navigate to Registration */}
             <div className="mt-8 text-center">
               <span className="text-sm font-medium text-muted-foreground">
-                Don't have an account? <Link href="/register" className="text-accent font-semibold hover:underline transition-colors">Register now</Link>
+                Don't have an account? <Link href="/register" className="text-theme-icon font-semibold hover:underline transition-colors">Register now</Link>
               </span>
             </div>
 

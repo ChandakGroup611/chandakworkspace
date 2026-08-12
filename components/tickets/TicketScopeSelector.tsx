@@ -45,7 +45,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 space-y-4 animate-pulse">
-        <div className="h-12 w-12 rounded-full border-4 border-accent/20 border-t-indigo-500 animate-spin" />
+        <div className="h-12 w-12 rounded-full border-4 border-theme-btn-primary/20 border-t-indigo-500 animate-spin" />
         <p className="text-xs text-muted font-bold tracking-[0.2em] uppercase">Syncing Governance Matrix...</p>
       </div>
     );
@@ -72,15 +72,15 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
               type="button"
               className="group relative text-left transition-all duration-300 hover:scale-[1.02] focus:outline-none w-full"
             >
-              <AppCard className={`h-full transition-all overflow-hidden relative group-hover:border-accent/30`}>
+              <AppCard className={`h-full transition-all overflow-hidden relative group-hover:border-theme-btn-primary/30`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-100 transition-opacity`} />
                 <AppCardContent className="p-6 relative z-10 space-y-4">
                   <div className={`h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 theme-card-structural`}>
-                    <Icon className={`h-6 w-6 text-accent`} />
+                    <Icon className={`h-6 w-6 text-theme-icon`} />
                   </div>
                   
                   <div className="space-y-1">
-                    <h3 className={`text-lg font-semibold transition-colors text-foreground group-hover:text-accent`}>
+                    <h3 className={`text-lg font-semibold transition-colors text-theme-heading group-hover:text-theme-icon`}>
                       {scope.name}
                     </h3>
                     <p className="text-sm text-muted leading-tight h-10 overflow-hidden line-clamp-2">
@@ -88,7 +88,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                     </p>
                   </div>
 
-                  <div className={`flex items-center text-xs font-bold uppercase tracking-widest transition-colors pt-2 text-accent`}>
+                  <div className={`flex items-center text-xs font-bold uppercase tracking-widest transition-colors pt-2 text-theme-icon`}>
                     <span>Initialize Flow</span>
                     <ChevronRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform" />
                   </div>

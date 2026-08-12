@@ -64,7 +64,7 @@ export function QuickApprovalModal({
         
         {loading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
           </div>
         ) : reqDetails ? (
           <div className="space-y-6 pt-4">
@@ -97,7 +97,7 @@ export function QuickApprovalModal({
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full text-sm p-3 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground dark:text-gray-100 placeholder:text-muted focus:ring-accent focus:border-accent shadow-inner min-h-[100px]"
+                className="w-full text-sm p-3 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground dark:text-gray-100 placeholder:text-muted focus:ring-theme-btn-primary focus:border-theme-btn-primary shadow-inner min-h-[100px]"
                 rows={3}
                 placeholder="Enter your approval, rejection, or hold remarks here..."
               />

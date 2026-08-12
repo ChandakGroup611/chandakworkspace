@@ -91,7 +91,7 @@ export default function NotificationCenter() {
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2 rounded-xl transition-all ${
           isOpen 
-            ? ("bg-accent/10 text-accent") 
+            ? ("bg-theme-btn-primary/10 text-theme-icon") 
             : ("text-muted hover:bg-elevated")
         }`}
       >
@@ -133,7 +133,7 @@ export default function NotificationCenter() {
                   key={n.id} 
                   onClick={() => handleRead(n.id, n.link)}
                   className={`p-4 border-b cursor-pointer transition-colors group relative ${
-                    "border-border hover:bg-accent/10/50"
+                    "border-border hover:opacity-90/10/50"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3 pr-6">
@@ -154,7 +154,7 @@ export default function NotificationCenter() {
                       <X className="h-4 w-4" />
                     </AppButton>
                     {n.link && (
-                      <ExternalLink className="h-3.5 w-3.5 text-muted group-hover:text-accent shrink-0" />
+                      <ExternalLink className="h-3.5 w-3.5 text-muted group-hover:text-theme-icon shrink-0" />
                     )}
                   </div>
                 </div>

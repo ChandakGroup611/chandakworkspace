@@ -248,7 +248,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <React.Fragment key={w.id}>
         <AppButton variant="secondary" 
           onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
-          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-accent/10 border-border/50' : 'hover:bg-surface border-border/50') : (activeWorkspace?.id === w.id ? 'bg-accent/10 border-white/5' : 'hover:theme-card-structural /5 border-white/5') }`}
+          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border/50' : 'hover:bg-surface border-border/50') : (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-white/5' : 'hover:theme-card-structural /5 border-white/5') }`}
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
           <div className="flex items-center gap-2">
@@ -705,7 +705,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <Loader2 className="h-10 w-10 animate-spin text-accent" />
+        <Loader2 className="h-10 w-10 animate-spin text-theme-icon" />
         <p className="text-xs text-muted font-bold tracking-[0.2em] uppercase">Hydrating Enterprise Workspaces...</p>
       </div>
     );
@@ -735,13 +735,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         actions={
           <>
             <div className="relative flex items-center">
-              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isSearching ? 'text-accent animate-spin' : 'text-muted'}`} />
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isSearching ? 'text-theme-icon animate-spin' : 'text-muted'}`} />
               <input 
                 type="text" 
                 placeholder="Deep search tasks & workspaces..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`pl-9 pr-8 py-1.5 text-sm rounded-lg outline-none focus:ring-2 focus:ring-accent w-56 sm:w-72 transition-all ${ "theme-card-structural text-foreground" }`}
+                className={`pl-9 pr-8 py-1.5 text-sm rounded-lg outline-none focus:ring-2 focus:ring-theme-icon w-56 sm:w-72 transition-all ${ "theme-card-structural text-foreground" }`}
               />
               {searchQuery && (
                 <button 
@@ -762,7 +762,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             >
               Filters
               {activeFilterCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white text-accent">
+                <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white text-theme-icon">
                   {activeFilterCount}
                 </span>
               )}
@@ -812,7 +812,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     onClick={() => setFilters(prev => ({ ...prev, entityType: tab.id as any }))}
                     className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                       filters.entityType === tab.id 
-                        ? 'bg-accent text-white shadow-sm font-semibold' 
+                        ? 'bg-theme-btn-primary text-white shadow-sm font-semibold' 
                         : 'text-muted hover:text-foreground'
                     }`}
                   >
@@ -857,7 +857,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <select
                 value={filters.statusId || ""}
                 onChange={(e) => setFilters(prev => ({ ...prev, statusId: e.target.value }))}
-                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-accent outline-none"
+                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
               >
                 <option value="">All Statuses</option>
                 {(taskStatuses || []).map((s: any) => (
@@ -872,7 +872,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <select
                 value={filters.priorityId || ""}
                 onChange={(e) => setFilters(prev => ({ ...prev, priorityId: e.target.value }))}
-                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-accent outline-none"
+                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
               >
                 <option value="">All Priorities</option>
                 {(priorities || []).map((p: any) => (
@@ -887,7 +887,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <select
                 value={filters.assigneeId || ""}
                 onChange={(e) => setFilters(prev => ({ ...prev, assigneeId: e.target.value }))}
-                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-accent outline-none"
+                className="w-full text-xs p-2 rounded-lg bg-surface border border-border text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
               >
                 <option value="">All Assignees</option>
                 {allUsers.map((u: any) => (
@@ -909,7 +909,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <div className="flex items-center gap-4">
                   <AppButton variant="secondary" 
                     onClick={() => setActiveView('HIERARCHY')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? ("border-accent text-accent") : "border-transparent text-muted hover:text-foreground dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'HIERARCHY' ? ("border-theme-icon text-theme-icon") : "border-transparent text-muted hover:text-foreground dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <GitMerge className="h-4 w-4" />
@@ -917,7 +917,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   </AppButton>
                   <AppButton variant="secondary" 
                     onClick={() => setActiveView('SPRINTS')}
-                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? ("border-accent text-accent") : "border-transparent text-muted hover:text-foreground dark:hover:text-white"}`}
+                    className={`flex items-center gap-2 text-sm font-bold pb-3 border-b-2 transition-colors ${activeView === 'SPRINTS' ? ("border-theme-icon text-theme-icon") : "border-transparent text-muted hover:text-foreground dark:hover:text-white"}`}
                     style={{ marginBottom: "-14px" }}
                   >
                     <Calendar className="h-4 w-4" />
@@ -936,7 +936,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       title="Fetch and expand all workspace and task branches"
                     >
                       {isExpandingAll ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1 text-accent" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1 text-theme-icon" />
                       ) : (
                         <ChevronsUpDown className="h-3.5 w-3.5 mr-1" />
                       )}
@@ -965,7 +965,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         type="checkbox" 
                         checked={autoCollapse} 
                         onChange={e => setAutoCollapse(e.target.checked)} 
-                        className={`rounded border-border text-accent focus:ring-accent`}
+                        className={`rounded border-border text-theme-icon focus:ring-theme-icon`}
                       />
                       Auto-Minimize Others
                     </label>
@@ -1071,7 +1071,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           footer={
             <div className="flex justify-end gap-3 w-full">
               <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting}>Cancel</AppButton>
-              <AppButton variant="primary" onClick={handleCreateWorkspace} className="bg-accent hover:bg-accent-secondary" disabled={isSubmitting}>
+              <AppButton variant="primary" onClick={handleCreateWorkspace} className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : (editWSId ? "Save Changes" : "Provision Workspace")}
               </AppButton>
             </div>
@@ -1082,7 +1082,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             {/* Section 1: Workspace Identity */}
             <div className={`p-5 rounded-2xl ${"theme-card-structural shadow-[var(--shadow-ambient)]"}`}>
               <div className="flex items-center gap-2 mb-4">
-                <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
+                <div className={`p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
                   <Building2 className="h-4 w-4" />
                 </div>
                 <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Workspace Identity</h3>
@@ -1092,7 +1092,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-muted uppercase tracking-wider">Company / Entity Link *</label>
                   <select 
-                    className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
+                    className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-icon cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                     value={newWS.company_id}
                     onChange={e => setNewWS({...newWS, company_id: e.target.value})}
                   >
@@ -1118,7 +1118,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-muted uppercase tracking-wider">Parent Workspace Link</label>
                     <select 
-                      className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
+                      className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-icon cursor-pointer transition-colors ${ "theme-card-structural text-foreground" }`}
                       value={newWS.parent_workspace_id}
                       onChange={e => {
                         const parentId = e.target.value;
@@ -1162,7 +1162,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Objective Description</label>
                 <textarea 
-                  className={`w-full h-24 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-none ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full h-24 p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-icon transition-colors resize-none ${ "theme-card-structural text-foreground" }`}
                   placeholder="Detailed project requirements, goals, and constraints..."
                   value={newWS.description}
                   onChange={e => setNewWS({...newWS, description: e.target.value})}
@@ -1181,7 +1181,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="space-y-1.5 relative mb-6">
                 <div className="flex items-center justify-between border-b border-border dark:border-white/10 pb-1.5 mb-2">
-                  <label className="text-[10px] font-bold text-accent uppercase tracking-wider block">Workspace Assignees (Users)</label>
+                  <label className="text-[10px] font-bold text-theme-icon uppercase tracking-wider block">Workspace Assignees (Users)</label>
                   <AppButton variant="secondary" 
                     type="button" 
                     onClick={(e) => {
@@ -1193,7 +1193,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         setNewWS({...newWS, assigneeIds: allIds});
                       }
                     }}
-                    className={`text-[9px] font-bold uppercase tracking-wider text-accent hover:text-accent`}
+                    className={`text-[9px] font-bold uppercase tracking-wider text-theme-icon hover:text-theme-icon`}
                   >
                     {newWS.assigneeIds.length === availableUsers.length && availableUsers.length > 0 ? "Deselect All" : "Select All"}
                   </AppButton>
@@ -1212,14 +1212,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         e.preventDefault();
                       }
                     }}
-                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-accent ${ "theme-card-structural text-foreground" }`}
+                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-theme-icon ${ "theme-card-structural text-foreground" }`}
                   />
                 </div>
 
                 <div className={`max-h-[160px] overflow-y-auto space-y-1 pr-1 rounded-xl p-2 border bg-elevated border-border scrollbar-thin scrollbar-thumb-indigo-500/30 scrollbar-track-transparent`}>
                   {availableUsers.filter(u => u.full_name?.toLowerCase().includes(assigneeSearch.toLowerCase()) || u.user_code?.toLowerCase().includes(assigneeSearch.toLowerCase())).map(u => (
                     <label key={u.id} className={`flex items-center gap-3 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
-                      "hover:bg-accent/10/50"
+                      "hover:bg-theme-btn-primary/10/50"
                     }`}>
                       <input 
                         type="checkbox" 
@@ -1228,7 +1228,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                           if (e.target.checked) setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
                           else setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
                         }} 
-                        className="rounded border-border text-accent focus:ring-accent h-4 w-4" 
+                        className="rounded border-border text-theme-icon focus:ring-theme-icon h-4 w-4" 
                       />
                       <div className="flex flex-col">
                         <span className={"text-foreground font-medium"}>{u.full_name}</span>
@@ -1242,7 +1242,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className={`p-4 rounded-xl border flex items-center gap-3 transition-colors ${
                 newWS.is_public 
-                  ? ("bg-accent/10/50 border-accent/30") 
+                  ? ("bg-theme-btn-primary/10/50 border-theme-icon/30") 
                   : ("bg-elevated border-border")
               }`}>
                 <input 
@@ -1258,7 +1258,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                       setNewWS({...newWS, is_public: false});
                     }
                   }} 
-                  className="rounded border-border text-accent focus:ring-accent h-5 w-5 cursor-pointer"
+                  className="rounded border-border text-theme-icon focus:ring-theme-icon h-5 w-5 cursor-pointer"
                 />
                 <label htmlFor="is_public" className="cursor-pointer flex flex-col">
                   <span className={`text-sm font-bold ${"text-foreground"}`}>Public Visibility</span>
@@ -1293,7 +1293,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-theme-btn-primary text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
       )}

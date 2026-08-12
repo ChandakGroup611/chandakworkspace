@@ -347,7 +347,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
       {/* Header */}
       <div className={`p-4 border-b flex items-center justify-between gap-2 ${"border-border"}`}>
         <div className="flex items-center gap-2">
-          <MessageSquare className={`h-4 w-4 text-accent`} />
+          <MessageSquare className={`h-4 w-4 text-theme-icon`} />
           <h3 className={`text-sm font-bold ${"text-foreground"}`}>
             Realtime Collaboration
           </h3>
@@ -445,9 +445,9 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                   
                   <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
                     isSender 
-                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border border-accent/30"
+                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border border-theme-btn-primary/30"
                       : isMention
-                        ? ("bg-accent/10 border border-indigo-100 text-accent-secondary rounded-tl-sm")
+                        ? ("bg-theme-btn-primary/10 border border-indigo-100 text-theme-icon-secondary rounded-tl-sm")
                         : ("bg-surface text-foreground rounded-tl-sm")
                   }`}>
                     {(() => {
@@ -526,10 +526,10 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                   type="button"
                   onClick={() => insertMention('ALL')}
                   className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-colors ${
-                    "hover:bg-accent/10 text-accent font-bold"
+                    "hover:opacity-90/10 text-theme-icon font-bold"
                   }`}
                 >
-                  <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center">
+                  <div className="h-6 w-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center">
                     <Users className="h-3 w-3" />
                   </div>
                   Notify Everyone (@All)
@@ -592,10 +592,10 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                     setShowMacros(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-xs flex flex-col gap-1 transition-colors ${
-                    "hover:bg-accent/10 text-muted"
+                    "hover:opacity-90/10 text-muted"
                   }`}
                 >
-                  <span className="font-bold text-accent">{m.title}</span>
+                  <span className="font-bold text-theme-icon">{m.title}</span>
                   <span className="truncate opacity-70">{m.content}</span>
                 </AppButton>
               ))}
@@ -605,11 +605,11 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
 
         <form
           onSubmit={handleSend}
-          className={`flex items-center gap-2 p-1.5 rounded-xl focus-within:ring-2 focus-within:ring-accent transition-all ${ "theme-card-structural " }`}
+          className={`flex items-center gap-2 p-1.5 rounded-xl focus-within:ring-2 focus-within:ring-theme-btn-primary transition-all ${ "theme-card-structural " }`}
         >
           <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileChange} />
           
-          <AppButton variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-muted hover:text-accent transition-colors shrink-0" tabIndex={-1}>
+          <AppButton variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-muted hover:text-theme-icon transition-colors shrink-0" tabIndex={-1}>
             <Paperclip className="h-4 w-4" />
           </AppButton>
           
@@ -625,7 +625,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
           <AppButton variant="secondary" 
             type="button" 
             onClick={() => setShowMacros(!showMacros)}
-            className={`p-2 transition-colors shrink-0 ${showMacros ? 'text-accent' : 'text-muted hover:text-accent'}`} 
+            className={`p-2 transition-colors shrink-0 ${showMacros ? 'text-theme-icon' : 'text-muted hover:text-theme-icon'}`} 
             tabIndex={-1}
             title="Use Canned Response"
           >
@@ -640,7 +640,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
             type="submit"
             variant="primary"
             size="sm"
-            className="h-8 w-8 p-0 rounded-lg shrink-0 flex items-center justify-center bg-accent hover:bg-accent-secondary"
+            className="h-8 w-8 p-0 rounded-lg shrink-0 flex items-center justify-center bg-theme-btn-primary hover:opacity-90"
             disabled={sending || (!newMessage.trim() && selectedFiles.length === 0)}
           >
             {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}

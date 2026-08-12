@@ -72,7 +72,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
-            <h3 className="text-xl font-bold text-accent">Renew Subscription</h3>
+            <h3 className="text-xl font-bold text-theme-icon">Renew Subscription</h3>
             <p className="text-sm text-muted mt-1">
               {amcData.software_name} - {amcData.provider_name}
             </p>

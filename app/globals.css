@@ -30,6 +30,17 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
+  --color-theme-btn-primary: var(--btn-primary-bg);
+  --color-theme-btn-primary-text: var(--btn-primary-text);
+  --color-theme-btn-secondary: var(--btn-secondary-bg);
+  --color-theme-btn-secondary-text: var(--btn-secondary-text);
+  --color-theme-tab-active: var(--tab-active-bg);
+  --color-theme-tab-active-text: var(--tab-active-text);
+  --color-theme-tab-inactive: var(--tab-inactive-bg);
+  --color-theme-tab-inactive-text: var(--tab-inactive-text);
+  --color-theme-heading: var(--heading-text);
+  --color-theme-icon: var(--icon-color);
+
 }
 
 /* Universal Theme Enhancements */

@@ -55,7 +55,7 @@ export default function ApprovalActionPanel({
     { id: "Approve", label: "Approve", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50 hover:bg-emerald-100" },
     { id: "Reject", label: "Reject", icon: XCircle, color: "text-red-600 bg-red-50 hover:bg-red-100" },
     { id: "Hold", label: "Hold", icon: PauseCircle, color: "text-amber-600 bg-amber-50 hover:bg-amber-100" },
-    { id: "Clarification", label: "Need Clarification", icon: MessageSquareWarning, color: "text-accent bg-accent/10 hover:bg-accent/10" }
+    { id: "Clarification", label: "Need Clarification", icon: MessageSquareWarning, color: "text-theme-icon bg-theme-btn-primary/10 hover:opacity-90/10" }
   ];
 
   return (
@@ -63,14 +63,14 @@ export default function ApprovalActionPanel({
       <AppCard className={`w-full overflow-hidden theme-card-structural`}>
         <div className={`px-4 py-3 border-b flex items-center justify-between bg-elevated border-border`}>
           <div className="flex items-center gap-3">
-            <div className={`p-1.5 rounded-full bg-accent/10 text-accent`}>
+            <div className={`p-1.5 rounded-full bg-theme-btn-primary/10 text-theme-icon`}>
               <ArrowRight className="h-4 w-4" />
             </div>
             <div>
               <h4 className={`text-sm font-bold text-foreground`}>Workflow Action Required</h4>
               <p className={`text-[10px] uppercase tracking-wider text-muted`}>
                 Level {currentLevel} • {departmentName}
-                {isSuperAdmin && <span className="ml-2 text-accent font-bold">(Super Admin Override)</span>}
+                {isSuperAdmin && <span className="ml-2 text-theme-icon font-bold">(Super Admin Override)</span>}
               </p>
             </div>
           </div>
@@ -118,7 +118,7 @@ export default function ApprovalActionPanel({
 
               <div>
                 <textarea
-                  className={`w-full p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[80px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+                  className={`w-full p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[80px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Enter mandatory justification or remarks..."
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}

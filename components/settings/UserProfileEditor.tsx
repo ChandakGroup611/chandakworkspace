@@ -252,7 +252,7 @@ export default function UserProfileEditor() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
         <p className="text-sm text-muted">Loading profile data...</p>
       </div>
     );
@@ -345,9 +345,9 @@ export default function UserProfileEditor() {
               <div className="text-center space-y-1.5">
                 <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center justify-center gap-1.5">
                   {profile?.full_name}
-                  {roleCode === 'SUPER_ADMIN' && <BadgeCheck className="h-5 w-5 text-accent" />}
+                  {roleCode === 'SUPER_ADMIN' && <BadgeCheck className="h-5 w-5 text-theme-icon" />}
                 </h2>
-                <p className="text-sm font-medium text-accent">
+                <p className="text-sm font-medium text-theme-icon">
                   {!isMissingDetails ? (profile?.designation?.name || "No Designation") : "Setup Required"}
                 </p>
                 <div className="flex items-center justify-center gap-1.5 text-xs text-muted mt-2">
@@ -357,7 +357,7 @@ export default function UserProfileEditor() {
 
                 {/* Role & User Code Badges */}
                 <div className="flex items-center justify-center gap-2 mt-3">
-                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
                      {profile?.role?.name || "No Role Assigned"}
                    </span>
                    <span className="text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-elevated border border-white/10 text-muted-foreground">
@@ -375,7 +375,7 @@ export default function UserProfileEditor() {
                         src={avatar} 
                         alt="Preset" 
                         onClick={() => !photoUploading && handlePresetAvatarSelect(avatar)}
-                        className={`w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-accent transition-all ${photoUploading ? 'opacity-50 cursor-not-allowed' : 'opacity-80 hover:opacity-100 hover:scale-110'}`} 
+                        className={`w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-theme-btn-primary transition-all ${photoUploading ? 'opacity-50 cursor-not-allowed' : 'opacity-80 hover:opacity-100 hover:scale-110'}`} 
                       />
                     ))}
                   </div>
@@ -390,7 +390,7 @@ export default function UserProfileEditor() {
           <AppCard className="border-0 shadow-lg backdrop-blur-sm bg-card/60">
             <AppCardHeader className="pb-4 border-b border-white/5">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-accent/10 text-accent">
+                <div className="p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
                   <User className="h-5 w-5" />
                 </div>
                 <div>
@@ -537,7 +537,7 @@ export default function UserProfileEditor() {
                               {managers.map((m) => (
                                 <div 
                                   key={m.id}
-                                  className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selectedManager === m.id ? 'bg-accent/10 text-accent font-medium' : 'hover:bg-elevated text-foreground'}`}
+                                  className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors ${selectedManager === m.id ? 'bg-theme-btn-primary/10 text-theme-icon font-medium' : 'hover:bg-elevated text-foreground'}`}
                                   onClick={() => { setSelectedManager(m.id); setManagerDropdownOpen(false); }}
                                 >
                                   <img 
@@ -592,7 +592,7 @@ export default function UserProfileEditor() {
                         <div className="h-10 px-3 rounded-[var(--radius-input,4px)] bg-elevated/50 border border-white/5 flex items-center gap-2 opacity-80 cursor-default">
                           <img 
                             src={getAvatarUrl(profile?.manager?.full_name || "Manager", profile?.manager?.profile_photo)} 
-                            className="h-5 w-5 rounded-full object-cover bg-accent/20"
+                            className="h-5 w-5 rounded-full object-cover bg-theme-btn-primary/20"
                             onError={(e) => { (e.target as any).src = getAvatarUrl(profile?.manager?.full_name || "Manager"); }}
                             alt=""
                           />

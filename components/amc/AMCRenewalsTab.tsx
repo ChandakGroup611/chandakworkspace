@@ -143,7 +143,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
       <div className="space-y-4">
         <h3 className="text-lg font-bold">Renewal History</h3>
         {loading ? (
-          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
         ) : renewals.length === 0 ? (
           <div className={`p-8 text-center text-muted italic rounded-xl border bg-elevated border-border`}>
             No renewals logged for this subscription yet.

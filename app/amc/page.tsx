@@ -764,7 +764,7 @@ export default function AMCPage() {
   if (!mounted || permsLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -797,7 +797,7 @@ export default function AMCPage() {
                 Analytics
               </AppButton>
             </Link>
-            <AppButton variant="outline" size="sm" onClick={fetchRecords} leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-accent' : ''}`} />}>
+            <AppButton variant="outline" size="sm" onClick={fetchRecords} leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-theme-icon' : ''}`} />}>
               Refresh
             </AppButton>
             {hasPermission("AMC_CREATE") && (
@@ -903,7 +903,7 @@ export default function AMCPage() {
                         </>
                       )}
                       <AppButton variant="ghost" size="sm" onClick={() => setSelectedHistoryId(rec.id)} title="View Audit History">
-                        <Clock className="h-3.5 w-3.5 text-accent" />
+                        <Clock className="h-3.5 w-3.5 text-theme-icon" />
                       </AppButton>
                       {hasPermission("AMC_EDIT") && (
                         <AppButton variant="ghost" size="sm" onClick={() => openEditModal(rec)} title="Edit Record & Log Transactions">
@@ -949,7 +949,7 @@ export default function AMCPage() {
         <div className={`fixed inset-0 z-[100] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-surface`}>
           <div className={`flex items-center justify-between p-6 border-b shrink-0 bg-surface border-border shadow-[var(--shadow-ambient)]`}>
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold text-accent">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
+              <h2 className="text-2xl font-bold text-theme-icon">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
               <p className="text-sm text-muted">Manage the core software record, mid-year transactions, and renewals.</p>
             </div>
             <AppButton variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-red-500/10 text-muted hover:text-red-500 transition-colors">
@@ -967,7 +967,7 @@ export default function AMCPage() {
                     onClick={() => setActiveTab(tab)}
                     className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
                       activeTab === tab 
-                        ? 'bg-surface dark:bg-surface text-accent dark:text-accent shadow-sm border border-border/50 dark:border-white/10' 
+                        ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-white/10' 
                         : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
                     }`}
                   >
@@ -985,13 +985,13 @@ export default function AMCPage() {
             {/* SECTION: GENERAL & CONTRACT DETAILS */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">1</span>
+                <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">1</span>
                 General & Contract Details
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-sm font-bold text-muted uppercase">Provider / Vendor <span className="text-red-500">*</span></label>
-                  <select value={formVendorId} onChange={(e) => handleVendorChange(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formVendorId} onChange={(e) => handleVendorChange(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select Vendor --</option>
                     {vendors.map(v => (
                       <option key={v.id} value={v.id}>{v.name}</option>
@@ -1007,7 +1007,7 @@ export default function AMCPage() {
                     <label className="text-sm font-bold text-muted uppercase mb-2 block">Contract Type <span className="text-red-500">*</span></label>
                     <div className="flex gap-2 h-11">
                       <select 
-                        className={`flex-1 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}
+                        className={`flex-1 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}
                         value={formContractType}
                         onChange={e => setFormContractType(e.target.value)}
                       >
@@ -1018,7 +1018,7 @@ export default function AMCPage() {
                       <button 
                         type="button"
                         onClick={handleAddContractType}
-                        className="w-11 h-11 flex items-center justify-center rounded-xl bg-accent text-white hover:bg-accent/90 transition-all flex-shrink-0"
+                        className="w-11 h-11 flex items-center justify-center rounded-xl bg-theme-btn-primary text-white hover:bg-theme-btn-primary/90 transition-all flex-shrink-0"
                         title="Add Contract Type"
                       >
                         <Plus className="h-5 w-5" />
@@ -1027,7 +1027,7 @@ export default function AMCPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-muted uppercase">Status <span className="text-red-500">*</span></label>
-                    <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                    <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                       <option value="Active">Active</option>
                       <option value="Expired">Expired</option>
                       <option value="Renewed">Renewed</option>
@@ -1052,7 +1052,7 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-muted uppercase">Renewal Period</label>
-                  <select value={formRenewalPeriodType} onChange={(e) => handleRenewalChange(e.target.value, formPutToUseDate)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formRenewalPeriodType} onChange={(e) => handleRenewalChange(e.target.value, formPutToUseDate)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select --</option>
                     <option value="Yearly">Yearly</option>
                     <option value="Half-Yearly">Half-Yearly</option>
@@ -1067,21 +1067,21 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-sm font-bold text-muted uppercase">Assigned To (Owner) <span className="text-red-500">*</span></label>
-                  <select value={formAssignedTo} onChange={(e) => setFormAssignedTo(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formAssignedTo} onChange={(e) => setFormAssignedTo(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select Owner --</option>
                     {users.map(u => <option key={u.id} value={u.id}>{u.full_name} ({u.email})</option>)}
                   </select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
                   <label className="text-sm font-bold text-muted uppercase">Department <span className="text-red-500">*</span></label>
-                  <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select Department --</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-muted uppercase">Cost Center</label>
-                  <select value={formCostCenterId} onChange={(e) => setFormCostCenterId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formCostCenterId} onChange={(e) => setFormCostCenterId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select Cost Center --</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
@@ -1096,7 +1096,7 @@ export default function AMCPage() {
             {/* SECTION: LICENSE & USAGE TRACKING */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">2</span>
+                <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">2</span>
                 License & Usage Tracking
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1129,13 +1129,13 @@ export default function AMCPage() {
             {/* SECTION: SLA & PAYMENT TERMS */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">3</span>
+                <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">3</span>
                 SLA & Payment Terms
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-muted uppercase">Currency</label>
-                  <select value={formCurrency} onChange={(e) => setFormCurrency(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formCurrency} onChange={(e) => setFormCurrency(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
@@ -1144,7 +1144,7 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-muted uppercase">Payment Terms</label>
-                  <select value={formPaymentTerms} onChange={(e) => setFormPaymentTerms(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formPaymentTerms} onChange={(e) => setFormPaymentTerms(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select --</option>
                     <option value="100% Advance">100% Advance</option>
                     <option value="Net 15">Net 15</option>
@@ -1157,7 +1157,7 @@ export default function AMCPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-muted uppercase">Support Tier</label>
-                  <select value={formSupportTier} onChange={(e) => setFormSupportTier(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                  <select value={formSupportTier} onChange={(e) => setFormSupportTier(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select --</option>
                     <option value="Standard Business Hours">Standard Business Hours</option>
                     <option value="Premium 24x5">Premium 24x5</option>
@@ -1179,7 +1179,7 @@ export default function AMCPage() {
             <div className={`p-6 rounded-2xl border overflow-hidden bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
                 <h4 className="text-base font-bold flex items-center gap-2">
-                  <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">4</span>
+                  <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">4</span>
                   Solution Name & Line Items
                 </h4>
                 <AppButton type="button" variant="outline" size="sm" onClick={addLineItem} leftIcon={<Plus className="h-4 w-4" />}>
@@ -1220,7 +1220,7 @@ export default function AMCPage() {
                             <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark" className="h-9 text-xs" />
                           </AppTableCell>
                           <AppTableCell className="py-2 px-1">
-                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                               <option value="">-- Select --</option>
                               <option value="Yearly">Yearly</option>
                               <option value="Half-Yearly">Half-Yearly</option>
@@ -1263,7 +1263,7 @@ export default function AMCPage() {
                           <AppTableCell className="py-2 px-1">
                             <AppInput type="number" value={item.discount} onChange={(e) => handleLineItemChange(item.id, "discount", e.target.value)} className="h-9 text-xs" />
                           </AppTableCell>
-                          <AppTableCell className="py-2 px-1 text-right font-bold text-accent">
+                          <AppTableCell className="py-2 px-1 text-right font-bold text-theme-icon">
                             {item.netAmount.toFixed(2)}
                           </AppTableCell>
                           <AppTableCell className="py-2 px-1 text-right">
@@ -1293,7 +1293,7 @@ export default function AMCPage() {
             {/* SECTION: VENDOR DETAILS */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">5</span>
+                <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">5</span>
                 Vendor & Contact Details
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -1380,7 +1380,7 @@ export default function AMCPage() {
 
                 {/* Contact Person & Address */}
                 <div className="col-span-1 md:col-span-3 space-y-4 pt-4 border-t border-border">
-                  <h5 className="text-sm font-semibold text-accent">Contact Person & Address</h5>
+                  <h5 className="text-sm font-semibold text-theme-icon">Contact Person & Address</h5>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-muted uppercase">Contact Name <span className="text-red-500">*</span></label>
@@ -1408,7 +1408,7 @@ export default function AMCPage() {
                       <select disabled={!!formVendorId} value={vendorAddrState} onChange={(e) => {
                         setVendorAddrState(e.target.value);
                         setVendorAddrCity(""); // Reset city when state changes
-                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                         <option value="">Select State</option>
                         {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -1416,11 +1416,11 @@ export default function AMCPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-muted uppercase flex items-center justify-between">
                         <span>City</span>
-                        <AppButton variant="secondary" type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
+                        <AppButton variant="secondary" type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} disabled={!!formVendorId} className="text-theme-icon hover:bg-theme-btn-primary/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                           <Plus className="h-4 w-4" />
                         </AppButton>
                       </label>
-                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                      <select value={vendorAddrCity} onChange={(e) => setVendorAddrCity(e.target.value)} disabled={!vendorAddrState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                         <option value="">Select City</option>
                         {masterCities.filter(c => c.state_name === vendorAddrState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                       </select>
@@ -1438,14 +1438,14 @@ export default function AMCPage() {
             {/* SECTION: FINANCIALS */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">6</span>
+                <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">6</span>
                 Financial & Taxation Details
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 {/* PO Details */}
                 <div className="space-y-4">
-                  <h5 className="text-sm font-semibold text-accent">Purchase Order</h5>
+                  <h5 className="text-sm font-semibold text-theme-icon">Purchase Order</h5>
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] font-bold text-muted uppercase">PO Number</label>
@@ -1477,7 +1477,7 @@ export default function AMCPage() {
 
                 {/* Taxation */}
                 <div className="space-y-4">
-                  <h5 className="text-sm font-semibold text-accent">Taxation</h5>
+                  <h5 className="text-sm font-semibold text-theme-icon">Taxation</h5>
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] font-bold text-muted uppercase">GST Number</label>
@@ -1497,7 +1497,7 @@ export default function AMCPage() {
 
               {/* Bank Details Sub Section */}
               <div className="mt-8 pt-6 border-t border-border space-y-4">
-                <h5 className="text-sm font-semibold text-accent">Bank Details</h5>
+                <h5 className="text-sm font-semibold text-theme-icon">Bank Details</h5>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted uppercase">Bank Name</label>
@@ -1520,7 +1520,7 @@ export default function AMCPage() {
                     <select disabled={!!formVendorId} value={bankState} onChange={(e) => {
                       setBankState(e.target.value);
                       setBankCity(""); // Reset city
-                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                    }} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                       <option value="">Select State</option>
                       {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -1528,11 +1528,11 @@ export default function AMCPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-muted uppercase flex items-center justify-between">
                       <span>City</span>
-                      <AppButton variant="secondary" type="button" onClick={() => handleAddCity(bankState, setBankCity)} disabled={!!formVendorId} className="text-accent hover:bg-accent/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
+                      <AppButton variant="secondary" type="button" onClick={() => handleAddCity(bankState, setBankCity)} disabled={!!formVendorId} className="text-theme-icon hover:bg-theme-btn-primary/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                         <Plus className="h-4 w-4" />
                       </AppButton>
                     </label>
-                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-accent focus:ring-accent/20 border`}>
+                    <select value={bankCity} onChange={(e) => setBankCity(e.target.value)} disabled={!bankState || !!formVendorId} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none disabled:opacity-50 ${formVendorId ? "bg-surface opacity-70" : "bg-surface"} border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                       <option value="">Select City</option>
                       {masterCities.filter(c => c.state_name === bankState).map(c => <option key={c.id} value={c.city_name}>{c.city_name}</option>)}
                     </select>
@@ -1544,7 +1544,7 @@ export default function AMCPage() {
             {/* SECTION: ATTACHMENTS & MISC */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">7</span>
+                <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">7</span>
                 Attachments & Notes
               </h4>
               
@@ -1566,7 +1566,7 @@ export default function AMCPage() {
                           <select 
                             value={entry.docName} 
                             onChange={(e) => setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, docName: e.target.value } : a))}
-                            className={`w-full sm:w-48 h-10 px-3 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-accent/20 bg-surface border-border text-foreground`}
+                            className={`w-full sm:w-48 h-10 px-3 rounded-lg text-sm border outline-none focus:ring-2 focus:ring-theme-btn-primary/20 bg-surface border-border text-foreground`}
                           >
                             <option value="">Select Type</option>
                             <option value="SOP Document">SOP Document</option>
@@ -1579,7 +1579,7 @@ export default function AMCPage() {
                           <input 
                             type="file" 
                             onChange={(e) => setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, file: e.target.files?.[0] || null } : a))} 
-                            className="flex-1 w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
+                            className="flex-1 w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-icon hover:file:bg-theme-btn-primary/20 cursor-pointer"
                           />
                           <AppButton variant="secondary" type="button" onClick={() => setAttachments(prev => prev.filter(a => a.id !== entry.id))} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                             <X className="h-4 w-4" />
@@ -1601,7 +1601,7 @@ export default function AMCPage() {
                         {existingAttachments.map((file, idx) => (
                           <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border bg-elevated border-border`}>
                             <div className="flex items-center gap-3 text-sm overflow-hidden">
-                              <div className="p-2 bg-accent/10 text-accent rounded shrink-0">
+                              <div className="p-2 bg-theme-btn-primary/10 text-theme-icon rounded shrink-0">
                                 <Paperclip className="h-4 w-4" />
                               </div>
                               <span className="truncate" title={file.name}>{formatFileName(file.name)}</span>
@@ -1611,7 +1611,7 @@ export default function AMCPage() {
                                 const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
                                 window.open(url, '_blank');
                               }}>
-                                <Download className="h-4 w-4 text-accent" />
+                                <Download className="h-4 w-4 text-theme-icon" />
                               </AppButton>
                               {hasPermission("AMC_DELETE") && (
                                 <AppButton type="button" variant="ghost" size="sm" onClick={() => deleteAttachment(file.name)}>
@@ -1628,7 +1628,7 @@ export default function AMCPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-muted uppercase">Additional Notes</label>
-                  <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className={`w-full p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none resize-none h-full min-h-[150px] bg-elevated border-border text-foreground focus:border-accent focus:ring-accent/20 border`} placeholder="Any additional details, terms and conditions, or internal comments..." />
+                  <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className={`w-full p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none resize-none h-full min-h-[150px] bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`} placeholder="Any additional details, terms and conditions, or internal comments..." />
                 </div>
               </div>
             </div>

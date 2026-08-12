@@ -98,7 +98,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
         <p className="text-sm text-muted font-medium tracking-widest uppercase">Fetching Infrastructure Matrix...</p>
       </div>
     );
@@ -117,7 +117,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Type</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.issueTypeId}
                 onChange={(e) => setFormData({ ...formData, issueTypeId: e.target.value, issueSubtypeId: "" })}
                 required
@@ -132,7 +132,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Subtype</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
                 value={formData.issueSubtypeId}
                 onChange={(e) => setFormData({ ...formData, issueSubtypeId: e.target.value })}
                 required
@@ -149,7 +149,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Asset Category</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value, subcategoryId: "" })}
                 required
@@ -164,7 +164,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Sub-Category</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
                 value={formData.subcategoryId}
                 onChange={(e) => setFormData({ ...formData, subcategoryId: e.target.value })}
                 required
@@ -181,7 +181,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Affected Asset</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.assetId}
                 onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
                 required
@@ -196,7 +196,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.priorityId}
                 onChange={(e) => handlePriorityChange(e.target.value)}
                 required
@@ -223,7 +223,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
           <div className="space-y-2">
             <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Incident Description & Technical Details</label>
             <textarea 
-              className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+              className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
               placeholder="Describe the hardware fault, server impact, or network outage in detail..."
               value={formData.remark}
               onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
@@ -232,13 +232,13 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
           </div>
 
           {isReqCategory && (
-            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-accent/20 rounded-2xl">
-              <h4 className="text-sm font-bold text-accent mb-2">Requirement Details (Mandatory)</h4>
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-theme-btn-primary/20 rounded-2xl">
+              <h4 className="text-sm font-bold text-theme-icon mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
                   value={formData.business_reason}
                   onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
@@ -249,7 +249,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <div className="space-y-2">
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
                   value={formData.requirement_description}
                   onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
@@ -263,7 +263,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             <div className="flex-1 space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Attachments (Log Files / Screenshots)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
-                "border-border hover:border-accent/30 bg-elevated/50"
+                "border-border hover:border-theme-btn-primary/30 bg-elevated/50"
               }`}>
                 <input 
                   type="file" 
@@ -273,7 +273,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg bg-surface shadow-sm`}>
-                      <Paperclip className={`h-4 w-4 text-accent`} />
+                      <Paperclip className={`h-4 w-4 text-theme-icon`} />
                     </div>
                     <div>
                       <p className={`text-xs font-medium ${"text-foreground"}`}>
@@ -299,7 +299,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
               <AppButton variant="ghost" type="button" onClick={onCancel} className={"text-muted"}>
                 Cancel
               </AppButton>
-              <AppButton variant="primary" type="submit" className="bg-accent hover:bg-accent text-white min-w-[140px]">
+              <AppButton variant="primary" type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 <Send className="h-4 w-4 mr-2" />
                 Submit Ticket
               </AppButton>

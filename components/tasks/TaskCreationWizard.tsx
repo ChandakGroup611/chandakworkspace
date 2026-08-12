@@ -201,7 +201,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       footer={
         <div className="flex justify-end gap-3 w-full">
           <AppButton variant="ghost" type="button" onClick={onClose} disabled={isLoading}>Cancel</AppButton>
-          <AppButton variant="primary" onClick={handleSubmit} className="bg-accent hover:bg-accent-secondary" disabled={isLoading}>
+          <AppButton variant="primary" onClick={handleSubmit} className="bg-theme-btn-primary hover:opacity-90" disabled={isLoading}>
             {isLoading ? "Deploying..." : "Deploy Directive"}
           </AppButton>
         </div>
@@ -214,7 +214,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           <div className={`w-full p-4 rounded-xl mb-2 theme-card-structural flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5 justify-between">
               <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
+                <div className={`p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
                   <LayoutTemplate className="h-4 w-4" />
                 </div>
                 <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Core Details</h3>
@@ -235,7 +235,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Parent Task Link</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${ "theme-card-structural text-foreground" }`}
                   value={parentTaskId}
                   onChange={e => setParentTaskId(e.target.value)}
                   disabled={!!initialParentTaskId}
@@ -249,7 +249,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Assign to Sprint</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={sprintId}
                   onChange={e => setSprintId(e.target.value)}
                 >
@@ -269,7 +269,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detailed execution instructions, context, or constraints..."
-                className={`w-full min-h-[120px] p-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors resize-y ${
+                className={`w-full min-h-[120px] p-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y ${
                   "bg-[#f8fafc] border-[#e2e8f0] text-foreground"
                 }`}
               />
@@ -282,7 +282,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           {/* Section 2: Timeline & Priority */}
           <div className={`w-full p-4 rounded-xl mb-2 theme-card-structural flex flex-col gap-2`}>
             <div className="flex items-center gap-2 mb-1.5">
-              <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
+              <div className={`p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
                 <CalendarDays className="h-4 w-4" />
               </div>
               <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Timeline & Classification</h3>
@@ -319,7 +319,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Priority</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={priorityId}
                   onChange={e => setPriorityId(e.target.value)}
                 >
@@ -332,7 +332,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Department</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={departmentId}
                   onChange={e => setDepartmentId(e.target.value)}
                 >
@@ -345,7 +345,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Status</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
                   value={statusId}
                   onChange={e => setStatusId(e.target.value)}
                 >
@@ -478,7 +478,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     placeholder="Type a tag (e.g. Bug, Frontend)..." 
                     className={`h-10 flex-1 ${"bg-surface"}`}
                   />
-                  <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-accent hover:bg-accent-secondary text-white border-0" onClick={() => {
+                  <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text border-0" onClick={() => {
                     if (newTag.trim() && !tags.includes(newTag.trim())) {
                       setTags([...tags, newTag.trim()]);
                       setNewTag("");
@@ -487,7 +487,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag, idx) => (
-                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-accent/10 text-accent`}>
+                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-theme-btn-primary/10 text-theme-icon`}>
                       {tag}
                       <AppButton variant="secondary" type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-rose-500"><X className="h-3 w-3" /></AppButton>
                     </span>
@@ -499,7 +499,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg bg-accent/10 text-accent`}>
+                    <div className={`p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
                       <LayoutList className="h-4 w-4" />
                     </div>
                     <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Checklist</h3>
@@ -524,7 +524,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       className={`h-10 ${"bg-surface"}`}
                     />
                   </div>
-                  <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-accent hover:bg-accent-secondary text-white border-0" onClick={() => {
+                  <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text border-0" onClick={() => {
                     if (!newChecklistItem.trim()) return;
                     setChecklistItems([...checklistItems, newChecklistItem.trim()]);
                     setNewChecklistItem("");
@@ -533,7 +533,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="space-y-2">
                   {checklistItems.map((item, index) => (
-                    <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
+                    <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-theme-btn-primary/30 shadow-[var(--shadow-ambient)]`}>
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
                         <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-surface`} />
                         <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
@@ -577,7 +577,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <label 
                       htmlFor="task-attachment"
                       className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-md text-sm font-bold border border-dashed cursor-pointer transition-all ${
-                        "bg-surface/50 border-border text-muted hover:bg-surface hover:border-accent hover:text-accent"
+                        "bg-surface/50 border-border text-muted hover:bg-surface hover:border-theme-btn-primary hover:text-theme-icon"
                       }`}
                     >
                       <Paperclip className="h-3 w-3" />
@@ -590,9 +590,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="grid grid-cols-1 gap-3">
                   {attachments.map((item, index) => (
-                    <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-accent/30 shadow-[var(--shadow-ambient)]`}>
+                    <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-theme-btn-primary/30 shadow-[var(--shadow-ambient)]`}>
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
-                        <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold bg-accent/10 text-accent`}>
+                        <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold bg-theme-btn-primary/10 text-theme-icon`}>
                           {item.file_type.substring(0,3).toUpperCase()}
                         </div>
                         <div className="flex flex-col min-w-0">

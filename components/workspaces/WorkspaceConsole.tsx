@@ -12,7 +12,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
         <div key={ws.id} className="bg-surface/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:shadow-xl transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h3 className="font-semibold text-lg text-foreground group-hover:text-accent transition-colors">{ws.workspace_name}</h3>
+              <h3 className="font-semibold text-lg text-theme-heading group-hover:text-theme-icon transition-colors">{ws.workspace_name}</h3>
               <p className="text-xs text-muted mt-1">{ws.workspace_code}</p>
             </div>
             {ws.status && (
@@ -34,7 +34,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
               <span>Members:</span>
               <span className="text-muted font-medium">{ws.members?.length || 0}</span>
             </div>
-            <AppButton variant="ghost" size="sm" className="h-auto p-0 text-accent hover:text-indigo-300 font-medium text-xs">
+            <AppButton variant="ghost" size="sm" className="h-auto p-0 text-theme-icon hover:text-indigo-300 font-medium text-xs">
               Enter Workspace <ArrowRight className="h-3 w-3 ml-1" />
             </AppButton>
           </div>
@@ -57,7 +57,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
           <AppButton variant="secondary" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors" leftIcon={<Activity className="h-4 w-4" />}>
             Check Availability
           </AppButton>
-          <AppButton variant="primary" className="px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-secondary transition-colors shadow-lg shadow-indigo-500/20" leftIcon={<Plus className="h-4 w-4" />}>
+          <AppButton variant="primary" className="px-4 py-2 bg-theme-btn-primary text-theme-btn-primary-text rounded-xl text-sm font-medium hover:opacity-90 transition-colors shadow-lg shadow-indigo-500/20" leftIcon={<Plus className="h-4 w-4" />}>
             New Task
           </AppButton>
         </div>

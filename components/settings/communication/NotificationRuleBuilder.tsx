@@ -167,7 +167,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.module}
                     onChange={(e) => updateLocalRule(rule.id, "module", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground dark:text-white focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {Object.keys(MODULE_CONFIG).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
@@ -180,7 +180,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.event}
                     onChange={(e) => updateLocalRule(rule.id, "event", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground dark:text-white focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {config.events.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
@@ -193,7 +193,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.status_trigger || "ANY"}
                     onChange={(e) => updateLocalRule(rule.id, "status_trigger", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-foreground dark:text-white focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {config.statuses.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -204,7 +204,7 @@ export default function NotificationRuleBuilder() {
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-accent font-bold text-lg">THEN</span>
+                    <span className="font-mono text-theme-icon font-bold text-lg">THEN</span>
                     <span className="text-sm font-bold text-muted">Resolve Recipients:</span>
                   </div>
                   
@@ -215,7 +215,7 @@ export default function NotificationRuleBuilder() {
                         <AppButton
                           key={type}
                           onClick={() => toggleArrayItem(rule.id, "recipient_type", type)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${ isSelected ? 'bg-accent/20 border-accent/50 text-blue-300' : 'theme-card-structural /5 border-transparent text-muted hover:/10' }`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${ isSelected ? 'bg-theme-btn-primary/20 border-theme-btn-primary/50 text-blue-300' : 'theme-card-structural /5 border-transparent text-muted hover:/10' }`}
                         >
                           {type}
                         </AppButton>
@@ -226,7 +226,7 @@ export default function NotificationRuleBuilder() {
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-accent font-bold text-lg">VIA</span>
+                    <span className="font-mono text-theme-icon font-bold text-lg">VIA</span>
                     <span className="text-sm font-bold text-muted">Delivery Method:</span>
                   </div>
                   
@@ -236,7 +236,7 @@ export default function NotificationRuleBuilder() {
                         type="checkbox" 
                         checked={rule.delivery_method.includes("EMAIL")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "EMAIL")}
-                        className="rounded border-border bg-surface text-accent focus:ring-accent"
+                        className="rounded border-border bg-surface text-theme-icon focus:ring-theme-btn-primary"
                       />
                       <span className="text-sm text-muted font-medium">Email Dispatch</span>
                     </label>
@@ -245,7 +245,7 @@ export default function NotificationRuleBuilder() {
                         type="checkbox" 
                         checked={rule.delivery_method.includes("IN_APP")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "IN_APP")}
-                        className="rounded border-border bg-surface text-accent focus:ring-accent"
+                        className="rounded border-border bg-surface text-theme-icon focus:ring-theme-btn-primary"
                       />
                       <span className="text-sm text-muted font-medium">In-App Notification</span>
                     </label>

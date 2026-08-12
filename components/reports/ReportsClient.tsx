@@ -51,7 +51,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
     <AppTableHead 
       ref={setNodeRef} 
       style={style}
-      className={`bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:bg-accent/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
+      className={`bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:opacity-90/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
     >
       <div className="flex flex-col gap-2">
         <div className="cursor-grab active:cursor-grabbing select-none" {...attributes} {...listeners}>
@@ -63,7 +63,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-white/10 text-foreground focus:outline-none focus:border-accent placeholder:text-muted"
+            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-white/10 text-foreground focus:outline-none focus:border-theme-btn-primary placeholder:text-muted"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -335,16 +335,16 @@ export default function ReportsClient() {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border pb-3">
         {/* Entity Selection Tabs */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <Briefcase className="h-3.5 w-3.5" /> Workspaces
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_WORKSPACE" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <Layers className="h-3.5 w-3.5" /> Sub-Workspaces
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "TASK" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <LayoutList className="h-3.5 w-3.5" /> Tasks
           </AppButton>
-          <AppButton variant="secondary" onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-accent/20 text-accent" : "text-muted hover:bg-elevated"}`}>
+          <AppButton variant="secondary" onClick={() => setEntityType("SUB_TASK")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "SUB_TASK" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <AlignLeft className="h-3.5 w-3.5" /> Sub-Tasks
           </AppButton>
         </div>
@@ -355,7 +355,7 @@ export default function ReportsClient() {
             <AppButton variant="secondary"
               key={sc}
               onClick={() => setScope(sc)}
-              className={`whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-md transition-all ${ scope === sc ? "theme-card-structural text-accent shadow-sm " : "text-muted hover:text-foreground" }`}
+              className={`whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-md transition-all ${ scope === sc ? "theme-card-structural text-theme-icon shadow-sm " : "text-muted hover:text-foreground" }`}
             >
               {sc === "ALL" ? "All Records" : sc === "ASSIGNED_TO_ME" ? "Assigned To Me" : "Enrolled Tasks"}
             </AppButton>
@@ -370,9 +370,9 @@ export default function ReportsClient() {
         <div className="flex items-center flex-wrap gap-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-subtle theme-card-structural p-2 rounded-xl">
             <span>Date Range:</span>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-accent`} />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-theme-btn-primary`} />
             <span>to</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-accent`} />
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className={`text-xs px-2 py-1.5 rounded-lg theme-card-structural focus:outline-none focus:ring-2 focus:ring-theme-btn-primary`} />
             
             {(selectedStatus || dateFrom || dateTo || query || Object.keys(columnFilters).some(k => columnFilters[k])) && (
               <AppButton variant="secondary" 
@@ -391,7 +391,7 @@ export default function ReportsClient() {
           </div>
 
           {(entityType === "TASK" || entityType === "SUB_TASK") && (
-            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl theme-card-structural text-foreground focus:outline-none focus:ring-2 focus:ring-accent`}>
+            <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className={`text-xs font-bold px-3 py-2.5 rounded-xl theme-card-structural text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary`}>
               <option value="">All Statuses</option>
               {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -475,7 +475,7 @@ export default function ReportsClient() {
                     {visibleColumns.map(col => {
                       switch(col.field_key) {
                         case "code": return (
-                          <AppTableCell key={col.field_id} className="font-mono text-[13px] font-bold text-accent whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="font-mono text-[13px] font-bold text-theme-icon whitespace-nowrap">
                             {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
                           </AppTableCell>
                         );
@@ -563,7 +563,7 @@ export default function ReportsClient() {
                             <AppTableCell key={col.field_id} className="text-[13px] text-subtle dark:text-muted">
                               <div className="truncate max-w-[200px]" title={String(val)}>
                                 {col.data_type === "link" && val !== "—" ? (
-                                  <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
+                                  <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
                                 ) : col.data_type === "badge" && val !== "—" ? (
                                   <AppBadge variant="neutral">{val}</AppBadge>
                                 ) : (

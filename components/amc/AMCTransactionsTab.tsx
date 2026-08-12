@@ -101,7 +101,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
     <div className="space-y-8">
       {/* Add New Transaction */}
       <AppCard className={`p-6 theme-card-structural`}>
-        <h3 className="text-lg font-bold text-accent mb-4">Log New Transaction</h3>
+        <h3 className="text-lg font-bold text-theme-icon mb-4">Log New Transaction</h3>
         <form onSubmit={handleAddTransaction} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
@@ -151,7 +151,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
       <div className="space-y-4">
         <h3 className="text-lg font-bold">Transaction Ledger</h3>
         {loading ? (
-          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
         ) : transactions.length === 0 ? (
           <div className={`p-8 text-center text-muted italic rounded-xl border bg-elevated border-border`}>
             No post-purchase transactions logged yet.
@@ -162,7 +162,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
               <AppCard key={tx.id} className={`p-4 flex items-center justify-between theme-card-structural`}>
                 <div>
                   <div className="flex items-center gap-3">
-                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${tx.transaction_type === 'Add-on Licenses' ? 'bg-accent/10 text-accent' : 'bg-accent/10 text-accent'}`}>
+                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${tx.transaction_type === 'Add-on Licenses' ? 'bg-theme-btn-primary/10 text-theme-icon' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
                       {tx.transaction_type}
                     </span>
                     <span className="font-semibold text-sm">{tx.po_number || 'No PO'}</span>

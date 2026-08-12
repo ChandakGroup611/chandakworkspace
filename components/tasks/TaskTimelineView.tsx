@@ -72,7 +72,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
             </div>
             <div className="flex flex-1">
               {days.map((day: Date, i: number) => (
-                <div key={i} className={`shrink-0 border-r border-border/50 p-2 text-center text-xs ${isSameDay(day, new Date()) ? 'bg-accent/10 text-accent font-bold' : 'text-muted'}`} style={{ width: dayWidth }}>
+                <div key={i} className={`shrink-0 border-r border-border/50 p-2 text-center text-xs ${isSameDay(day, new Date()) ? 'bg-theme-btn-primary/10 text-theme-icon font-bold' : 'text-muted'}`} style={{ width: dayWidth }}>
                   <div>{format(day, 'MMM')}</div>
                   <div className="font-bold text-foreground">{format(day, 'dd')}</div>
                 </div>
@@ -85,7 +85,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
             {/* Grid lines background */}
             <div className="absolute inset-0 flex ml-[250px] pointer-events-none">
               {days.map((day: Date, i: number) => (
-                <div key={i} className={`shrink-0 border-r border-border/50 h-full ${isSameDay(day, new Date()) ? 'bg-accent/5' : ''}`} style={{ width: dayWidth }} />
+                <div key={i} className={`shrink-0 border-r border-border/50 h-full ${isSameDay(day, new Date()) ? 'bg-theme-btn-primary/5' : ''}`} style={{ width: dayWidth }} />
               ))}
             </div>
 
@@ -115,7 +115,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
                   {/* Timeline area row */}
                   <div className="flex-1 h-14 relative cursor-pointer" onClick={() => onTaskClick(task)}>
                     <div 
-                      className={`absolute top-1/2 -translate-y-1/2 h-8 rounded-md shadow-sm border overflow-hidden flex items-center px-2 transition-transform hover:scale-[1.01] ${isOverdue ? 'bg-red-100 border-red-300 text-red-800' : 'bg-accent/20 border-accent/30 text-accent-secondary dark:text-accent'}`}
+                      className={`absolute top-1/2 -translate-y-1/2 h-8 rounded-md shadow-sm border overflow-hidden flex items-center px-2 transition-transform hover:scale-[1.01] ${isOverdue ? 'bg-red-100 border-red-300 text-red-800' : 'bg-theme-btn-primary/20 border-theme-btn-primary/30 text-theme-icon-secondary dark:text-theme-icon'}`}
                       style={{ left: `${left}px`, width: `${width}px` }}
                       title={`${task.title} (${format(start, 'MMM dd')} - ${format(end, 'MMM dd')})`}
                     >

@@ -27,13 +27,13 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
         <div className="space-y-2 group cursor-pointer">
           <div className="flex justify-between text-xs font-semibold">
             <span className="flex items-center gap-2 text-foreground/80 group-hover:text-foreground transition-colors">
-              <ListTodo className="w-4 h-4 text-accent" /> Active Tickets
+              <ListTodo className="w-4 h-4 text-theme-icon" /> Active Tickets
             </span>
             <span className="font-bold">{workload.active_tickets}</span>
           </div>
           <div className="w-full theme-input-structural h-2 rounded-full overflow-hidden p-0 flex items-center">
             <div 
-              className="bg-accent h-full rounded-full transition-all duration-1000 ease-out" 
+              className="bg-theme-btn-primary h-full rounded-full transition-all duration-1000 ease-out" 
               style={{ width: `${Math.min(100, workload.active_tickets * 10)}%` }} 
             />
           </div>
@@ -42,13 +42,13 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
         <div className="space-y-2 group cursor-pointer">
           <div className="flex justify-between text-xs font-semibold">
             <span className="flex items-center gap-2 text-foreground/80 group-hover:text-foreground transition-colors">
-              <Layers className="w-4 h-4 text-accent" /> Active Tasks
+              <Layers className="w-4 h-4 text-theme-icon" /> Active Tasks
             </span>
             <span className="font-bold">{workload.active_tasks}</span>
           </div>
           <div className="w-full theme-input-structural h-2 rounded-full overflow-hidden p-0 flex items-center">
             <div 
-              className="bg-accent h-full rounded-full transition-all duration-1000 ease-out delay-100" 
+              className="bg-theme-btn-primary h-full rounded-full transition-all duration-1000 ease-out delay-100" 
               style={{ width: `${Math.min(100, workload.active_tasks * 10)}%` }} 
             />
           </div>

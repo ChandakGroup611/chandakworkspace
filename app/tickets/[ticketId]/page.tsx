@@ -97,7 +97,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   if (loading || permissionsLoading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background text-foreground">
-        <Loader2 className="h-10 w-10 animate-spin text-accent mb-4" />
+        <Loader2 className="h-10 w-10 animate-spin text-theme-icon mb-4" />
         <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">
           Loading Ticket Data...
         </span>
@@ -109,7 +109,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background text-foreground space-y-4">
         <h2 className="text-xl font-bold">Ticket Not Found</h2>
-        <AppButton variant="secondary" onClick={() => router.push("/tickets")} className="px-4 py-2 bg-accent text-white rounded-lg text-sm font-bold">
+        <AppButton variant="secondary" onClick={() => router.push("/tickets")} className="px-4 py-2 bg-theme-btn-primary text-white rounded-lg text-sm font-bold">
           Return to Tickets
         </AppButton>
       </div>
@@ -121,7 +121,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       <div className="px-6 flex flex-wrap items-center gap-4">
         <Link
           href="/tickets"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:text-accent-secondary"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-theme-icon hover:text-theme-icon-secondary"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Ticket List
@@ -133,14 +133,14 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
             {/* Top row: Tags and Button */}
             <div className="flex items-start justify-between gap-4 w-full">
               <div className="flex flex-wrap items-center gap-2 mb-2">
-                <p className="text-[11px] font-mono tracking-wider text-accent bg-accent/10 dark:bg-accent/10 px-2 py-0.5 rounded font-bold">
+                <p className="text-[11px] font-mono tracking-wider text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 px-2 py-0.5 rounded font-bold">
                   {ticketData.id}
                 </p>
                 <p className="text-[11px] tracking-wider text-muted-foreground px-2 py-0.5 border border-border rounded font-bold bg-background">
                   DEPARTMENT: {ticketData.departmentObj?.name || "Unassigned"}
                 </p>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-2xl bg-accent/10 px-4 py-2 text-xs font-semibold text-accent dark:bg-accent/10 dark:text-purple-200 shrink-0">
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-theme-btn-primary/10 px-4 py-2 text-xs font-semibold text-theme-icon dark:bg-theme-btn-primary/10 dark:text-purple-200 shrink-0">
                 <ArrowLeft className="h-4 w-4" /> {/* Or some other icon */}
                 Full ticket page
               </div>
@@ -154,7 +154,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                     Subject
                   </span>
                   {!isEditing ? (
-                    <AppButton variant="secondary" onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-accent">
+                    <AppButton variant="secondary" onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-theme-icon hover:text-theme-icon">
                       Edit
                     </AppButton>
                   ) : (
@@ -174,10 +174,10 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                 </div>
                 <div className="flex items-center gap-3 min-w-0 w-full">
                   {!isEditing ? (
-                    <h1 className="text-lg font-bold text-accent dark:text-accent break-words whitespace-normal w-full">{ticketData.title}</h1>
+                    <h1 className="text-lg font-bold text-theme-icon dark:text-theme-icon break-words whitespace-normal w-full">{ticketData.title}</h1>
                   ) : (
                     <input 
-                      className="text-lg font-bold w-full border border-accent/30 rounded px-2 py-1 bg-background"
+                      className="text-lg font-bold w-full border border-theme-btn-primary/30 rounded px-2 py-1 bg-background"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
                     />
@@ -196,7 +196,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                   />
                 ) : (
                   <textarea 
-                    className="w-full text-[13px] sm:text-sm border border-accent/30 rounded-xl p-4 bg-background min-h-[120px] resize-y"
+                    className="w-full text-[13px] sm:text-sm border border-theme-btn-primary/30 rounded-xl p-4 bg-background min-h-[120px] resize-y"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                   />
@@ -216,7 +216,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Last Status</span>
                 <p className="text-xs font-semibold text-foreground mt-0.5">
-                  <span className="inline-flex items-center rounded-md bg-accent/10 px-1.5 py-0.5 text-xs font-medium text-accent ring-1 ring-inset ring-accent/10 dark:bg-accent/10 dark:text-accent dark:ring-accent/20">
+                  <span className="inline-flex items-center rounded-md bg-theme-btn-primary/10 px-1.5 py-0.5 text-xs font-medium text-theme-icon ring-1 ring-inset ring-theme-btn-primary/10 dark:bg-theme-btn-primary/10 dark:text-theme-icon dark:ring-theme-btn-primary/20">
                     {ticketData.statusObj?.name || "Open"}
                   </span>
                 </p>

@@ -32,7 +32,7 @@ const pricingPlans = [
     price: "$29",
     period: "per user/month",
     description: "Advanced tools for growing teams that need more power.",
-    icon: <Star className="w-5 h-5 text-accent" />,
+    icon: <Star className="w-5 h-5 text-theme-icon" />,
     features: [
       "Unlimited Users",
       "Advanced Hierarchy & Workspaces",
@@ -70,7 +70,7 @@ export default function SubscriptionPage() {
     <div className="w-full space-y-8 animate-in fade-in-50 duration-700 py-6 px-4 md:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <header className="text-center space-y-4 pb-8 border-b border-border/30">
-        <AppBadge variant="neutral" className="px-3 py-1 text-accent border border-accent/30 bg-accent/5 rounded-full mb-2">
+        <AppBadge variant="neutral" className="px-3 py-1 text-theme-icon border border-theme-btn-primary/30 bg-theme-btn-primary/5 rounded-full mb-2">
           Plans & Pricing
         </AppBadge>
         <h1 id="subscription-page-title" className="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-br from-foreground via-foreground/90 to-foreground/50 bg-clip-text text-transparent">
@@ -88,12 +88,12 @@ export default function SubscriptionPage() {
             key={plan.name}
             className={`relative flex flex-col h-full overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${
               plan.highlighted 
-                ? 'border-accent shadow-[0_0_40px_-15px_rgba(var(--accent),0.3)] bg-gradient-to-b from-accent/5 to-transparent' 
+                ? 'border-theme-btn-primary shadow-[0_0_40px_-15px_rgba(var(--accent),0.3)] bg-gradient-to-b from-accent/5 to-transparent' 
                 : 'border-border/40 hover:border-border/80'
             }`}
           >
             {plan.highlighted && (
-              <div className="absolute top-0 inset-x-0 h-1 bg-accent" />
+              <div className="absolute top-0 inset-x-0 h-1 bg-theme-btn-primary" />
             )}
             
             <div className="p-6 md:p-8 flex-1 flex flex-col">
@@ -103,7 +103,7 @@ export default function SubscriptionPage() {
                 </div>
                 <h3 className="text-xl font-bold">{plan.name}</h3>
                 {plan.highlighted && (
-                  <AppBadge className="ml-auto bg-accent text-accent-foreground border-none shadow-sm text-[10px] uppercase tracking-wider font-bold">
+                  <AppBadge className="ml-auto bg-theme-btn-primary text-theme-icon-foreground border-none shadow-sm text-[10px] uppercase tracking-wider font-bold">
                     Most Popular
                   </AppBadge>
                 )}
@@ -123,7 +123,7 @@ export default function SubscriptionPage() {
               <div className="space-y-4 mb-8 flex-1">
                 {plan.features.map((feature, fIdx) => (
                   <div key={fIdx} className="flex items-start gap-3">
-                    <div className={`mt-0.5 shrink-0 rounded-full p-0.5 ${plan.highlighted ? 'bg-accent/20 text-accent' : 'bg-surface/50 text-muted'}`}>
+                    <div className={`mt-0.5 shrink-0 rounded-full p-0.5 ${plan.highlighted ? 'bg-theme-btn-primary/20 text-theme-icon' : 'bg-surface/50 text-muted'}`}>
                       <Check className="w-3.5 h-3.5" strokeWidth={3} />
                     </div>
                     <span className="text-sm font-medium opacity-90">{feature}</span>

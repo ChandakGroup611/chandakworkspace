@@ -157,10 +157,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     }
   };
 
-  const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+  const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${
     "bg-surface border-border text-foreground"
   }`;
-  const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none min-h-[80px] ${
+  const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 resize-none min-h-[80px] ${
     "bg-surface border-border text-foreground"
   }`;
   const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
@@ -168,7 +168,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   if (loadingConfig) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-[#070913]">
-        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
     );
   }
@@ -200,7 +200,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* Business Section */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-accent border-border`}>
+              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-theme-icon border-border`}>
                 <Briefcase className="h-4 w-4" /> Business Classification
               </h3>
               
@@ -312,7 +312,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         onClick={() => handleDepartmentToggle(d.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
                           isSelected 
-                            ? "bg-accent border-accent text-white" 
+                            ? "bg-theme-btn-primary border-theme-btn-primary text-white" 
                             : "bg-elevated border-border text-muted hover:bg-elevated"
                         }`}
                       >
@@ -352,7 +352,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <AppButton type="button" variant="ghost" onClick={() => router.push("/requirements")} disabled={loading} className={"text-muted"}>
                 Cancel
               </AppButton>
-              <AppButton type="submit" variant="primary" disabled={loading} className="bg-accent hover:bg-accent text-white min-w-[140px]">
+              <AppButton type="submit" variant="primary" disabled={loading} className="bg-theme-btn-primary hover:bg-theme-btn-primary text-white min-w-[140px]">
                 {loading ? "Submitting Analysis..." : "Submit Requirement Analysis"}
               </AppButton>
             </div>

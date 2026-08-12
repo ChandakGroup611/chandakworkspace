@@ -151,10 +151,10 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
     }
   };
 
-  const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+  const inputClass = `w-full h-10 px-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${
     "bg-surface border-border text-foreground"
   }`;
-  const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none min-h-[80px] ${
+  const textareaClass = `w-full p-3 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 resize-none min-h-[80px] ${
     "bg-surface border-border text-foreground"
   }`;
   const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
@@ -175,7 +175,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
         <AppCardHeader className={`border-b shrink-0 pb-4 theme-card-structural`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg bg-accent/10 text-accent`}>
+            <div className={`p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
               <LayoutDashboard className="h-5 w-5" />
             </div>
             <div>
@@ -196,7 +196,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Business Section */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-accent border-border`}>
+              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-theme-icon border-border`}>
                 <Briefcase className="h-4 w-4" /> Business Classification
               </h3>
               
@@ -296,7 +296,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                         onClick={() => handleDepartmentToggle(d.id)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-2 ${
                           isSelected 
-                            ? "bg-accent border-accent text-white" 
+                            ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" 
                             : "bg-elevated border-border text-muted hover:bg-elevated"
                         }`}
                       >
@@ -317,8 +317,8 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                       const selectedApprovers = formData.department_approvers[deptId] || [];
                       
                       return (
-                        <div key={deptId} className={`p-3 border rounded-md border-accent/20 bg-accent/10/30`}>
-                          <div className={`text-xs font-semibold mb-2 text-accent`}>{deptName} Approvers</div>
+                        <div key={deptId} className={`p-3 border rounded-md border-theme-btn-primary/20 bg-theme-btn-primary/10/30`}>
+                          <div className={`text-xs font-semibold mb-2 text-theme-icon`}>{deptName} Approvers</div>
                           <div className="flex flex-wrap gap-2">
                             {deptUsers.map((u: any) => {
                               const isUserSelected = selectedApprovers.includes(u.id);
@@ -338,7 +338,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                       }
                                     });
                                   }}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${ isUserSelected ? "bg-accent border-accent text-white" : "theme-card-structural text-muted hover:bg-elevated" }`}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${ isUserSelected ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" : "theme-card-structural text-muted hover:bg-elevated" }`}
                                 >
                                   {isUserSelected && <span className="bg-surface/20 w-4 h-4 rounded-full flex items-center justify-center text-[10px]">{orderIndex}</span>}
                                   {u.full_name}
@@ -382,7 +382,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
               <AppButton type="button" variant="ghost" onClick={onClose} disabled={loading} className={"text-muted"}>
                 Cancel
               </AppButton>
-              <AppButton type="submit" variant="primary" disabled={loading} className="bg-accent hover:bg-accent text-white min-w-[140px]">
+              <AppButton type="submit" variant="primary" disabled={loading} className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 {loading ? "Submitting..." : "Submit Analysis"}
               </AppButton>
             </div>

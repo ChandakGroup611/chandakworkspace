@@ -75,7 +75,7 @@ export default async function TransferTasksPage() {
         </p>
       </div>
 
-      <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>}>
+      <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-theme-icon" /></div>}>
         <TransferTasksClient 
           initialTasks={tasks || []} 
           workspaces={workspaces || []} 

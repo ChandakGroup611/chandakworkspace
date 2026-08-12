@@ -36,7 +36,7 @@ export function DashboardThemeSwitcher() {
               onClick={() => setDashboardTheme(t.id as any)}
               className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex justify-between items-center ${
                 dashboardTheme === t.id 
-                  ? 'bg-accent text-white font-bold' 
+                  ? 'bg-theme-btn-primary text-theme-btn-primary-text font-bold' 
                   : 'text-muted hover:bg-surface/5'
               }`}
             >

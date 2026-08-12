@@ -22,7 +22,7 @@ export default function LearningHubClient() {
       {/* Hero / Selection Header */}
       <div className={`w-full max-w-3xl mx-auto text-center space-y-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-500`}>
         <div className="flex justify-center">
-          <div className={`p-4 rounded-3xl bg-gradient-to-tr from-blue-100 to-indigo-100 text-accent shadow-xl shadow-blue-500/10`}>
+          <div className={`p-4 rounded-3xl bg-gradient-to-tr from-blue-100 to-indigo-100 text-theme-icon shadow-xl shadow-blue-500/10`}>
             <GraduationCap className="h-12 w-12" />
           </div>
         </div>
@@ -41,14 +41,14 @@ export default function LearningHubClient() {
           <AppButton variant="secondary"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className={`w-full flex items-center justify-between px-6 h-auto py-4 rounded-2xl border-2 text-left transition-all ${
-              "bg-surface border-blue-100 hover:border-accent/30 shadow-lg text-foreground"
-            } ${isDropdownOpen ? ("border-accent ring-4 ring-accent/10") : ""}`}
+              "bg-surface border-blue-100 hover:border-theme-btn-primary/30 shadow-lg text-foreground"
+            } ${isDropdownOpen ? ("border-theme-btn-primary ring-4 ring-theme-btn-primary/10") : ""}`}
             rightIcon={<ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} />}
           >
             <div className="flex items-center gap-3">
               {selectedModule ? (
                 <>
-                  <selectedModule.icon className={`h-6 w-6 text-accent`} />
+                  <selectedModule.icon className={`h-6 w-6 text-theme-icon`} />
                   <span className="font-bold text-lg">{selectedModule.title}</span>
                 </>
               ) : (
@@ -71,13 +71,13 @@ export default function LearningHubClient() {
                     }}
                     className={`w-full flex items-start justify-start gap-4 px-4 h-auto py-3 rounded-xl transition-all border border-transparent ${
                       selectedModuleId === module.id
-                        ? ("bg-accent/10 border-accent/20 text-accent font-bold")
+                        ? ("bg-theme-btn-primary/10 border-theme-btn-primary/20 text-theme-icon font-bold")
                         : ("hover:bg-elevated hover:border-border text-foreground")
                     }`}
                     leftIcon={
                       <div className={`p-2 rounded-lg shrink-0 ${
                         selectedModuleId === module.id 
-                          ? ("bg-accent/20 text-accent")
+                          ? ("bg-theme-btn-primary/20 text-theme-icon")
                           : ("bg-surface border border-border text-muted-foreground")
                       }`}>
                         <module.icon className="h-5 w-5" />

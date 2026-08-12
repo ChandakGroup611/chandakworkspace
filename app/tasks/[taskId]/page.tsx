@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, MessageCircle, ClipboardList, Type, AlignLeft } from "lucide-react";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
+import { EditableTaskTitle } from "@/components/tasks/EditableTaskTitle";
 import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/tasks";
 import { notFound } from "next/navigation";
 import SafeHtml from "@/components/ui/SafeHtml";
@@ -49,38 +50,46 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
   return (
     <div className="space-y-6 pb-6 pt-2">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-4">
-          <Link
-            href={task.parent_task_id ? `/tasks/${task.parent_task_id}` : (task.workspace_id ? `/workspaces/tasks?workspaceId=${task.workspace_id}` : "/workspaces")}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:text-accent-secondary"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to {task.parent_task_id ? "Parent Task" : "Task List"}
-          </Link>
-          <span className="hidden sm:inline text-muted dark:text-subtle">|</span>
-          <Link
-            href="/workspaces"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-subtle dark:text-muted dark:hover:text-muted transition-colors"
-          >
-            Back to Workspace List
-          </Link>
+      <AppCard className="p-6 mb-6 border border-border/60 shadow-md">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href={task.parent_task_id ? `/tasks/${task.parent_task_id}` : (task.workspace_id ? `/workspaces/tasks?workspaceId=${task.workspace_id}` : "/workspaces")}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-theme-icon hover:opacity-80 transition-opacity"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to {task.parent_task_id ? "Parent Task" : "Task List"}
+            </Link>
+            <span className="hidden sm:inline text-muted/50 dark:text-subtle/50">|</span>
+            <Link
+              href="/workspaces"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-foreground transition-colors"
+            >
+              Back to Workspace List
+            </Link>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-6">
         {/* Header Tags */}
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <p className="text-[11px] font-mono tracking-wider text-accent bg-accent/10 dark:bg-accent/10 px-2 py-0.5 rounded font-bold">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <p className="text-[11px] font-mono tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded font-bold border border-theme-btn-primary/20">
             {task.task_code || "TASK"}
           </p>
           <p className="text-[11px] tracking-wider text-muted px-2 py-0.5 border border-border dark:border-white/10 rounded font-bold bg-surface dark:bg-transparent">
             WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
           </p>
         </div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-accent dark:text-accent break-words whitespace-normal w-full">{task.title}</h1>
+        
+        <div>
+          {effectiveReadOnly ? (
+            <h1 className="text-2xl font-bold text-theme-heading break-words whitespace-normal w-full">{task.title || task.subject}</h1>
+          ) : (
+            <EditableTaskTitle task={task} asHeading={true} />
+          )}
         </div>
+      </AppCard>
+
+      <div className="space-y-6">
 
         {/* DEDICATED CARD FOR SUBJECT AND DESCRIPTION */}
         <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
@@ -90,7 +99,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
               <Type className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <h3 className="font-bold text-sm tracking-wide text-foreground">Task Subject & Description</h3>
             </div>
-            <span className="text-[10px] font-mono font-bold tracking-wider text-accent bg-accent/10 px-2.5 py-0.5 rounded-full border border-accent/20">
+            <span className="text-[10px] font-mono font-bold tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2.5 py-0.5 rounded-full border border-theme-btn-primary/20">
               {task.task_code || "TASK"}
             </span>
           </div>

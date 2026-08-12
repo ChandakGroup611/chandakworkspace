@@ -127,7 +127,7 @@ export default function DepartmentsMasterPage() {
         <PageHeader 
           title="Departments" 
           description="Manage organizational departments and business units." 
-          icon={<Layers className="h-6 w-6 text-accent" />}
+          icon={<Layers className="h-6 w-6 text-theme-icon" />}
         />
 
         <AppCard className="flex-1 flex flex-col overflow-hidden">
@@ -146,7 +146,7 @@ export default function DepartmentsMasterPage() {
               <AppButton variant="outline" size="sm" onClick={fetchDepartments} className="h-10 px-3 hidden sm:flex">
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </AppButton>
-              <AppButton size="sm" className="h-10 shrink-0 shadow-md shadow-accent/20" onClick={handleOpenCreate}>
+              <AppButton size="sm" className="h-10 shrink-0 shadow-md shadow-theme-btn-primary/20" onClick={handleOpenCreate}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Department
               </AppButton>
@@ -179,8 +179,8 @@ export default function DepartmentsMasterPage() {
                     </AppTableRow>
                   ) : (
                     filtered.map(d => (
-                      <AppTableRow key={d.id} className="hover:bg-accent/5 group">
-                        <AppTableCell className="font-mono text-sm font-bold text-accent">{d.code}</AppTableCell>
+                      <AppTableRow key={d.id} className="hover:bg-theme-btn-primary/5 group">
+                        <AppTableCell className="font-mono text-sm font-bold text-theme-icon">{d.code}</AppTableCell>
                         <AppTableCell className="font-bold text-foreground">{d.name}</AppTableCell>
                         <AppTableCell className="text-muted text-sm">{d.description || '-'}</AppTableCell>
                         <AppTableCell>
@@ -246,12 +246,12 @@ export default function DepartmentsMasterPage() {
                       value={formDesc} 
                       onChange={e => setFormDesc(e.target.value)} 
                       placeholder="Brief description..." 
-                      className="w-full h-24 p-3 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border resize-none"
+                      className="w-full h-24 p-3 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border resize-none"
                     />
                   </div>
 
                   <label className="flex items-center gap-3 cursor-pointer mt-2">
-                    <input type="checkbox" checked={formIsActive} onChange={e => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-border text-accent focus:ring-accent" />
+                    <input type="checkbox" checked={formIsActive} onChange={e => setFormIsActive(e.target.checked)} className="h-4 w-4 rounded border-border text-theme-icon focus:ring-theme-btn-primary" />
                     <span className="text-sm font-medium text-foreground">Active Department</span>
                   </label>
                 </div>

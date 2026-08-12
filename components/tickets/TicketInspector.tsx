@@ -61,7 +61,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded uppercase tracking-widest ${
-                "text-accent bg-accent/10"
+                "text-theme-icon bg-theme-btn-primary/10"
               }`}>
                 {ticket.id}
               </span>
@@ -82,7 +82,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             </div>
             <div className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full ${
-                priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : ("bg-accent")
+                priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : ("bg-theme-btn-primary")
               }`} />
               <span className={`text-sm font-semibold ${"text-foreground"}`}>{priority?.name || "Medium"}</span>
             </div>
@@ -122,7 +122,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             onClick={() => setActiveTab(tab)}
             className={`py-2 px-5 text-sm font-bold uppercase tracking-widest transition-all shadow-sm ${
               activeTab === tab 
-                ? "shadow-accent/20" 
+                ? "shadow-theme-btn-primary/20" 
                 : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
             }`}
           >
@@ -170,7 +170,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                     <Paperclip className="h-5 w-5 text-subtle" />
                   </div>
                   <p className="text-xs text-subtle">No diagnostic files attached</p>
-                  <AppButton variant="ghost" size="sm" className="text-xs text-accent hover:text-indigo-300 hover:bg-surface/5">
+                  <AppButton variant="ghost" size="sm" className="text-xs text-theme-icon hover:text-indigo-300 hover:bg-surface/5">
                     Upload File
                   </AppButton>
                 </div>

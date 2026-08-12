@@ -50,7 +50,7 @@ export function FormMultiSelect({
           type="button"
           disabled={disabled}
           className={cn(
-            "flex w-full items-center justify-between h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none border border-border text-foreground focus:border-accent focus:ring-accent/20",
+            "flex w-full items-center justify-between h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none border border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20",
             disabled ? "bg-surface dark:bg-slate-800 opacity-70 cursor-not-allowed" : "bg-surface hover:border-border",
             className
           )}
@@ -74,12 +74,12 @@ export function FormMultiSelect({
               <button
                 key={option.value}
                 type="button"
-                className="w-full flex items-center px-3 py-2 text-sm rounded-lg hover:bg-accent/10 hover:text-accent transition-colors text-left group"
+                className="w-full flex items-center px-3 py-2 text-sm rounded-lg hover:opacity-90/10 hover:text-theme-icon transition-colors text-left group"
                 onClick={() => handleToggle(option.value)}
               >
                 <div className={cn(
                   "w-4 h-4 mr-3 border rounded-[4px] flex items-center justify-center transition-colors",
-                  selectedValues.includes(option.value) ? "bg-accent border-accent text-white" : "border-border group-hover:border-accent"
+                  selectedValues.includes(option.value) ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" : "border-border group-hover:border-theme-btn-primary"
                 )}>
                   {selectedValues.includes(option.value) && <Check className="w-3 h-3" />}
                 </div>

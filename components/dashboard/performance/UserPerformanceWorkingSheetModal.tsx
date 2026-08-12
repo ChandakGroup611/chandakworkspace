@@ -353,7 +353,7 @@ export function UserPerformanceWorkingSheetModal({
                 <div className="p-4 rounded-2xl bg-surface dark:bg-[#111625] border border-border/70 shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">SLA Compliance</span>
-                    <ShieldCheck className="w-4 h-4 text-accent" />
+                    <ShieldCheck className="w-4 h-4 text-theme-icon" />
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-3xl font-black text-foreground tracking-tight">
@@ -363,7 +363,7 @@ export function UserPerformanceWorkingSheetModal({
                   </div>
                   <div className="mt-2.5 w-full bg-surface dark:bg-surface/20 h-1.5 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-accent rounded-full transition-all duration-1000"
+                      className="h-full bg-theme-btn-primary rounded-full transition-all duration-1000"
                       style={{ width: `${data.ratios.slaComplianceRate}%` }}
                     />
                   </div>
@@ -421,7 +421,7 @@ export function UserPerformanceWorkingSheetModal({
                 <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-2">Output Breakdown:</span>
                 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
-                  <Layers className="w-3.5 h-3.5 text-accent" />
+                  <Layers className="w-3.5 h-3.5 text-theme-icon" />
                   <span className="text-foreground font-semibold">Tasks:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.tasks.completed}/{data.moduleBreakdown.tasks.total}</span>
                   <span className="text-muted-foreground text-[10px]">({data.moduleBreakdown.tasks.rate}%)</span>
@@ -613,7 +613,7 @@ export function UserPerformanceWorkingSheetModal({
                                   {/* Module Badge */}
                                   <AppTableCell>
                                     <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                                      {act.module === "Tasks" && <Layers className="w-3.5 h-3.5 text-accent" />}
+                                      {act.module === "Tasks" && <Layers className="w-3.5 h-3.5 text-theme-icon" />}
                                       {act.module === "Sub Tasks" && <ListTodo className="w-3.5 h-3.5 text-teal-500" />}
                                       {act.module === "Tickets" && <Briefcase className="w-3.5 h-3.5 text-amber-500" />}
                                       {act.module === "Requirements" && <FileText className="w-3.5 h-3.5 text-rose-500" />}
@@ -657,10 +657,10 @@ export function UserPerformanceWorkingSheetModal({
                                       "inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg",
                                       isResolved ? "bg-emerald-500/10 text-emerald-500" :
                                       isEscalated ? "bg-rose-500/10 text-rose-500" :
-                                      isReview ? "bg-accent/10 text-accent" :
-                                      "bg-accent/10 text-accent"
+                                      isReview ? "bg-theme-btn-primary/10 text-theme-icon" :
+                                      "bg-theme-btn-primary/10 text-theme-icon"
                                     )}>
-                                      <span className={cn("w-1.5 h-1.5 rounded-full", isResolved ? "bg-emerald-500" : isEscalated ? "bg-rose-500" : isReview ? "bg-accent" : "bg-accent")} />
+                                      <span className={cn("w-1.5 h-1.5 rounded-full", isResolved ? "bg-emerald-500" : isEscalated ? "bg-rose-500" : isReview ? "bg-theme-btn-primary" : "bg-theme-btn-primary")} />
                                       {act.rawStatus}
                                     </span>
                                   </AppTableCell>

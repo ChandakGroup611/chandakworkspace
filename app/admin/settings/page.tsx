@@ -90,7 +90,7 @@ export default function GlobalSettingsPage() {
         <PageHeader 
           title="Global Configuration" 
           description="Manage system-wide switches, global performance tunings, and kill switches." 
-          icon={<Settings className="h-6 w-6 text-accent" />}
+          icon={<Settings className="h-6 w-6 text-theme-icon" />}
         />
 
         <div className="space-y-6">
@@ -116,7 +116,7 @@ export default function GlobalSettingsPage() {
                 <>
                   <div className="flex items-center justify-between p-5 border border-border rounded-xl bg-surface hover:border-rose-200 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl ${settings.disable_all_emails ? 'bg-rose-100 text-rose-600' : 'bg-accent/10 text-accent'}`}>
+                      <div className={`p-3 rounded-xl ${settings.disable_all_emails ? 'bg-rose-100 text-rose-600' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
                         <Mail className="h-6 w-6" />
                       </div>
                       <div>
@@ -134,7 +134,7 @@ export default function GlobalSettingsPage() {
 
                   <div className="flex items-center justify-between p-5 border border-border rounded-xl bg-surface hover:border-amber-200 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl ${settings.disable_all_realtime ? 'bg-amber-100 text-amber-600' : 'bg-accent/10 text-accent'}`}>
+                      <div className={`p-3 rounded-xl ${settings.disable_all_realtime ? 'bg-amber-100 text-amber-600' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
                         <Activity className="h-6 w-6" />
                       </div>
                       <div>
@@ -152,7 +152,7 @@ export default function GlobalSettingsPage() {
 
                   <div className="flex items-center justify-between p-5 border border-border rounded-xl bg-surface hover:border-blue-200 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl ${settings.disable_digests ? 'bg-blue-100 text-blue-600' : 'bg-accent/10 text-accent'}`}>
+                      <div className={`p-3 rounded-xl ${settings.disable_digests ? 'bg-blue-100 text-blue-600' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
                         <Mail className="h-6 w-6" />
                       </div>
                       <div>

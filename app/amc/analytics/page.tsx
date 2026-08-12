@@ -108,14 +108,14 @@ export default function AMCAnalyticsPage() {
     if (total === 0) return 'text-muted';
     const percent = (used / total) * 100;
     if (percent >= 90) return 'text-emerald-500';
-    if (percent >= 50) return 'text-accent';
+    if (percent >= 50) return 'text-theme-icon';
     return 'text-amber-500';
   };
 
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function AMCAnalyticsPage() {
         {/* KPI Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
-            <div className={`p-4 rounded-xl bg-accent/10 text-accent`}>
+            <div className={`p-4 rounded-xl bg-theme-btn-primary/10 text-theme-icon`}>
               <DollarSign className="h-6 w-6" />
             </div>
             <div>
@@ -161,7 +161,7 @@ export default function AMCAnalyticsPage() {
           </AppCard>
 
           <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
-            <div className={`p-4 rounded-xl bg-accent/10 text-accent`}>
+            <div className={`p-4 rounded-xl bg-theme-btn-primary/10 text-theme-icon`}>
               <Users className="h-6 w-6" />
             </div>
             <div>
@@ -189,7 +189,7 @@ export default function AMCAnalyticsPage() {
           <AppCard className={`flex flex-col bg-surface`}>
             <div className={`p-6 border-b flex items-center gap-2 border-border`}>
               <AlertCircle className="h-5 w-5 text-rose-500" />
-              <h3 className="font-bold text-accent">Renewals in Next 60 Days</h3>
+              <h3 className="font-bold text-theme-icon">Renewals in Next 60 Days</h3>
             </div>
             <div className="p-4 flex-1 overflow-y-auto max-h-[400px]">
               {upcomingRenewals.length === 0 ? (
@@ -222,7 +222,7 @@ export default function AMCAnalyticsPage() {
           <AppCard className={`flex flex-col bg-surface`}>
             <div className={`p-6 border-b flex items-center gap-2 border-border`}>
               <DollarSign className="h-5 w-5 text-emerald-500" />
-              <h3 className="font-bold text-accent">Spend by Cost Center</h3>
+              <h3 className="font-bold text-theme-icon">Spend by Cost Center</h3>
             </div>
             <div className="p-4 flex-1 overflow-y-auto max-h-[400px]">
               {departmentSpend.length === 0 ? (
@@ -241,7 +241,7 @@ export default function AMCAnalyticsPage() {
                         </div>
                         <div className="w-full h-2 rounded-full overflow-hidden bg-elevated dark:bg-surface/10">
                           <div 
-                            className="h-full bg-accent"
+                            className="h-full bg-theme-btn-primary"
                             style={{ width: `${percent}%` }}
                           />
                         </div>

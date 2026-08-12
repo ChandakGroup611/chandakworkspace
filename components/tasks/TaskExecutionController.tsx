@@ -633,7 +633,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   if (loading) {
     return (
       <AppCard className="p-8 flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
         <p className="text-xs text-muted font-bold uppercase tracking-wider">Hydrating Task details...</p>
       </AppCard>
     );
@@ -903,7 +903,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <h3 className="font-bold text-sm tracking-wide text-foreground">Timeline & Meta</h3>
             </div>
             {task.priority?.name && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full theme-data-value border dark:border-white/10 bg-accent/10 text-accent">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full theme-data-value border dark:border-white/10 bg-theme-btn-primary/10 text-theme-icon">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.priority?.color || 'var(--accent-primary)' }} />
                 {task.priority.name}
               </span>
@@ -916,7 +916,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* 1. Creator */}
               <div className="flex flex-col space-y-1 p-3 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Creator</span>
+                  <User className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Creator</span>
                 </span>
                 <div className="theme-data-value text-foreground h-9 flex items-center truncate">
                   {task.creator?.full_name || task.created_by?.full_name || task.created_by_user?.full_name || "System Actor"}
@@ -936,7 +936,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* 3. Last Status */}
               <div className="flex flex-col space-y-1 p-3 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-200/60 dark:border-indigo-800/40 hover:border-indigo-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Last Status</span>
+                  <Tag className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Last Status</span>
                 </span>
                 <div className="theme-data-value text-foreground h-9 flex items-center">
                   {task.status?.name || task.status?.status_name || "Open"}
@@ -976,7 +976,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <div className="flex items-center gap-1 text-xs">
                       <input
                         type="number"
-                        className="w-16 px-2 py-0.5 border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-accent text-center font-bold text-foreground"
+                        className="w-16 px-2 py-0.5 border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-theme-btn-primary text-center font-bold text-foreground"
                         value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
                         onChange={(e) => {
                           if (!task.start_date) return;
@@ -1008,7 +1008,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {task.currentUserIsSuperAdmin ? (
                     <input
                       type="date"
-                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/40 dark:bg-accent/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
+                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
                       value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newStartDate = e.target.value;
@@ -1033,7 +1033,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {task.currentUserIsSuperAdmin ? (
                     <input
                       type="date"
-                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/40 dark:bg-accent/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
+                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
                       value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newEndDate = e.target.value;
@@ -1055,13 +1055,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <div className="flex flex-col space-y-1 p-3 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <div className="flex items-center justify-between">
                   <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-accent" /> <span className="text-accent font-bold">Primary Assignee</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary Assignee</span>
                   </span>
                   { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('primary')}
-                      className="text-[10px] font-bold text-accent hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                      className="text-[10px] font-bold text-theme-icon hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
                     >
                       Edit
                     </AppButton>
@@ -1072,8 +1072,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     (() => {
                       const pUser = stakeholders.find(s => s.id === pendingPrimaryAssignee);
                       return (
-                        <div className="flex items-center gap-1.5 text-xs text-accent font-bold">
-                          <span className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse" />
+                        <div className="flex items-center gap-1.5 text-xs text-theme-icon font-bold">
+                          <span className="inline-block w-2 h-2 rounded-full bg-theme-btn-primary animate-pulse" />
                           <span className="truncate">{pUser?.full_name || "New Primary"} (Pending save)</span>
                         </div>
                       );
@@ -1087,7 +1087,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                            {a.profile_photo ? (
                              <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-elevated shadow-xs" />
                            ) : (
-                             <div className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-[10px] font-bold shadow-xs">
+                             <div className="w-5 h-5 rounded-full bg-theme-btn-primary/20 text-theme-icon flex items-center justify-center text-[10px] font-bold shadow-xs">
                                {a.full_name?.substring(0, 2).toUpperCase() || "U"}
                              </div>
                            )}
@@ -1161,7 +1161,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <MessageSquare className="w-4 h-4 text-amber-600 dark:text-amber-400 animate-pulse" />
               <h3 className="font-bold text-sm tracking-wide text-foreground">Remarks and Updates</h3>
             </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-accent bg-accent/10 dark:bg-accent/20 px-2.5 py-0.5 rounded-full border border-accent/30 dark:shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 px-2.5 py-0.5 rounded-full border border-theme-btn-primary/30 dark:shadow-[0_0_10px_rgba(99,102,241,0.2)]">
               Data Feeding Zone
             </span>
           </div>
@@ -1183,7 +1183,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingStatus(newCode);
                 }
               }}
-              className={`w-full h-10 px-3 rounded-xl theme-data-value border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/50 dark:bg-accent/10 dark:shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-10 px-3 rounded-xl theme-data-value border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/50 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
@@ -1204,7 +1204,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingDepartment(newDept);
                 }
               }}
-              className={`w-full h-10 px-3 rounded-xl theme-data-value border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-accent dark:border-accent/50 dark:bg-accent/10 dark:shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-10 px-3 rounded-xl theme-data-value border border-border bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/50 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="">-- No Department --</option>
               {departments.map(dept => (
@@ -1222,7 +1222,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   size="sm" 
                   variant="primary" 
-                  className="bg-accent hover:bg-accent-secondary"
+                  className="bg-theme-btn-primary hover:opacity-90"
                   leftIcon={<Play className="h-4 w-4" />}
                   disabled={actionLoading}
                   onClick={() => handleStatusTransition("start")}
@@ -1249,7 +1249,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <AppButton 
                     size="sm" 
                     variant="primary" 
-                    className="bg-accent hover:bg-accent-secondary"
+                    className="bg-theme-btn-primary hover:opacity-90"
                     leftIcon={<CheckCircle2 className="h-4 w-4" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("approve")}
@@ -1259,7 +1259,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <AppButton 
                     size="sm" 
                     variant="ghost" 
-                    className="text-accent hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                    className="text-theme-icon hover:bg-rose-50 dark:hover:bg-rose-500/10"
                     leftIcon={<RotateCcw className="h-4 w-4" />}
                     disabled={actionLoading}
                     onClick={() => handleStatusTransition("reopen")}
@@ -1284,7 +1284,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   variant="outline" 
                   size="sm" 
-                  className="text-accent hover:bg-rose-50 border-rose-200 dark:border-rose-500/20 dark:hover:bg-rose-500/10" 
+                  className="text-theme-icon hover:bg-rose-50 border-rose-200 dark:border-rose-500/20 dark:hover:bg-rose-500/10" 
                   onClick={handleDeleteTask} 
                   disabled={deleteLoading || actionLoading}
                   leftIcon={<Trash2 className="h-4 w-4" />}
@@ -1297,7 +1297,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <AppButton 
                   variant="outline" 
                   size="sm" 
-                  className="text-accent hover:bg-accent/10 border-accent/30 dark:border-accent/20 dark:hover:bg-accent/10" 
+                  className="text-theme-icon hover:opacity-90/10 border-theme-btn-primary/30 dark:border-theme-btn-primary/20 dark:hover:opacity-90/10" 
                   onClick={handleOpenTransfer} 
                   disabled={actionLoading}
                   leftIcon={<ChevronUp className="h-4 w-4 rotate-90" />}
@@ -1309,8 +1309,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             
             {/* Transfer Modal / Inline Panel */}
             {isTransferModalOpen && (
-              <div className="mt-4 p-5 border-2 border-accent/30 bg-accent/10 dark:bg-accent/10 dark:border-accent/20 rounded-xl animate-in fade-in zoom-in-95 w-full text-left shadow-lg">
-                <h4 className="text-sm font-bold text-accent dark:text-accent mb-4 flex items-center gap-2 border-b border-accent/30 dark:border-indigo-800 pb-2">
+              <div className="mt-4 p-5 border-2 border-theme-btn-primary/30 bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 dark:border-theme-btn-primary/20 rounded-xl animate-in fade-in zoom-in-95 w-full text-left shadow-lg">
+                <h4 className="text-sm font-bold text-theme-icon dark:text-theme-icon mb-4 flex items-center gap-2 border-b border-theme-btn-primary/30 dark:border-indigo-800 pb-2">
                   <FolderPlus className="w-4 h-4" /> Transfer Task to Another Workspace
                 </h4>
                 <div className="space-y-4">
@@ -1337,7 +1337,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             }
                           }
                         }}
-                        className="w-full p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-accent dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
+                        className="w-full p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
                       >
                         <option value="">-- Select Destination Workspace --</option>
                         {flattenedWorkspaces.map(w => (
@@ -1354,7 +1354,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   </div>
 
                   {checkingScope && (
-                    <div className="flex items-center gap-2 text-xs text-accent font-bold p-2">
+                    <div className="flex items-center gap-2 text-xs text-theme-icon font-bold p-2">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking user scope...
                     </div>
                   )}
@@ -1412,13 +1412,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <textarea 
                       value={transferRemarks}
                       onChange={e => setTransferRemarks(e.target.value)}
-                      className="w-full min-h-[60px] p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-accent dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
+                      className="w-full min-h-[60px] p-2.5 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:bg-[#0B0F19] dark:border-white/10 dark:text-white"
                       placeholder="Why is this task being transferred?"
                     />
                   </div>
-                  <div className="flex gap-2 justify-end pt-2 border-t border-accent/30 dark:border-indigo-800/50 mt-4">
+                  <div className="flex gap-2 justify-end pt-2 border-t border-theme-btn-primary/30 dark:border-indigo-800/50 mt-4">
                     <AppButton variant="ghost" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }}>Cancel</AppButton>
-                    <AppButton variant="primary" size="sm" className="bg-accent hover:bg-accent-secondary" onClick={submitTransfer} disabled={transferLoading || checkingScope}>
+                    <AppButton variant="primary" size="sm" className="bg-theme-btn-primary hover:opacity-90" onClick={submitTransfer} disabled={transferLoading || checkingScope}>
                       {transferLoading ? "Transferring..." : "Confirm Transfer"}
                     </AppButton>
                   </div>
@@ -1436,25 +1436,25 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         )}
 
         {pendingDepartment && (
-          <div className="p-3 bg-accent/10 border border-accent/20 text-accent text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
+          <div className="p-3 bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-theme-icon text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
             <span>Department change to <strong>{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
-            <AppButton variant="secondary" onClick={() => setPendingDepartment(null)} className="text-xs text-accent/60 hover:text-accent font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+            <AppButton variant="secondary" onClick={() => setPendingDepartment(null)} className="text-xs text-theme-icon/60 hover:text-theme-icon font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
 
         {pendingAssignees && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-accent text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-theme-icon text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
             <span>Executors change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <AppButton variant="secondary" onClick={() => setPendingAssignees(null)} className="text-xs text-accent/60 hover:text-accent font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+            <AppButton variant="secondary" onClick={() => setPendingAssignees(null)} className="text-xs text-theme-icon/60 hover:text-theme-icon font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
  
-        <div className="space-y-3 p-4 rounded-2xl bg-surface/40 dark:bg-accent/5 dark:border dark:border-accent/40 dark:shadow-[0_0_18px_rgba(99,102,241,0.12)] transition-all">
+        <div className="space-y-3 p-4 rounded-2xl bg-surface/40 dark:bg-theme-btn-primary/5 dark:border dark:border-theme-btn-primary/40 dark:shadow-[0_0_18px_rgba(99,102,241,0.12)] transition-all">
           <div className="flex items-center justify-between">
             <label className="theme-data-value uppercase tracking-wider text-foreground flex items-center gap-1.5">
               Task Remarks <span className="text-rose-500 font-extrabold">*</span>
             </label>
-            <span className="text-[10px] font-extrabold tracking-wider text-accent bg-accent/15 px-2 py-0.5 rounded-md border border-accent/30">
+            <span className="text-[10px] font-extrabold tracking-wider text-theme-icon bg-theme-btn-primary/15 px-2 py-0.5 rounded-md border border-theme-btn-primary/30">
               Required Handoff Input
             </span>
           </div>
@@ -1483,14 +1483,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               className="flex items-center justify-between cursor-pointer select-none group"
             >
               <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-accent" />
+                <MessageSquare className="h-4 w-4 text-theme-icon" />
                 <span className={`theme-data-value uppercase tracking-wider transition-colors ${
-                  "text-muted group-hover:text-accent"
+                  "text-muted group-hover:text-theme-icon"
                 }`}>
                   Remarks History Queue
                 </span>
                 {remarksHistory.length > 0 && (
-                  <AppBadge className="text-xs py-0.5 px-2 font-extrabold rounded-full bg-accent/20 text-accent border border-accent/30">
+                  <AppBadge className="text-xs py-0.5 px-2 font-extrabold rounded-full bg-theme-btn-primary/20 text-theme-icon border border-theme-btn-primary/30">
                     {remarksHistory.length}
                   </AppBadge>
                 )}
@@ -1515,7 +1515,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <div className="mt-4 space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
                 {remarksHistoryLoading ? (
                   <div className="flex items-center justify-center py-6 gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                    <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
                     <span className="text-xs text-muted">Loading history queue...</span>
                   </div>
                 ) : remarksHistory.length === 0 ? (
@@ -1523,7 +1523,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     No remark history entries. Create a new remark above to start the queue.
                   </div>
                 ) : (
-                  <div className="relative pl-4 border-l border-accent/20 space-y-5">
+                  <div className="relative pl-4 border-l border-theme-btn-primary/20 space-y-5">
                     {remarksHistory.map((item, index) => {
                       const initials = (item.user?.full_name || "Unknown")
                         .split(" ")
@@ -1535,7 +1535,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       return (
                         <div key={item.id} className="relative group/item">
                           {/* Timeline Node Point */}
-                          <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent border-2 border-slate-900 group-hover/item:scale-125 transition-transform" />
+                          <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-theme-btn-primary border-2 border-slate-900 group-hover/item:scale-125 transition-transform" />
                           
                           <div className="flex items-start gap-3">
                             {/* Avatar */}
@@ -1543,10 +1543,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               <img 
                                 src={item.user.profile_photo} 
                                 alt={item.user.full_name} 
-                                className="h-7 w-7 rounded-full border border-accent/20 object-cover"
+                                className="h-7 w-7 rounded-full border border-theme-btn-primary/20 object-cover"
                               />
                             ) : (
-                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-accent/20 shadow-md">
+                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-theme-btn-primary/20 shadow-md">
                                 {initials}
                               </div>
                             )}
@@ -1555,7 +1555,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-1">
                                 <span className={`theme-data-value transition-colors ${
-                                  "text-foreground group-hover/item:text-accent"
+                                  "text-foreground group-hover/item:text-theme-icon"
                                 }`}>
                                   {item.user?.full_name || "System Actor"}
                                 </span>
@@ -1615,17 +1615,17 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     onClick={() => setActiveTab(t.id as any)}
                     className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl theme-data-value transition-all duration-200 cursor-pointer select-none ${
                       isActive 
-                        ? "bg-accent text-white shadow-md shadow-accent/25 border border-accent scale-[1.02]" 
+                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-md shadow-theme-btn-primary/25 border border-theme-btn-primary scale-[1.02]" 
                         : "bg-surface hover:bg-elevated text-muted hover:text-foreground border border-border/60 hover:border-border"
                     }`}
                   >
-                    <t.icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-accent"}`} />
+                    <t.icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-theme-icon"}`} />
                     <span>{t.label}</span>
                     {t.count !== undefined && t.count > 0 && (
                       <span className={`ml-1 px-1.5 py-0.2 text-[10px] font-extrabold rounded-full ${
                         isActive 
                           ? "bg-surface/20 text-white" 
-                          : "bg-accent/10 text-accent border border-accent/20"
+                          : "bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20"
                       }`}>
                         {t.count}
                       </span>
@@ -1641,7 +1641,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {activeTab === 'tags' && (
                 <div className="space-y-4">
                   <h4 className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
-                    <Pin className="w-3.5 h-3.5 text-accent" /> Custom Properties & Tags
+                    <Pin className="w-3.5 h-3.5 text-theme-icon" /> Custom Properties & Tags
                   </h4>
                   {localCustomFields && Object.keys(localCustomFields).length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1662,7 +1662,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {activeTab === 'links' && (
                 <div className="space-y-4">
                   <h4 className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
-                    <LinkIcon className="w-3.5 h-3.5 text-accent" /> Link URLs & External Resources
+                    <LinkIcon className="w-3.5 h-3.5 text-theme-icon" /> Link URLs & External Resources
                   </h4>
                   {localCustomFields?.link_url ? (
                     <div className="p-4 rounded-xl border border-border/40 bg-surface/40 flex items-center justify-between gap-4">
@@ -1670,7 +1670,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         href={getSafeExternalUrl(localCustomFields.link_url)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-xs font-semibold text-accent hover:underline truncate flex-1"
+                        className="text-xs font-semibold text-theme-icon hover:underline truncate flex-1"
                         title={localCustomFields.link_url}
                       >
                         {localCustomFields.link_url}
@@ -1679,7 +1679,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         href={getSafeExternalUrl(localCustomFields.link_url)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="px-3 py-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
+                        className="px-3 py-1.5 rounded-lg bg-theme-btn-primary/10 hover:opacity-90/20 text-theme-icon text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
                       >
                         Open <ExternalLink className="w-3.5 h-3.5" />
                       </a>
@@ -1783,7 +1783,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 <a href={viewUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 dark:text-blue-400 font-bold hover:underline flex items-center gap-1" title="View Attachment">
                                   <Eye className="w-3.5 h-3.5" /> View
                                 </a>
-                                <a href={downloadUrl} download={item.file_name || "Attachment"} className="text-xs text-accent font-bold hover:underline flex items-center gap-1" title="Download Attachment">
+                                <a href={downloadUrl} download={item.file_name || "Attachment"} className="text-xs text-theme-icon font-bold hover:underline flex items-center gap-1" title="Download Attachment">
                                   <Download className="w-3.5 h-3.5" /> Download
                                 </a>
                                 {roleCode === 'SUPER_ADMIN' && !item.is_temp && (
@@ -1836,7 +1836,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             {/* Modal Header */}
             <div className="px-6 py-4 bg-surface/90 dark:bg-elevated/90 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center text-accent">
+                <div className="w-9 h-9 rounded-xl bg-theme-btn-primary/15 flex items-center justify-center text-theme-icon">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
@@ -1861,14 +1861,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 onClick={() => setAssigneeModalTab('primary')}
                 className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
                   assigneeModalTab === 'primary' 
-                    ? 'border-accent text-accent bg-surface dark:bg-elevated shadow-xs' 
+                    ? 'border-theme-btn-primary text-theme-icon bg-surface dark:bg-elevated shadow-xs' 
                     : 'border-transparent text-muted hover:text-foreground'
                 }`}
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Primary Assignee</span>
                 {selectedPrimaryAssignee && (
-                  <span className="w-2 h-2 rounded-full bg-accent" />
+                  <span className="w-2 h-2 rounded-full bg-theme-btn-primary" />
                 )}
               </button>
               <button
@@ -1897,7 +1897,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   placeholder="Search workspace members by name or email..."
                   value={stakeholderSearch}
                   onChange={(e) => setStakeholderSearch(e.target.value)}
-                  className="w-full h-10 pl-9 pr-9 rounded-xl border border-border bg-surface dark:bg-elevated text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-muted"
+                  className="w-full h-10 pl-9 pr-9 rounded-xl border border-border bg-surface dark:bg-elevated text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-all placeholder:text-muted"
                 />
                 {stakeholderSearch && (
                   <button 
@@ -1946,15 +1946,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             onClick={() => setSelectedPrimaryAssignee(s.id)}
                             className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
                               isSelected 
-                                ? 'border-accent bg-accent/10 dark:bg-accent/15 shadow-xs' 
-                                : 'border-border/60 hover:border-accent/40 hover:bg-surface/60 dark:hover:bg-elevated/60'
+                                ? 'border-theme-btn-primary bg-theme-btn-primary/10 dark:bg-theme-btn-primary/15 shadow-xs' 
+                                : 'border-border/60 hover:border-theme-btn-primary/40 hover:bg-surface/60 dark:hover:bg-elevated/60'
                             }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               {s.profile_photo ? (
                                 <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-theme-btn-primary/20 text-theme-icon flex items-center justify-center text-xs font-bold shrink-0">
                                   {s.full_name?.substring(0, 2).toUpperCase() || "U"}
                                 </div>
                               )}
@@ -1962,7 +1962,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
                                   <span>{s.full_name}</span>
                                   {isSelected && (
-                                    <span className="text-[10px] bg-accent text-white px-2 py-0.2 rounded-full font-semibold shrink-0">
+                                    <span className="text-[10px] bg-theme-btn-primary text-theme-btn-primary-text px-2 py-0.2 rounded-full font-semibold shrink-0">
                                       Primary
                                     </span>
                                   )}
@@ -1971,7 +1971,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               </div>
                             </div>
                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-                              isSelected ? 'border-accent bg-accent text-white' : 'border-border'
+                              isSelected ? 'border-theme-btn-primary bg-theme-btn-primary text-theme-btn-primary-text' : 'border-border'
                             }`}>
                               {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                             </div>
@@ -2037,7 +2037,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
                                 <span>{s.full_name}</span>
                                 {s.id === selectedPrimaryAssignee && (
-                                  <span className="text-[10px] bg-accent/15 text-accent border border-accent/30 px-1.5 py-0.2 rounded-full font-semibold shrink-0">
+                                  <span className="text-[10px] bg-theme-btn-primary/15 text-theme-icon border border-theme-btn-primary/30 px-1.5 py-0.2 rounded-full font-semibold shrink-0">
                                     Primary Owner
                                   </span>
                                 )}
@@ -2079,7 +2079,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   variant="primary" 
                   size="sm" 
                   onClick={handleStageAssignees}
-                  className="bg-accent hover:bg-accent-secondary"
+                  className="bg-theme-btn-primary hover:opacity-90"
                 >
                   Stage Assignment
                 </AppButton>

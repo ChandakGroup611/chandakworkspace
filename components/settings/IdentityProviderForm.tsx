@@ -80,7 +80,7 @@ export default function IdentityProviderForm() {
   if (fetching || permsLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        <Loader2 className="w-8 h-8 animate-spin text-theme-icon" />
       </div>
     );
   }
@@ -104,8 +104,8 @@ export default function IdentityProviderForm() {
       <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-xl p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-accent/10 rounded-lg">
-              <Shield className="w-6 h-6 text-accent" />
+            <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
+              <Shield className="w-6 h-6 text-theme-icon" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-foreground">Microsoft Entra ID (Azure AD)</h2>
@@ -116,7 +116,7 @@ export default function IdentityProviderForm() {
             <span className="text-sm font-medium text-muted">Status</span>
             <AppButton 
               onClick={() => setConfig({ ...config, is_active: !config.is_active })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-accent' : 'bg-surface'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-theme-btn-primary' : 'bg-surface'}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
             </AppButton>
@@ -130,7 +130,7 @@ export default function IdentityProviderForm() {
               type="text" 
               value={config.tenant_id || ""}
               onChange={(e) => setConfig({ ...config, tenant_id: e.target.value })}
-              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
               placeholder="e.g. 8eaef023-..."
             />
           </div>
@@ -141,7 +141,7 @@ export default function IdentityProviderForm() {
               type="text" 
               value={config.client_id || ""}
               onChange={(e) => setConfig({ ...config, client_id: e.target.value })}
-              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
               placeholder="e.g. d2a2b023-..."
             />
           </div>
@@ -153,7 +153,7 @@ export default function IdentityProviderForm() {
                 type="password" 
                 value={config.client_secret_encrypted || ""}
                 onChange={(e) => setConfig({ ...config, client_secret_encrypted: e.target.value })}
-                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
+                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
                 placeholder="Enter client secret value"
               />
               <Key className="w-4 h-4 text-muted absolute left-3 top-3.5" />
@@ -168,7 +168,7 @@ export default function IdentityProviderForm() {
                 type="text" 
                 value={config.authority_url || ""}
                 onChange={(e) => setConfig({ ...config, authority_url: e.target.value })}
-                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 pl-10"
+                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
                 placeholder="https://login.microsoftonline.com/common"
               />
               <Link2 className="w-4 h-4 text-muted absolute left-3 top-3.5" />
@@ -180,8 +180,8 @@ export default function IdentityProviderForm() {
       {/* Auto Provisioning Settings */}
       <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-xl p-6 shadow-2xl">
         <div className="flex items-center space-x-3 mb-6">
-          <div className="p-2 bg-accent/10 rounded-lg">
-            <Users className="w-6 h-6 text-accent" />
+          <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
+            <Users className="w-6 h-6 text-theme-icon" />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-foreground">Auto-Provisioning Settings</h2>
@@ -193,7 +193,7 @@ export default function IdentityProviderForm() {
           <label className="flex items-center space-x-3 cursor-pointer group">
             <AppButton 
               onClick={() => setConfig({ ...config, auto_provision_users: !config.auto_provision_users })}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-accent' : 'bg-surface'}`}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-theme-btn-primary' : 'bg-surface'}`}
             >
               <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
             </AppButton>
@@ -218,8 +218,8 @@ export default function IdentityProviderForm() {
         </div>
 
         {config.auto_provision_users && (
-          <div className="mt-6 p-4 rounded-lg bg-accent/5 border border-accent/20 flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+          <div className="mt-6 p-4 rounded-lg bg-theme-btn-primary/5 border border-theme-btn-primary/20 flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-theme-icon shrink-0 mt-0.5" />
             <p className="text-sm text-blue-200/80 leading-relaxed">
               When JIT provisioning is enabled, Supabase Auth will instantly map the incoming Azure AD profile to the `user_master` table. Ensure your default organizational policies in the Azure Portal restrict access to the correct Security Groups.
             </p>
@@ -231,7 +231,7 @@ export default function IdentityProviderForm() {
         <AppButton
           onClick={handleSave}
           disabled={loading || !hasPermission("SETTINGS_IDENTITY_MANAGE")}
-          className="flex items-center space-x-2 bg-accent hover:bg-accent text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+          className="flex items-center space-x-2 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text px-6 py-2.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           <span>{loading ? "Saving..." : "Save Configuration"}</span>

@@ -571,7 +571,7 @@ export default function UserMasterPage() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
         <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
           Verifying Credentials...
         </span>
@@ -600,7 +600,7 @@ export default function UserMasterPage() {
           <AppButton 
             variant="outline" 
             size="sm" 
-            leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-accent" : ""}`} />}
+            leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-theme-icon" : ""}`} />}
             onClick={fetchUsersDirectory}
           >
             Refresh Directory
@@ -675,7 +675,7 @@ export default function UserMasterPage() {
                       onClick={() => setStatusFilter(flt)}
                       className={`text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
                         statusFilter === flt 
-                          ? "bg-accent text-white shadow-sm" 
+                          ? "bg-theme-btn-primary text-white shadow-sm" 
                           : "text-subtle hover:text-foreground dark:text-muted dark:hover:text-white hover:bg-surface dark:hover:bg-surface/5"
                       }`}
                     >
@@ -691,7 +691,7 @@ export default function UserMasterPage() {
                   <select 
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface dark:bg-[#0f111a] border-border dark:border-white/10 appearance-none focus:outline-none focus:ring-2 focus:ring-accent/30 text-subtle dark:text-muted"
+                    className="w-full h-9 text-xs pl-3 pr-8 rounded-xl border bg-surface dark:bg-[#0f111a] border-border dark:border-white/10 appearance-none focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 text-subtle dark:text-muted"
                   >
                     <option value="ALL">All Departments</option>
                     {departments.map(d => (
@@ -714,7 +714,7 @@ export default function UserMasterPage() {
             <div className="p-0 flex-1 flex flex-col">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                  <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+                  <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
                   <p className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
                     Syncing Enterprise Directory...
                   </p>
@@ -755,7 +755,7 @@ export default function UserMasterPage() {
                             onClick={() => handleInspectUser(usr)}
                             className={`cursor-pointer group transition-all duration-200 ${
                               isSelected 
-                                ? ("bg-accent/10/50 shadow-inner") 
+                                ? ("bg-theme-btn-primary/10/50 shadow-inner") 
                                 : ("hover:bg-elevated/80")
                             }`}
                           >
@@ -795,7 +795,7 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap bg-accent/10 text-accent`}>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide uppercase whitespace-nowrap bg-theme-btn-primary/10 text-theme-icon`}>
                                 {usr.designationObj?.name || "General Assignee"}
                               </span>
                             </AppTableCell>
@@ -841,7 +841,7 @@ export default function UserMasterPage() {
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
                                     className={`p-1.5 rounded transition-all ${
-                                      "text-slate-400 dark:text-slate-500 hover:text-accent hover:bg-accent/10"
+                                      "text-slate-400 dark:text-slate-500 hover:text-theme-icon hover:bg-theme-btn-primary/10"
                                     }`}
                                     title="Edit User Profile"
                                   >
@@ -888,7 +888,7 @@ export default function UserMasterPage() {
             
             {deleteWarningData.loading ? (
               <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                <RefreshCw className="h-10 w-10 animate-spin text-accent" />
+                <RefreshCw className="h-10 w-10 animate-spin text-theme-icon" />
                 <p className={`text-xs font-semibold ${"text-foreground"}`}>
                   Performing Security Integrity Checks...
                 </p>

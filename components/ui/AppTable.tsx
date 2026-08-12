@@ -57,7 +57,7 @@ export const AppTableRow = React.forwardRef<
     ref={ref}
       className={cn(
         "theme-table-row transition-all duration-200 text-foreground group",
-        "data-[state=selected]:bg-accent/10",
+        "data-[state=selected]:bg-theme-btn-primary/10",
         className
       )}
     {...props}

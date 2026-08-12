@@ -112,19 +112,19 @@ export default function TicketAutomationsBuilder() {
               onClick={() => handleEdit(rule)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 editingId === rule.id 
-                  ? "border-accent bg-accent/5 shadow-md shadow-accent/10" 
+                  ? "border-theme-btn-primary bg-theme-btn-primary/5 shadow-md shadow-theme-btn-primary/10" 
                   : "border-border bg-surface dark:bg-[#121620] hover:border-border"
               }`}
             >
               <div className="flex justify-between items-start mb-2">
-                <h3 className={`font-bold ${editingId === rule.id ? "text-accent" : "text-foreground"}`}>
+                <h3 className={`font-bold ${editingId === rule.id ? "text-theme-icon" : "text-foreground"}`}>
                   {rule.name || "Untitled Rule"}
                 </h3>
                 <div className={`w-2 h-2 rounded-full ${rule.isActive ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "bg-gray-400"}`} />
               </div>
               <div className="text-xs text-muted flex flex-col gap-1">
                 <span className="flex items-center gap-1"><Filter className="w-3 h-3" /> {rule.conditions.length} Conditions</span>
-                <span className="flex items-center gap-1"><Play className="w-3 h-3 text-accent" /> {rule.actions.length} Actions</span>
+                <span className="flex items-center gap-1"><Play className="w-3 h-3 text-theme-icon" /> {rule.actions.length} Actions</span>
               </div>
             </div>
           ))}
@@ -216,7 +216,7 @@ export default function TicketAutomationsBuilder() {
                         
                         <input 
                           type="text" 
-                          className="flex-1 p-2 bg-transparent border-b border-dashed border-border dark:border-border focus:outline-none focus:border-accent text-sm"
+                          className="flex-1 p-2 bg-transparent border-b border-dashed border-border dark:border-border focus:outline-none focus:border-theme-btn-primary text-sm"
                           placeholder="Value..."
                           value={cond.value}
                           onChange={e => {

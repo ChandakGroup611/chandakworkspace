@@ -86,9 +86,9 @@ export default function LearningCourseBuilder() {
 
       {editingCourse ? (
         <div className="mt-6 space-y-6 animate-in fade-in">
-          <AppCard className="ring-2 ring-accent">
+          <AppCard className="ring-2 ring-theme-btn-primary">
             <div className="p-6 border-b border-border flex justify-between items-center bg-surface dark:bg-surface/[0.02]">
-              <h3 className="font-bold text-lg text-accent">Course Settings</h3>
+              <h3 className="font-bold text-lg text-theme-icon">Course Settings</h3>
               <div className="flex gap-2">
                 <AppButton variant="outline" onClick={() => setEditingCourse(null)}>Cancel</AppButton>
                 <AppButton variant="primary" onClick={handleSave} leftIcon={<Save className="w-4 h-4"/>}>Save Course</AppButton>
@@ -107,7 +107,7 @@ export default function LearningCourseBuilder() {
               <div>
                 <label className="text-sm font-bold text-muted uppercase">Description</label>
                 <textarea 
-                  className="w-full mt-1 p-3 bg-transparent border border-border rounded-lg focus:outline-none focus:border-accent text-sm min-h-[100px]"
+                  className="w-full mt-1 p-3 bg-transparent border border-border rounded-lg focus:outline-none focus:border-theme-btn-primary text-sm min-h-[100px]"
                   placeholder="What will employees learn?"
                   value={editingCourse.description}
                   onChange={e => setEditingCourse({...editingCourse, description: e.target.value})}
@@ -206,17 +206,17 @@ export default function LearningCourseBuilder() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {courses.map(course => (
-            <AppCard key={course.id} className="flex flex-col hover:border-accent transition-colors cursor-pointer" onClick={() => setEditingCourse(course)}>
+            <AppCard key={course.id} className="flex flex-col hover:border-theme-btn-primary transition-colors cursor-pointer" onClick={() => setEditingCourse(course)}>
               <div className="p-6 flex-1">
-                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                  <GraduationCap className="w-5 h-5 text-accent" />
+                <div className="w-10 h-10 rounded-lg bg-theme-btn-primary/10 flex items-center justify-center mb-4">
+                  <GraduationCap className="w-5 h-5 text-theme-icon" />
                 </div>
                 <h3 className="font-bold text-lg leading-tight mb-2">{course.title}</h3>
                 <p className="text-sm text-muted line-clamp-2">{course.description}</p>
               </div>
               <div className="p-4 border-t border-border bg-surface dark:bg-surface/[0.02] flex items-center justify-between">
                 <span className="text-xs font-bold text-muted">{course.modules.length} Modules</span>
-                <span className="text-xs font-bold text-accent">Edit Course &rarr;</span>
+                <span className="text-xs font-bold text-theme-icon">Edit Course &rarr;</span>
               </div>
             </AppCard>
           ))}

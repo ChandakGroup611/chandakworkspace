@@ -25,7 +25,7 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
       return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-red-500/10 text-red-500 border border-red-500/20">Blocked</span>;
     if (statusStr.includes("review")) 
       return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">Review</span>;
-    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-accent/10 text-accent border border-accent/20">Active</span>;
+    return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">Active</span>;
   };
 
   const renderPriority = (p: string) => {
@@ -66,7 +66,7 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
                 const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
                 const isBug = m.module === 'Tickets';
                 const isTask = m.module === 'Tasks';
-                const tagBg = isBug ? 'bg-red-500/10 text-red-500 border-red-500/20' : isTask ? 'bg-accent/10 text-accent border-accent/20' : 'bg-accent/10 text-accent border-accent/20';
+                const tagBg = isBug ? 'bg-red-500/10 text-red-500 border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
                 
                 const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 

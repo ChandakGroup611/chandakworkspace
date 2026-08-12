@@ -348,7 +348,7 @@ export default function VendorMasterPage() {
         <PageHeader 
           title="Provider / Vendor Master" 
           description="Manage software providers, OEMs, and general vendors across the organization." 
-          icon={<Building2 className="h-6 w-6 text-accent" />}
+          icon={<Building2 className="h-6 w-6 text-theme-icon" />}
         />
 
         <AppCard className="flex-1 flex flex-col overflow-hidden">
@@ -367,7 +367,7 @@ export default function VendorMasterPage() {
               <AppButton variant="outline" size="sm" onClick={fetchVendors} className="h-10 px-3 hidden sm:flex">
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </AppButton>
-              <AppButton size="sm" className="h-10 shrink-0 shadow-md shadow-accent/20" onClick={handleOpenCreate}>
+              <AppButton size="sm" className="h-10 shrink-0 shadow-md shadow-theme-btn-primary/20" onClick={handleOpenCreate}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Vendor
               </AppButton>
@@ -401,7 +401,7 @@ export default function VendorMasterPage() {
                     </AppTableRow>
                   ) : (
                     filtered.map(v => (
-                      <AppTableRow key={v.id} className="hover:bg-accent/5 group">
+                      <AppTableRow key={v.id} className="hover:bg-theme-btn-primary/5 group">
                         <AppTableCell className="font-bold text-foreground">{v.name}</AppTableCell>
                         <AppTableCell>{v.contact_name || '-'}</AppTableCell>
                         <AppTableCell>
@@ -457,7 +457,7 @@ export default function VendorMasterPage() {
 
                 {/* Section 1: General Info */}
                 <div className="space-y-6">
-                  <h4 className="text-sm font-bold text-accent flex items-center gap-2 border-b border-border pb-2">
+                  <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
                     <Briefcase className="h-4 w-4" /> General & Contact Details
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -559,7 +559,7 @@ export default function VendorMasterPage() {
 
                 {/* Section 2: Address */}
                 <div className="space-y-6">
-                  <h4 className="text-sm font-bold text-accent flex items-center gap-2 border-b border-border pb-2">
+                  <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
                     <Building2 className="h-4 w-4" /> Registered Address
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -579,7 +579,7 @@ export default function VendorMasterPage() {
                           setFormState(e.target.value);
                           setFormCity(""); // reset city when state changes
                         }} 
-                        className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border"
+                        className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                       >
                         <option value="">-- Select State --</option>
                         {INDIAN_STATES.map(st => (
@@ -593,7 +593,7 @@ export default function VendorMasterPage() {
                         <select 
                           value={formCity} 
                           onChange={e => setFormCity(e.target.value)} 
-                          className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border"
+                          className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                           disabled={!formState || loadingCities}
                         >
                           <option value="">-- Select City --</option>
@@ -622,7 +622,7 @@ export default function VendorMasterPage() {
                 {/* Section 3: Taxation & Bank */}
                 <div className="space-y-8">
                   <div className="space-y-6">
-                    <h4 className="text-sm font-bold text-accent flex items-center gap-2 border-b border-border pb-2">
+                    <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
                       <FileText className="h-4 w-4" /> Financial & Taxation
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -642,7 +642,7 @@ export default function VendorMasterPage() {
                   </div>
 
                   <div className="space-y-6">
-                    <h4 className="text-sm font-bold text-accent flex items-center gap-2 border-b border-border pb-2">
+                    <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2 border-b border-border pb-2">
                       <Landmark className="h-4 w-4" /> Bank Account Details
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -674,7 +674,7 @@ export default function VendorMasterPage() {
                             setFormBankState(e.target.value);
                             setFormBankCity(""); // reset city when state changes
                           }} 
-                          className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border"
+                          className="w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                         >
                           <option value="">-- Select State --</option>
                           {INDIAN_STATES.map(st => (
@@ -688,7 +688,7 @@ export default function VendorMasterPage() {
                           <select 
                             value={formBankCity} 
                             onChange={e => setFormBankCity(e.target.value)} 
-                            className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border"
+                            className="flex-1 h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border"
                             disabled={!formBankState || loadingBankCities}
                           >
                             <option value="">-- Select City --</option>
@@ -718,7 +718,7 @@ export default function VendorMasterPage() {
                     value={formNotes} 
                     onChange={e => setFormNotes(e.target.value)} 
                     placeholder="Any specific instructions or terms related to this vendor..." 
-                    className="w-full min-h-[100px] p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-accent focus:ring-accent/20 border resize-y"
+                    className="w-full min-h-[100px] p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border resize-y"
                   />
                 </div>
 
@@ -729,7 +729,7 @@ export default function VendorMasterPage() {
               <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-11 px-6">
                 Cancel
               </AppButton>
-              <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-bold shadow-lg shadow-accent/20">
+              <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-bold shadow-lg shadow-theme-btn-primary/20">
                 {saving ? "Saving..." : editId ? "Update Profile" : "Create Vendor"}
               </AppButton>
             </div>

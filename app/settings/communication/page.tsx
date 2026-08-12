@@ -11,18 +11,18 @@ const MODULES = [
     description: "Manage Primary and Fallback SMTP/Graph providers for high-availability routing.",
     href: "/settings/communication/providers",
     icon: Server,
-    color: "text-accent",
-    bg: "bg-accent/10",
-    border: "border-accent/20"
+    color: "text-theme-icon",
+    bg: "bg-theme-btn-primary/10",
+    border: "border-theme-btn-primary/20"
   },
   {
     title: "Template Designer",
     description: "Design dynamic HTML email templates with intelligent merge tag hydration.",
     href: "/settings/communication/templates",
     icon: LayoutTemplate,
-    color: "text-accent",
-    bg: "bg-accent/10",
-    border: "border-accent/20"
+    color: "text-theme-icon",
+    bg: "bg-theme-btn-primary/10",
+    border: "border-theme-btn-primary/20"
   },
   {
     title: "Notification Rules",
@@ -50,7 +50,7 @@ export default function CommunicationCenterHub() {
   if (permsLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
     );
   }
@@ -81,13 +81,13 @@ export default function CommunicationCenterHub() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {MODULES.map((mod) => (
           <Link href={mod.href} key={mod.title}>
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md hover:border-accent/50 hover:bg-accent/5 transition-all cursor-pointer group h-full">
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md hover:border-theme-btn-primary/50 hover:bg-theme-btn-primary/5 transition-all cursor-pointer group h-full">
               <div className="flex items-start space-x-4">
                 <div className={`p-3 rounded-lg ${mod.bg} ${mod.border} border transition-colors group-hover:bg-opacity-20`}>
                   <mod.icon className={`w-6 h-6 ${mod.color}`} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-foreground group-hover:text-accent transition-colors">{mod.title}</h2>
+                  <h2 className="text-lg font-semibold text-foreground group-hover:text-theme-icon transition-colors">{mod.title}</h2>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{mod.description}</p>
                 </div>
               </div>

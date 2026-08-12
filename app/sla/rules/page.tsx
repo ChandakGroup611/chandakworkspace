@@ -99,7 +99,7 @@ export default function SLARuleBuilder() {
   };
 
   if (loading) {
-    return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
+    return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-theme-icon" /></div>;
   }
 
   return (
@@ -126,7 +126,7 @@ export default function SLARuleBuilder() {
           )}
 
           {rules.map(rule => (
-            <AppCard key={rule.id} className={`transition-all ${editingId === rule.id ? 'ring-2 ring-accent' : ''}`}>
+            <AppCard key={rule.id} className={`transition-all ${editingId === rule.id ? 'ring-2 ring-theme-btn-primary' : ''}`}>
               {editingId === rule.id ? (
                 <div className="p-6 space-y-4">
                   <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
@@ -155,14 +155,14 @@ export default function SLARuleBuilder() {
                     </div>
                     <div>
                       <label className="text-sm font-bold text-muted uppercase">Working Hours Code</label>
-                      <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
+                      <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                         <option value="24x7">24x7 Continuous</option>
                         <option value="9x5">9x5 Business Hours</option>
                       </select>
                     </div>
                     <div>
                       <label className="text-sm font-bold text-muted uppercase">Escalation Level</label>
-                      <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
+                      <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                         <option value="STANDARD">Standard</option>
                         <option value="PRIORITY">Priority Escalate</option>
                         <option value="URGENT">Urgent (C-Level)</option>
@@ -204,10 +204,10 @@ export default function SLARuleBuilder() {
           ))}
 
           {editingId === "new" && (
-            <AppCard className="ring-2 ring-accent">
+            <AppCard className="ring-2 ring-theme-btn-primary">
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
-                  <h3 className="font-bold text-lg text-accent">Create New SLA Policy</h3>
+                  <h3 className="font-bold text-lg text-theme-icon">Create New SLA Policy</h3>
                   <div className="flex gap-2">
                     <AppButton size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</AppButton>
                     <AppButton size="sm" variant="primary" onClick={handleSave} disabled={saving} leftIcon={saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}>Save Policy</AppButton>
@@ -232,14 +232,14 @@ export default function SLARuleBuilder() {
                   </div>
                   <div>
                     <label className="text-sm font-bold text-muted uppercase">Working Hours Code</label>
-                    <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
+                    <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                       <option value="24x7">24x7 Continuous</option>
                       <option value="9x5">9x5 Business Hours</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-sm font-bold text-muted uppercase">Escalation Level</label>
-                    <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
+                    <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                       <option value="STANDARD">Standard</option>
                       <option value="PRIORITY">Priority Escalate</option>
                       <option value="URGENT">Urgent (C-Level)</option>

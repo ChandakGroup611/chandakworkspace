@@ -75,7 +75,7 @@ export default function KnowledgeBaseAuthoring() {
                 onClick={() => { setActiveArticle(article); setPreviewMode(false); }}
                 className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                   activeArticle?.id === article.id
-                    ? "border-accent bg-accent/5 dark:bg-accent/10 shadow-sm" 
+                    ? "border-theme-btn-primary bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 shadow-sm" 
                     : "border-transparent hover:bg-surface dark:hover:bg-surface/5"
                 }`}
               >
@@ -85,7 +85,7 @@ export default function KnowledgeBaseAuthoring() {
                   </AppBadge>
                   <span className="text-[10px] text-muted">{article.category}</span>
                 </div>
-                <h4 className={`text-sm font-bold truncate ${activeArticle?.id === article.id ? "text-accent" : "text-foreground"}`}>
+                <h4 className={`text-sm font-bold truncate ${activeArticle?.id === article.id ? "text-theme-icon" : "text-foreground"}`}>
                   {article.title || "Untitled Article"}
                 </h4>
               </div>
@@ -124,7 +124,7 @@ export default function KnowledgeBaseAuthoring() {
                   <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <span className="text-muted font-medium">Status:</span>
                     <select 
-                      className="bg-transparent border border-border rounded px-2 py-1 text-sm focus:ring-accent"
+                      className="bg-transparent border border-border rounded px-2 py-1 text-sm focus:ring-theme-btn-primary"
                       value={activeArticle.isPublished ? "published" : "draft"}
                       onChange={e => setActiveArticle({...activeArticle, isPublished: e.target.value === "published"})}
                     >
@@ -168,7 +168,7 @@ export default function KnowledgeBaseAuthoring() {
                       <div>
                         <label className="text-sm font-bold text-muted uppercase">Category</label>
                         <select 
-                          className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-accent" 
+                          className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" 
                           value={activeArticle.category} 
                           onChange={e => setActiveArticle({...activeArticle, category: e.target.value})}
                         >

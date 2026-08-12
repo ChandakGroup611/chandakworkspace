@@ -55,14 +55,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
                 <span className={`text-2xl font-bold tabular-nums ${"text-foreground"}`}>{timeLeft}m</span>
                 <p className="text-xs text-muted font-medium">Until Resolution Breach</p>
               </div>
-              <div className={`p-3 rounded-xl bg-accent/10`}>
-                <Clock className={`h-5 w-5 text-accent`} />
+              <div className={`p-3 rounded-xl bg-theme-btn-primary/10`}>
+                <Clock className={`h-5 w-5 text-theme-icon`} />
               </div>
             </div>
             <div className="space-y-2">
               <div className={`h-1.5 w-full rounded-full overflow-hidden bg-elevated`}>
                 <div 
-                  className={`h-full transition-all duration-1000 ${isStable ? "bg-accent" : "bg-amber-500"}`}
+                  className={`h-full transition-all duration-1000 ${isStable ? "bg-theme-btn-primary" : "bg-amber-500"}`}
                   style={{ width: `${slaPercentage}%` }}
                 />
               </div>
@@ -80,7 +80,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           <div className="grid grid-cols-1 gap-2">
             <AppButton 
               className={`w-full justify-start text-xs py-5 border ${
-                "bg-accent/10 border-accent/30 text-accent hover:bg-accent/10"
+                "bg-theme-btn-primary/10 border-theme-btn-primary/30 text-theme-icon hover:opacity-90/10"
               }`}
               onClick={() => onAction("ASSIGN")}
             >
@@ -129,11 +129,11 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Watchers</h3>
-            <span className="text-xs text-accent font-bold cursor-pointer">Manage</span>
+            <span className="text-xs text-theme-icon font-bold cursor-pointer">Manage</span>
           </div>
           <div className="flex -space-x-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-accent ${
+              <div key={i} className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold text-white bg-theme-btn-primary ${
                 "border-white"
               }`}>
                 JD
@@ -153,8 +153,8 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
             "border-border bg-elevated/50/50/50/50 hover:bg-elevated/50/50/50/50"
           }`}>
-            <div className={`p-2 rounded-lg bg-surface group-hover:bg-accent/10`}>
-              <Eye className={`h-4 w-4 text-muted group-hover:text-accent`} />
+            <div className={`p-2 rounded-lg bg-surface group-hover:opacity-90/10`}>
+              <Eye className={`h-4 w-4 text-muted group-hover:text-theme-icon`} />
             </div>
             <p className="text-[0.7rem] text-muted">Drop files to link</p>
           </div>

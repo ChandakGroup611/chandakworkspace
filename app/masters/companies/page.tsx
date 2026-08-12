@@ -167,7 +167,7 @@ export default function CompanyMasterPage() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface"
       }`}>
-        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
       </div>
     );
   }
@@ -193,7 +193,7 @@ export default function CompanyMasterPage() {
       <div className="flex items-center justify-between pb-4 border-b border-white/5">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Building2 className={`h-6 w-6 text-accent`} />
+            <Building2 className={`h-6 w-6 text-theme-icon`} />
             <h1 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Company Master</h1>
             <AppBadge variant="info">Global Enterprise</AppBadge>
           </div>
@@ -257,7 +257,7 @@ export default function CompanyMasterPage() {
                 <AppTableRow key={c.id} className={`border-b last:border-0 transition-colors ${
                   "border-border hover:bg-elevated"
                 }`}>
-                  <AppTableCell className="py-3 px-4 font-mono text-xs font-bold text-accent">{c.code}</AppTableCell>
+                  <AppTableCell className="py-3 px-4 font-mono text-xs font-bold text-theme-icon">{c.code}</AppTableCell>
                   <AppTableCell className="py-3 px-4">
                     <div className="flex flex-col">
                       <span className={`text-sm font-bold ${"text-foreground"}`}>{c.name}</span>
@@ -280,7 +280,7 @@ export default function CompanyMasterPage() {
                       <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-rose-400 hover:bg-rose-500/10' : 'text-emerald-400 hover:bg-emerald-500/10'}`}>
                         {c.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                       </AppButton>
-                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-accent hover:bg-accent/10 transition-colors">
+                      <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-theme-icon hover:bg-theme-btn-primary/10 transition-colors">
                         Edit
                       </AppButton>
                       <AppButton variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
@@ -304,7 +304,7 @@ export default function CompanyMasterPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 bg-surface/60 backdrop-blur-sm flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4 animate-in fade-in-50">
-          <AppCard className="w-full max-w-xl p-6 shadow-2xl border-accent/20">
+          <AppCard className="w-full max-w-xl p-6 shadow-2xl border-theme-btn-primary/20">
             <h2 className="text-xl font-bold text-foreground mb-4">{editId ? 'Edit' : 'Register'} Company</h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -337,7 +337,7 @@ export default function CompanyMasterPage() {
               <div className="space-y-1">
                 <label className="text-sm uppercase tracking-wider text-muted font-bold">Physical Address</label>
                 <textarea 
-                  className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
+                  className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-theme-btn-primary focus:outline-none"
                   rows={2}
                   value={formAddress}
                   onChange={e => setFormAddress(e.target.value)}
@@ -347,7 +347,7 @@ export default function CompanyMasterPage() {
               <div className="space-y-1">
                 <label className="text-sm uppercase tracking-wider text-muted font-bold">Remarks</label>
                 <textarea 
-                  className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-accent focus:outline-none"
+                  className="w-full bg-surface/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-theme-btn-primary focus:outline-none"
                   rows={2}
                   value={formRemarks}
                   onChange={e => setFormRemarks(e.target.value)}

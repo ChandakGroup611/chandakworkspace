@@ -64,7 +64,7 @@ export function EnterpriseDrawerShell({
         {/* Header */}
         <div className={`shrink-0 p-6 border-b flex items-start justify-between gap-4 ${ " theme-card-structural " }`}>
           <div>
-            {title && <h2 className={`text-xl font-extrabold tracking-tight ${"text-foreground"}`}>{title}</h2>}
+            {title && <h2 className={`text-xl font-extrabold tracking-tight ${"text-theme-heading"}`}>{title}</h2>}
             {subtitle && <div className="text-sm text-muted mt-1">{subtitle}</div>}
           </div>
           <AppButton 

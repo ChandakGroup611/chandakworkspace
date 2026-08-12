@@ -87,7 +87,7 @@ function DraggableTableHead({
       ref={setNodeRef} 
       style={style} 
       className={cn(
-        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors align-middle group/header relative", 
+        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:opacity-90/10 transition-colors align-middle group/header relative", 
         col.field_key === "actions" ? "w-[50px]" : "", 
         !isTitle ? "text-center" : "text-left",
         ["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""
@@ -797,7 +797,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   });
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full mx-auto my-12" />;
+    return <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full mx-auto my-12" />;
   }
 
   if (!hasPermission("TASKS_VIEW")) {
@@ -828,21 +828,21 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <div className="flex theme-card-structural p-0.5 rounded-lg mr-2">
               <AppButton variant="secondary" 
                 onClick={() => setViewMode("list")} 
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-accent text-white" : "text-muted hover:text-foreground"}`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-theme-btn-primary text-theme-btn-primary-text" : "text-muted hover:text-foreground"}`}
                 title="List View"
               >
                 <ListIcon className="h-4 w-4" />
               </AppButton>
               <AppButton variant="secondary" 
                 onClick={() => setViewMode("board")} 
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "board" ? "bg-accent text-white" : "text-muted hover:text-foreground"}`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "board" ? "bg-theme-btn-primary text-theme-btn-primary-text" : "text-muted hover:text-foreground"}`}
                 title="Board View"
               >
                 <LayoutGrid className="h-4 w-4" />
               </AppButton>
               <AppButton variant="secondary" 
                 onClick={() => setViewMode("timeline")} 
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "timeline" ? "bg-accent text-white" : "text-muted hover:text-foreground"}`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "timeline" ? "bg-theme-btn-primary text-theme-btn-primary-text" : "text-muted hover:text-foreground"}`}
                 title="Timeline View"
               >
                 <CalendarDays className="h-4 w-4" />
@@ -862,7 +862,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               setCreationWorkspaceId(initialWs);
               setCreationSubWorkspaceId(initialSubWs);
               setShowWorkspaceSelector(true);
-            }} leftIcon={<Plus className="h-4 w-4" />} className="h-9 px-4 font-semibold bg-accent hover:bg-accent-secondary text-white shadow-sm">
+            }} leftIcon={<Plus className="h-4 w-4" />} className="h-9 px-4 font-semibold bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text shadow-sm">
               New Task
             </AppButton>
           </div>
@@ -876,7 +876,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <AppButton variant="secondary"
                   key={sc}
                   onClick={() => setScope(sc)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Tasks" : sc === "ASSIGNEE" ? "Assigned To Me" : "Enrolled Tasks"}
                 </AppButton>
@@ -893,7 +893,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                     setSelectedWorkspaceId(newWsId);
                     fetchTasksData(1, false, newWsId);
                   }}
-                  className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
                 >
                   <option value="">All Workspaces</option>
                   {allWorkspaces.map((ws: any) => (
@@ -904,7 +904,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </select>
               </div>
 
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
                 <option value="">All Statuses</option>
                 {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -913,20 +913,20 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
           {/* Bottom Row: Priority, Escalated, Date Range, Search, Actions */}
           <div className="flex items-center gap-3 px-4 py-3 bg-surface/50 dark:bg-surface/[0.02]">
-            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-10 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-10 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
               <option value="">All Priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
             
             <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer hover:opacity-80 transition-opacity">
-              <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-border text-accent focus:ring-accent w-4 h-4" />
+              <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-4 h-4" />
               Escalated
             </label>
 
             <div className="flex items-center gap-2 mx-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
               <span className="text-sm text-muted">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
             </div>
             
             <div className="relative flex-1">
@@ -935,7 +935,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 placeholder="Search tasks, code..." 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
+                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary placeholder:text-muted" 
               />
             </div>
 
@@ -969,7 +969,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         />
 
         {successToast && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
             <span className="text-xs font-semibold">{successToast}</span>
           </div>
         )}
@@ -990,7 +990,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       }
                     }}
                     onChange={handleSelectAll}
-                    className="rounded border-border text-accent focus:ring-accent w-3.5 h-3.5 mx-auto block"
+                    className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
                   />
                 </AppTableHead>
                 <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
@@ -1027,21 +1027,21 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       type="checkbox" 
                       checked={selectedTaskIds.has(task.id)}
                       onChange={(e) => handleSelectTask(task.id, e.target.checked)}
-                      className="rounded border-border text-accent focus:ring-accent w-3.5 h-3.5 mx-auto block"
+                      className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
                     />
                   </AppTableCell>
                   {visibleColumns.map((col, index) => {
                     const renderCell = () => {
                       switch(col.field_key) {
                       case "code": return (
-                        <AppTableCell className="font-mono text-[13px] font-bold text-accent whitespace-nowrap text-center">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                        <AppTableCell className="font-mono text-[13px] font-bold text-theme-icon whitespace-nowrap text-center">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                       );
                       case "title_description": return (
                         <AppTableCell className="text-left">
                           <div className="flex items-center gap-2">
                             <div className="text-[13px] font-semibold text-foreground whitespace-normal break-words w-full">{task.title || '-'}</div>
                             {task.attachmentCount > 0 && (
-                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-accent/10 dark:bg-accent/20 text-accent dark:text-accent" title={`${task.attachmentCount} Attachment(s)`}>
+                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 text-theme-icon dark:text-theme-icon" title={`${task.attachmentCount} Attachment(s)`}>
                                 <Paperclip className="h-3 w-3" />
                               </div>
                             )}
@@ -1167,7 +1167,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                      {a.profile_photo ? (
                                        <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-elevated" />
                                      ) : (
-                                       <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
+                                       <div className="w-5 h-5 rounded-full bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center text-[10px] font-bold shrink-0">
                                          {a.full_name?.substring(0, 2).toUpperCase() || "U"}
                                        </div>
                                      )}
@@ -1237,7 +1237,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                 u.profile_photo ? (
                                   <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
                                 ) : (
-                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-accent/10 text-accent text-[8px] font-bold" title={u.full_name}>
+                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-theme-btn-primary/10 text-theme-icon text-[8px] font-bold" title={u.full_name}>
                                     {u.full_name?.substring(0, 2).toUpperCase() || "W"}
                                   </div>
                                 )
@@ -1254,7 +1254,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       case "attachments": return (
                         <AppTableCell className="text-center">
                           {task.attachmentCount > 0 ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/10 text-accent dark:bg-accent/10 dark:text-accent font-medium text-[11px]">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
                               <Paperclip className="h-3 w-3" />
                               {task.attachmentCount}
                             </div>
@@ -1264,7 +1264,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       case "comments": return (
                         <AppTableCell className="text-center">
                           {task.commentCount > 0 ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/10 text-accent dark:bg-accent/10 dark:text-accent font-medium text-[11px]">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
                               <MessageSquare className="h-3 w-3" />
                               {task.commentCount}
                             </div>
@@ -1274,7 +1274,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       case "external_link": return (
                         <AppTableCell className="text-xs">
                           {task.custom_fields?.link_url ? (
-                            <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
+                            <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="text-theme-icon hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
                               <ExternalLink className="h-3 w-3 flex-shrink-0" />
                               <span className="truncate">{task.custom_fields.link_url}</span>
                             </a>
@@ -1292,7 +1292,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           <div className="flex items-center justify-end gap-3">
                             <Link 
                               href={`/tasks/${task.id}?mode=view`}
-                              className="text-accent hover:text-accent transition-colors active:scale-95"
+                              className="text-theme-icon hover:text-theme-icon transition-colors active:scale-95"
                               title="View Task"
                             >
                               <Eye className="h-[15px] w-[15px]" />
@@ -1339,7 +1339,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           <AppTableCell className="text-[13px] text-subtle dark:text-muted">
                             <div className="truncate max-w-[200px]" title={String(val)}>
                               {col.data_type === "link" && val !== "—" ? (
-                                <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-accent hover:underline">{val}</a>
+                                <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
                               ) : col.data_type === "badge" && val !== "—" ? (
                                 <AppBadge variant="neutral">{val}</AppBadge>
                               ) : (
@@ -1428,7 +1428,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] theme-card-structural dark:bg-[#0B0F19] shadow-2xl border-l border-border dark:border-white/10 flex flex-col animate-in slide-in-from-right duration-200">
             <div className="p-4 border-b border-border dark:border-white/10 flex items-center justify-between bg-surface dark:theme-card-structural /[0.02]">
               <div>
-                <h2 className="text-[14px] font-bold text-foreground dark:text-white truncate pr-4">{selectedTask.title}</h2>
+                <h2 className="text-[14px] font-bold text-theme-heading truncate pr-4">{selectedTask.title}</h2>
                 <div className="text-[11px] font-mono text-muted mt-1">{selectedTask.code} • {selectedTask.workspace?.name}</div>
               </div>
               <AppButton variant="ghost" size="sm" onClick={() => setSelectedTask(null)} className="h-8 w-8 p-0 shrink-0">✕</AppButton>
@@ -1464,13 +1464,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               {/* Checklists and Custom Fields */}
               {selectedTask.custom_fields && Object.keys(selectedTask.custom_fields).length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-border/50 dark:border-white/5">
-                  <h4 className="text-[11px] uppercase font-bold text-accent tracking-wider mb-2">Checklists & Details</h4>
+                  <h4 className="text-[11px] uppercase font-bold text-theme-icon tracking-wider mb-2">Checklists & Details</h4>
                   
                   {selectedTask.custom_fields.checklist && Array.isArray(selectedTask.custom_fields.checklist) && (
                     <div className="space-y-2 mb-4">
                       {selectedTask.custom_fields.checklist.map((item: any, idx: number) => (
                         <div key={idx} className="flex items-start gap-2 bg-surface dark:theme-card-structural /[0.02] p-2 rounded-lg border-border/50 dark:border-white/5">
-                          <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-border text-accent focus:ring-accent" />
+                          <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-border text-theme-icon focus:ring-theme-btn-primary" />
                           <span className={`text-[13px] ${item.completed ? 'line-through text-muted' : 'text-foreground dark:text-muted'}`}>{item.title}</span>
                         </div>
                       ))}
@@ -1493,7 +1493,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             <div className="p-4 border-t border-border dark:border-white/10 bg-surface dark:theme-card-structural /[0.02] flex items-center gap-2">
               <Link href={`/tasks/${selectedTask.id}`} className="w-full flex-1">
-                <AppButton variant="primary" className="w-full bg-accent hover:bg-accent-secondary">Open Execution Workspace</AppButton>
+                <AppButton variant="primary" className="w-full bg-theme-btn-primary hover:opacity-90">Open Execution Workspace</AppButton>
               </Link>
             </div>
           </div>
@@ -1505,7 +1505,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       {selectedTaskIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 theme-card-structural dark:bg-[#0f111a] border-border dark:border-white/10 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10 fade-in duration-300">
           <div className="flex items-center gap-2">
-            <div className="bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
+            <div className="bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/20 dark:text-theme-icon font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
               {selectedTaskIds.size}
             </div>
             <span className="theme-data-value text-subtle dark:text-muted">Tasks Selected</span>
@@ -1538,7 +1538,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkOldStatus}
                   onChange={(e) => setBulkOldStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
                 >
                   <option value="">Any Status</option>
                   {masterStatuses.map((st) => (
@@ -1552,7 +1552,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkNewStatus}
                   onChange={(e) => setBulkNewStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
                 >
                   <option value="">Leave Unchanged</option>
                   {masterStatuses.map((st) => (
@@ -1568,7 +1568,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkOldDepartment}
                   onChange={(e) => setBulkOldDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
                 >
                   <option value="">Any Department</option>
                   {departments.map((dep) => (
@@ -1582,7 +1582,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={bulkNewDepartment}
                   onChange={(e) => setBulkNewDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
                 >
                   <option value="">Leave Unchanged</option>
                   {departments.map((dep) => (
@@ -1598,7 +1598,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={bulkRemark}
                 onChange={(e) => setBulkRemark(e.target.value)}
                 placeholder="Why are you updating these tasks?"
-                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary min-h-[80px] resize-none"
               />
             </div>
             <div className="text-[10px] text-amber-600">Note: Tasks you don't own will fail to update unless you are a super admin.</div>
@@ -1632,7 +1632,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={inlineNewStatus}
                   onChange={(e) => setInlineNewStatus(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
                 >
                   <option value="" disabled>Select Status</option>
                   {masterStatuses.map((st) => (
@@ -1652,7 +1652,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1685,7 +1685,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={inlineNewDepartment}
                   onChange={(e) => setInlineNewDepartment(e.target.value)}
-                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                  className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
                 >
                   <option value="">-- No Department --</option>
                   {departments.map((dep) => (
@@ -1705,7 +1705,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 value={inlineRemark}
                 onChange={(e) => setInlineRemark(e.target.value)}
                 placeholder="Why are you updating this task?"
-                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[80px] resize-none"
+                className="w-full text-[13px] theme-card-structural border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary min-h-[80px] resize-none"
               />
             </div>
           </div>
@@ -1737,7 +1737,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   setCreationWorkspaceId(e.target.value);
                   setCreationSubWorkspaceId("");
                 }}
-                className="w-full text-sm p-2.5 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-accent focus:border-accent"
+                className="w-full text-sm p-2.5 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-theme-heading focus:ring-theme-btn-primary focus:border-theme-btn-primary"
               >
                 <option value="">-- Select Workspace --</option>
                 {allWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
@@ -1752,7 +1752,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-accent focus:border-accent"
+                  className="w-full text-sm p-2.5 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-theme-heading focus:ring-theme-btn-primary focus:border-theme-btn-primary"
                 >
                   <option value="">-- None --</option>
                   {allWorkspaces.filter(sw => sw.parent_workspace_id === creationWorkspaceId).map(sw => (

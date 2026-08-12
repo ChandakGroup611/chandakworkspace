@@ -40,12 +40,12 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
 
   const getActionIcon = (action: string) => {
     switch (action) {
-      case 'STATUS_CHANGE': return <Activity className="h-4 w-4 text-accent" />;
-      case 'DEPARTMENT_CHANGE': return <Activity className="h-4 w-4 text-accent" />;
+      case 'STATUS_CHANGE': return <Activity className="h-4 w-4 text-theme-icon" />;
+      case 'DEPARTMENT_CHANGE': return <Activity className="h-4 w-4 text-theme-icon" />;
       case 'CHECKLIST_UPDATE': return <CheckSquare className="h-4 w-4 text-emerald-500" />;
-      case 'COMMENT': return <MessageSquare className="h-4 w-4 text-accent" />;
+      case 'COMMENT': return <MessageSquare className="h-4 w-4 text-theme-icon" />;
       case 'EDIT': return <Edit className="h-4 w-4 text-amber-500" />;
-      case 'CREATE': return <Activity className="h-4 w-4 text-accent" />;
+      case 'CREATE': return <Activity className="h-4 w-4 text-theme-icon" />;
       case 'DELETE': return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'RESTORE': return <Activity className="h-4 w-4 text-emerald-500" />;
       case 'ASSIGNMENT_CHANGE': return <Edit className="h-4 w-4 text-emerald-600" />;
@@ -91,7 +91,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
   return (
     <AppCard className={`p-5 space-y-4 border-smooth theme-card-structural shadow-sm`}>
       <div className="flex items-center gap-2 border-b pb-3 mb-4 border-border dark:border-white/5">
-        <Clock className={`h-4 w-4 text-accent`} />
+        <Clock className={`h-4 w-4 text-theme-icon`} />
         <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>
       </div>
 
@@ -108,7 +108,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
                 "bg-elevated/50 border-border"
               }`}>
                 <p className={`text-xs text-foreground`}>
-                  <strong className={"text-accent"}>
+                  <strong className={"text-theme-icon"}>
                     {log.actor?.full_name || 'System Administrator'}
                   </strong> {getActionText(log)}
                 </p>

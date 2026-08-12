@@ -59,7 +59,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   onClick={() => setActiveTab("details")}
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "details"
-                      ? "shadow-accent/20"
+                      ? "shadow-theme-btn-primary/20"
                       : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
                   }`}
                 >
@@ -71,7 +71,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   onClick={() => setActiveTab("collaboration")}
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "collaboration"
-                      ? "shadow-accent/20"
+                      ? "shadow-theme-btn-primary/20"
                       : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
                   }`}
                 >
@@ -83,7 +83,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               {activeTab === "details" && (
                 <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
                   <section className="bg-surface/20 rounded-2xl p-6 border border-white/5">
-                    <h3 className="text-xs font-bold text-accent uppercase tracking-widest mb-3">Business Justification</h3>
+                    <h3 className="text-xs font-bold text-theme-icon uppercase tracking-widest mb-3">Business Justification</h3>
                     <div className="text-muted text-sm leading-relaxed">
                       <SafeHtml html={requirement.business_justification} />
                     </div>
@@ -100,7 +100,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   <section className="bg-surface/40 rounded-2xl p-6 border border-white/5">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-sm font-bold text-foreground">Implementation Progress</h3>
-                      <span className="text-2xl font-bold text-accent">{requirement.completion_percentage}%</span>
+                      <span className="text-2xl font-bold text-theme-icon">{requirement.completion_percentage}%</span>
                     </div>
                     <div className="h-2 w-full bg-surface rounded-full overflow-hidden mb-6">
                       <div 
@@ -176,7 +176,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Business Analyst</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent border border-accent/50">
+                  <div className="w-6 h-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold text-theme-icon border border-theme-btn-primary/50">
                     {requirement.analyst?.full_name?.charAt(0) || '?'}
                   </div>
                   <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
@@ -202,7 +202,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               <div className="bg-surface/40 rounded-2xl p-5 border border-white/5">
                 <h3 className="text-xs font-bold text-muted uppercase tracking-widest flex justify-between items-center mb-4">
                   Attachments
-                  <AppButton size="sm" variant="ghost" className="text-accent hover:text-indigo-300 p-1 bg-accent/10">+</AppButton>
+                  <AppButton size="sm" variant="ghost" className="text-theme-icon hover:text-indigo-300 p-1 bg-theme-btn-primary/10">+</AppButton>
                 </h3>
                 <div className="space-y-3">
                   <div className="text-sm text-muted flex items-center gap-2 bg-surface/40 p-2 rounded-lg border border-white/5">

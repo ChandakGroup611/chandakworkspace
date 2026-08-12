@@ -133,7 +133,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
-            <h3 className="text-xl font-bold text-accent">License Allocation</h3>
+            <h3 className="text-xl font-bold text-theme-icon">License Allocation</h3>
             <p className="text-sm text-muted mt-1">
               {allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'} Licenses Assigned
             </p>
@@ -151,7 +151,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {loading ? (
-                <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+                <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
               ) : allocations.length === 0 ? (
                 <div className="text-center p-8 text-muted italic">No licenses allocated yet.</div>
               ) : (
@@ -187,18 +187,18 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                   placeholder="Search users to allocate..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20 transition-all theme-card-structural text-foreground`}
+                  className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none focus:ring-2 focus:ring-theme-btn-primary/20 transition-all theme-card-structural text-foreground`}
                 />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {loading ? (
-                <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+                <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center p-8 text-muted italic">No unassigned users found.</div>
               ) : (
                 filteredUsers.map(u => (
-                  <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-accent/50 transition-colors`}>
+                  <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-theme-btn-primary/50 transition-colors`}>
                     <div>
                       <div className="font-semibold text-sm">{u.full_name}</div>
                       <div className="text-xs text-muted">{u.email}</div>

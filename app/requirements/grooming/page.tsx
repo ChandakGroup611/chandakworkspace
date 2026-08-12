@@ -105,7 +105,7 @@ export default function RequirementsGroomingBoard() {
       <div className="mt-4 flex-1 overflow-hidden flex flex-col min-h-[500px]">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-btn-primary"></div>
           </div>
         ) : (
           <div className="flex h-full overflow-x-auto pb-4 space-x-6">
@@ -173,7 +173,7 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   if (isDragging) {
-    return <div ref={setNodeRef} style={style} className="opacity-40 border-2 border-accent border-dashed rounded-xl h-[140px] bg-accent/5" />;
+    return <div ref={setNodeRef} style={style} className="opacity-40 border-2 border-theme-btn-primary border-dashed rounded-xl h-[140px] bg-theme-btn-primary/5" />;
   }
 
   return (
@@ -185,12 +185,12 @@ function SortableReqCard({ req, onClick }: { req: any, onClick: () => void }) {
 
 function ReqCard({ req }: { req: any }) {
   return (
-    <AppCard className="hover:shadow-lg hover:border-accent/40 transition-all group overflow-hidden bg-surface dark:bg-[#0f111a] border-border dark:border-white/10">
+    <AppCard className="hover:shadow-lg hover:border-theme-btn-primary/40 transition-all group overflow-hidden bg-surface dark:bg-[#0f111a] border-border dark:border-white/10">
       <div className="p-4">
         <div className="flex justify-between items-start mb-3 gap-2">
           <div className="flex items-center gap-2">
             <GripVertical className="h-4 w-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="font-mono text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
+            <div className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded">
               {req.code || req.requirement_code || req.id?.substring(0, 8)}
             </div>
           </div>

@@ -165,12 +165,12 @@ export default function SLAPage() {
       {/* Interactive SLA Governance Heatmap Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-accent' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
+          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-theme-btn-primary' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
             <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1">Total Records</span>
-            <span className="text-3xl font-bold text-accent dark:text-accent">{loading ? '-' : totalRecords}</span>
+            <span className="text-3xl font-bold text-theme-icon dark:text-theme-icon">{loading ? '-' : totalRecords}</span>
           </AppCardContent>
         </AppCard>
 
@@ -231,11 +231,11 @@ export default function SLAPage() {
                         <AppTableCell>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className={`font-mono text-xs font-bold text-accent`}>{item.displayId || item.id}</span>
+                              <span className={`font-mono text-xs font-bold text-theme-icon`}>{item.displayId || item.id}</span>
                               <AppBadge variant="neutral" className="text-[0.65rem] py-0">{item.module}</AppBadge>
                             </div>
                             <span className="text-[0.8rem] text-muted block truncate max-w-[150px]">{item.targetEntity}</span>
-                            <span className={`text-xs font-semibold text-accent`}>{item.type}</span>
+                            <span className={`text-xs font-semibold text-theme-icon`}>{item.type}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell>
@@ -259,7 +259,7 @@ export default function SLAPage() {
                               <AppButton 
                                 variant="ghost" 
                                 size="sm" 
-                                className="h-6 w-6 p-0 text-accent hover:bg-accent/10" 
+                                className="h-6 w-6 p-0 text-theme-icon hover:bg-theme-btn-primary/10" 
                                 title="View Record"
                                 onClick={() => {
                                   let url = "";

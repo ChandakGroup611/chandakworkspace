@@ -642,7 +642,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-surface dark:bg-[#050505]">
-        <div className="animate-spin h-10 w-10 border-2 border-accent border-t-transparent rounded-full"></div>
+        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -736,7 +736,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <label className="block theme-data-value text-subtle dark:text-muted mb-1.5 uppercase tracking-wider">Attachment (Optional)</label>
               <input 
                 type="file" 
-                className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-white hover:file:bg-accent-secondary transition-all"
+                className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary file:text-white hover:file:bg-theme-btn-primary-secondary transition-all"
                 onChange={(e) => {
                   if (e.target.files && e.target.files.length > 0) {
                     setAmendmentFile(e.target.files[0]);
@@ -770,8 +770,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
       <Dialog open={showReadyNotification} onOpenChange={setShowReadyNotification}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5 bg-accent/5">
-            <DialogTitle className="flex items-center gap-2 text-accent">
+          <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5 bg-theme-btn-primary/5">
+            <DialogTitle className="flex items-center gap-2 text-theme-icon">
               <CheckCircle className="h-5 w-5" />
               Tasks Completed
             </DialogTitle>
@@ -825,7 +825,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <select
                 value={selectedWorkspaceId}
                 onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                className="w-full text-sm p-2.5 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-accent focus:border-accent"
+                className="w-full text-sm p-2.5 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-theme-btn-primary focus:border-theme-btn-primary"
               >
                 <option value="">-- Select Workspace --</option>
                 {workspaces.map(w => <option key={w.id} value={w.id}>{w.workspace_name || w.name}</option>)}
@@ -838,7 +838,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 <select
                   value={selectedSubWorkspaceId}
                   onChange={(e) => setSelectedSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-accent focus:border-accent"
+                  className="w-full text-sm p-2.5 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-white focus:ring-theme-btn-primary focus:border-theme-btn-primary"
                 >
                   <option value="">-- None --</option>
                   {subWorkspaces.filter(sw => sw.parent_workspace_id === selectedWorkspaceId).map(sw => (
@@ -1061,7 +1061,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
                   <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
-                    <Target className="w-3 h-3 text-accent" /> Scope
+                    <Target className="w-3 h-3 text-theme-icon" /> Scope
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.scope || '-'}>{requirement.scope || '-'}</span>
                 </div>
@@ -1113,7 +1113,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             {attachments.length > 0 && (
               <AppCard className="overflow-hidden border border-border/60 shadow-md p-5">
                 <div className="text-xs font-extrabold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
-                  <Paperclip className="h-4 w-4 text-accent" /> Associated Files & Attachments ({attachments.length})
+                  <Paperclip className="h-4 w-4 text-theme-icon" /> Associated Files & Attachments ({attachments.length})
                 </div>
                 <div className="flex gap-3 flex-wrap">
                   {attachments.map(att => (
@@ -1121,14 +1121,14 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       key={att.id}
                       className="flex items-center gap-2 pl-3 pr-1 py-1.5 bg-surface dark:bg-elevated/40 border border-border/60 rounded-xl text-xs shadow-2xs hover:border-border transition-all"
                     >
-                      <Paperclip className="h-4 w-4 text-accent" />
+                      <Paperclip className="h-4 w-4 text-theme-icon" />
                       <span className="text-foreground font-semibold truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
                       <span className="text-[10px] text-muted mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
                       <div className="flex items-center gap-1 border-l border-border/60 pl-2">
                         <AppButton 
                           variant="ghost" size="sm"
                           onClick={() => handleAttachmentAction(att.id, 'view')}
-                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
                           title="View Attachment"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -1136,7 +1136,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         <AppButton 
                           variant="ghost" size="sm"
                           onClick={() => handleAttachmentAction(att.id, 'download')}
-                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
                           title="Download Attachment"
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -1520,7 +1520,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 <div className="pt-3 border-t border-border/60 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-accent" /> Remarks History ({auditLogs.length})
+                      <Clock className="w-3.5 h-3.5 text-theme-icon" /> Remarks History ({auditLogs.length})
                     </h4>
                     
                     <AppButton
@@ -1549,7 +1549,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         <div className="space-y-2.5 max-h-60 overflow-y-auto scrollbar-thin pr-1">
                           {auditLogs.map((log: any, idx: number) => (
                             <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 hover:border-border transition-all">
-                              <div className="w-7 h-7 rounded-full bg-accent/20 text-accent font-bold text-xs flex items-center justify-center shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-theme-btn-primary/20 text-theme-icon font-bold text-xs flex items-center justify-center shrink-0">
                                 {log.user?.full_name?.substring(0, 2).toUpperCase() || 'U'}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -1641,14 +1641,14 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
                   <div className="space-y-3 pt-2">
                     <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-accent" /> Remark & Audit History ({auditLogs.length})
+                      <Clock className="w-3.5 h-3.5 text-theme-icon" /> Remark & Audit History ({auditLogs.length})
                     </h4>
                     
                     {auditLogs.length > 0 ? (
                       <div className="space-y-2.5 max-h-60 overflow-y-auto scrollbar-thin pr-1">
                         {auditLogs.map((log: any, idx: number) => (
                           <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 hover:border-border transition-all">
-                            <div className="w-7 h-7 rounded-full bg-accent/20 text-accent font-bold text-xs flex items-center justify-center shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-theme-btn-primary/20 text-theme-icon font-bold text-xs flex items-center justify-center shrink-0">
                               {log.user?.full_name?.substring(0, 2).toUpperCase() || 'U'}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1681,7 +1681,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <div className="flex flex-col h-full animate-in fade-in duration-300 gap-4 p-2">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-2">
-                  <Paperclip className="h-4 w-4 text-accent" /> Associated Files & Attachments ({attachments.length})
+                  <Paperclip className="h-4 w-4 text-theme-icon" /> Associated Files & Attachments ({attachments.length})
                 </h3>
               </div>
 
@@ -1692,14 +1692,14 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       key={att.id}
                       className="flex items-center gap-2 pl-3 pr-1 py-1.5 bg-surface dark:bg-elevated/40 border border-border/60 rounded-xl text-xs shadow-2xs hover:border-border transition-all"
                     >
-                      <Paperclip className="h-4 w-4 text-accent" />
+                      <Paperclip className="h-4 w-4 text-theme-icon" />
                       <span className="text-foreground font-semibold truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
                       <span className="text-[10px] text-muted mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
                       <div className="flex items-center gap-1 border-l border-border/60 pl-2">
                         <AppButton 
                           variant="ghost" size="sm"
                           onClick={() => handleAttachmentAction(att.id, 'view')}
-                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
                           title="View Attachment"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -1707,7 +1707,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         <AppButton 
                           variant="ghost" size="sm"
                           onClick={() => handleAttachmentAction(att.id, 'download')}
-                          className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
                           title="Download Attachment"
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -1730,7 +1730,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <div className="space-y-6 animate-in fade-in duration-300">
               {approvalFlow.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 opacity-50 mt-4 border border-dashed border-border dark:border-white/10 rounded-lg">
-                  <Shield className="h-8 w-8 mb-2 text-accent" />
+                  <Shield className="h-8 w-8 mb-2 text-theme-icon" />
                   <p className="text-xs text-muted dark:text-muted">No approval workflow has been initiated yet.</p>
                 </div>
               ) : (
@@ -1868,7 +1868,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           {activeTab === 'audit' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-2 pb-10">
               <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border dark:border-white/10">
-                <Clock className="h-5 w-5 text-accent" />
+                <Clock className="h-5 w-5 text-theme-icon" />
                 <h2 className="text-sm font-bold text-foreground dark:text-white">Audit Trail & Lifecycle History</h2>
               </div>
               
@@ -1882,7 +1882,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <AppCard key={log.id} className="p-3 flex flex-col gap-1 shadow-sm">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-accent/10 dark:bg-accent/20 flex items-center justify-center text-accent dark:text-accent">
+                          <div className="w-6 h-6 rounded-full bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 flex items-center justify-center text-theme-icon dark:text-theme-icon">
                             <Clock className="w-3 h-3" />
                           </div>
                           <span className="font-bold text-sm text-foreground dark:text-white">{log.event_type.replace(/_/g, ' ')}</span>
@@ -1923,7 +1923,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border dark:border-white/10 shadow-2xl rounded-xl bg-surface dark:bg-[#0a0d14]">
           <DialogHeader className="px-6 py-4 border-b border-border/50 dark:border-white/5 bg-surface/50 dark:bg-surface/30">
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <FilePlus className="h-5 w-5 text-accent" />
+              <FilePlus className="h-5 w-5 text-theme-icon" />
               Add {masterModalType === 'issue_type' ? 'Requirement Type' : 'Business Value'}
             </DialogTitle>
           </DialogHeader>

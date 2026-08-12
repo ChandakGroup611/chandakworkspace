@@ -31,7 +31,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
   return (
     <div 
-      className={`h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-accent/20 overflow-hidden bg-background`}
+      className={`h-screen w-full flex font-sans antialiased transition-colors duration-300 relative selection:bg-theme-btn-primary/20 overflow-hidden bg-background`}
       style={{
         color: "var(--text-primary, #FFFFFF)"
       }}

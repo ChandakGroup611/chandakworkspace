@@ -30,14 +30,14 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
   ) => {
 
     const baseStyles = 
-      "inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/40 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
+      "inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/40 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
 
     const variants = {
-      primary: "theme-button-structural theme-btn-primary bg-accent text-white hover:opacity-90",
-      secondary: "theme-btn-secondary bg-surface text-foreground hover:bg-elevated border border-border/50",
-      ghost: "theme-btn-ghost bg-transparent text-muted hover:bg-surface hover:text-foreground",
+      primary: "theme-button-structural theme-btn-primary bg-theme-btn-primary text-theme-btn-primary-text hover:opacity-90",
+      secondary: "theme-btn-secondary bg-theme-btn-secondary text-theme-btn-secondary-text hover:bg-elevated border border-border/50",
+      ghost: "theme-btn-ghost bg-transparent text-muted hover:bg-theme-btn-secondary hover:text-theme-btn-secondary-text",
       destructive: "theme-btn-destructive bg-danger text-white hover:opacity-90",
-      outline: "theme-btn-outline bg-transparent border border-border text-muted hover:bg-surface hover:text-foreground",
+      outline: "theme-btn-outline bg-transparent border border-border text-theme-btn-secondary-text hover:bg-theme-btn-secondary",
     };
 
     const sizes = {

@@ -204,7 +204,7 @@ function SortableTaskCard({ task, onClick }: { task: any, onClick: () => void })
       <div
         ref={setNodeRef}
         style={style}
-        className="opacity-30 border-2 border-accent border-dashed rounded-xl h-[120px] bg-accent/5"
+        className="opacity-30 border-2 border-theme-btn-primary border-dashed rounded-xl h-[120px] bg-theme-btn-primary/5"
       />
     );
   }
@@ -232,7 +232,7 @@ function TaskCard({ task }: { task: any }) {
   const isOverdue = task.end_date && new Date(task.end_date) < new Date() && !task.status?.is_closed;
   
   return (
-    <AppCard className="hover:shadow-md hover:border-accent/40 transition-all group overflow-hidden">
+    <AppCard className="hover:shadow-md hover:border-theme-btn-primary/40 transition-all group overflow-hidden">
       {task.priority?.priority_color && (
         <div className="h-1 w-full" style={{ backgroundColor: task.priority.priority_color }} />
       )}
@@ -271,7 +271,7 @@ function TaskCard({ task }: { task: any }) {
                   return a.profile_photo ? (
                     <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-gray-200" title={a.full_name} />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[9px] font-bold ring-1 ring-accent/20" title={a.full_name}>
+                    <div className="w-5 h-5 rounded-full bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center text-[9px] font-bold ring-1 ring-theme-btn-primary/20" title={a.full_name}>
                       {a.full_name?.substring(0, 2).toUpperCase() || "U"}
                     </div>
                   );

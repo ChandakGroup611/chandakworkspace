@@ -50,7 +50,7 @@ export function SelfServicePortal() {
   const getStatusColor = (statusName: string) => {
     const lower = statusName?.toLowerCase() || '';
     if (lower.includes('resolv') || lower.includes('clos')) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-    if (lower.includes('progress') || lower.includes('doing')) return "bg-accent/10 text-accent border-accent/20";
+    if (lower.includes('progress') || lower.includes('doing')) return "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20";
     return "bg-gray-500/10 text-subtle border-gray-500/20";
   };
 
@@ -58,14 +58,14 @@ export function SelfServicePortal() {
     <PageContainer strict={true}>
       <PageHeader
         title="My IT Support"
-        icon={<MessageSquare className="h-6 w-6 text-accent" />}
+        icon={<MessageSquare className="h-6 w-6 text-theme-icon" />}
         actions={
           <AppButton 
             variant="primary" 
             size="sm" 
             onClick={() => setShowWizard(true)}
             leftIcon={<Plus className="h-4 w-4" />}
-            className="bg-accent hover:bg-accent-secondary text-white font-bold"
+            className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text font-bold"
           >
             New Request
           </AppButton>
@@ -75,7 +75,7 @@ export function SelfServicePortal() {
         
         <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-border dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-            <h2 className="text-lg font-bold text-foreground dark:text-white">How can we help you today?</h2>
+            <h2 className="text-lg font-bold text-theme-heading">How can we help you today?</h2>
             <p className="text-sm text-muted dark:text-muted">Track your existing requests or submit a new one.</p>
           </div>
           <div className="relative w-full sm:w-64">
@@ -85,7 +85,7 @@ export function SelfServicePortal() {
               placeholder="Search your tickets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-surface/20 border border-border dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-surface/20 border border-border dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ export function SelfServicePortal() {
           <div className="flex-1 overflow-y-auto">
             {loading && tickets.length === 0 ? (
               <div className="flex items-center justify-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
               </div>
             ) : tickets.length > 0 ? (
               <AppTableContainer>
@@ -115,7 +115,7 @@ export function SelfServicePortal() {
                   <AppTableBody>
                     {tickets.map(ticket => (
                       <AppTableRow key={ticket.dbId} onClick={() => router.push(`/tickets/${ticket.dbId}`)} className="cursor-pointer group hover:bg-surface dark:hover:bg-surface/5">
-                        <AppTableCell className="font-mono text-xs font-bold text-accent dark:text-accent">
+                        <AppTableCell className="font-mono text-xs font-bold text-theme-icon dark:text-theme-icon">
                           {ticket.id}
                         </AppTableCell>
                         <AppTableCell className="font-semibold text-sm max-w-xs truncate">
@@ -131,7 +131,7 @@ export function SelfServicePortal() {
                           {new Date(ticket.created_at).toLocaleDateString()}
                         </AppTableCell>
                         <AppTableCell className="text-right">
-                          <AppButton variant="ghost" size="sm" className="h-8 w-8 p-0 group-hover:bg-accent/10 dark:group-hover:bg-accent/20 text-accent">
+                          <AppButton variant="ghost" size="sm" className="h-8 w-8 p-0 group-hover:opacity-90/10 dark:group-hover:opacity-90/20 text-theme-icon">
                             <ArrowRight className="h-4 w-4" />
                           </AppButton>
                         </AppTableCell>

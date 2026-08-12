@@ -4,6 +4,17 @@
     --bg-surface: #f8fafc;
     --bg-elevated: #ffffff;
     --text-primary: #334155;
+    --btn-primary-bg: #38bdf8;
+    --btn-primary-text: #0f172a;
+    --btn-secondary-bg: #f8fafc;
+    --btn-secondary-text: #0f172a;
+    --tab-active-bg: #e0f2fe;
+    --tab-active-text: #0f172a;
+    --tab-inactive-bg: #f8fafc;
+    --tab-inactive-text: #64748b;
+    --heading-text: #1e293b;
+    --icon-color: #38bdf8;
+
     --text-secondary: #64748b;
     --text-muted: #94a3b8;
     --border-subtle: #e2e8f0;
@@ -66,9 +77,9 @@
 
   /* Primary Buttons - Complete 360-Degree Border Pill */
   [data-theme="light-neumorphic"] .theme-button-structural {
-    background: linear-gradient(135deg, #fb923c, #fb7185) !important;
+    background: var(--btn-primary-bg) !important;
     border: 1px solid #f43f5e !important;
-    color: #ffffff !important;
+    color: var(--btn-primary-text) !important;
     border-radius: 10px !important;
     font-weight: 600;
     box-shadow: 

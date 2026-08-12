@@ -27,7 +27,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       {/* 1. Where to Start (Header & Overview) */}
       <section className={`p-6 rounded-2xl shadow-sm theme-card-structural`}>
         <div className="flex items-center gap-4 mb-4">
-          <div className={`p-3 rounded-xl bg-accent/10 text-accent`}>
+          <div className={`p-3 rounded-xl bg-theme-btn-primary/10 text-theme-icon`}>
             <module.icon className="h-8 w-8" />
           </div>
           <div>
@@ -40,7 +40,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
 
         <div className="mt-6 space-y-4">
           <div className="flex gap-2">
-            <Info className={`h-5 w-5 shrink-0 text-accent`} />
+            <Info className={`h-5 w-5 shrink-0 text-theme-icon`} />
             <div>
               <h3 className={`font-semibold text-sm text-foreground`}>Where to Start / Overview</h3>
               <p className={`text-sm mt-1 leading-relaxed text-muted`}>
@@ -122,7 +122,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
         <div className="space-y-3">
           {module.steps.map((step, idx) => (
             <div key={idx} className={`relative flex items-start gap-4 p-5 rounded-2xl transition-all hover:-translate-y-0.5 hover:shadow-md theme-card-structural`}>
-              <div className={`flex items-center justify-center h-8 w-8 rounded-full shrink-0 font-bold text-sm bg-accent/10 text-accent`}>
+              <div className={`flex items-center justify-center h-8 w-8 rounded-full shrink-0 font-bold text-sm bg-theme-btn-primary/10 text-theme-icon`}>
                 {idx + 1}
               </div>
               <div>
@@ -155,7 +155,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                 {result.outcome}
               </p>
               <div className={`p-3 rounded-xl border text-[11px] font-mono leading-relaxed mt-auto bg-surface text-muted border-border`}>
-                <span className="text-accent mr-2">$</span>
+                <span className="text-theme-icon mr-2">$</span>
                 {result.technicalDetail}
               </div>
             </div>

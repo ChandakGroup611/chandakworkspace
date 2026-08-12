@@ -188,13 +188,13 @@ export default function DynamicReportBuilder({
               {unselectedFields.map(field => (
                 <div 
                   key={field.field_key}
-                  className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-accent/30 dark:hover:border-accent/30 transition-colors group cursor-pointer"
+                  className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-theme-btn-primary/30 dark:hover:border-theme-btn-primary/30 transition-colors group cursor-pointer"
                   onClick={() => handleAddMissingField(field)}
                 >
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block truncate">{field.display_name}</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity dark:bg-accent/20 dark:text-accent shrink-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity dark:bg-theme-btn-primary/20 dark:text-theme-icon shrink-0">
                     Add +
                   </span>
                 </div>

@@ -154,7 +154,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
 
   return (
     <div className="space-y-6">
-      <div className={`p-4 rounded-xl border flex items-center justify-between bg-accent/10 border-accent/30 text-accent-secondary`}>
+      <div className={`p-4 rounded-xl border flex items-center justify-between bg-theme-btn-primary/10 border-theme-btn-primary/30 text-theme-icon-secondary`}>
         <div>
           <h4 className="font-bold">License Utilization</h4>
           <p className="text-sm mt-1">Assign available licenses to users. The master record will automatically track usage.</p>
@@ -173,7 +173,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {loading ? (
-              <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+              <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
             ) : allocations.length === 0 ? (
               <div className="text-center p-8 text-muted italic">No licenses allocated yet.</div>
             ) : (
@@ -205,7 +205,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                           size="sm" 
                           onClick={() => setTransferringId(a.id)}
                           disabled={processingId === a.id}
-                          className="text-accent hover:bg-accent/10"
+                          className="text-theme-icon hover:opacity-90/10"
                         >
                           Transfer
                         </AppButton>
@@ -237,18 +237,18 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                 placeholder="Search users to allocate..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20 transition-all theme-card-structural text-foreground`}
+                className={`w-full h-10 pl-9 pr-4 rounded-lg text-sm outline-none focus:ring-2 focus:ring-theme-btn-primary/20 transition-all theme-card-structural text-foreground`}
               />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {loading ? (
-              <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+              <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center p-8 text-muted italic">No unassigned users found.</div>
             ) : (
               filteredUsers.map(u => (
-                <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-accent/50 transition-colors`}>
+                <div key={u.id} className={`p-3 rounded-lg flex items-center justify-between theme-card-structural hover:border-theme-btn-primary/50 transition-colors`}>
                   <div>
                     <div className="font-semibold text-sm">{u.full_name}</div>
                     <div className="text-xs text-muted">{u.email}</div>

@@ -237,7 +237,7 @@ export default function Sidebar() {
           variant="outline"
           size="icon-sm"
           onClick={() => setIsCompactState(!isCompactState)}
-          className="absolute -right-3 top-5 rounded-full shadow-md transition-all hover:scale-125 duration-300 z-50 theme-card-structural text-muted hover:text-foreground hover:border-accent"
+          className="absolute -right-3 top-5 rounded-full shadow-md transition-all hover:scale-125 duration-300 z-50 theme-card-structural text-muted hover:text-foreground hover:border-theme-btn-primary"
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
           {isCompactState ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -281,7 +281,7 @@ export default function Sidebar() {
                     case "/learning": return { text: "text-teal-500", activeBg: "from-teal-500/25 via-teal-500/15", border: "border-teal-500/50", shadow: "shadow-teal-500/20", line: "bg-teal-500 shadow-teal-500/40", hover: "hover:bg-teal-500/15 hover:border-teal-500/30 hover:text-teal-600" };
                     case "/settings": return { text: "text-rose-500", activeBg: "from-rose-500/25 via-rose-500/15", border: "border-rose-500/50", shadow: "shadow-rose-500/20", line: "bg-rose-500 shadow-rose-500/40", hover: "hover:bg-rose-500/15 hover:border-rose-500/30 hover:text-rose-600" };
                     case "/masters": return { text: "text-emerald-500", activeBg: "from-emerald-500/25 via-emerald-500/15", border: "border-emerald-500/50", shadow: "shadow-emerald-500/20", line: "bg-emerald-500 shadow-emerald-500/40", hover: "hover:bg-emerald-500/15 hover:border-emerald-500/30 hover:text-emerald-600" };
-                    default: return { text: "text-accent", activeBg: "from-accent/25 via-accent/15", border: "border-accent/50", shadow: "shadow-accent/20", line: "bg-accent shadow-accent/40", hover: "hover:bg-accent/15 hover:border-accent/30 hover:text-accent" };
+                    default: return { text: "text-theme-icon", activeBg: "from-accent/25 via-accent/15", border: "border-theme-btn-primary/50", shadow: "shadow-theme-btn-primary/20", line: "bg-theme-btn-primary shadow-theme-btn-primary/40", hover: "hover:opacity-90/15 hover:border-theme-btn-primary/30 hover:text-theme-icon" };
                   }
                 };
 

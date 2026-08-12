@@ -40,7 +40,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "accent", // Using global accent
       gradientLight: "from-white to-accent/10",
       gradientDark: "from-white/5 to-accent/10",
-      textColor: "text-accent",
+      textColor: "text-theme-icon",
     },
     {
       id: "resolved",
@@ -98,7 +98,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
 
             {/* Glowing Accent Top Border */}
             <div className={`absolute top-0 left-0 w-full h-1 ${
-              card.color === "accent" ? "bg-accent" : `bg-${card.color}`
+              card.color === "accent" ? "bg-theme-btn-primary" : `bg-${card.color}`
             }`} />
 
             <div className="p-5 relative z-10 flex flex-col h-full">

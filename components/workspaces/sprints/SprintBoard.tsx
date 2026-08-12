@@ -124,14 +124,14 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
     <div className="flex flex-col h-full space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-bold flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-accent" />
+          <Calendar className="h-4 w-4 text-theme-icon" />
           Agile Sprint Planning
         </h3>
         <div className="flex items-center gap-3">
           <select 
             value={taskFilter} 
             onChange={(e) => setTaskFilter(e.target.value as any)}
-            className={`text-xs p-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent ${"theme-card-structural "}`}
+            className={`text-xs p-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-theme-btn-primary ${"theme-card-structural "}`}
           >
             <option value="ALL">All Tasks</option>
             <option value="ASSIGNED">Assigned To Me</option>
@@ -146,18 +146,18 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       </div>
 
       {isCreatingSprint && (
-        <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-accent/10/50 border-indigo-100`}>
+        <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-theme-btn-primary/10/50 border-indigo-100`}>
           <div className="space-y-1.5 flex-1">
             <label className="text-sm font-bold text-muted uppercase tracking-wider">Sprint Name</label>
-            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
+            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date</label>
-            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
+            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary ${"theme-card-structural "}`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-sm font-bold text-muted uppercase tracking-wider">End Date</label>
-            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-accent ${"theme-card-structural "}`} />
+            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary ${"theme-card-structural "}`} />
           </div>
           <div className="flex gap-2 h-9">
             <AppButton type="button" variant="ghost" onClick={() => setIsCreatingSprint(false)}>Cancel</AppButton>
@@ -209,18 +209,18 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         {activeSprints.map(sprint => (
           <div 
             key={sprint.id}
-            className={`flex-shrink-0 w-80 rounded-xl border flex flex-col bg-accent/10/30 border-indigo-100`}
+            className={`flex-shrink-0 w-80 rounded-xl border flex flex-col bg-theme-btn-primary/10/30 border-indigo-100`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, sprint.id)}
           >
-            <div className="p-3 border-b border-accent/20 group relative">
+            <div className="p-3 border-b border-theme-btn-primary/20 group relative">
               {editingSprintId === sprint.id ? (
                 <div className="space-y-2">
                   <input 
                     type="text" 
                     value={editSprintName} 
                     onChange={e => setEditSprintName(e.target.value)} 
-                    className={`w-full text-sm font-bold p-1 rounded focus:outline-none focus:ring-1 focus:ring-accent theme-card-structural`}
+                    className={`w-full text-sm font-bold p-1 rounded focus:outline-none focus:ring-1 focus:ring-theme-btn-primary theme-card-structural`}
                     placeholder="Sprint Name"
                   />
                   <div className="flex gap-2">
@@ -245,7 +245,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
               ) : (
                 <>
                   <div className="flex justify-between items-start">
-                    <div className="font-bold text-sm text-accent dark:text-accent">{sprint.name}</div>
+                    <div className="font-bold text-sm text-theme-icon dark:text-theme-icon">{sprint.name}</div>
                     <AppButton variant="secondary" 
                       onClick={() => {
                         setEditingSprintId(sprint.id);
@@ -253,7 +253,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                         setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
                         setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
                       }} 
-                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-muted hover:theme-input-structural hover:text-accent`}
+                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-muted hover:theme-input-structural hover:text-theme-icon`}
                       title="Edit Sprint"
                     >
                       <Edit2 className="h-3.5 w-3.5" />

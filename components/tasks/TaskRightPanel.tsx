@@ -25,7 +25,7 @@ export default function TaskRightPanel({ taskId, onUpdate }: { taskId: string; o
 
   return (
     <div className="h-full min-h-0" ref={panelRef}>
-      <div className="h-full min-h-0 flex flex-col rounded-2xl p-4 theme-card-structural border-transparent transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-accent/30 dark:hover:shadow-blue-500/20 dark:hover:border-accent/40">
+      <div className="h-full min-h-0 flex flex-col rounded-2xl p-4 theme-card-structural border-transparent transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:border-theme-btn-primary/30 dark:hover:shadow-blue-500/20 dark:hover:border-theme-btn-primary/40">
         <Tabs defaultValue="chat" onValueChange={setActiveTab} value={activeTab} className="flex flex-col h-full min-h-0">
           <TabsList className="grid grid-cols-3 bg-surface/50 border border-border/50 dark:border-white/5 dark:bg-[#0B0F19] rounded-xl p-1 shrink-0">
             <TabsTrigger 

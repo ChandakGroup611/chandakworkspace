@@ -92,7 +92,7 @@ export default function Navbar() {
             <input 
               type="text" 
               placeholder="Search tickets, documentation, quick masters..." 
-              className={`h-10 w-full rounded-xl pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${ "theme-input-structural text-foreground placeholder-gray-400 focus:theme-card-structural /50 focus:border-accent" }`}
+              className={`h-10 w-full rounded-xl pl-9 pr-12 text-xs focus:outline-none transition-all duration-200 ${ "theme-input-structural text-foreground placeholder-gray-400 focus:theme-card-structural /50 focus:border-theme-btn-primary" }`}
             />
             <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold pointer-events-none ${
               "bg-elevated/60 text-muted"
@@ -110,7 +110,7 @@ export default function Navbar() {
             onClick={toggleQuickTheme}
             className="!h-10 !w-10 rounded-xl theme-card-structural text-muted hover:bg-muted hover:text-foreground"
           >
-            {isLight ? <Moon className="h-4 w-4 text-accent" /> : <Sun className="h-4 w-4 text-amber-500" />}
+            {isLight ? <Moon className="h-4 w-4 text-theme-icon" /> : <Sun className="h-4 w-4 text-amber-500" />}
           </AppButton>
 
           <Link 
@@ -119,7 +119,7 @@ export default function Navbar() {
               "bg-elevated border-border text-muted hover:bg-elevated hover:text-foreground"
             }`}
           >
-            <Palette className="h-4 w-4 text-accent" />
+            <Palette className="h-4 w-4 text-theme-icon" />
           </Link>
 
           <RealtimeNotificationsDrawer />
@@ -152,7 +152,7 @@ export default function Navbar() {
                         "hover:bg-elevated text-muted"
                       }`}
                     >
-                      <User className="h-3.5 w-3.5 text-accent" />
+                      <User className="h-3.5 w-3.5 text-theme-icon" />
                       <span>My Profile & Settings</span>
                     </Link>
                   </div>

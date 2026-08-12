@@ -109,7 +109,7 @@ export default function ProviderDashboard() {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-theme-icon" /></div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -123,13 +123,13 @@ export default function ProviderDashboard() {
       <div className="space-y-6">
         {providers.map((prov) => (
           <div key={prov.id || prov.priority_level} className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-            <div className={`p-4 border-b border-border flex items-center justify-between ${prov.priority_level === 1 ? 'bg-accent/5' : 'bg-muted/30'}`}>
+            <div className={`p-4 border-b border-border flex items-center justify-between ${prov.priority_level === 1 ? 'bg-theme-btn-primary/5' : 'bg-muted/30'}`}>
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-accent/20' : 'bg-muted'}`}>
-                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-accent' : 'text-muted-foreground'}`} />
+                <div className={`p-2 rounded-lg ${prov.priority_level === 1 ? 'bg-theme-btn-primary/20' : 'bg-muted'}`}>
+                  <Server className={`w-5 h-5 ${prov.priority_level === 1 ? 'text-theme-icon' : 'text-muted-foreground'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-accent' : 'text-foreground'}`}>
+                  <h3 className={`font-bold ${prov.priority_level === 1 ? 'text-theme-icon' : 'text-foreground'}`}>
                     {prov.priority_level === 1 ? 'PRIMARY DISPATCH' : `FALLBACK LEVEL ${prov.priority_level - 1}`}
                   </h3>
                   <p className="text-xs text-muted-foreground">
@@ -141,12 +141,12 @@ export default function ProviderDashboard() {
                 <select 
                   value={prov.provider_name}
                   onChange={(e) => updateProviderField(prov.priority_level, "provider_name", e.target.value)}
-                  className="bg-background border border-border rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-accent"
+                  className="bg-background border border-border rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-theme-btn-primary"
                 >
                   {PROVIDER_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                 </select>
                 <label className="flex items-center gap-2 cursor-pointer ml-4">
-                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-accent' : 'bg-muted-foreground/30'}`}>
+                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${prov.is_active ? 'bg-theme-btn-primary' : 'bg-muted-foreground/30'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${prov.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
@@ -169,7 +169,7 @@ export default function ProviderDashboard() {
                       type="text" 
                       value={prov.config.host || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "host", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                       placeholder="smtp.office365.com"
                     />
                   </div>
@@ -179,7 +179,7 @@ export default function ProviderDashboard() {
                       type="number" 
                       value={prov.config.port || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "port", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                       placeholder="587"
                     />
                   </div>
@@ -189,7 +189,7 @@ export default function ProviderDashboard() {
                       type="text" 
                       value={prov.config.username || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "username", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                       placeholder="noreply@enterprise.com"
                     />
                   </div>
@@ -200,7 +200,7 @@ export default function ProviderDashboard() {
                         type="password" 
                         value={prov.config.password || ""}
                         onChange={(e) => updateProviderConfig(prov.priority_level, "password", e.target.value)}
-                        className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-accent"
+                        className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                         placeholder="••••••••"
                       />
                       <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
@@ -217,7 +217,7 @@ export default function ProviderDashboard() {
                       type="password" 
                       value={prov.config.api_key || ""}
                       onChange={(e) => updateProviderConfig(prov.priority_level, "api_key", e.target.value)}
-                      className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-accent"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 pl-9 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                       placeholder="re_..."
                     />
                     <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
@@ -234,7 +234,7 @@ export default function ProviderDashboard() {
                 <AppButton 
                   onClick={() => handleTestConnection(prov)}
                   disabled={testingId === (prov.id || prov.priority_level.toString())}
-                  className="flex items-center gap-2 bg-background hover:bg-accent/10 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border disabled:opacity-50"
+                  className="flex items-center gap-2 bg-background hover:opacity-90/10 text-foreground px-4 py-1.5 rounded text-sm font-bold transition-colors border border-border disabled:opacity-50"
                 >
                   {testingId === (prov.id || prov.priority_level.toString()) ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -246,7 +246,7 @@ export default function ProviderDashboard() {
               )}
               <AppButton 
                 onClick={() => handleSave(prov)}
-                className="flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors shadow-sm"
+                className="flex items-center gap-2 bg-theme-btn-primary hover:opacity-90/90 text-theme-btn-primary-text px-4 py-1.5 rounded text-sm font-bold transition-colors shadow-sm"
               >
                 <Save className="w-4 h-4" /> Save Details
               </AppButton>
@@ -256,7 +256,7 @@ export default function ProviderDashboard() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : toastMsg.type === 'warning' ? 'bg-amber-500' : 'bg-accent'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : toastMsg.type === 'warning' ? 'bg-amber-500' : 'bg-theme-btn-primary'} text-theme-btn-primary-text`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

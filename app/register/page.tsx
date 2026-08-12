@@ -161,7 +161,7 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/70 to-slate-900/40"></div>
         
         {/* Abstract Glow Effects */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-accent/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-theme-btn-primary/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
@@ -335,11 +335,11 @@ export default function RegisterPage() {
                   Identity Visual (Photo Upload)
                 </label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6 p-5 rounded-xl border border-dashed border-white/20 bg-surface/[0.02]">
-                  <div className="h-16 w-16 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="h-16 w-16 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex items-center justify-center overflow-hidden shrink-0">
                     {uploadFile ? (
                       <img src={URL.createObjectURL(uploadFile)} className="h-full w-full object-cover" />
                     ) : (
-                      <Camera className="h-5 w-5 text-accent" />
+                      <Camera className="h-5 w-5 text-theme-icon" />
                     )}
                   </div>
                   <div className="flex-1 space-y-2">
@@ -353,7 +353,7 @@ export default function RegisterPage() {
                     />
                     <label 
                       htmlFor="photo-upload"
-                      className="inline-block px-4 py-2 rounded-lg bg-accent/20 text-accent border border-accent/30 text-sm font-bold cursor-pointer hover:bg-accent/40 transition-colors"
+                      className="inline-block px-4 py-2 rounded-lg bg-theme-btn-primary/20 text-theme-icon border border-theme-btn-primary/30 text-sm font-bold cursor-pointer hover:bg-theme-btn-primary/40 transition-colors"
                     >
                       Select Image
                     </label>
@@ -366,12 +366,12 @@ export default function RegisterPage() {
                       key={idx}
                       onClick={() => { setPhoto(url); setUploadFile(null); }}
                       className={`relative shrink-0 h-10 w-10 rounded-full cursor-pointer transition-all border-2 ${
-                        photo === url && !uploadFile ? "border-accent scale-110 shadow-lg shadow-purple-500/20" : "border-transparent opacity-50 hover:opacity-100"
+                        photo === url && !uploadFile ? "border-theme-btn-primary scale-110 shadow-lg shadow-purple-500/20" : "border-transparent opacity-50 hover:opacity-100"
                       }`}
                     >
                       <img src={url} alt={`Avatar ${idx}`} className="h-full w-full rounded-full object-cover" />
                       {photo === url && !uploadFile && (
-                        <div className="absolute -right-1 -top-1 bg-accent rounded-full p-0.5 shadow-sm">
+                        <div className="absolute -right-1 -top-1 bg-theme-btn-primary rounded-full p-0.5 shadow-sm">
                           <CheckCircle2 className="h-2 w-2 text-white" />
                         </div>
                       )}
@@ -438,7 +438,7 @@ export default function RegisterPage() {
             {/* Back navigation context */}
             <div className="mt-8 text-center">
               <span className="text-sm font-medium text-muted">
-                Already have an account? <Link href="/login" className="text-accent font-semibold hover:underline transition-colors">Sign In</Link>
+                Already have an account? <Link href="/login" className="text-theme-icon font-semibold hover:underline transition-colors">Sign In</Link>
               </span>
             </div>
 

@@ -109,7 +109,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Service Area</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.moduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, moduleId: e.target.value, submoduleId: "" }))}
                 required
@@ -124,7 +124,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.priorityId}
                 onChange={(e) => handlePriorityChange(e.target.value)}
                 required
@@ -139,7 +139,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Service Sub-Area</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
                 value={formData.submoduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, submoduleId: e.target.value }))}
                 required
@@ -167,7 +167,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Request Classification</label>
               <select 
-                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 ${ "theme-card-structural text-foreground" }`}
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground" }`}
                 value={formData.issueTypeId}
                 onChange={(e) => setFormData(prev => ({ ...prev, issueTypeId: e.target.value, issueSubtypeId: "" }))}
                 required
@@ -182,7 +182,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Detail Classification</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
+                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
                 value={formData.issueSubtypeId}
                 onChange={(e) => setFormData(prev => ({ ...prev, issueSubtypeId: e.target.value }))}
                 required
@@ -199,7 +199,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
           <div className="space-y-2">
             <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Request Narrative</label>
             <textarea 
-              className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+              className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
               placeholder="Provide detailed context for your inquiry or support request..."
               value={formData.remark}
               onChange={(e) => setFormData(prev => ({ ...prev, remark: e.target.value }))}
@@ -208,13 +208,13 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
           </div>
 
           {isReqCategory && (
-            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-accent/20 rounded-2xl mt-4">
-              <h4 className="text-sm font-bold text-accent mb-2">Requirement Details (Mandatory)</h4>
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-theme-btn-primary/20 rounded-2xl mt-4">
+              <h4 className="text-sm font-bold text-theme-icon mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
                   value={formData.business_reason || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
@@ -225,7 +225,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
               <div className="space-y-2">
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
                 <textarea 
-                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+                  className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
                   value={formData.requirement_description || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
@@ -239,7 +239,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="flex-1 space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Supporting Evidence (Optional)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
-                "border-border hover:border-accent/30 bg-elevated/50"
+                "border-border hover:border-theme-btn-primary/30 bg-elevated/50"
               }`}>
                 <input 
                   type="file" 
@@ -249,7 +249,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg bg-surface shadow-sm`}>
-                      <Paperclip className={`h-4 w-4 text-accent`} />
+                      <Paperclip className={`h-4 w-4 text-theme-icon`} />
                     </div>
                     <div>
                       <p className={`text-xs font-medium ${"text-foreground"}`}>
@@ -275,7 +275,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
               <AppButton variant="ghost" type="button" onClick={onCancel} className={"text-muted"}>
                 Cancel
               </AppButton>
-              <AppButton variant="primary" type="submit" className="bg-accent hover:bg-accent text-white min-w-[140px]">
+              <AppButton variant="primary" type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 <Send className="h-4 w-4 mr-2" />
                 Submit Request
               </AppButton>

@@ -44,15 +44,15 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
 
   return (
     <div className="absolute inset-0 bg-surface/80 backdrop-blur-md z-[200] flex items-center justify-center p-6 rounded-xl animate-in fade-in-50">
-      <AppCard className={`w-full max-w-md p-6 shadow-2xl theme-card-structural border-accent/30`}>
+      <AppCard className={`w-full max-w-md p-6 shadow-2xl theme-card-structural border-theme-btn-primary/30`}>
         
         <div className="flex items-center justify-between border-b pb-4 mb-5 border-border dark:border-white/5">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-accent/10 rounded-lg">
-              <Activity className="h-5 w-5 text-accent" />
+            <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
+              <Activity className="h-5 w-5 text-theme-icon" />
             </div>
             <div>
-              <h3 className={`font-bold text-accent`}>Workload Intelligence</h3>
+              <h3 className={`font-bold text-theme-icon`}>Workload Intelligence</h3>
               <p className="text-xs text-muted">Capacity & bandwidth analysis</p>
             </div>
           </div>
@@ -71,8 +71,8 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             {/* Primary Capacity Meter */}
             <div className="space-y-2">
               <div className="flex items-end justify-between">
-                <span className="text-xs font-bold text-accent uppercase tracking-wider">Utilization</span>
-                <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-rose-500' : 'text-accent'}`}>
+                <span className="text-xs font-bold text-theme-icon uppercase tracking-wider">Utilization</span>
+                <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-rose-500' : 'text-theme-icon'}`}>
                   {metrics.capacity_percentage}%
                 </span>
               </div>
@@ -97,7 +97,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             <div className="grid grid-cols-2 gap-3">
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 mb-2" />
-                <span className="block text-2xl font-bold text-accent mb-1">{metrics.active_tasks}</span>
+                <span className="block text-2xl font-bold text-theme-icon mb-1">{metrics.active_tasks}</span>
                 <span className="text-xs text-muted uppercase tracking-wider font-bold">Active Directives</span>
               </div>
               <div className={`p-4 rounded-xl border bg-rose-50 border-rose-100`}>
@@ -106,13 +106,13 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                 <span className="text-xs text-rose-500/70 uppercase tracking-wider font-bold">Overdue SLA</span>
               </div>
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
-                <Clock className="h-4 w-4 text-accent mb-2" />
-                <span className="block text-2xl font-bold text-accent mb-1">{metrics.estimated_hours}h</span>
+                <Clock className="h-4 w-4 text-theme-icon mb-2" />
+                <span className="block text-2xl font-bold text-theme-icon mb-1">{metrics.estimated_hours}h</span>
                 <span className="text-xs text-muted uppercase tracking-wider font-bold">Estimated Load</span>
               </div>
-              <div className={`p-4 rounded-xl border flex flex-col justify-center bg-accent/10 border-blue-100`}>
-                <span className="text-xs text-accent dark:text-accent uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
-                <span className="text-xl font-bold text-accent dark:text-blue-300">{metrics.available_capacity}%</span>
+              <div className={`p-4 rounded-xl border flex flex-col justify-center bg-theme-btn-primary/10 border-blue-100`}>
+                <span className="text-xs text-theme-icon dark:text-theme-icon uppercase tracking-wider font-bold mb-1">Available Bandwidth</span>
+                <span className="text-xl font-bold text-theme-icon dark:text-blue-300">{metrics.available_capacity}%</span>
               </div>
             </div>
 

@@ -6,7 +6,7 @@ import { queueBusinessEvent } from '@/lib/actions/notification-engine';
 import { dispatchNotification } from '@/lib/actions/notifications';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
-
+import { fetchWorkspaceStakeholders } from '@/lib/actions/workspaces';
 export async function getDepartments() {
   const { data, error } = await supabaseAdmin
     .from('departments')
@@ -671,10 +671,10 @@ export async function updateTask(taskId: string, payload: any) {
   const userId = user?.id;
   if (!userId) return { error: "Unauthenticated" };
 
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  if (task.assigned_to !== userId) {
+  if (task.assigned_to !== userId && task.created_by !== userId) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
       .select('id')
@@ -683,10 +683,22 @@ export async function updateTask(taskId: string, payload: any) {
       .maybeSingle();
 
     if (!participant) {
-       await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
-         action_attempted: 'UPDATE_TASK'
-       }, userId);
-       return { error: "You do not have permission to edit this task. Only the Task Owner or Participants can edit." };
+      // Check if user is a super admin or workspace manager
+      let isAuthorizedAdmin = false;
+      try {
+        const permissionsModule = await import('@/lib/permissions');
+        isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE") || 
+                            await permissionsModule.hasPermission(userId, "TASKS_UPDATE");
+      } catch (e) {
+        console.warn("[updateTask] Permission check failed", e);
+      }
+      
+      if (!isAuthorizedAdmin) {
+        await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+          action_attempted: 'UPDATE_TASK'
+        }, userId);
+        return { error: "You do not have permission to edit this task. Only the Task Owner or Participants can edit." };
+      }
     }
   }
 

@@ -66,7 +66,7 @@ export function AMCHistoryModal({
   const getOperationColor = (op: string) => {
     switch (op) {
       case "INSERT": return "text-green-500 bg-green-500/10";
-      case "UPDATE": return "text-accent bg-accent/10";
+      case "UPDATE": return "text-theme-icon bg-theme-btn-primary/10";
       case "DELETE": return "text-red-500 bg-red-500/10";
       default: return "text-muted bg-gray-500/10";
     }
@@ -80,7 +80,7 @@ export function AMCHistoryModal({
         <div className={`flex items-center justify-between p-5 border-b shrink-0 border-border bg-elevated`}>
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg bg-surface shadow-sm`}>
-              <Clock className={`h-5 w-5 text-accent`} />
+              <Clock className={`h-5 w-5 text-theme-icon`} />
             </div>
             <div>
               <h2 className="text-lg font-bold">Audit History</h2>
@@ -96,7 +96,7 @@ export function AMCHistoryModal({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted">
-              <Loader2 className="h-8 w-8 animate-spin mb-4 text-accent" />
+              <Loader2 className="h-8 w-8 animate-spin mb-4 text-theme-icon" />
               <p>Loading audit trail...</p>
             </div>
           ) : logs.length === 0 ? (

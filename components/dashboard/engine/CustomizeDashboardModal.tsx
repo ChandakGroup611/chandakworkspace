@@ -88,7 +88,7 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
             <h2 className="text-lg font-bold text-foreground tracking-tight">Customize Dashboard</h2>
             <p className="text-xs text-muted-foreground mt-1">Drag to reorder widgets. Set widths for your command center.</p>
           </div>
-          <AppButton variant="primary" onClick={onClose} className="p-2 text-muted-foreground hover:bg-accent/10 hover:text-accent rounded-full transition-colors">
+          <AppButton variant="primary" onClick={onClose} className="p-2 text-muted-foreground hover:opacity-90/10 hover:text-theme-icon rounded-full transition-colors">
             <X className="w-5 h-5" />
           </AppButton>
         </div>
@@ -183,7 +183,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
                   "w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-all",
                   item.colSpan === w 
                     ? "bg-primary text-primary-foreground shadow-sm" 
-                    : "bg-accent/10 text-muted-foreground hover:bg-accent/20 hover:text-foreground"
+                    : "bg-theme-btn-primary/10 text-muted-foreground hover:opacity-90/20 hover:text-foreground"
                 )}
               >
                 {w}/4

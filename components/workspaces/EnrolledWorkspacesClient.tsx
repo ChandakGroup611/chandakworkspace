@@ -48,7 +48,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   };
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full mx-auto my-12" />;
+    return <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full mx-auto my-12" />;
   }
 
   if (!hasPermission("ENROLLED_WORKSPACES_VIEW")) {
@@ -122,7 +122,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
                   filteredItems.map(item => (
                     <AppTableRow key={`${item.type}-${item.id}`}>
                       <AppTableCell>
-                        <span className="font-mono text-[13px] font-bold text-accent">
+                        <span className="font-mono text-[13px] font-bold text-theme-icon">
                           {item.workspace_code || item.code || item.id.substring(0,8)}
                         </span>
                       </AppTableCell>
@@ -144,12 +144,12 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
                       </AppTableCell>
                       <AppTableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <AppButton variant="ghost" size="sm" onClick={() => handleView(item)} className="h-8 px-2 text-subtle hover:bg-accent/10 hover:text-accent transition-all active:scale-95">
+                          <AppButton variant="ghost" size="sm" onClick={() => handleView(item)} className="h-8 px-2 text-subtle hover:opacity-90/10 hover:text-theme-icon transition-all active:scale-95">
                             <Eye className="h-4 w-4 mr-1" /> View
                           </AppButton>
                           {canManage && (
                             <>
-                              <AppButton variant="ghost" size="sm" onClick={() => handleUpdate(item)} className="h-8 px-2 text-subtle hover:bg-warning/10 hover:text-warning transition-all active:scale-95">
+                              <AppButton variant="ghost" size="sm" onClick={() => handleUpdate(item)} className="h-8 px-2 text-subtle hover:bg-theme-btn-secondary/10 hover:text-theme-btn-secondary-text transition-all active:scale-95">
                                 <Edit2 className="h-4 w-4 mr-1" /> Update
                               </AppButton>
                               <AppButton variant="ghost" size="sm" onClick={() => handleDelete(item)} className="h-8 px-2 text-subtle hover:bg-danger/10 hover:text-danger transition-all active:scale-95">

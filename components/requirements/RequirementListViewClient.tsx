@@ -56,7 +56,7 @@ function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
       ref={setNodeRef} 
       style={style} 
       className={cn(
-        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:bg-accent/10 transition-colors", 
+        "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-3 cursor-grab active:cursor-grabbing hover:opacity-90/10 transition-colors", 
         col.field_key === "actions" ? "w-[50px]" : "", 
         !isTitle ? "text-center" : "text-left",
         ["code", "due_date", "created_at", "updated_at", "status_name", "priority_name", "department_name"].includes(col.field_key) ? "whitespace-nowrap" : ""
@@ -202,10 +202,10 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     });
 
     return [
-      { label: "Total Reqs", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
+      { label: "Total Reqs", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon" },
       { label: "Pending", value: pending, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-amber-500/10", iconColorClass: "text-amber-600" },
       { label: "Approved", value: approved, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-emerald-500/10", iconColorClass: "text-emerald-600" },
-      { label: "Linked Tasks Progress", value: totalTasks > 0 ? `${Math.round((closedTasks / totalTasks) * 100)}%` : "0%", icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-accent/10", iconColorClass: "text-accent" },
+      { label: "Linked Tasks Progress", value: totalTasks > 0 ? `${Math.round((closedTasks / totalTasks) * 100)}%` : "0%", icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon" },
     ];
   }, [filtered]);
 
@@ -329,7 +329,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   });
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full mx-auto my-12" />;
+    return <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full mx-auto my-12" />;
   }
 
   if (!hasPermission("REQUIREMENTS_REPORTS_VIEW")) {
@@ -376,7 +376,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                 <AppButton variant="secondary"
                   key={sc}
                   onClick={() => setScope(sc)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-accent text-accent" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Requirements" : sc === "REQUESTER" ? "My Requests" : "Pending My Approval"}
                 </AppButton>
@@ -384,7 +384,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
             </div>
 
             <div className="flex items-center gap-4 pb-2">
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
                 <option value="">All Statuses</option>
                 {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -392,15 +392,15 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
           </div>
 
           <div className="flex items-center gap-3 px-4 py-3 bg-surface/50 dark:bg-surface/[0.02]">
-            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent">
+            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-9 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
               <option value="">All Priorities</option>
               {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
             
             <div className="flex items-center gap-2 mx-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
               <span className="text-sm text-muted">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent" />
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-9 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
             </div>
             
             <div className="relative flex-1">
@@ -409,7 +409,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                 placeholder="Search requirements, code, department..." 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-9 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-muted" 
+                className="w-full text-sm font-medium h-9 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary placeholder:text-muted" 
               />
             </div>
           </div>
@@ -443,7 +443,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                       <AppTableRow 
                         key={r.id} 
                         style={{ height: `${virtualRow.size}px` }} 
-                        className="hover:bg-accent/10/50 dark:hover:bg-surface/[0.02] cursor-pointer"
+                        className="hover:opacity-90/10/50 dark:hover:bg-surface/[0.02] cursor-pointer"
                         onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
                       >
                         {visibleColumns.map((col, i) => {
@@ -483,7 +483,7 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                               ) : col.field_key === "title" ? (
                                 <div className="font-medium truncate" title={r.title}>{r.title}</div>
                               ) : col.field_key === "task_count" ? (
-                                <div className="font-bold text-accent bg-accent/10 dark:bg-accent/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
+                                <div className="font-bold text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
                               ) : col.field_key === "due_days" ? (
                                 <div className={cn("font-semibold", r.due_days?.includes("Overdue") ? "text-rose-500" : "text-emerald-500")}>
                                   {r.due_days}

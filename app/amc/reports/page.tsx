@@ -144,7 +144,7 @@ export default function AMCReportsPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-accent border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -178,7 +178,7 @@ export default function AMCReportsPage() {
         {/* Level 1: Global Summary */}
         <div>
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">L1</span>
+            <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">L1</span>
             Global Executive Summary
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -204,14 +204,14 @@ export default function AMCReportsPage() {
         {/* Level 2: Department Drill-down */}
         <div>
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">L2</span>
+            <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">L2</span>
             Department / Cost Center View
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {deptMetrics.map((dept, idx) => (
               <AppCard key={idx} className={`p-6 flex flex-col bg-surface border-border`}>
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-bold text-accent">{dept.name}</h4>
+                  <h4 className="font-bold text-theme-icon">{dept.name}</h4>
                   <div className="text-sm font-black">{formatCurrency(dept.contracted)}</div>
                 </div>
                 <div className="flex justify-between items-end mt-auto pt-4 border-t border-border dark:border-white/10">
@@ -228,7 +228,7 @@ export default function AMCReportsPage() {
         {/* Level 3: Transactional View */}
         <div>
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <span className="bg-accent text-white h-6 w-6 rounded flex items-center justify-center text-xs">L3</span>
+            <span className="bg-theme-btn-primary text-white h-6 w-6 rounded flex items-center justify-center text-xs">L3</span>
             Detailed Cashflow / Payment Forecast
           </h3>
           <AppCard className={`overflow-hidden border bg-surface border-border`}>
@@ -265,7 +265,7 @@ export default function AMCReportsPage() {
                         <AppTableCell className={`p-4 font-semibold ${isOverdue ? 'text-rose-500' : ''}`}>
                           {new Date(inv.due_date).toLocaleDateString()}
                         </AppTableCell>
-                        <AppTableCell className="p-4 font-medium text-accent">
+                        <AppTableCell className="p-4 font-medium text-theme-icon">
                           {inv.software_amc?.software_name}
                         </AppTableCell>
                         <AppTableCell className="p-4 text-muted">

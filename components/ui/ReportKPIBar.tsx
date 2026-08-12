@@ -25,13 +25,13 @@ export function ReportKPIBar({ kpis, className, variant = "default" }: { kpis: R
             )}
           >
             {kpi.icon && (
-              <div className={cn("flex items-center justify-center rounded-lg", variant === "default" ? "p-2.5 rounded-xl" : "p-1", kpi.iconBgClass || "bg-accent/10", kpi.iconColorClass || "text-accent")}>
+              <div className={cn("flex items-center justify-center rounded-lg", variant === "default" ? "p-2.5 rounded-xl" : "p-1", kpi.iconBgClass || "bg-theme-btn-primary/10", kpi.iconColorClass || "text-theme-icon")}>
                 <div className={variant === "compact" ? "scale-50" : ""}>{kpi.icon}</div>
               </div>
             )}
             <div className="flex flex-col">
               <span className={cn("font-bold text-muted uppercase tracking-wider", variant === "default" ? "text-[10px] gap-1" : "text-[8px] leading-tight")}>{kpi.label}</span>
-              <span className={cn("font-extrabold text-accent leading-none", variant === "default" ? "text-2xl" : "text-[13px]")}>{kpi.value}</span>
+              <span className={cn("font-extrabold text-theme-icon leading-none", variant === "default" ? "text-2xl" : "text-[13px]")}>{kpi.value}</span>
             </div>
           </div>
         );

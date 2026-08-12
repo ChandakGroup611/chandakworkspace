@@ -4,6 +4,17 @@
     --bg-surface: #ffffff;
     --bg-elevated: #ffffff;
     --text-primary: #1e293b;
+    --btn-primary-bg: #4f46e5;
+    --btn-primary-text: #ffffff;
+    --btn-secondary-bg: #f8fafc;
+    --btn-secondary-text: #0f172a;
+    --tab-active-bg: #eef2ff;
+    --tab-active-text: #4338ca;
+    --tab-inactive-bg: #ffffff;
+    --tab-inactive-text: #475569;
+    --heading-text: #0f172a;
+    --icon-color: #4f46e5;
+
     --text-secondary: #000000;
     --text-muted: #000000;
     --border-subtle: #e2e8f0;
@@ -82,8 +93,8 @@
   
   /* Primary Button is slightly colored but still neumorphic */
   [data-theme="pure-white-neumorphic"] .theme-button-structural.theme-btn-primary {
-    background: #4f46e5 !important;
-    color: #ffffff !important;
+    background: var(--btn-primary-bg) !important;
+    color: var(--btn-primary-text) !important;
     box-shadow: 
       6px 6px 10px 0 rgba(79, 70, 229, 0.3),
       -6px -6px 10px 0 rgba(255, 255, 255, 1) !important;

@@ -36,15 +36,15 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
   const getEventIcon = (type: string) => {
     if (type.includes('APPROVAL')) return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
     if (type.includes('ESCALATION')) return <AlertCircle className="w-4 h-4 text-red-500" />;
-    if (type.includes('INITIATED') || type.includes('CREATED')) return <PlayCircle className="w-4 h-4 text-accent" />;
-    return <Activity className="w-4 h-4 text-accent" />;
+    if (type.includes('INITIATED') || type.includes('CREATED')) return <PlayCircle className="w-4 h-4 text-theme-icon" />;
+    return <Activity className="w-4 h-4 text-theme-icon" />;
   };
 
   return (
     <AppCard className={`h-full theme-card-structural`}>
       <AppCardHeader className={`border-b bg-elevated border-border`}>
         <div className="flex items-center gap-2">
-          <Clock className={`w-4 h-4 text-accent`} />
+          <Clock className={`w-4 h-4 text-theme-icon`} />
           <AppCardTitle className={"text-foreground"}>Governance Audit Trail</AppCardTitle>
         </div>
       </AppCardHeader>
@@ -56,7 +56,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
               No activity recorded yet.
             </div>
           ) : (
-            <div className="relative border-l border-accent/20 ml-3 space-y-6 pb-4">
+            <div className="relative border-l border-theme-btn-primary/20 ml-3 space-y-6 pb-4">
               {events.map((ev, idx) => (
                 <div key={ev.id} className="relative pl-6 group">
                   {/* Timeline Dot */}
@@ -80,7 +80,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
 
                     {ev.new_value?.level && (
                       <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold w-fit ${
-                        "bg-accent/10 text-accent"
+                        "bg-theme-btn-primary/10 text-theme-icon"
                       }`}>
                         Level {ev.new_value.level}
                       </div>

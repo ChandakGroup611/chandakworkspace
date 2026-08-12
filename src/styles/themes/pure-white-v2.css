@@ -4,6 +4,17 @@
     --bg-surface: #ffffff;
     --bg-elevated: #ffffff;
     --text-primary: #111111;
+    --btn-primary-bg: #2563eb;
+    --btn-primary-text: #ffffff;
+    --btn-secondary-bg: #f8fafc;
+    --btn-secondary-text: #0f172a;
+    --tab-active-bg: #eff6ff;
+    --tab-active-text: #1d4ed8;
+    --tab-inactive-bg: #ffffff;
+    --tab-inactive-text: #475569;
+    --heading-text: #0f172a;
+    --icon-color: #2563eb;
+
     --text-secondary: #000000;
     --text-muted: #000000;
     --border-subtle: #eaeaea;
@@ -73,8 +84,8 @@
   }
   
   [data-theme="pure-white"] .theme-button-structural.theme-btn-primary {
-    background: var(--accent-primary) !important;
-    color: #ffffff !important;
+    background: var(--btn-primary-bg) !important;
+    color: var(--btn-primary-text) !important;
     border: none !important;
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3) !important;
   }

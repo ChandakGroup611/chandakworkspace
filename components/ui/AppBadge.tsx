@@ -22,17 +22,17 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
         ? "bg-transparent text-success border-success"
         : ("bg-success/10 text-success border-success/30"),
       warning: isOutline
-        ? "bg-transparent text-warning border-warning"
-        : ("bg-warning/10 text-warning border-warning/30"),
+        ? "bg-transparent text-theme-btn-secondary-text border-theme-btn-secondary-text"
+        : ("bg-theme-btn-secondary/10 text-theme-btn-secondary-text border-theme-btn-secondary-text/30"),
       danger: isOutline
         ? "bg-transparent text-danger border-danger"
         : ("bg-danger/10 text-danger border-danger/30"),
       info: isOutline
-        ? "bg-transparent text-accent border-accent"
-        : ("bg-accent/10 text-accent border-accent/30"),
+        ? "bg-transparent text-theme-icon border-theme-btn-primary"
+        : ("bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/30"),
       accent: isOutline
-        ? "bg-transparent text-accent border-accent"
-        : "bg-accent/10 text-accent border-accent/20",
+        ? "bg-transparent text-theme-icon border-theme-btn-primary"
+        : "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20",
       neutral: isOutline
         ? "bg-transparent text-subtle border-border dark:text-muted dark:border-gray-500"
         : ("bg-elevated text-muted border-border"),
