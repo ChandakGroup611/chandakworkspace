@@ -222,7 +222,7 @@ export default function MigrationClient() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Step 1: Configuration */}
-        <div className="bg-[#121827] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+        <div className="bg-surface dark:bg-[#121827] border border-border dark:border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
             <FileSpreadsheet className="w-32 h-32" />
           </div>
@@ -242,7 +242,7 @@ export default function MigrationClient() {
                   setTargetWorkspaceId('');
                   setTargetSubworkspaceId('');
                 }}
-                className="w-full bg-[#1C1C21] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition-colors"
+                className="w-full bg-background dark:bg-[#1C1C21] border border-border dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground dark:text-white focus:outline-none focus:border-accent transition-colors"
               >
                 <option value="WORKSPACE">Root Workspace</option>
                 <option value="SUBWORKSPACE">Subworkspace</option>
@@ -262,7 +262,7 @@ export default function MigrationClient() {
                 <div>
                   <label className="block text-sm font-semibold text-muted mb-1.5">Target Workspace (Root) <span className="text-red-400">*</span></label>
                   <select
-                    className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
+                    className="w-full bg-background dark:bg-[#0B0F19] border border-border dark:border-white/10 rounded-lg px-3 py-2 text-sm text-foreground dark:text-white focus:outline-none focus:border-accent"
                     value={targetWorkspaceId}
                     onChange={(e) => {
                       setTargetWorkspaceId(e.target.value);
@@ -279,7 +279,7 @@ export default function MigrationClient() {
                 <div>
                   <label className="block text-sm font-semibold text-muted mb-1.5">Target Subworkspace (Optional)</label>
                   <select
-                    className="w-full bg-[#0B0F19] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent disabled:opacity-50"
+                    className="w-full bg-background dark:bg-[#0B0F19] border border-border dark:border-white/10 rounded-lg px-3 py-2 text-sm text-foreground dark:text-white focus:outline-none focus:border-accent disabled:opacity-50"
                     value={targetSubworkspaceId}
                     onChange={(e) => setTargetSubworkspaceId(e.target.value)}
                     disabled={!targetWorkspaceId}
@@ -308,7 +308,7 @@ export default function MigrationClient() {
         </div>
         
         {/* Step 2: Upload */}
-        <div className={`bg-[#121827] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-opacity ${selectedModule === 'TASK' && !targetWorkspaceId ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`bg-surface dark:bg-[#121827] border border-border dark:border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group transition-opacity ${selectedModule === 'TASK' && !targetWorkspaceId ? 'opacity-50 pointer-events-none' : ''}`}>
           
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-xs">2</span>
@@ -332,7 +332,7 @@ export default function MigrationClient() {
              )}
 
              <div 
-               className={`border-2 border-dashed ${isUploading ? 'border-accent/50 bg-accent/5' : 'border-white/10 hover:border-accent/50 hover:bg-surface/5 cursor-pointer transition-all'} rounded-xl p-8 flex flex-col items-center justify-center text-center`}
+               className={`border-2 border-dashed ${isUploading ? 'border-accent/50 bg-accent/5' : 'border-border dark:border-white/10 hover:border-accent/50 hover:bg-surface/5 cursor-pointer transition-all'} rounded-xl p-8 flex flex-col items-center justify-center text-center`}
                onClick={() => !isUploading && fileInputRef.current?.click()}
                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                onDrop={(e) => {
