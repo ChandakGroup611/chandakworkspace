@@ -187,7 +187,7 @@ export async function dispatchNotification(
         // Fallback for background contexts
       }
     }
-    baseUrl = baseUrl || "http://localhost:3000";
+    baseUrl = baseUrl || "https://chandakgroup.tech";
     
     const absoluteLink = link ? (link.startsWith('http') ? link : `${baseUrl}${link}`) : '';
 
@@ -233,8 +233,8 @@ export async function dispatchNotification(
       }]);
       
       // Async trigger the cron job so the email sends immediately via configured providers
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      fetch(`${baseUrl}/api/cron/process-email-queue`, { method: 'POST' }).catch(() => {});
+      const triggerUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
+      fetch(`${triggerUrl}/api/cron/process-email-queue`, { method: 'POST' }).catch(() => {});
       
     } catch (e) {
       console.error('Failed to insert into email_queue', e);
