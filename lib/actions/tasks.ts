@@ -2,7 +2,6 @@
 
 import { supabaseAdmin } from '@/lib/supabase/service_role';
 import { revalidatePath } from 'next/cache';
-import { fetchWorkspaceStakeholders } from '@/lib/actions/workspaces';
 import { queueBusinessEvent } from '@/lib/actions/notification-engine';
 import { dispatchNotification } from '@/lib/actions/notifications';
 import { cookies } from 'next/headers';
@@ -1744,6 +1743,7 @@ export async function transferTask(payload: {
 
     // --- AUTO-WATCHER LOGIC ---
     // Fetch stakeholders for the destination workspace
+    const { fetchWorkspaceStakeholders } = await import('@/lib/actions/workspaces');
     const targetStakeholders = await fetchWorkspaceStakeholders(finalWorkspaceId);
     
     // Fetch all current participants (which now includes valid old ones + new executors)
