@@ -174,10 +174,14 @@ export async function dispatchNotification(
     const { data: user } = await supabaseAdmin.from("user_master").select("email, full_name").eq("id", userId).single();
     if (!user?.email) return;
 
+    // Build absolute URL for emails
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const absoluteLink = link ? (link.startsWith('http') ? link : `${baseUrl}${link}`) : '';
+
     // Insert into corporate email_queue table
     try {
       let finalSubject = title;
-      let finalBody = `${message}\n\nLink: ${link || 'N/A'}`;
+      let finalBody = `${message}\n\nLink: ${absoluteLink || 'N/A'}`;
 
       if (moduleCode && eventCode) {
         const { data: template } = await supabaseAdmin
@@ -189,7 +193,7 @@ export async function dispatchNotification(
           .single();
 
         if (template) {
-          const payload = { title, message, link, recipient_name: user.full_name || user.email };
+          const payload = { title, message, link: absoluteLink, recipient_name: user.full_name || user.email };
           const hydrate = (text: string) => {
             if (!text) return text;
             let hydrated = text;
