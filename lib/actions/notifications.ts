@@ -232,9 +232,9 @@ export async function dispatchNotification(
         is_sent: false
       }]);
       
-      // Async trigger the cron job so the email sends immediately via configured providers
-      const triggerUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
-      fetch(`${triggerUrl}/api/cron/process-email-queue`, { method: 'POST' }).catch(() => {});
+      // Async trigger the cron job via localhost to avoid Hairpin NAT/SSL issues on self-hosted environments
+      const triggerUrl = process.env.INTERNAL_CRON_URL || "http://127.0.0.1:3000";
+      fetch(`${triggerUrl}/api/cron/process-email-queue`, { method: 'POST' }).catch((e) => console.error("Instant cron trigger failed:", e));
       
     } catch (e) {
       console.error('Failed to insert into email_queue', e);
