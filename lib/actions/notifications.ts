@@ -171,7 +171,7 @@ export async function dispatchNotification(
   // 2. Email Delivery Phase
   if (isEmailEnabled) {
     // Fetch User Email
-    const { data: user } = await supabaseAdmin.from("user_master").select("email, first_name").eq("id", userId).single();
+    const { data: user } = await supabaseAdmin.from("user_master").select("email, full_name").eq("id", userId).single();
     if (!user?.email) return;
 
     // Insert into corporate email_queue table
@@ -182,14 +182,14 @@ export async function dispatchNotification(
       if (moduleCode && eventCode) {
         const { data: template } = await supabaseAdmin
           .from("email_templates")
-          .select("subject, body_template, html_body")
+          .select("subject, html_body")
           .eq("module", moduleCode)
           .eq("event", eventCode)
           .eq("is_active", true)
           .single();
 
         if (template) {
-          const payload = { title, message, link, recipient_name: user.first_name || user.email };
+          const payload = { title, message, link, recipient_name: user.full_name || user.email };
           const hydrate = (text: string) => {
             if (!text) return text;
             let hydrated = text;
@@ -205,7 +205,6 @@ export async function dispatchNotification(
 
           if (template.subject) finalSubject = hydrate(template.subject);
           if (template.html_body) finalBody = hydrate(template.html_body);
-          else if (template.body_template) finalBody = hydrate(template.body_template);
         }
       }
 
