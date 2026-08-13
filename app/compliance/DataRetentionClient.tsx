@@ -324,19 +324,17 @@ export default function DataRetentionClient() {
             </AppCardTitle>
             
             <div className="flex bg-surface/40 rounded-lg p-1 border border-white/10">
-              <AppButton variant="secondary"
+              <AppButton 
+                variant={activeView === "active" ? "primary" : "ghost"}
                 onClick={() => setActiveView("active")}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                  activeView === "active" ? "bg-surface/20 text-white shadow-sm" : "text-muted hover:text-muted"
-                }`}
+                className="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
               >
                 Active Records
               </AppButton>
-              <AppButton variant="secondary"
+              <AppButton 
+                variant={activeView === "deleted" ? "destructive" : "ghost"}
                 onClick={() => setActiveView("deleted")}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeView === "deleted" ? "bg-rose-500/20 text-rose-400 shadow-sm border border-rose-500/30" : "text-muted hover:text-muted"
-                }`}
+                className="px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
               >
                 <ShieldAlert className="h-3.5 w-3.5" />
                 Recycle Bin
