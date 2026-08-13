@@ -1216,7 +1216,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
     if (!workspaceId) return [];
   
     const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+    const supabase = createClient(cookieStore);
   
     let targetWorkspaceIds = [workspaceId];
   
@@ -1228,78 +1228,71 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
       console.log(`[PROFILER] Hierarchy_CTE_End_${tId}`);
     }
   
-  const startIdx = (page - 1) * limit;
-  const endIdx = startIdx + limit - 1;
+    const startIdx = (page - 1) * limit;
+    const endIdx = startIdx + limit - 1;
 
+    // We select exact columns needed + related embedded resources to avoid N+1 queries.
     const { data: workspaceTasks, error: tasksError } = await supabase
       .from("tasks")
       .select(`
-        *,
+        id, subject, task_code, created_at, updated_at, start_date, due_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted,
         title:subject,
         status:status_master(name:status_name, code:status_code, status_color),
         priority:priority_master(name:priority_name, code:priority_code, priority_color),
         department:departments(id, name),
-        participants:task_participants(user_id, participation_role)
+        participants:task_participants(user_id, participation_role, user:user_master(id, full_name, profile_photo, manager_id)),
+        workspace:workspaces(id, workspace_name, workspace_code, parent_workspace_id),
+        creator:user_master!tasks_created_by_fkey(id, full_name, profile_photo, manager_id),
+        assignee:user_master!tasks_assigned_to_fkey(id, full_name, profile_photo, manager_id),
+        checklists:task_checklists(id, is_completed),
+        attachments:task_attachments(id),
+        comments:task_comments(id)
       `)
-    .in("workspace_id", targetWorkspaceIds)
-    .eq("is_deleted", false)
-    .order("created_at", { ascending: false })
-    .range(startIdx, endIdx);
+      .in("workspace_id", targetWorkspaceIds)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
+      .range(startIdx, endIdx);
 
-  if (tasksError) {
-    console.error("[Workspaces] Error fetching tasks by workspace:", tasksError);
-    return [];
-  }
+    if (tasksError) {
+      console.error("[Workspaces] Error fetching tasks by workspace:", tasksError);
+      return [];
+    }
 
-  if (workspaceTasks && workspaceTasks.length > 0) {
-      const wsIds = Array.from(new Set(workspaceTasks.map((t: any) => t.workspace_id).filter(Boolean)));
-      const userIds = Array.from(new Set(workspaceTasks.flatMap((t: any) => [t.created_by, t.assigned_to]).filter(Boolean)));
+    if (workspaceTasks && workspaceTasks.length > 0) {
+      // Missing relationships like sub_workspaces or parent tasks that couldn't be efficiently queried deeply
+      const wsIds = Array.from(new Set(workspaceTasks.map((t: any) => t.workspace?.parent_workspace_id).filter(Boolean)));
       
-      const taskIds = workspaceTasks.map((t: any) => t.id);
-      
-      const [
-        { data: rawWorkspaces },
-        { data: users },
-        { data: checklists },
-        { data: attachments },
-        { data: comments }
-      ] = await Promise.all([
-        supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", wsIds),
-        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds),
-        supabaseAdmin.from("task_checklists").select("id, task_id, is_completed").in("task_id", taskIds),
-        supabaseAdmin.from("task_attachments").select("id, task_id").in("task_id", taskIds),
-        supabaseAdmin.from("task_comments").select("id, task_id").in("task_id", taskIds)
-      ]);
-      
-      let workspaces = rawWorkspaces || [];
-      const parentIds = Array.from(new Set(workspaces.map((w: any) => w.parent_workspace_id).filter(Boolean)));
-      if (parentIds.length > 0) {
-        const { data: parentWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", parentIds);
-        if (parentWs) workspaces = [...workspaces, ...parentWs];
+      let parentWorkspaces: any[] = [];
+      if (wsIds.length > 0) {
+        const { data: pWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
+        if (pWs) parentWorkspaces = pWs;
       }
-        
+      
       workspaceTasks.forEach((t: any) => {
-        const ws = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
-        if (ws && ws.parent_workspace_id) {
-          const parentWs = workspaces?.find((w: any) => w.id === ws.parent_workspace_id);
-          t.workspace = parentWs || ws;
-          t.sub_workspace = ws;
+        // Fix up workspace mapping
+        if (t.workspace && t.workspace.parent_workspace_id) {
+          const parentWs = parentWorkspaces.find((w: any) => w.id === t.workspace.parent_workspace_id);
+          t.sub_workspace = t.workspace;
+          if (parentWs) t.workspace = parentWs;
         } else {
-          t.workspace = ws;
           t.sub_workspace = null;
         }
-        t.creator = users?.find((u: any) => u.id === t.created_by) || null;
-        t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
+
         t.assignees = []; // Implicitly workspace members
 
-        // Extract Extensions
-        t.checklists = checklists?.filter((c: any) => c.task_id === t.id) || [];
-        t.attachmentCount = attachments?.filter((a: any) => a.task_id === t.id).length || 0;
-        t.commentCount = comments?.filter((c: any) => c.task_id === t.id).length || 0;
+        // Extract Extensions counts
+        t.attachmentCount = t.attachments ? t.attachments.length : 0;
+        t.commentCount = t.comments ? t.comments.length : 0;
 
         // Map Participants
-        t.executors = t.participants?.filter((p: any) => p.participation_role === "EXECUTOR").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
-        t.reviewers = t.participants?.filter((p: any) => p.participation_role === "REVIEWER" || p.participation_role === "WATCHER").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
+        t.executors = [];
+        t.reviewers = [];
+        if (t.participants) {
+          t.participants.forEach((p: any) => {
+            if (p.participation_role === "EXECUTOR" && p.user) t.executors.push(p.user);
+            if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && p.user) t.reviewers.push(p.user);
+          });
+        }
 
         // Calculate progress percentage
         if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
@@ -1318,28 +1311,29 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
           }
         }
       });
-  }
-
-  // Also fetch parent tasks for sub-tasks
-  const subTasks = workspaceTasks?.filter(t => t.parent_task_id) || [];
-  if (subTasks.length > 0) {
-    const parentIds = Array.from(new Set(subTasks.map(t => t.parent_task_id)));
-    const { data: parentTasks } = await supabaseAdmin.from("tasks").select("id, subject, task_code").in("id", parentIds);
-    if (parentTasks) {
-      const taskMap = new Map(parentTasks.map(t => [t.id, { id: t.id, title: t.subject, code: t.task_code }]));
-      workspaceTasks?.forEach(t => {
-        if (t.parent_task_id && taskMap.has(t.parent_task_id)) {
-          t.parent_task = taskMap.get(t.parent_task_id);
-        }
-      });
     }
-  }
-  
-  return workspaceTasks || [];
+
+    // Also fetch parent tasks for sub-tasks
+    const subTasks = workspaceTasks?.filter(t => t.parent_task_id) || [];
+    if (subTasks.length > 0) {
+      const parentIds = Array.from(new Set(subTasks.map(t => t.parent_task_id)));
+      const { data: parentTasks } = await supabaseAdmin.from("tasks").select("id, subject, task_code").in("id", parentIds);
+      if (parentTasks) {
+        const taskMap = new Map(parentTasks.map(t => [t.id, { id: t.id, title: t.subject, code: t.task_code }]));
+        workspaceTasks?.forEach(t => {
+          if (t.parent_task_id && taskMap.has(t.parent_task_id)) {
+            (t as any).parent_task = taskMap.get(t.parent_task_id);
+          }
+        });
+      }
+    }
+    
+    return workspaceTasks || [];
   } finally {
     console.timeEnd(`[PROFILER] fetchTasksByWorkspace_TOTAL_${tId}`);
   }
 }
+
 
 export async function fetchAllTasks() {
   const cookieStore = await cookies();
@@ -1360,12 +1354,18 @@ export async function fetchAllTasks() {
   let query = supabase
     .from("tasks")
     .select(`
-      *,
+      id, subject, task_code, created_at, updated_at, start_date, due_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
       priority:priority_master(name:priority_name, code:priority_code, priority_color),
       department:departments(id, name),
-      participants:task_participants(user_id, participation_role)
+      participants:task_participants(user_id, participation_role, user:user_master(id, full_name, profile_photo, manager_id)),
+      workspace:workspaces(id, workspace_name, workspace_code, parent_workspace_id),
+      creator:user_master!tasks_created_by_fkey(id, full_name, profile_photo, manager_id),
+      assignee:user_master!tasks_assigned_to_fkey(id, full_name, profile_photo, manager_id),
+      checklists:task_checklists(id, is_completed),
+      attachments:task_attachments(id),
+      comments:task_comments(id)
     `)
     .eq("is_deleted", false);
 
@@ -1387,54 +1387,38 @@ export async function fetchAllTasks() {
   }
   
   if (allTasks && allTasks.length > 0) {
-      const wsIds = Array.from(new Set(allTasks.map((t: any) => t.workspace_id).filter(Boolean)));
-      const userIds = Array.from(new Set(allTasks.flatMap((t: any) => [t.created_by, t.assigned_to]).filter(Boolean)));
+      const wsIds = Array.from(new Set(allTasks.map((t: any) => t.workspace?.parent_workspace_id).filter(Boolean)));
       
-      const taskIds = allTasks.map((t: any) => t.id);
-      
-      const [
-        { data: rawWorkspaces },
-        { data: users },
-        { data: checklists },
-        { data: attachments },
-        { data: comments }
-      ] = await Promise.all([
-        supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", wsIds),
-        supabaseAdmin.from("user_master").select("id, full_name, profile_photo, manager_id").in("id", userIds),
-        supabaseAdmin.from("task_checklists").select("id, task_id, is_completed").in("task_id", taskIds),
-        supabaseAdmin.from("task_attachments").select("id, task_id").in("task_id", taskIds),
-        supabaseAdmin.from("task_comments").select("id, task_id").in("task_id", taskIds)
-      ]);
-      
-      let workspaces = rawWorkspaces || [];
-      const parentIds = Array.from(new Set(workspaces.map((w: any) => w.parent_workspace_id).filter(Boolean)));
-      if (parentIds.length > 0) {
-        const { data: parentWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code, parent_workspace_id").in("id", parentIds);
-        if (parentWs) workspaces = [...workspaces, ...parentWs];
+      let parentWorkspaces: any[] = [];
+      if (wsIds.length > 0) {
+        const { data: pWs } = await supabaseAdmin.from("workspaces").select("id, name:workspace_name, code:workspace_code").in("id", wsIds);
+        if (pWs) parentWorkspaces = pWs;
       }
         
       allTasks.forEach((t: any) => {
-        const ws = workspaces?.find((w: any) => w.id === t.workspace_id) || null;
-        if (ws && ws.parent_workspace_id) {
-          const parentWs = workspaces?.find((w: any) => w.id === ws.parent_workspace_id);
-          t.workspace = parentWs || ws;
-          t.sub_workspace = ws;
+        if (t.workspace && t.workspace.parent_workspace_id) {
+          const parentWs = parentWorkspaces.find((w: any) => w.id === t.workspace.parent_workspace_id);
+          t.sub_workspace = t.workspace;
+          if (parentWs) t.workspace = parentWs;
         } else {
-          t.workspace = ws;
           t.sub_workspace = null;
         }
-        t.creator = users?.find((u: any) => u.id === t.created_by) || null;
-        t.assignee = users?.find((u: any) => u.id === t.assigned_to) || null;
+
         t.assignees = []; // Implicitly workspace members
 
-        // Extract Extensions
-        t.checklists = checklists?.filter((c: any) => c.task_id === t.id) || [];
-        t.attachmentCount = attachments?.filter((a: any) => a.task_id === t.id).length || 0;
-        t.commentCount = comments?.filter((c: any) => c.task_id === t.id).length || 0;
+        // Extract Extensions counts
+        t.attachmentCount = t.attachments ? t.attachments.length : 0;
+        t.commentCount = t.comments ? t.comments.length : 0;
 
         // Map Participants
-        t.executors = t.participants?.filter((p: any) => p.participation_role === "EXECUTOR").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
-        t.reviewers = t.participants?.filter((p: any) => p.participation_role === "REVIEWER" || p.participation_role === "WATCHER").map((p: any) => users?.find((u: any) => u.id === p.user_id)).filter(Boolean) || [];
+        t.executors = [];
+        t.reviewers = [];
+        if (t.participants) {
+          t.participants.forEach((p: any) => {
+            if (p.participation_role === "EXECUTOR" && p.user) t.executors.push(p.user);
+            if ((p.participation_role === "REVIEWER" || p.participation_role === "WATCHER") && p.user) t.reviewers.push(p.user);
+          });
+        }
 
         // Calculate progress percentage
         if (t.status?.code === "CLOSED" || t.status?.code === "RESOLVED" || t.status?.code === "DONE") {
@@ -1457,6 +1441,7 @@ export async function fetchAllTasks() {
 
   return allTasks || [];
 }
+
 
 export async function toggleChecklistItem(itemId: string, completed: boolean) {
   const cookieStore = await cookies();
