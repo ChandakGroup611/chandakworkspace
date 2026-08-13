@@ -568,24 +568,24 @@ export default function MastersPage() {
       {/* Global Event Trigger Banners */}
       {errorAlert && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3 animate-in fade-in-20">
-          <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-          <div className="flex-1 text-xs text-rose-200">
-            <strong className="font-semibold block text-rose-300">Governance Integrity Notice:</strong>
+          <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <div className="flex-1 text-xs text-rose-700 dark:text-rose-200">
+            <strong className="font-semibold block text-rose-600 dark:text-rose-300">Governance Integrity Notice:</strong>
             {errorAlert}
           </div>
-          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-white">
+          <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-foreground dark:hover:text-white">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-300 animate-in fade-in-20">
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in-20">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>{successAlert}</span>
           </div>
-          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-white">
+          <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-foreground dark:hover:text-white">
             <X className="h-3.5 w-3.5" />
           </AppButton>
         </div>
@@ -970,7 +970,7 @@ export default function MastersPage() {
               <AppButton variant="secondary" 
                 type="button" 
                 onClick={() => setShowModal(false)}
-                className="p-1.5 rounded-lg text-muted hover:text-white"
+                className="p-1.5 rounded-lg text-muted hover:text-foreground dark:hover:text-white"
               >
                 <X className="h-4 w-4" />
               </AppButton>
