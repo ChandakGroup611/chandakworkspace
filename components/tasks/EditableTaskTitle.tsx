@@ -76,7 +76,7 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
   return (
     <div className="group flex items-start gap-2 relative w-full">
       <TitleWrapper className={titleClasses}>{title}</TitleWrapper>
-      <button 
+      <AppButton 
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -86,7 +86,7 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
         title="Edit Task Title"
       >
         <Edit2 className="h-4 w-4" />
-      </button>
+      </AppButton>
     </div>
   );
 }

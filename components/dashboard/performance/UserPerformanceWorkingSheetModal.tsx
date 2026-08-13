@@ -274,12 +274,12 @@ export function UserPerformanceWorkingSheetModal({
               Print
             </AppButton>
 
-            <button
+            <AppButton
               onClick={onClose}
               className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface dark:hover:bg-surface/10 transition-colors ml-1"
             >
               <X className="w-5 h-5" />
-            </button>
+            </AppButton>
           </div>
         </div>
 
@@ -474,7 +474,7 @@ export function UserPerformanceWorkingSheetModal({
                       const Icon = tab.icon;
                       const isActive = activeTab === tab.key;
                       return (
-                        <button
+                        <AppButton
                           key={tab.key}
                           onClick={() => setActiveTab(tab.key as TabType)}
                           className={cn(
@@ -494,7 +494,7 @@ export function UserPerformanceWorkingSheetModal({
                               {tab.count}
                             </span>
                           )}
-                        </button>
+                        </AppButton>
                       );
                     })}
                   </div>

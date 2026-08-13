@@ -1609,7 +1609,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               ].map(t => {
                 const isActive = activeTab === t.id;
                 return (
-                  <button
+                  <AppButton
                     key={t.id}
                     type="button"
                     onClick={() => setActiveTab(t.id as any)}
@@ -1630,7 +1630,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         {t.count}
                       </span>
                     )}
-                  </button>
+                  </AppButton>
                 );
               })}
             </div>
@@ -1787,7 +1787,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                   <Download className="w-3.5 h-3.5" /> Download
                                 </a>
                                 {roleCode === 'SUPER_ADMIN' && !item.is_temp && (
-                                  <button
+                                  <AppButton
                                     onClick={(e) => {
                                       e.preventDefault();
                                       handleDeleteAttachment(item.id);
@@ -1796,7 +1796,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                     title="Delete Attachment"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" /> Delete
-                                  </button>
+                                  </AppButton>
                                 )}
                               </div>
                             )}
@@ -1844,19 +1844,19 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <p className="text-xs text-muted">Assign the Primary Owner and collaborating Executors for this task.</p>
                 </div>
               </div>
-              <button 
+              <AppButton 
                 type="button"
                 onClick={() => setIsAssigneeModalOpen(false)} 
                 className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface/80 transition-colors"
                 title="Close"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </AppButton>
             </div>
 
             {/* Modal Tabs */}
             <div className="flex border-b border-border bg-surface/50 dark:bg-elevated/50 px-6 pt-3 gap-2">
-              <button
+              <AppButton
                 type="button"
                 onClick={() => setAssigneeModalTab('primary')}
                 className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
@@ -1870,8 +1870,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 {selectedPrimaryAssignee && (
                   <span className="w-2 h-2 rounded-full bg-theme-btn-primary" />
                 )}
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="button"
                 onClick={() => setAssigneeModalTab('executors')}
                 className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
@@ -1885,7 +1885,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full font-bold">
                   {selectedExecutors.length}
                 </span>
-              </button>
+              </AppButton>
             </div>
 
             {/* Search Input */}
@@ -1900,13 +1900,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   className="w-full h-10 pl-9 pr-9 rounded-xl border border-border bg-surface dark:bg-elevated text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-all placeholder:text-muted"
                 />
                 {stakeholderSearch && (
-                  <button 
+                  <AppButton 
                     type="button"
                     onClick={() => setStakeholderSearch("")}
                     className="absolute right-3 top-3 text-muted hover:text-foreground"
                   >
                     <X className="w-4 h-4" />
-                  </button>
+                  </AppButton>
                 )}
               </div>
             </div>
@@ -1990,21 +1990,21 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         Select all collaborators who will execute this directive:
                       </span>
                       <div className="flex items-center gap-2">
-                        <button
+                        <AppButton
                           type="button"
                           onClick={() => setSelectedExecutors(stakeholders.map(s => s.id))}
                           className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                         >
                           Select All
-                        </button>
+                        </AppButton>
                         <span className="text-muted text-xs">•</span>
-                        <button
+                        <AppButton
                           type="button"
                           onClick={() => setSelectedExecutors([])}
                           className="text-[10px] text-muted hover:text-foreground font-bold hover:underline"
                         >
                           Clear All
-                        </button>
+                        </AppButton>
                       </div>
                     </div>
                     {filteredStakeholders.map(s => {

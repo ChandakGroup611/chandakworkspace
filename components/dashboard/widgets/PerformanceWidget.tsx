@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { AppButton } from '@/components/ui/AppButton';
 import { Users, ArrowUpRight, FileSpreadsheet } from "lucide-react";
 import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
 import { BaseWidget } from "./BaseWidget";
@@ -73,12 +74,12 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
         className="h-[400px]"
         noPadding
         headerRight={
-          <button 
+          <AppButton 
             onClick={handleOpenTopPerformer}
             className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1 bg-transparent border-0 p-0"
           >
             Full Working Sheet <ArrowUpRight className="w-3 h-3" />
-          </button>
+          </AppButton>
         }
       >
         <div className="w-full overflow-auto h-full custom-scrollbar">

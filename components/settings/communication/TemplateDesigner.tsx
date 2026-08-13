@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AppTable } from "@/components/ui/AppTable";
 import { AppButton } from '@/components/ui/AppButton';
 import DOMPurify from 'dompurify';
 import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate, ArrowLeft, Edit2 } from "lucide-react";
@@ -255,7 +256,7 @@ export default function TemplateDesigner() {
                 <p className="text-sm text-muted mt-1">Click 'Add Template' to create your first email payload.</p>
               </div>
             ) : (
-              <table className="w-full text-left text-sm">
+              <AppTable className="w-full text-left text-sm">
                 <thead className="bg-background border-b border-border">
                   <tr>
                     <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Template Name</th>
@@ -301,7 +302,7 @@ export default function TemplateDesigner() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </AppTable>
             )}
           </div>
         )}

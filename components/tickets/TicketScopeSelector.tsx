@@ -66,7 +66,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
           const colorClass = getColor(scope.code);
           
           return (
-            <button
+            <AppButton
               key={scope.id}
               onClick={() => onSelect(scope)}
               type="button"
@@ -94,7 +94,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                   </div>
                 </AppCardContent>
               </AppCard>
-            </button>
+            </AppButton>
           );
         })}
       </div>

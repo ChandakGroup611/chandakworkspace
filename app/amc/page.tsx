@@ -961,7 +961,7 @@ export default function AMCPage() {
             <div className={`p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border`}>
               <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
                 {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
-                  <button 
+                  <AppButton 
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab)}
@@ -972,7 +972,7 @@ export default function AMCPage() {
                     }`}
                   >
                     {tab}
-                  </button>
+                  </AppButton>
                 ))}
               </div>
             </div>
@@ -1015,14 +1015,14 @@ export default function AMCPage() {
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
-                      <button 
+                      <AppButton 
                         type="button"
                         onClick={handleAddContractType}
                         className="w-11 h-11 flex items-center justify-center rounded-xl bg-theme-btn-primary text-white hover:bg-theme-btn-primary/90 transition-all flex-shrink-0"
                         title="Add Contract Type"
                       >
                         <Plus className="h-5 w-5" />
-                      </button>
+                      </AppButton>
                     </div>
                   </div>
                   <div className="space-y-2">

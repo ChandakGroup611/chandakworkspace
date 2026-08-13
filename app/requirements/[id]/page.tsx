@@ -938,7 +938,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
             return (
-              <button
+              <AppButton
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
@@ -959,7 +959,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     {tab.count}
                   </span>
                 )}
-              </button>
+              </AppButton>
             );
           })}
         </div>
@@ -1358,7 +1358,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     {(masters.departments || []).map((d: any) => {
                       const isSelected = formData.impacted_departments.includes(d.id);
                       return (
-                        <button
+                        <AppButton
                           type="button"
                           key={d.id}
                           onClick={() => handleDepartmentToggle(d.id)}
@@ -1371,7 +1371,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                           <div className={`w-2 h-2 rounded-full ${isSelected ? "bg-surface" : "bg-purple-500"}`} />
                           <span>{d.name}</span>
                           {isSelected && <span className="text-[10px] font-extrabold bg-surface/20 px-1.5 py-0.2 rounded-full">Selected</span>}
-                        </button>
+                        </AppButton>
                       );
                     })}
                   </div>
@@ -1410,7 +1410,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                 const orderIndex = selectedApprovers.indexOf(u.id) + 1;
 
                                 return (
-                                  <button
+                                  <AppButton
                                     type="button"
                                     key={u.id}
                                     onClick={() => {
@@ -1447,7 +1447,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                       </span>
                                     )}
                                     <span>{u.full_name || u.name || 'User'}</span>
-                                  </button>
+                                  </AppButton>
                                 );
                               })}
                             </div>

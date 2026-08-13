@@ -744,12 +744,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 className={`pl-9 pr-8 py-1.5 text-sm rounded-lg outline-none focus:ring-2 focus:ring-theme-icon w-56 sm:w-72 transition-all ${ "theme-card-structural text-foreground" }`}
               />
               {searchQuery && (
-                <button 
+                <AppButton 
                   onClick={() => setSearchQuery("")}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-surface/50 text-muted hover:text-foreground"
                 >
                   <X className="h-3.5 w-3.5" />
-                </button>
+                </AppButton>
               )}
             </div>
 
@@ -807,7 +807,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   { id: 'SUB_WORKSPACES', label: 'Sub-Workspaces' },
                   { id: 'TASKS', label: 'Tasks' },
                 ].map(tab => (
-                  <button
+                  <AppButton
                     key={tab.id}
                     onClick={() => setFilters(prev => ({ ...prev, entityType: tab.id as any }))}
                     className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
@@ -817,14 +817,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     }`}
                   >
                     {tab.label}
-                  </button>
+                  </AppButton>
                 ))}
               </div>
             </div>
 
             {/* Quick Toggle: My Assigned Tasks Only */}
             <div className="flex items-center gap-2">
-              <button
+              <AppButton
                 onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
                 className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
                   filters.myTasksOnly 
@@ -835,7 +835,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 <UserCheck className="h-3.5 w-3.5" />
                 <span>My Assigned Tasks Only</span>
                 {filters.myTasksOnly && <Check className="h-3 w-3 ml-0.5" />}
-              </button>
+              </AppButton>
 
               {activeFilterCount > 0 && (
                 <AppButton 

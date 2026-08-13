@@ -296,7 +296,7 @@ export default function DataRetentionClient() {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <button 
+              <AppButton 
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
@@ -307,7 +307,7 @@ export default function DataRetentionClient() {
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
-              </button>
+              </AppButton>
             );
           })}
         </div>

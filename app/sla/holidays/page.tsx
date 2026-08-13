@@ -48,7 +48,7 @@ export default function HolidayCalendar() {
 
       <div className="p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border mt-6">
         <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
-          <button 
+          <AppButton 
             onClick={() => setActiveTab("holidays")}
             className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
               activeTab === 'holidays' 
@@ -57,8 +57,8 @@ export default function HolidayCalendar() {
             }`}
           >
             <Calendar className="w-4 h-4 mr-2" /> Holiday Calendar
-          </button>
-          <button 
+          </AppButton>
+          <AppButton 
             onClick={() => setActiveTab("working_hours")}
             className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
               activeTab === 'working_hours' 
@@ -67,7 +67,7 @@ export default function HolidayCalendar() {
             }`}
           >
             <Clock className="w-4 h-4 mr-2" /> Working Hours (Business Schedules)
-          </button>
+          </AppButton>
         </div>
       </div>
 
