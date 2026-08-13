@@ -1216,7 +1216,13 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
     if (!workspaceId) return [];
   
     const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
+    const supabaseClient = createClient(cookieStore);
+    
+    const { data: userData } = await supabaseClient.auth.getUser();
+    if (!userData.user) return [];
+
+    const canManageAll = await hasPermission(userData.user.id, "WORKSPACES_MANAGE");
+    const supabase = canManageAll ? supabaseAdmin : supabaseClient;
   
     let targetWorkspaceIds = [workspaceId];
   
@@ -1337,11 +1343,14 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
 
 export async function fetchAllTasks() {
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const supabaseClient = createClient(cookieStore);
 
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return [];
+
+  const canManageAll = await hasPermission(user.id, "WORKSPACES_MANAGE");
+  const supabase = canManageAll ? supabaseAdmin : supabaseClient;
 
   // Fetch workspaces the user has access to
   const visibleWorkspaces = await getVisibleWorkspaces(user.id);
