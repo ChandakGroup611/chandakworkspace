@@ -81,23 +81,23 @@ export function QuickApprovalModal({
                </div>
                <div className="md:col-span-2">
                   <span className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">Scope</span>
-                  <div className="bg-surface dark:bg-surface/5 p-3 rounded-md text-foreground dark:text-muted">{reqDetails.scope || '-'}</div>
+                  <div className="bg-surface dark:bg-surface/5 p-3 rounded-md text-foreground ">{reqDetails.scope || '-'}</div>
                </div>
                <div className="md:col-span-2">
                   <span className="block text-xs font-bold text-muted uppercase tracking-wider mb-1">Objective</span>
-                  <div className="bg-surface dark:bg-surface/5 p-3 rounded-md text-foreground dark:text-muted whitespace-pre-wrap">{reqDetails.objective || '-'}</div>
+                  <div className="bg-surface dark:bg-surface/5 p-3 rounded-md text-foreground  whitespace-pre-wrap">{reqDetails.objective || '-'}</div>
                </div>
             </div>
 
             {/* Approval Action Form */}
             <div>
-              <label className="block text-sm font-medium text-subtle dark:text-muted mb-2">
+              <label className="block text-sm font-medium text-subtle  mb-2">
                 Mandatory Remarks *
               </label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="w-full text-sm p-3 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-foreground dark:text-gray-100 placeholder:text-muted focus:ring-theme-btn-primary focus:border-theme-btn-primary shadow-inner min-h-[100px]"
+                className="w-full text-sm p-3 border-border dark:border-white/10 rounded-md theme-card-structural dark:bg-[#0a0d14] text-theme-heading placeholder:text-muted focus:ring-theme-btn-primary focus:border-theme-btn-primary shadow-inner min-h-[100px]"
                 rows={3}
                 placeholder="Enter your approval, rejection, or hold remarks here..."
               />

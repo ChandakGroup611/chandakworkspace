@@ -11,7 +11,7 @@ import { fetchTaskTemplates, createTaskTemplate, deleteTaskTemplate } from "@/li
 
 export default function TemplateManager({ workspaceId, onClose }: { workspaceId: string, onClose: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
 

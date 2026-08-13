@@ -103,7 +103,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
           ) : (
             <>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-subtle dark:text-muted">Title <span className="text-rose-500">*</span></label>
+                <label className="text-sm font-medium text-subtle ">Title <span className="text-rose-500">*</span></label>
                 <input
                   type="text"
                   value={formData.title}
@@ -113,7 +113,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-subtle dark:text-muted">System</label>
+                <label className="text-sm font-medium text-subtle ">System</label>
                 <select
                   value={formData.software_system_id}
                   onChange={(e) => setFormData({ ...formData, software_system_id: e.target.value })}
@@ -126,7 +126,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-subtle dark:text-muted">Priority</label>
+                <label className="text-sm font-medium text-subtle ">Priority</label>
                 <select
                   value={formData.priority_id}
                   onChange={(e) => setFormData({ ...formData, priority_id: e.target.value })}
@@ -139,7 +139,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-subtle dark:text-muted">Department</label>
+                <label className="text-sm font-medium text-subtle ">Department</label>
                 <select
                   value={formData.department_id}
                   onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}

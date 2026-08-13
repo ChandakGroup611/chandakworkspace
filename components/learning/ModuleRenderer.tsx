@@ -17,7 +17,7 @@ import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow,
 
 export default function ModuleRenderer({ module }: { module: LearningModule }) {
   const { theme } = useTheme();
-  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   if (!module) return null;
 
@@ -31,7 +31,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
             <module.icon className="h-8 w-8" />
           </div>
           <div>
-            <h1 className={`text-2xl font-bold tracking-tight text-foreground`}>
+            <h1 className={`-theme-heading`}>
               {module.title}
             </h1>
             <p className={"text-muted"}>{module.description}</p>
@@ -50,7 +50,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
           </div>
 
           <div className="flex gap-2">
-            <ArrowRight className={`h-5 w-5 shrink-0 text-blue-500`} />
+            <ArrowRight className={`h-5 w-5 shrink-0 text-theme-icon`} />
             <div>
               <h3 className={`font-semibold text-sm text-foreground`}>Navigation Flow</h3>
               <p className={`text-sm mt-1 leading-relaxed text-muted font-mono font-semibold`}>
@@ -77,7 +77,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
           <Settings2 className={`h-5 w-5 text-muted`} />
-          <h2 className={`text-lg font-bold tracking-tight text-foreground`}>Field to Field Information</h2>
+          <h2 className={`-theme-heading`}>Field to Field Information</h2>
         </div>
         <div className={`rounded-2xl overflow-hidden theme-card-structural`}>
           <AppTableContainer><AppTable className="w-full text-left text-base">
@@ -102,7 +102,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                     {field.isRequired ? (
                       <span className="text-[10px] font-bold uppercase text-rose-500 bg-rose-500/10 px-2 py-1 rounded">Required</span>
                     ) : (
-                      <span className="text-[10px] font-bold uppercase text-muted bg-gray-500/10 px-2 py-1 rounded">Optional</span>
+                      <span className="text-[10px] font-bold uppercase text-muted bg-theme-btn-secondary/20 text-theme-btn-secondary-text px-2 py-1 rounded">Optional</span>
                     )}
                   </AppTableCell>
                   <AppTableCell className={`px-6 py-4 leading-relaxed text-muted`}>{field.description}</AppTableCell>
@@ -117,7 +117,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
           <BookOpen className={`h-5 w-5 text-muted`} />
-          <h2 className={`text-lg font-bold tracking-tight text-foreground`}>Step-by-Step Navigation</h2>
+          <h2 className={`-theme-heading`}>Step-by-Step Navigation</h2>
         </div>
         <div className="space-y-3">
           {module.steps.map((step, idx) => (
@@ -141,7 +141,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
           <Terminal className={`h-5 w-5 text-muted`} />
-          <h2 className={`text-lg font-bold tracking-tight text-foreground`}>System Results & Technical Details</h2>
+          <h2 className={`-theme-heading`}>System Results & Technical Details</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {module.results.map((result, idx) => (

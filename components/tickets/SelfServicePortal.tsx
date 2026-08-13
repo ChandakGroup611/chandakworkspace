@@ -76,7 +76,7 @@ export function SelfServicePortal() {
         <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-border dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <h2 className="text-lg font-bold text-theme-heading">How can we help you today?</h2>
-            <p className="text-sm text-muted dark:text-muted">Track your existing requests or submit a new one.</p>
+            <p className="text-sm text-muted ">Track your existing requests or submit a new one.</p>
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
@@ -92,7 +92,7 @@ export function SelfServicePortal() {
 
         <div className="flex-1 min-h-0 theme-card-structural dark:bg-[#1a1c23] rounded-2xl shadow-sm border-border dark:border-white/5 overflow-hidden flex flex-col">
           <div className="p-4 border-b border-border dark:border-white/5">
-            <h3 className="font-bold text-foreground dark:text-muted">Recent Requests</h3>
+            <h3 className="font-bold text-foreground ">Recent Requests</h3>
           </div>
           
           <div className="flex-1 overflow-y-auto">

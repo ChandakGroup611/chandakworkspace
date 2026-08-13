@@ -9,6 +9,8 @@
 
 @import '../src/styles/themes/pure-white-v2.css';
 @import '../src/styles/themes/pure-white-neumorphic-v2.css';
+@import '../src/styles/themes/amazon-v2.css';
+@import '../src/styles/themes/amazon-prime-upi-v2.css';
 
 /* Force Tailwind v4 to use class-based dark mode instead of media queries */
 @custom-variant dark (&:where(.dark, .dark *));

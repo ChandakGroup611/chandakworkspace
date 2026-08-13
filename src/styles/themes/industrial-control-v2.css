@@ -1,7 +1,7 @@
 @layer theme {
   [data-theme="industrial-control"] {
-    --bg-primary: #050505;
-    --bg-surface: rgba(20, 20, 20, 0.4);
+    --bg-primary: #1a1a1a;
+    --bg-surface: #1a1a1a;
     --bg-elevated: rgba(30, 30, 30, 0.6);
     --text-primary: #ffffff;
     --btn-primary-bg: #0ea5e9;

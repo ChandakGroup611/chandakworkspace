@@ -33,7 +33,7 @@ export function EnterpriseModalShell({
   className = "",
 }: EnterpriseModalShellProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   // Prevent background scrolling
   useEffect(() => {

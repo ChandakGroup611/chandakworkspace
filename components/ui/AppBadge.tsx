@@ -15,7 +15,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       const themeCtx = useTheme();
       theme = themeCtx.theme;
     } catch (e) {}
-    const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+    const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
     const variants = {
       success: isOutline 
@@ -34,7 +34,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
         ? "bg-transparent text-theme-icon border-theme-btn-primary"
         : "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20",
       neutral: isOutline
-        ? "bg-transparent text-subtle border-border dark:text-muted dark:border-gray-500"
+        ? "bg-transparent text-subtle border-border  dark:border-gray-500"
         : ("bg-elevated text-muted border-border"),
       custom: "" // Handled dynamically via style prop
     };

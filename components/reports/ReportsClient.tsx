@@ -105,7 +105,7 @@ const formatDate = (dateString: string | null | undefined): string => {
 
 export default function ReportsClient() {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canExport = roleCode === "SUPER_ADMIN" || hasPermission("REPORTS_EXPORT");
 
@@ -560,7 +560,7 @@ export default function ReportsClient() {
                           else if (typeof val === "object") val = JSON.stringify(val);
                           
                           return (
-                            <AppTableCell key={col.field_id} className="text-[13px] text-subtle dark:text-muted">
+                            <AppTableCell key={col.field_id} className="text-[13px] text-subtle ">
                               <div className="truncate max-w-[200px]" title={String(val)}>
                                 {col.data_type === "link" && val !== "—" ? (
                                   <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>

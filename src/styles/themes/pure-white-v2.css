@@ -4,23 +4,14 @@
     --bg-surface: #ffffff;
     --bg-elevated: #ffffff;
     --text-primary: #111111;
-    --btn-primary-bg: #2563eb;
-    --btn-primary-text: #ffffff;
-    --btn-secondary-bg: #f8fafc;
-    --btn-secondary-text: #0f172a;
-    --tab-active-bg: #eff6ff;
-    --tab-active-text: #1d4ed8;
-    --tab-inactive-bg: #ffffff;
-    --tab-inactive-text: #475569;
-    --heading-text: #0f172a;
-    --icon-color: #2563eb;
+    --icon-color: #7c3aed;
 
     --text-secondary: #000000;
     --text-muted: #000000;
     --border-subtle: #eaeaea;
     --border-active: #cccccc;
-    --accent-primary: #2563eb;
-    --accent-secondary: #3b82f6;
+    --accent-primary: #7c3aed;
+    --accent-secondary: #8b5cf6;
     --success: #16a34a;
     --warning: #d97706;
     --danger: #dc2626;
@@ -30,10 +21,19 @@
     --shadow-inner: none;
     --shadow-pressed: inset 0 2px 4px rgba(0,0,0,0.05);
     --border-3d: 1px solid var(--border-subtle);
+    --btn-primary-bg: #7c3aed;
+    --btn-primary-text: #ffffff;
+    --btn-secondary-bg: #F5F5F5;
+    --btn-secondary-text: #0f172a;
+    --tab-active-bg: #f5f3ff;
+    --tab-active-text: #6d28d9;
+    --tab-inactive-bg: #ffffff;
+    --tab-inactive-text: #475569;
+    --heading-text: #0f172a;
   }
   
   [data-theme="pure-white"] body {
-    background: #ffffff !important;
+    background: var(--bg-primary) !important;
   }
 
   /* Cards - Flat Pure White */
@@ -60,7 +60,7 @@
   }
   [data-theme="pure-white"] .theme-input-structural:focus {
     border-color: var(--accent-primary) !important;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2) !important;
     outline: none;
   }
 
@@ -87,10 +87,10 @@
     background: var(--btn-primary-bg) !important;
     color: var(--btn-primary-text) !important;
     border: none !important;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3) !important;
+    box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3) !important;
   }
   [data-theme="pure-white"] .theme-button-structural.theme-btn-primary:hover {
-    background: #1d4ed8 !important; /* darker accent */
+    background: #6d28d9 !important; /* darker accent */
   }
 
   /* Tables */

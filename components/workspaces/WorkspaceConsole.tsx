@@ -50,7 +50,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
     <div className="flex flex-col h-full bg-background dark:bg-[#0a0a0b] text-muted">
       <header className="p-6 border-b border-white/5 flex justify-between items-center bg-surface/20">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{workspace.workspace_name}</h1>
+          <h1 className="-theme-heading">{workspace.workspace_name}</h1>
           <p className="text-sm text-muted mt-1">Workspace operations and execution center</p>
         </div>
         <div className="flex gap-4">
@@ -68,7 +68,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
         <div className="p-6">
           <div className="bg-surface/40 border border-white/5 rounded-2xl p-6 mb-6 flex justify-around">
             <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">{tasks.length}</p>
+              <p className="-theme-heading">{tasks.length}</p>
               <p className="text-xs text-muted uppercase tracking-widest mt-1">Total Tasks</p>
             </div>
             <div className="text-center">
@@ -81,7 +81,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
             </div>
           </div>
           
-          <h2 className="text-lg font-semibold mb-4 text-foreground">Active Tasks Kanban</h2>
+          <h2 className="text-lg font-semibold mb-4 text-theme-heading">Active Tasks Kanban</h2>
           {/* <TaskBoard initialTasks={tasks} statuses={[]} /> */}
         </div>
       </div>

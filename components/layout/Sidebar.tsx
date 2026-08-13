@@ -250,7 +250,7 @@ export default function Sidebar() {
           const groupColorClass = groupIdx === 0 
             ? "text-blue-600 dark:text-blue-400" 
             : groupIdx === 1 
-            ? "text-purple-600 dark:text-purple-400" 
+            ? "text-theme-icon" 
             : "text-amber-600 dark:text-amber-400";
 
           return (

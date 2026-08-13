@@ -13,7 +13,7 @@ interface TicketScopeSelectorProps {
 
 export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const [dbScopes, setDbScopes] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -54,7 +54,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
       <div className="text-center space-y-1">
-        <h2 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>Select Operational Scope</h2>
+        <h2 className={`-theme-heading"}`}>Select Operational Scope</h2>
         <p className="text-sm text-muted max-w-md mx-auto">
           Choose the appropriate category to route your ticket correctly.
         </p>

@@ -1,0 +1,120 @@
+@layer theme {
+  [data-theme="amazon-prime-upi"] {
+    --bg-primary: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ffffff;
+    --text-primary: #0f1111;
+    --icon-color: #e77600;
+
+    --text-secondary: #565959;
+    --text-muted: #888888;
+    --border-subtle: #d5d9d9;
+    --border-active: #ff9900;
+    --accent-primary: #ff9900;
+    --accent-secondary: #e77600;
+    --success: #067d62;
+    --warning: #e47911;
+    --danger: #b12704;
+
+    --btn-primary-bg: #ffd814;
+    --btn-primary-text: #0f1111;
+    --btn-secondary-bg: #f0f2f2;
+    --btn-secondary-text: #0f1111;
+    --tab-active-bg: #fcf4eb;
+    --tab-active-text: #e77600;
+    --tab-inactive-bg: #ffffff;
+    --tab-inactive-text: #565959;
+    --heading-text: #0f1111;
+  }
+  
+  [data-theme="amazon-prime-upi"] body {
+    background: var(--bg-primary) !important;
+  }
+
+  /* Cards - Clean and Trustworthy for Financial UI */
+  [data-theme="amazon-prime-upi"] .theme-card-structural {
+    background: #ffffff !important;
+    border: 1px solid #e7e9ea !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease-in-out;
+  }
+  [data-theme="amazon-prime-upi"] .theme-card-structural:hover {
+    background: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* Inputs - Smooth and secure looking */
+  [data-theme="amazon-prime-upi"] .theme-input-structural {
+    background: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+    color: #0f1111 !important;
+    border-radius: 8px !important;
+    padding: 12px 14px;
+    box-shadow: 0 1px 2px rgba(15, 17, 17, 0.1) inset !important;
+    transition: all 0.2s;
+  }
+  [data-theme="amazon-prime-upi"] .theme-input-structural:focus {
+    border-color: #e77600 !important;
+    box-shadow: 0 0 0 3px rgba(231, 118, 0, 0.2) inset !important;
+    outline: none;
+  }
+
+  /* Buttons - Prime Blue */
+  [data-theme="amazon-prime-upi"] .theme-button-structural {
+    background: #f0f2f2 !important;
+    border: 1px solid #d5d9d9 !important;
+    color: #0f1111 !important;
+    border-radius: 8px !important;
+    padding: 10px 20px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s ease;
+  }
+  [data-theme="amazon-prime-upi"] .theme-button-structural:hover {
+    background: #e3e6e6 !important;
+  }
+  
+  [data-theme="amazon-prime-upi"] .theme-button-structural.theme-btn-primary {
+    background: #ffd814 !important;
+    color: #0f1111 !important;
+    border: 1px solid #fcd200 !important;
+    box-shadow: 0 4px 8px rgba(255, 216, 20, 0.3) !important;
+  }
+  [data-theme="amazon-prime-upi"] .theme-button-structural.theme-btn-primary:hover {
+    background: #f7ca00 !important;
+    border-color: #f2c200 !important;
+  }
+
+  /* Tables */
+  [data-theme="amazon-prime-upi"] .theme-table-structural {
+    background: #ffffff !important;
+    border: 1px solid #e7e9ea !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+  }
+  [data-theme="amazon-prime-upi"] .theme-table-header {
+    background: #f8f9fa !important;
+    color: #565959 !important;
+    font-weight: 700;
+    border-bottom: 2px solid #e7e9ea !important;
+  }
+  [data-theme="amazon-prime-upi"] .theme-table-row {
+    border-bottom: 1px solid #f0f2f2;
+    transition: all 0.2s;
+  }
+  [data-theme="amazon-prime-upi"] .theme-table-row:hover {
+    background: #f8f9fa !important;
+  }
+
+  /* Badges */
+  [data-theme="amazon-prime-upi"] .theme-badge-structural {
+    background: #fcf4eb !important;
+    border: 1px solid #ff9900 !important;
+    color: #e77600 !important;
+    border-radius: 12px !important;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}

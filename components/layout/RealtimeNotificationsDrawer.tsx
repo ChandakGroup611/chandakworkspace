@@ -48,7 +48,7 @@ export default function RealtimeNotificationsDrawer() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"ALL" | "UNREAD" | "CRITICAL">("UNREAD");
@@ -322,7 +322,7 @@ export default function RealtimeNotificationsDrawer() {
                   size="sm"
                   variant={activeFilter === "ALL" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("ALL")}
-                  className={activeFilter === "ALL" ? "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-md border-none hover:scale-105" : "text-muted-foreground"}
+                  className={activeFilter === "ALL" ? "bg-theme-tab-active text-theme-tab-active-text shadow-md border-none hover:scale-105" : "text-muted-foreground"}
                 >
                   All ({localNotifications.length})
                 </AppButton>

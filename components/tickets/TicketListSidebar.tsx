@@ -28,7 +28,7 @@ export function TicketListSidebar({
   departments
 }: TicketListSidebarProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   return (
     <div className={`flex flex-col h-full overflow-hidden border-r transition-colors duration-300 ${ "theme-card-structural " }`}>

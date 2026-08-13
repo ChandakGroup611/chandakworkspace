@@ -15,7 +15,7 @@ interface TicketFormInfraProps {
 
 export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   
   const [loading, setLoading] = useState(true);
   const [masters, setMasters] = useState<any>({});
@@ -232,7 +232,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
           </div>
 
           {isReqCategory && (
-            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-indigo-900/10 border border-theme-btn-primary/20 rounded-2xl">
+            <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-theme-btn-primary/5 border border-theme-btn-primary/20 rounded-2xl">
               <h4 className="text-sm font-bold text-theme-icon mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">

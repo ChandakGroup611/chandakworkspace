@@ -159,7 +159,7 @@ export function WorkspaceMasterTable({
             const isOnline = onlineUsers.has(uid);
             return (
               <div key={idx} className="relative">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-white`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : '#4f46e5' }}>
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-white`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : 'var(--accent-primary, #4f46e5)' }}>
                   {uInfo?.profile_photo ? <img src={uInfo.profile_photo} className="h-full w-full rounded-full" alt="" /> : (uInfo?.full_name?.substring(0,2).toUpperCase() || "U")}
                 </div>
                 <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -398,7 +398,7 @@ export function WorkspaceMasterTable({
           </div>
           
           {/* Created Date */}
-          <div className="py-1 px-2 text-xs text-slate-900 dark:text-muted whitespace-nowrap" title={fullDate}>
+          <div className="py-1 px-2 text-xs text-slate-900  whitespace-nowrap" title={fullDate}>
             {shortDate}
           </div>
 

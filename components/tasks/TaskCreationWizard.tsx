@@ -14,7 +14,7 @@ import TemplateManager from "@/components/tasks/TemplateManager";
 
 export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialDescription, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialDescription?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const [departmentId, setDepartmentId] = useState("");
   const [departments, setDepartments] = useState<any[]>([]);
@@ -393,7 +393,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className={`p-2 rounded-xl max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders.filter(s => s.full_name?.toLowerCase().includes(assigneeSearchTerm.toLowerCase())).map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle dark:text-muted cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
+                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle  cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
                       <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={assignees.includes(s.id)} onChange={e => {
                         if (e.target.checked) setAssignees([...assignees, s.id]);
                         else setAssignees(assignees.filter(id => id !== s.id));
@@ -434,7 +434,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     .filter(s => !assignees.includes(s.id))
                     .filter(s => s.full_name?.toLowerCase().includes(watcherSearchTerm.toLowerCase()))
                     .map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle dark:text-muted cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
+                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle  cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
                       <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={watchers.includes(s.id)} onChange={e => {
                         if (e.target.checked) setWatchers([...watchers, s.id]);
                         else setWatchers(watchers.filter(id => id !== s.id));

@@ -1,0 +1,119 @@
+@layer theme {
+  [data-theme="amazon"] {
+    --bg-primary: #131921;
+    --bg-surface: #131921;
+    --bg-elevated: #232f3e;
+    --text-primary: #ffffff;
+    --icon-color: #ff9900;
+
+    --text-secondary: #cccccc;
+    --text-muted: #888888;
+    --border-subtle: #37475a;
+    --border-active: #ff9900;
+    --accent-primary: #ff9900;
+    --accent-secondary: #e47911;
+    --success: #008a00;
+    --warning: #e47911;
+    --danger: #cc0c39;
+
+    --btn-primary-bg: #ffd814;
+    --btn-primary-text: #0f1111;
+    --btn-secondary-bg: #37475a;
+    --btn-secondary-text: #ffffff;
+    --tab-active-bg: #232f3e;
+    --tab-active-text: #ff9900;
+    --tab-inactive-bg: #131921;
+    --tab-inactive-text: #cccccc;
+    --heading-text: #ffffff;
+  }
+  
+  [data-theme="amazon"] body {
+    background: var(--bg-primary) !important;
+  }
+
+  /* Cards */
+  [data-theme="amazon"] .theme-card-structural {
+    background: #131921 !important;
+    border: 1px solid #37475a !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+    border-radius: 8px !important;
+    transition: border-color 0.2s;
+  }
+  [data-theme="amazon"] .theme-card-structural:hover {
+    border-color: #ff9900 !important;
+  }
+
+  /* Inputs */
+  [data-theme="amazon"] .theme-input-structural {
+    background: #ffffff !important;
+    border: 1px solid #888888 !important;
+    color: #111111 !important;
+    border-radius: 4px !important;
+    padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2) inset !important;
+    transition: all 0.2s;
+  }
+  [data-theme="amazon"] .theme-input-structural:focus {
+    border-color: #e77600 !important;
+    box-shadow: 0 0 3px 2px rgba(228,121,17,0.5) !important;
+    outline: none;
+  }
+
+  /* Buttons */
+  [data-theme="amazon"] .theme-button-structural {
+    background: #37475a !important;
+    border: 1px solid #131921 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    padding: 8px 16px;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s ease;
+  }
+  [data-theme="amazon"] .theme-button-structural:hover {
+    background: #485769 !important;
+  }
+  
+  [data-theme="amazon"] .theme-button-structural.theme-btn-primary {
+    background: #ffd814 !important;
+    color: #0f1111 !important;
+    border: 1px solid #fcd200 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+  }
+  [data-theme="amazon"] .theme-button-structural.theme-btn-primary:hover {
+    background: #f7ca00 !important;
+    border-color: #f2c200 !important;
+  }
+
+  /* Tables */
+  [data-theme="amazon"] .theme-table-structural {
+    background: #131921 !important;
+    border: 1px solid #37475a !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+  }
+  [data-theme="amazon"] .theme-table-header {
+    background: #232f3e !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    border-bottom: 2px solid #37475a !important;
+  }
+  [data-theme="amazon"] .theme-table-row {
+    border-bottom: 1px solid #232f3e;
+    transition: all 0.2s;
+  }
+  [data-theme="amazon"] .theme-table-row:hover {
+    background: #1a222c !important;
+  }
+
+  /* Badges */
+  [data-theme="amazon"] .theme-badge-structural {
+    background: #232f3e !important;
+    border: 1px solid #37475a !important;
+    color: #cccccc !important;
+    border-radius: 4px !important;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}

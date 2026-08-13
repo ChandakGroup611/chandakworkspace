@@ -97,7 +97,7 @@ export default function SettingsGallery() {
       sentiment: "Calm & Focused",
       icon: Sun,
       previewBg: "bg-[#f8fafc] text-[#334155]",
-      previewBorder: "border-[#ddd6fe]",
+      previewBorder: "border-[#cbd5e1]",
       accentColor: "bg-[#fb923c]",
     },
     {
@@ -109,7 +109,7 @@ export default function SettingsGallery() {
       icon: Sun,
       previewBg: "bg-[#ffffff] text-slate-900",
       previewBorder: "border-border/50",
-      accentColor: "bg-indigo-600",
+      accentColor: "bg-emerald-500",
     },
     {
       id: "industrial-control",
@@ -142,7 +142,29 @@ export default function SettingsGallery() {
       icon: Sun,
       previewBg: "bg-[#ffffff] text-[#000000]",
       previewBorder: "border-[#e5e5e5]",
-      accentColor: "bg-blue-600",
+      accentColor: "bg-violet-500",
+    },
+    {
+      id: "amazon",
+      name: "Amazon Dark",
+      tagline: "E-Commerce Professional",
+      benefit: "High contrast UI",
+      sentiment: "Familiar & Reliable",
+      icon: Layers,
+      previewBg: "bg-[#131921] text-[#ffffff]",
+      previewBorder: "border-[#37475a]",
+      accentColor: "bg-[#ff9900]",
+    },
+    {
+      id: "amazon-prime-upi",
+      name: "Amazon Prime UPI",
+      tagline: "Clean Financial UI",
+      benefit: "Trustworthy & Secure",
+      sentiment: "Professional",
+      icon: CheckCircle2,
+      previewBg: "bg-[#ffffff] text-[#0f1111]",
+      previewBorder: "border-[#ff9900]",
+      accentColor: "bg-[#ffd814]",
     },
   ];
 
@@ -211,7 +233,7 @@ export default function SettingsGallery() {
   ];
 
 
-  const isLightMode = theme === "light-neumorphic" || theme === "pure-white" || theme === "pure-white-neumorphic";
+  const isLightMode = theme === "light-neumorphic" || theme === "pure-white" || theme === "pure-white-neumorphic" || theme === "amazon-prime-upi";
 
   return (
     <div className="space-y-8 pb-12">
@@ -250,13 +272,13 @@ export default function SettingsGallery() {
                 }}
                 className={`group relative flex flex-col justify-between rounded-2xl p-5 cursor-pointer transition-all duration-300 tactile-lift ${
                   isSelected 
-                    ? `ring-2 ring-blue-500 shadow-xl theme-card-structural border-blue-500` 
+                    ? `ring-2 ring-primary shadow-xl theme-card-structural border-primary` 
                     : `theme-card-structural opacity-80 border-border hover:opacity-100 hover:-translate-y-1`
                 }`}
               >
                 {/* Active Check Indicator */}
                 {isSelected && (
-                  <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow-md animate-in zoom-in-50">
+                  <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md animate-in zoom-in-50">
                     <Check className="h-3 w-3 stroke-[3]" />
                   </div>
                 )}
@@ -289,7 +311,7 @@ export default function SettingsGallery() {
                   {/* Descriptions matching exact requirement mappings */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <IconComponent className={`h-4 w-4 ${isSelected ? "text-blue-500" : "text-muted"}`} />
+                      <IconComponent className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted"}`} />
                       <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
                         {t.name}
                       </h3>
@@ -308,7 +330,7 @@ export default function SettingsGallery() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted font-medium">User Sentiment:</span>
-                    <span className="text-indigo-400 font-semibold text-right">{t.sentiment}</span>
+                    <span className="text-muted-foreground font-semibold text-right">{t.sentiment}</span>
                   </div>
                 </div>
               </div>

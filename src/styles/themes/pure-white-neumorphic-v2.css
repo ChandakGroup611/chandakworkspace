@@ -4,23 +4,23 @@
     --bg-surface: #ffffff;
     --bg-elevated: #ffffff;
     --text-primary: #1e293b;
-    --btn-primary-bg: #4f46e5;
+    --btn-primary-bg: #10b981;
     --btn-primary-text: #ffffff;
-    --btn-secondary-bg: #f8fafc;
+    --btn-secondary-bg: #F5F5F5;
     --btn-secondary-text: #0f172a;
-    --tab-active-bg: #eef2ff;
-    --tab-active-text: #4338ca;
+    --tab-active-bg: #ecfdf5;
+    --tab-active-text: #047857;
     --tab-inactive-bg: #ffffff;
     --tab-inactive-text: #475569;
     --heading-text: #0f172a;
-    --icon-color: #4f46e5;
+    --icon-color: #10b981;
 
     --text-secondary: #000000;
     --text-muted: #000000;
     --border-subtle: #e2e8f0;
     --border-active: #cbd5e1;
-    --accent-primary: #4f46e5;
-    --accent-secondary: #6366f1;
+    --accent-primary: #10b981;
+    --accent-secondary: #34d399;
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
@@ -96,7 +96,7 @@
     background: var(--btn-primary-bg) !important;
     color: var(--btn-primary-text) !important;
     box-shadow: 
-      6px 6px 10px 0 rgba(79, 70, 229, 0.3),
+      6px 6px 10px 0 rgba(16, 185, 129, 0.3),
       -6px -6px 10px 0 rgba(255, 255, 255, 1) !important;
   }
   [data-theme="pure-white-neumorphic"] .theme-button-structural.theme-btn-primary:active {

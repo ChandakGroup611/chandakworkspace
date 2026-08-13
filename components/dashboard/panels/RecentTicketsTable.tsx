@@ -77,8 +77,8 @@ export default function RecentTicketsTable({ metrics = [] }: RecentTicketsTableP
               return (
                 <AppTableRow key={i} onClick={handleRowClick} className="cursor-pointer">
                   <AppTableCell>
-                    <div className="font-mono text-[0.7rem] font-bold text-muted dark:text-muted uppercase">{m.code || `TF-${shortId}`}</div>
-                    <div className="text-xs font-semibold text-foreground dark:text-gray-100 truncate max-w-[200px]" title={m.title}>{m.title || `${m.module} Assignment`}</div>
+                    <div className="font-mono text-[0.7rem] font-bold text-muted  uppercase">{m.code || `TF-${shortId}`}</div>
+                    <div className="text-xs font-semibold text-theme-heading truncate max-w-[200px]" title={m.title}>{m.title || `${m.module} Assignment`}</div>
                   </AppTableCell>
                   <AppTableCell><span className={tagClass}>{m.module.substring(0,4).toLowerCase()}</span></AppTableCell>
                   <AppTableCell>{renderPriority(m.priority || "")}</AppTableCell>

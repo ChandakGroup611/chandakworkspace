@@ -9,7 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 
 export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; onLogAdded?: () => void }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   
   const [logs, setLogs] = useState<any[]>([]);
   const [estimatedHours, setEstimatedHours] = useState<number>(0);
@@ -66,7 +66,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
         <div className="flex justify-between items-end mb-2">
           <div className="space-y-1">
             <p className="text-xs font-bold text-muted uppercase tracking-wider">Total Logged</p>
-            <p className={`text-2xl font-bold text-slate-900 dark:text-slate-100`}>{totalLogged.toFixed(1)}h</p>
+            <p className={`-theme-heading dark:text-slate-100`}>{totalLogged.toFixed(1)}h</p>
           </div>
           <div className="space-y-1 text-right">
             <p className="text-xs font-bold text-muted uppercase tracking-wider">Estimated</p>

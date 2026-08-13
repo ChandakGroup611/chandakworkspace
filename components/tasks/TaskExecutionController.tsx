@@ -120,7 +120,7 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
 
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const router = useRouter();
   const { hasPermission, roleCode } = usePermissions();
@@ -898,8 +898,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
           <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
             <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
-              <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary shadow-xs" />
+              <Clock className="w-4 h-4 text-theme-icon" />
               <h3 className="font-bold text-sm tracking-wide text-foreground">Timeline & Meta</h3>
             </div>
             {task.priority?.name && (
@@ -914,7 +914,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
               
               {/* 1. Creator */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 border border-theme-btn-primary/20 hover:border-theme-btn-primary/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Creator</span>
                 </span>
@@ -924,7 +924,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 2. Created At */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-slate-500/5 dark:bg-slate-500/10 border border-slate-200/60 dark:border-slate-800/40 hover:border-slate-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-surface/5 dark:bg-surface/10 border border-border/60 hover:border-border transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Created At</span>
                 </span>
@@ -934,7 +934,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 3. Last Status */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-200/60 dark:border-indigo-800/40 hover:border-indigo-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-tab-active/5 dark:bg-theme-tab-active/10 border border-theme-tab-active/20 hover:border-theme-tab-active/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Last Status</span>
                 </span>
@@ -944,7 +944,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 4. Last Updated */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-purple-500/5 dark:bg-purple-500/10 border border-purple-200/60 dark:border-purple-800/40 hover:border-purple-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-secondary/5 dark:bg-theme-btn-secondary/10 border border-theme-btn-secondary/20 hover:border-theme-btn-secondary/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Last Updated</span>
                 </span>
@@ -1052,7 +1052,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 9. Primary Assignee */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 border border-theme-btn-primary/20 hover:border-theme-btn-primary/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
                 <div className="flex items-center justify-between">
                   <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary Assignee</span>
@@ -1316,7 +1316,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="theme-data-value text-subtle dark:text-muted mb-1.5 block">Destination Workspace <span className="text-red-500">*</span></label>
+                      <label className="theme-data-value text-subtle  mb-1.5 block">Destination Workspace <span className="text-red-500">*</span></label>
                       <select
                         value={selectedTransferSubworkspace || selectedTransferWorkspace}
                         onChange={e => {
@@ -1388,7 +1388,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           <label className="theme-data-value text-amber-800 dark:text-amber-300 mb-1.5 block">Assign Additional Executives (Optional)</label>
                           <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
                             {targetStakeholders.map(s => (
-                              <label key={s.id} className="flex items-center gap-2 text-xs text-subtle dark:text-muted p-1 hover:bg-surface/5 dark:hover:bg-surface/5 rounded cursor-pointer">
+                              <label key={s.id} className="flex items-center gap-2 text-xs text-subtle  p-1 hover:bg-surface/5 dark:hover:bg-surface/5 rounded cursor-pointer">
                                 <input 
                                   type="checkbox" 
                                   checked={newExecutors.includes(s.id)}
@@ -1408,7 +1408,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   )}
 
                   <div>
-                    <label className="theme-data-value text-subtle dark:text-muted mb-1 block">Transfer Remarks (Mandatory) <span className="text-red-500">*</span></label>
+                    <label className="theme-data-value text-subtle  mb-1 block">Transfer Remarks (Mandatory) <span className="text-red-500">*</span></label>
                     <textarea 
                       value={transferRemarks}
                       onChange={e => setTransferRemarks(e.target.value)}

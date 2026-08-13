@@ -15,7 +15,7 @@ import { sanitizeErrorMessage } from "@/lib/utils";
 export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
   useRenderLog("TaskRealtimeChat", { taskId });
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   // Create client once with useRef so it's stable across renders
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;

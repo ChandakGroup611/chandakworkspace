@@ -29,7 +29,7 @@ interface TicketInspectorProps {
 export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
   const [activeTab, setActiveTab] = useState<"DETAILS" | "COLLAB" | "TIMELINE">("DETAILS");
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   if (!ticket) {
     return (
@@ -40,7 +40,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <Activity className={`h-10 w-10 text-muted`} />
         </div>
         <div className="space-y-1">
-          <h3 className={`text-xl font-bold ${"text-foreground"}`}>Select a Ticket to Inspect</h3>
+          <h3 className={`-theme-heading"}`}>Select a Ticket to Inspect</h3>
           <p className="text-sm text-muted max-w-xs">Select an operational record from the sidebar to view full diagnostic data and collaboration history.</p>
         </div>
       </div>
@@ -70,7 +70,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                 {status?.name || "Active"}
               </AppBadge>
             </div>
-            <h2 className={`text-2xl font-bold tracking-tight ${"text-foreground"}`}>{ticket.title}</h2>
+            <h2 className={`-theme-heading"}`}>{ticket.title}</h2>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             className={`py-2 px-5 text-sm font-bold uppercase tracking-widest transition-all shadow-sm ${
               activeTab === tab 
                 ? "shadow-theme-btn-primary/20" 
-                : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
+                : "text-muted hover:text-foreground  "
             }`}
           >
             {tab === "COLLAB" ? "Collaboration" : tab === "DETAILS" ? "Technical Data" : "Audit Trail"}

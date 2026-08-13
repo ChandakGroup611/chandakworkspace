@@ -119,7 +119,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
     }}>
       <DialogContent className="sm:max-w-[500px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-foreground dark:text-gray-100">
+          <DialogTitle className="text-theme-heading">
             {step === 1 ? `Move ${taskIds.length} Task(s)` : "Map Assignees & Watchers"}
           </DialogTitle>
         </DialogHeader>
@@ -131,7 +131,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
               <select
                 value={targetWorkspaceId}
                 onChange={(e) => setTargetWorkspaceId(e.target.value)}
-                className="w-full text-sm theme-card-structural dark:bg-[#151923] text-foreground dark:text-gray-100 border-border dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                className="w-full text-sm theme-card-structural dark:bg-[#151923] text-theme-heading border-border dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
               >
                 <option value="">Select a Workspace...</option>
                 {workspaces.map(w => (

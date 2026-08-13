@@ -24,7 +24,7 @@ interface TicketOpsSidebarProps {
 export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
   const [timeLeft, setTimeLeft] = useState(240); // Initial minutes from priority
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   
   useEffect(() => {
     if (ticket?.priorityObj?.sla_target_minutes) {
@@ -52,7 +52,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           }`}>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <span className={`text-2xl font-bold tabular-nums ${"text-foreground"}`}>{timeLeft}m</span>
+                <span className={`-theme-heading"}`}>{timeLeft}m</span>
                 <p className="text-xs text-muted font-medium">Until Resolution Breach</p>
               </div>
               <div className={`p-3 rounded-xl bg-theme-btn-primary/10`}>

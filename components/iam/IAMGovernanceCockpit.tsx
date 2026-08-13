@@ -53,7 +53,7 @@ export default function IAMGovernanceCockpit({
 }: IAMGovernanceCockpitProps) {
   const { theme } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const resolvedRoles = initialRoles.length > 0 ? initialRoles : roles;
   const resolvedPermissions = initialPermissions.length > 0 ? initialPermissions : permissions;
@@ -397,7 +397,7 @@ export default function IAMGovernanceCockpit({
         <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
           <Lock className="h-10 w-10" />
         </div>
-        <h2 className={cn("text-lg font-bold", "text-foreground")}>Access Denied</h2>
+        <h2 className={cn("-theme-heading")}>Access Denied</h2>
         <p className="text-xs text-muted max-w-sm">You do not have capabilities to view the IAM Governance Cockpit.</p>
       </div>
     );
@@ -428,7 +428,7 @@ export default function IAMGovernanceCockpit({
               <ShieldCheck className="h-6 w-6 text-foreground" />
             </div>
             <div>
-              <h1 className={cn("text-2xl font-bold tracking-tight flex items-center gap-3", "text-foreground")}>
+              <h1 className={cn("-theme-heading")}>
                 IAM Governance Cockpit
                 <AppBadge variant="info" className={cn("py-0.5 px-2", "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/30/50")}>
                   v2.0 Realtime
@@ -503,7 +503,7 @@ export default function IAMGovernanceCockpit({
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className={cn("text-sm font-bold transition-colors", isSelected ? ("text-foreground") : ("text-muted group-hover:text-foreground"))}>
+                          <span className={cn("-theme-heading") : ("text-muted group-hover:text-foreground"))}>
                             {role.name}
                           </span>
                           {role.is_system && <ShieldCheck className="h-3.5 w-3.5 text-amber-500/80" />}
@@ -580,7 +580,7 @@ export default function IAMGovernanceCockpit({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-500" />
-                        <h3 className={cn("text-lg font-bold tracking-tight", "text-foreground")}>
+                        <h3 className={cn("-theme-heading")}>
                           Capability Matrix: <span className="text-theme-icon">{activeRole.name}</span>
                         </h3>
                         {activeRole.is_system && (
@@ -745,7 +745,7 @@ export default function IAMGovernanceCockpit({
                                     >
                                       <AppTableCell className="pl-6">
                                         <div className="space-y-0.5">
-                                          <div className={cn("text-xs font-bold transition-colors", "text-foreground group-hover/row:text-theme-icon")}>
+                                          <div className={cn("-theme-heading group-hover/row:text-theme-icon")}>
                                             {m.submodule}
                                           </div>
                                           <div className="text-[0.7rem] font-mono text-muted uppercase tracking-tighter">

@@ -106,7 +106,7 @@ export default function MastersPage() {
   let isLightMode = false;
   try {
     const { theme } = useTheme();
-    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   } catch (e) {}
   const [activeTab, setActiveTab] = useState("infra_issue_types");
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("ALL");

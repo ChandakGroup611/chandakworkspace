@@ -374,7 +374,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     
     return [
       { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-sky-500/10", iconColorClass: "text-sky-600 dark:text-sky-400" },
-      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-purple-500/10", iconColorClass: "text-purple-600 dark:text-purple-400" },
+      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon" },
       { label: "In Progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-amber-500/10", iconColorClass: "text-amber-600 dark:text-amber-400" },
       { label: "Completed", value: completed, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-emerald-500/10", iconColorClass: "text-emerald-600 dark:text-emerald-400" },
     ];
@@ -1132,7 +1132,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               >
                                 <Link 
                                   href={`/tasks/${task.id}`}
-                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle dark:text-muted flex items-center gap-2 font-medium"
+                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle  flex items-center gap-2 font-medium"
                                   onClick={(e) => {
                                      e.stopPropagation();
                                      setOpenMenuTaskId(null);
@@ -1141,7 +1141,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                   <Eye className="w-3.5 h-3.5" /> View Task
                                 </Link>
                                 <AppButton variant="secondary" 
-                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle dark:text-muted flex items-center gap-2 font-medium"
+                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle  flex items-center gap-2 font-medium"
                                   onClick={(e) => {
                                      e.stopPropagation();
                                      setOpenMenuTaskId(null);
@@ -1193,7 +1193,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
                           text = `${diff} day(s)`;
                         }
-                        return <AppTableCell className="text-xs text-subtle dark:text-muted">{text}</AppTableCell>;
+                        return <AppTableCell className="text-xs text-subtle ">{text}</AppTableCell>;
                       }
                       case "progress": return (
                         <AppTableCell className="w-[120px]">
@@ -1336,7 +1336,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         else if (col.data_type === "date") val = formatDate(val);
                         
                         return (
-                          <AppTableCell className="text-[13px] text-subtle dark:text-muted">
+                          <AppTableCell className="text-[13px] text-subtle ">
                             <div className="truncate max-w-[200px]" title={String(val)}>
                               {col.data_type === "link" && val !== "—" ? (
                                 <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
@@ -1437,7 +1437,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
               <div className="space-y-2">
                 <h4 className="text-[11px] uppercase font-bold text-muted tracking-wider">Description</h4>
-                <div className="text-[13px] text-foreground dark:text-muted leading-relaxed">
+                <div className="text-[13px] text-foreground  leading-relaxed">
                   <SafeHtml html={selectedTask.description || 'No description provided.'} />
                 </div>
               </div>
@@ -1445,19 +1445,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
-                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.priority?.name || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.priority?.name || 'N/A'}</div>
                 </div>
                 <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Department</span>
-                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.department?.name || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.department?.name || 'N/A'}</div>
                 </div>
                 <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
-                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.status?.name || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.status?.name || 'N/A'}</div>
                 </div>
                 <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Due Date</span>
-                  <div className="text-[13px] font-semibold text-foreground dark:text-gray-100 truncate">{selectedTask.end_date || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.end_date || 'N/A'}</div>
                 </div>
               </div>
               
@@ -1471,7 +1471,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       {selectedTask.custom_fields.checklist.map((item: any, idx: number) => (
                         <div key={idx} className="flex items-start gap-2 bg-surface dark:theme-card-structural /[0.02] p-2 rounded-lg border-border/50 dark:border-white/5">
                           <input type="checkbox" checked={item.completed} readOnly className="mt-1 shrink-0 rounded border-border text-theme-icon focus:ring-theme-btn-primary" />
-                          <span className={`text-[13px] ${item.completed ? 'line-through text-muted' : 'text-foreground dark:text-muted'}`}>{item.title}</span>
+                          <span className={`text-[13px] ${item.completed ? 'line-through text-muted' : 'text-foreground '}`}>{item.title}</span>
                         </div>
                       ))}
                     </div>
@@ -1481,7 +1481,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                     {Object.entries(selectedTask.custom_fields).filter(([k]) => k !== 'checklist' && k !== 'progress_percentage').map(([key, value]) => (
                       <div key={key} className="flex flex-col gap-1">
                         <span className="text-[11px] uppercase font-bold text-muted tracking-wider">{key.replace(/_/g, ' ')}</span>
-                        <div className="text-[13px] text-foreground dark:text-muted">
+                        <div className="text-[13px] text-foreground ">
                           {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
                         </div>
                       </div>
@@ -1508,7 +1508,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <div className="bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/20 dark:text-theme-icon font-bold text-sm w-6 h-6 rounded-full flex items-center justify-center">
               {selectedTaskIds.size}
             </div>
-            <span className="theme-data-value text-subtle dark:text-muted">Tasks Selected</span>
+            <span className="theme-data-value text-subtle ">Tasks Selected</span>
           </div>
           <div className="h-6 w-px bg-elevated dark:bg-surface/20"></div>
           <div className="flex items-center gap-2">
@@ -1527,7 +1527,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <Dialog open={bulkStatusModalOpen} onOpenChange={setBulkStatusModalOpen}>
         <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-foreground dark:text-gray-100">Bulk Update Tasks</DialogTitle>
+            <DialogTitle className="text-theme-heading">Bulk Update Tasks</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Updating {selectedTaskIds.size} Tasks</div>
@@ -1621,7 +1621,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
         <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-foreground dark:text-gray-100">Update Status</DialogTitle>
+            <DialogTitle className="text-theme-heading">Update Status</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
@@ -1674,7 +1674,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <Dialog open={departmentModalOpen} onOpenChange={setDepartmentModalOpen}>
         <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-foreground dark:text-gray-100">Update Department</DialogTitle>
+            <DialogTitle className="text-theme-heading">Update Department</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
@@ -1730,7 +1730,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block theme-data-value text-subtle dark:text-muted mb-1">Target Workspace <span className="text-red-500">*</span></label>
+              <label className="block theme-data-value text-subtle  mb-1">Target Workspace <span className="text-red-500">*</span></label>
               <select
                 value={creationWorkspaceId}
                 onChange={(e) => {
@@ -1748,7 +1748,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             
             {creationWorkspaceId && (
               <div>
-                <label className="block theme-data-value text-subtle dark:text-muted mb-1">Sub-Workspace (Optional)</label>
+                <label className="block theme-data-value text-subtle  mb-1">Sub-Workspace (Optional)</label>
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}

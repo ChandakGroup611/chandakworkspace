@@ -6,7 +6,7 @@ import { AppButton } from "@/components/ui/AppButton";
 
 export function RequirementQueue({ requirements }: { requirements: any[] }) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const [filter, setFilter] = useState('ALL');
 
   const filtered = filter === 'ALL' 
@@ -17,7 +17,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
     <div className={`flex flex-col h-full p-6 bg-surface text-foreground`}>
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className={`text-2xl font-bold tracking-tight text-foreground`}>Requirement Queue</h1>
+          <h1 className={`-theme-heading`}>Requirement Queue</h1>
           <p className={`text-sm mt-1 text-muted`}>Manage, analyze, and approve enterprise requirements</p>
         </div>
         <div className="flex flex-wrap gap-2">

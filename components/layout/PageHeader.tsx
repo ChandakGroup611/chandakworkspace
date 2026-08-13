@@ -16,7 +16,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
   let isLight = false;
   try {
     const { theme } = useTheme();
-    isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
+    isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   } catch (e) {}
 
   return (
@@ -30,7 +30,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
               {icon}
             </div>
           )}
-          <h1 className={`text-2xl font-bold tracking-tight truncate text-foreground`}>
+          <h1 className={`-theme-heading`}>
             {title}
           </h1>
           {badge && <div className="shrink-0">{badge}</div>}

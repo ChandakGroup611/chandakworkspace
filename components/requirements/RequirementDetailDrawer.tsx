@@ -60,7 +60,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "details"
                       ? "shadow-theme-btn-primary/20"
-                      : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
+                      : "text-muted hover:text-foreground  "
                   }`}
                 >
                   <ListTodo className="w-4 h-4" />
@@ -72,7 +72,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
                     activeTab === "collaboration"
                       ? "shadow-theme-btn-primary/20"
-                      : "text-muted hover:text-foreground dark:text-muted dark:hover:text-gray-100"
+                      : "text-muted hover:text-foreground  "
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />
@@ -179,20 +179,20 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   <div className="w-6 h-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold text-theme-icon border border-theme-btn-primary/50">
                     {requirement.analyst?.full_name?.charAt(0) || '?'}
                   </div>
-                  <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
+                  <span className="text-sm font-semibold text-theme-heading truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
                 </div>
               </div>
               <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Department</span>
-                <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{requirement.department?.name || 'Enterprise Global'}</span>
+                <span className="text-sm font-semibold text-theme-heading truncate">{requirement.department?.name || 'Enterprise Global'}</span>
               </div>
               <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority SLA</span>
-                <span className="text-sm font-semibold text-foreground dark:text-gray-100 truncate">{requirement.priority?.priority_name || 'Standard'}</span>
+                <span className="text-sm font-semibold text-theme-heading truncate">{requirement.priority?.priority_name || 'Standard'}</span>
               </div>
               <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Estimations</span>
-                <div className="space-y-1 text-sm font-semibold text-foreground dark:text-gray-100 mt-1">
+                <div className="space-y-1 text-sm font-semibold text-theme-heading mt-1">
                   <div className="flex justify-between"><span>Hours:</span> <span>{requirement.estimated_hours || 0}</span></div>
                   <div className="flex justify-between"><span>Cost:</span> <span>${requirement.estimated_cost?.toLocaleString() || 0}</span></div>
                 </div>
