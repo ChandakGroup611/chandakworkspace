@@ -1612,11 +1612,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <AppButton
                     key={t.id}
                     type="button"
+                    variant={isActive ? "primary" : "ghost"}
                     onClick={() => setActiveTab(t.id as any)}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl theme-data-value transition-all duration-200 cursor-pointer select-none ${
-                      isActive 
-                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-md shadow-theme-btn-primary/25 border border-theme-btn-primary scale-[1.02]" 
-                        : "bg-surface hover:bg-elevated text-muted hover:text-foreground border border-border/60 hover:border-border"
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer select-none ${
+                      isActive ? "shadow-md scale-[1.02] border-transparent" : "border border-transparent hover:border-border/60"
                     }`}
                   >
                     <t.icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-theme-icon"}`} />

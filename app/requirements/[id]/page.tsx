@@ -941,11 +941,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <AppButton
                 key={tab.id}
                 type="button"
+                variant={isActive ? "primary" : "ghost"}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl theme-data-value transition-all duration-200 cursor-pointer select-none ${
-                  isActive 
-                    ? `${tab.activeBg} text-white shadow-md scale-[1.02] border border-white/20` 
-                    : "bg-surface hover:bg-elevated text-muted hover:text-foreground border border-border/60 hover:border-border"
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer select-none ${
+                  isActive ? "shadow-md scale-[1.02] border-transparent" : "border border-transparent hover:border-border/60"
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : tab.color}`} />

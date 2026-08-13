@@ -55,24 +55,24 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               {/* Tabs */}
               <div className="flex gap-3 mb-2">
                 <AppButton
-                  variant={activeTab === "details" ? "primary" : "secondary"}
+                  variant={activeTab === "details" ? "primary" : "ghost"}
                   onClick={() => setActiveTab("details")}
-                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
+                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all flex items-center gap-2 ${
                     activeTab === "details"
-                      ? "shadow-theme-btn-primary/20"
-                      : "text-muted hover:text-foreground  "
+                      ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]"
+                      : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
                   }`}
                 >
                   <ListTodo className="w-4 h-4" />
                   Execution Details
                 </AppButton>
                 <AppButton
-                  variant={activeTab === "collaboration" ? "primary" : "secondary"}
+                  variant={activeTab === "collaboration" ? "primary" : "ghost"}
                   onClick={() => setActiveTab("collaboration")}
-                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all shadow-sm flex items-center gap-2 ${
+                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all flex items-center gap-2 ${
                     activeTab === "collaboration"
-                      ? "shadow-theme-btn-primary/20"
-                      : "text-muted hover:text-foreground  "
+                      ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]"
+                      : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />

@@ -117,13 +117,13 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
       <div className={`px-8 border-b flex items-center gap-8 theme-card-structural`}>
         {(["DETAILS", "COLLAB", "TIMELINE"] as const).map((tab) => (
           <AppButton 
-            variant={activeTab === tab ? "primary" : "secondary"}
+            variant={activeTab === tab ? "primary" : "ghost"}
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`py-2 px-5 text-sm font-bold uppercase tracking-widest transition-all shadow-sm ${
+            className={`py-2 px-5 text-sm font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
               activeTab === tab 
-                ? "shadow-theme-btn-primary/20" 
-                : "text-muted hover:text-foreground  "
+                ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]" 
+                : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
             }`}
           >
             {tab === "COLLAB" ? "Collaboration" : tab === "DETAILS" ? "Technical Data" : "Audit Trail"}

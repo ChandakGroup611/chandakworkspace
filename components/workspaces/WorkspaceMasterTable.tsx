@@ -245,9 +245,9 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
-        className={`theme-table-row grid items-center border-b transition-colors group min-h-[44px] cursor-pointer select-none relative hover:z-50 ${
-        node.isMatched ? 'bg-theme-btn-primary/5 ring-1 ring-inset ring-theme-icon/30' : ''
-      } border-border`} style={{ gridTemplateColumns: gridCols }}>
+        className={`theme-table-row grid items-center border-b transition-colors group min-h-[48px] cursor-pointer select-none relative hover:z-50 hover:bg-surface-hover ${
+        node.isMatched ? 'bg-theme-btn-primary/5 ring-1 ring-inset ring-theme-btn-primary/30' : ''
+      } border-border/40`} style={{ gridTemplateColumns: gridCols }}>
 
           {/* VS Code Style Guide Lines for Nested Items */}
           {depth > 0 && Array.from({ length: depth }).map((_, i) => {
@@ -287,8 +287,8 @@ export function WorkspaceMasterTable({
                   <AppButton 
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
-                    className={`p-1 rounded-md transition-colors relative z-20 ${
-                      "hover:bg-elevated text-muted bg-surface/40 backdrop-blur"
+                    className={`p-0.5 rounded-md transition-colors relative z-20 ${
+                      "text-muted hover:bg-surface-hover hover:text-foreground"
                     } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
@@ -317,9 +317,9 @@ export function WorkspaceMasterTable({
                       <span className={`whitespace-normal break-words ${
                         isWorkspaceType ? 'font-semibold tracking-tight text-[14px]' : 
                         isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
-                        'text-[13px] font-medium'
+                        'text-[13px] font-normal'
                       } ${
-                        (depth === 0 ? 'text-foreground' : 'text-foreground/90')
+                        (depth === 0 ? 'text-foreground group-hover:text-theme-icon transition-colors' : 'text-foreground/80 group-hover:text-foreground transition-colors')
                       }`}>
                         {isSubWorkspace && parentNode && (parentNode.workspace_name || parentNode.name) && !(node.workspace_name || node.name || '').startsWith((parentNode.workspace_name || parentNode.name) + ' -')
                           ? `${parentNode.workspace_name || parentNode.name} - ${node.workspace_name || node.name}`
@@ -398,7 +398,7 @@ export function WorkspaceMasterTable({
           </div>
           
           {/* Created Date */}
-          <div className="py-1 px-2 text-xs text-slate-900  whitespace-nowrap" title={fullDate}>
+          <div className="py-1 px-2 text-[12px] text-muted whitespace-nowrap" title={fullDate}>
             {shortDate}
           </div>
 
@@ -442,8 +442,8 @@ export function WorkspaceMasterTable({
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap">
+          {/* Actions - Progressive Disclosure (Visible on Hover) */}
+          <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {isTask && onOpenTask && (
               <AppButton 
                 variant="ghost"
@@ -552,8 +552,8 @@ export function WorkspaceMasterTable({
     <div className="w-full font-sans overflow-visible">
       <div className="w-full flex flex-col min-w-[1050px]">
         {/* Header */}
-        <div className={`sticky top-0 z-20 grid items-center text-xs uppercase tracking-wider font-bold border-b-2 ${
-          "bg-elevated text-foreground border-border"
+        <div className={`sticky top-0 z-20 grid items-center text-[11px] tracking-widest font-semibold uppercase border-b border-border/50 pb-2 mb-1 ${
+          "bg-background/90 backdrop-blur-md text-muted"
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-2 px-2 pl-[64px]">Entity Name</div>
           <div className="py-2 px-2">Created Date</div>

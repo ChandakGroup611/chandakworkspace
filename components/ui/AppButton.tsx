@@ -30,22 +30,22 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
   ) => {
 
     const baseStyles = 
-      "inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/40 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
+      "inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
 
     const variants = {
-      primary: "theme-button-structural theme-btn-primary bg-theme-btn-primary text-theme-btn-primary-text hover:opacity-90",
-      secondary: "theme-btn-secondary bg-theme-btn-secondary text-theme-btn-secondary-text hover:bg-elevated border border-border/50",
-      ghost: "theme-btn-ghost bg-transparent text-muted hover:bg-theme-btn-secondary hover:text-theme-btn-secondary-text",
-      destructive: "theme-btn-destructive bg-danger text-white hover:opacity-90",
-      outline: "theme-btn-outline bg-transparent border border-border text-theme-btn-secondary-text hover:bg-theme-btn-secondary",
+      primary: "theme-button-structural theme-btn-primary bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_1px_2px_rgba(0,0,0,0.05)]",
+      secondary: "theme-btn-secondary bg-surface text-foreground hover:bg-surface-hover border border-border/60 shadow-sm",
+      ghost: "theme-btn-ghost bg-transparent text-muted hover:bg-surface-hover hover:text-foreground",
+      destructive: "theme-btn-destructive bg-danger text-white hover:bg-danger/90 shadow-sm",
+      outline: "theme-btn-outline bg-transparent border border-border/60 text-foreground hover:bg-surface-hover shadow-sm",
     };
 
     const sizes = {
-      sm: "min-h-[32px] py-1.5 px-3.5 text-[12px] gap-1.5",
-      md: "min-h-[40px] py-2 px-5 text-[14px] gap-2",
-      lg: "min-h-[44px] py-2.5 px-6 text-[15px] gap-2",
-      icon: "h-10 w-10 px-0 gap-0 shrink-0",
-      "icon-sm": "h-8 w-8 px-0 gap-0 shrink-0",
+      sm: "min-h-[28px] py-1 px-2.5 text-[12px] gap-1.5",
+      md: "min-h-[32px] py-1.5 px-3 text-[13px] gap-2",
+      lg: "min-h-[40px] py-2.5 px-4 text-[14px] gap-2",
+      icon: "h-8 w-8 px-0 gap-0 shrink-0",
+      "icon-sm": "h-6 w-6 px-0 gap-0 shrink-0",
     };
 
     return (

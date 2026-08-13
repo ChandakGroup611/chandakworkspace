@@ -8,7 +8,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { Plus, X, Activity, Paperclip, LayoutTemplate, CalendarDays, Users, LayoutList, AlignLeft, Search } from "lucide-react";
 import { fetchCustomFields, createCustomField, getDepartments } from "@/lib/actions/tasks";
 import { fetchPriorities, fetchTasksByWorkspace, fetchStatusesByScope } from "@/lib/actions/workspaces";
-import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
+import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
 import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
 
@@ -192,34 +192,20 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
   };
 
   return (
-    <EnterpriseWizardShell
+    <SidePeekDrawer
+      isOpen={true}
       title={initialParentTaskId ? "Initialize Sub-Task" : "Initialize Enterprise Task"}
-      subtitle="Configure task details, assignments, and requirements."
       onClose={onClose}
-      size="lg"
-      headerAccent="purple"
-      footer={
-        <div className="flex justify-end gap-3 w-full">
-          <AppButton variant="ghost" type="button" onClick={onClose} disabled={isLoading}>Cancel</AppButton>
-          <AppButton variant="primary" onClick={handleSubmit} className="bg-theme-btn-primary hover:opacity-90" disabled={isLoading}>
-            {isLoading ? "Deploying..." : "Deploy Directive"}
-          </AppButton>
-        </div>
-      }
+      width="xl"
     >
-
-        <div className="space-y-2">
+      <div className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
           
           {/* Section 1: Core Details */}
-          <div className={`w-full p-4 rounded-xl mb-2 theme-card-structural flex flex-col gap-2`}>
-            <div className="flex items-center gap-2 mb-1.5 justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
-                  <LayoutTemplate className="h-4 w-4" />
-                </div>
-                <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Core Details</h3>
-              </div>
-
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <LayoutTemplate className="h-4 w-4 text-theme-icon" />
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Core Details</h3>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
@@ -280,12 +266,10 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 2: Timeline & Priority */}
-          <div className={`w-full p-4 rounded-xl mb-2 theme-card-structural flex flex-col gap-2`}>
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className={`p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
-                <CalendarDays className="h-4 w-4" />
-              </div>
-              <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Timeline & Classification</h3>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <CalendarDays className="h-4 w-4 text-theme-icon" />
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Timeline & Classification</h3>
             </div>
             
             <div className="grid grid-cols-3 gap-2 mb-2">
@@ -360,12 +344,10 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           </div>
 
           {/* Section 3: Assignment & Execution */}
-          <div className={`w-full p-4 rounded-xl mb-1 theme-card-structural flex flex-col gap-2`}>
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className={`p-1.5 rounded-lg bg-emerald-100 text-emerald-600`}>
-                <Users className="h-4 w-4" />
-              </div>
-              <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Assignment & Execution</h3>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <Users className="h-4 w-4 text-theme-icon" />
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Assignment & Execution</h3>
             </div>
             
             <div className="space-y-1.5 mb-3">
@@ -533,9 +515,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="space-y-2">
                   {checklistItems.map((item, index) => (
-                    <div key={`${item}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-theme-btn-primary/30 shadow-[var(--shadow-ambient)]`}>
+                    <div key={`${item}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md border border-border/40 bg-surface transition-all hover:border-theme-icon/30">
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
-                        <div className={`shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-surface`} />
+                        <div className="shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-background" />
                         <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
                       </div>
                       <AppButton variant="secondary"
@@ -590,9 +572,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="grid grid-cols-1 gap-3">
                   {attachments.map((item, index) => (
-                    <div key={`${item.file_url}-${index}`} className={`group flex items-center justify-between gap-3 p-3 rounded-xl transition-all theme-card-structural hover:border-theme-btn-primary/30 shadow-[var(--shadow-ambient)]`}>
+                    <div key={`${item.file_url}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md border border-border/40 bg-surface transition-all hover:border-theme-icon/30">
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
-                        <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold bg-theme-btn-primary/10 text-theme-icon`}>
+                        <div className="shrink-0 h-8 w-8 rounded-md flex items-center justify-center text-[10px] font-bold bg-theme-icon/10 text-theme-icon">
                           {item.file_type.substring(0,3).toUpperCase()}
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -614,14 +596,13 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
               {/* Bottom Right: Extended Properties */}
               <div className="w-full flex flex-col gap-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between border-b border-border/40 pb-2">
                   <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg bg-amber-100 text-amber-600`}>
-                      <Activity className="h-4 w-4" />
-                    </div>
-                    <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Extended Properties</h3>
+                    <Activity className="h-4 w-4 text-theme-icon" />
+                    <h3 className="text-sm font-semibold tracking-tight text-foreground">Extended Properties</h3>
                   </div>
-                  <AppButton variant="secondary" 
+                  <AppButton variant="ghost" 
+
                     type="button" 
                     onClick={() => setIsAddingField(!isAddingField)}
                     className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-700 hover:bg-amber-200`}
@@ -648,9 +629,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       />
                     </div>
                     <div className="w-full sm:flex-1 space-y-1.5">
-                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Data Type</label>
+                      <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Data Type</label>
                       <select 
-                        className={`w-full h-10 px-3 rounded-xl text-sm focus:outline-none cursor-pointer theme-card-structural`}
+                        className="w-full h-9 px-3 rounded-md text-[12px] bg-surface border border-border/60 focus:border-theme-icon focus:outline-none transition-colors"
                         value={newFieldType}
                         onChange={e => setNewFieldType(e.target.value)}
                       >
@@ -679,12 +660,17 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               </div>
             </div>
           </div>
+          
+          {/* Drawer Footer */}
+          <div className="p-6 border-t border-border/40 bg-background flex justify-end gap-3 shrink-0">
+            <AppButton variant="ghost" type="button" onClick={onClose} disabled={isLoading}>Cancel</AppButton>
+            <AppButton variant="primary" onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? "Deploying..." : "Deploy Directive"}
+            </AppButton>
           </div>
-
-        
-
-
-    </EnterpriseWizardShell>
+        </div>
+      </div>
+    </SidePeekDrawer>
   );
 }
 

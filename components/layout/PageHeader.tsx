@@ -20,9 +20,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
   } catch (e) {}
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-6 border-b shrink-0 ${
-      "border-border"
-    }`}>
+    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-6 border-b border-border/40 shrink-0`}>
       <div className="space-y-1.5 flex-1 min-w-0">
         <div className="flex items-center gap-2.5 flex-wrap">
           {icon && (
@@ -30,7 +28,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
               {icon}
             </div>
           )}
-          <h1 className={`-theme-heading`}>
+          <h1 className={`text-2xl font-semibold tracking-tight text-foreground`}>
             {title}
           </h1>
           {badge && <div className="shrink-0">{badge}</div>}

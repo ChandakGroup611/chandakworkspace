@@ -27,8 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${roboto.variable}`}>
       <head>
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{
-          __html: `
+      </head>
+      <body className="bg-background text-foreground min-h-screen antialiased font-sans text-base" suppressHydrationWarning>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`
             try {
               const theme = localStorage.getItem("app_theme") || "light-neumorphic";
               const density = localStorage.getItem("app_density") || "comfortable";
@@ -64,10 +66,8 @@ export default function RootLayout({
               document.documentElement.style.setProperty("--base-font-size", baseSize + "px");
               document.documentElement.style.setProperty("--subtext-font-size", subtextSize + "px");
             } catch (e) {}
-          `
-        }} />
-      </head>
-      <body className="bg-background text-foreground min-h-screen antialiased font-sans text-base" suppressHydrationWarning>
+          `}
+        </Script>
         <QueryProvider>
           <PermissionsProvider>
             <ThemeProvider>

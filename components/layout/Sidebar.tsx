@@ -210,17 +210,17 @@ export default function Sidebar() {
       <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-surface border-r border-border/60 shadow-[4px_0_24px_-4px_rgba(0,0,0,0.04)] ${ isCompact ? "w-20" : "w-64" }`}
+      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-background border-r border-border/40 ${ isCompact ? "w-16" : "w-[240px]" }`}
     >
       {/* Sidebar Top Master Header */}
-      <div className={`flex h-16 items-center justify-between px-4 border-b shrink-0 ${"border-border"}`}>
+      <div className={`flex h-14 items-center justify-between px-4 shrink-0`}>
         {!isCompact ? (
-          <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-            <div className={`flex items-center justify-center transition-all duration-300 h-10 w-10 shrink-0 bg-white rounded-lg p-1 shadow-xs border border-border/30`}>
+          <Link href="/" className="flex items-center gap-2 overflow-hidden">
+            <div className={`flex items-center justify-center transition-all duration-300 h-8 w-8 shrink-0 bg-white rounded-md p-1 shadow-sm border border-border/30`}>
               <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-auto object-contain" />
             </div>
             <div className="flex flex-col min-w-0 justify-center">
-              <span className={`text-[0.9375rem] font-bold tracking-tight truncate text-foreground`}>
+              <span className={`text-[14px] font-semibold tracking-tight truncate text-foreground`}>
                 Chandak Workspace
               </span>
             </div>
@@ -234,10 +234,10 @@ export default function Sidebar() {
         )}
 
         <AppButton
-          variant="outline"
+          variant="ghost"
           size="icon-sm"
           onClick={() => setIsCompactState(!isCompactState)}
-          className="absolute -right-3 top-5 rounded-full shadow-md transition-all hover:scale-125 duration-300 z-50 theme-card-structural text-muted hover:text-foreground hover:border-theme-btn-primary"
+          className="absolute -right-3 top-4 rounded-full shadow-sm transition-all hover:scale-110 duration-200 z-50 bg-background border border-border/50 text-muted hover:text-foreground"
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
           {isCompactState ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -256,9 +256,8 @@ export default function Sidebar() {
           return (
             <div key={groupIdx} className="flex flex-col mb-2">
               {!isCompact && (
-                <div className="px-3 mb-2.5 flex items-center gap-1.5">
-                  <div className={`w-1.5 h-3.5 rounded-full ${groupIdx === 0 ? "bg-blue-500" : groupIdx === 1 ? "bg-purple-500" : "bg-amber-500"}`} />
-                  <span className={`text-[0.75rem] font-black tracking-wider uppercase ${groupColorClass}`}>
+                <div className="px-3 mb-2 mt-4 flex items-center gap-1.5">
+                  <span className={`text-[11px] font-semibold tracking-wider uppercase text-muted`}>
                     {group.label}
                   </span>
                 </div>
@@ -267,65 +266,50 @@ export default function Sidebar() {
                 {group.items.map((item) => {
                 const IconComponent = item.icon;
                 
-                const getModuleTheme = (href: string) => {
-                  switch (href) {
-                    case "/": return { text: "text-blue-500", activeBg: "from-blue-500/25 via-blue-500/15", border: "border-blue-500/50", shadow: "shadow-blue-500/20", line: "bg-blue-500 shadow-blue-500/40", hover: "hover:bg-blue-500/15 hover:border-blue-500/30 hover:text-blue-600" };
-                    case "/support": return { text: "text-cyan-500", activeBg: "from-cyan-500/25 via-cyan-500/15", border: "border-cyan-500/50", shadow: "shadow-cyan-500/20", line: "bg-cyan-500 shadow-cyan-500/40", hover: "hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:text-cyan-600" };
-                    case "/tickets": return { text: "text-rose-500", activeBg: "from-rose-500/25 via-rose-500/15", border: "border-rose-500/50", shadow: "shadow-rose-500/20", line: "bg-rose-500 shadow-rose-500/40", hover: "hover:bg-rose-500/15 hover:border-rose-500/30 hover:text-rose-600" };
-                    case "/requirements": return { text: "text-emerald-500", activeBg: "from-emerald-500/25 via-emerald-500/15", border: "border-emerald-500/50", shadow: "shadow-emerald-500/20", line: "bg-emerald-500 shadow-emerald-500/40", hover: "hover:bg-emerald-500/15 hover:border-emerald-500/30 hover:text-emerald-600" };
-                    case "/workspaces": return { text: "text-purple-500", activeBg: "from-purple-500/25 via-purple-500/15", border: "border-purple-500/50", shadow: "shadow-purple-500/20", line: "bg-purple-500 shadow-purple-500/40", hover: "hover:bg-purple-500/15 hover:border-purple-500/30 hover:text-purple-600" };
-                    case "/sla": return { text: "text-cyan-500", activeBg: "from-cyan-500/25 via-cyan-500/15", border: "border-cyan-500/50", shadow: "shadow-cyan-500/20", line: "bg-cyan-500 shadow-cyan-500/40", hover: "hover:bg-cyan-500/15 hover:border-cyan-500/30 hover:text-cyan-600" };
-                    case "/amc": return { text: "text-amber-500", activeBg: "from-amber-500/25 via-amber-500/15", border: "border-amber-500/50", shadow: "shadow-amber-500/20", line: "bg-amber-500 shadow-amber-500/40", hover: "hover:bg-amber-500/15 hover:border-amber-500/30 hover:text-amber-600" };
-                    case "/users": return { text: "text-indigo-500", activeBg: "from-indigo-500/25 via-indigo-500/15", border: "border-indigo-500/50", shadow: "shadow-indigo-500/20", line: "bg-indigo-500 shadow-indigo-500/40", hover: "hover:bg-indigo-500/15 hover:border-indigo-500/30 hover:text-indigo-600" };
-                    case "/iam": return { text: "text-violet-500", activeBg: "from-violet-500/25 via-violet-500/15", border: "border-violet-500/50", shadow: "shadow-violet-500/20", line: "bg-violet-500 shadow-violet-500/40", hover: "hover:bg-violet-500/15 hover:border-violet-500/30 hover:text-violet-600" };
-                    case "/learning": return { text: "text-teal-500", activeBg: "from-teal-500/25 via-teal-500/15", border: "border-teal-500/50", shadow: "shadow-teal-500/20", line: "bg-teal-500 shadow-teal-500/40", hover: "hover:bg-teal-500/15 hover:border-teal-500/30 hover:text-teal-600" };
-                    case "/settings": return { text: "text-rose-500", activeBg: "from-rose-500/25 via-rose-500/15", border: "border-rose-500/50", shadow: "shadow-rose-500/20", line: "bg-rose-500 shadow-rose-500/40", hover: "hover:bg-rose-500/15 hover:border-rose-500/30 hover:text-rose-600" };
-                    case "/masters": return { text: "text-emerald-500", activeBg: "from-emerald-500/25 via-emerald-500/15", border: "border-emerald-500/50", shadow: "shadow-emerald-500/20", line: "bg-emerald-500 shadow-emerald-500/40", hover: "hover:bg-emerald-500/15 hover:border-emerald-500/30 hover:text-emerald-600" };
-                    default: return { text: "text-theme-icon", activeBg: "from-accent/25 via-accent/15", border: "border-theme-btn-primary/50", shadow: "shadow-theme-btn-primary/20", line: "bg-theme-btn-primary shadow-theme-btn-primary/40", hover: "hover:opacity-90/15 hover:border-theme-btn-primary/30 hover:text-theme-icon" };
-                  }
-                };
-
-                const modTheme = getModuleTheme(item.href);
                 let isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
                 if (item.href === '/requirements' && searchParams?.get('from') === 'approvals') {
                   isBaseActive = false;
                 }
-                const isTreeExpanded = !!expandedTrees[item.href];
+                
+                const isTreeExpanded = !!expandedTrees[item.href] || isBaseActive;
+
+                // Combine in chain: If tree is expanded, show the parent as active
+                const showAsActive = isBaseActive || isTreeExpanded;
+
+                const getModuleTheme = (href: string) => {
+                  return {
+                    text: showAsActive ? "text-foreground" : "text-muted",
+                    activeBg: showAsActive ? "bg-surface shadow-[inset_2px_0_0_var(--theme-btn-primary)]" : "",
+                    border: "border-border/50",
+                    hover: "hover:bg-surface/50 hover:text-foreground",
+                    iconColor: showAsActive ? "text-theme-icon" : "text-muted group-hover:text-theme-icon"
+                  };
+                };
+
+                const modTheme = getModuleTheme(item.href);
                 
                 const dynamicBadge = item.badge;
 
                 return (
-                  <div key={item.href} className="space-y-0.5">
+                  <div key={item.href} className="space-y-0.5 relative">
                     <div className="relative flex items-center">
                       <Link
                         href={item.href}
                         className={`group relative flex items-center transition-all duration-200 select-none cursor-pointer ${
                           isCompact 
-                            ? "w-12 h-12 mx-auto justify-center rounded-2xl" 
-                            : "flex-1 gap-3 rounded-xl py-2.5 px-3 text-sm font-medium overflow-hidden whitespace-nowrap"
+                            ? "w-10 h-10 mx-auto justify-center rounded-lg" 
+                            : "flex-1 gap-3 rounded-md py-2 px-3 text-[13px] font-medium overflow-hidden whitespace-nowrap"
                         } ${
-                          isBaseActive 
-                            ? `bg-gradient-to-r to-transparent font-bold shadow-md scale-[1.03] ${modTheme.activeBg} ${modTheme.border} ${modTheme.text} ${modTheme.shadow} border` 
-                            : `text-foreground font-semibold hover:shadow-xs hover:scale-[1.02] active:scale-[0.96] border border-transparent transition-all duration-150 ${modTheme.hover}`
+                          showAsActive 
+                            ? `font-medium ${modTheme.activeBg} ${modTheme.text}` 
+                            : `text-muted hover:bg-surface-hover hover:text-foreground transition-all duration-150`
                         }`}
                       >
-                        {/* Active Indicator Line */}
-                        {isBaseActive && (
-                          <div className={`absolute top-1/2 -translate-y-1/2 rounded-r shadow-sm ${modTheme.line} ${
-                            isCompact ? "-left-2 h-6 w-1.5" : "-left-3 h-6 w-1"
-                          }`} />
-                        )}
-
                         {/* Content Wrapper */}
                         <div className={`flex items-center ${isCompact ? "justify-center w-full h-full" : "gap-3 w-full overflow-hidden"}`}>
-                          {/* Dynamically Scaled Icon with OnHover and OnClick micro-animations */}
-                          <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-125 group-hover:rotate-3 ${
-                            isCompact ? "h-6 w-6" : "h-4 w-4"
-                          } ${
-                            isBaseActive 
-                              ? `${modTheme.text} font-bold drop-shadow-sm scale-110` 
-                              : `${modTheme.text} opacity-90 group-hover:opacity-100 group-hover:drop-shadow-xs`
-                          }`} />
+                          <IconComponent className={`shrink-0 transition-transform duration-200 ${
+                            isCompact ? "h-5 w-5" : "h-4 w-4"
+                          } ${modTheme.iconColor}`} />
                           
                           {!isCompact && (
                             <span className="flex-1 truncate transition-colors duration-150 text-inherit group-hover:font-bold">{item.label}</span>
@@ -363,9 +347,11 @@ export default function Sidebar() {
                       )}
                     </div>
 
-                    {/* RENDER EXPANDED SUB-ITEMS TREE CONTAINER */}
                     {!isCompact && item.subItems && isTreeExpanded && (
-                      <div className={`pl-2.5 pr-1 py-1.5 space-y-1.5 relative border-l-2 ml-5 ${modTheme.border}`}>
+                      <div className={`pl-9 pr-1 py-1 space-y-0.5 relative`}>
+                        {/* The vertical chain line */}
+                        <div className="absolute left-[1.125rem] top-0 bottom-3 w-[1px] bg-border/60" />
+                        
                         {item.subItems.map((sub) => {
                           
                           let isSubActive = pathname === sub.href;
@@ -380,19 +366,14 @@ export default function Sidebar() {
                               key={sub.href}
                               href={sub.href}
                               onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
-                              className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[0.8125rem] font-semibold transition-all duration-150 select-none cursor-pointer overflow-hidden ${
+                              className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-normal transition-all duration-150 select-none cursor-pointer overflow-hidden ${
                                 isSubActive 
-                                  ? `bg-gradient-to-r to-transparent font-bold shadow-xs scale-[1.02] border ${modTheme.activeBg} ${modTheme.border} ${modTheme.text}` 
-                                  : `text-muted-foreground hover:scale-[1.02] hover:shadow-xs active:scale-[0.96] border border-transparent ${modTheme.hover}`
+                                  ? `font-medium text-theme-icon bg-surface shadow-[inset_2px_0_0_var(--theme-btn-primary)]` 
+                                  : `text-muted hover:bg-surface-hover hover:text-foreground`
                               }`}
                             >
-                              {/* Submodule Bullet Indicator Dot */}
-                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-200 ${
-                                isSubActive 
-                                  ? `shadow-xs scale-125 bg-current` 
-                                  : `opacity-40 group-hover:opacity-100 group-hover:scale-125 bg-current`
-                              }`} />
-                              
+                              {/* The horizontal branch line */}
+                              <div className="absolute -left-[14px] top-1/2 w-3 h-[1px] bg-border/60" />
                               <span className="truncate flex-1 text-inherit">{sub.label}</span>
                             </Link>
                           );
