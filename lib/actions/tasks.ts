@@ -1709,6 +1709,18 @@ export async function transferTask(payload: {
       return { error: "Only the Task Owner, an Executive, or a Super Admin can transfer this task." };
     }
 
+    // Fetch all subtasks to apply the same transfer logic
+    const { data: subtasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id')
+      .eq('parent_task_id', taskId)
+      .eq('is_deleted', false);
+      
+    const allTaskIds = [taskId];
+    if (subtasks) {
+      subtasks.forEach(st => allTaskIds.push(st.id));
+    }
+
     // Update tasks
     const finalWorkspaceId = targetSubworkspaceId || targetWorkspaceId;
     const updatePayload: any = { 
@@ -1725,7 +1737,7 @@ export async function transferTask(payload: {
     const { error: updateError } = await supabaseAdmin
       .from('tasks')
       .update(updatePayload)
-      .eq('id', taskId);
+      .in('id', allTaskIds);
 
     if (updateError) throw updateError;
 
@@ -1733,21 +1745,21 @@ export async function transferTask(payload: {
     if (droppedUsers && droppedUsers.length > 0) {
       await supabaseAdmin.from('task_participants')
         .delete()
-        .eq('task_id', taskId)
+        .in('task_id', allTaskIds)
         .in('user_id', droppedUsers);
     }
 
     // Handle new executors
     if (newExecutors && newExecutors.length > 0) {
-      const execsData = newExecutors.map(userId => ({
-        task_id: taskId,
+      const execsData = allTaskIds.flatMap(tId => newExecutors.map(userId => ({
+        task_id: tId,
         user_id: userId,
         participation_role: 'EXECUTOR'
-      }));
+      })));
       // Delete any existing matching roles just in case, then insert
       await supabaseAdmin.from('task_participants')
         .delete()
-        .eq('task_id', taskId)
+        .in('task_id', allTaskIds)
         .in('user_id', newExecutors);
         
       await supabaseAdmin.from('task_participants').insert(execsData);
@@ -1761,22 +1773,26 @@ export async function transferTask(payload: {
     // Fetch all current participants (which now includes valid old ones + new executors)
     const { data: currentParticipants } = await supabaseAdmin
       .from('task_participants')
-      .select('user_id')
-      .eq('task_id', taskId);
+      .select('task_id, user_id')
+      .in('task_id', allTaskIds);
       
     // Get the final assignee (either new or existing)
     const finalAssigneeId = newAssigneeId || task.assigned_to;
     
-    const existingUserIds = new Set(currentParticipants?.map(p => p.user_id) || []);
-    if (finalAssigneeId) existingUserIds.add(finalAssigneeId);
+    const watcherData: any[] = [];
+    for (const tId of allTaskIds) {
+      const existingUserIds = new Set(currentParticipants?.filter(p => p.task_id === tId).map(p => p.user_id) || []);
+      if (finalAssigneeId) existingUserIds.add(finalAssigneeId);
 
-    const watcherData = targetStakeholders
-      .filter((s: any) => !existingUserIds.has(s.id))
-      .map((s: any) => ({
-        task_id: taskId,
-        user_id: s.id,
-        participation_role: 'WATCHER'
-      }));
+      const taskWatchers = targetStakeholders
+        .filter((s: any) => !existingUserIds.has(s.id))
+        .map((s: any) => ({
+          task_id: tId,
+          user_id: s.id,
+          participation_role: 'WATCHER'
+        }));
+      watcherData.push(...taskWatchers);
+    }
 
     if (watcherData.length > 0) {
       await supabaseAdmin.from('task_participants').insert(watcherData);
@@ -1784,8 +1800,8 @@ export async function transferTask(payload: {
     // --------------------------
 
     // Log activity
-    await supabaseAdmin.from('task_activity_logs').insert([{
-      task_id: taskId,
+    const logData = allTaskIds.map(tId => ({
+      task_id: tId,
       actor_id: user.id,
       action: 'WORKSPACE_CHANGE',
       new_state: { 
@@ -1793,9 +1809,11 @@ export async function transferTask(payload: {
         sub_workspace_id: targetSubworkspaceId || null,
         remarks: remarks,
         dropped_users: droppedUsers,
-        new_assignee: newAssigneeId
+        new_assignee: newAssigneeId,
+        is_subtask_transfer: tId !== taskId
       }
-    }]);
+    }));
+    await supabaseAdmin.from('task_activity_logs').insert(logData);
 
     if (remarks && remarks.trim()) {
       let commentMsg = `[TRANSFERRED] ${remarks.trim()}`;
@@ -1806,11 +1824,12 @@ export async function transferTask(payload: {
         commentMsg += `\n(System Note: Primary Assignee was updated due to scope mismatch.)`;
       }
       
-      await supabaseAdmin.from('task_comments').insert([{
-        task_id: taskId,
+      const commentsData = allTaskIds.map(tId => ({
+        task_id: tId,
         author_id: user.id,
         content: commentMsg
-      }]);
+      }));
+      await supabaseAdmin.from('task_comments').insert(commentsData);
     }
 
     revalidatePath('/workspaces');

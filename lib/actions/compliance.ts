@@ -6,20 +6,27 @@ import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { hasPermission } from "@/lib/permissions";
 
-async function verifySuperAdmin() {
+async function verifyAccess(requiredPermission: string) {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
   const isSuperAdmin = await hasPermission(user.id, "SUPER_ADMIN");
-  if (!isSuperAdmin) throw new Error("Forbidden: Super Admin access required");
+  if (isSuperAdmin) return true;
+  
+  if (requiredPermission) {
+    const hasAccess = await hasPermission(user.id, requiredPermission);
+    if (!hasAccess) throw new Error(`Forbidden: ${requiredPermission} access required`);
+  } else {
+    throw new Error("Forbidden: Super Admin access required");
+  }
 }
 
 /**
  * Fetches workspaces, optionally filtering by soft-deleted status.
  */
 export async function fetchComplianceWorkspaces(isDeleted: boolean = false) {
-  await verifySuperAdmin();
+  await verifyAccess("TRASH_VIEW");
   const { data, error } = await supabaseAdmin
     .from('workspaces')
     .select('id, workspace_name, workspace_code, is_deleted, created_at, updated_at')
@@ -37,7 +44,7 @@ export async function fetchComplianceWorkspaces(isDeleted: boolean = false) {
  * Fetches tasks, optionally filtering by soft-deleted status.
  */
 export async function fetchComplianceTasks(isDeleted: boolean = false) {
-  await verifySuperAdmin();
+  await verifyAccess("TRASH_VIEW");
   const { data, error } = await supabaseAdmin
     .from('tasks')
     .select('id, subject, description, is_deleted, created_at, updated_at, workspace_id')
@@ -52,7 +59,7 @@ export async function fetchComplianceTasks(isDeleted: boolean = false) {
 }
 
 export async function fetchComplianceRequirements(isDeleted: boolean = false) {
-  await verifySuperAdmin();
+  await verifyAccess("TRASH_VIEW");
   const { data, error } = await supabaseAdmin
     .from('requirements')
     .select('id, title, code, is_deleted, created_at, updated_at')
@@ -67,7 +74,7 @@ export async function fetchComplianceRequirements(isDeleted: boolean = false) {
 }
 
 export async function fetchComplianceMaster(table: string, nameKey: string, codeKey: string, isDeleted: boolean = false) {
-  await verifySuperAdmin();
+  await verifyAccess("TRASH_VIEW");
   // Safe list of allowed tables to prevent SQL injection or bad requests
   const allowedTables = ['user_master', 'status_master', 'priority_master', 'department_master', 'designation_master', 'company_master'];
   if (!allowedTables.includes(table)) throw new Error("Invalid master table");
@@ -93,7 +100,7 @@ export type ComplianceEntity = 'workspaces' | 'tasks' | 'requirements' | 'user_m
  * This completely destroys the rows.
  */
 export async function hardDeleteEntity(entityType: ComplianceEntity, ids: string[]) {
-  await verifySuperAdmin();
+  await verifyAccess("TRASH_DELETE");
   if (!ids || ids.length === 0) return { success: true };
 
   const { error } = await supabaseAdmin
@@ -118,7 +125,7 @@ export async function hardDeleteEntity(entityType: ComplianceEntity, ids: string
  * RESTORES soft-deleted records back to active status.
  */
 export async function restoreEntity(entityType: ComplianceEntity, ids: string[]) {
-  await verifySuperAdmin();
+  await verifyAccess("TRASH_UPDATE");
   if (!ids || ids.length === 0) return { success: true };
 
   const { error } = await supabaseAdmin
@@ -137,7 +144,7 @@ export async function restoreEntity(entityType: ComplianceEntity, ids: string[])
 }
 
 export async function fetchWorkspaceStakeholders(workspaceId: string) {
-  await verifySuperAdmin();
+  await verifyAccess("SUPER_ADMIN");
   const { data, error } = await supabaseAdmin
     .from('workspace_members')
     .select('user_id, role, user:user_master(id, full_name, user_code, email)')
@@ -156,7 +163,7 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
 }
 
 export async function fetchTaskParticipants(taskId: string) {
-  await verifySuperAdmin();
+  await verifyAccess("SUPER_ADMIN");
   const { data } = await supabaseAdmin
     .from('task_participants')
     .select('user_id')
@@ -169,7 +176,7 @@ export async function moveTasksBatchOperation(
   targetWorkspaceId: string, 
   reassignments: Record<string, { newExecutive?: string; newWatchers?: string[] }>
 ) {
-  await verifySuperAdmin();
+  await verifyAccess("SUPER_ADMIN");
   
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);

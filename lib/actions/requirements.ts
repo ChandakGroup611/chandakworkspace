@@ -480,7 +480,21 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
   const isSuperAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
   
   if (!isSuperAdmin && !canDelete) throw new Error('Only SUPER_ADMIN or users with REQUIREMENTS_DELETE permission can delete requirements.');
-  const { error } = await supabaseAdmin.from('requirements').delete().eq('id', reqId);
+
+  // Check cross-logic: Are there any active tasks raised against this requirement?
+  const { count: taskCount, error: taskError } = await supabaseAdmin
+    .from('tasks')
+    .select('id', { count: 'exact', head: true })
+    .eq('requirement_id', reqId)
+    .eq('is_deleted', false);
+    
+  if (taskError) throw new Error('Failed to verify cross-logic: ' + taskError.message);
+  if (taskCount && taskCount > 0) {
+    throw new Error('Cannot delete this requirement because there are active tasks raised against it. Please reassign or delete those tasks first.');
+  }
+
+  // Soft delete the requirement so it can be viewed in the Trash Data module
+  const { error } = await supabaseAdmin.from('requirements').update({ is_deleted: true }).eq('id', reqId);
   if (error) throw new Error('Failed to delete requirement: ' + error.message);
   revalidatePath('/requirements');
   return { success: true };

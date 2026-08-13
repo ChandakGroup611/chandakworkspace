@@ -34,6 +34,15 @@ export class LifecycleManager {
 
     // 2. Cascade logic based on root entity type
     if (entityType === 'WORKSPACE') {
+      // CROSS-CHECK: Prevent deletion if active dependencies exist
+      const { count: taskCount, error: taskError } = await supabaseAdmin.from('tasks').select('id', { count: 'exact', head: true }).eq('workspace_id', entityId).eq('is_deleted', false);
+      if (taskError) throw new Error("Failed to check workspace tasks: " + taskError.message);
+      if (taskCount && taskCount > 0) throw new Error("Cannot delete this Workspace because it contains active tasks. Please delete or reassign them first.");
+
+      const { count: subWsCount, error: subWsError } = await supabaseAdmin.from('workspaces').select('id', { count: 'exact', head: true }).eq('parent_workspace_id', entityId).eq('is_deleted', false);
+      if (subWsError) throw new Error("Failed to check sub-workspaces: " + subWsError.message);
+      if (subWsCount && subWsCount > 0) throw new Error("Cannot delete this Workspace because it contains active sub-workspaces. Please delete or move them first.");
+
       await this.cascadeWorkspaceTrash(entityId, batchId, userId, timestamp);
     } else if (entityType === 'TASK') {
       await this.cascadeTaskTrash(entityId, batchId, userId, timestamp);
