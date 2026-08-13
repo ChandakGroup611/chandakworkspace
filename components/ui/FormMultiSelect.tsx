@@ -64,29 +64,31 @@ export function FormMultiSelect({
         <Popover.Content
           align="start"
           sideOffset={4}
-          className="z-[100] theme-card-structural rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-[var(--radix-popover-trigger-width)] max-h-64 overflow-auto outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95 p-1.5"
+          className="z-[100] theme-card-structural rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-[var(--radix-popover-trigger-width)] outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
           onInteractOutside={() => setIsOpen(false)}
         >
-          {options.length === 0 ? (
-            <div className="p-3 text-center text-xs text-muted italic">No options available</div>
-          ) : (
-            options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className="w-full flex items-center px-3 py-2 text-sm rounded-lg hover:opacity-90/10 hover:text-theme-icon transition-colors text-left group"
-                onClick={() => handleToggle(option.value)}
-              >
-                <div className={cn(
-                  "w-4 h-4 mr-3 border rounded-[4px] flex items-center justify-center transition-colors",
-                  selectedValues.includes(option.value) ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" : "border-border group-hover:border-theme-btn-primary"
-                )}>
-                  {selectedValues.includes(option.value) && <Check className="w-3 h-3" />}
-                </div>
-                <span className="truncate font-medium">{option.label}</span>
-              </button>
-            ))
-          )}
+          <div className="max-h-64 overflow-y-auto scrollbar-thin p-1.5">
+            {options.length === 0 ? (
+              <div className="p-3 text-center text-xs text-muted italic">No options available</div>
+            ) : (
+              options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="w-full flex items-center px-3 py-2 text-sm rounded-lg hover:opacity-90/10 hover:text-theme-icon transition-colors text-left group"
+                  onClick={() => handleToggle(option.value)}
+                >
+                  <div className={cn(
+                    "w-4 h-4 mr-3 border rounded-[4px] flex items-center justify-center transition-colors",
+                    selectedValues.includes(option.value) ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text" : "border-border group-hover:border-theme-btn-primary"
+                  )}>
+                    {selectedValues.includes(option.value) && <Check className="w-3 h-3" />}
+                  </div>
+                  <span className="truncate font-medium">{option.label}</span>
+                </button>
+              ))
+            )}
+          </div>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

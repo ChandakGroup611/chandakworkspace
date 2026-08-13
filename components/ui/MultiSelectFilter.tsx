@@ -56,10 +56,10 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
           data-active={selectedValues.length > 0}
         >
           {!iconOnly && <span className="truncate max-w-[120px]">{displayValue}</span>}
-          {iconOnly && selectedValues.length > 0 ? (
-            <Filter className="w-3.5 h-3.5 fill-current" />
+          {iconOnly ? (
+            <Filter className={cn("w-3.5 h-3.5", selectedValues.length > 0 ? "fill-current" : "")} />
           ) : (
-            <ChevronDown className={cn("w-4 h-4", !iconOnly && "opacity-50")} />
+            <ChevronDown className="w-4 h-4 opacity-50" />
           )}
         </button>
       </Popover.Trigger>
@@ -69,34 +69,40 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
           align={iconOnly ? "end" : "start"}
           sideOffset={4}
           className={cn(
-            "z-[100] bg-surface border border-border rounded-md shadow-xl max-h-60 overflow-auto outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95",
+            "z-[100] bg-surface border border-border rounded-md shadow-xl outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95",
             iconOnly ? "w-48" : "w-56"
           )}
           onInteractOutside={() => setIsOpen(false)}
         >
-          <div className="p-1">
-            <button
-              className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
-              onClick={handleSelectAll}
-            >
-              <div className="w-4 h-4 mr-2 border rounded-sm flex items-center justify-center border-border">
-                {selectedValues.length === options.length && <Check className="w-3 h-3" />}
-              </div>
-              <span className="font-medium">Select All</span>
-            </button>
-            <div className="h-px bg-border my-1" />
-            {options.map((option) => (
-              <button
-                key={option.value}
-                className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
-                onClick={() => handleToggle(option.value)}
-              >
-                <div className="w-4 h-4 mr-2 border rounded-sm flex items-center justify-center border-border">
-                  {selectedValues.includes(option.value) && <Check className="w-3 h-3" />}
-                </div>
-                <span className="truncate">{option.label}</span>
-              </button>
-            ))}
+          <div className="max-h-60 overflow-y-auto scrollbar-thin p-1">
+            {options.length === 0 ? (
+              <div className="p-3 text-center text-xs text-muted italic">No options available</div>
+            ) : (
+              <>
+                <button
+                  className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
+                  onClick={handleSelectAll}
+                >
+                  <div className="w-4 h-4 mr-2 border rounded-sm flex items-center justify-center border-border">
+                    {selectedValues.length === options.length && <Check className="w-3 h-3" />}
+                  </div>
+                  <span className="font-medium">Select All</span>
+                </button>
+                <div className="h-px bg-border my-1" />
+                {options.map((option) => (
+                  <button
+                    key={option.value}
+                    className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
+                    onClick={() => handleToggle(option.value)}
+                  >
+                    <div className="w-4 h-4 mr-2 border rounded-sm flex items-center justify-center border-border">
+                      {selectedValues.includes(option.value) && <Check className="w-3 h-3" />}
+                    </div>
+                    <span className="truncate">{option.label}</span>
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         </Popover.Content>
       </Popover.Portal>

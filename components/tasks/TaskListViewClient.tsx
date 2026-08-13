@@ -184,6 +184,53 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     setColumnFilters(prev => ({ ...prev, [fieldId]: values }));
   };
 
+
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedPriority, setSelectedPriority] = useState<string>("");
+  const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+
+  const [viewState, setViewState] = useState<any>(null);
+  
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
+
+  const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [inlineTask, setInlineTask] = useState<Task | null>(null);
+  const [inlineNewStatus, setInlineNewStatus] = useState<string>("");
+  const [departmentModalOpen, setDepartmentModalOpen] = useState(false);
+  const [inlineNewDepartment, setInlineNewDepartment] = useState<string>("");
+  const [inlineRemark, setInlineRemark] = useState<string>("");
+  const [inlineLoading, setInlineLoading] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false);
+  const [bulkOldStatus, setBulkOldStatus] = useState<string>("");
+  const [bulkNewStatus, setBulkNewStatus] = useState<string>("");
+  const [bulkOldDepartment, setBulkOldDepartment] = useState<string>("");
+  const [bulkNewDepartment, setBulkNewDepartment] = useState<string>("");
+  const [bulkRemark, setBulkRemark] = useState<string>("");
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [masterPriorities, setMasterPriorities] = useState<any[]>([]);
+  const [masterAssignees, setMasterAssignees] = useState<any[]>([]);
+
+
+  useEffect(() => {
+    getTaskStatuses().then(setMasterStatuses).catch(console.error);
+    getDepartments().then(setDepartments).catch(console.error);
+    getAllReportCustomFields().then(setDynamicFields).catch(console.error);
+  }, []);
+
+  const uniqueStatuses = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[], [tasks]);
+  const uniquePriorities = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.priority?.name).filter(Boolean))) as string[], [tasks]);
+  const router = useRouter();
+
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const [allWorkspaces, setAllWorkspaces] = useState<any[]>([]);
+
   const columnOptions = useMemo(() => {
     const optionsMap: Record<string, {label: string, value: string}[]> = {};
     
@@ -191,6 +238,41 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       const key = col.field_key;
       const fieldId = col.field_id || key;
       if (key === "actions") return;
+
+      if (key === "department" && departments.length > 0) {
+        optionsMap[fieldId] = [...departments]
+          .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+          .map(d => ({ label: d.name, value: d.name }));
+        return;
+      }
+      
+      if (key === "status" && masterStatuses.length > 0) {
+        optionsMap[fieldId] = [...masterStatuses]
+          .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+          .map(s => ({ label: s.name, value: s.name }));
+        return;
+      }
+
+      if (key === "workspace" && allWorkspaces.length > 0) {
+        optionsMap[fieldId] = [...allWorkspaces]
+          .sort((a, b) => (a.name || a.code || "").localeCompare(b.name || b.code || ""))
+          .map(w => ({ label: w.name || w.code, value: w.name || w.code }));
+        return;
+      }
+
+      if (key === "priority" && masterPriorities.length > 0) {
+        optionsMap[fieldId] = [...masterPriorities]
+          .sort((a, b) => (a.priority_name || a.name || "").localeCompare(b.priority_name || b.name || ""))
+          .map(p => ({ label: p.priority_name || p.name, value: p.priority_name || p.name }));
+        return;
+      }
+
+      if ((key === "assignee" || key === "creator_name") && masterAssignees.length > 0) {
+        optionsMap[fieldId] = [...masterAssignees]
+          .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""))
+          .map(u => ({ label: u.full_name, value: u.full_name }));
+        return;
+      }
 
       const uniqueVals = new Set<string>();
 
@@ -222,49 +304,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     });
 
     return optionsMap;
-  }, [tasks, visibleColumns]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
-  const [selectedPriority, setSelectedPriority] = useState<string>("");
-  const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
-  const [dateFrom, setDateFrom] = useState<string>("");
-  const [dateTo, setDateTo] = useState<string>("");
-
-  const [viewState, setViewState] = useState<any>(null);
-  
-  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
-
-  const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [inlineTask, setInlineTask] = useState<Task | null>(null);
-  const [inlineNewStatus, setInlineNewStatus] = useState<string>("");
-  const [departmentModalOpen, setDepartmentModalOpen] = useState(false);
-  const [inlineNewDepartment, setInlineNewDepartment] = useState<string>("");
-  const [inlineRemark, setInlineRemark] = useState<string>("");
-  const [inlineLoading, setInlineLoading] = useState(false);
-  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
-  const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false);
-  const [bulkOldStatus, setBulkOldStatus] = useState<string>("");
-  const [bulkNewStatus, setBulkNewStatus] = useState<string>("");
-  const [bulkOldDepartment, setBulkOldDepartment] = useState<string>("");
-  const [bulkNewDepartment, setBulkNewDepartment] = useState<string>("");
-  const [bulkRemark, setBulkRemark] = useState<string>("");
-  const [departments, setDepartments] = useState<any[]>([]);
-
-  useEffect(() => {
-    getTaskStatuses().then(setMasterStatuses).catch(console.error);
-    getDepartments().then(setDepartments).catch(console.error);
-    getAllReportCustomFields().then(setDynamicFields).catch(console.error);
-  }, []);
-
-  const uniqueStatuses = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[], [tasks]);
-  const uniquePriorities = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.priority?.name).filter(Boolean))) as string[], [tasks]);
-  const router = useRouter();
-
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const [allWorkspaces, setAllWorkspaces] = useState<any[]>([]);
+  }, [tasks, visibleColumns, departments, masterStatuses, allWorkspaces, masterPriorities, masterAssignees]);
 
   useEffect(() => {
     import('@/lib/actions/workspaces').then(({ fetchWorkspaces }) => {
