@@ -84,7 +84,7 @@ function CommandItem({ icon, label, shortcut, onClick }: { icon: React.ReactNode
       className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-surface-hover hover:text-foreground text-muted"
     >
       <div className="flex items-center gap-3">
-        <div className="text-theme-icon">{React.cloneElement(icon as React.ReactElement, { className: "h-4 w-4" })}</div>
+        <div className="text-theme-icon">{React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "h-4 w-4" })}</div>
         <span className="font-medium text-foreground">{label}</span>
       </div>
       {shortcut && (

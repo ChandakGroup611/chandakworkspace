@@ -8,8 +8,19 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
 
     steps:
+      - name: Start Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Production
+
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -68,3 +79,13 @@ jobs:
             mkdir -p tmp
             touch tmp/restart.txt
             echo "Restarted Node server"
+
+      - name: Update Deployment Status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}

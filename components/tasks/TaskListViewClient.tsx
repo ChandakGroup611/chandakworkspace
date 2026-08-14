@@ -19,6 +19,7 @@ import {
 import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield } from "lucide-react";
 import Link from "next/link";
 import { deleteTask, getTaskStatuses, updateTaskStatusInline, getDepartments, executeTaskBatchOperation, createTask } from "@/lib/actions/tasks";
+import { fetchTasksByWorkspace, fetchAllTasks, fetchWorkspaces } from "@/lib/actions/workspaces";
 import { createClient } from "@/utils/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
@@ -307,9 +308,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   }, [tasks, visibleColumns, departments, masterStatuses, allWorkspaces, masterPriorities, masterAssignees]);
 
   useEffect(() => {
-    import('@/lib/actions/workspaces').then(({ fetchWorkspaces }) => {
-      fetchWorkspaces().then(setAllWorkspaces).catch(console.error);
-    });
+    fetchWorkspaces().then(ws => setAllWorkspaces(ws)).catch(console.error);
   }, []);
 
   const uniqueWorkspaces = useMemo(() => {
@@ -454,8 +453,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     const currentWsId = overrideWsId !== undefined ? overrideWsId : selectedWorkspaceId;
 
     try {
-      const { fetchTasksByWorkspace, fetchAllTasks } = await import('@/lib/actions/workspaces');
-      
       let newTasks: any[] = [];
       if (currentWsId) {
         newTasks = await fetchTasksByWorkspace(currentWsId, pageNum, 50, true);
@@ -855,42 +852,25 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   return (
     <ExperienceProvider mode="operational">
       <div className="space-y-6">
-        <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-2">
           <div className="flex flex-col gap-1.5 shrink-0">
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Workspace Tasks</h1>
-            <p className="text-sm font-medium text-muted">
-              Internal Audit • {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected Workspace' : 'All Workspaces'} • {filtered.length} total tasks
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground bg-clip-text">
+              Workspace Tasks
+            </h1>
+            <p className="text-[13px] font-medium text-muted flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-surface/50 dark:bg-surface/10 px-2 py-0.5 rounded-md border border-border/50 shadow-sm">
+                <Layers className="h-3 w-3" />
+                {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected Workspace' : 'All Workspaces'}
+              </span>
+              <span>•</span>
+              <span>{filtered.length} total tasks</span>
             </p>
           </div>
+          
           <div className="flex flex-wrap items-center gap-3">
-            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0" />
-            <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
-            <div className="flex theme-card-structural p-0.5 rounded-lg mr-2">
-              <AppButton variant="secondary" 
-                onClick={() => setViewMode("list")} 
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-theme-btn-primary text-theme-btn-primary-text" : "text-muted hover:text-foreground"}`}
-                title="List View"
-              >
-                <ListIcon className="h-4 w-4" />
-              </AppButton>
-              <AppButton variant="secondary" 
-                onClick={() => setViewMode("board")} 
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "board" ? "bg-theme-btn-primary text-theme-btn-primary-text" : "text-muted hover:text-foreground"}`}
-                title="Board View"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </AppButton>
-              <AppButton variant="secondary" 
-                onClick={() => setViewMode("timeline")} 
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "timeline" ? "bg-theme-btn-primary text-theme-btn-primary-text" : "text-muted hover:text-foreground"}`}
-                title="Timeline View"
-              >
-                <CalendarDays className="h-4 w-4" />
-              </AppButton>
-            </div>
-            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-4 font-semibold border-border shadow-sm">
-              Export
-            </AppButton>
+            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0 shadow-sm border border-border/50 rounded-xl" />
+            <div className="hidden sm:block h-8 w-[1px] bg-border mx-2"></div>
+            
             <AppButton size="sm" onClick={() => {
               let initialWs = selectedWorkspaceId || "";
               let initialSubWs = "";
@@ -902,101 +882,194 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               setCreationWorkspaceId(initialWs);
               setCreationSubWorkspaceId(initialSubWs);
               setShowWorkspaceSelector(true);
-            }} leftIcon={<Plus className="h-4 w-4" />} className="h-9 px-4 font-semibold bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text shadow-sm">
+            }} leftIcon={<Plus className="h-4 w-4" />} className="h-10 px-5 rounded-xl font-bold bg-foreground text-background hover:bg-foreground/90 dark:bg-primary dark:text-primary-foreground shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_14px_0_rgba(0,182,212,0.3)] transition-all active:scale-[0.98]">
               New Task
             </AppButton>
           </div>
         </header>
 
-        <div className="theme-card-structural rounded-2xl shadow-sm flex flex-col">
-          {/* Top Row: Tabs, Workspace, Status */}
-          <div className="flex items-center justify-between border-b border-border px-4 pt-2">
-            <div className="flex items-center gap-6 self-end">
-              {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
-                <AppButton variant="secondary"
-                  key={sc}
-                  onClick={() => setScope(sc)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
-                >
-                  {sc === "ALL" ? "All Tasks" : sc === "ASSIGNEE" ? "Assigned To Me" : "Enrolled Tasks"}
-                </AppButton>
-              ))}
+        {/* Command Bar */}
+        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-2 bg-surface/80 backdrop-blur-xl border border-border/50 rounded-2xl shadow-sm mb-6">
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
+            {/* View Toggles */}
+            <div className="flex bg-elevated/50 p-1 rounded-xl border border-border/50">
+              <AppButton variant="ghost" 
+                onClick={() => setViewMode("list")} 
+                className={`p-2 rounded-lg transition-all ${viewMode === "list" ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                title="List View"
+              >
+                <ListIcon className="h-4 w-4" />
+              </AppButton>
+              <AppButton variant="ghost" 
+                onClick={() => setViewMode("board")} 
+                className={`p-2 rounded-lg transition-all ${viewMode === "board" ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                title="Board View"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </AppButton>
+              <AppButton variant="ghost" 
+                onClick={() => setViewMode("timeline")} 
+                className={`p-2 rounded-lg transition-all ${viewMode === "timeline" ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                title="Timeline View"
+              >
+                <CalendarDays className="h-4 w-4" />
+              </AppButton>
             </div>
 
-            <div className="flex items-center gap-4 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted font-bold uppercase tracking-wider">Workspace</span>
-                <select
-                  value={selectedWorkspaceId || ""}
-                  onChange={(e) => {
-                    const newWsId = e.target.value || null;
-                    setSelectedWorkspaceId(newWsId);
-                    fetchTasksData(1, false, newWsId);
-                  }}
-                  className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
-                >
-                  <option value="">All Workspaces</option>
-                  {allWorkspaces.map((ws: any) => (
-                    <option key={ws.id} value={ws.id}>
-                      {ws.workspace_name || ws.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="h-6 w-[1px] bg-border mx-1"></div>
 
-              <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
-                <option value="">All Statuses</option>
-                {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+            {/* Scope Toggles */}
+            <div className="flex items-center gap-1 bg-elevated/50 p-1 rounded-xl border border-border/50">
+              {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
+                <button
+                  key={sc}
+                  onClick={() => setScope(sc)}
+                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap ${scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                >
+                  {sc === "ALL" ? "All" : sc === "ASSIGNEE" ? "Assigned to Me" : "Enrolled"}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Bottom Row: Priority, Escalated, Date Range, Search, Actions */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-surface/50 dark:bg-surface/[0.02]">
-            <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="text-sm font-medium h-10 px-3 w-40 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary">
-              <option value="">All Priorities</option>
-              {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer hover:opacity-80 transition-opacity">
-              <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-4 h-4" />
-              Escalated
-            </label>
-
-            <div className="flex items-center gap-2 mx-2">
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
-              <span className="text-sm text-muted">to</span>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm font-medium h-10 px-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary" />
-            </div>
-            
-            <div className="relative flex-1">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
-                placeholder="Search tasks, code..." 
+                placeholder="Search tasks..." 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-lg theme-card-structural text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary placeholder:text-muted" 
+                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-xl bg-elevated/50 border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted" 
               />
             </div>
+            
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <AppButton variant="outline" className="h-10 px-4 rounded-xl border-border/50 bg-elevated/50 shadow-sm font-semibold hover:bg-surface relative">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo || selectedWorkspaceId) && (
+                    <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center border-2 border-surface">
+                      !
+                    </span>
+                  )}
+                </AppButton>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl bg-surface/95 backdrop-blur-xl border border-border/50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
+                    <button onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
+                      <RotateCcw className="h-3 w-3" /> Reset
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Workspace</label>
+                      <select value={selectedWorkspaceId || ""} onChange={(e) => { const v = e.target.value || null; setSelectedWorkspaceId(v); fetchTasksData(1, false, v); }} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
+                        <option value="">All Workspaces</option>
+                        {allWorkspaces.map((ws: any) => <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>)}
+                      </select>
+                    </div>
 
-            <AppButton 
-              variant="outline"
-              onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setQuery(""); setColumnFilters({}); }}
-              className="h-9 px-3 font-medium text-muted hover:theme-card-structural hover:text-foreground shadow-sm"
-              leftIcon={<RotateCcw className="h-4 w-4" />}
-            >
-              Reset
-            </AppButton>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Status</label>
+                        <select value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
+                          <option value="">All</option>
+                          {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Priority</label>
+                        <select value={selectedPriority} onChange={e => setSelectedPriority(e.target.value)} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
+                          <option value="">All</option>
+                          {uniquePriorities.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Date Range</label>
+                      <div className="flex items-center gap-2">
+                        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-full h-9 px-2 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20" />
+                        <span className="text-muted text-xs">to</span>
+                        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-full h-9 px-2 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20" />
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-2 text-sm font-medium text-foreground cursor-pointer p-2 rounded-lg hover:bg-elevated/50 transition-colors">
+                      <input type="checkbox" checked={showEscalatedOnly} onChange={e => setShowEscalatedOnly(e.target.checked)} className="rounded border-border text-primary focus:ring-primary w-4 h-4" />
+                      Show Escalated Only
+                    </label>
+                  </div>
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <AppButton variant="outline" className="h-10 px-3 rounded-xl border-border/50 bg-elevated/50 shadow-sm font-semibold hover:bg-surface">
+                  <span className="flex items-center gap-1"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Export</span></span>
+                </AppButton>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl bg-surface/95 backdrop-blur-xl border border-border/50 shadow-xl min-w-[140px]">
+                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
+                    <FileSpreadsheet className="h-4 w-4 text-emerald-500" /> Export to Excel
+                  </button>
+                  <button onClick={exportToPDF} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
+                    <FileText className="h-4 w-4 text-rose-500" /> Export to PDF
+                  </button>
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+
             <AppButton 
               variant="outline"
               onClick={() => setIsConfigOpen(true)}
-              className="h-9 px-3 font-medium text-muted hover:theme-card-structural hover:text-foreground shadow-sm"
-              leftIcon={<Settings2 className="h-4 w-4" />}
+              className="h-10 px-3 rounded-xl border-border/50 bg-elevated/50 shadow-sm font-semibold hover:bg-surface"
+              title="Configure Columns"
             >
-              Columns
+              <Settings2 className="h-4 w-4" />
             </AppButton>
           </div>
         </div>
+
+        {/* Floating Bulk Action Bar */}
+        {selectedTaskIds.size > 0 && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-300">
+            <div className="flex items-center gap-3 bg-foreground dark:bg-surface/95 dark:backdrop-blur-xl text-background dark:text-foreground px-5 py-3 rounded-full shadow-2xl border border-border/10 dark:border-white/10">
+              <span className="text-sm font-bold bg-background/20 dark:bg-white/10 px-2.5 py-0.5 rounded-full">
+                {selectedTaskIds.size} Selected
+              </span>
+              <div className="h-5 w-[1px] bg-background/20 dark:bg-border mx-1"></div>
+              
+              <button 
+                onClick={() => setBulkStatusModalOpen(true)}
+                className="text-sm font-semibold hover:opacity-80 transition-opacity flex items-center gap-1.5 px-2"
+              >
+                <Edit2 className="h-4 w-4" /> Update
+              </button>
+              
+              <button 
+                onClick={handleBulkDelete}
+                className="text-sm font-semibold text-rose-400 hover:text-rose-300 transition-opacity flex items-center gap-1.5 px-2"
+              >
+                <Trash2 className="h-4 w-4" /> Delete
+              </button>
+              
+              <button 
+                onClick={() => setSelectedTaskIds(new Set())}
+                className="text-background/50 hover:text-background dark:text-muted dark:hover:text-foreground p-1 ml-2 transition-colors"
+                title="Clear Selection"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         <DynamicReportBuilder 
           isOpen={isConfigOpen} 
@@ -1123,15 +1196,52 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       }
                       case "department": return (
                         <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center truncate max-w-[0px] px-2">
-                          <AppButton variant="secondary" 
-                            onClick={(e) => canUpdate && handleDepartmentClick(e, task)} 
-                            className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
-                            title={canUpdate ? "Update Department" : "Department"}
-                          >
-                            <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdate ? "border-dashed" : ""}`}>
-                              {task.department?.name || '—'}
-                            </AppBadge>
-                          </AppButton>
+                          <Popover.Root>
+                            <Popover.Trigger asChild>
+                              <AppButton variant="secondary" 
+                                onClick={(e) => { e.stopPropagation(); }}
+                                className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
+                                title={canUpdate ? "Update Department" : "Department"}
+                              >
+                                <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdate ? "border-dashed" : ""}`}>
+                                  {task.department?.name || '—'}
+                                </AppBadge>
+                              </AppButton>
+                            </Popover.Trigger>
+                            {canUpdate && (
+                              <Popover.Portal>
+                                <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl shadow-xl flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                                  <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-2 py-1 mb-1 border-b border-border/50">Update Department</div>
+                                  <div className="max-h-60 overflow-y-auto pr-1">
+                                    {departments.map(d => (
+                                      <button 
+                                        key={d.id}
+                                        onClick={async () => {
+                                          if (d.id === task.department_id) return;
+                                          try {
+                                            setInlineLoading(true);
+                                            const res = await executeTaskBatchOperation({
+                                              taskId: task.id,
+                                              departmentChange: { old_id: task.department_id, new_id: d.id, old_name: task.department?.name, new_name: d.name },
+                                              remarks: "Inline update"
+                                            });
+                                            if (res?.error) throw new Error(res.error);
+                                            setTasks(prev => prev.map(t => t.id === task.id ? { ...t, department_id: d.id, department: d } : t));
+                                            triggerToast("Department updated");
+                                          } catch (e: any) { alert("Failed: " + e.message); }
+                                          finally { setInlineLoading(false); }
+                                        }}
+                                        className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
+                                      >
+                                        <span className="truncate">{d.name}</span>
+                                        {d.id === task.department_id && <CheckCircle2 className="h-3 w-3" />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </Popover.Content>
+                              </Popover.Portal>
+                            )}
+                          </Popover.Root>
                         </AppTableCell>
                       );
                       case "priority": return (
@@ -1146,52 +1256,53 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       );
                       case "status": return (
                         <AppTableCell className="whitespace-nowrap text-center">
-                          <Popover.Root open={openMenuTaskId === task.id} onOpenChange={(open) => {
-                             if (!open) setOpenMenuTaskId(null);
-                             else if (canUpdate) setOpenMenuTaskId(task.id);
-                          }}>
+                          <Popover.Root>
                             <Popover.Trigger asChild>
                               <AppButton variant="secondary" 
-                                onClick={(e) => { e.stopPropagation(); }} 
+                                onClick={(e) => { e.stopPropagation(); }}
                                 className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
-                                title={canUpdate ? "Options" : "Status"}
+                                title={canUpdate ? "Update Status" : "Status"}
                               >
                                 <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""} isOutline={true}>
                                   {task.status?.name || '—'}
                                 </AppBadge>
                               </AppButton>
                             </Popover.Trigger>
-                            
-                            <Popover.Portal>
-                              <Popover.Content
-                                align="center"
-                                sideOffset={4}
-                                className="z-[100] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border rounded-lg shadow-xl flex flex-col py-1 min-w-[150px] outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
-                                onInteractOutside={() => setOpenMenuTaskId(null)}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Link 
-                                  href={`/tasks/${task.id}`}
-                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle  flex items-center gap-2 font-medium"
-                                  onClick={(e) => {
-                                     e.stopPropagation();
-                                     setOpenMenuTaskId(null);
-                                  }}
-                                >
-                                  <Eye className="w-3.5 h-3.5" /> View Task
-                                </Link>
-                                <AppButton variant="secondary" 
-                                  className="px-4 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface/5 transition-colors text-subtle  flex items-center gap-2 font-medium"
-                                  onClick={(e) => {
-                                     e.stopPropagation();
-                                     setOpenMenuTaskId(null);
-                                     handleStatusClick(e, task);
-                                  }}
-                                >
-                                  <Edit2 className="w-3.5 h-3.5" /> Change Status
-                                </AppButton>
-                              </Popover.Content>
-                            </Popover.Portal>
+                            {canUpdate && (
+                              <Popover.Portal>
+                                <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl shadow-xl flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/50">
+                                    <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Update Status</span>
+                                    <Link href={`/tasks/${task.id}`} className="text-[10px] font-bold text-primary hover:underline">View</Link>
+                                  </div>
+                                  <div className="max-h-60 overflow-y-auto pr-1">
+                                    {masterStatuses.map(s => (
+                                      <button 
+                                        key={s.id}
+                                        onClick={async () => {
+                                          if (s.id === task.status_id) return;
+                                          try {
+                                            setInlineLoading(true);
+                                            const { error } = await updateTaskStatusInline(task.id, s.id, "Inline update");
+                                            if (error) throw new Error(error);
+                                            setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status_id: s.id, status: { name: s.name, code: s.code, status_color: s.color } } : t));
+                                            triggerToast("Status updated");
+                                          } catch (e: any) { alert("Failed: " + e.message); }
+                                          finally { setInlineLoading(false); }
+                                        }}
+                                        className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${s.id === task.status_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
+                                      >
+                                        <div className="flex items-center gap-2 truncate">
+                                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color || '#ccc' }} />
+                                          <span className="truncate">{s.name}</span>
+                                        </div>
+                                        {s.id === task.status_id && <CheckCircle2 className="h-3 w-3" />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </Popover.Content>
+                              </Popover.Portal>
+                            )}
                           </Popover.Root>
                         </AppTableCell>
                       );
