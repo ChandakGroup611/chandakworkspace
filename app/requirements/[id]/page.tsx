@@ -1268,6 +1268,79 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
             </AppCard>
 
+            
+            {/* IT System Conditional Render */}
+            {requirement.custom_fields?.requirement_domain === 'IT & Software System' && (
+              <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-gradient-to-r from-blue-500/15 via-surface/90 to-surface/40 dark:from-blue-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-1.5 h-4 rounded-full bg-blue-500 shadow-xs" />
+                    <Server className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <h3 className="font-bold text-sm tracking-wide text-foreground">IT & Software Scope</h3>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">Target System / Application</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_system || 'Not specified'}</span>
+                    </div>
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">Data Privacy & Security</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.data_privacy || 'Not specified'}</span>
+                    </div>
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">Software License Cost</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.software_cost ? `₹${requirement.custom_fields.software_cost}` : 'N/A'}</span>
+                    </div>
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">Development Cost</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.dev_cost ? `₹${requirement.custom_fields.dev_cost}` : 'N/A'}</span>
+                    </div>
+                  </div>
+                  {requirement.custom_fields?.integrations && (
+                    <div className="mt-3.5 flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">Integration Dependencies</span>
+                      <span className="theme-data-value text-foreground whitespace-pre-wrap">{requirement.custom_fields.integrations}</span>
+                    </div>
+                  )}
+                </div>
+              </AppCard>
+            )}
+
+            {/* Infrastructure Conditional Render */}
+            {requirement.custom_fields?.requirement_domain === 'Infrastructure & Hardware' && (
+              <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-gradient-to-r from-indigo-500/15 via-surface/90 to-surface/40 dark:from-indigo-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-1.5 h-4 rounded-full bg-indigo-500 shadow-xs" />
+                    <Server className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <h3 className="font-bold text-sm tracking-wide text-foreground">Infrastructure Scope</h3>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">Target Environment</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_environment || 'Not specified'}</span>
+                    </div>
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">Hardware & Capacity Needs</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.hardware_needs || 'Not specified'}</span>
+                    </div>
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">CAPEX Amount</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.capex_amount ? `₹${requirement.custom_fields.capex_amount}` : 'N/A'}</span>
+                    </div>
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                      <span className="theme-label mb-1.5 text-muted">OPEX Amount</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.opex_amount ? `₹${requirement.custom_fields.opex_amount}` : 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+              </AppCard>
+            )}
+
             {/* 3. CARD: Timelines & Resources */}
             <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
               <div className="bg-gradient-to-r from-cyan-500/15 via-surface/90 to-surface/40 dark:from-cyan-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
