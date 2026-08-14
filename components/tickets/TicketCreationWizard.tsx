@@ -106,7 +106,18 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
           intake_snapshot: intakeSnapshot,
           custom_fields: {
             ...payload,
-            business_reason: data.business_reason
+            business_reason: data.business_reason,
+            requirement_domain: data.requirement_domain || null,
+            target_system: data.target_system || null,
+            integrations: data.integrations || null,
+            data_privacy: data.data_privacy || null,
+            software_cost: data.software_cost || null,
+            dev_cost: data.dev_cost || null,
+            target_environment: data.target_environment || null,
+            hardware_needs: data.hardware_needs || null,
+            capex_amount: data.capex_amount || null,
+            opex_amount: data.opex_amount || null,
+            budget_impact: data.budget_impact || null
           }
         };
 
