@@ -195,7 +195,7 @@ export function WorkspaceMasterTable({
   };
 
   // Perfectly balanced layout matrix:
-  const gridCols = 'minmax(250px, 4fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(160px, 1.5fr) minmax(140px, 1fr)';
+  const gridCols = 'minmax(350px, 8fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(80px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr)';
 
   const renderHierarchyRow = (node: any, parentNode: any, depth: number, isExpanded: boolean) => {
     const hasChildren = node.children && node.children.length > 0;
@@ -311,9 +311,6 @@ export function WorkspaceMasterTable({
                       isWorkspaceType ? (depth === 0 ? 'text-theme-icon dark:text-theme-icon' : 'text-theme-icon/80') : 'text-success'
                     }`} />
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold shrink-0">
-                        {node.workspace_code || node.task_code || node.code || ""}
-                      </span>
                       <span className={`truncate ${
                         isWorkspaceType ? 'font-semibold tracking-tight text-[14px]' : 
                         isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
@@ -414,7 +411,7 @@ export function WorkspaceMasterTable({
 
           {/* Create Sub-Items */}
           <div className="py-1 px-2">
-            <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+            <div className="flex items-center justify-center gap-1 whitespace-nowrap">
               {isWorkspaceType && onCreateSubWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE')) && (
                 <AppButton
                   variant="outline"
@@ -443,7 +440,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Actions - Progressive Disclosure (Visible on Hover) */}
-          <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="py-1 px-1 flex items-center justify-center gap-0.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {isTask && onOpenTask && (
               <AppButton 
                 variant="ghost"
