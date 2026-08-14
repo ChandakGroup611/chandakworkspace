@@ -63,7 +63,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           source: "./upload-payload/deploy.zip"
           target: "domains/chandakgroup.tech/public_html/"
-          strip_components: 2 # Removes the ./upload-payload/ folder structure during upload
+          strip_components: 1 # Removes the ./upload-payload/ folder structure during upload
 
       # Automatically extract the zip and restart the Node.js server via SSH
       - name: Extract and Restart Server via SSH
