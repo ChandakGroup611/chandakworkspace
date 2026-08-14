@@ -70,7 +70,8 @@ function DraggableTableHead({
   options?: {label: string, value: string}[]
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
-  const w = col.column_width || col.default_width || 150;
+  const isActions = col.field_key === "actions";
+  const w = isActions ? Math.max(col.column_width || col.default_width || 120, 110) : (col.column_width || col.default_width || 150);
   const isTitle = col.field_key === "title_description";
   const style = { 
     transform: CSS.Translate.toString(transform), 
@@ -89,7 +90,6 @@ function DraggableTableHead({
       style={style} 
       className={cn(
         "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:opacity-90/10 transition-colors align-middle group/header relative", 
-        col.field_key === "actions" ? "w-[50px]" : "", 
         !isTitle ? "text-center" : "text-left",
         ["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""
       )}
@@ -114,17 +114,17 @@ function DraggableTableHead({
 }
 
 const INITIAL_TASK_FIELDS: UIFieldDefinition[] = [
-  { field_key: "code", display_name: "Code", data_type: "text", is_default: true, default_width: 80 },
+  { field_key: "code", display_name: "Code", data_type: "text", is_default: true, default_width: 100 },
   { field_key: "title_description", display_name: "Title", data_type: "custom", is_default: true, default_width: 300 },
-  { field_key: "workspace", display_name: "Workspace", data_type: "text", is_default: true, default_width: 150 },
-  { field_key: "sub_workspace", display_name: "Sub-Workspace", data_type: "text", is_default: true, default_width: 150 },
-  { field_key: "department", display_name: "Department", data_type: "badge", is_default: true, default_width: 150 },
+  { field_key: "workspace", display_name: "Workspace", data_type: "text", is_default: true, default_width: 160 },
+  { field_key: "sub_workspace", display_name: "Sub-Workspace", data_type: "text", is_default: true, default_width: 160 },
+  { field_key: "department", display_name: "Department", data_type: "badge", is_default: true, default_width: 160 },
   { field_key: "priority", display_name: "Priority", data_type: "badge", is_default: true, default_width: 120 },
   { field_key: "due_date", display_name: "Due Date", data_type: "date", is_default: true, default_width: 120 },
   { field_key: "status", display_name: "Status", data_type: "badge", is_default: true, default_width: 150 },
-  { field_key: "assignee", display_name: "Assignee", data_type: "user", is_default: true, default_width: 100 },
-  { field_key: "created_at", display_name: "Created At", data_type: "date", is_default: true, default_width: 120 },
-  { field_key: "actions", display_name: "Actions", data_type: "custom", is_default: true, default_width: 80 },
+  { field_key: "assignee", display_name: "Assignee", data_type: "user", is_default: true, default_width: 120 },
+  { field_key: "created_at", display_name: "Created At", data_type: "date", is_default: true, default_width: 130 },
+  { field_key: "actions", display_name: "Actions", data_type: "custom", is_default: true, default_width: 120 },
   { field_key: "start_date", display_name: "Start Date", data_type: "date", is_default: false, default_width: 120 },
   { field_key: "duration", display_name: "Duration", data_type: "custom", is_default: false, default_width: 100 },
   { field_key: "progress", display_name: "Checklist Progress", data_type: "custom", is_default: false, default_width: 130 },
