@@ -729,9 +729,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     <PageContainer strict={true}>
       <PageHeader
         title="Workspace & Task Engine"
-        description="Real-time collaborative project workspaces linked to corporate masters."
         icon={<FolderKanban className="h-6 w-6" />}
-        badge={<AppBadge variant="info">Enterprise Tier</AppBadge>}
         actions={
           <>
             <div className="relative flex items-center">
@@ -927,6 +925,16 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
                 {activeView === 'HIERARCHY' && (
                   <div className="flex items-center gap-1.5">
+                    <label className={`flex items-center gap-2 cursor-pointer text-muted mr-3`}>
+                      <input 
+                        type="checkbox" 
+                        checked={autoCollapse} 
+                        onChange={e => setAutoCollapse(e.target.checked)} 
+                        className={`rounded border-border text-theme-icon focus:ring-theme-icon`}
+                      />
+                      <span className="text-[11px] uppercase tracking-wider font-bold">Auto-Minimize Others</span>
+                    </label>
+                    <div className="w-px h-4 bg-border/50 mx-1"></div>
                     <AppButton
                       variant="ghost"
                       size="icon-sm"
@@ -957,17 +965,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               {activeView === 'HIERARCHY' ? (
                 <div className="flex-1 overflow-auto min-h-0 scrollbar-thin pr-1">
-                  <div className="flex justify-end mb-3 mr-2">
-                    <label className={`flex items-center gap-2 text-sm font-medium cursor-pointer text-muted`}>
-                      <input 
-                        type="checkbox" 
-                        checked={autoCollapse} 
-                        onChange={e => setAutoCollapse(e.target.checked)} 
-                        className={`rounded border-border text-theme-icon focus:ring-theme-icon`}
-                      />
-                      Auto-Minimize Others
-                    </label>
-                  </div>
               <WorkspaceMasterTable 
                 hierarchy={masterHierarchy} 
                 expandedNodes={expandedNodes}

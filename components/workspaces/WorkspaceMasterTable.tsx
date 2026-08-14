@@ -310,11 +310,11 @@ export function WorkspaceMasterTable({
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
                       isWorkspaceType ? (depth === 0 ? 'text-theme-icon dark:text-theme-icon' : 'text-theme-icon/80') : 'text-success'
                     }`} />
-                    <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="opacity-50 font-mono text-[10px] tracking-wider font-bold shrink-0">
                         {node.workspace_code || node.task_code || node.code || ""}
                       </span>
-                      <span className={`whitespace-normal break-words ${
+                      <span className={`truncate ${
                         isWorkspaceType ? 'font-semibold tracking-tight text-[14px]' : 
                         isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
                         'text-[13px] font-normal'
@@ -328,7 +328,7 @@ export function WorkspaceMasterTable({
 
                       {/* Task Status & Priority Badges */}
                       {isTask && (
-                        <div className="inline-flex items-center gap-1.5 ml-1">
+                        <div className="inline-flex items-center gap-1.5 ml-1 shrink-0">
                           <span 
                             className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-sm"
                             style={{ 
