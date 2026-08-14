@@ -921,13 +921,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             {/* Scope Toggles */}
             <div className="flex items-center gap-1 bg-elevated/50 p-1 rounded-xl border border-border/50">
               {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
-                <button
+                <AppButton
                   key={sc}
                   onClick={() => setScope(sc)}
                   className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap ${scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
                 >
                   {sc === "ALL" ? "All" : sc === "ASSIGNEE" ? "Assigned to Me" : "Enrolled"}
-                </button>
+                </AppButton>
               ))}
             </div>
           </div>
@@ -959,9 +959,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl bg-surface/95 backdrop-blur-xl border border-border/50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
-                    <button onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
+                    <AppButton onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
                       <RotateCcw className="h-3 w-3" /> Reset
-                    </button>
+                    </AppButton>
                   </div>
                   
                   <div className="space-y-3">
@@ -1016,12 +1016,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </Popover.Trigger>
               <Popover.Portal>
                 <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl bg-surface/95 backdrop-blur-xl border border-border/50 shadow-xl min-w-[140px]">
-                  <button onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
+                  <AppButton onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
                     <FileSpreadsheet className="h-4 w-4 text-emerald-500" /> Export to Excel
-                  </button>
-                  <button onClick={exportToPDF} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
+                  </AppButton>
+                  <AppButton onClick={exportToPDF} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
                     <FileText className="h-4 w-4 text-rose-500" /> Export to PDF
-                  </button>
+                  </AppButton>
                 </Popover.Content>
               </Popover.Portal>
             </Popover.Root>
@@ -1046,27 +1046,27 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </span>
               <div className="h-5 w-[1px] bg-background/20 dark:bg-border mx-1"></div>
               
-              <button 
+              <AppButton 
                 onClick={() => setBulkStatusModalOpen(true)}
                 className="text-sm font-semibold hover:opacity-80 transition-opacity flex items-center gap-1.5 px-2"
               >
                 <Edit2 className="h-4 w-4" /> Update
-              </button>
+              </AppButton>
               
-              <button 
+              <AppButton 
                 onClick={handleBulkDelete}
                 className="text-sm font-semibold text-rose-400 hover:text-rose-300 transition-opacity flex items-center gap-1.5 px-2"
               >
                 <Trash2 className="h-4 w-4" /> Delete
-              </button>
+              </AppButton>
               
-              <button 
+              <AppButton 
                 onClick={() => setSelectedTaskIds(new Set())}
                 className="text-background/50 hover:text-background dark:text-muted dark:hover:text-foreground p-1 ml-2 transition-colors"
                 title="Clear Selection"
               >
                 <RotateCcw className="h-4 w-4" />
-              </button>
+              </AppButton>
             </div>
           </div>
         )}
@@ -1214,7 +1214,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                   <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-2 py-1 mb-1 border-b border-border/50">Update Department</div>
                                   <div className="max-h-60 overflow-y-auto pr-1">
                                     {departments.map(d => (
-                                      <button 
+                                      <AppButton 
                                         key={d.id}
                                         onClick={async () => {
                                           if (d.id === task.department_id) return;
@@ -1235,7 +1235,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                       >
                                         <span className="truncate">{d.name}</span>
                                         {d.id === task.department_id && <CheckCircle2 className="h-3 w-3" />}
-                                      </button>
+                                      </AppButton>
                                     ))}
                                   </div>
                                 </Popover.Content>
@@ -1277,7 +1277,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                   </div>
                                   <div className="max-h-60 overflow-y-auto pr-1">
                                     {masterStatuses.map(s => (
-                                      <button 
+                                      <AppButton 
                                         key={s.id}
                                         onClick={async () => {
                                           if (s.id === task.status_id) return;
@@ -1297,7 +1297,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                           <span className="truncate">{s.name}</span>
                                         </div>
                                         {s.id === task.status_id && <CheckCircle2 className="h-3 w-3" />}
-                                      </button>
+                                      </AppButton>
                                     ))}
                                   </div>
                                 </Popover.Content>
