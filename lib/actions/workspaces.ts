@@ -1241,7 +1241,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
     const { data: workspaceTasks, error: tasksError } = await supabase
       .from("tasks")
       .select(`
-        id, subject, task_code, created_at, updated_at, start_date, end_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted,
+        id, subject, task_code, created_at, updated_at, start_date, end_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted, custom_fields,
         title:subject,
         status:status_master(name:status_name, code:status_code, status_color),
         priority:priority_master(name:priority_name, code:priority_code, priority_color),
@@ -1390,7 +1390,7 @@ export async function fetchAllTasks() {
   let query = supabase
     .from("tasks")
     .select(`
-      id, subject, task_code, created_at, updated_at, start_date, end_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted,
+      id, subject, task_code, created_at, updated_at, start_date, end_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted, custom_fields,
       title:subject,
       status:status_master(name:status_name, code:status_code, status_color),
       priority:priority_master(name:priority_name, code:priority_code, priority_color),
