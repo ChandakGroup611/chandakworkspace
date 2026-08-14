@@ -1400,7 +1400,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                 <span className="w-2 h-2 rounded-full bg-purple-500" />
                                 {deptName} Approvers
                               </span>
-                              <span className="text-[10px] font-semibold text-muted">Select users in order (1st = Approver, 2nd = Executive, etc)</span>
+                              <span className="theme-label text-muted">Select users in order (1st = Approver, 2nd = Executive, etc)</span>
                             </div>
 
                             <div className="flex flex-wrap gap-2 pt-1">
@@ -1504,7 +1504,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback with rich text decorations..."
                   />
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-[11px] font-medium text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
+                    <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
                     {isCurrentApprover && (
                       <div className="flex items-center gap-2">
                         <AppButton variant="secondary" size="sm" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
@@ -1518,7 +1518,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 {/* SECTION 2: Remarks History (Separated, Default Minimized) */}
                 <div className="pt-3 border-t border-border/60 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                    <h4 className="theme-label flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-theme-icon" /> Remarks History ({auditLogs.length})
                     </h4>
                     
@@ -1554,9 +1554,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-1">
                                   <span className="theme-data-value text-foreground truncate">{log.user?.full_name || log.actor_name || 'System Actor'}</span>
-                                  <span className="text-[10px] font-semibold text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
+                                  <span className="theme-label text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
                                 </div>
-                                <div className="text-xs text-muted-foreground leading-relaxed break-words">
+                                <div className="theme-data-value text-muted-foreground leading-relaxed break-words">
                                   <SafeHtml html={log.action || log.remarks || log.message || 'Updated requirement parameters.'} />
                                 </div>
                               </div>
@@ -1587,7 +1587,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Add New Analysis Remarks (Mandatory for Approvers) & History</h3>
                   {auditLogs.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded-full theme-label bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                       {auditLogs.length} Entries
                     </span>
                   )}
@@ -1627,7 +1627,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback..."
                     />
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] font-medium text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
+                      <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
                       {isCurrentApprover && (
                         <div className="flex items-center gap-2">
                           <AppButton variant="secondary" size="sm" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
@@ -1639,7 +1639,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="space-y-3 pt-2">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                    <h4 className="theme-label flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-theme-icon" /> Remark & Audit History ({auditLogs.length})
                     </h4>
                     
@@ -1653,7 +1653,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2 mb-1">
                                 <span className="theme-data-value text-foreground truncate">{log.user?.full_name || log.actor_name || 'System Actor'}</span>
-                                <span className="text-[10px] font-semibold text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
+                                <span className="theme-label text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
                               </div>
                               <div 
                                 className="text-xs text-muted-foreground leading-relaxed break-words quill-rendered-content"
