@@ -90,7 +90,11 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="theme-label text-foreground">Technical Description & Scope</h3>
+                    <h3 className="theme-label text-foreground mb-1">Functional Scope</h3>
+          <div className="theme-data-value text-muted leading-relaxed bg-surface/20 rounded-xl p-4 border border-white/5 mb-4">
+            {requirement.functional_scope || requirement.custom_fields?.functional_scope || 'Functional breakdown of the requirement.'}
+          </div>
+          <h3 className="theme-label text-foreground">Technical Description & Scope</h3>
                     <div className="theme-data-value text-muted leading-relaxed bg-surface/20 rounded-xl p-4 border border-white/5">
                       <SafeHtml html={requirement.description} />
                     </div>

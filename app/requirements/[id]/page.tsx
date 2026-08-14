@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
-import { Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight } from "lucide-react";
+import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -977,7 +977,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
 
               <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
@@ -1008,6 +1008,15 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       {requirement.business_value?.name || requirement.custom_fields?.business_value || 'Cost Optimization & Efficiency'}
                     </span>
                   </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 text-fuchsia-500" /> Business Impact
+                    </span>
+                    <span className="theme-data-value text-foreground break-all">
+                      {requirement.business_impact || requirement.custom_fields?.business_impact || 'No immediate impact details provided.'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -1025,7 +1034,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_details || requirement.functional_scope || requirement.technical_scope || 'Functional & Technical details of the requirement workflow.'}
+                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || 'Detailed requirement workflow description.'}
                     </div>
                   </div>
                 </div>
@@ -1238,7 +1247,16 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Technical & Execution Scope *</h3>
                 </div>
               </div>
-              <div className="p-5">
+              <div className="p-5 space-y-4">
+                <div className="flex flex-col p-4 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-500" /> Functional Scope <span className="text-red-500">*</span>
+                  </span>
+                  <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    {requirement.functional_scope || requirement.custom_fields?.functional_scope || 'Functional breakdown of the requirement.'}
+                  </div>
+                </div>
+
                 <div className="flex flex-col p-4 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
                   <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                     <Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture Details <span className="text-red-500">*</span>
@@ -1261,7 +1279,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
 
               <div className="p-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-emerald-500" /> Start Date <span className="text-red-500">*</span>
@@ -1296,6 +1314,56 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <span className="theme-data-value text-foreground truncate">
                       {requirement.estimated_cost ? `₹${requirement.estimated_cost}` : (requirement.custom_fields?.estimated_cost ? `₹${requirement.custom_fields.estimated_cost}` : 'Standard Budget')}
                     </span>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-pink-500" /> Estimated Resources
+                    </span>
+                    <span className="theme-data-value text-foreground truncate">
+                      {requirement.estimated_resources || requirement.custom_fields?.estimated_resources || 'Standard Team'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </AppCard>
+
+            
+            {/* 3.5 CARD: Collaborators & Stakeholders */}
+            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+              <div className="bg-gradient-to-r from-blue-500/15 via-surface/90 to-surface/40 dark:from-blue-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-blue-500 shadow-xs" />
+                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Stakeholders & Collaborators</h3>
+                </div>
+              </div>
+
+              <div className="p-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <span className="theme-label mb-1.5 text-muted">Watchers</span>
+                    <div className="theme-data-value text-foreground">
+                      {(requirement.custom_fields?.watchers || []).length > 0 
+                        ? (requirement.custom_fields?.watchers).join(', ') 
+                        : 'No watchers assigned'}
+                    </div>
+                  </div>
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <span className="theme-label mb-1.5 text-muted">Stakeholders</span>
+                    <div className="theme-data-value text-foreground">
+                      {(requirement.custom_fields?.stakeholders || []).length > 0 
+                        ? (requirement.custom_fields?.stakeholders).join(', ') 
+                        : 'No stakeholders assigned'}
+                    </div>
+                  </div>
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <span className="theme-label mb-1.5 text-muted">CC Users</span>
+                    <div className="theme-data-value text-foreground">
+                      {(requirement.custom_fields?.cc_users || []).length > 0 
+                        ? (requirement.custom_fields?.cc_users).join(', ') 
+                        : 'No CC users assigned'}
+                    </div>
                   </div>
                 </div>
               </div>
