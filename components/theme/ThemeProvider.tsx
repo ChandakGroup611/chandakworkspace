@@ -30,7 +30,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeType>("light-neumorphic");
+  const [theme, setThemeState] = useState<ThemeType>("dark-neumorphic");
   const [density, setDensityState] = useState<DensityType>("comfortable");
   const [tactileFeedback, setTactileFeedbackState] = useState<boolean>(true);
   const [fontFamily, setFontFamilyState] = useState<FontFamilyType>("inter");

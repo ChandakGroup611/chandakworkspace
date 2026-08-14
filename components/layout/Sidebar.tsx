@@ -210,7 +210,7 @@ export default function Sidebar() {
       <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-background border-r border-border/40 ${ isCompact ? "w-16" : "w-[240px]" }`}
+      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-background/80 backdrop-blur-xl border-r border-border/20 ${ isCompact ? "w-16" : "w-[240px]" }`}
     >
       {/* Sidebar Top Master Header */}
       <div className={`flex h-14 items-center justify-between px-4 shrink-0`}>
