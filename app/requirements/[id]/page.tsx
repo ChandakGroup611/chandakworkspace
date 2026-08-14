@@ -672,17 +672,17 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </div>
           <AppBadge variant="info">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
           <div className="flex items-center gap-2 ml-2 border-l border-border dark:border-white/10 pl-3 hidden md:flex">
-            <span className="text-[10px] text-muted font-bold uppercase tracking-wider">Priority:</span>
+            <span className="theme-label text-muted">Priority:</span>
             <span className="theme-data-value px-2.5 py-0.5 rounded-full text-foreground tracking-wide shadow-sm" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
               {requirement.priority?.name || requirement.priority?.priority_name || '-'}
             </span>
-            <span className="text-[10px] text-muted font-bold uppercase tracking-wider ml-2">Created:</span>
+            <span className="theme-label text-muted ml-2">Created:</span>
             <span className="text-xs font-semibold text-foreground dark:text-muted">
               {new Date(requirement.created_at).toLocaleDateString()}
             </span>
             {requirement.put_to_use_date && (
               <>
-                <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider ml-2">Put to Use:</span>
+                <span className="theme-label text-emerald-500 ml-2">Put to Use:</span>
                 <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                   {new Date(requirement.put_to_use_date).toLocaleDateString()}
                 </span>
@@ -979,7 +979,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
                     </span>
                     <div>
@@ -990,7 +990,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span>
                     </span>
                     <div>
@@ -1001,7 +1001,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value
                     </span>
                     <span className="theme-data-value text-foreground break-all">
@@ -1012,19 +1012,19 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
                     </span>
-                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
                     </div>
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
                     </span>
-                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.requirement_details || requirement.functional_scope || requirement.technical_scope || 'Functional & Technical details of the requirement workflow.'}
                     </div>
                   </div>
@@ -1032,19 +1032,19 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span>
                     </span>
-                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || 'Requires integration approval and system setup verification.'}
                     </div>
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture <span className="text-red-500">*</span>
                     </span>
-                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, schema specifications, and API integration scope.'}
                     </div>
                   </div>
@@ -1059,50 +1059,50 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Target className="w-3 h-3 text-theme-icon" /> Scope
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.scope || '-'}>{requirement.scope || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Server className="w-3 h-3 text-purple-500" /> System
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.software_system?.name || snap.system || '-'}>{requirement.software_system?.name || snap.system || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Briefcase className="w-3 h-3 text-emerald-500" /> Module
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.module?.name || snap.module || '-'}>{requirement.module?.name || snap.module || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <FileText className="w-3 h-3 text-cyan-500" /> Submodule
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_module?.name || snap.submodule || '-'}>{requirement.sub_module?.name || snap.submodule || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Category</span>
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Category</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.category?.name || snap.category || '-'}>{requirement.category?.name || snap.category || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Sub Category</span>
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Sub Category</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_category?.name || snap.subcategory || '-'}>{requirement.sub_category?.name || snap.subcategory || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Created By</span>
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Created By</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.creator?.full_name || '-'}>{requirement.creator?.full_name || '-'}</span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-muted flex items-center gap-1">Department</span>
+                  <span className="theme-label mb-1 text-muted flex items-center gap-1">Department</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.department?.name || '-'}>{requirement.department?.name || '-'}</span>
                 </div>
               </div>
@@ -1165,7 +1165,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
                     </span>
                     <div>
@@ -1176,7 +1176,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span>
                     </span>
                     <div>
@@ -1187,7 +1187,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value
                     </span>
                     <span className="theme-data-value text-foreground break-all">
@@ -1198,19 +1198,19 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
                     </span>
-                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
                     </div>
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
                     </span>
-                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.requirement_details || requirement.functional_scope || requirement.technical_scope || 'Functional & Technical details of the requirement workflow.'}
                     </div>
                   </div>
@@ -1218,10 +1218,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
                 <div className="grid grid-cols-1 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span>
                     </span>
-                    <div className="text-xs font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                       {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || 'Requires integration approval and system setup verification.'}
                     </div>
                   </div>
@@ -1240,10 +1240,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
               <div className="p-5">
                 <div className="flex flex-col p-4 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider mb-2 text-muted flex items-center gap-1.5">
+                  <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                     <Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture Details <span className="text-red-500">*</span>
                   </span>
-                  <div className="text-xs md:text-sm font-medium text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                  <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                     {requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, API integrations, database schemas, and infrastructure prerequisites.'}
                   </div>
                 </div>
@@ -1263,7 +1263,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <div className="p-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-emerald-500" /> Start Date <span className="text-red-500">*</span>
                     </span>
                     <span className="theme-data-value text-foreground truncate">
@@ -1272,7 +1272,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-amber-500" /> Due Date <span className="text-red-500">*</span>
                     </span>
                     <span className="theme-data-value text-foreground truncate">
@@ -1281,7 +1281,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> Estimated Effort (Days) <span className="text-red-500">*</span>
                     </span>
                     <span className="theme-data-value text-foreground truncate">
@@ -1290,7 +1290,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-muted flex items-center gap-1.5">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-indigo-500" /> Estimated Cost
                     </span>
                     <span className="theme-data-value text-foreground truncate">
@@ -1314,7 +1314,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col p-3.5 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-800/60">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-indigo-600 dark:text-indigo-400">
+                    <span className="theme-label mb-1.5 text-indigo-600 dark:text-indigo-400">
                       Primary Impacted Department
                     </span>
                     <div className="flex items-center gap-2">
@@ -1325,7 +1325,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-800/60">
-                    <span className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-purple-600 dark:text-purple-400">
+                    <span className="theme-label mb-1.5 text-purple-600 dark:text-purple-400">
                       Department Approvers & Stakeholders (Sequence Configured)
                     </span>
                     <div className="flex flex-wrap gap-2">
@@ -1378,7 +1378,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   {/* 2. Interactive Approval Sequence Builder per Selected Department */}
                   {formData.impacted_departments.length > 0 && (
                     <div className="mt-4 space-y-4 pt-3 border-t border-border/60">
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-muted">
+                      <label className="block theme-label text-muted">
                         Configure Department Approval Sequence <span className="text-red-500">*</span>
                       </label>
                       {formData.impacted_departments.map((deptId: string) => {
@@ -1454,7 +1454,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                             {/* Approval Sequence Preview Strip */}
                             {selectedApprovers.length > 0 && (
                               <div className="mt-2 p-2.5 rounded-lg bg-surface/90 dark:bg-elevated/60 border border-purple-500/20">
-                                <div className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
+                                <div className="theme-label text-purple-600 dark:text-purple-400 mb-1">
                                   {deptName} - Configured Approval Sequence
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-foreground">
