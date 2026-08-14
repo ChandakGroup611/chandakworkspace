@@ -49,7 +49,20 @@ export async function fetchDesignPreferences() {
     .single();
 
   if (error || !data) {
-    return { success: false, data: null };
+    // If no preferences exist, return defaults so we don't inherit another user's local storage
+    return { 
+      success: true, 
+      data: {
+        theme: "light-neumorphic",
+        density: "comfortable",
+        tactile: true,
+        fontFamily: "inter",
+        fontWeightProfile: "heavy",
+        accentColor: "theme-default",
+        baseFontSize: 16,
+        subtextFontSize: 14
+      } 
+    };
   }
 
   return { success: true, data: data.widget_layout };
