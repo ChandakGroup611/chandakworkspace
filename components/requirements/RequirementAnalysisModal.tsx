@@ -196,7 +196,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Business Section */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-theme-icon border-border`}>
+              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-theme-icon border-border`}>
                 <Briefcase className="h-4 w-4" /> Business Classification
               </h3>
               
@@ -239,7 +239,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Technical Section */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-emerald-700 border-border`}>
+              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-emerald-700 border-border`}>
                 <Server className="h-4 w-4" /> Technical & Execution Scope
               </h3>
               
@@ -272,7 +272,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Governance & Dependency */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-amber-700 border-border`}>
+              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-amber-700 border-border`}>
                 <Shield className="h-4 w-4" /> Governance & Dependencies
               </h3>
 
@@ -306,7 +306,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                     );
                   })}
                 </div>
-                <p className={`text-[10px] text-muted`}>Select departments in the order they should approve this requirement.</p>
+                <p className={`theme-label text-muted`}>Select departments in the order they should approve this requirement.</p>
 
                 {formData.impacted_departments.length > 0 && (
                   <div className="mt-4 space-y-3">
@@ -318,7 +318,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                       
                       return (
                         <div key={deptId} className={`p-3 border rounded-md border-theme-btn-primary/20 bg-theme-btn-primary/10/30`}>
-                          <div className={`text-xs font-semibold mb-2 text-theme-icon`}>{deptName} Approvers</div>
+                          <div className={`theme-label mb-2 text-theme-icon`}>{deptName} Approvers</div>
                           <div className="flex flex-wrap gap-2">
                             {deptUsers.map((u: any) => {
                               const isUserSelected = selectedApprovers.includes(u.id);
@@ -345,7 +345,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                                 </AppButton>
                               );
                             })}
-                            {deptUsers.length === 0 && <span className="text-xs text-muted">No users found in this department.</span>}
+                            {deptUsers.length === 0 && <span className="theme-label text-muted">No users found in this department.</span>}
                           </div>
                           <p className="text-[9px] text-muted mt-2">Select users in the order they should approve (1st = Approver, 2nd = Executive, etc).</p>
                         </div>
@@ -358,7 +358,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
             {/* Stakeholders & Timelines */}
             <div className="space-y-4">
-              <h3 className={`text-sm font-bold flex items-center gap-2 pb-2 border-b text-pink-700 border-border`}>
+              <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-pink-700 border-border`}>
                 <Calendar className="h-4 w-4" /> Schedule & Stakeholders
               </h3>
 
