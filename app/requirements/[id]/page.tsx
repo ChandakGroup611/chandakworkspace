@@ -466,8 +466,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       const payload = { ...formData, analysis_remarks: currentRemarks };
 
       if (action === 'ACCEPT') {
-        if (!payload.impacted_departments.length || !payload.due_date || !payload.dependency_notes?.trim() || !payload.technical_scope?.trim() || !payload.estimated_effort?.trim()) {
-            alert("Impacted Departments, Due Date, Dependency Notes, Technical Scope, and Estimated Effort are mandatory to Accept.");
+        if (!payload.impacted_departments.length || !payload.due_date || !payload.dependency_notes?.trim() || !payload.estimated_effort?.trim()) {
+            alert("Impacted Departments, Due Date, Dependency Notes, and Estimated Effort are mandatory to Accept.");
             return;
         }
         for (const deptId of payload.impacted_departments) {
@@ -1031,26 +1031,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
-                    </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
-                    </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || 'Detailed requirement workflow description.'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span>
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
@@ -1281,48 +1261,34 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
             </AppCard>
 
-            {/* 2. CARD: Technical & Execution Scope */}
+            {/* 2. CARD: Requirement Reason & Details */}
             <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
               <div className="bg-gradient-to-r from-emerald-500/15 via-surface/90 to-surface/40 dark:from-emerald-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-emerald-500 shadow-xs" />
-                  <Server className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Technical & Execution Scope *</h3>
+                  <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Requirement Reason & Details</h3>
                 </div>
               </div>
-              <div className="p-5 space-y-4">
-                <div className="flex flex-col space-y-1.5">
-                  <label className="theme-label text-muted flex items-center justify-between">
-                    <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-blue-500" /> Technical & Execution Scope <span className="text-red-500">*</span></span>
-                  </label>
-                  {isEditable ? (
-                    <RichTextEditor
-                      value={formData.functional_scope}
-                      onChange={(v) => handleUpdateField('functional_scope', v)}
-                      placeholder="Enter technical & execution scope..."
-                    />
-                  ) : (
-                    <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm prose dark:prose-invert max-w-none">
-                      <SafeHtml html={formData.functional_scope || ''} />
+              <div className="p-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
+                    </span>
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <div className="flex flex-col space-y-1.5 mt-2">
-                  <label className="theme-label text-muted flex items-center justify-between">
-                    <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture Details <span className="text-red-500">*</span></span>
-                  </label>
-                  {isEditable ? (
-                    <RichTextEditor
-                      value={formData.technical_scope}
-                      onChange={(v) => handleUpdateField('technical_scope', v)}
-                      placeholder="Enter architecture details..."
-                    />
-                  ) : (
-                    <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm prose dark:prose-invert max-w-none">
-                      <SafeHtml html={formData.technical_scope || ''} />
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
+                    </span>
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || 'Detailed requirement workflow description.'}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </AppCard>
