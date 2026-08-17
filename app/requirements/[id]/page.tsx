@@ -115,6 +115,12 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const { hasPermission } = usePermissions();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "details");
+
+  useEffect(() => {
+    if (requirement && isSuperAdmin && (requirement.approval_status === 'Pending' || requirement.approval_status === 'Draft' || !requirement.approval_status) && !searchParams.get('tab')) {
+      setActiveTab("analysis");
+    }
+  }, [requirement, isSuperAdmin, searchParams]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [showRemarksHistory, setShowRemarksHistory] = useState(false);
@@ -451,18 +457,21 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   };
 
   const handleAction = async (action: 'ACCEPT' | 'HOLD' | 'CANCEL' | 'SAVE') => {
-      if (!formData.analysis_remarks?.trim()) {
+      const currentRemarks = approvalRemarks?.trim() || formData.analysis_remarks?.trim();
+      if (!currentRemarks) {
         alert("Remarks are mandatory before saving or submitting.");
         return;
       }
+      
+      const payload = { ...formData, analysis_remarks: currentRemarks };
 
       if (action === 'ACCEPT') {
-        if (!formData.impacted_departments.length || !formData.due_date || !formData.dependency_notes?.trim() || !formData.technical_scope?.trim() || !formData.estimated_effort?.trim()) {
+        if (!payload.impacted_departments.length || !payload.due_date || !payload.dependency_notes?.trim() || !payload.technical_scope?.trim() || !payload.estimated_effort?.trim()) {
             alert("Impacted Departments, Due Date, Dependency Notes, Technical Scope, and Estimated Effort are mandatory to Accept.");
             return;
         }
-        for (const deptId of formData.impacted_departments) {
-            if (!formData.department_approvers[deptId] || formData.department_approvers[deptId].length === 0) {
+        for (const deptId of payload.impacted_departments) {
+            if (!payload.department_approvers[deptId] || payload.department_approvers[deptId].length === 0) {
                 alert("Please select at least one approver for each Impacted Department.");
                 return;
             }
@@ -488,7 +497,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       try {
         const { submitRequirementAnalysis } = await import("@/lib/actions/requirements");
         const { data: { user } } = await supabase.auth.getUser();
-        await submitRequirementAnalysis(requirement.id, formData, user!.id, action);
+        await submitRequirementAnalysis(requirement.id, payload, user!.id, action);
         alert(`Requirement ${action.toLowerCase()} successfully!`);
         await loadData();
       } catch (err: any) {
@@ -657,7 +666,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   }
 
   const isViewMode = searchParams.get('mode') === 'view';
-  const isEditable = !isViewMode && (!requirement.approval_status || requirement.approval_status === 'Draft' || requirement.approval_status === 'Pending' || requirement.approval_status === 'On Hold' || requirement.approval_status === 'Rejected' || requirement.approval_status === 'Clarification');
+  const isEditable = !isViewMode && (!requirement.approval_status || requirement.approval_status === 'Draft' || requirement.approval_status === 'Pending' || requirement.approval_status === 'On Hold' || requirement.approval_status === 'Clarification');
   const snap = requirement.intake_snapshot || {};
 
   return (
@@ -1172,67 +1181,101 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
 
               <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
-                    </span>
-                    <div>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
-                        {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || 'Standard Business Request'}
-                      </span>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification <span className="text-red-500">*</span></span>
+                      {isEditable && (
+                        <button type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-purple-500 hover:text-purple-600 p-0.5 rounded-full hover:bg-purple-500/10">
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </label>
+                    {isEditable ? (
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.requirement_type_id || ""}
+                        onChange={(e) => handleUpdateField('requirement_type_id', e.target.value)}
+                      >
+                        <option value="">Select Classification...</option>
+                        {masters.issue_types?.map((t: any) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
+                        {masters.issue_types?.find((t: any) => t.id === formData.requirement_type_id)?.name || requirement.business_classification?.name || requirement.requirement_type?.name || 'Standard Business Request'}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span>
-                    </span>
-                    <div>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
-                        {requirement.business_criticality?.name || requirement.priority?.name || 'HIGH'}
-                      </span>
-                    </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span></span>
+                    </label>
+                    {isEditable ? (
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.business_criticality_id || ""}
+                        onChange={(e) => handleUpdateField('business_criticality_id', e.target.value)}
+                      >
+                        <option value="">Select Criticality...</option>
+                        {masters.priority_master?.map((p: any) => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
+                        {masters.priority_master?.find((p: any) => p.id === formData.business_criticality_id)?.name || requirement.business_criticality?.name || requirement.priority?.name || 'Not specified'}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value
-                    </span>
-                    <span className="theme-data-value text-foreground break-all">
-                      {requirement.business_value?.name || requirement.custom_fields?.business_value || 'Cost Optimization & Efficiency'}
-                    </span>
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value</span>
+                      {isEditable && (
+                        <button type="button" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }} className="text-indigo-500 hover:text-indigo-600 p-0.5 rounded-full hover:bg-indigo-500/10">
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </label>
+                    {isEditable ? (
+                      <select
+                        className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.business_value_id || ""}
+                        onChange={(e) => handleUpdateField('business_value_id', e.target.value)}
+                      >
+                        <option value="">Select Value...</option>
+                        {masters.business_values?.map((bv: any) => (
+                          <option key={bv.id} value={bv.id}>{bv.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
+                        {masters.business_values?.find((b: any) => b.id === formData.business_value_id)?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || 'Not specified'}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
-                    </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
-                    </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_details || requirement.functional_scope || requirement.technical_scope || 'Functional & Technical details of the requirement workflow.'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span>
-                    </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || 'Requires integration approval and system setup verification.'}
-                    </div>
+                <div className="grid grid-cols-1 gap-4 mt-2">
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span></span>
+                    </label>
+                    {isEditable ? (
+                      <textarea
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.dependency_notes}
+                        onChange={(e) => handleUpdateField('dependency_notes', e.target.value)}
+                        placeholder="Enter dependency notes..."
+                      />
+                    ) : (
+                      <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm whitespace-pre-wrap">
+                        {formData.dependency_notes || 'No dependency notes.'}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1248,22 +1291,38 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 </div>
               </div>
               <div className="p-5 space-y-4">
-                <div className="flex flex-col p-4 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-blue-500" /> Functional Scope <span className="text-red-500">*</span>
-                  </span>
-                  <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                    {requirement.functional_scope || requirement.custom_fields?.functional_scope || 'Functional breakdown of the requirement.'}
-                  </div>
+                <div className="flex flex-col space-y-1.5">
+                  <label className="theme-label text-muted flex items-center justify-between">
+                    <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-blue-500" /> Technical & Execution Scope <span className="text-red-500">*</span></span>
+                  </label>
+                  {isEditable ? (
+                    <RichTextEditor
+                      value={formData.functional_scope}
+                      onChange={(v) => handleUpdateField('functional_scope', v)}
+                      placeholder="Enter technical & execution scope..."
+                    />
+                  ) : (
+                    <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm prose dark:prose-invert max-w-none">
+                      <SafeHtml html={formData.functional_scope || ''} />
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-col p-4 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
-                  <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
-                    <Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture Details <span className="text-red-500">*</span>
-                  </span>
-                  <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                    {requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, API integrations, database schemas, and infrastructure prerequisites.'}
-                  </div>
+                <div className="flex flex-col space-y-1.5 mt-2">
+                  <label className="theme-label text-muted flex items-center justify-between">
+                    <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture Details <span className="text-red-500">*</span></span>
+                  </label>
+                  {isEditable ? (
+                    <RichTextEditor
+                      value={formData.technical_scope}
+                      onChange={(v) => handleUpdateField('technical_scope', v)}
+                      placeholder="Enter architecture details..."
+                    />
+                  ) : (
+                    <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm prose dark:prose-invert max-w-none">
+                      <SafeHtml html={formData.technical_scope || ''} />
+                    </div>
+                  )}
                 </div>
               </div>
             </AppCard>
@@ -1401,46 +1460,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
             </AppCard>
 
-            
-            {/* 3.5 CARD: Collaborators & Stakeholders */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
-              <div className="bg-gradient-to-r from-blue-500/15 via-surface/90 to-surface/40 dark:from-blue-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-blue-500 shadow-xs" />
-                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Stakeholders & Collaborators</h3>
-                </div>
-              </div>
-
-              <div className="p-5">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
-                    <span className="theme-label mb-1.5 text-muted">Watchers</span>
-                    <div className="theme-data-value text-foreground">
-                      {(requirement.custom_fields?.watchers || []).length > 0 
-                        ? (requirement.custom_fields?.watchers).join(', ') 
-                        : 'No watchers assigned'}
-                    </div>
-                  </div>
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
-                    <span className="theme-label mb-1.5 text-muted">Stakeholders</span>
-                    <div className="theme-data-value text-foreground">
-                      {(requirement.custom_fields?.stakeholders || []).length > 0 
-                        ? (requirement.custom_fields?.stakeholders).join(', ') 
-                        : 'No stakeholders assigned'}
-                    </div>
-                  </div>
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
-                    <span className="theme-label mb-1.5 text-muted">CC Users</span>
-                    <div className="theme-data-value text-foreground">
-                      {(requirement.custom_fields?.cc_users || []).length > 0 
-                        ? (requirement.custom_fields?.cc_users).join(', ') 
-                        : 'No CC users assigned'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </AppCard>
 
             {/* 4. CARD: Impacted Departments & Define Approval Sequence * */}
             <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
@@ -1714,7 +1733,47 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 </div>
               </div>
             </AppCard>
-</div>
+
+            {/* Analysis Action Buttons */}
+            {isSuperAdmin && isEditable && (
+              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-border/60">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleAction('SAVE')}
+                  leftIcon={<Save className="w-4 h-4" />}
+                >
+                  Save Draft
+                </AppButton>
+                {requirement.approval_status !== 'On Hold' && (
+                  <AppButton
+                    type="button"
+                    variant="secondary"
+                    onClick={() => handleAction('HOLD')}
+                    leftIcon={<PauseCircle className="w-4 h-4" />}
+                  >
+                    Hold Requirement
+                  </AppButton>
+                )}
+                <AppButton
+                  type="button"
+                  variant="destructive"
+                  onClick={() => handleAction('CANCEL')}
+                  leftIcon={<XCircle className="w-4 h-4" />}
+                >
+                  Reject Requirement
+                </AppButton>
+                <AppButton
+                  type="button"
+                  variant="primary"
+                  onClick={() => handleAction('ACCEPT')}
+                  leftIcon={<CheckCircle className="w-4 h-4" />}
+                >
+                  Accept & Initiate Approval
+                </AppButton>
+              </div>
+            )}
+          </div>
         )}
 
         {/* TAB 3: Approval Workflow */}
