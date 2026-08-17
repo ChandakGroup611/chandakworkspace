@@ -36,6 +36,49 @@ interface RequirementItem {
   currentApproverId?: string | null;
   createdAt: string;
   ageing: number;
+  storyPoints: number;
+  acceptanceCriteria?: string;
+  tags: string[];
+  targetRelease?: string;
+  objective?: string;
+  functionalScope?: string;
+  technicalScope?: string;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
+  deletedBy?: string | null;
+  updatedAt?: string;
+  customFields?: any;
+  dueDate?: string | null;
+  sourceTicketId?: string | null;
+  requesterDepartmentId?: string | null;
+  requirementReason?: string | null;
+  budgetImpact?: string | null;
+  estimatedEffort?: string | null;
+  estimatedCost?: number | null;
+  dependencyNotes?: string | null;
+  startDate?: string | null;
+  expectedCompletionDate?: string | null;
+  actualCompletionDate?: string | null;
+  requirementTypeId?: string | null;
+  businessCriticalityId?: string | null;
+  businessValueId?: string | null;
+  projectId?: string | null;
+  sprintId?: string | null;
+  releaseVersion?: string | null;
+  ownerId?: string | null;
+  coordinatorId?: string | null;
+  tatStatus?: string | null;
+  overdueDays?: number;
+  remainingDays?: number;
+  regulatoryMapping?: string | null;
+  requirementDetails?: string | null;
+  requesterDesignationId?: string | null;
+  intakeSnapshot?: any;
+  putToUseDate?: string | null;
+  deleteReason?: string | null;
+  deleteBatchId?: string | null;
+  amendmentVersion?: number;
+  revisedDetails?: string | null;
 }
 
 export default function RequirementsPage() {
@@ -97,7 +140,50 @@ export default function RequirementsPage() {
           currentApprover: d.current_assignee_id ? 'Assigned' : '-', 
           currentApproverId: d.current_assignee_id,
           createdAt: createdDate.toLocaleDateString(),
-          ageing: ageingDays
+          ageing: ageingDays,
+          storyPoints: d.story_points || 0,
+          acceptanceCriteria: d.acceptance_criteria || '',
+          tags: d.tags || [],
+          targetRelease: d.target_release || '-',
+          objective: d.objective,
+          functionalScope: d.functional_scope,
+          technicalScope: d.technical_scope,
+          isDeleted: d.is_deleted,
+          deletedAt: d.deleted_at,
+          deletedBy: d.deleted_by,
+          updatedAt: d.updated_at,
+          customFields: d.custom_fields,
+          dueDate: d.due_date,
+          sourceTicketId: d.source_ticket_id,
+          requesterDepartmentId: d.requester_department_id,
+          requirementReason: d.requirement_reason,
+          budgetImpact: d.budget_impact,
+          estimatedEffort: d.estimated_effort,
+          estimatedCost: d.estimated_cost,
+          dependencyNotes: d.dependency_notes,
+          startDate: d.start_date,
+          expectedCompletionDate: d.expected_completion_date,
+          actualCompletionDate: d.actual_completion_date,
+          requirementTypeId: d.requirement_type_id,
+          businessCriticalityId: d.business_criticality_id,
+          businessValueId: d.business_value_id,
+          projectId: d.project_id,
+          sprintId: d.sprint_id,
+          releaseVersion: d.release_version,
+          ownerId: d.owner_id,
+          coordinatorId: d.coordinator_id,
+          tatStatus: d.tat_status,
+          overdueDays: d.overdue_days || 0,
+          remainingDays: d.remaining_days || 0,
+          regulatoryMapping: d.regulatory_mapping,
+          requirementDetails: d.requirement_details,
+          requesterDesignationId: d.requester_designation_id,
+          intakeSnapshot: d.intake_snapshot,
+          putToUseDate: d.put_to_use_date,
+          deleteReason: d.delete_reason,
+          deleteBatchId: d.delete_batch_id,
+          amendmentVersion: d.amendment_version || 0,
+          revisedDetails: d.revised_details,
         };
       });
       setReqs(mapped);
@@ -309,6 +395,8 @@ export default function RequirementsPage() {
                 <AppTableHead>Submodule</AppTableHead>
                 <AppTableHead>Particulars</AppTableHead>
                 <AppTableHead>Priority</AppTableHead>
+                <AppTableHead>Est. Pts</AppTableHead>
+                <AppTableHead>Release</AppTableHead>
                 <AppTableHead>Department</AppTableHead>
                 <AppTableHead>Created By</AppTableHead>
                 <AppTableHead>Created Date</AppTableHead>
@@ -327,7 +415,7 @@ export default function RequirementsPage() {
                 return true;
               }).length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={12} className="text-center py-8 text-muted">
+                  <AppTableCell colSpan={14} className="text-center py-8 text-muted">
                     {loadingReqs ? "Loading requirements..." : "No requirements found."}
                   </AppTableCell>
                 </AppTableRow>
@@ -364,6 +452,14 @@ export default function RequirementsPage() {
                         <span className="text-muted">-</span>
                       )}
                     </AppTableCell>
+                    <AppTableCell>
+                      {r.storyPoints > 0 ? (
+                        <AppBadge variant="info">{r.storyPoints} pts</AppBadge>
+                      ) : (
+                        <span className="text-muted text-xs">-</span>
+                      )}
+                    </AppTableCell>
+                    <AppTableCell className="text-xs">{r.targetRelease}</AppTableCell>
                     <AppTableCell className="text-xs">{r.department}</AppTableCell>
                     <AppTableCell className="text-xs">{r.createdBy}</AppTableCell>
                     <AppTableCell className="text-xs">{r.createdAt}</AppTableCell>

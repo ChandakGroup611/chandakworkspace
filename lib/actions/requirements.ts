@@ -152,6 +152,12 @@ export async function fetchRequirements(workspaceId?: string | null) {
     .from('requirements')
     .select(`
       id, code, title, scope, approval_status, current_assignee_id, created_at, creator_id, requester_id,
+      parent_requirement_id, acceptance_criteria, story_points, target_release, tags,
+      objective, functional_scope, technical_scope, is_deleted, deleted_at, deleted_by, updated_at, custom_fields, due_date,
+      source_ticket_id, requester_department_id, requirement_reason, budget_impact, estimated_effort, estimated_cost, dependency_notes,
+      start_date, expected_completion_date, actual_completion_date, requirement_type_id, business_criticality_id, business_value_id,
+      project_id, sprint_id, release_version, owner_id, coordinator_id, tat_status, overdue_days, remaining_days, regulatory_mapping,
+      requirement_details, requester_designation_id, intake_snapshot, put_to_use_date, delete_reason, delete_batch_id, amendment_version, revised_details,
       status:status_master(name:status_name, status_color, code:status_code),
       department:departments!requirements_department_id_fkey(name),
       priority:priority_master!requirements_priority_id_fkey(name:priority_name, priority_color),
@@ -516,7 +522,26 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
 export async function updateRequirementIntake(reqId: string, payload: any, performedBy: string) {
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
   if (!isAuthorized) throw new Error('Unauthorized to update this requirement.');
-  const updatePayload = { title: payload.title, scope: payload.scope, department_id: payload.department_id, software_system_id: payload.software_system_id, priority_id: payload.priority_id };
+  const updatePayload: any = { 
+    title: payload.title, 
+    scope: payload.scope, 
+    department_id: payload.department_id, 
+    software_system_id: payload.software_system_id, 
+    priority_id: payload.priority_id 
+  };
+  
+  // Conditionally add new fields if provided in payload
+  const optionalFields = [
+    'target_release', 'story_points', 'estimated_effort', 'estimated_cost', 
+    'budget_impact', 'start_date', 'expected_completion_date', 
+    'acceptance_criteria', 'dependency_notes', 'requirement_reason'
+  ];
+  
+  optionalFields.forEach(field => {
+    if (payload[field] !== undefined) {
+      updatePayload[field] = payload[field];
+    }
+  });
   const { error } = await supabaseAdmin.from('requirements').update(updatePayload).eq('id', reqId);
   if (error) throw new Error('Failed to update requirement: ' + error.message);
   await logActivityEvent('REQUIREMENT', reqId, 'INTAKE_UPDATED', null, { message: 'Requirement intake details updated by Super Admin.' }, performedBy);
