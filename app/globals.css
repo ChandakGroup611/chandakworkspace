@@ -283,3 +283,8 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* Premium Card Hover Effects */
+.hover\:shadow-lg:hover .theme-data-value { text-shadow: 0 0 10px rgba(var(--foreground), 0.1); }
+.hover\:shadow-lg:hover .theme-label svg { transform: scale(1.15) rotate(4deg); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); filter: drop-shadow(0 0 4px currentColor); }
+.theme-label svg { transition: all 0.3s ease; }

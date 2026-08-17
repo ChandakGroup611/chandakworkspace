@@ -976,7 +976,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         {activeTab === 'details' && (
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {/* DEDICATED CARD: Business Classification */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
@@ -987,7 +987,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
                     </span>
@@ -998,7 +998,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span>
                     </span>
@@ -1009,7 +1009,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value
                     </span>
@@ -1018,7 +1018,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </span>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-fuchsia-500" /> Business Impact
                     </span>
@@ -1029,7 +1029,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-cyan-500" /> Dependency Notes <span className="text-red-500">*</span>
                     </span>
@@ -1038,7 +1038,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Server className="w-3.5 h-3.5 text-emerald-500" /> Technical Scope / Architecture <span className="text-red-500">*</span>
                     </span>
@@ -1056,50 +1056,50 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 <Briefcase className="w-4 h-4 text-emerald-500" /> Scope & System Classification
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0">
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Target className="w-3 h-3 text-theme-icon" /> Scope
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.scope || '-'}>{requirement.scope || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Server className="w-3 h-3 text-purple-500" /> System
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.software_system?.name || snap.system || '-'}>{requirement.software_system?.name || snap.system || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <Briefcase className="w-3 h-3 text-emerald-500" /> Module
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.module?.name || snap.module || '-'}>{requirement.module?.name || snap.module || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
                     <FileText className="w-3 h-3 text-cyan-500" /> Submodule
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_module?.name || snap.submodule || '-'}>{requirement.sub_module?.name || snap.submodule || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Category</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.category?.name || snap.category || '-'}>{requirement.category?.name || snap.category || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Sub Category</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_category?.name || snap.subcategory || '-'}>{requirement.sub_category?.name || snap.subcategory || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Created By</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.creator?.full_name || '-'}>{requirement.creator?.full_name || '-'}</span>
                 </div>
 
-                <div className="flex flex-col p-3 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">Department</span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.department?.name || '-'}>{requirement.department?.name || '-'}</span>
                 </div>
@@ -1151,7 +1151,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         {activeTab === 'analysis' && (
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {/* 1. CARD: Business Classification */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
@@ -1262,7 +1262,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             </AppCard>
 
             {/* 2. CARD: Requirement Reason, Details & Technical Scope */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-emerald-500/15 via-surface/90 to-surface/40 dark:from-emerald-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-emerald-500 shadow-xs" />
@@ -1272,7 +1272,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-amber-500" /> Requirement Reason
                     </span>
@@ -1281,7 +1281,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-blue-500" /> Requirement Details
                     </span>
@@ -1313,7 +1313,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             
             {/* IT System Conditional Render */}
             {requirement.custom_fields?.requirement_domain === 'IT & Software System' && (
-              <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
+              <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="bg-gradient-to-r from-blue-500/15 via-surface/90 to-surface/40 dark:from-blue-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                   <div className="flex items-center gap-2.5">
                     <div className="w-1.5 h-4 rounded-full bg-blue-500 shadow-xs" />
@@ -1323,25 +1323,25 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Target System / Application</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_system || 'Not specified'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Data Privacy & Security</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.data_privacy || 'Not specified'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Software License Cost</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.software_cost ? `₹${requirement.custom_fields.software_cost}` : 'N/A'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Development Cost</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.dev_cost ? `₹${requirement.custom_fields.dev_cost}` : 'N/A'}</span>
                     </div>
                   </div>
                   {requirement.custom_fields?.integrations && (
-                    <div className="mt-3.5 flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="mt-3.5 flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Integration Dependencies</span>
                       <span className="theme-data-value text-foreground whitespace-pre-wrap">{requirement.custom_fields.integrations}</span>
                     </div>
@@ -1352,7 +1352,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* Infrastructure Conditional Render */}
             {requirement.custom_fields?.requirement_domain === 'Infrastructure & Hardware' && (
-              <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
+              <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="bg-gradient-to-r from-indigo-500/15 via-surface/90 to-surface/40 dark:from-indigo-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                   <div className="flex items-center gap-2.5">
                     <div className="w-1.5 h-4 rounded-full bg-indigo-500 shadow-xs" />
@@ -1362,19 +1362,19 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 </div>
                 <div className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Target Environment</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_environment || 'Not specified'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Hardware & Capacity Needs</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.hardware_needs || 'Not specified'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">CAPEX Amount</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.capex_amount ? `₹${requirement.custom_fields.capex_amount}` : 'N/A'}</span>
                     </div>
-                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60">
+                    <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">OPEX Amount</span>
                       <span className="theme-data-value text-foreground">{requirement.custom_fields?.opex_amount ? `₹${requirement.custom_fields.opex_amount}` : 'N/A'}</span>
                     </div>
@@ -1384,7 +1384,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             )}
 
             {/* 3. CARD: Timelines & Resources */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-cyan-500/15 via-surface/90 to-surface/40 dark:from-cyan-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-cyan-500 shadow-xs" />
@@ -1395,7 +1395,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
               <div className="p-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-emerald-500" /> Start Date <span className="text-red-500">*</span>
                     </span>
@@ -1408,7 +1408,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-amber-500" /> Due Date <span className="text-red-500">*</span>
                     </span>
@@ -1421,7 +1421,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> Estimated Effort (Days) <span className="text-red-500">*</span>
                     </span>
@@ -1434,7 +1434,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-indigo-500" /> Estimated Cost
                     </span>
@@ -1447,7 +1447,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-pink-500" /> Estimated Resources
                     </span>
@@ -1465,7 +1465,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
 
             {/* 4. CARD: Impacted Departments & Define Approval Sequence * */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-indigo-500/15 via-surface/90 to-surface/40 dark:from-indigo-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-indigo-500 shadow-xs" />
@@ -1645,7 +1645,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             </AppCard>
 
             {/* 5. CARD: Add New Analysis Remarks (Mandatory for Approvers) & Remarks History */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               {/* Card Header */}
               <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-surface/40 dark:from-amber-600/30 dark:via-rose-900/20 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
                 <div className="flex items-center gap-2.5">
@@ -1799,7 +1799,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         {activeTab === 'approval' && (
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {/* DEDICATED CARD: Analysis Remarks & Approver History */}
-            <AppCard className="overflow-hidden border border-border/60 shadow-md p-0 mb-4">
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-surface/40 dark:from-amber-600/30 dark:via-rose-900/20 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-amber-500 shadow-xs animate-pulse" />
