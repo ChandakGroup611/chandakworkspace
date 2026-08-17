@@ -1416,45 +1416,65 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-emerald-500" /> Start Date <span className="text-red-500">*</span>
                     </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.start_date ? new Date(requirement.start_date).toLocaleDateString() : (requirement.created_at ? new Date(requirement.created_at).toLocaleDateString() : 'Not Set')}
-                    </span>
+                    {isEditable ? (
+                      <AppInput type="date" min={requirement.created_at?.split('T')[0]} value={formData.start_date} onChange={(e) => handleDateChange('start_date', e.target.value)} className="w-full" />
+                    ) : (
+                      <span className="theme-data-value text-foreground truncate">
+                        {requirement.start_date ? new Date(requirement.start_date).toLocaleDateString() : (requirement.created_at ? new Date(requirement.created_at).toLocaleDateString() : 'Not Set')}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-amber-500" /> Due Date <span className="text-red-500">*</span>
                     </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.due_date || requirement.expected_completion_date ? new Date(requirement.due_date || requirement.expected_completion_date).toLocaleDateString() : 'Not Set'}
-                    </span>
+                    {isEditable ? (
+                      <AppInput type="date" min={formData.start_date || requirement.created_at?.split('T')[0]} value={formData.due_date} onChange={(e) => handleDateChange('due_date', e.target.value)} className="w-full" />
+                    ) : (
+                      <span className="theme-data-value text-foreground truncate">
+                        {requirement.due_date || requirement.expected_completion_date ? new Date(requirement.due_date || requirement.expected_completion_date).toLocaleDateString() : 'Not Set'}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> Estimated Effort (Days) <span className="text-red-500">*</span>
                     </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.estimated_effort || requirement.custom_fields?.estimated_effort || (requirement.start_date && requirement.due_date ? Math.max(1, Math.round((new Date(requirement.due_date).getTime() - new Date(requirement.start_date).getTime()) / (1000 * 60 * 60 * 24))) : '5 Days')}
-                    </span>
+                    {isEditable ? (
+                      <AppInput type="number" min="1" value={formData.estimated_effort} onChange={handleEffortChange} className="w-full" placeholder="e.g. 5" />
+                    ) : (
+                      <span className="theme-data-value text-foreground truncate">
+                        {requirement.estimated_effort || requirement.custom_fields?.estimated_effort || (requirement.start_date && requirement.due_date ? Math.max(1, Math.round((new Date(requirement.due_date).getTime() - new Date(requirement.start_date).getTime()) / (1000 * 60 * 60 * 24))) : '5 Days')}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-indigo-500" /> Estimated Cost
                     </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.estimated_cost ? `₹${requirement.estimated_cost}` : (requirement.custom_fields?.estimated_cost ? `₹${requirement.custom_fields.estimated_cost}` : 'Standard Budget')}
-                    </span>
+                    {isEditable || isSuperAdmin ? (
+                      <AppInput type="number" placeholder="Amount (e.g. 50000)" value={formData.estimated_cost} onChange={(e) => setFormData({...formData, estimated_cost: e.target.value})} className="w-full" />
+                    ) : (
+                      <span className="theme-data-value text-foreground truncate">
+                        {requirement.estimated_cost ? `₹${requirement.estimated_cost}` : (requirement.custom_fields?.estimated_cost ? `₹${requirement.custom_fields.estimated_cost}` : 'Standard Budget')}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/60 dark:bg-elevated/30 border border-border/60 hover:border-border transition-all duration-200 justify-center min-h-[76px]">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-pink-500" /> Estimated Resources
                     </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.estimated_resources || requirement.custom_fields?.estimated_resources || 'Standard Team'}
-                    </span>
+                    {isEditable ? (
+                      <AppInput placeholder="e.g. 2 Developers" value={formData.estimated_resources} onChange={(e) => setFormData({...formData, estimated_resources: e.target.value})} className="w-full" />
+                    ) : (
+                      <span className="theme-data-value text-foreground truncate">
+                        {requirement.estimated_resources || requirement.custom_fields?.estimated_resources || 'Standard Team'}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1735,42 +1755,58 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             </AppCard>
 
             {/* Analysis Action Buttons */}
-            {isSuperAdmin && isEditable && (
+            {isSuperAdmin && !isViewMode && (
               <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-border/60">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleAction('SAVE')}
-                  leftIcon={<Save className="w-4 h-4" />}
-                >
-                  Save Draft
-                </AppButton>
-                {requirement.approval_status !== 'On Hold' && (
+                {isEditable ? (
+                  <>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleAction('SAVE')}
+                      leftIcon={<Save className="w-4 h-4" />}
+                    >
+                      Save Draft
+                    </AppButton>
+                    
+                    {requirement.approval_status !== 'On Hold' && (
+                      <AppButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => handleAction('HOLD')}
+                        leftIcon={<PauseCircle className="w-4 h-4" />}
+                      >
+                        Hold Requirement
+                      </AppButton>
+                    )}
+
+                    <AppButton
+                      type="button"
+                      variant="destructive"
+                      onClick={() => handleAction('CANCEL')}
+                      leftIcon={<XCircle className="w-4 h-4" />}
+                    >
+                      Reject Requirement
+                    </AppButton>
+
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      onClick={() => handleAction('ACCEPT')}
+                      leftIcon={<CheckCircle className="w-4 h-4" />}
+                    >
+                      Accept & Initiate Approval
+                    </AppButton>
+                  </>
+                ) : (
                   <AppButton
                     type="button"
-                    variant="secondary"
-                    onClick={() => handleAction('HOLD')}
-                    leftIcon={<PauseCircle className="w-4 h-4" />}
+                    variant="outline"
+                    onClick={() => handleAction('SAVE')}
+                    leftIcon={<Save className="w-4 h-4" />}
                   >
-                    Hold Requirement
+                    Update Details
                   </AppButton>
                 )}
-                <AppButton
-                  type="button"
-                  variant="destructive"
-                  onClick={() => handleAction('CANCEL')}
-                  leftIcon={<XCircle className="w-4 h-4" />}
-                >
-                  Reject Requirement
-                </AppButton>
-                <AppButton
-                  type="button"
-                  variant="primary"
-                  onClick={() => handleAction('ACCEPT')}
-                  leftIcon={<CheckCircle className="w-4 h-4" />}
-                >
-                  Accept & Initiate Approval
-                </AppButton>
               </div>
             )}
           </div>
