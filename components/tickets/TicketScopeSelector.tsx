@@ -33,12 +33,12 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
     }
   };
 
-  const getColor = (code: string) => {
+  const getStyleProps = (code: string) => {
     switch (code) {
-      case "INFRA": return "from-blue-500/20 to-indigo-500/20";
-      case "ERP": return "from-purple-500/20 to-pink-500/20";
-      case "OTHERS": return "from-emerald-500/20 to-teal-500/20";
-      default: return "from-gray-500/20 to-slate-500/20";
+      case "INFRA": return { iconBg: "bg-blue-500/10", iconText: "text-blue-600 dark:text-blue-400", hoverBg: "group-hover:bg-blue-500", border: "group-hover:border-blue-500/50", gradient: "from-blue-500/5 to-indigo-500/5 group-hover:from-blue-500/10 group-hover:to-indigo-500/10" };
+      case "ERP": return { iconBg: "bg-orange-500/10", iconText: "text-orange-600 dark:text-orange-400", hoverBg: "group-hover:bg-orange-500", border: "group-hover:border-orange-500/50", gradient: "from-orange-500/5 to-amber-500/5 group-hover:from-orange-500/10 group-hover:to-amber-500/10" };
+      case "OTHERS": return { iconBg: "bg-emerald-500/10", iconText: "text-emerald-600 dark:text-emerald-400", hoverBg: "group-hover:bg-emerald-500", border: "group-hover:border-emerald-500/50", gradient: "from-emerald-500/5 to-teal-500/5 group-hover:from-emerald-500/10 group-hover:to-teal-500/10" };
+      default: return { iconBg: "bg-slate-500/10", iconText: "text-slate-600 dark:text-slate-400", hoverBg: "group-hover:bg-slate-500", border: "group-hover:border-slate-500/50", gradient: "from-slate-500/5 to-gray-500/5 group-hover:from-slate-500/10 group-hover:to-gray-500/10" };
     }
   };
 
@@ -63,7 +63,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full px-4">
         {dbScopes.map((scope) => {
           const Icon = getIcon(scope.code);
-          const colorClass = getColor(scope.code);
+          const style = getStyleProps(scope.code);
           
           return (
             <AppButton
@@ -71,17 +71,17 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
               onClick={() => onSelect(scope)}
               type="button"
               variant="ghost"
-              className="p-0 h-auto w-full group relative text-left transition-all duration-300 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
+              className="p-0 h-auto w-full group relative text-left transition-all duration-300 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
             >
-              <AppCard className="h-full w-full transition-all overflow-hidden relative border border-border/40 hover:border-theme-btn-primary/50 hover:shadow-md bg-surface/50 hover:bg-surface">
-                <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-                <AppCardContent className="p-6 relative z-10 flex flex-col h-full space-y-4">
-                  <div className="h-12 w-12 rounded-xl flex items-center justify-center bg-surface border border-border/50 group-hover:scale-110 transition-transform duration-500 shadow-sm">
-                    <Icon className="h-6 w-6 text-theme-icon" />
+              <AppCard className={`h-full w-full transition-all duration-300 overflow-hidden relative border ${isLightMode ? 'border-border/80 hover:border-theme-btn-primary/60' : 'border-white/10 hover:border-theme-btn-primary/80'} shadow-sm hover:shadow-md ${style.border} bg-surface rounded-2xl`}>
+                <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} transition-colors duration-500`} />
+                <AppCardContent className="p-6 relative z-10 flex flex-col h-full space-y-5">
+                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${style.iconBg} ${style.hoverBg} transition-colors duration-300 shadow-sm border border-black/5 dark:border-white/5`}>
+                    <Icon className={`h-7 w-7 ${style.iconText} group-hover:text-white transition-colors duration-300`} />
                   </div>
                   
-                  <div className="space-y-1.5 flex-1">
-                    <h3 className="text-lg font-semibold transition-colors text-foreground group-hover:text-theme-btn-primary">
+                  <div className="space-y-2 flex-1">
+                    <h3 className="text-[17px] font-semibold text-foreground group-hover:text-foreground/90 transition-colors">
                       {scope.name}
                     </h3>
                     <p className="text-sm text-muted leading-relaxed line-clamp-2">
@@ -89,9 +89,11 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs font-bold tracking-wider uppercase transition-colors pt-4 border-t border-border/30 text-muted group-hover:text-theme-btn-primary">
+                  <div className="flex items-center justify-between text-[11px] font-bold tracking-wider uppercase transition-colors pt-4 border-t border-border/50 text-muted group-hover:text-foreground">
                     <span>Initialize Flow</span>
-                    <ChevronRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                    <div className="h-6 w-6 rounded-full bg-border/40 group-hover:bg-foreground/10 flex items-center justify-center transition-colors">
+                      <ChevronRight className="h-3.5 w-3.5 transform group-hover:translate-x-0.5 transition-transform" />
+                    </div>
                   </div>
                 </AppCardContent>
               </AppCard>
