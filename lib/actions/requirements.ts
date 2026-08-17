@@ -152,9 +152,9 @@ export async function fetchRequirements(workspaceId?: string | null) {
     .from('requirements')
     .select(`
       id, code, title, scope, approval_status, current_assignee_id, created_at, creator_id, requester_id,
-      parent_requirement_id, acceptance_criteria, story_points, target_release, tags,
+      target_release,
       objective, functional_scope, technical_scope, is_deleted, deleted_at, deleted_by, updated_at, custom_fields, due_date,
-      source_ticket_id, requester_department_id, requirement_reason, budget_impact, estimated_effort, estimated_cost, dependency_notes,
+      source_ticket_id, requester_department_id, requirement_reason, budget_impact, estimated_effort, dependency_notes,
       start_date, expected_completion_date, actual_completion_date, requirement_type_id, business_criticality_id, business_value_id,
       project_id, sprint_id, release_version, owner_id, coordinator_id, tat_status, overdue_days, remaining_days, regulatory_mapping,
       requirement_details, requester_designation_id, intake_snapshot, put_to_use_date, delete_reason, delete_batch_id, amendment_version, revised_details,
