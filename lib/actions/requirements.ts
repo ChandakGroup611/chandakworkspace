@@ -169,6 +169,7 @@ export async function fetchRequirements(workspaceId?: string | null) {
       requester:user_master!requirements_requester_id_fkey(full_name),
       requirement_approval_flow(level, status)
     `)
+    .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (workspaceId) {
