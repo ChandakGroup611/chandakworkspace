@@ -501,6 +501,8 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
   if (!isSuperAdmin && !canDelete) throw new Error('Only SUPER_ADMIN or users with REQUIREMENTS_DELETE permission can delete requirements.');
 
   // Check cross-logic: Are there any active tasks raised against this requirement?
+  // TEMPORARILY DISABLED: tasks.requirement_id column does not exist yet pending migration.
+  /*
   const { count: taskCount, error: taskError } = await supabaseAdmin
     .from('tasks')
     .select('id', { count: 'exact', head: true })
@@ -511,6 +513,7 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
   if (taskCount && taskCount > 0) {
     throw new Error('Cannot delete this requirement because there are active tasks raised against it. Please reassign or delete those tasks first.');
   }
+  */
 
   // Soft delete the requirement so it can be viewed in the Trash Data module
   const { error } = await supabaseAdmin.from('requirements').update({ is_deleted: true }).eq('id', reqId);
