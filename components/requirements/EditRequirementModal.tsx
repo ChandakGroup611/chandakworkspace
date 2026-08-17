@@ -113,20 +113,22 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
         </DialogHeader>
 
         <div className="flex border-b border-border dark:border-white/10 overflow-x-auto bg-surface/30 px-6 pt-2">
-          {['general', 'planning', 'details'].map(tab => (
+          {['general', 'planning', 'details'].map(tab => {
             // eslint-disable-next-line no-restricted-syntax
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === tab 
-                  ? 'border-theme-btn-primary text-theme-icon' 
-                  : 'border-transparent text-muted hover:text-foreground hover:border-border'
-              }`}
-            >
-              {tab === 'general' ? 'General' : tab === 'planning' ? 'Planning & Cost' : 'Advanced Details'}
-            </button>
-          ))}
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                  activeTab === tab 
+                    ? 'border-theme-btn-primary text-theme-icon' 
+                    : 'border-transparent text-muted hover:text-foreground hover:border-border'
+                }`}
+              >
+                {tab === 'general' ? 'General' : tab === 'planning' ? 'Planning & Cost' : 'Advanced Details'}
+              </button>
+            );
+          })}
         </div>
 
         <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-[60vh]">
