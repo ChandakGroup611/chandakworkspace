@@ -1737,9 +1737,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
             </AppCard>
 
-            {/* Analysis Action Buttons */}
+            {/* Analysis Action Buttons (Frozen Footer) */}
             {isSuperAdmin && !isViewMode && (
-              <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-border/60">
+              <div className="sticky bottom-0 z-[100] -mx-4 sm:-mx-6 -mb-12 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
                 {isEditable ? (
                   <>
                     <AppButton
@@ -1894,7 +1894,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </div>
         )}
 
-        <div className="bg-surface dark:bg-[#050505] rounded-lg border border-border/50 dark:border-white/5 p-3 shadow-sm mb-10">
+        <div className={`rounded-lg mb-10 ${activeTab !== 'analysis' ? 'bg-surface dark:bg-[#050505] border border-border/50 dark:border-white/5 p-3 shadow-sm' : ''}`}>
           {activeTab === 'details' && (
             <div className="flex flex-col h-full animate-in fade-in duration-300 gap-4 p-2">
               <div className="flex items-center justify-between border-b border-border/60 pb-3">
