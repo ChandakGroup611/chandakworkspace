@@ -70,27 +70,28 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
               key={scope.id}
               onClick={() => onSelect(scope)}
               type="button"
-              className="group relative text-left transition-all duration-300 hover:scale-[1.02] focus:outline-none w-full"
+              variant="ghost"
+              className="p-0 h-auto w-full group relative text-left transition-all duration-300 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
             >
-              <AppCard className={`h-full transition-all overflow-hidden relative group-hover:border-theme-btn-primary/30`}>
-                <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                <AppCardContent className="p-6 relative z-10 space-y-4">
-                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 theme-card-structural`}>
-                    <Icon className={`h-6 w-6 text-theme-icon`} />
+              <AppCard className="h-full w-full transition-all overflow-hidden relative border border-border/40 hover:border-theme-btn-primary/50 hover:shadow-md bg-surface/50 hover:bg-surface">
+                <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                <AppCardContent className="p-6 relative z-10 flex flex-col h-full space-y-4">
+                  <div className="h-12 w-12 rounded-xl flex items-center justify-center bg-surface border border-border/50 group-hover:scale-110 transition-transform duration-500 shadow-sm">
+                    <Icon className="h-6 w-6 text-theme-icon" />
                   </div>
                   
-                  <div className="space-y-1">
-                    <h3 className={`text-lg font-semibold transition-colors text-theme-heading group-hover:text-theme-icon`}>
+                  <div className="space-y-1.5 flex-1">
+                    <h3 className="text-lg font-semibold transition-colors text-foreground group-hover:text-theme-btn-primary">
                       {scope.name}
                     </h3>
-                    <p className="text-sm text-muted leading-tight h-10 overflow-hidden line-clamp-2">
+                    <p className="text-sm text-muted leading-relaxed line-clamp-2">
                       {scope.description}
                     </p>
                   </div>
 
-                  <div className={`flex items-center text-xs font-bold uppercase tracking-widest transition-colors pt-2 text-theme-icon`}>
+                  <div className="flex items-center justify-between text-xs font-bold tracking-wider uppercase transition-colors pt-4 border-t border-border/30 text-muted group-hover:text-theme-btn-primary">
                     <span>Initialize Flow</span>
-                    <ChevronRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </AppCardContent>
               </AppCard>
