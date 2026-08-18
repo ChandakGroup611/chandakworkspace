@@ -670,7 +670,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const snap = requirement.intake_snapshot || {};
 
   return (
-    <PageContainer strict={false} className="px-4 pb-12 pt-2 min-h-screen overflow-y-auto">
+    <PageContainer strict={false} className="px-4 pb-0 pt-2 min-h-screen overflow-y-auto">
       <div className="flex items-center justify-between pb-2 mb-2 shrink-0 border-b border-border dark:border-white/5">
         <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-2">
