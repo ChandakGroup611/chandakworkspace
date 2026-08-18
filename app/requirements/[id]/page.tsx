@@ -905,7 +905,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pb-12">
         {/* Action Required Panel */}
         {isCurrentApprover && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-surface dark:bg-elevated/40 border-l-4 border-accent p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex items-start gap-3">
               <ShieldAlert className="h-6 w-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -976,8 +976,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
-                  <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                  <Target className="w-4 h-4 text-accent" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Business Classification</h3>
                 </div>
               </div>
@@ -989,7 +989,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification
                     </span>
                     <div>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
                         {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || 'Standard Business Request'}
                       </span>
                     </div>
@@ -1000,7 +1000,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Business Criticality <span className="text-red-500">*</span>
                     </span>
                     <div>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
                         {requirement.business_criticality?.name || requirement.priority?.name || 'HIGH'}
                       </span>
                     </div>
@@ -1151,8 +1151,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-purple-500 shadow-xs" />
-                  <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                  <Target className="w-4 h-4 text-accent" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Business Classification</h3>
                 </div>
               </div>
@@ -1163,7 +1163,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <label className="theme-label text-muted flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-purple-500" /> Business Classification <span className="text-red-500">*</span></span>
                       {isEditable && (
-                        <button type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-purple-500 hover:text-purple-600 p-0.5 rounded-full hover:bg-purple-500/10">
+                        <button type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10">
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       )}
@@ -1212,7 +1212,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <label className="theme-label text-muted flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-indigo-500" /> Business Value</span>
                       {isEditable && (
-                        <button type="button" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }} className="text-indigo-500 hover:text-indigo-600 p-0.5 rounded-full hover:bg-indigo-500/10">
+                        <button type="button" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10">
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       )}
@@ -1262,8 +1262,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-emerald-500/15 via-surface/90 to-surface/40 dark:from-emerald-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-emerald-500 shadow-xs" />
-                  <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                  <FileText className="w-4 h-4 text-accent" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Requirement Reason, Details & Technical Scope</h3>
                 </div>
               </div>
@@ -1313,8 +1313,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="bg-gradient-to-r from-blue-500/15 via-surface/90 to-surface/40 dark:from-blue-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-1.5 h-4 rounded-full bg-blue-500 shadow-xs" />
-                    <Server className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                    <Server className="w-4 h-4 text-accent" />
                     <h3 className="font-bold text-sm tracking-wide text-foreground">IT & Software Scope</h3>
                   </div>
                 </div>
@@ -1352,8 +1352,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="bg-gradient-to-r from-indigo-500/15 via-surface/90 to-surface/40 dark:from-indigo-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-1.5 h-4 rounded-full bg-indigo-500 shadow-xs" />
-                    <Server className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                    <Server className="w-4 h-4 text-accent" />
                     <h3 className="font-bold text-sm tracking-wide text-foreground">Infrastructure Scope</h3>
                   </div>
                 </div>
@@ -1384,8 +1384,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-cyan-500/15 via-surface/90 to-surface/40 dark:from-cyan-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-cyan-500 shadow-xs" />
-                  <Clock className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                  <Clock className="w-4 h-4 text-accent" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Timelines & Resources</h3>
                 </div>
               </div>
@@ -1465,15 +1465,15 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-indigo-500/15 via-surface/90 to-surface/40 dark:from-indigo-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-indigo-500 shadow-xs" />
-                  <Briefcase className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                  <Briefcase className="w-4 h-4 text-accent" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Impacted Departments & Define Approval Sequence *</h3>
                 </div>
               </div>
 
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-800/60">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
                     <span className="theme-label mb-1.5 text-indigo-600 dark:text-indigo-400">
                       Primary Impacted Department
                     </span>
@@ -1484,7 +1484,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </div>
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-800/60">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
                     <span className="theme-label mb-1.5 text-purple-600 dark:text-purple-400">
                       Department Approvers & Stakeholders (Sequence Configured)
                     </span>
@@ -1651,17 +1651,17 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             {/* 5. CARD: Add New Analysis Remarks (Mandatory for Approvers) & Remarks History */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               {/* Card Header */}
-              <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-surface/40 dark:from-amber-600/30 dark:via-rose-900/20 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-amber-500 shadow-xs animate-pulse" />
-                  <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs animate-pulse" />
+                  <FileText className="w-4 h-4 text-accent" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Analysis Remarks & Approver History</h3>
                 </div>
               </div>
 
               <div className="p-5 space-y-5">
                 {/* SECTION 1: Add New Analysis Remarks (Always Visible & Accessible) */}
-                <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-800/60">
+                <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
                   <label className="theme-data-value uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Add New Analysis Remarks (Mandatory for Approvers) <span className="text-red-500">*</span>
                   </label>
@@ -1741,10 +1741,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {/* DEDICATED CARD: Analysis Remarks & Approver History */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
-              <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-surface/40 dark:from-amber-600/30 dark:via-rose-900/20 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-amber-500 shadow-xs animate-pulse" />
-                  <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs animate-pulse" />
+                  <FileText className="w-4 h-4 text-accent" />
                   <h3 className="font-bold text-sm tracking-wide text-foreground">Add New Analysis Remarks (Mandatory for Approvers) & History</h3>
                   {auditLogs.length > 0 && (
                     <span className="px-2 py-0.5 rounded-full theme-label bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
@@ -1775,7 +1775,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
               {!isRemarksHistoryMinimized && (
                 <div className="p-5 space-y-5 transition-all duration-300">
-                  <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-800/60">
+                  <div className="flex flex-col space-y-2 p-4 rounded-2xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
                     <label className="theme-data-value uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> New Analysis Remarks / Approver Feedback <span className="text-red-500">*</span>
                     </label>

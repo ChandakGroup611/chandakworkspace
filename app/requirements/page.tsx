@@ -474,7 +474,7 @@ export default function RequirementsPage() {
                           variant="ghost" 
                           size="sm" 
                           title="View"
-                          className="h-7 w-7 p-0 text-sky-500 hover:text-sky-600 hover:bg-sky-500/10"
+                          className="h-7 w-7 p-0 text-accent hover:text-accent/80 hover:bg-accent/10"
                           onClick={(e) => {
                             e.stopPropagation();
                             router.push(`/requirements/${r.dbId}?mode=view`);
@@ -501,7 +501,7 @@ export default function RequirementsPage() {
                             variant="ghost" 
                             size="sm" 
                             title="Delete"
-                            className="h-7 w-7 p-0 text-muted hover:text-rose-500 hover:bg-rose-500/10"
+                            className="h-7 w-7 p-0 text-muted hover:text-rose-500 hover:bg-accent/10"
                             onClick={(e) => handleDelete(e, r.dbId)}
                           >
                             <Trash2 className="h-4 w-4" />
