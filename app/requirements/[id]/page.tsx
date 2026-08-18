@@ -1668,7 +1668,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   />
                     <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
                   </div>
-                </div>
 
                 {/* SECTION 2: Remarks History (Separated, Default Minimized) */}
                 <div className="pt-3 border-t border-border/60 space-y-3">
@@ -2016,8 +2015,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   ))}
                 </div>
               )}
-              )}
-            </div>
             
             {/* Approval Action Buttons (Frozen Footer) */}
             {isCurrentApprover && (
