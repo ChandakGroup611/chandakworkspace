@@ -1145,7 +1145,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
         {/* TAB 2: Business Analysis */}
         {activeTab === 'analysis' && (
-          <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
+          <div className="flex flex-col space-y-6 animate-in fade-in duration-300">
             {/* 1. CARD: Business Classification */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               <div className="bg-gradient-to-r from-purple-500/15 via-surface/90 to-surface/40 dark:from-purple-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
@@ -1666,15 +1666,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     onChange={setApprovalRemarks}
                     placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback with rich text decorations..."
                   />
-                  <div className="flex items-center justify-between pt-1">
                     <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
-                    {isCurrentApprover && (
-                      <div className="flex items-center gap-2">
-                        <AppButton variant="secondary" size="sm" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
-                        <AppButton variant="destructive" size="sm" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                        <AppButton variant="primary" size="sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -1738,57 +1730,69 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             </AppCard>
 
             {/* Analysis Action Buttons (Frozen Footer) */}
-            {isSuperAdmin && !isViewMode && (
-              <div className="sticky bottom-0 z-[100] -mx-4 sm:-mx-6 -mb-12 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
-                {isEditable ? (
+            {((isSuperAdmin && !isViewMode) || isCurrentApprover) && (
+              <div className="sticky bottom-0 z-[100] -mx-4 sm:-mx-6 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
+                {isCurrentApprover ? (
                   <>
+                    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      Pending Your Approval
+                    </span>
+                    <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
+                    <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
+                    <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                  </>
+                ) : (
+                  isEditable ? (
+                    <>
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleAction('SAVE')}
+                        leftIcon={<Save className="w-4 h-4" />}
+                      >
+                        Save Draft
+                      </AppButton>
+                      
+                      {requirement.approval_status !== 'On Hold' && (
+                        <AppButton
+                          type="button"
+                          variant="secondary"
+                          onClick={() => handleAction('HOLD')}
+                          leftIcon={<PauseCircle className="w-4 h-4" />}
+                        >
+                          Hold Requirement
+                        </AppButton>
+                      )}
+
+                      <AppButton
+                        type="button"
+                        variant="destructive"
+                        onClick={() => handleAction('CANCEL')}
+                        leftIcon={<XCircle className="w-4 h-4" />}
+                      >
+                        Reject Requirement
+                      </AppButton>
+
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        onClick={() => handleAction('ACCEPT')}
+                        leftIcon={<CheckCircle className="w-4 h-4" />}
+                      >
+                        Accept & Initiate Approval
+                      </AppButton>
+                    </>
+                  ) : (
                     <AppButton
                       type="button"
                       variant="outline"
                       onClick={() => handleAction('SAVE')}
                       leftIcon={<Save className="w-4 h-4" />}
                     >
-                      Save Draft
+                      Update Details
                     </AppButton>
-                    
-                    {requirement.approval_status !== 'On Hold' && (
-                      <AppButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => handleAction('HOLD')}
-                        leftIcon={<PauseCircle className="w-4 h-4" />}
-                      >
-                        Hold Requirement
-                      </AppButton>
-                    )}
-
-                    <AppButton
-                      type="button"
-                      variant="destructive"
-                      onClick={() => handleAction('CANCEL')}
-                      leftIcon={<XCircle className="w-4 h-4" />}
-                    >
-                      Reject Requirement
-                    </AppButton>
-
-                    <AppButton
-                      type="button"
-                      variant="primary"
-                      onClick={() => handleAction('ACCEPT')}
-                      leftIcon={<CheckCircle className="w-4 h-4" />}
-                    >
-                      Accept & Initiate Approval
-                    </AppButton>
-                  </>
-                ) : (
-                  <AppButton
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleAction('SAVE')}
-                    leftIcon={<Save className="w-4 h-4" />}
-                  >
-                    Update Details
-                  </AppButton>
+                  )
                 )}
               </div>
             )}
@@ -1845,16 +1849,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       rows={3}
                       placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback..."
                     />
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
-                      {isCurrentApprover && (
-                        <div className="flex items-center gap-2">
-                          <AppButton variant="secondary" size="sm" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
-                          <AppButton variant="destructive" size="sm" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                          <AppButton variant="primary" size="sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
-                        </div>
-                      )}
-                    </div>
+                    <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
                   </div>
 
                   <div className="space-y-3 pt-2">
@@ -2021,10 +2016,25 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   ))}
                 </div>
               )}
+              )}
             </div>
-          )}
+            
+            {/* Approval Action Buttons (Frozen Footer) */}
+            {isCurrentApprover && (
+              <div className="sticky bottom-0 z-[100] -mx-4 sm:-mx-6 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
+                <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Pending Your Approval
+                </span>
+                <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
+                <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
+                <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+              </div>
+            )}
+          </div>
+        )}
 
-          {activeTab === 'tasks' && (
+        {activeTab === 'tasks' && (
             <div className="space-y-4 animate-in fade-in duration-300 pt-2 pb-10">
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-border dark:border-white/10">
                 <div className="flex items-center gap-2">
