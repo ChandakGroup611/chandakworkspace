@@ -97,7 +97,7 @@ export default function NotificationCenter() {
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[#070913]" />
+          <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 bg-danger rounded-full ring-2 ring-white dark:ring-[#070913]" />
         )}
       </AppButton>
 
@@ -109,7 +109,7 @@ export default function NotificationCenter() {
               <div className="flex items-center gap-2">
                 <h3 className={`font-bold ${"text-foreground"}`}>Notifications</h3>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                  unreadCount > 0 ? "bg-rose-500/10 text-rose-500" : "bg-gray-500/10 text-muted"
+                  unreadCount > 0 ? "bg-danger/10 text-danger" : "bg-gray-500/10 text-muted"
                 }`}>
                   {unreadCount} New
                 </span>
@@ -120,7 +120,7 @@ export default function NotificationCenter() {
                   size="sm" 
                   onClick={handleMarkAllRead} 
                   leftIcon={<X className="h-3.5 w-3.5" />}
-                  className="h-7 px-2 text-[10px] text-red-500 hover:text-red-600 border-none bg-transparent"
+                  className="h-7 px-2 text-[10px] text-danger hover:text-danger border-none bg-transparent"
                 >
                   Clear all
                 </AppButton>
@@ -148,7 +148,7 @@ export default function NotificationCenter() {
                   <div className="absolute right-4 top-4 flex flex-col items-center gap-2">
                     <AppButton
                       onClick={(e) => handleDelete(e, n.id)}
-                      className="text-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                      className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity p-1"
                       title="Delete Notification"
                     >
                       <X className="h-4 w-4" />

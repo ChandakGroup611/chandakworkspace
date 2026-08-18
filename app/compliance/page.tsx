@@ -20,7 +20,7 @@ export default function CompliancePage() {
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-400 w-full">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-foreground">Trash Data</h1>

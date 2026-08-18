@@ -210,7 +210,7 @@ export default function Sidebar() {
       <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-background/80 backdrop-blur-xl border-r border-border/20 ${ isCompact ? "w-16" : "w-[240px]" }`}
+      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-surface/40 backdrop-blur-2xl border-r border-border/30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${ isCompact ? "w-16" : "w-[240px]" }`}
     >
       {/* Sidebar Top Master Header */}
       <div className={`flex h-14 items-center justify-between px-4 shrink-0`}>
@@ -237,10 +237,10 @@ export default function Sidebar() {
           variant="ghost"
           size="icon-sm"
           onClick={() => setIsCompactState(!isCompactState)}
-          className="absolute -right-3 top-4 rounded-full shadow-sm transition-all hover:scale-110 duration-200 z-50 bg-background border border-border/50 text-muted hover:text-foreground"
+          className="absolute -right-3 top-4 rounded-full shadow-md transition-all hover:scale-110 duration-200 z-50 bg-surface border border-border/50 text-muted hover:text-accent hover:border-accent/50"
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
-          {isCompactState ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+          {isCompactState ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
         </AppButton>
       </div>
 
@@ -248,16 +248,16 @@ export default function Sidebar() {
       <div className="flex-1 px-3 py-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {visibleNavTree.map((group, groupIdx) => {
           const groupColorClass = groupIdx === 0 
-            ? "text-blue-600 dark:text-blue-400" 
+            ? "text-accent dark:text-accent" 
             : groupIdx === 1 
             ? "text-theme-icon" 
-            : "text-amber-600 dark:text-amber-400";
+            : "text-warning dark:text-warning";
 
           return (
             <div key={groupIdx} className="flex flex-col mb-2">
               {!isCompact && (
-                <div className="px-3 mb-2 mt-4 flex items-center gap-1.5">
-                  <span className={`text-[11px] font-semibold tracking-wider uppercase text-muted`}>
+                <div className="px-3 mb-2 mt-5 flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted/70">
                     {group.label}
                   </span>
                 </div>
@@ -278,11 +278,9 @@ export default function Sidebar() {
 
                 const getModuleTheme = (href: string) => {
                   return {
-                    text: showAsActive ? "text-foreground" : "text-muted",
-                    activeBg: showAsActive ? "bg-surface shadow-[inset_2px_0_0_var(--theme-btn-primary)]" : "",
-                    border: "border-border/50",
-                    hover: "hover:bg-surface/50 hover:text-foreground",
-                    iconColor: showAsActive ? "text-theme-icon" : "text-muted group-hover:text-theme-icon"
+                    text: showAsActive ? "text-accent font-semibold" : "text-muted",
+                    activeBg: showAsActive ? "bg-accent/10 shadow-[inset_3px_0_0_var(--color-accent)]" : "border-l-[3px] border-transparent hover:bg-surface/50",
+                    iconColor: showAsActive ? "text-accent drop-shadow-[0_0_8px_var(--color-accent)]" : "text-muted group-hover:text-foreground transition-colors"
                   };
                 };
 
@@ -291,19 +289,15 @@ export default function Sidebar() {
                 const dynamicBadge = item.badge;
 
                 return (
-                  <div key={item.href} className="space-y-0.5 relative">
+                  <div key={item.href} className="space-y-1 relative">
                     <div className="relative flex items-center">
                       <Link
                         href={item.href}
                         className={`group relative flex items-center transition-all duration-200 select-none cursor-pointer ${
                           isCompact 
-                            ? "w-10 h-10 mx-auto justify-center rounded-lg" 
-                            : "flex-1 gap-3 rounded-md py-2 px-3 text-[13px] font-medium overflow-hidden whitespace-nowrap"
-                        } ${
-                          showAsActive 
-                            ? `font-medium ${modTheme.activeBg} ${modTheme.text}` 
-                            : `text-muted hover:bg-surface-hover hover:text-foreground transition-all duration-150`
-                        }`}
+                            ? "w-10 h-10 mx-auto justify-center rounded-xl" 
+                            : "flex-1 gap-3 rounded-r-xl py-2 px-3 text-sm overflow-hidden whitespace-nowrap"
+                        } ${modTheme.activeBg} ${modTheme.text}`}
                       >
                         {/* Content Wrapper */}
                         <div className={`flex items-center ${isCompact ? "justify-center w-full h-full" : "gap-3 w-full overflow-hidden"}`}>
@@ -348,9 +342,9 @@ export default function Sidebar() {
                     </div>
 
                     {!isCompact && item.subItems && isTreeExpanded && (
-                      <div className={`pl-9 pr-1 py-1 space-y-0.5 relative`}>
+                      <div className={`pl-9 pr-1 py-1 space-y-1 relative animate-in slide-in-from-top-2 fade-in duration-200`}>
                         {/* The vertical chain line */}
-                        <div className="absolute left-[1.125rem] top-0 bottom-3 w-[1px] bg-border/60" />
+                        <div className="absolute left-[1.125rem] top-0 bottom-3 w-[1px] bg-gradient-to-b from-border/80 via-border/40 to-transparent" />
                         
                         {item.subItems.map((sub) => {
                           
@@ -366,15 +360,15 @@ export default function Sidebar() {
                               key={sub.href}
                               href={sub.href}
                               onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
-                              className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-normal transition-all duration-150 select-none cursor-pointer overflow-hidden ${
+                              className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-r-lg text-xs transition-all duration-300 select-none cursor-pointer overflow-hidden ${
                                 isSubActive 
-                                  ? `font-medium text-theme-icon bg-surface shadow-[inset_2px_0_0_var(--theme-btn-primary)]` 
-                                  : `text-muted hover:bg-surface-hover hover:text-foreground`
+                                  ? `font-bold text-accent bg-accent/5 border-l-[3px] border-accent` 
+                                  : `text-muted hover:bg-surface/50 hover:text-foreground border-l-[3px] border-transparent`
                               }`}
                             >
                               {/* The horizontal branch line */}
-                              <div className="absolute -left-[14px] top-1/2 w-3 h-[1px] bg-border/60" />
-                              <span className="truncate flex-1 text-inherit">{sub.label}</span>
+                              <div className={`absolute -left-[14px] top-1/2 w-3 h-[1px] transition-colors duration-300 ${isSubActive ? 'bg-accent' : 'bg-border/60 group-hover:bg-border'}`} />
+                              <span className="truncate flex-1 text-inherit transform group-hover:translate-x-1 transition-transform duration-200">{sub.label}</span>
                             </Link>
                           );
                         })}

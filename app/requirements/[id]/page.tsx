@@ -913,11 +913,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   This requirement is currently awaiting your review in the workflow sequence. Please provide your mandatory remarks and select an action below.
                 </p>
                 <div className="space-y-3">
-                  <textarea
+                  <RichTextEditor
                     value={approvalRemarks}
-                    onChange={(e) => setApprovalRemarks(e.target.value)}
-                    className="w-full text-sm p-3 border border-amber-200 dark:border-amber-700/50 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 placeholder:text-muted focus:ring-amber-500 focus:border-amber-500"
-                    rows={2}
+                    onChange={setApprovalRemarks}
                     placeholder="Enter your mandatory approval or rejection remarks here..."
                   />
                   <div className="flex flex-wrap gap-2">

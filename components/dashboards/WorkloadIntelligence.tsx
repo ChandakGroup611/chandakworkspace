@@ -41,11 +41,11 @@ export function WorkloadIntelligence({ workload }: { workload: any }) {
 
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-medium">
-            <span className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-emerald-500" /> Active Requirements</span>
+            <span className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-success" /> Active Requirements</span>
             <span>{workload.active_requirements}</span>
           </div>
           <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.min(100, workload.active_requirements * 10)}%` }} />
+            <div className="bg-success h-full rounded-full" style={{ width: `${Math.min(100, workload.active_requirements * 10)}%` }} />
           </div>
         </div>
       </div>

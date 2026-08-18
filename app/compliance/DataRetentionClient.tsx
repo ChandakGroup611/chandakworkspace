@@ -154,7 +154,7 @@ export default function DataRetentionClient() {
   const renderDataGrid = () => (
     <div className="space-y-4">
       {selectedIds.size > 0 && (
-        <div className="bg-surface/5 border border-white/10 rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
+        <div className="bg-surface/5 border border-border rounded-lg p-3 flex items-center justify-between mx-4 mt-4">
           <span className="text-sm font-bold text-muted">{selectedIds.size} record(s) selected</span>
           <div className="flex gap-2">
             {activeView === "deleted" ? (
@@ -248,7 +248,7 @@ export default function DataRetentionClient() {
       {showErrorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/60 backdrop-blur-sm">
           <div className="bg-rose-950 border border-rose-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-rose-900/20">
-            <div className="flex items-center gap-3 text-rose-500 mb-4">
+            <div className="flex items-center gap-3 text-danger mb-4">
               <ShieldAlert className="h-8 w-8" />
               <h3 className="text-xl font-bold">Deletion Blocked</h3>
             </div>
@@ -270,28 +270,28 @@ export default function DataRetentionClient() {
 
       {/* Action Banners */}
       {errorBanner && (
-        <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 flex items-start gap-3">
-          <AlertOctagon className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl border border-rose-500/30 bg-danger/10 flex items-start gap-3">
+          <AlertOctagon className="h-5 w-5 text-danger shrink-0 mt-0.5" />
           <div className="space-y-1 text-sm">
-            <h4 className="font-bold text-rose-500 uppercase tracking-wider">Action Failed</h4>
-            <p className="text-rose-400/80">{errorBanner}</p>
+            <h4 className="font-bold text-danger uppercase tracking-wider">Action Failed</h4>
+            <p className="text-danger/80">{errorBanner}</p>
           </div>
         </div>
       )}
       
       {successBanner && (
-        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-start gap-3">
-          <CheckSquare className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl border border-emerald-500/30 bg-success/10 flex items-start gap-3">
+          <CheckSquare className="h-5 w-5 text-success shrink-0 mt-0.5" />
           <div className="space-y-1 text-sm">
-            <h4 className="font-bold text-emerald-500 uppercase tracking-wider">Success</h4>
-            <p className="text-emerald-400/80">{successBanner}</p>
+            <h4 className="font-bold text-success uppercase tracking-wider">Success</h4>
+            <p className="text-success/80">{successBanner}</p>
           </div>
         </div>
       )}
 
       {/* Module Tabs (Scrollable for many tabs) */}
       <div className="pb-4">
-        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -302,7 +302,7 @@ export default function DataRetentionClient() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
                   isActive 
-                    ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-white/10' 
+                    ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
                     : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
                 }`}
               >
@@ -316,14 +316,14 @@ export default function DataRetentionClient() {
 
       {/* View Toggle (Active vs Deleted) */}
       <AppCard className="overflow-hidden">
-        <AppCardHeader className="flex flex-row items-center justify-between pb-4 border-b border-white/5">
+        <AppCardHeader className="flex flex-row items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-4">
             <AppCardTitle className="flex items-center gap-2 text-foreground">
               <Archive className="h-4 w-4" />
               <span>{currentTabConfig.label} Registry</span>
             </AppCardTitle>
             
-            <div className="flex bg-surface/40 rounded-lg p-1 border border-white/10">
+            <div className="flex bg-surface/40 rounded-lg p-1 border border-border">
               <AppButton 
                 variant={activeView === "active" ? "primary" : "ghost"}
                 onClick={() => setActiveView("active")}

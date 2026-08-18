@@ -38,7 +38,7 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
     const isBug = m.module === 'Tickets';
     const isTask = m.module === 'Tasks';
     
-    const tagBg = isBug ? 'bg-red-500/10 text-red-500 border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
+    const tagBg = isBug ? 'bg-danger/10 text-danger border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
     const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
     const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
@@ -117,10 +117,10 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
         </div>
 
         {/* In Review */}
-        <div className="flex flex-col h-full bg-amber-500/5 rounded-xl p-2 border border-amber-500/10">
+        <div className="flex flex-col h-full bg-warning/5 rounded-xl p-2 border border-amber-500/10">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">In Review</h4>
-            <span className="bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{board.inReview.length}</span>
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-warning dark:text-warning">In Review</h4>
+            <span className="bg-warning/10 text-warning dark:text-warning text-[10px] font-bold px-1.5 py-0.5 rounded-full">{board.inReview.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.inReview.map(m => renderCard(m, false))}
@@ -129,10 +129,10 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
         </div>
 
         {/* Done */}
-        <div className="flex flex-col h-full bg-emerald-500/5 rounded-xl p-2 border border-emerald-500/10 opacity-70 hover:opacity-100 transition-opacity">
+        <div className="flex flex-col h-full bg-success/5 rounded-xl p-2 border border-emerald-500/10 opacity-70 hover:opacity-100 transition-opacity">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">Done</h4>
-            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{board.done.length}</span>
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-success dark:text-success">Done</h4>
+            <span className="bg-success/10 text-success dark:text-success text-[10px] font-bold px-1.5 py-0.5 rounded-full">{board.done.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
             {board.done.map(m => renderCard(m, false))}

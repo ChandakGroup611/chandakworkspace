@@ -63,7 +63,7 @@ function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; fi
             value={filterValue || ""} 
             onChange={(e) => onFilterChange(e.target.value)} 
             placeholder={`Filter ${col.display_name}...`}
-            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-white/10 text-foreground focus:outline-none focus:border-theme-btn-primary placeholder:text-muted"
+            className="w-full text-[10px] font-normal px-2 py-1 rounded theme-card-structural dark:bg-surface/40 border-border dark:border-border text-foreground focus:outline-none focus:border-theme-btn-primary placeholder:text-muted"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -383,7 +383,7 @@ export default function ReportsClient() {
                   setQuery("");
                   setColumnFilters({});
                 }}
-                className="ml-2 px-2 py-1 text-[10px] uppercase font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-colors"
+                className="ml-2 px-2 py-1 text-[10px] uppercase font-bold text-danger hover:bg-rose-50 dark:hover:bg-danger/10 rounded transition-colors"
               >
                 Clear Filters
               </AppButton>
@@ -402,10 +402,10 @@ export default function ReportsClient() {
         <div className="flex items-center flex-wrap gap-3">
           {canExport && (
             <div className="flex items-center gap-2 border-r border-border pr-3 mr-1">
-              <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-500" />}>
+              <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<FileSpreadsheet className="h-4 w-4 text-success" />}>
                 Export Excel
               </AppButton>
-              <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-rose-500" />}>
+              <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<FileText className="h-4 w-4 text-danger" />}>
                 Export PDF
               </AppButton>
             </div>

@@ -166,7 +166,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                       }} className="text-[10px] font-bold uppercase tracking-widest text-muted hover:text-subtle">
                         Cancel
                       </AppButton>
-                      <AppButton variant="secondary" onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-green-500 hover:text-green-600">
+                      <AppButton variant="secondary" onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-success hover:text-success">
                         Save
                       </AppButton>
                     </div>

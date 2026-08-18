@@ -88,7 +88,7 @@ export default function IdentityProviderForm() {
   if (!hasPermission("SETTINGS_IDENTITY_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <Shield className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
@@ -101,7 +101,7 @@ export default function IdentityProviderForm() {
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Overview Card */}
-      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-xl p-6 shadow-2xl">
+      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-xl p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
@@ -130,7 +130,7 @@ export default function IdentityProviderForm() {
               type="text" 
               value={config.tenant_id || ""}
               onChange={(e) => setConfig({ ...config, tenant_id: e.target.value })}
-              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
+              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
               placeholder="e.g. 8eaef023-..."
             />
           </div>
@@ -141,7 +141,7 @@ export default function IdentityProviderForm() {
               type="text" 
               value={config.client_id || ""}
               onChange={(e) => setConfig({ ...config, client_id: e.target.value })}
-              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
+              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
               placeholder="e.g. d2a2b023-..."
             />
           </div>
@@ -153,7 +153,7 @@ export default function IdentityProviderForm() {
                 type="password" 
                 value={config.client_secret_encrypted || ""}
                 onChange={(e) => setConfig({ ...config, client_secret_encrypted: e.target.value })}
-                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
+                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
                 placeholder="Enter client secret value"
               />
               <Key className="w-4 h-4 text-muted absolute left-3 top-3.5" />
@@ -168,7 +168,7 @@ export default function IdentityProviderForm() {
                 type="text" 
                 value={config.authority_url || ""}
                 onChange={(e) => setConfig({ ...config, authority_url: e.target.value })}
-                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
+                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-theme-heading focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
                 placeholder="https://login.microsoftonline.com/common"
               />
               <Link2 className="w-4 h-4 text-muted absolute left-3 top-3.5" />
@@ -178,7 +178,7 @@ export default function IdentityProviderForm() {
       </div>
 
       {/* Auto Provisioning Settings */}
-      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-xl p-6 shadow-2xl">
+      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-xl p-6 shadow-2xl">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
             <Users className="w-6 h-6 text-theme-icon" />
@@ -206,7 +206,7 @@ export default function IdentityProviderForm() {
           <label className="flex items-center space-x-3 cursor-pointer group">
             <AppButton 
               onClick={() => setConfig({ ...config, force_sso: !config.force_sso })}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-red-500' : 'bg-surface'}`}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-danger' : 'bg-surface'}`}
             >
               <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
             </AppButton>
@@ -240,7 +240,7 @@ export default function IdentityProviderForm() {
 
       {/* Local Toast Notification */}
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'}`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}`}>
           {toastMsg.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>

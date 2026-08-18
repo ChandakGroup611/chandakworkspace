@@ -66,7 +66,7 @@ export default function PerformanceCommandCenter() {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
           <p className="text-muted">Super Admin privileges are required to view the Performance Command Center.</p>
         </div>
       </div>
@@ -91,7 +91,7 @@ export default function PerformanceCommandCenter() {
             onClick={toggleKillSwitch}
             className={`px-4 py-2 font-bold rounded-lg transition-colors ${
               killSwitchEnabled 
-                ? "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.6)]" 
+                ? "bg-danger text-white shadow-[0_0_15px_rgba(220,38,38,0.6)]" 
                 : "bg-elevated text-foreground hover:bg-elevated"
             }`}
           >
@@ -108,7 +108,7 @@ export default function PerformanceCommandCenter() {
               <h2 className="text-xl font-bold text-muted">Weighted Enterprise Health Score</h2>
               <p className="text-sm text-muted">Aggregated via Passive Governance Engine</p>
             </div>
-            <div className={`text-4xl font-black ${govMetrics.totalEnterpriseScore > 90 ? 'text-green-400' : govMetrics.totalEnterpriseScore > 75 ? 'text-yellow-400' : 'text-red-500'}`}>
+            <div className={`text-4xl font-black ${govMetrics.totalEnterpriseScore > 90 ? 'text-success' : govMetrics.totalEnterpriseScore > 75 ? 'text-warning' : 'text-danger'}`}>
               {govMetrics.totalEnterpriseScore.toFixed(1)} / 100
             </div>
           </div>
@@ -122,17 +122,17 @@ export default function PerformanceCommandCenter() {
             <div className="bg-surface/30 p-3 rounded-lg"><div className="text-xs text-muted">Rerenders</div><div className="font-bold">{govMetrics.rerenderStormScore.toFixed(0)}</div></div>
           </div>
 
-          <div className="mt-6 p-4 rounded-lg bg-surface/50 border border-white/10 flex items-center justify-between">
+          <div className="mt-6 p-4 rounded-lg bg-surface/50 border border-border flex items-center justify-between">
             <div>
               <div className="font-bold text-muted">Degradation Stage</div>
               <div className="text-sm text-muted">Current Self-Protection Level</div>
             </div>
-            <div className="text-lg font-bold text-amber-500">
-              {govMetrics.currentStage === DegradationStage.STAGE_0_NORMAL && <span className="text-green-400">STAGE 0: NORMAL</span>}
+            <div className="text-lg font-bold text-warning">
+              {govMetrics.currentStage === DegradationStage.STAGE_0_NORMAL && <span className="text-success">STAGE 0: NORMAL</span>}
               {govMetrics.currentStage === DegradationStage.STAGE_1_MILD && <span>STAGE 1: MILD</span>}
               {govMetrics.currentStage === DegradationStage.STAGE_2_MODERATE && <span>STAGE 2: MODERATE</span>}
               {govMetrics.currentStage === DegradationStage.STAGE_3_SEVERE && <span className="text-orange-500">STAGE 3: SEVERE</span>}
-              {govMetrics.currentStage === DegradationStage.STAGE_4_CRITICAL && <span className="text-red-500">STAGE 4: CRITICAL</span>}
+              {govMetrics.currentStage === DegradationStage.STAGE_4_CRITICAL && <span className="text-danger">STAGE 4: CRITICAL</span>}
             </div>
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function PerformanceCommandCenter() {
 
       {violations.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-red-600">Soft Governance Budget Violations</h2>
+          <h2 className="text-xl font-semibold text-danger">Soft Governance Budget Violations</h2>
           <div className="overflow-x-auto">
             <AppTableContainer><AppTable className="min-w-full divide-y divide-red-200 text-base">
               <AppTableHeader className="bg-red-50">
@@ -185,7 +185,7 @@ export default function PerformanceCommandCenter() {
                 {violations.map((v, i) => (
                   <AppTableRow key={i} className="bg-surface">
                     <AppTableCell className="px-4 py-3 font-medium">{v.route}</AppTableCell>
-                    <AppTableCell className="px-4 py-3 text-right font-bold text-red-600">{v.count}</AppTableCell>
+                    <AppTableCell className="px-4 py-3 text-right font-bold text-danger">{v.count}</AppTableCell>
                     <AppTableCell className="px-4 py-3 text-right text-muted">{v.budget}</AppTableCell>
                     <AppTableCell className="px-4 py-3 text-muted">{new Date(v.timestamp).toLocaleTimeString()}</AppTableCell>
                   </AppTableRow>
@@ -231,7 +231,7 @@ export default function PerformanceCommandCenter() {
                       {m.severity.toUpperCase()}
                     </span>
                   </AppTableCell>
-                  <AppTableCell className="px-4 py-3 text-red-600 font-bold">{m.isDuplicate ? `YES (${m.duplicateCount})` : ''}</AppTableCell>
+                  <AppTableCell className="px-4 py-3 text-danger font-bold">{m.isDuplicate ? `YES (${m.duplicateCount})` : ''}</AppTableCell>
                 </AppTableRow>
               ))}
             </AppTableBody>

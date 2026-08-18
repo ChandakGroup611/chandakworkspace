@@ -108,8 +108,8 @@ export function TicketListSidebar({
                   </span>
                   <div className="flex items-center gap-1">
                     <div className={`h-1.5 w-1.5 rounded-full ${
-                      priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : 
-                      priority?.code === "PRIO_HIGH_P2" ? "bg-amber-500" : "bg-theme-btn-primary"
+                      priority?.code === "PRIO_CRIT_P1" ? "bg-danger" : 
+                      priority?.code === "PRIO_HIGH_P2" ? "bg-warning" : "bg-theme-btn-primary"
                     }`} />
                     <span className="text-xs text-muted font-medium">
                       {priority?.name || "P3"}
@@ -150,10 +150,10 @@ export function TicketListSidebar({
                       <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-theme-btn-primary/10 text-theme-icon hover:opacity-90/20" title="View" onClick={(e) => e.stopPropagation()}>
                         <Eye className="h-3.5 w-3.5" />
                       </AppButton>
-                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" title="Update" onClick={(e) => e.stopPropagation()}>
+                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-warning/10 text-warning hover:bg-warning/20" title="Update" onClick={(e) => e.stopPropagation()}>
                         <Edit2 className="h-3.5 w-3.5" />
                       </AppButton>
-                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20" title="Delete" onClick={(e) => e.stopPropagation()}>
+                      <AppButton variant="ghost" size="sm" className="h-7 w-7 p-0 rounded bg-danger/10 text-danger hover:bg-danger/20" title="Delete" onClick={(e) => e.stopPropagation()}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </AppButton>
                     </div>
@@ -171,7 +171,7 @@ export function TicketListSidebar({
       } flex items-center justify-between`}>
         <span className="text-xs text-muted font-medium">{tickets.length} Incidents Found</span>
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+          <div className="h-2 w-2 rounded-full bg-success" />
           <span className="text-xs text-muted">Realtime Sync Active</span>
         </div>
       </div>

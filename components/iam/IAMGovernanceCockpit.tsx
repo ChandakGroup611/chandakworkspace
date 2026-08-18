@@ -394,7 +394,7 @@ export default function IAMGovernanceCockpit({
   if (!hasPermission("IAM_VIEW")) {
     return (
       <div className="h-96 flex flex-col items-center justify-center space-y-4 text-center">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <Lock className="h-10 w-10" />
         </div>
         <h2 className={cn("text-lg font-bold", "text-foreground")}>Access Denied</h2>
@@ -424,7 +424,7 @@ export default function IAMGovernanceCockpit({
       <div className={cn("flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b pb-8", "border-border")}>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-xl shadow-indigo-500/20">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-accent shadow-xl shadow-indigo-500/20">
               <ShieldCheck className="h-6 w-6 text-foreground" />
             </div>
             <div>
@@ -445,7 +445,7 @@ export default function IAMGovernanceCockpit({
           <div className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all duration-300",
             isSaving 
-              ? ("bg-emerald-50 border-emerald-200 text-emerald-600")
+              ? ("bg-emerald-50 border-emerald-200 text-success")
               : ("bg-elevated border-border text-muted")
           )}>
             <Zap className={`h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
@@ -453,7 +453,7 @@ export default function IAMGovernanceCockpit({
               {isSaving ? "Syncing Logic Gates..." : "Snapshot Synced"}
             </span>
           </div>
-          <AppButton variant="primary" className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 border-none shadow-lg shadow-indigo-500/10">
+          <AppButton variant="primary" className="bg-gradient-to-r from-indigo-600 to-accent hover:from-indigo-500 hover:to-accent border-none shadow-lg shadow-indigo-500/10">
             Audit Export
           </AppButton>
         </div>
@@ -506,9 +506,9 @@ export default function IAMGovernanceCockpit({
                           <span className={cn("text-sm font-bold transition-colors", isSelected ? ("text-foreground") : ("text-muted group-hover:text-foreground"))}>
                             {role.name}
                           </span>
-                          {role.is_system && <ShieldCheck className="h-3.5 w-3.5 text-amber-500/80" />}
+                          {role.is_system && <ShieldCheck className="h-3.5 w-3.5 text-warning/80" />}
                           {!role.is_active && (
-                            <AppBadge variant="danger" className="text-[0.65rem] py-0 px-1 font-mono uppercase bg-rose-500/10 border-rose-500/20 text-rose-400">Disabled</AppBadge>
+                            <AppBadge variant="danger" className="text-[0.65rem] py-0 px-1 font-mono uppercase bg-danger/10 border-rose-500/20 text-danger">Disabled</AppBadge>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
@@ -579,15 +579,15 @@ export default function IAMGovernanceCockpit({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-amber-500" />
+                        <Zap className="h-4 w-4 text-warning" />
                         <h3 className={cn("text-lg font-bold tracking-tight", "text-foreground")}>
                           Capability Matrix: <span className="text-theme-icon">{activeRole.name}</span>
                         </h3>
                         {activeRole.is_system && (
-                          <AppBadge className="bg-amber-500/10 text-amber-500 border-amber-500/20 py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
+                          <AppBadge className="bg-warning/10 text-warning border-amber-500/20 py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
                         )}
                         {/* DEBUG INJECT */}
-                        <div className="text-[10px] text-red-500 max-w-[300px] truncate">
+                        <div className="text-[10px] text-danger max-w-[300px] truncate">
                           Perms ({activeRolePerms.length}): {JSON.stringify(activeRolePerms)}
                         </div>
                       </div>
@@ -609,8 +609,8 @@ export default function IAMGovernanceCockpit({
                           onClick={() => handleToggleStatus(activeRole)}
                           className={cn("h-9 px-3 text-xs font-semibold gap-1.5 transition-all border",
                             activeRole.is_active
-                              ? "bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 border-rose-500/20"
-                              : "bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                              ? "bg-danger/5 hover:bg-danger/10 text-danger border-rose-500/20"
+                              : "bg-success/5 hover:bg-success/10 text-success border-emerald-500/20"
                           )}
                         >
                           <Power className="h-3.5 w-3.5" />
@@ -631,7 +631,7 @@ export default function IAMGovernanceCockpit({
                       {!activeRole.is_system && hasPermission("IAM_DELETE") && (
                         <AppButton
                           onClick={() => handleDeleteRole(activeRole)}
-                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20"
+                          className="h-9 px-3 text-xs font-semibold gap-1.5 bg-danger/10 text-danger hover:bg-danger/20 border border-rose-500/20"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Delete
@@ -772,7 +772,7 @@ export default function IAMGovernanceCockpit({
                                                   className={cn(
                                                     "relative h-5 w-5 rounded-md border flex items-center justify-center transition-all duration-300",
                                                     checked
-                                                      ? "bg-green-500 border-green-600 text-white shadow-md"
+                                                      ? "bg-success border-green-600 text-white shadow-md"
                                                       : "bg-surface border-border",
                                                     isSuperAdmin ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:border-theme-btn-primary"
                                                   )}
@@ -796,7 +796,7 @@ export default function IAMGovernanceCockpit({
                       </AppTable>
                     </div>
                   ) : (
-                    <div className="h-60 flex flex-col items-center justify-center space-y-2 border border-dashed rounded-2xl border-white/5">
+                    <div className="h-60 flex flex-col items-center justify-center space-y-2 border border-dashed rounded-2xl border-border">
                       <Filter className={cn("h-6 w-6", "text-muted")} />
                       <span className={cn("text-xs font-semibold", "text-muted")}>No matching capabilities found.</span>
                       <span className="text-xs text-muted">Try adjusting your filters or search query.</span>

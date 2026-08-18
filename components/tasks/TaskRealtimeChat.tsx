@@ -344,17 +344,17 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         {/* Connection Status Indicator */}
         <div className="flex items-center gap-1.5">
           {connected === null && (
-            <span className="flex items-center gap-1 text-xs text-amber-400 font-bold animate-pulse">
+            <span className="flex items-center gap-1 text-xs text-warning font-bold animate-pulse">
               <Loader2 className="h-3 w-3 animate-spin" /> Connecting...
             </span>
           )}
           {connected === true && (
-            <span className="flex items-center gap-1 text-xs text-emerald-400 font-bold">
+            <span className="flex items-center gap-1 text-xs text-success font-bold">
               <Wifi className="h-3 w-3" /> Live
             </span>
           )}
           {connected === false && (
-            <span className="flex items-center gap-1 text-xs text-rose-400 font-bold">
+            <span className="flex items-center gap-1 text-xs text-danger font-bold">
               <WifiOff className="h-3 w-3" /> Disconnected
             </span>
           )}
@@ -363,9 +363,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-400 text-[0.8rem] shrink-0 font-medium flex items-center justify-between animate-in slide-in-from-top-1">
+        <div className="p-3 bg-warning/10 border-b border-amber-500/20 text-warning text-[0.8rem] shrink-0 font-medium flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{sanitizeErrorMessage(error)}</span>
-          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-amber-400/60 hover:text-amber-400 font-bold px-1">
+          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-warning/60 hover:text-warning font-bold px-1">
             Dismiss
           </AppButton>
         </div>
@@ -395,7 +395,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             return (
               <div key={m.id || idx} className={`flex gap-3 animate-in fade-in slide-in-from-bottom-2 ${isSender ? "flex-row-reverse" : ""}`}>
                 {!isSender && (
-                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden">
                     {m.user?.profile_photo ? (
                       <img src={m.user.profile_photo} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -420,7 +420,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                       {Date.now() - new Date(m.created_at).getTime() < 5 * 60 * 1000 && (
                         <AppButton variant="secondary" 
                           onClick={() => handleDeleteMessage(m.id)}
-                          className="text-muted hover:text-red-500 transition-colors"
+                          className="text-muted hover:text-danger transition-colors"
                           title="Delete message"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
@@ -453,7 +453,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                             <div className="flex flex-col gap-1.5 mt-1 border-t border-white/20 pt-2">
                               {attachments.map((att, i) => (
                                 att.type?.startsWith('image/') ? (
-                                  <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-black/10 dark:border-white/10">
+                                  <div key={i} className="mt-1 relative group rounded-lg overflow-hidden border border-black/10 dark:border-border">
                                     <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-surface/5 dark:bg-surface/5 transition-transform duration-300 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-surface/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
                                       <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="View Full Image">
@@ -471,7 +471,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                                     </div>
                                   </div>
                                 ) : (
-                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-surface/10 border-black/10' : 'bg-surface/5 dark:theme-card-structural /5 border-black/5 dark:border-white/10'}`}>
+                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-surface/10 border-black/10' : 'bg-surface/5 dark:theme-card-structural /5 border-black/5 dark:border-border'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden mr-3">
                                     <Paperclip className="h-4 w-4 shrink-0 opacity-70" />
                                     <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
@@ -537,7 +537,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                       "hover:bg-elevated text-muted"
                     }`}
                   >
-                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden">
+                    <div className="h-6 w-6 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden">
                       {u.profile_photo ? <img src={u.profile_photo} alt="" className="h-full w-full object-cover" /> : u.full_name.substring(0, 2).toUpperCase()}
                     </div>
                     {u.full_name}
@@ -555,9 +555,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         {selectedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2 p-2 bg-surface dark:bg-surface/5 rounded-lg">
             {selectedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center gap-1 theme-card-structural dark:bg-surface/20 border-border dark:border-white/10 px-2 py-1 rounded text-xs">
+              <div key={idx} className="flex items-center gap-1 theme-card-structural dark:bg-surface/20 border-border dark:border-border px-2 py-1 rounded text-xs">
                 <span className="truncate max-w-[120px]">{file.name}</span>
-                <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-muted hover:text-red-500 ml-1">
+                <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-muted hover:text-danger ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </AppButton>
               </div>
@@ -584,7 +584,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
             disabled={sending}
           />
           
-          <AppButton variant="secondary" type="button" className="p-2 text-muted hover:text-amber-500 transition-colors shrink-0" tabIndex={-1}>
+          <AppButton variant="secondary" type="button" className="p-2 text-muted hover:text-warning transition-colors shrink-0" tabIndex={-1}>
             <Smile className="h-4 w-4" />
           </AppButton>
           

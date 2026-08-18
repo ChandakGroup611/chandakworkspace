@@ -76,7 +76,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
         {estimatedHours > 0 && (
           <div className="w-full bg-elevated dark:bg-surface rounded-full h-2 mt-4 overflow-hidden">
             <div 
-              className={`h-2 rounded-full ${progressPercent > 100 ? "bg-rose-500" : "bg-emerald-500"}`}
+              className={`h-2 rounded-full ${progressPercent > 100 ? "bg-danger" : "bg-success"}`}
               style={{ width: `${Math.min(100, progressPercent)}%` }}
             />
           </div>
@@ -107,7 +107,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
             className={`flex-1 ${"bg-surface"}`}
           />
         </div>
-        <AppButton type="submit" disabled={isSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white border-0 h-9">
+        <AppButton type="submit" disabled={isSubmitting} className="w-full bg-success hover:bg-success text-white border-0 h-9">
           {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4 mr-1" /> Save Log</>}
         </AppButton>
       </form>
@@ -120,7 +120,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
         ) : (
           logs.slice().reverse().map(log => (
             <div key={log.id} className={`p-3 rounded-lg text-sm flex gap-3 theme-card-structural`}>
-              <div className="shrink-0 font-bold text-emerald-600 dark:text-emerald-400 w-12">{log.hours}h</div>
+              <div className="shrink-0 font-bold text-success dark:text-success w-12">{log.hours}h</div>
               <div className="flex-1 min-w-0">
                 <p className={`truncate text-foreground`}>{log.description}</p>
                 <p className="text-[10px] text-muted mt-1">{new Date(log.logged_at).toLocaleString()}</p>

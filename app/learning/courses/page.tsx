@@ -119,9 +119,9 @@ export default function LearningCourseBuilder() {
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-lg">Curriculum Modules</h3>
             <div className="flex gap-2">
-              <AppButton variant="outline" size="sm" onClick={() => addModule('article')} leftIcon={<Book className="w-4 h-4 text-blue-500"/>}>Add Article</AppButton>
-              <AppButton variant="outline" size="sm" onClick={() => addModule('video')} leftIcon={<PlayCircle className="w-4 h-4 text-purple-500"/>}>Add Video</AppButton>
-              <AppButton variant="outline" size="sm" onClick={() => addModule('quiz')} leftIcon={<HelpCircle className="w-4 h-4 text-emerald-500"/>}>Add Quiz</AppButton>
+              <AppButton variant="outline" size="sm" onClick={() => addModule('article')} leftIcon={<Book className="w-4 h-4 text-accent"/>}>Add Article</AppButton>
+              <AppButton variant="outline" size="sm" onClick={() => addModule('video')} leftIcon={<PlayCircle className="w-4 h-4 text-accent"/>}>Add Video</AppButton>
+              <AppButton variant="outline" size="sm" onClick={() => addModule('quiz')} leftIcon={<HelpCircle className="w-4 h-4 text-success"/>}>Add Quiz</AppButton>
             </div>
           </div>
 
@@ -145,7 +145,7 @@ export default function LearningCourseBuilder() {
                       }}
                     />
                   </div>
-                  <AppButton variant="secondary" onClick={() => removeModule(index)} className="text-muted hover:text-red-500 transition-colors">
+                  <AppButton variant="secondary" onClick={() => removeModule(index)} className="text-muted hover:text-danger transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </AppButton>
                 </div>
@@ -183,10 +183,10 @@ export default function LearningCourseBuilder() {
                   )}
                   {mod.type === 'quiz' && (
                     <div className="text-center p-8 border-2 border-dashed border-border rounded-lg">
-                      <HelpCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-50" />
+                      <HelpCircle className="w-8 h-8 text-success mx-auto mb-2 opacity-50" />
                       <p className="text-sm text-muted font-bold">Quiz Builder UI</p>
                       <p className="text-xs text-muted mt-1">Questions will be added via modal in full implementation.</p>
-                      <AppButton variant="outline" size="sm" className="mt-4 text-emerald-600 border-emerald-200">
+                      <AppButton variant="outline" size="sm" className="mt-4 text-success border-emerald-200">
                         Add Question
                       </AppButton>
                     </div>

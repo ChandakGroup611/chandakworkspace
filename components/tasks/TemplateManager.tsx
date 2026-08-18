@@ -134,7 +134,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                     <p className="text-xs text-muted truncate max-w-md mt-0.5">{t.subject}</p>
                   </div>
                   {canDelete && (
-                    <AppButton variant="secondary" onClick={() => handleDelete(t.id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors">
+                    <AppButton variant="secondary" onClick={() => handleDelete(t.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
                       <Trash2 className="h-4 w-4" />
                     </AppButton>
                   )}

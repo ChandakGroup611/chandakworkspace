@@ -40,7 +40,7 @@ const CircularGauge = ({ percentage, color, label }: { percentage: number, color
           {percentage}%
         </div>
       </div>
-      <div className="text-[10px] text-gray-400 mt-2 text-center max-w-[70px] leading-[1.1] uppercase font-medium">
+      <div className="text-[10px] text-muted mt-2 text-center max-w-[70px] leading-[1.1] uppercase font-medium">
         {label}
       </div>
     </div>
@@ -49,9 +49,9 @@ const CircularGauge = ({ percentage, color, label }: { percentage: number, color
 
 const HierarchyRow = ({ data }: { data: any }) => {
   return (
-    <div className="grid grid-cols-[3.5fr_1fr_1fr_1fr_1fr_1.5fr] gap-4 items-center py-3.5 border-b border-white/5 hover:bg-white/[0.02] transition-colors relative group">
+    <div className="grid grid-cols-[3.5fr_1fr_1fr_1fr_1fr_1.5fr] gap-4 items-center py-3.5 border-b border-border hover:bg-white/[0.02] transition-colors relative group">
       <div className="flex items-center gap-3" style={{ paddingLeft: `${data.level * 28}px` }}>
-        <div className="w-4 flex justify-center text-gray-500">
+        <div className="w-4 flex justify-center text-muted">
           {data.hasChildren || data.level === 0 ? (
             data.expanded ? <Minus size={14} className="opacity-80" /> : <ChevronRight size={14} className="opacity-80" />
           ) : null}
@@ -73,7 +73,7 @@ const HierarchyRow = ({ data }: { data: any }) => {
       </div>
 
       <div className="flex items-center gap-2">
-        {data.typeText && <span className="text-gray-400 text-xs">{data.typeText}</span>}
+        {data.typeText && <span className="text-muted text-xs">{data.typeText}</span>}
         {data.status && (
           <span 
             className="px-2.5 py-0.5 rounded-full text-[10px] font-medium border"
@@ -89,7 +89,7 @@ const HierarchyRow = ({ data }: { data: any }) => {
         )}
       </div>
 
-      <div className="text-gray-400 text-xs font-medium">
+      <div className="text-muted text-xs font-medium">
         {data.deadline}
       </div>
 
@@ -153,7 +153,7 @@ export default function WorkspaceTestingUI() {
         <div className="flex justify-between items-end mb-8">
           <div>
             <h1 className="text-3xl font-semibold text-white mb-6 tracking-wide drop-shadow-md">Project Dashboard</h1>
-            <div className="flex gap-8 text-sm text-gray-400 font-medium">
+            <div className="flex gap-8 text-sm text-muted font-medium">
               <div className="relative text-white pb-2 cursor-pointer">
                 Overview
                 <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#00f0ff] shadow-[0_0_8px_#00f0ff]"></div>
@@ -165,7 +165,7 @@ export default function WorkspaceTestingUI() {
           </div>
           
           {/* Gauges Card */}
-          <div className="flex items-center gap-6 px-7 py-5 rounded-2xl border border-white/10 bg-[#121620]/60 backdrop-blur-xl shadow-2xl">
+          <div className="flex items-center gap-6 px-7 py-5 rounded-2xl border border-border bg-[#121620]/60 backdrop-blur-xl shadow-2xl">
             <CircularGauge percentage={95} color="#00f0ff" label="Total Projects Active" />
             <CircularGauge percentage={20} color="#ff00a0" label="Total Tasks Overdue" />
             <CircularGauge percentage={35} color="#00ff88" label="Team Availability" />
@@ -173,11 +173,11 @@ export default function WorkspaceTestingUI() {
         </div>
 
         {/* Hierarchy Table */}
-        <div className="bg-[#121620]/70 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl">
-          <div className="text-[11px] tracking-[0.2em] text-gray-400 mb-6 uppercase font-semibold">Project Hierarchy</div>
+        <div className="bg-[#121620]/70 backdrop-blur-xl rounded-2xl border border-border p-6 shadow-2xl">
+          <div className="text-[11px] tracking-[0.2em] text-muted mb-6 uppercase font-semibold">Project Hierarchy</div>
           
           <div className="w-full">
-            <div className="grid grid-cols-[3.5fr_1fr_1fr_1fr_1fr_1.5fr] gap-4 text-gray-400 pb-3 border-b border-white/10 mb-2 font-medium text-xs">
+            <div className="grid grid-cols-[3.5fr_1fr_1fr_1fr_1fr_1.5fr] gap-4 text-muted pb-3 border-b border-border mb-2 font-medium text-xs">
               <div>Name</div>
               <div>Owner</div>
               <div>Status</div>

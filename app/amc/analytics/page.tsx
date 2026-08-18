@@ -107,9 +107,9 @@ export default function AMCAnalyticsPage() {
   const getUtilizationColor = (used: number, total: number) => {
     if (total === 0) return 'text-muted';
     const percent = (used / total) * 100;
-    if (percent >= 90) return 'text-emerald-500';
+    if (percent >= 90) return 'text-success';
     if (percent >= 50) return 'text-theme-icon';
-    return 'text-amber-500';
+    return 'text-warning';
   };
 
   if (loading) {
@@ -151,7 +151,7 @@ export default function AMCAnalyticsPage() {
           </AppCard>
 
           <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
-            <div className={`p-4 rounded-xl bg-emerald-50 text-emerald-600`}>
+            <div className={`p-4 rounded-xl bg-emerald-50 text-success`}>
               <Calendar className="h-6 w-6" />
             </div>
             <div>
@@ -171,7 +171,7 @@ export default function AMCAnalyticsPage() {
           </AppCard>
 
           <AppCard className={`p-6 flex items-center gap-4 bg-surface`}>
-            <div className={`p-4 rounded-xl bg-amber-50 text-amber-600`}>
+            <div className={`p-4 rounded-xl bg-amber-50 text-warning`}>
               <BarChart2 className="h-6 w-6" />
             </div>
             <div>
@@ -188,7 +188,7 @@ export default function AMCAnalyticsPage() {
           {/* Upcoming Renewals */}
           <AppCard className={`flex flex-col bg-surface`}>
             <div className={`p-6 border-b flex items-center gap-2 border-border`}>
-              <AlertCircle className="h-5 w-5 text-rose-500" />
+              <AlertCircle className="h-5 w-5 text-danger" />
               <h3 className="font-bold text-theme-icon">Renewals in Next 60 Days</h3>
             </div>
             <div className="p-4 flex-1 overflow-y-auto max-h-[400px]">
@@ -205,7 +205,7 @@ export default function AMCAnalyticsPage() {
                           <div className="text-xs text-muted mt-1">{rec.provider_name}</div>
                         </div>
                         <div className="text-right">
-                          <div className={`text-sm font-black ${daysLeft <= 15 ? 'text-rose-500' : 'text-amber-500'}`}>
+                          <div className={`text-sm font-black ${daysLeft <= 15 ? 'text-danger' : 'text-warning'}`}>
                             {daysLeft} days left
                           </div>
                           <div className="text-xs text-muted mt-1">{new Date(rec.expiry_date).toLocaleDateString()}</div>
@@ -221,7 +221,7 @@ export default function AMCAnalyticsPage() {
           {/* Spend by Cost Center */}
           <AppCard className={`flex flex-col bg-surface`}>
             <div className={`p-6 border-b flex items-center gap-2 border-border`}>
-              <DollarSign className="h-5 w-5 text-emerald-500" />
+              <DollarSign className="h-5 w-5 text-success" />
               <h3 className="font-bold text-theme-icon">Spend by Cost Center</h3>
             </div>
             <div className="p-4 flex-1 overflow-y-auto max-h-[400px]">

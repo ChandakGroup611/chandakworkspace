@@ -23,7 +23,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
     <AppCard className="flex flex-col h-full border-rose-500/10 bg-gradient-to-b from-rose-950/10 via-white/[0.01] to-transparent">
       <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-rose-500/10">
         <div className="flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-rose-400 animate-pulse" />
+          <ShieldAlert className="h-4 w-4 text-danger animate-pulse" />
           <AppCardTitle className="text-rose-200">SLA Breach Governance</AppCardTitle>
         </div>
         <AppBadge variant="danger">Escalated</AppBadge>
@@ -38,13 +38,13 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
           {escalations.length > 0 ? escalations.map((esc) => (
             <div 
               key={esc.id} 
-              className="p-3 rounded-xl theme-card-structural /[0.02] border-white/5 hover:border-white/10 flex items-center justify-between transition-colors duration-200"
+              className="p-3 rounded-xl theme-card-structural /[0.02] border-border hover:border-border flex items-center justify-between transition-colors duration-200"
             >
               <div className="space-y-1 truncate pr-2">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold text-theme-icon">{esc.id}</span>
                   <span className={`text-[0.7rem] font-bold px-1.5 py-0.2 rounded uppercase ${
-                    esc.risk === "danger" ? "bg-rose-500/10 text-rose-400" : "bg-amber-500/10 text-amber-400"
+                    esc.risk === "danger" ? "bg-danger/10 text-danger" : "bg-warning/10 text-warning"
                   }`}>
                     {esc.level}
                   </span>
@@ -53,7 +53,7 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-1 text-xs font-semibold text-rose-400 bg-rose-500/5 px-2 py-1 rounded-lg border border-rose-500/10">
+                <div className="flex items-center gap-1 text-xs font-semibold text-danger bg-danger/5 px-2 py-1 rounded-lg border border-rose-500/10">
                   <Clock className="h-3 w-3" />
                   <span>{esc.timeRemaining}</span>
                 </div>
@@ -63,14 +63,14 @@ export default function EscalationMonitor({ activities = [] }: { activities?: an
               </div>
             </div>
           )) : (
-            <div className="p-4 text-center text-xs text-muted rounded-xl theme-card-structural /[0.01] border-white/5">
+            <div className="p-4 text-center text-xs text-muted rounded-xl theme-card-structural /[0.01] border-border">
               No active escalations or critical SLA breaches detected.
             </div>
           )}
         </div>
 
         <div className="pt-1 flex items-center justify-between text-xs text-muted">
-          <span>Worker dispatch status: <strong className="text-emerald-500 font-bold">ONLINE</strong></span>
+          <span>Worker dispatch status: <strong className="text-success font-bold">ONLINE</strong></span>
           <span className="underline hover:text-muted cursor-pointer">SLA Escalation Matrix</span>
         </div>
       </AppCardContent>

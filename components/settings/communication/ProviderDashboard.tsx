@@ -223,7 +223,7 @@ export default function ProviderDashboard() {
                     <Key className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3 text-amber-500" /> Keys are encrypted at rest.
+                    <ShieldAlert className="w-3 h-3 text-warning" /> Keys are encrypted at rest.
                   </p>
                 </div>
               )}
@@ -239,7 +239,7 @@ export default function ProviderDashboard() {
                   {testingId === (prov.id || prov.priority_level.toString()) ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Zap className="w-4 h-4 text-amber-500" />
+                    <Zap className="w-4 h-4 text-warning" />
                   )}
                   {testingId === (prov.id || prov.priority_level.toString()) ? 'Testing...' : 'Test Connection'}
                 </AppButton>
@@ -256,7 +256,7 @@ export default function ProviderDashboard() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : toastMsg.type === 'warning' ? 'bg-amber-500' : 'bg-theme-btn-primary'} text-theme-btn-primary-text`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : toastMsg.type === 'warning' ? 'bg-warning' : 'bg-theme-btn-primary'} text-theme-btn-primary-text`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

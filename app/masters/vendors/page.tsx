@@ -416,10 +416,10 @@ export default function VendorMasterPage() {
                         <AppTableCell>{v.city || '-'}</AppTableCell>
                         <AppTableCell className="text-right">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <AppButton variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                            <AppButton variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-blue-50 text-accent hover:bg-blue-100 transition-colors">
                               <Edit className="h-4 w-4" />
                             </AppButton>
-                            <AppButton variant="secondary" onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                            <AppButton variant="secondary" onClick={() => handleDelete(v.id)} className="p-1.5 rounded bg-red-50 text-danger hover:bg-red-100 transition-colors">
                               <Trash2 className="h-4 w-4" />
                             </AppButton>
                           </div>
@@ -450,7 +450,7 @@ export default function VendorMasterPage() {
             <div className="flex-1 overflow-y-auto">
               <form id="vendorForm" onSubmit={handleSave} className="p-6 md:p-8 space-y-10">
                 {errorMsg && (
-                  <div className="p-4 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm font-semibold">
+                  <div className="p-4 rounded-xl bg-red-50 text-danger border border-red-100 text-sm font-semibold">
                     {errorMsg}
                   </div>
                 )}
@@ -462,7 +462,7 @@ export default function VendorMasterPage() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-muted uppercase">Vendor / Company Name <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-muted uppercase">Vendor / Company Name <span className="text-danger">*</span></label>
                       <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Microsoft Corporation" className="h-11 font-semibold" />
                     </div>
                     <div className="space-y-2">
@@ -539,15 +539,15 @@ export default function VendorMasterPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Contact Person Name <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-muted uppercase">Contact Person Name <span className="text-danger">*</span></label>
                       <AppInput value={formContactName} onChange={e => setFormContactName(e.target.value)} required placeholder="John Doe" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Contact Email <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-muted uppercase">Contact Email <span className="text-danger">*</span></label>
                       <AppInput type="email" value={formContactEmail} onChange={e => setFormContactEmail(e.target.value)} required placeholder="john@example.com" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Phone Number <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-muted uppercase">Phone Number <span className="text-danger">*</span></label>
                       <AppInput value={formPhone} onChange={e => setFormPhone(e.target.value)} required placeholder="+91 ..." className="h-11" />
                     </div>
                     <div className="space-y-2">

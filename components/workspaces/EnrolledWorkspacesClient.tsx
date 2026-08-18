@@ -54,7 +54,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   if (!hasPermission("ENROLLED_WORKSPACES_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <FolderKanban className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
@@ -67,14 +67,14 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
 
   return (
     <div className={`p-8 w-full max-w-7xl mx-auto space-y-6 ${"text-foreground"}`}>
-      <div className="flex items-center justify-between border-b pb-4 border-border dark:border-white/10">
+      <div className="flex items-center justify-between border-b pb-4 border-border dark:border-border">
         <div className="flex items-center gap-3">
           <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
             Back
           </AppButton>
           <div className="space-y-1">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-emerald-500" />
+            <FolderKanban className="h-6 w-6 text-success" />
             Enrolled Workspaces
           </h1>
           <p className="text-sm text-muted">
@@ -85,7 +85,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
       </div>
 
       <AppCard className="bg-surface">
-        <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border/50 dark:border-white/5">
+        <AppCardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border/50 dark:border-border">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
             <AppInput 

@@ -101,7 +101,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
     <div className="space-y-8">
       {/* Add New Renewal */}
       <AppCard className={`p-6 theme-card-structural`}>
-        <h3 className="text-lg font-bold text-emerald-500 mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-bold text-success mb-4 flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Log AMC Renewal
         </h3>
@@ -154,7 +154,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
               <AppCard key={rn.id} className={`p-4 flex items-center justify-between theme-card-structural`}>
                 <div>
                   <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-500">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-success/10 text-success">
                       Renewal
                     </span>
                     <span className="font-semibold text-sm">{rn.po_number || 'No PO'}</span>
@@ -167,12 +167,12 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <div className="font-black text-lg text-emerald-500">
+                    <div className="font-black text-lg text-success">
                       {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(rn.renewal_cost)}
                     </div>
                     <div className="text-[10px] text-muted">Processed by {rn.user_master?.full_name}</div>
                   </div>
-                  <AppButton variant="secondary" onClick={() => handleDelete(rn.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                  <AppButton variant="secondary" onClick={() => handleDelete(rn.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </AppButton>
                 </div>

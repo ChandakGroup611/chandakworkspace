@@ -104,7 +104,7 @@ export default function CustomFieldsConfigurator() {
   ];
 
   return (
-    <div className="space-y-6 pt-4 border-t border-white/5">
+    <div className="space-y-6 pt-4 border-t border-border">
       {/* Toast alert notice */}
       {successToast && (
         <div id="cf-toast-notice" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
@@ -147,7 +147,7 @@ export default function CustomFieldsConfigurator() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveModule(tab.id)}
-                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural /[0.06] border-theme-btn-primary/40 text-white shadow-md font-bold" : "/[0.01] border-white/5 hover:border-white/10 text-muted hover:text-muted" }`}
+                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 cursor-pointer flex items-center justify-between ${ isActive ? "theme-card-structural /[0.06] border-theme-btn-primary/40 text-white shadow-md font-bold" : "/[0.01] border-border hover:border-border text-muted hover:text-muted" }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <div className={`p-1.5 rounded-lg ${isActive ? "bg-theme-btn-primary text-theme-btn-primary-text" : "bg-surface/5 text-muted"}`}>
@@ -155,7 +155,7 @@ export default function CustomFieldsConfigurator() {
                       </div>
                       <span className="text-xs truncate">{tab.label}</span>
                     </div>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /5 text-muted border-white/5">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /5 text-muted border-border">
                       {tab.count} fields
                     </span>
                   </AppButton>
@@ -166,7 +166,7 @@ export default function CustomFieldsConfigurator() {
 
           {/* New field definition append form */}
           <AppCard className="p-5 space-y-4 border-theme-btn-primary/20 bg-gradient-to-b from-blue-950/10 via-transparent to-transparent">
-            <span className="text-xs font-semibold text-foreground block pb-2 border-b border-white/5">
+            <span className="text-xs font-semibold text-foreground block pb-2 border-b border-border">
               Append Schema Definition
             </span>
 
@@ -202,7 +202,7 @@ export default function CustomFieldsConfigurator() {
                   <select 
                     value={newType}
                     onChange={(e: any) => setNewType(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg theme-card-structural /5 border-white/5 text-[14px] text-muted focus:outline-none focus:border-theme-btn-primary/50"
+                    className="w-full h-10 px-3 rounded-lg theme-card-structural /5 border-border text-[14px] text-muted focus:outline-none focus:border-theme-btn-primary/50"
                   >
                     <option value="text" className="bg-background dark:bg-[#0f172a]">Text String</option>
                     <option value="number" className="bg-background dark:bg-[#0f172a]">Numeric Scalar</option>
@@ -212,7 +212,7 @@ export default function CustomFieldsConfigurator() {
                 </div>
 
                 <div className="space-y-1 flex flex-col justify-end">
-                  <label className="flex items-center gap-2 h-10 px-3 rounded-lg theme-card-structural /[0.02] border-white/5 cursor-pointer select-none hover:/5">
+                  <label className="flex items-center gap-2 h-10 px-3 rounded-lg theme-card-structural /[0.02] border-border cursor-pointer select-none hover:/5">
                     <input 
                       type="checkbox" 
                       checked={newRequired}
@@ -248,14 +248,14 @@ export default function CustomFieldsConfigurator() {
         {/* Right Side Span 8: Entity Normalized List Layout */}
         <div className="lg:col-span-8 flex flex-col space-y-4">
           <AppCard className="flex-1 flex flex-col justify-between overflow-hidden">
-            <AppCardHeader className="flex flex-row items-center justify-between pb-3 border-b border-white/5">
+            <AppCardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
               <div className="space-y-0.5">
                 <AppCardTitle className="text-foreground">
                   Active Dictionaries: <strong className="text-theme-icon capitalize">{activeModule}</strong>
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-muted">Values ingest seamlessly via runtime custom form mutators.</p>
               </div>
-              <span className="text-xs font-mono font-bold theme-card-structural /5 px-2 py-0.5 rounded text-muted border-white/5">
+              <span className="text-xs font-mono font-bold theme-card-structural /5 px-2 py-0.5 rounded text-muted border-border">
                 Target Schema: JSONB Map
               </span>
             </AppCardHeader>
@@ -289,7 +289,7 @@ export default function CustomFieldsConfigurator() {
                           {fItem.field_key}
                         </AppTableCell>
                         <AppTableCell>
-                          <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /[0.03] text-muted border-white/5 capitalize">
+                          <span className="text-xs font-mono px-2 py-0.5 rounded theme-card-structural /[0.03] text-muted border-border capitalize">
                             {fItem.field_type}
                           </span>
                         </AppTableCell>
@@ -302,7 +302,7 @@ export default function CustomFieldsConfigurator() {
                           <AppButton variant="secondary"
                             type="button"
                             onClick={() => handleDeleteField(fItem.id)}
-                            className="p-1 rounded text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="p-1 rounded text-muted hover:text-danger hover:bg-danger/10 transition-colors"
                             title="Drop field dictionary key"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -321,7 +321,7 @@ export default function CustomFieldsConfigurator() {
               )}
             </div>
 
-            <div className="p-4 theme-card-structural /[0.01] border-t border-white/5 space-y-2">
+            <div className="p-4 theme-card-structural /[0.01] border-t border-border space-y-2">
               <span className="text-xs font-bold text-muted uppercase tracking-wider block">End-to-End JSONB Data Capture Simulation</span>
               <p className="text-[0.8rem] text-muted leading-snug">
                 Records inside the active view render dynamic input strips matching these declared payload parameters. Storage calls append directly to PostgreSQL database tuples automatically.

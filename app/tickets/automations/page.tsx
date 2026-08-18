@@ -120,7 +120,7 @@ export default function TicketAutomationsBuilder() {
                 <h3 className={`font-bold ${editingId === rule.id ? "text-theme-icon" : "text-foreground"}`}>
                   {rule.name || "Untitled Rule"}
                 </h3>
-                <div className={`w-2 h-2 rounded-full ${rule.isActive ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "bg-gray-400"}`} />
+                <div className={`w-2 h-2 rounded-full ${rule.isActive ? "bg-success shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "bg-gray-400"}`} />
               </div>
               <div className="text-xs text-muted flex flex-col gap-1">
                 <span className="flex items-center gap-1"><Filter className="w-3 h-3" /> {rule.conditions.length} Conditions</span>
@@ -152,7 +152,7 @@ export default function TicketAutomationsBuilder() {
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <span className="text-sm font-bold text-muted">Active</span>
-                    <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? 'bg-emerald-500' : 'bg-elevated dark:bg-surface'}`}>
+                    <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? 'bg-success' : 'bg-elevated dark:bg-surface'}`}>
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                     </div>
                     <input 
@@ -162,7 +162,7 @@ export default function TicketAutomationsBuilder() {
                       onChange={e => setForm({...form, isActive: e.target.checked})}
                     />
                   </label>
-                  <AppButton variant="outline" className="text-red-500" onClick={() => handleDelete(form.id)}>
+                  <AppButton variant="outline" className="text-danger" onClick={() => handleDelete(form.id)}>
                     <Trash2 className="w-4 h-4" />
                   </AppButton>
                   <AppButton variant="primary" onClick={handleSave} leftIcon={<Save className="w-4 h-4" />}>
@@ -176,7 +176,7 @@ export default function TicketAutomationsBuilder() {
                 <div className="mb-8 relative">
                   <div className="absolute left-6 top-8 bottom-[-40px] w-0.5 bg-elevated dark:bg-surface z-0" />
                   
-                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black tracking-wider text-xl mb-4 relative z-10 bg-surface/50 dark:bg-[#0B0F19] pr-4 w-max">
+                  <div className="flex items-center gap-2 text-accent dark:text-accent font-black tracking-wider text-xl mb-4 relative z-10 bg-surface/50 dark:bg-[#0B0F19] pr-4 w-max">
                     <GitMerge className="w-6 h-6" /> WHEN (Trigger Conditions)
                   </div>
                   
@@ -201,7 +201,7 @@ export default function TicketAutomationsBuilder() {
                         </select>
                         
                         <select 
-                          className="p-2 bg-surface dark:bg-[#0A0D14] border border-border rounded-md text-sm font-mono text-blue-600 dark:text-blue-400"
+                          className="p-2 bg-surface dark:bg-[#0A0D14] border border-border rounded-md text-sm font-mono text-accent dark:text-accent"
                           value={cond.operator}
                           onChange={e => {
                             const c = [...form.conditions];
@@ -226,7 +226,7 @@ export default function TicketAutomationsBuilder() {
                           }}
                         />
                         
-                        <AppButton variant="secondary" onClick={() => removeCondition(i)} className="text-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AppButton variant="secondary" onClick={() => removeCondition(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       </div>
@@ -239,7 +239,7 @@ export default function TicketAutomationsBuilder() {
 
                 {/* Actions */}
                 <div className="relative mt-12">
-                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-black tracking-wider text-xl mb-4 relative z-10 bg-surface/50 dark:bg-[#0B0F19] pr-4 w-max">
+                  <div className="flex items-center gap-2 text-success dark:text-success font-black tracking-wider text-xl mb-4 relative z-10 bg-surface/50 dark:bg-[#0B0F19] pr-4 w-max">
                     <Zap className="w-6 h-6" /> THEN (Execute Actions)
                   </div>
                   
@@ -268,7 +268,7 @@ export default function TicketAutomationsBuilder() {
                         
                         <input 
                           type="text" 
-                          className="flex-1 p-2 bg-transparent border-b border-dashed border-border dark:border-border focus:outline-none focus:border-emerald-500 text-sm font-mono text-emerald-600 dark:text-emerald-400"
+                          className="flex-1 p-2 bg-transparent border-b border-dashed border-border dark:border-border focus:outline-none focus:border-emerald-500 text-sm font-mono text-success dark:text-success"
                           placeholder="Action parameter..."
                           value={act.value}
                           onChange={e => {
@@ -278,12 +278,12 @@ export default function TicketAutomationsBuilder() {
                           }}
                         />
                         
-                        <AppButton variant="secondary" onClick={() => removeAction(i)} className="text-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AppButton variant="secondary" onClick={() => removeAction(i)} className="text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       </div>
                     ))}
-                    <AppButton variant="outline" size="sm" onClick={addAction} className="mt-2 text-xs border-dashed text-emerald-600 dark:text-emerald-500 border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/10" leftIcon={<Plus className="w-3 h-3" />}>
+                    <AppButton variant="outline" size="sm" onClick={addAction} className="mt-2 text-xs border-dashed text-success dark:text-success border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/10" leftIcon={<Plus className="w-3 h-3" />}>
                       Add Action
                     </AppButton>
                   </div>

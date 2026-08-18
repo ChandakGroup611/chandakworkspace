@@ -58,16 +58,16 @@ export function TicketsDashboard({ metrics }: { metrics: Metrics }) {
         </div>
 
         <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors" />
-          <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-3" />
+          <div className="absolute inset-0 bg-success/5 group-hover:bg-success/10 transition-colors" />
+          <CheckCircle2 className="w-8 h-8 text-success mb-3" />
           <div className="text-3xl font-black text-foreground">{resolvedTickets}</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Resolved ({resolutionRate}%)</div>
         </div>
 
         <div className="theme-card-structural rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
-          <AlertCircle className="w-8 h-8 text-red-500 mb-3" />
-          <div className="text-3xl font-black text-red-500">{breachedSla}</div>
+          <div className="absolute inset-0 bg-danger/5 group-hover:bg-danger/10 transition-colors" />
+          <AlertCircle className="w-8 h-8 text-danger mb-3" />
+          <div className="text-3xl font-black text-danger">{breachedSla}</div>
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">SLA Breaches</div>
         </div>
       </div>

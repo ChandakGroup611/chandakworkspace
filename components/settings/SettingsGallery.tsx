@@ -109,7 +109,7 @@ export default function SettingsGallery() {
       icon: Sun,
       previewBg: "bg-[#ffffff] text-slate-900",
       previewBorder: "border-border/50",
-      accentColor: "bg-emerald-500",
+      accentColor: "bg-success",
     },
     {
       id: "industrial-control",
@@ -119,7 +119,7 @@ export default function SettingsGallery() {
       sentiment: "Tactile & Blurred",
       icon: Layers,
       previewBg: "bg-[#1e293b] text-[#f8fafc]",
-      previewBorder: "border-white/10",
+      previewBorder: "border-border",
       accentColor: "bg-cyan-500",
     },
     {
@@ -131,7 +131,7 @@ export default function SettingsGallery() {
       icon: Moon,
       previewBg: "bg-[#1e1e1e] text-[#e0e0e0]",
       previewBorder: "border-[#333333]",
-      accentColor: "bg-emerald-500",
+      accentColor: "bg-success",
     },
     {
       id: "pure-white",
@@ -224,11 +224,11 @@ export default function SettingsGallery() {
 
   const accentsList: { id: AccentColorType; name: string; hex: string }[] = [
     { id: "theme-default", name: "Theme Default", hex: "bg-gray-400" },
-    { id: "blue", name: "Executive Blue", hex: "bg-blue-500" },
-    { id: "emerald", name: "Secure Emerald", hex: "bg-emerald-500" },
-    { id: "rose", name: "Alert Rose", hex: "bg-rose-500" },
-    { id: "amber", name: "Warm Amber", hex: "bg-amber-500" },
-    { id: "purple", name: "Creative Purple", hex: "bg-purple-500" },
+    { id: "blue", name: "Executive Blue", hex: "bg-theme-btn-primary text-theme-btn-primary-text" },
+    { id: "emerald", name: "Secure Emerald", hex: "bg-success" },
+    { id: "rose", name: "Alert Rose", hex: "bg-danger" },
+    { id: "amber", name: "Warm Amber", hex: "bg-warning" },
+    { id: "purple", name: "Creative Purple", hex: "bg-theme-btn-primary text-theme-btn-primary-text" },
     { id: "slate", name: "Minimal Slate", hex: "bg-slate-500" }
   ];
 
@@ -239,7 +239,7 @@ export default function SettingsGallery() {
     <div className="space-y-8 pb-12">
       {/* Toast feedback component */}
       {successToast && (
-        <div id="settings-toast-alert" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-emerald-500 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div id="settings-toast-alert" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-success text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
@@ -249,7 +249,7 @@ export default function SettingsGallery() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sliders className={`h-4 w-4 text-blue-600`} />
+            <Sliders className={`h-4 w-4 text-accent`} />
             <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
               1. Aesthetic Palette System
             </h2>
@@ -303,8 +303,8 @@ export default function SettingsGallery() {
 
                     {/* Bottom floating layered decoration */}
                     <div className="absolute bottom-1 right-2 flex items-center gap-1">
-                      <div className="h-2 w-8 rounded bg-blue-500/20" />
-                      <div className="h-2 w-2 rounded-full bg-emerald-500/40" />
+                      <div className="h-2 w-8 rounded bg-theme-btn-primary text-theme-btn-primary-text/20" />
+                      <div className="h-2 w-2 rounded-full bg-success/40" />
                     </div>
                   </div>
 
@@ -343,7 +343,7 @@ export default function SettingsGallery() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Type className={`h-4 w-4 text-blue-600`} />
+            <Type className={`h-4 w-4 text-accent`} />
             <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
               3. Typography Engine & Font Scale
             </h2>
@@ -460,14 +460,14 @@ export default function SettingsGallery() {
                   }}
                   className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                     isSelected 
-                      ? `ring-2 ring-blue-500 bg-blue-500/[0.04] border-blue-500 theme-card-structural` 
-                      : `hover:border-white/10 theme-card-structural opacity-80 hover:opacity-100 border-border`
+                      ? `ring-2 ring-blue-500 bg-theme-btn-primary text-theme-btn-primary-text/[0.04] border-blue-500 theme-card-structural` 
+                      : `hover:border-border theme-card-structural opacity-80 hover:opacity-100 border-border`
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <span className={`text-xs font-bold ${"text-foreground"}`}>{w.name}</span>
-                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
+                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-theme-btn-primary text-theme-btn-primary-text" />}
                     </div>
                     <p className={`text-[0.8rem] ${"text-muted"}`}>
                       {w.desc}
@@ -486,7 +486,7 @@ export default function SettingsGallery() {
       </section>
 
       {/* Row 5: Persistent Saving */}
-      <section className="space-y-4 pt-6 border-t border-white/5">
+      <section className="space-y-4 pt-6 border-t border-border">
         <AppCard className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1 max-w-xl">
             <div className="flex items-center gap-2">

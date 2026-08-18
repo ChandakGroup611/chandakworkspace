@@ -239,7 +239,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   </div>
                   <div className="flex justify-end gap-1">
                     <AppButton variant="secondary" onClick={() => setEditingSprintId(null)} className="p-1 text-muted hover:bg-elevated rounded transition-colors"><X className="h-3.5 w-3.5" /></AppButton>
-                    <AppButton variant="secondary" onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} className="p-1 text-emerald-600 hover:bg-emerald-100 rounded transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></AppButton>
+                    <AppButton variant="secondary" onClick={() => handleUpdateSprint(sprint.id)} disabled={isUpdatingSprint} className="p-1 text-success hover:bg-emerald-100 rounded transition-colors disabled:opacity-50"><Check className="h-3.5 w-3.5" /></AppButton>
                   </div>
                 </div>
               ) : (

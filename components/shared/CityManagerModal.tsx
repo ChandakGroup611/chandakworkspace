@@ -81,7 +81,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
           <h2 className="text-xl font-black text-foreground">
             Manage Cities for {stateName}
           </h2>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-muted hover:text-red-500 transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-danger/10 text-muted hover:text-danger transition-colors">
             <X className="h-6 w-6" />
           </AppButton>
         </div>
@@ -106,8 +106,8 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
                       onClick={() => toggleStatus(c)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
                         c.is_active 
-                          ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' 
-                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                          ? 'bg-amber-50 text-warning hover:bg-amber-100' 
+                          : 'bg-green-50 text-success hover:bg-green-100'
                       }`}
                     >
                       <Power className="h-3.5 w-3.5" />
@@ -115,7 +115,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
                     </AppButton>
                     <AppButton variant="secondary"
                       onClick={() => handleDelete(c)}
-                      className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                      className="p-1.5 rounded-lg bg-red-50 text-danger hover:bg-red-100 transition-colors"
                       title="Delete City"
                     >
                       <Trash2 className="h-4 w-4" />

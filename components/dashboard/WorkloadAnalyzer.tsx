@@ -46,7 +46,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
     <div className="absolute inset-0 bg-surface/80 backdrop-blur-md z-[200] flex items-center justify-center p-6 rounded-xl animate-in fade-in-50">
       <AppCard className={`w-full max-w-md p-6 shadow-2xl theme-card-structural border-theme-btn-primary/30`}>
         
-        <div className="flex items-center justify-between border-b pb-4 mb-5 border-border dark:border-white/5">
+        <div className="flex items-center justify-between border-b pb-4 mb-5 border-border dark:border-border">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
               <Activity className="h-5 w-5 text-theme-icon" />
@@ -72,7 +72,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             <div className="space-y-2">
               <div className="flex items-end justify-between">
                 <span className="text-xs font-bold text-theme-icon uppercase tracking-wider">Utilization</span>
-                <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-rose-500' : 'text-theme-icon'}`}>
+                <span className={`text-2xl font-bold ${metrics.capacity_percentage > 80 ? 'text-danger' : 'text-theme-icon'}`}>
                   {metrics.capacity_percentage}%
                 </span>
               </div>
@@ -81,13 +81,13 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
                   className={`h-full rounded-full transition-all duration-1000 ${
                     metrics.capacity_percentage > 80 
                       ? 'bg-gradient-to-r from-rose-500 to-red-500' 
-                      : 'bg-gradient-to-r from-blue-500 to-indigo-500'
+                      : 'bg-gradient-to-r from-accent to-indigo-500'
                   }`} 
                   style={{ width: `${metrics.capacity_percentage}%` }} 
                 />
               </div>
               {metrics.capacity_percentage > 80 && (
-                <p className="text-xs text-rose-500 flex items-center gap-1 mt-1">
+                <p className="text-xs text-danger flex items-center gap-1 mt-1">
                   <AlertTriangle className="h-3 w-3" /> User is currently over-utilized. High risk of SLA breach.
                 </p>
               )}
@@ -96,14 +96,14 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
             {/* Metric Bento Grid */}
             <div className="grid grid-cols-2 gap-3">
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 mb-2" />
+                <CheckCircle2 className="h-4 w-4 text-success mb-2" />
                 <span className="block text-2xl font-bold text-theme-icon mb-1">{metrics.active_tasks}</span>
                 <span className="text-xs text-muted uppercase tracking-wider font-bold">Active Directives</span>
               </div>
               <div className={`p-4 rounded-xl border bg-rose-50 border-rose-100`}>
-                <AlertTriangle className="h-4 w-4 text-rose-500 mb-2" />
-                <span className="block text-2xl font-bold text-rose-600 dark:text-rose-400 mb-1">{metrics.overdue_tasks}</span>
-                <span className="text-xs text-rose-500/70 uppercase tracking-wider font-bold">Overdue SLA</span>
+                <AlertTriangle className="h-4 w-4 text-danger mb-2" />
+                <span className="block text-2xl font-bold text-danger dark:text-danger mb-1">{metrics.overdue_tasks}</span>
+                <span className="text-xs text-danger/70 uppercase tracking-wider font-bold">Overdue SLA</span>
               </div>
               <div className={`p-4 rounded-xl border bg-elevated border-border`}>
                 <Clock className="h-4 w-4 text-theme-icon mb-2" />

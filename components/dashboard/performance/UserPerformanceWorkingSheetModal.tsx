@@ -294,7 +294,7 @@ export function UserPerformanceWorkingSheetModal({
           )}
 
           {error && (
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-500 flex items-center gap-3 text-sm">
+            <div className="p-4 rounded-2xl bg-danger/10 border border-rose-500/30 text-danger flex items-center gap-3 text-sm">
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -315,7 +315,7 @@ export function UserPerformanceWorkingSheetModal({
                     <span className="text-3xl font-black text-foreground tracking-tight">
                       {data.ratios.overallPerformanceRatio}%
                     </span>
-                    <span className="text-xs font-semibold text-emerald-500">
+                    <span className="text-xs font-semibold text-success">
                       Score
                     </span>
                   </div>
@@ -331,7 +331,7 @@ export function UserPerformanceWorkingSheetModal({
                 <div className="p-4 rounded-2xl bg-surface dark:bg-[#111625] border border-border/70 shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">On-Time Delivery</span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <CheckCircle2 className="w-4 h-4 text-success" />
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-3xl font-black text-foreground tracking-tight">
@@ -343,7 +343,7 @@ export function UserPerformanceWorkingSheetModal({
                   </div>
                   <div className="mt-2.5 w-full bg-surface dark:bg-surface/20 h-1.5 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                      className="h-full bg-success rounded-full transition-all duration-1000"
                       style={{ width: `${data.ratios.onTimeDeliveryRate}%` }}
                     />
                   </div>
@@ -395,21 +395,21 @@ export function UserPerformanceWorkingSheetModal({
                 <div className="p-4 rounded-2xl bg-surface dark:bg-[#111625] border border-border/70 shadow-sm col-span-2 lg:col-span-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Active & Overdue</span>
-                    <AlertTriangle className={cn("w-4 h-4", data.metrics.totalOverdue > 0 ? "text-rose-500" : "text-amber-500")} />
+                    <AlertTriangle className={cn("w-4 h-4", data.metrics.totalOverdue > 0 ? "text-danger" : "text-warning")} />
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-3xl font-black text-foreground tracking-tight">
                       {data.metrics.totalActive}
                     </span>
-                    <span className={cn("text-xs font-bold", data.metrics.totalOverdue > 0 ? "text-rose-500" : "text-muted-foreground")}>
+                    <span className={cn("text-xs font-bold", data.metrics.totalOverdue > 0 ? "text-danger" : "text-muted-foreground")}>
                       ({data.metrics.totalOverdue} overdue)
                     </span>
                   </div>
                   <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span className="w-2 h-2 rounded-full bg-warning"></span>
                     <span>{data.metrics.totalInReview} In Review</span>
                     <span className="mx-1">•</span>
-                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                    <span className="w-2 h-2 rounded-full bg-danger"></span>
                     <span>{data.metrics.totalEscalated} Escalated</span>
                   </div>
                 </div>
@@ -435,21 +435,21 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
-                  <Briefcase className="w-3.5 h-3.5 text-amber-500" />
+                  <Briefcase className="w-3.5 h-3.5 text-warning" />
                   <span className="text-foreground font-semibold">Tickets:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.tickets.resolved}/{data.moduleBreakdown.tickets.total}</span>
                   <span className="text-muted-foreground text-[10px]">({data.moduleBreakdown.tickets.rate}%)</span>
                 </div>
 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
-                  <FileText className="w-3.5 h-3.5 text-rose-500" />
+                  <FileText className="w-3.5 h-3.5 text-danger" />
                   <span className="text-foreground font-semibold">Requirements:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.requirements.completed}/{data.moduleBreakdown.requirements.total}</span>
                   <span className="text-muted-foreground text-[10px]">({data.moduleBreakdown.requirements.rate}%)</span>
                 </div>
 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
-                  <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                  <Building2 className="w-3.5 h-3.5 text-accent" />
                   <span className="text-foreground font-semibold">Workspaces:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.workspaces.total} Enrolled</span>
                 </div>
@@ -557,8 +557,8 @@ export function UserPerformanceWorkingSheetModal({
                           <span className="text-xs font-bold font-mono text-muted-foreground uppercase">{trend.month}</span>
                           <div className="text-2xl font-black text-foreground">{trend.total}</div>
                           <div className="text-[11px] text-muted-foreground">
-                            <span className="text-emerald-500 font-bold">{trend.completed} closed</span>
-                            {trend.escalated > 0 && <span className="text-rose-500 ml-1">({trend.escalated} esc)</span>}
+                            <span className="text-success font-bold">{trend.completed} closed</span>
+                            {trend.escalated > 0 && <span className="text-danger ml-1">({trend.escalated} esc)</span>}
                           </div>
                           <div className="w-full bg-surface dark:bg-surface/20 h-1.5 rounded-full overflow-hidden">
                             <div className="h-full bg-primary rounded-full" style={{ width: `${trend.completionRate}%` }} />
@@ -615,9 +615,9 @@ export function UserPerformanceWorkingSheetModal({
                                     <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
                                       {act.module === "Tasks" && <Layers className="w-3.5 h-3.5 text-theme-icon" />}
                                       {act.module === "Sub Tasks" && <ListTodo className="w-3.5 h-3.5 text-teal-500" />}
-                                      {act.module === "Tickets" && <Briefcase className="w-3.5 h-3.5 text-amber-500" />}
-                                      {act.module === "Requirements" && <FileText className="w-3.5 h-3.5 text-rose-500" />}
-                                      {(act.module === "Workspaces" || act.module === "Sub Workspaces") && <Building2 className="w-3.5 h-3.5 text-indigo-500" />}
+                                      {act.module === "Tickets" && <Briefcase className="w-3.5 h-3.5 text-warning" />}
+                                      {act.module === "Requirements" && <FileText className="w-3.5 h-3.5 text-danger" />}
+                                      {(act.module === "Workspaces" || act.module === "Sub Workspaces") && <Building2 className="w-3.5 h-3.5 text-accent" />}
                                       {act.module}
                                     </span>
                                   </AppTableCell>
@@ -643,8 +643,8 @@ export function UserPerformanceWorkingSheetModal({
                                   <AppTableCell className="text-center">
                                     <span className={cn(
                                       "text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider font-mono",
-                                      act.priority.toLowerCase().includes("urgent") ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" :
-                                      act.priority.toLowerCase().includes("high") ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                                      act.priority.toLowerCase().includes("urgent") ? "bg-danger/10 text-danger border border-rose-500/20" :
+                                      act.priority.toLowerCase().includes("high") ? "bg-warning/10 text-warning border border-amber-500/20" :
                                       "bg-surface dark:bg-surface/20 text-muted-foreground"
                                     )}>
                                       {act.priority}
@@ -655,12 +655,12 @@ export function UserPerformanceWorkingSheetModal({
                                   <AppTableCell>
                                     <span className={cn(
                                       "inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg",
-                                      isResolved ? "bg-emerald-500/10 text-emerald-500" :
-                                      isEscalated ? "bg-rose-500/10 text-rose-500" :
+                                      isResolved ? "bg-success/10 text-success" :
+                                      isEscalated ? "bg-danger/10 text-danger" :
                                       isReview ? "bg-theme-btn-primary/10 text-theme-icon" :
                                       "bg-theme-btn-primary/10 text-theme-icon"
                                     )}>
-                                      <span className={cn("w-1.5 h-1.5 rounded-full", isResolved ? "bg-emerald-500" : isEscalated ? "bg-rose-500" : isReview ? "bg-theme-btn-primary" : "bg-theme-btn-primary")} />
+                                      <span className={cn("w-1.5 h-1.5 rounded-full", isResolved ? "bg-success" : isEscalated ? "bg-danger" : isReview ? "bg-theme-btn-primary" : "bg-theme-btn-primary")} />
                                       {act.rawStatus}
                                     </span>
                                   </AppTableCell>
@@ -668,7 +668,7 @@ export function UserPerformanceWorkingSheetModal({
                                   {/* Target Due */}
                                   <AppTableCell className="text-right text-xs font-mono">
                                     {act.dueDate ? (
-                                      <span className={cn(act.isOverdue ? "text-rose-500 font-bold" : "text-muted-foreground")}>
+                                      <span className={cn(act.isOverdue ? "text-danger font-bold" : "text-muted-foreground")}>
                                         {format(new Date(act.dueDate), "MMM d, yyyy")}
                                       </span>
                                     ) : (
@@ -682,13 +682,13 @@ export function UserPerformanceWorkingSheetModal({
                                       <span className={cn(
                                         "text-[10px] font-bold px-2 py-0.5 rounded-md",
                                         act.isOnTime 
-                                          ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30" 
-                                          : "bg-amber-500/15 text-amber-500 border border-amber-500/30"
+                                          ? "bg-success/15 text-success border border-emerald-500/30" 
+                                          : "bg-warning/15 text-warning border border-amber-500/30"
                                       )}>
                                         {act.isOnTime ? "✓ On-Time" : "⚠ Completed Late"}
                                       </span>
                                     ) : act.isOverdue ? (
-                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-danger/15 text-danger border border-rose-500/30">
                                         ✕ Overdue / SLA Risk
                                       </span>
                                     ) : (
@@ -723,7 +723,7 @@ export function UserPerformanceWorkingSheetModal({
         {/* MODAL FOOTER */}
         <div className="p-4 border-t border-border/60 flex items-center justify-between bg-surface/50 dark:bg-[#0E1320]/80">
           <div className="text-xs text-muted-foreground flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
             <span>TaskForge Intelligence Governance • Realtime Multi-Module Sync</span>
           </div>
           <AppButton variant="primary" size="sm" onClick={onClose}>

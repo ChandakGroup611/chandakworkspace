@@ -175,12 +175,12 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <div className="font-black text-lg text-emerald-500">
+                    <div className="font-black text-lg text-success">
                       {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(tx.cost)}
                     </div>
                     <div className="text-[10px] text-muted">Logged by {tx.user_master?.full_name}</div>
                   </div>
-                  <AppButton variant="secondary" onClick={() => handleDelete(tx.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                  <AppButton variant="secondary" onClick={() => handleDelete(tx.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </AppButton>
                 </div>

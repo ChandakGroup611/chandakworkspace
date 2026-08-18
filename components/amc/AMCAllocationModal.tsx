@@ -138,7 +138,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
               {allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'} Licenses Assigned
             </p>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-full transition-colors">
             <X className="h-5 w-5" />
           </AppButton>
         </div>
@@ -165,7 +165,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                     <AppButton 
                       variant="outline" 
                       size="sm" 
-                      className="text-red-500 border-red-500/20 hover:bg-red-500/10"
+                      className="text-danger border-red-500/20 hover:bg-danger/10"
                       onClick={() => handleRevoke(a.id)}
                       disabled={processingId === a.id}
                     >

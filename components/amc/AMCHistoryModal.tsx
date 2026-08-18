@@ -65,9 +65,9 @@ export function AMCHistoryModal({
 
   const getOperationColor = (op: string) => {
     switch (op) {
-      case "INSERT": return "text-green-500 bg-green-500/10";
+      case "INSERT": return "text-success bg-success/10";
       case "UPDATE": return "text-theme-icon bg-theme-btn-primary/10";
-      case "DELETE": return "text-red-500 bg-red-500/10";
+      case "DELETE": return "text-danger bg-danger/10";
       default: return "text-muted bg-gray-500/10";
     }
   };
@@ -87,7 +87,7 @@ export function AMCHistoryModal({
               <p className="text-xs text-muted">Immutable changelog for this record</p>
             </div>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-red-500/10 text-muted hover:text-red-500 transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-danger/10 text-muted hover:text-danger transition-colors">
             <X className="h-5 w-5" />
           </AppButton>
         </div>
@@ -145,9 +145,9 @@ export function AMCHistoryModal({
                               <div key={key} className={`flex items-center gap-3 p-2.5 rounded-lg text-sm border bg-surface border-border`}>
                                 <span className="font-mono text-xs w-1/3 truncate text-muted">{key}</span>
                                 <div className="flex-1 flex items-center gap-3 truncate">
-                                  <span className="truncate text-red-500/80 line-through opacity-80 max-w-[40%]">{String(before || 'null')}</span>
+                                  <span className="truncate text-danger/80 line-through opacity-80 max-w-[40%]">{String(before || 'null')}</span>
                                   <ArrowRight className="h-3.5 w-3.5 text-muted shrink-0" />
-                                  <span className="truncate text-green-500 font-medium max-w-[40%]">{String(after || 'null')}</span>
+                                  <span className="truncate text-success font-medium max-w-[40%]">{String(after || 'null')}</span>
                                 </div>
                               </div>
                             );
@@ -161,7 +161,7 @@ export function AMCHistoryModal({
                     )}
 
                     {log.operation === 'DELETE' && (
-                       <p className="text-sm text-red-400">Record was deleted.</p>
+                       <p className="text-sm text-danger">Record was deleted.</p>
                     )}
 
                   </div>

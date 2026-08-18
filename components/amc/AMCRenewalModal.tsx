@@ -77,7 +77,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
               {amcData.software_name} - {amcData.provider_name}
             </p>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
+          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-full transition-colors">
             <X className="h-5 w-5" />
           </AppButton>
         </div>

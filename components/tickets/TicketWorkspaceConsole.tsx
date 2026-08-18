@@ -229,9 +229,9 @@ export function TicketWorkspaceConsole({
 
   const getPriorityColor = () => {
     const code = ticket.priorityObj?.code;
-    if (code === "PR_CRITICAL") return "bg-red-500/10 text-red-500 border-red-500/20";
+    if (code === "PR_CRITICAL") return "bg-danger/10 text-danger border-red-500/20";
     if (code === "PR_HIGH") return "bg-orange-500/10 text-orange-500 border-orange-500/20";
-    if (code === "PR_MEDIUM") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+    if (code === "PR_MEDIUM") return "bg-warning/10 text-warning border-yellow-500/20";
     return "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20";
   };
 
@@ -248,7 +248,7 @@ export function TicketWorkspaceConsole({
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Checklist & Objectives
+                 <CheckCircle2 className="w-4 h-4 text-success" /> Checklist & Objectives
                </h3>
             </div>
             <div className="p-6 space-y-4">
@@ -317,8 +317,8 @@ export function TicketWorkspaceConsole({
                     <div key={rel.id} className="flex items-center justify-between p-3 border rounded-lg bg-background text-xs">
                       <div className="flex items-center gap-3">
                         <span className={`px-2 py-0.5 rounded font-bold uppercase ${
-                          rel.relation_type === 'DUPLICATE' ? 'bg-amber-500/10 text-amber-500' :
-                          rel.relation_type === 'BLOCKS' ? 'bg-red-500/10 text-red-500' : 'bg-theme-btn-primary/10 text-theme-icon'
+                          rel.relation_type === 'DUPLICATE' ? 'bg-warning/10 text-warning' :
+                          rel.relation_type === 'BLOCKS' ? 'bg-danger/10 text-danger' : 'bg-theme-btn-primary/10 text-theme-icon'
                         }`}>
                           {rel.relation_type}
                         </span>
@@ -436,7 +436,7 @@ export function TicketWorkspaceConsole({
                </div>
                <div>
                   <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">SLA Status</div>
-                  <div className={`text-xs font-semibold ${slaStatus === "BREACHED" ? "text-red-500" : slaStatus === "MET" ? "text-green-500" : "text-theme-icon"}`}>
+                  <div className={`text-xs font-semibold ${slaStatus === "BREACHED" ? "text-danger" : slaStatus === "MET" ? "text-success" : "text-theme-icon"}`}>
                     {slaTimeRemaining}
                   </div>
                </div>
@@ -540,7 +540,7 @@ export function TicketWorkspaceConsole({
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4 flex items-center justify-between">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Network className="w-4 h-4 text-emerald-500" /> Classification
+                 <Network className="w-4 h-4 text-success" /> Classification
                </h3>
             </div>
             <div className="p-6 space-y-4">
@@ -612,7 +612,7 @@ export function TicketWorkspaceConsole({
           <div className="rounded-3xl theme-card-structural shadow-sm overflow-hidden flex flex-col">
             <div className="bg-background border-b border-border p-4">
                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                 <Paperclip className="w-4 h-4 text-amber-500" /> References & Artifacts
+                 <Paperclip className="w-4 h-4 text-warning" /> References & Artifacts
                </h3>
             </div>
             <div className="p-4">
@@ -629,14 +629,14 @@ export function TicketWorkspaceConsole({
         {/* RIGHT: TICKET REMARKS */}
         <div className="space-y-3">
         {(Object.keys(pendingChanges).length > 0) && (
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mb-4">
+          <div className="p-3 bg-warning/10 border border-amber-500/20 text-warning text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mb-4">
             <span>Ticket updates are pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <AppButton onClick={cancelChanges} className="text-xs text-amber-500/60 hover:text-amber-500 font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+            <AppButton onClick={cancelChanges} className="text-xs text-warning/60 hover:text-warning font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
 
         <div className="flex items-center justify-between">
-          <label className="text-sm font-bold uppercase tracking-wider text-muted">Ticket Remarks <span className="text-red-500">*</span></label>
+          <label className="text-sm font-bold uppercase tracking-wider text-muted">Ticket Remarks <span className="text-danger">*</span></label>
           
           {/* Quick Actions */}
           {canEditFields && (
@@ -663,7 +663,7 @@ export function TicketWorkspaceConsole({
                     setUpdateRemark("Issue has been resolved successfully.");
                   }
                 }}
-                className="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors border border-emerald-500/20"
+                className="text-[10px] font-bold px-2 py-1 rounded bg-success/10 text-success hover:bg-success/20 transition-colors border border-emerald-500/20"
               >
                 Mark Resolved
               </AppButton>
@@ -753,7 +753,7 @@ export function TicketWorkspaceConsole({
                               className="h-7 w-7 rounded-full border border-theme-btn-primary/20 object-cover"
                             />
                           ) : (
-                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-theme-btn-primary/20 shadow-md">
+                            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-accent to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-theme-btn-primary/20 shadow-md">
                               {initials}
                             </div>
                           )}

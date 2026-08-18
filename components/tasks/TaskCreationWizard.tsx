@@ -249,7 +249,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             <div className="mt-2">
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
-                <AlignLeft className="h-3 w-3" /> Execution Notes (Rich Text) <span className="text-red-500">*</span>
+                <AlignLeft className="h-3 w-3" /> Execution Notes (Rich Text) <span className="text-danger">*</span>
               </label>
               <textarea
                 value={description}
@@ -274,7 +274,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             
             <div className="grid grid-cols-3 gap-2 mb-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date <span className="text-red-500">*</span></label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date <span className="text-danger">*</span></label>
                 <AppInput 
                   type="date" 
                   min={localTodayString} 
@@ -284,7 +284,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Target Due Date <span className="text-red-500">*</span></label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">Target Due Date <span className="text-danger">*</span></label>
                 <AppInput 
                   type="date" 
                   min={startDate || localTodayString} 
@@ -368,7 +368,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <AppButton variant="secondary" type="button" onClick={() => {
                   if (assignees.length === stakeholders.length && stakeholders.length > 0) setAssignees([]);
                   else setAssignees(stakeholders.map(s => s.id));
-                }} className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
+                }} className="text-[10px] font-bold text-success hover:text-emerald-700 uppercase tracking-wider">
                   {assignees.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
@@ -406,7 +406,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <AppButton variant="secondary" type="button" onClick={() => {
                   if (watchers.length === stakeholders.length && stakeholders.length > 0) setWatchers([]);
                   else setWatchers(stakeholders.map(s => s.id));
-                }} className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider">
+                }} className="text-[10px] font-bold text-success hover:text-emerald-700 uppercase tracking-wider">
                   {watchers.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
@@ -471,7 +471,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   {tags.map((tag, idx) => (
                     <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-theme-btn-primary/10 text-theme-icon`}>
                       {tag}
-                      <AppButton variant="secondary" type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-rose-500"><X className="h-3 w-3" /></AppButton>
+                      <AppButton variant="secondary" type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-danger"><X className="h-3 w-3" /></AppButton>
                     </span>
                   ))}
                 </div>
@@ -523,7 +523,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       <AppButton variant="secondary"
                         type="button"
                         onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
-                        className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
+                        className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-danger hover:bg-danger/10 transition-all"
                       >
                         <X className="h-3.5 w-3.5" />
                       </AppButton>
@@ -585,7 +585,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                       <AppButton variant="secondary"
                         type="button"
                         onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
-                        className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-rose-500 hover:bg-rose-500/10 transition-all"
+                        className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-danger hover:bg-danger/10 transition-all"
                       >
                         <X className="h-3.5 w-3.5" />
                       </AppButton>
@@ -640,7 +640,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         <option value="date">Date</option>
                       </select>
                     </div>
-                    <AppButton type="button" variant="primary" onClick={handleAddField} className="w-full sm:w-auto h-10 bg-amber-600 hover:bg-amber-700 text-white border-0">Save Field</AppButton>
+                    <AppButton type="button" variant="primary" onClick={handleAddField} className="w-full sm:w-auto h-10 bg-warning hover:bg-warning text-white border-0">Save Field</AppButton>
                   </div>
                 )}
 

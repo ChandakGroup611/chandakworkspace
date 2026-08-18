@@ -46,7 +46,7 @@ export default function TicketDashboardPage() {
   if (!hasPermission("TICKETS_VIEW")) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4 bg-surface text-foreground">
-        <h2 className="text-xl font-bold text-red-500">Access Denied</h2>
+        <h2 className="text-xl font-bold text-danger">Access Denied</h2>
         <p className="text-xs text-muted-foreground">You do not have capabilities to view Operations Tickets.</p>
       </div>
     );

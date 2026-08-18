@@ -11,7 +11,7 @@ export default function ProfilePage() {
   return (
     <div className="w-full space-y-6 animate-in fade-in-50 duration-500">
       {/* Semantic main header wrapper */}
-      <header className="border-b border-white/5 pb-4">
+      <header className="border-b border-border pb-4">
         <h1 id="profile-page-title" className="text-xl font-bold tracking-tight">
           My Profile Settings
         </h1>

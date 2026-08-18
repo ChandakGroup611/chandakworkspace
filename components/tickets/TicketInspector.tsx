@@ -82,7 +82,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             </div>
             <div className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full ${
-                priority?.code === "PRIO_CRIT_P1" ? "bg-red-500" : ("bg-theme-btn-primary")
+                priority?.code === "PRIO_CRIT_P1" ? "bg-danger" : ("bg-theme-btn-primary")
               }`} />
               <span className={`text-sm font-semibold ${"text-foreground"}`}>{priority?.name || "Medium"}</span>
             </div>
@@ -147,7 +147,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Classification</h3>
-                <div className="p-6 theme-card-structural /[0.02] border-white/5 rounded-2xl space-y-4">
+                <div className="p-6 theme-card-structural /[0.02] border-border rounded-2xl space-y-4">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted">Category</span>
                     <span className={`font-medium ${"text-foreground"}`}>{ticket.categoryObj?.name || "Unclassified"}</span>
@@ -165,7 +165,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-muted uppercase tracking-widest">Attachments</h3>
-                <div className="p-6 theme-card-structural /[0.02] border-white/5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3 min-h-[140px]">
+                <div className="p-6 theme-card-structural /[0.02] border-border rounded-2xl flex flex-col items-center justify-center text-center space-y-3 min-h-[140px]">
                   <div className="p-3 bg-surface/5 rounded-full">
                     <Paperclip className="h-5 w-5 text-subtle" />
                   </div>

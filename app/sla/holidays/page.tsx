@@ -47,12 +47,12 @@ export default function HolidayCalendar() {
       />
 
       <div className="p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border mt-6">
-        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
+        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm">
           <AppButton 
             onClick={() => setActiveTab("holidays")}
             className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
               activeTab === 'holidays' 
-                ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-white/10' 
+                ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
                 : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
             }`}
           >
@@ -62,7 +62,7 @@ export default function HolidayCalendar() {
             onClick={() => setActiveTab("working_hours")}
             className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
               activeTab === 'working_hours' 
-                ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-white/10' 
+                ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
                 : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
             }`}
           >
@@ -105,8 +105,8 @@ export default function HolidayCalendar() {
               
               <AppCard className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30">
                 <div className="p-4 space-y-2">
-                  <h4 className="font-bold text-amber-800 dark:text-amber-500 text-sm">SLA Impact</h4>
-                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                  <h4 className="font-bold text-amber-800 dark:text-warning text-sm">SLA Impact</h4>
+                  <p className="text-xs text-amber-700 dark:text-warning">
                     SLA timers are automatically paused on registered holidays based on the Ticket's or Task's assigned working hours code.
                   </p>
                 </div>
@@ -129,7 +129,7 @@ export default function HolidayCalendar() {
                           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {holiday.region}</span>
                         </div>
                       </div>
-                      <AppButton variant="outline" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => handleDeleteHoliday(holiday.id)}>
+                      <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteHoliday(holiday.id)}>
                         <Trash2 className="w-4 h-4" />
                       </AppButton>
                     </div>
@@ -165,7 +165,7 @@ export default function HolidayCalendar() {
                   </div>
                   <div className="mt-4 flex gap-2">
                     <AppButton variant="outline" size="sm">Edit Schedule</AppButton>
-                    <AppButton variant="outline" size="sm" className="text-red-500 hover:bg-red-50">Delete</AppButton>
+                    <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50">Delete</AppButton>
                   </div>
                 </div>
               </AppCard>

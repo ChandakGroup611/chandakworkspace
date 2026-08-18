@@ -248,7 +248,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <React.Fragment key={w.id}>
         <AppButton variant="secondary" 
           onClick={() => setActiveWorkspace(workspaces.find(orig => orig.id === w.id))}
-          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border/50' : 'hover:bg-surface border-border/50') : (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-white/5' : 'hover:theme-card-structural /5 border-white/5') }`}
+          className={`w-full text-left py-3 text-xs transition-colors border-b last:border-0 ${ isLightMode ? (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border/50' : 'hover:bg-surface border-border/50') : (activeWorkspace?.id === w.id ? 'bg-theme-btn-primary/10 border-border' : 'hover:theme-card-structural /5 border-border') }`}
           style={{ paddingLeft: `${1 + depth * 1.5}rem`, paddingRight: '1rem' }}
         >
           <div className="flex items-center gap-2">
@@ -716,7 +716,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <ShieldAlert className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
@@ -826,7 +826,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
                 className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
                   filters.myTasksOnly 
-                    ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/40 shadow-sm' 
+                    ? 'bg-success/15 text-success border-emerald-500/40 shadow-sm' 
                     : 'bg-surface/50 text-muted border-border hover:text-foreground'
                 }`}
               >
@@ -1279,7 +1279,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         </div>
       )}
       {errorToast && (
-        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-rose-600 text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-danger text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <span className="text-xs font-semibold">{errorToast}</span>
         </div>
       )}

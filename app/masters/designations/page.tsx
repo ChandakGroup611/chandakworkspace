@@ -210,10 +210,10 @@ export default function DesignationsMasterPage() {
                         </AppTableCell>
                         <AppTableCell className="text-right">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <AppButton variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(d)} className="text-blue-600">
+                            <AppButton variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(d)} className="text-accent">
                               <Edit className="h-4 w-4" />
                             </AppButton>
-                            <AppButton variant="ghost" size="icon-sm" onClick={() => handleDelete(d.id)} className="text-red-600">
+                            <AppButton variant="ghost" size="icon-sm" onClick={() => handleDelete(d.id)} className="text-danger">
                               <Trash2 className="h-4 w-4" />
                             </AppButton>
                           </div>
@@ -244,20 +244,20 @@ export default function DesignationsMasterPage() {
             <div className="p-6">
               <form id="desigForm" onSubmit={handleSave} className="space-y-6">
                 {errorMsg && (
-                  <div className="p-3 rounded-lg bg-red-50 text-red-600 border border-red-100 text-sm font-medium">
+                  <div className="p-3 rounded-lg bg-red-50 text-danger border border-red-100 text-sm font-medium">
                     {errorMsg}
                   </div>
                 )}
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase">Designation Name <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-bold text-muted uppercase">Designation Name <span className="text-danger">*</span></label>
                     <AppInput value={formName} onChange={e => setFormName(e.target.value)} required placeholder="e.g. Senior Developer" className="h-11" />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted uppercase">Code <span className="text-red-500">*</span></label>
+                      <label className="text-sm font-bold text-muted uppercase">Code <span className="text-danger">*</span></label>
                       <AppInput value={formCode} onChange={e => setFormCode(e.target.value)} required placeholder="e.g. SR-DEV" className="h-11 uppercase font-mono" />
                     </div>
                     

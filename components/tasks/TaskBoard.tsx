@@ -46,7 +46,7 @@ function SortableTask({ task }: { task: Task }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} 
-      className="p-3 mb-2 theme-card-structural /5 border-white/10 rounded-xl shadow-sm text-sm cursor-grab active:cursor-grabbing hover:/10 transition-colors">
+      className="p-3 mb-2 theme-card-structural /5 border-border rounded-xl shadow-sm text-sm cursor-grab active:cursor-grabbing hover:/10 transition-colors">
       {task.subject}
     </div>
   );
@@ -54,7 +54,7 @@ function SortableTask({ task }: { task: Task }) {
 
 function Column({ id, title, tasks }: ColumnProps) {
   return (
-    <div className="flex-1 min-w-[280px] flex flex-col bg-surface/40 rounded-xl p-4 border border-white/5">
+    <div className="flex-1 min-w-[280px] flex flex-col bg-surface/40 rounded-xl p-4 border border-border">
       <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-4 flex justify-between items-center">
         <span>{title}</span>
         <span className="bg-surface/10 px-2 py-0.5 rounded-full text-xs">{tasks.length}</span>

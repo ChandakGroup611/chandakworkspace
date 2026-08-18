@@ -188,15 +188,15 @@ export default function AMCReportsPage() {
             </AppCard>
             <AppCard className={`p-6 border-l-4 border-l-emerald-500 bg-surface`}>
               <p className="text-sm font-semibold text-muted">Total Cash Paid</p>
-              <h4 className="text-2xl font-black mt-1 text-emerald-500">{formatCurrency(globalMetrics.totalPaid)}</h4>
+              <h4 className="text-2xl font-black mt-1 text-success">{formatCurrency(globalMetrics.totalPaid)}</h4>
             </AppCard>
             <AppCard className={`p-6 border-l-4 border-l-amber-500 bg-surface`}>
               <p className="text-sm font-semibold text-muted">Upcoming / Pending</p>
-              <h4 className="text-2xl font-black mt-1 text-amber-500">{formatCurrency(globalMetrics.totalPending - globalMetrics.totalOverdue)}</h4>
+              <h4 className="text-2xl font-black mt-1 text-warning">{formatCurrency(globalMetrics.totalPending - globalMetrics.totalOverdue)}</h4>
             </AppCard>
             <AppCard className={`p-6 border-l-4 border-l-rose-500 bg-surface`}>
               <p className="text-sm font-semibold text-muted">Overdue Payments</p>
-              <h4 className="text-2xl font-black mt-1 text-rose-500">{formatCurrency(globalMetrics.totalOverdue)}</h4>
+              <h4 className="text-2xl font-black mt-1 text-danger">{formatCurrency(globalMetrics.totalOverdue)}</h4>
             </AppCard>
           </div>
         </div>
@@ -214,7 +214,7 @@ export default function AMCReportsPage() {
                   <h4 className="font-bold text-theme-icon">{dept.name}</h4>
                   <div className="text-sm font-black">{formatCurrency(dept.contracted)}</div>
                 </div>
-                <div className="flex justify-between items-end mt-auto pt-4 border-t border-border dark:border-white/10">
+                <div className="flex justify-between items-end mt-auto pt-4 border-t border-border dark:border-border">
                   <div className="text-xs text-muted uppercase font-semibold">Utilization</div>
                   <div className="text-sm font-bold">
                     {dept.used} / {dept.licenses} ({dept.licenses > 0 ? Math.round((dept.used/dept.licenses)*100) : 0}%)
@@ -252,17 +252,17 @@ export default function AMCReportsPage() {
                   ) : invoices.map(inv => {
                     const isOverdue = inv.status === 'Pending' && new Date(inv.due_date) < new Date();
                     return (
-                      <AppTableRow key={inv.id} className={`hover:bg-surface/5 dark:hover:bg-surface/5 transition-colors ${isOverdue ? 'bg-rose-500/5' : ''}`}>
+                      <AppTableRow key={inv.id} className={`hover:bg-surface/5 dark:hover:bg-surface/5 transition-colors ${isOverdue ? 'bg-danger/5' : ''}`}>
                         <AppTableCell className="p-4">
                           {inv.status === 'Paid' ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 flex items-center gap-1 w-max"><CheckCircle className="h-3 w-3" /> PAID</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-success/10 text-success flex items-center gap-1 w-max"><CheckCircle className="h-3 w-3" /> PAID</span>
                           ) : isOverdue ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-500 flex items-center gap-1 w-max"><AlertCircle className="h-3 w-3" /> OVERDUE</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-danger/10 text-danger flex items-center gap-1 w-max"><AlertCircle className="h-3 w-3" /> OVERDUE</span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-500 flex items-center gap-1 w-max"><Clock className="h-3 w-3" /> PENDING</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-warning/10 text-warning flex items-center gap-1 w-max"><Clock className="h-3 w-3" /> PENDING</span>
                           )}
                         </AppTableCell>
-                        <AppTableCell className={`p-4 font-semibold ${isOverdue ? 'text-rose-500' : ''}`}>
+                        <AppTableCell className={`p-4 font-semibold ${isOverdue ? 'text-danger' : ''}`}>
                           {new Date(inv.due_date).toLocaleDateString()}
                         </AppTableCell>
                         <AppTableCell className="p-4 font-medium text-theme-icon">

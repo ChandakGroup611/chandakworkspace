@@ -108,13 +108,13 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
 
   const getStatusBadge = (status: string, dueDate: string) => {
     if (status === 'Paid') {
-      return <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Paid</span>;
+      return <span className="px-2 py-0.5 rounded text-xs font-bold bg-success/10 text-success flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Paid</span>;
     }
     const isOverdue = new Date(dueDate) < new Date();
     if (isOverdue) {
-      return <span className="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/10 text-rose-500 flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Overdue</span>;
+      return <span className="px-2 py-0.5 rounded text-xs font-bold bg-danger/10 text-danger flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Overdue</span>;
     }
-    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/10 text-amber-500 flex items-center gap-1"><Clock className="h-3 w-3" /> Pending</span>;
+    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-warning/10 text-warning flex items-center gap-1"><Clock className="h-3 w-3" /> Pending</span>;
   };
 
   return (
@@ -173,7 +173,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
                   <div className="text-xs text-muted mt-2 flex items-center gap-4">
                     <span>Due: {new Date(inv.due_date).toLocaleDateString()}</span>
                     {inv.invoice_number && <span>Invoice #: {inv.invoice_number}</span>}
-                    {inv.payment_date && <span className="text-emerald-500 font-semibold">Paid On: {new Date(inv.payment_date).toLocaleDateString()}</span>}
+                    {inv.payment_date && <span className="text-success font-semibold">Paid On: {new Date(inv.payment_date).toLocaleDateString()}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
@@ -194,7 +194,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
                         {processingId === inv.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark Paid"}
                       </AppButton>
                     )}
-                    <AppButton variant="secondary" onClick={() => handleDelete(inv.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                    <AppButton variant="secondary" onClick={() => handleDelete(inv.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
                       <Trash2 className="h-4 w-4" />
                     </AppButton>
                   </div>

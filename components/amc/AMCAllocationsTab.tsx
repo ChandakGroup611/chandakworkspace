@@ -214,7 +214,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
                           size="sm" 
                           onClick={() => handleRevoke(a.id)}
                           disabled={processingId === a.id}
-                          className="text-red-500 hover:bg-red-500/10"
+                          className="text-danger hover:bg-danger/10"
                         >
                           {processingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Revoke"}
                         </AppButton>

@@ -49,7 +49,7 @@ export function SelfServicePortal() {
 
   const getStatusColor = (statusName: string) => {
     const lower = statusName?.toLowerCase() || '';
-    if (lower.includes('resolv') || lower.includes('clos')) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+    if (lower.includes('resolv') || lower.includes('clos')) return "bg-success/10 text-success border-emerald-500/20";
     if (lower.includes('progress') || lower.includes('doing')) return "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20";
     return "bg-gray-500/10 text-subtle border-gray-500/20";
   };
@@ -73,7 +73,7 @@ export function SelfServicePortal() {
       />
       <div className="flex-1 flex flex-col p-6 max-w-5xl mx-auto w-full gap-6">
         
-        <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-border dark:border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-border dark:border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <h2 className="text-lg font-bold text-theme-heading">How can we help you today?</h2>
             <p className="text-sm text-muted ">Track your existing requests or submit a new one.</p>
@@ -85,13 +85,13 @@ export function SelfServicePortal() {
               placeholder="Search your tickets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-surface/20 border border-border dark:border-white/10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary"
+              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-surface/20 border border-border dark:border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary"
             />
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 theme-card-structural dark:bg-[#1a1c23] rounded-2xl shadow-sm border-border dark:border-white/5 overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border dark:border-white/5">
+        <div className="flex-1 min-h-0 theme-card-structural dark:bg-[#1a1c23] rounded-2xl shadow-sm border-border dark:border-border overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border dark:border-border">
             <h3 className="font-bold text-foreground ">Recent Requests</h3>
           </div>
           

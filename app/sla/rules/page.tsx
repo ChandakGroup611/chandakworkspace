@@ -181,12 +181,12 @@ export default function SLARuleBuilder() {
                     
                     <div className="flex gap-6 mt-4">
                       <div className="flex items-center gap-2 text-sm">
-                        <Clock className="w-4 h-4 text-emerald-500" />
+                        <Clock className="w-4 h-4 text-success" />
                         <span className="text-subtle dark:text-muted">Response:</span>
                         <span className="font-bold text-foreground">{rule.response_target_minutes}m</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <Play className="w-4 h-4 text-amber-500" />
+                        <Play className="w-4 h-4 text-warning" />
                         <span className="text-subtle dark:text-muted">Resolution:</span>
                         <span className="font-bold text-foreground">{rule.resolution_target_minutes}m</span>
                       </div>
@@ -194,7 +194,7 @@ export default function SLARuleBuilder() {
                   </div>
                   <div className="flex items-center gap-2">
                     <AppButton size="sm" variant="outline" onClick={() => handleEdit(rule)}>Edit</AppButton>
-                    <AppButton size="sm" variant="outline" className="text-red-500 hover:bg-red-50" onClick={() => handleDelete(rule.id)}>
+                    <AppButton size="sm" variant="outline" className="text-danger hover:bg-red-50" onClick={() => handleDelete(rule.id)}>
                       <Trash2 className="w-4 h-4" />
                     </AppButton>
                   </div>

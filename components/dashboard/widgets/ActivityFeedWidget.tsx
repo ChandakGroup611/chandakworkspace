@@ -80,11 +80,11 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
           let iconBg;
           
           if (act.type === 'closed') {
-            iconElement = <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-            iconBg = "bg-emerald-500/10 border-emerald-500/20";
+            iconElement = <CheckCircle2 className="h-4 w-4 text-success" />;
+            iconBg = "bg-success/10 border-emerald-500/20";
           } else if (act.type === 'blocked') {
-            iconElement = <AlertCircle className="h-4 w-4 text-red-500" />;
-            iconBg = "bg-red-500/10 border-red-500/20";
+            iconElement = <AlertCircle className="h-4 w-4 text-danger" />;
+            iconBg = "bg-danger/10 border-red-500/20";
           } else if (act.type === 'comment') {
             iconElement = <MessageSquare className="h-4 w-4 text-theme-icon" />;
             iconBg = "bg-theme-btn-primary/10 border-theme-btn-primary/20";

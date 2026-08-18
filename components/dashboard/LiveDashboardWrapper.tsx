@@ -43,7 +43,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbEr
       {isFetching ? (
         <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />
       ) : (
-        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
       )}
       <span className="text-[10px] text-muted font-medium tracking-wider">
         {isFetching ? "SYNCING" : "LIVE"}

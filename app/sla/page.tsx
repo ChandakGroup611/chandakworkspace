@@ -175,22 +175,22 @@ export default function SLAPage() {
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-amber-500/10'} bg-surface`}
+          className={`cursor-pointer transition-all ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-warning/10'} bg-surface`}
           onClick={() => setFilter('UPCOMING')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
             <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
-            <span className="text-3xl font-bold text-amber-500">{loading ? '-' : upcomingRecords}</span>
+            <span className="text-3xl font-bold text-warning">{loading ? '-' : upcomingRecords}</span>
           </AppCardContent>
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-rose-500/10'} bg-surface`}
+          className={`cursor-pointer transition-all ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-danger/10'} bg-surface`}
           onClick={() => setFilter('ESCALATED')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
             <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
-            <span className="text-3xl font-bold text-rose-600 dark:text-rose-400">{loading ? '-' : escalatedRecords}</span>
+            <span className="text-3xl font-bold text-danger dark:text-danger">{loading ? '-' : escalatedRecords}</span>
           </AppCardContent>
         </AppCard>
       </div>
@@ -201,7 +201,7 @@ export default function SLAPage() {
           <AppCard className="flex-1 flex flex-col justify-between overflow-hidden">
             <AppCardHeader className={`flex flex-row items-center justify-between pb-3 border-b border-border bg-elevated/50`}>
               <div className="space-y-0.5">
-                <AppCardTitle className={`flex items-center gap-2 text-rose-600`}>
+                <AppCardTitle className={`flex items-center gap-2 text-danger`}>
                   <ShieldAlert className="h-4 w-4" />
                   <span>Monitored Operational Timeouts</span>
                 </AppCardTitle>
@@ -241,7 +241,7 @@ export default function SLAPage() {
                         <AppTableCell>
                           <div className="space-y-0.5 text-xs">
                             <span className={`${"text-foreground"} font-medium block`}>{item.allocatedWindow}</span>
-                            <span className={`text-[0.8rem] font-mono block text-amber-600`}>{item.elapsedTime}</span>
+                            <span className={`text-[0.8rem] font-mono block text-warning`}>{item.elapsedTime}</span>
                           </div>
                         </AppTableCell>
                         <AppTableCell>
@@ -272,12 +272,12 @@ export default function SLAPage() {
                                 <Eye className="h-3.5 w-3.5" />
                               </AppButton>
                               {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
-                                <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-500 hover:bg-amber-500/10" title="Update Thresholds">
+                                <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-warning hover:bg-warning/10" title="Update Thresholds">
                                   <Edit2 className="h-3.5 w-3.5" />
                                 </AppButton>
                               )}
                               {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_DELETE")) && (
-                                <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-red-500 hover:bg-red-500/10" title="Delete / Override Alert">
+                                <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-danger hover:bg-danger/10" title="Delete / Override Alert">
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </AppButton>
                               )}
@@ -293,7 +293,7 @@ export default function SLAPage() {
 
             <div className={`p-4 border-t text-[0.8rem] text-muted flex items-center justify-between bg-elevated border-border`}>
               <span>Powered by Real-Time Database Tracking Triggers & Dynamic Target Computations.</span>
-              <span className={`cursor-pointer hover:underline text-rose-600`} onClick={refreshLiveTracking}>Force Re-sync</span>
+              <span className={`cursor-pointer hover:underline text-danger`} onClick={refreshLiveTracking}>Force Re-sync</span>
             </div>
           </AppCard>
         </div>
@@ -303,7 +303,7 @@ export default function SLAPage() {
           <AppCard className="p-5 space-y-4">
             <div className={`pb-2 border-b ${"border-border"}`}>
               <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-2 ${"text-muted"}`}>
-                <BellRing className={`h-3.5 w-3.5 text-amber-500`} />
+                <BellRing className={`h-3.5 w-3.5 text-warning`} />
                 <span>Escalation Level Routing Matrix</span>
               </span>
             </div>

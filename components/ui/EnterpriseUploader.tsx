@@ -147,19 +147,19 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
   const getFileIcon = (mime: string, fileName: string = '') => {
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
     if (mime.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
-      return <ImageIcon className="h-4 w-4 text-emerald-500 shrink-0" />;
+      return <ImageIcon className="h-4 w-4 text-success shrink-0" />;
     }
     if (mime.includes('pdf') || ext === 'pdf') {
-      return <FileText className="h-4 w-4 text-rose-500 shrink-0" />;
+      return <FileText className="h-4 w-4 text-danger shrink-0" />;
     }
     if (mime.includes('sheet') || mime.includes('excel') || ['xls', 'xlsx', 'csv'].includes(ext)) {
-      return <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />;
+      return <FileSpreadsheet className="h-4 w-4 text-success shrink-0" />;
     }
     if (mime.includes('word') || ['doc', 'docx'].includes(ext)) {
-      return <FileText className="h-4 w-4 text-blue-500 shrink-0" />;
+      return <FileText className="h-4 w-4 text-accent shrink-0" />;
     }
     if (mime.includes('zip') || mime.includes('compressed') || ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-      return <FileArchive className="h-4 w-4 text-amber-500 shrink-0" />;
+      return <FileArchive className="h-4 w-4 text-warning shrink-0" />;
     }
     return <File className="h-4 w-4 text-muted shrink-0" />;
   };
@@ -218,12 +218,12 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                     </span>
                   )}
                   {fileObj.status === 'error' && (
-                    <span className="text-[11px] text-red-500 flex items-center gap-1 font-medium">
+                    <span className="text-[11px] text-danger flex items-center gap-1 font-medium">
                       <AlertCircle className="h-3 w-3" /> {fileObj.errorMsg}
                     </span>
                   )}
                   {fileObj.status === 'success' && (
-                    <span className="text-[11px] text-emerald-500 flex items-center gap-1 font-medium">
+                    <span className="text-[11px] text-success flex items-center gap-1 font-medium">
                       <CheckCircle2 className="h-3 w-3" /> Uploaded successfully
                     </span>
                   )}
@@ -252,7 +252,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                     variant="ghost"
                     size="sm"
                     onClick={() => removeFile(fileObj.id)}
-                    className="p-1.5 rounded-lg text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition-colors"
                   >
                     <X className="h-3.5 w-3.5" />
                   </AppButton>
@@ -291,7 +291,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                       href={viewUrl} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="px-2 py-1 rounded-lg text-blue-500 hover:bg-blue-500/10 transition-colors flex items-center gap-1" 
+                      className="px-2 py-1 rounded-lg text-accent hover:bg-theme-btn-primary text-theme-btn-primary-text/10 transition-colors flex items-center gap-1" 
                       title="View Attachment"
                     >
                       <Eye className="h-3.5 w-3.5" />

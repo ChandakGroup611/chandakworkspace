@@ -268,7 +268,7 @@ export default function IAMRoleBuilder() {
                                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                                   isChecked 
                                     ? "bg-theme-btn-primary/5 border-theme-btn-primary/30 dark:bg-theme-btn-primary/10 dark:border-theme-btn-primary/40" 
-                                    : "bg-surface dark:bg-[#0B0F19] border-border dark:border-white/10 hover:border-theme-btn-primary/50"
+                                    : "bg-surface dark:bg-[#0B0F19] border-border dark:border-border hover:border-theme-btn-primary/50"
                                 }`}
                               >
                                 <input 

@@ -189,7 +189,7 @@ export default function LoginPage() {
         
         {/* Abstract Glow Effects */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-theme-btn-primary/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-theme-btn-primary text-theme-btn-primary-text/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
           
@@ -208,7 +208,7 @@ export default function LoginPage() {
           <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight !text-white mb-12 leading-tight drop-shadow-lg">
               Intelligent Governance <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-cyan-400">
                 & Enterprise Mastery
               </span>
             </h1>
@@ -249,7 +249,7 @@ export default function LoginPage() {
 
             {/* Realtime Alert Displays */}
             {errorMsg && (
-              <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-danger dark:text-danger text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                 <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <strong className="font-semibold block">Authentication Failed</strong>
@@ -259,7 +259,7 @@ export default function LoginPage() {
             )}
 
             {successMsg && (
-              <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-success dark:text-success text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                 <ShieldCheck className="h-5 w-5 shrink-0" />
                 <span className="font-medium">{successMsg}</span>
               </div>
@@ -279,7 +279,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
                   required
                 />
               </div>
@@ -300,7 +300,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
                   required
                 />
               </div>
@@ -348,7 +348,7 @@ export default function LoginPage() {
               variant="outline"
               onClick={handleMicrosoftLogin}
               disabled={ssoLoading}
-              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-surface/5 font-semibold bg-[#0A0D14] lg:bg-transparent border border-white/10"
+              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-surface/5 font-semibold bg-[#0A0D14] lg:bg-transparent border border-border"
             >
               {ssoLoading ? (
                 <div className="flex items-center gap-2 text-white">

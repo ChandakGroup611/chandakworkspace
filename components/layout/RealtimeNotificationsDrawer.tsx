@@ -214,7 +214,7 @@ export default function RealtimeNotificationsDrawer() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative !h-10 !w-10 rounded-xl theme-card-structural text-muted hover:bg-muted hover:text-foreground"
       >
-        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-amber-500 animate-bounce" : ""}`} />
+        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-warning animate-bounce" : ""}`} />
         {unreadCount > 0 && (
           <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
             {unreadCount}
@@ -238,15 +238,15 @@ export default function RealtimeNotificationsDrawer() {
               <div className="shrink-0 mt-0.5">
                 <div className={`p-2 rounded-xl ${
                   isCritical 
-                    ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-rose-500 border border-rose-500/20" 
-                    : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-500 border border-amber-500/20"
+                    ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-danger border border-rose-500/20" 
+                    : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-warning border border-amber-500/20"
                 }`}>
                   {isCritical ? <ShieldAlert className="h-4 w-4 animate-pulse" /> : <Bell className="h-4 w-4" />}
                 </div>
               </div>
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className={`text-[0.7rem] font-mono font-bold uppercase tracking-wider ${isCritical ? 'text-rose-500' : 'text-amber-500'}`}>
+                  <span className={`text-[0.7rem] font-mono font-bold uppercase tracking-wider ${isCritical ? 'text-danger' : 'text-warning'}`}>
                     {toast.entity_id}
                   </span>
                   <AppButton 
@@ -267,9 +267,9 @@ export default function RealtimeNotificationsDrawer() {
                 <p className="text-[0.8rem] text-muted leading-snug line-clamp-2">
                   {displayMessage}
                 </p>
-                <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-white/5 mt-1 text-muted">
+                <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-border mt-1 text-muted">
                   <span>Actor: <strong>{toast.actor_name || toast.actor}</strong></span>
-                  <span className={`${isCritical ? 'text-rose-500' : 'text-amber-500'} font-bold group-hover:underline`}>View details →</span>
+                  <span className={`${isCritical ? 'text-danger' : 'text-warning'} font-bold group-hover:underline`}>View details →</span>
                 </div>
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function RealtimeNotificationsDrawer() {
         <EnterpriseDrawerShell
           title={
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 shrink-0">
+              <div className="p-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-warning dark:text-warning shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
               <span className={`text-lg font-bold tracking-wider ${"text-foreground"}`}>Enterprise Stream</span>
@@ -295,7 +295,7 @@ export default function RealtimeNotificationsDrawer() {
           footer={
             <div className={`w-full p-2 text-xs text-muted flex items-center justify-between gap-2`}>
               <span>Auto-redirect anchors bound instantly</span>
-              <ExternalLink className="h-3 w-3 text-amber-500" />
+              <ExternalLink className="h-3 w-3 text-warning" />
             </div>
           }
         >
@@ -306,7 +306,7 @@ export default function RealtimeNotificationsDrawer() {
                   size="sm"
                   variant={activeFilter === "UNREAD" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("UNREAD")}
-                  className={activeFilter === "UNREAD" ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-amber-500/10"}
+                  className={activeFilter === "UNREAD" ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-warning/10"}
                 >
                   Unread ({unreadCount})
                 </AppButton>
@@ -314,7 +314,7 @@ export default function RealtimeNotificationsDrawer() {
                   size="sm"
                   variant={activeFilter === "CRITICAL" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("CRITICAL")}
-                  className={activeFilter === "CRITICAL" ? "bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-rose-500/10"}
+                  className={activeFilter === "CRITICAL" ? "bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-danger/10"}
                 >
                   Escalations ({criticalCount})
                 </AppButton>
@@ -333,7 +333,7 @@ export default function RealtimeNotificationsDrawer() {
                   variant="outline"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400"
+                  className="hover:bg-amber-50 hover:text-warning dark:hover:bg-warning/10 dark:hover:text-warning"
                 >
                   Clear Badges
                 </AppButton>
@@ -351,7 +351,7 @@ export default function RealtimeNotificationsDrawer() {
                 </div>
               ) : filteredItems.length === 0 ? (
                 <div className="text-center py-12 space-y-1.5 text-muted">
-                  <CheckCircle2 className="h-6 w-6 mx-auto text-emerald-500/40" />
+                  <CheckCircle2 className="h-6 w-6 mx-auto text-success/40" />
                   <span className="text-xs font-semibold block">Zero Pending Items</span>
                 </div>
               ) : (
@@ -372,7 +372,7 @@ export default function RealtimeNotificationsDrawer() {
                       }`}
                     >
                       <div className="shrink-0 mt-0.5">
-                        <div className={`p-1.5 rounded-lg ${isCritical ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-rose-500 border border-rose-500/30" : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-500 border border-amber-500/30"}`}>
+                        <div className={`p-1.5 rounded-lg ${isCritical ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-danger border border-rose-500/30" : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-warning border border-amber-500/30"}`}>
                           {isCritical ? <ShieldAlert className="h-3 w-3" /> : <Layers className="h-3 w-3" />}
                         </div>
                       </div>
@@ -381,7 +381,7 @@ export default function RealtimeNotificationsDrawer() {
                           <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider truncate flex items-center gap-1">
                             <span className={"text-foreground"}>{item.entity_id}</span>
                             <span className="text-muted">•</span>
-                            <span className={`${isCritical ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'}`}>{item.module}</span>
+                            <span className={`${isCritical ? 'text-danger dark:text-danger' : 'text-warning dark:text-warning'}`}>{item.module}</span>
                           </span>
                           <AppButton 
                             variant="ghost" 

@@ -128,10 +128,10 @@ export default function TicketsPage() {
 
   const getPriorityColor = (code: string | undefined) => {
     if (!code) return "bg-gray-500";
-    if (code.includes("CRITICAL") || code === "PRIO_CRIT_P1" || code === "P1") return "bg-red-500 text-white";
-    if (code.includes("HIGH") || code === "PRIO_HIGH_P2" || code === "P2") return "bg-amber-500 text-white";
+    if (code.includes("CRITICAL") || code === "PRIO_CRIT_P1" || code === "P1") return "bg-danger text-white";
+    if (code.includes("HIGH") || code === "PRIO_HIGH_P2" || code === "P2") return "bg-warning text-white";
     if (code.includes("MEDIUM") || code === "PRIO_MED_P3" || code === "P3") return "bg-theme-btn-primary text-white";
-    return "bg-green-500 text-white";
+    return "bg-success text-white";
   };
 
   // End User Role Visibility: Can only see their own created or assigned tickets is handled on the server side using the existing getVisibleTickets logic, but we still apply it here just in case, though the DB already enforces it. Actually, wait. The DB filters for ends users as well? Yes, getVisibleTickets handles user isolation. So we can just use tickets directly.
@@ -151,7 +151,7 @@ export default function TicketsPage() {
   if (!hasPermission("TICKETS_VIEW")) {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <Database className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
@@ -168,13 +168,13 @@ export default function TicketsPage() {
         children={
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
               <span className={`text-[0.65rem] font-bold uppercase tracking-widest text-muted`}>Live Node: Chandak Workspace-ENTERPRISE-01</span>
             </div>
             <div className={`h-4 w-px bg-elevated`} />
             <div className="flex items-center gap-4 text-xs">
               <span className="font-semibold text-muted uppercase tracking-wide">Active: <span className="text-foreground dark:text-white">{tickets.length}</span></span>
-              <span className="font-semibold text-emerald-500 uppercase tracking-wide">SLA Stability: 98.4%</span>
+              <span className="font-semibold text-success uppercase tracking-wide">SLA Stability: 98.4%</span>
             </div>
           </div>
         }
@@ -369,7 +369,7 @@ export default function TicketsPage() {
                               <AppButton 
                                 variant="ghost" 
                                 size="sm" 
-                                className="h-8 px-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 transition-colors"
+                                className="h-8 px-2 text-success hover:bg-green-50 dark:hover:bg-success/10 transition-colors"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleTicketClick(ticket);

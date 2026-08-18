@@ -526,7 +526,7 @@ export default function MastersPage() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <Lock className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
@@ -567,10 +567,10 @@ export default function MastersPage() {
 
       {/* Global Event Trigger Banners */}
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3 animate-in fade-in-20">
-          <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-danger/10 border border-rose-500/20 flex items-start gap-3 animate-in fade-in-20">
+          <AlertTriangle className="h-4 w-4 text-danger dark:text-danger shrink-0 mt-0.5" />
           <div className="flex-1 text-xs text-rose-700 dark:text-rose-200">
-            <strong className="font-semibold block text-rose-600 dark:text-rose-300">Governance Integrity Notice:</strong>
+            <strong className="font-semibold block text-danger dark:text-rose-300">Governance Integrity Notice:</strong>
             {errorAlert}
           </div>
           <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-foreground dark:hover:text-white">
@@ -580,9 +580,9 @@ export default function MastersPage() {
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in-20">
+        <div className="p-4 rounded-xl bg-success/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in-20">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 className="h-4 w-4 text-success dark:text-success" />
             <span>{successAlert}</span>
           </div>
           <AppButton variant="secondary" onClick={() => setSuccessAlert(null)} className="text-muted hover:text-foreground dark:hover:text-white">
@@ -717,7 +717,7 @@ export default function MastersPage() {
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-white/10 flex flex-col gap-3 shadow-sm">
+            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-border flex flex-col gap-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
@@ -735,7 +735,7 @@ export default function MastersPage() {
               </div>
 
               {/* Dynamic Quick Text Search bar */}
-              <div className="flex items-center pt-2 mt-1 border-t border-border dark:border-white/10">
+              <div className="flex items-center pt-2 mt-1 border-t border-border dark:border-border">
                 <AppInput 
                   placeholder="Filter records by string parameters..." 
                   value={searchQuery}
@@ -759,7 +759,7 @@ export default function MastersPage() {
                     <div className={`py-16 px-4 text-center space-y-3 border border-dashed rounded-2xl ${
                       "bg-elevated border-border"
                     }`}>
-                      <div className="h-10 w-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400 font-bold">
+                      <div className="h-10 w-10 rounded-full bg-warning/10 border border-amber-500/20 flex items-center justify-center mx-auto text-warning font-bold">
                         !
                       </div>
                       <div className="space-y-1 max-w-sm mx-auto">
@@ -818,7 +818,7 @@ export default function MastersPage() {
                                       rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
                                         ? "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
                                         : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
-                                        ? "text-amber-400 border-amber-500/30 bg-amber-500/5"
+                                        ? "text-warning border-amber-500/30 bg-warning/5"
                                         : "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
                                     }`}>
                                       {rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
@@ -850,7 +850,7 @@ export default function MastersPage() {
                                   {rec.max_sla_hours !== undefined ? (
                                     <div className="flex items-center gap-2">
                                       <div className={`p-1 rounded-md bg-amber-100`}>
-                                        <Clock className="h-3 w-3 text-amber-500" />
+                                        <Clock className="h-3 w-3 text-warning" />
                                       </div>
                                       <span className="font-semibold">{rec.max_sla_hours * 60}m Target</span>
                                       <div className="flex gap-2 text-[0.65rem] opacity-60 uppercase font-bold tracking-tighter">
@@ -915,7 +915,7 @@ export default function MastersPage() {
                                     onClick={() => handleDelete(rec)}
                                     disabled={!hasPermission("MASTERS_DELETE")}
                                     className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      "bg-surface border-border text-muted hover:text-rose-600 hover:border-rose-300"
+                                      "bg-surface border-border text-muted hover:text-danger hover:border-rose-300"
                                     }`}
                                     title="Delete Record"
                                   >
@@ -934,9 +934,9 @@ export default function MastersPage() {
             </div>
 
             {/* Pagination / Context Footer */}
-            <div className="p-4 bg-surface/[0.005] border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted">
+            <div className="p-4 bg-surface/[0.005] border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted">
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
+                <ShieldCheck className="h-3 w-3 text-success shrink-0" />
                 <span>Auditing active: all status updates automatically export JSONB snapshots.</span>
               </div>
               <span className="text-muted font-mono">Visible entities: {filteredDataset.length} of {records.length}</span>
@@ -981,7 +981,7 @@ export default function MastersPage() {
               {/* Code */}
               <div className="space-y-1.5">
                 <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                  Short Code <span className="text-rose-400">*</span>
+                  Short Code <span className="text-danger">*</span>
                 </label>
                 <AppInput 
                   placeholder="e.g. SEC_INC"
@@ -996,7 +996,7 @@ export default function MastersPage() {
               {/* Full Display Name */}
               <div className="space-y-1.5">
                 <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                  Display Name <span className="text-rose-400">*</span>
+                  Display Name <span className="text-danger">*</span>
                 </label>
                 <AppInput 
                   placeholder="e.g. Security Incident"
@@ -1027,7 +1027,7 @@ export default function MastersPage() {
               {(currentConfig.table === "status_master" || currentConfig.table === "priority_master") && (
                 <div className="space-y-1.5">
                   <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                    Display Color <span className="text-rose-400">*</span>
+                    Display Color <span className="text-danger">*</span>
                   </label>
                   <div className="flex items-center gap-3">
                     <input 
@@ -1050,7 +1050,7 @@ export default function MastersPage() {
               {currentConfig.parentTable && (
                 <div className="space-y-1.5">
                   <label className="text-[0.8rem] font-bold text-theme-icon uppercase tracking-wider block">
-                    Parent Record Link <span className="text-rose-400">*</span>
+                    Parent Record Link <span className="text-danger">*</span>
                   </label>
                   <select
                     value={formParentId}
@@ -1077,9 +1077,9 @@ export default function MastersPage() {
 
               {/* Target SLA target minutes input */}
               {currentConfig.table === "master_priorities" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 rounded-lg border border-emerald-500/20 bg-success/5">
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
                       Min Time (Mins)
                     </label>
                     <AppInput 
@@ -1090,7 +1090,7 @@ export default function MastersPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
                       Standard Time (Mins)
                     </label>
                     <AppInput 
@@ -1101,7 +1101,7 @@ export default function MastersPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
+                    <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
                       Max Time (Mins)
                     </label>
                     <AppInput 
@@ -1117,9 +1117,9 @@ export default function MastersPage() {
               {/* Associated System Module dropdown removed - dynamically assigned based on Governance Scope */}
 
               {/* Operational Scope Flag (1=INFRA, 2=ERP) */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-surface/[0.02] border border-white/5">
+              <div className="space-y-1.5 p-3 rounded-xl bg-surface/[0.02] border border-border">
                 <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">
-                  Operational Governance Scope <span className="text-rose-400">*</span>
+                  Operational Governance Scope <span className="text-danger">*</span>
                 </label>
                 <select
                   value={formScopeId || ""}
@@ -1139,7 +1139,7 @@ export default function MastersPage() {
               {/* Custom asset tags */}
               {activeTab === "assets" && (
                 <div className="space-y-1.5">
-                  <label className="text-[0.8rem] font-bold text-emerald-400 uppercase tracking-wider block">
+                  <label className="text-[0.8rem] font-bold text-success uppercase tracking-wider block">
                     Hardware Tag Reference ID
                   </label>
                   <AppInput 

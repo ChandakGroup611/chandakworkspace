@@ -57,13 +57,13 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
         <div className="space-y-2 group cursor-pointer">
           <div className="flex justify-between text-xs font-semibold">
             <span className="flex items-center gap-2 text-foreground/80 group-hover:text-foreground transition-colors">
-              <Briefcase className="w-4 h-4 text-emerald-500" /> Active Requirements
+              <Briefcase className="w-4 h-4 text-success" /> Active Requirements
             </span>
             <span className="font-bold">{workload.active_requirements}</span>
           </div>
           <div className="w-full theme-input-structural h-2 rounded-full overflow-hidden p-0 flex items-center">
             <div 
-              className="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out delay-200" 
+              className="bg-success h-full rounded-full transition-all duration-1000 ease-out delay-200" 
               style={{ width: `${Math.min(100, workload.active_requirements * 10)}%` }} 
             />
           </div>

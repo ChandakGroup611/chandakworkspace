@@ -131,7 +131,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
               <select
                 value={targetWorkspaceId}
                 onChange={(e) => setTargetWorkspaceId(e.target.value)}
-                className="w-full text-sm theme-card-structural dark:bg-[#151923] text-theme-heading border-border dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
+                className="w-full text-sm theme-card-structural dark:bg-[#151923] text-theme-heading border-border dark:border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary"
               >
                 <option value="">Select a Workspace...</option>
                 {workspaces.map(w => (
@@ -144,17 +144,17 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
           {step === 2 && (
             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
               {taskDetails.length === 0 ? (
-                <div className="text-sm text-emerald-500 bg-emerald-500/10 p-4 rounded-lg border border-emerald-500/20">
+                <div className="text-sm text-success bg-success/10 p-4 rounded-lg border border-emerald-500/20">
                   All current assignees and watchers are already members of the target workspace. No mapping required!
                 </div>
               ) : (
                 <>
-                  <div className="text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
+                  <div className="text-sm text-warning bg-warning/10 p-3 rounded-lg border border-amber-500/20">
                     Some tasks have assignees or watchers who are <strong>not</strong> members of the target workspace. Please select valid stakeholders.
                   </div>
                   
                   {taskDetails.map((t) => (
-                    <div key={t.id} className="p-3 border-border dark:border-white/10 rounded-lg space-y-3 bg-surface dark:theme-card-structural /[0.02]">
+                    <div key={t.id} className="p-3 border-border dark:border-border rounded-lg space-y-3 bg-surface dark:theme-card-structural /[0.02]">
                       <div className="font-semibold text-sm">{t.subject || t.id}</div>
                       
                       {t.reqNewExec && (
@@ -163,7 +163,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                           <select
                             value={mappings[t.id]?.newExecutive || ""}
                             onChange={(e) => setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newExecutive: e.target.value } }))}
-                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-border dark:border-white/10 rounded px-2 py-1.5"
+                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-border dark:border-border rounded px-2 py-1.5"
                           >
                             <option value="">Select Executive...</option>
                             {stakeholders.map(s => (
@@ -185,7 +185,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
                               const opts = Array.from(e.target.selectedOptions, option => option.value);
                               setMappings(prev => ({ ...prev, [t.id]: { ...prev[t.id], newWatchers: opts } }));
                             }}
-                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-border dark:border-white/10 rounded px-2 py-1.5"
+                            className="w-full mt-1 text-xs theme-card-structural dark:bg-[#151923] border-border dark:border-border rounded px-2 py-1.5"
                           >
                             {stakeholders.map(s => (
                               <option key={s.user_id} value={s.user_id}>{s.full_name || s.email}</option>

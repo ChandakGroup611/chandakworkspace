@@ -277,7 +277,7 @@ export default function TemplateDesigner() {
                       <td className="px-6 py-4 text-muted">{item.module}</td>
                       <td className="px-6 py-4 text-muted">{item.event}</td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.is_active ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.is_active ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
                           {item.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
@@ -292,7 +292,7 @@ export default function TemplateDesigner() {
                           </AppButton>
                           <AppButton 
                             onClick={(e) => handleDelete(item.id, e)} 
-                            className="p-2 text-muted hover:text-rose-500 bg-background rounded-md border border-border shadow-sm"
+                            className="p-2 text-muted hover:text-danger bg-background rounded-md border border-border shadow-sm"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -398,7 +398,7 @@ export default function TemplateDesigner() {
                 id={`editor_${tpl.id}`}
                 value={tpl.html_body || ''}
                 onChange={(e) => updateLocal(tpl.id, "html_body", e.target.value)}
-                className="w-full h-64 bg-background text-emerald-600 dark:text-emerald-400 font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-theme-btn-primary/20 resize-y"
+                className="w-full h-64 bg-background text-success dark:text-success font-mono text-sm p-6 focus:outline-none focus:ring-inset focus:ring-2 focus:ring-theme-btn-primary/20 resize-y"
                 spellCheck={false}
               />
             ) : (
@@ -424,7 +424,7 @@ export default function TemplateDesigner() {
               </label>
 
               <div className="flex items-center gap-3">
-                <AppButton onClick={(e) => handleDelete(tpl.id, e)} className="text-muted hover:text-rose-500 transition-colors mr-2">
+                <AppButton onClick={(e) => handleDelete(tpl.id, e)} className="text-muted hover:text-danger transition-colors mr-2">
                   <Trash2 className="w-4 h-4" />
                 </AppButton>
                 <AppButton 
@@ -452,7 +452,7 @@ export default function TemplateDesigner() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

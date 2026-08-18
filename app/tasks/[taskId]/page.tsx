@@ -75,7 +75,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
           <p className="text-[11px] font-mono tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded font-bold border border-theme-btn-primary/20">
             {task.task_code || "TASK"}
           </p>
-          <p className="text-[11px] tracking-wider text-muted px-2 py-0.5 border border-border dark:border-white/10 rounded font-bold bg-surface dark:bg-transparent">
+          <p className="text-[11px] tracking-wider text-muted px-2 py-0.5 border border-border dark:border-border rounded font-bold bg-surface dark:bg-transparent">
             WORKSPACE: {task.workspace?.code ? `[${task.workspace.code}] ` : ""}{task.workspace?.name || "Unknown"}
           </p>
         </div>
@@ -93,10 +93,10 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
         {/* DEDICATED CARD FOR SUBJECT AND DESCRIPTION */}
         <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
-          <div className="bg-gradient-to-r from-blue-500/15 via-surface/90 to-surface/40 dark:from-blue-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+          <div className="bg-gradient-to-r from-accent/15 via-surface/90 to-surface/40 dark:from-accent/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
             <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-4 rounded-full bg-blue-500 shadow-xs" />
-              <Type className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary text-theme-btn-primary-text shadow-xs" />
+              <Type className="w-4 h-4 text-accent dark:text-accent" />
               <h3 className="font-bold text-sm tracking-wide text-foreground">Task Subject & Description</h3>
             </div>
             <span className="text-[10px] font-mono font-bold tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2.5 py-0.5 rounded-full border border-theme-btn-primary/20">
@@ -111,7 +111,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
                   <AlignLeft className="w-3.5 h-3.5" /> Description
                 </span>
                 <SafeHtml 
-                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-subtle dark:text-muted w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-surface/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-border/60 dark:border-white/10 shadow-sm"
+                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-subtle dark:text-muted w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-surface/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-border/60 dark:border-border shadow-sm"
                   html={task.description} 
                 />
               </div>
@@ -121,7 +121,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Subtask Progress</span>
                 <div className="w-64 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                  <div className="h-full bg-success rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                 </div>
                 <span className="text-[10px] font-bold text-subtle dark:text-muted">{task.custom_fields.progress_percentage}%</span>
               </div>
@@ -131,11 +131,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
         <div className="w-full">
           {isFrozen && (
-            <div className="mb-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-4 shadow-sm flex items-start gap-3">
+            <div className="mb-4 rounded-xl bg-amber-50 dark:bg-warning/10 border border-amber-200 dark:border-amber-500/20 p-4 shadow-sm flex items-start gap-3">
               <span className="text-xl shrink-0">🧊</span>
               <div>
-                <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Task is Frozen</h4>
-                <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">This task is strictly frozen because its status is Closed. Only Super Admins and Executives can edit or reopen it.</p>
+                <h4 className="text-sm font-bold text-amber-800 dark:text-warning">Task is Frozen</h4>
+                <p className="text-xs text-amber-700 dark:text-warning mt-1">This task is strictly frozen because its status is Closed. Only Super Admins and Executives can edit or reopen it.</p>
               </div>
             </div>
           )}

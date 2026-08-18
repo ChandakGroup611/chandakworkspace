@@ -20,22 +20,22 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
   const renderStatus = (s: string) => {
     const statusStr = String(s || "").toLowerCase();
     if (statusStr.includes("resolv") || statusStr.includes("done")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Done</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-success/10 text-success border border-emerald-500/20">Done</span>;
     if (statusStr.includes("escalat") || statusStr.includes("block")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-red-500/10 text-red-500 border border-red-500/20">Blocked</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-danger/10 text-danger border border-red-500/20">Blocked</span>;
     if (statusStr.includes("review")) 
-      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">Review</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-warning/10 text-warning border border-amber-500/20">Review</span>;
     return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">Active</span>;
   };
 
   const renderPriority = (p: string) => {
     const priorityStr = String(p || "").toLowerCase();
     if (priorityStr.includes("critical") || priorityStr.includes("p1")) 
-      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span><span className="text-xs text-foreground">Critical</span></div>;
+      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span><span className="text-xs text-foreground">Critical</span></div>;
     if (priorityStr.includes("high") || priorityStr.includes("p2")) 
       return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-500"></span><span className="text-xs text-foreground">High</span></div>;
     if (priorityStr.includes("medium")) 
-      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500"></span><span className="text-xs text-foreground">Medium</span></div>;
+      return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-warning"></span><span className="text-xs text-foreground">Medium</span></div>;
     return <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-slate-400"></span><span className="text-xs text-foreground">Low</span></div>;
   };
 
@@ -66,7 +66,7 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
                 const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
                 const isBug = m.module === 'Tickets';
                 const isTask = m.module === 'Tasks';
-                const tagBg = isBug ? 'bg-red-500/10 text-red-500 border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
+                const tagBg = isBug ? 'bg-danger/10 text-danger border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
                 
                 const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
@@ -97,7 +97,7 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
                     </AppTableCell>
                     <AppTableCell>
                       {m.dueDate ? (
-                        <div className={`text-xs font-semibold ${m.isOverdue ? 'text-red-500' : 'text-muted-foreground'}`}>
+                        <div className={`text-xs font-semibold ${m.isOverdue ? 'text-danger' : 'text-muted-foreground'}`}>
                           {new Date(m.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>
                       ) : (

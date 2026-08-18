@@ -29,15 +29,15 @@ export function DeadlinesWidget({ metrics = [] }: DeadlinesWidgetProps) {
   };
 
   const renderDaysLeft = (diff: number) => {
-    if (diff < 0) return <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Overdue</span>;
-    if (diff === 0) return <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">Due Today</span>;
+    if (diff < 0) return <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-danger/10 text-danger border border-red-500/20">Overdue</span>;
+    if (diff === 0) return <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-warning/10 text-warning border border-amber-500/20">Due Today</span>;
     if (diff === 1) return <span className="text-xs font-semibold text-foreground/80">Tomorrow</span>;
     return <span className="text-xs font-semibold text-muted-foreground">In {diff} days</span>;
   };
 
   const getIconData = (diff: number) => {
-    if (diff < 0) return { icon: <Flame className="h-4 w-4 text-red-500" />, bg: "bg-red-500/10 border-red-500/20" };
-    if (diff <= 2) return { icon: <AlertCircle className="h-4 w-4 text-amber-500" />, bg: "bg-amber-500/10 border-amber-500/20" };
+    if (diff < 0) return { icon: <Flame className="h-4 w-4 text-danger" />, bg: "bg-danger/10 border-red-500/20" };
+    if (diff <= 2) return { icon: <AlertCircle className="h-4 w-4 text-warning" />, bg: "bg-warning/10 border-amber-500/20" };
     return { icon: <Calendar className="h-4 w-4 text-muted-foreground" />, bg: "bg-surface-hover border-border/50" };
   };
 
@@ -67,8 +67,8 @@ export function DeadlinesWidget({ metrics = [] }: DeadlinesWidgetProps) {
               key={m.id} 
               className={cn(
                 "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group",
-                diff < 0 ? "bg-red-500/5 hover:bg-red-500/10 border-red-500/20" : 
-                diff === 0 ? "bg-amber-500/5 hover:bg-amber-500/10 border-amber-500/20" : 
+                diff < 0 ? "bg-danger/5 hover:bg-danger/10 border-red-500/20" : 
+                diff === 0 ? "bg-warning/5 hover:bg-warning/10 border-amber-500/20" : 
                 "bg-surface-hover/30 hover:bg-surface-hover/80 border-transparent hover:border-border/50"
               )}
               onClick={handleItemClick}

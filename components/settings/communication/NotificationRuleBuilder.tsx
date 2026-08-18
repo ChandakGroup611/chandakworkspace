@@ -135,18 +135,18 @@ export default function NotificationRuleBuilder() {
     }));
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>;
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-success" /></div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between items-center bg-surface dark:bg-[#0A0D14] border border-border dark:border-border p-4 rounded-xl shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-foreground">Rule Engine</h2>
           <p className="text-xs text-muted">Configure declarative IF-THEN routing constraints.</p>
         </div>
         <AppButton
           onClick={handleAddRule}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
+          className="flex items-center gap-2 bg-success hover:bg-success text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
         >
           <Plus className="w-4 h-4" /> Add Rule
         </AppButton>
@@ -157,43 +157,43 @@ export default function NotificationRuleBuilder() {
           const config = MODULE_CONFIG[rule.module] || MODULE_CONFIG["Task"];
           
           return (
-            <div key={rule.id} className="bg-background dark:bg-[#121620] border border-border dark:border-white/5 rounded-xl overflow-hidden shadow-xl">
+            <div key={rule.id} className="bg-background dark:bg-[#121620] border border-border dark:border-border rounded-xl overflow-hidden shadow-xl">
               {/* Header IF block */}
-              <div className="theme-card-structural /5 px-6 py-4 border-b border-white/5 flex flex-wrap items-center gap-4">
-                <span className="font-mono text-emerald-400 font-bold text-lg">IF</span>
+              <div className="theme-card-structural /5 px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
+                <span className="font-mono text-success font-bold text-lg">IF</span>
                 
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-muted uppercase">Module =</span>
                   <select 
                     value={rule.module}
                     onChange={(e) => updateLocalRule(rule.id, "module", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {Object.keys(MODULE_CONFIG).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
 
-                <span className="font-mono text-emerald-400/70 font-bold text-sm">AND</span>
+                <span className="font-mono text-success/70 font-bold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-muted uppercase">Event =</span>
                   <select 
                     value={rule.event}
                     onChange={(e) => updateLocalRule(rule.id, "event", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {config.events.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
                 </div>
 
-                <span className="font-mono text-emerald-400/70 font-bold text-sm">AND</span>
+                <span className="font-mono text-success/70 font-bold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-muted uppercase">Status =</span>
                   <select 
                     value={rule.status_trigger || "ANY"}
                     onChange={(e) => updateLocalRule(rule.id, "status_trigger", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-white/10 rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {config.statuses.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -254,9 +254,9 @@ export default function NotificationRuleBuilder() {
               </div>
 
               {/* Actions Footer */}
-              <div className="bg-surface dark:bg-[#0A0D14] px-6 py-3 border-t border-border dark:border-white/5 flex justify-between items-center">
+              <div className="bg-surface dark:bg-[#0A0D14] px-6 py-3 border-t border-border dark:border-border flex justify-between items-center">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-emerald-500' : 'bg-gray-600'}`}>
+                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-success' : 'bg-gray-600'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
@@ -269,12 +269,12 @@ export default function NotificationRuleBuilder() {
                 </label>
 
                 <div className="flex items-center gap-3">
-                  <AppButton onClick={() => handleDeleteRule(rule.id)} className="text-muted hover:text-rose-400 transition-colors">
+                  <AppButton onClick={() => handleDeleteRule(rule.id)} className="text-muted hover:text-danger transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </AppButton>
                   <AppButton 
                     onClick={() => handleSaveRule(rule)}
-                    className="flex items-center gap-2 theme-card-structural /5 hover:/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border-white/10"
+                    className="flex items-center gap-2 theme-card-structural /5 hover:/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border-border"
                   >
                     <Save className="w-4 h-4" /> Save
                   </AppButton>
@@ -285,7 +285,7 @@ export default function NotificationRuleBuilder() {
         })}
 
         {rules.length === 0 && (
-          <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-xl">
+          <div className="text-center py-12 border-2 border-dashed border-border rounded-xl">
             <Workflow className="w-12 h-12 text-subtle mx-auto mb-4" />
             <h3 className="text-lg font-bold text-muted">No Routing Rules Configured</h3>
             <p className="text-sm text-muted mt-1">Events will not trigger any notifications until rules are defined.</p>
@@ -294,7 +294,7 @@ export default function NotificationRuleBuilder() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

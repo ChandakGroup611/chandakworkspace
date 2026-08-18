@@ -35,9 +35,9 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
 
   const getStyleProps = (code: string) => {
     switch (code) {
-      case "INFRA": return { iconBg: "bg-blue-500/10", iconText: "text-blue-600 dark:text-blue-400", hoverBg: "group-hover:bg-blue-500", border: "group-hover:border-blue-500/50", gradient: "from-blue-500/5 to-indigo-500/5 group-hover:from-blue-500/10 group-hover:to-indigo-500/10" };
+      case "INFRA": return { iconBg: "bg-theme-btn-primary text-theme-btn-primary-text/10", iconText: "text-accent dark:text-accent", hoverBg: "group-hover:bg-theme-btn-primary text-theme-btn-primary-text", border: "group-hover:border-blue-500/50", gradient: "from-accent/5 to-indigo-500/5 group-hover:from-accent/10 group-hover:to-indigo-500/10" };
       case "ERP": return { iconBg: "bg-orange-500/10", iconText: "text-orange-600 dark:text-orange-400", hoverBg: "group-hover:bg-orange-500", border: "group-hover:border-orange-500/50", gradient: "from-orange-500/5 to-amber-500/5 group-hover:from-orange-500/10 group-hover:to-amber-500/10" };
-      case "OTHERS": return { iconBg: "bg-emerald-500/10", iconText: "text-emerald-600 dark:text-emerald-400", hoverBg: "group-hover:bg-emerald-500", border: "group-hover:border-emerald-500/50", gradient: "from-emerald-500/5 to-teal-500/5 group-hover:from-emerald-500/10 group-hover:to-teal-500/10" };
+      case "OTHERS": return { iconBg: "bg-success/10", iconText: "text-success dark:text-success", hoverBg: "group-hover:bg-success", border: "group-hover:border-emerald-500/50", gradient: "from-emerald-500/5 to-teal-500/5 group-hover:from-emerald-500/10 group-hover:to-teal-500/10" };
       default: return { iconBg: "bg-slate-500/10", iconText: "text-slate-600 dark:text-slate-400", hoverBg: "group-hover:bg-slate-500", border: "group-hover:border-slate-500/50", gradient: "from-slate-500/5 to-gray-500/5 group-hover:from-slate-500/10 group-hover:to-gray-500/10" };
     }
   };
@@ -73,10 +73,10 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
               variant="ghost"
               className="p-0 h-auto w-full group relative text-left transition-all duration-300 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
             >
-              <AppCard className={`h-full w-full transition-all duration-300 overflow-hidden relative border ${isLightMode ? 'border-border/80 hover:border-theme-btn-primary/60' : 'border-white/10 hover:border-theme-btn-primary/80'} shadow-sm hover:shadow-md ${style.border} bg-surface rounded-2xl`}>
+              <AppCard className={`h-full w-full transition-all duration-300 overflow-hidden relative border ${isLightMode ? 'border-border/80 hover:border-theme-btn-primary/60' : 'border-border hover:border-theme-btn-primary/80'} shadow-sm hover:shadow-md ${style.border} bg-surface rounded-2xl`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} transition-colors duration-500`} />
                 <AppCardContent className="p-6 relative z-10 flex flex-col h-full space-y-5">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${style.iconBg} ${style.hoverBg} transition-colors duration-300 shadow-sm border border-black/5 dark:border-white/5`}>
+                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${style.iconBg} ${style.hoverBg} transition-colors duration-300 shadow-sm border border-black/5 dark:border-border`}>
                     <Icon className={`h-7 w-7 ${style.iconText} group-hover:text-white transition-colors duration-300`} />
                   </div>
                   

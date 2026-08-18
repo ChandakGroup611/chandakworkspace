@@ -79,12 +79,12 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
   return (
     <div className="flex flex-col h-full relative">
       {degradationStage >= DegradationStage.STAGE_1_MILD && (
-        <div className="bg-amber-900/30 text-amber-500 text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-amber-500/20">
+        <div className="bg-amber-900/30 text-warning text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-amber-500/20">
           Governance: Presence & Typing Indicators Paused
         </div>
       )}
       {degradationStage >= DegradationStage.STAGE_3_SEVERE && (
-        <div className="bg-red-900/30 text-red-500 text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-red-500/20">
+        <div className="bg-red-900/30 text-danger text-[10px] uppercase font-bold py-1 px-3 text-center border-b border-red-500/20">
           Governance: Live Chat Stream Paused. Force Refresh to load new.
         </div>
       )}
@@ -113,13 +113,13 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
         })}
       </div>
       
-      <form onSubmit={handleSend} className="p-3 bg-surface border-t border-white/5 flex gap-2">
+      <form onSubmit={handleSend} className="p-3 bg-surface border-t border-border flex gap-2">
         <input 
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message or @mention someone..."
-          className="flex-1 bg-surface/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-theme-btn-primary"
+          className="flex-1 bg-surface/40 border border-border rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-theme-btn-primary"
         />
         <AppButton type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
           Send

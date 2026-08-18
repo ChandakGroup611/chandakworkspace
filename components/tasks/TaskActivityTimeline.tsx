@@ -42,13 +42,13 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
     switch (action) {
       case 'STATUS_CHANGE': return <Activity className="h-4 w-4 text-theme-icon" />;
       case 'DEPARTMENT_CHANGE': return <Activity className="h-4 w-4 text-theme-icon" />;
-      case 'CHECKLIST_UPDATE': return <CheckSquare className="h-4 w-4 text-emerald-500" />;
+      case 'CHECKLIST_UPDATE': return <CheckSquare className="h-4 w-4 text-success" />;
       case 'COMMENT': return <MessageSquare className="h-4 w-4 text-theme-icon" />;
-      case 'EDIT': return <Edit className="h-4 w-4 text-amber-500" />;
+      case 'EDIT': return <Edit className="h-4 w-4 text-warning" />;
       case 'CREATE': return <Activity className="h-4 w-4 text-theme-icon" />;
-      case 'DELETE': return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'RESTORE': return <Activity className="h-4 w-4 text-emerald-500" />;
-      case 'ASSIGNMENT_CHANGE': return <Edit className="h-4 w-4 text-emerald-600" />;
+      case 'DELETE': return <AlertCircle className="h-4 w-4 text-danger" />;
+      case 'RESTORE': return <Activity className="h-4 w-4 text-success" />;
+      case 'ASSIGNMENT_CHANGE': return <Edit className="h-4 w-4 text-success" />;
       default: return <AlertCircle className="h-4 w-4 text-muted" />;
     }
   };
@@ -90,7 +90,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
 
   return (
     <AppCard className={`p-5 space-y-4 border-smooth theme-card-structural shadow-sm`}>
-      <div className="flex items-center gap-2 border-b pb-3 mb-4 border-border dark:border-white/5">
+      <div className="flex items-center gap-2 border-b pb-3 mb-4 border-border dark:border-border">
         <Clock className={`h-4 w-4 text-theme-icon`} />
         <h3 className={`text-sm font-bold tracking-tight ${"text-foreground"}`}>Activity Timeline</h3>
       </div>
@@ -98,7 +98,7 @@ export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
       {loading ? (
         <div className="py-8 text-center text-xs text-muted animate-pulse">Loading timeline...</div>
       ) : (
-        <div className="relative border-l border-border dark:border-white/10 ml-3 space-y-6">
+        <div className="relative border-l border-border dark:border-border ml-3 space-y-6">
           {logs.map((log, idx) => (
             <div key={log.id || idx} className="relative pl-6 animate-in fade-in slide-in-from-bottom-2">
               <span className={`absolute -left-3.5 top-0.5 h-7 w-7 rounded-full border-4 flex items-center justify-center ${ "theme-card-structural border-white shadow-[var(--shadow-ambient)]" }`}>

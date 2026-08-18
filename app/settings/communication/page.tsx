@@ -29,8 +29,8 @@ const MODULES = [
     description: "Configure event-based routing, recipient resolution, and status triggers.",
     href: "/settings/communication/rules",
     icon: Workflow,
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/10",
+    color: "text-success",
+    bg: "bg-success/10",
     border: "border-emerald-500/20"
   },
   {
@@ -38,8 +38,8 @@ const MODULES = [
     description: "Audit trail of all communication dispatch, fallbacks, and delivery receipts.",
     href: "/settings/communication/logs",
     icon: Activity,
-    color: "text-amber-400",
-    bg: "bg-amber-500/10",
+    color: "text-warning",
+    bg: "bg-warning/10",
     border: "border-amber-500/20"
   }
 ];
@@ -58,7 +58,7 @@ export default function CommunicationCenterHub() {
   if (!hasPermission("SETTINGS_COMMUNICATION_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <Shield className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
@@ -69,7 +69,7 @@ export default function CommunicationCenterHub() {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
-      <header className="border-b border-white/5 pb-4">
+      <header className="border-b border-border pb-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Communication Center
         </h1>

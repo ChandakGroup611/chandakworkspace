@@ -30,7 +30,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground">Workspace / Enterprise Overview</h1>
           <div className="flex items-center gap-4 mt-2 text-xs font-medium text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> System Health: Excellent</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success animate-pulse"></span> System Health: Excellent</span>
             <span>•</span>
             <span>{metrics.length} Active Items</span>
           </div>

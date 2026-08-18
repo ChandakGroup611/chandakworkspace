@@ -20,26 +20,26 @@ export function SlaGovernanceView({ slaStats }: { slaStats: any }) {
 
       {/* Heatmap Bar */}
       <div className="w-full h-8 flex rounded-xl overflow-hidden mb-8 shadow-inner">
-        <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${healthyPct}%` }} title="Healthy" />
-        <div className="bg-amber-500 h-full transition-all duration-1000" style={{ width: `${warningPct}%` }} title="Warning" />
-        <div className="bg-red-500 h-full transition-all duration-1000" style={{ width: `${breachedPct}%` }} title="Breached" />
+        <div className="bg-success h-full transition-all duration-1000" style={{ width: `${healthyPct}%` }} title="Healthy" />
+        <div className="bg-warning h-full transition-all duration-1000" style={{ width: `${warningPct}%` }} title="Warning" />
+        <div className="bg-danger h-full transition-all duration-1000" style={{ width: `${breachedPct}%` }} title="Breached" />
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-center">
-          <ShieldCheck className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
-          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{slaStats.healthy}</div>
-          <div className="text-xs font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mt-1">Healthy</div>
+        <div className="p-4 rounded-xl border border-emerald-500/20 bg-success/5 text-center">
+          <ShieldCheck className="w-6 h-6 text-success mx-auto mb-2" />
+          <div className="text-2xl font-extrabold text-success dark:text-success">{slaStats.healthy}</div>
+          <div className="text-xs font-bold text-success/70 dark:text-success/70 uppercase tracking-widest mt-1">Healthy</div>
         </div>
-        <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-center">
-          <AlertTriangle className="w-6 h-6 text-amber-500 mx-auto mb-2" />
-          <div className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">{slaStats.warning}</div>
-          <div className="text-xs font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest mt-1">Warning</div>
+        <div className="p-4 rounded-xl border border-amber-500/20 bg-warning/5 text-center">
+          <AlertTriangle className="w-6 h-6 text-warning mx-auto mb-2" />
+          <div className="text-2xl font-extrabold text-warning dark:text-warning">{slaStats.warning}</div>
+          <div className="text-xs font-bold text-warning/70 dark:text-warning/70 uppercase tracking-widest mt-1">Warning</div>
         </div>
-        <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-center">
-          <ShieldAlert className="w-6 h-6 text-red-500 mx-auto mb-2" />
-          <div className="text-2xl font-extrabold text-red-600 dark:text-red-400">{slaStats.breached}</div>
-          <div className="text-xs font-bold text-red-600/70 dark:text-red-400/70 uppercase tracking-widest mt-1">Breached</div>
+        <div className="p-4 rounded-xl border border-red-500/20 bg-danger/5 text-center">
+          <ShieldAlert className="w-6 h-6 text-danger mx-auto mb-2" />
+          <div className="text-2xl font-extrabold text-danger dark:text-danger">{slaStats.breached}</div>
+          <div className="text-xs font-bold text-danger/70 dark:text-danger/70 uppercase tracking-widest mt-1">Breached</div>
         </div>
       </div>
     </div>

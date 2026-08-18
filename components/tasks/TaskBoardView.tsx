@@ -140,8 +140,8 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
   });
 
   return (
-    <div className="flex flex-col w-[320px] min-w-[320px] bg-surface dark:theme-card-structural /[0.02] rounded-xl border-border dark:border-white/5 h-full max-h-full">
-      <div className="p-3 border-b border-border dark:border-white/5 flex items-center justify-between theme-card-structural dark:bg-[#0B0F19] rounded-t-xl shrink-0">
+    <div className="flex flex-col w-[320px] min-w-[320px] bg-surface dark:theme-card-structural /[0.02] rounded-xl border-border dark:border-border h-full max-h-full">
+      <div className="p-3 border-b border-border dark:border-border flex items-center justify-between theme-card-structural dark:bg-[#0B0F19] rounded-t-xl shrink-0">
         <div className="flex items-center gap-2">
           {column.color && (
             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: column.color }} />
@@ -169,7 +169,7 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
         </SortableContext>
         
         {column.tasks.length === 0 && (
-          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border dark:border-white/10 rounded-lg">
+          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border dark:border-border rounded-lg">
             <span className="text-xs font-medium text-muted">Drop tasks here</span>
           </div>
         )}
@@ -255,13 +255,13 @@ function TaskCard({ task }: { task: any }) {
         {task.progress_percentage !== undefined && task.progress_percentage > 0 && (
           <div className="mb-3 flex items-center gap-2">
             <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
+              <div className="h-full bg-success rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
             </div>
             <span className="text-[10px] font-bold text-muted">{task.progress_percentage}%</span>
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-3 border-t border-border/50 dark:border-white/5">
+        <div className="flex items-center justify-between pt-3 border-t border-border/50 dark:border-border">
           <div className="flex items-center gap-2">
             {task.assignee ? (
               <div className="flex items-center gap-1.5">
@@ -282,7 +282,7 @@ function TaskCard({ task }: { task: any }) {
             )}
             
             {task.end_date && (
-              <div className={`flex items-center gap-1 text-[10px] font-semibold ${isOverdue ? 'text-red-500 bg-red-50 px-1.5 py-0.5 rounded' : 'text-muted'}`}>
+              <div className={`flex items-center gap-1 text-[10px] font-semibold ${isOverdue ? 'text-danger bg-red-50 px-1.5 py-0.5 rounded' : 'text-muted'}`}>
                 <Clock className="w-3 h-3" />
                 {new Date(task.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>

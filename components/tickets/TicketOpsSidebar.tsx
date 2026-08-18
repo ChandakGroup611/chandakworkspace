@@ -62,7 +62,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <div className="space-y-2">
               <div className={`h-1.5 w-full rounded-full overflow-hidden bg-elevated`}>
                 <div 
-                  className={`h-full transition-all duration-1000 ${isStable ? "bg-theme-btn-primary" : "bg-amber-500"}`}
+                  className={`h-full transition-all duration-1000 ${isStable ? "bg-theme-btn-primary" : "bg-warning"}`}
                   style={{ width: `${slaPercentage}%` }}
                 />
               </div>
@@ -91,7 +91,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
               className={`w-full justify-start text-xs py-5 ${ "theme-card-structural text-muted hover:bg-elevated/50/50/50 shadow-sm" }`}
               onClick={() => onAction("RESOLVE")}
             >
-              <CheckCircle2 className="h-4 w-4 mr-3 text-emerald-500" /> Mark as Resolved
+              <CheckCircle2 className="h-4 w-4 mr-3 text-success" /> Mark as Resolved
             </AppButton>
             <div className="grid grid-cols-2 gap-2">
               <AppButton 
@@ -111,7 +111,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             </div>
             <AppButton 
               variant="ghost" 
-              className={`w-full justify-start text-red-500/80 hover:text-red-600 hover:bg-red-50 text-xs h-10 mt-2 border ${
+              className={`w-full justify-start text-danger/80 hover:text-danger hover:bg-red-50 text-xs h-10 mt-2 border ${
                 "border-red-100"
               }`}
               onClick={() => {

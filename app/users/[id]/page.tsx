@@ -220,7 +220,7 @@ export default function UserFormPage() {
   };
 
   const inputStyle = `w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 focus:border-theme-btn-primary ${
-    "bg-slate-50 dark:bg-[#0a0d14] border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-400 disabled:dark:text-slate-500"
+    "bg-surface dark:bg-[#0a0d14] border-border dark:border-border text-slate-800 dark:text-slate-200 disabled:bg-slate-100 disabled:dark:bg-slate-800 disabled:text-slate-400 disabled:dark:text-muted"
   }`;
 
   const labelStyle = `text-sm font-semibold mb-2 block text-slate-700`;
@@ -291,8 +291,8 @@ export default function UserFormPage() {
         <div className="xl:col-span-8 space-y-8">
           
           {/* SECTION 1: Personal Identity */}
-          <AppCard className={`overflow-hidden transition-all border-slate-200`}>
-            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
+          <AppCard className={`overflow-hidden transition-all border-border`}>
+            <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-theme-icon" />
                 <AppCardTitle className="text-lg">Personal Identity</AppCardTitle>
@@ -374,10 +374,10 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 2: Organization Alignment */}
-          <AppCard className={`overflow-hidden transition-all border-slate-200`}>
-            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
+          <AppCard className={`overflow-hidden transition-all border-border`}>
+            <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-amber-500" />
+                <Briefcase className="h-5 w-5 text-warning" />
                 <AppCardTitle className="text-lg">Organization Alignment</AppCardTitle>
               </div>
             </AppCardHeader>
@@ -448,17 +448,17 @@ export default function UserFormPage() {
         <div className="xl:col-span-4 space-y-8">
 
           {/* User Status & Code (Highlights) */}
-          <AppCard className={`overflow-hidden transition-all border-slate-200`}>
+          <AppCard className={`overflow-hidden transition-all border-border`}>
             <AppCardContent className="p-6 space-y-6">
               <div>
                 <label className={labelStyle}>Account Status</label>
                 <div className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${formIsActive ? ("bg-emerald-50 border-emerald-200") : ("bg-rose-50 border-rose-200")}`}>
-                  <span className={`font-semibold ${formIsActive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                  <span className={`font-semibold ${formIsActive ? "text-success dark:text-success" : "text-danger dark:text-danger"}`}>
                     {formIsActive ? "Active Participant" : "Suspended"}
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} className="sr-only peer" disabled={!isSuperAdmin} />
-                    <div className="w-11 h-6 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    <div className="w-11 h-6 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
                   </label>
                 </div>
               </div>
@@ -478,10 +478,10 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 3: Security Credentials */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-slate-200`}>
-            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
+          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-border`}>
+            <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-rose-500" />
+                <Shield className="h-5 w-5 text-danger" />
                 <AppCardTitle className="text-lg">Security Settings</AppCardTitle>
               </div>
             </AppCardHeader>
@@ -536,8 +536,8 @@ export default function UserFormPage() {
           </AppCard>
 
           {/* SECTION 4: Hardware Assets */}
-          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-slate-200`}>
-            <AppCardHeader className={"bg-slate-50/50 pb-4"}>
+          <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-border`}>
+            <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
                 <MonitorSmartphone className="h-5 w-5 text-cyan-500" />
                 <AppCardTitle className="text-lg">Assigned Assets</AppCardTitle>
@@ -545,7 +545,7 @@ export default function UserFormPage() {
             </AppCardHeader>
             <AppCardContent className="p-6">
               <label className={labelStyle}>Linked IT Hardware Tags</label>
-              <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative bg-slate-50 border-slate-200`}>
+              <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative bg-surface border-border`}>
                 <div className="flex flex-wrap items-center gap-2">
                   {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
                     <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-theme-btn-primary/10 text-theme-icon-secondary border border-theme-btn-primary/30 rounded-lg dark:bg-theme-btn-primary/20 dark:text-indigo-300 dark:border-theme-btn-primary/30 shadow-sm">

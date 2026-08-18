@@ -25,8 +25,8 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
     const d2 = new Date(dueDate);
     const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
     
-    if (diff < 0) return <AppBadge variant="danger" className="text-[10px] uppercase font-bold py-0 h-5 border-rose-500/30 text-rose-500">Overdue</AppBadge>;
-    if (diff === 0) return <AppBadge variant="warning" className="text-[10px] uppercase font-bold py-0 h-5 border-amber-500/30 text-amber-500">Due Today</AppBadge>;
+    if (diff < 0) return <AppBadge variant="danger" className="text-[10px] uppercase font-bold py-0 h-5 border-rose-500/30 text-danger">Overdue</AppBadge>;
+    if (diff === 0) return <AppBadge variant="warning" className="text-[10px] uppercase font-bold py-0 h-5 border-amber-500/30 text-warning">Due Today</AppBadge>;
     if (diff === 1) return <span className="text-xs font-medium text-muted-foreground">Tomorrow</span>;
     return <span className="text-xs font-medium text-muted-foreground">In {diff} days</span>;
   };
@@ -35,15 +35,15 @@ export default function UpcomingDeadlines({ metrics = [] }: UpcomingDeadlinesPro
     const d1 = new Date();
     const d2 = new Date(dueDate);
     const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
-    if (diff < 0) return { icon: <Flame className="h-4 w-4 text-rose-500" /> };
-    if (diff <= 2) return { icon: <AlertCircle className="h-4 w-4 text-amber-500" /> };
+    if (diff < 0) return { icon: <Flame className="h-4 w-4 text-danger" /> };
+    if (diff <= 2) return { icon: <AlertCircle className="h-4 w-4 text-warning" /> };
     return { icon: <Calendar className="h-4 w-4 text-muted-foreground" /> };
   };
 
   return (
     <AppCard>
       <div className="flex items-center gap-2 p-4 border-b theme-card-structural">
-        <CalendarClock className="h-4 w-4 text-rose-500" />
+        <CalendarClock className="h-4 w-4 text-danger" />
         <span className="text-sm font-bold text-foreground">Upcoming Deadlines</span>
       </div>
       <div className="p-4 bg-background">

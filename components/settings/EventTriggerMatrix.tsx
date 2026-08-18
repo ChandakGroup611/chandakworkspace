@@ -31,7 +31,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   if (!hasPermission("SETTINGS_NOTIFICATIONS_VIEW")) {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-12">
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <Shield className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
@@ -43,7 +43,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   const canManage = hasPermission("SETTINGS_NOTIFICATIONS_MANAGE");
 
   return (
-    <div className="theme-card-structural /5 border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+    <div className="theme-card-structural /5 border-border p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
       <h2 className="text-xl font-bold text-foreground mb-2">Event Trigger Controls</h2>
       <p className="text-sm text-muted mb-6">Granular control over which system events trigger notifications. Disabling here bypasses backend processing for maximum performance.</p>
 
@@ -51,8 +51,8 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
         {modules.map(mod => {
           const modConfigs = configs.filter(c => c.module_code === mod);
           return (
-            <div key={mod} className="border border-white/5 rounded-lg overflow-hidden">
-              <div className="bg-surface/30 px-4 py-3 border-b border-white/5">
+            <div key={mod} className="border border-border rounded-lg overflow-hidden">
+              <div className="bg-surface/30 px-4 py-3 border-b border-border">
                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">{mod}</h3>
               </div>
               <div className="divide-y divide-white/5">

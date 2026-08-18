@@ -11,7 +11,7 @@ export default function LearningHubPage() {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-red-500">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-danger">Access Denied</h2>
           <p className="text-muted">You do not have permission to view the Learning Hub.</p>
         </div>
       </div>

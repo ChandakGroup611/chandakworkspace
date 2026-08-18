@@ -16,6 +16,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [targetWorkspaceId, setTargetWorkspaceId] = useState('');
   const [targetSubworkspaceId, setTargetSubworkspaceId] = useState('');
+  const [targetParentTaskId, setTargetParentTaskId] = useState('');
+  const [targetParentTasks, setTargetParentTasks] = useState<any[]>([]);
   const [newOwnerId, setNewOwnerId] = useState('');
   const [newExecutors, setNewExecutors] = useState<string[]>([]);
   const [newWatchers, setNewWatchers] = useState<string[]>([]);
@@ -64,24 +66,32 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
   const [targetStakeholders, setTargetStakeholders] = useState<any[]>([]);
   const [checkingScope, setCheckingScope] = useState(false);
 
-  // Fetch stakeholders dynamically whenever target changes
+  // Fetch stakeholders and tasks dynamically whenever target changes
   React.useEffect(() => {
     const targetId = targetSubworkspaceId || targetWorkspaceId;
     if (!targetId) {
       setTargetStakeholders([]);
+      setTargetParentTasks([]);
       return;
     }
     let isMounted = true;
     setCheckingScope(true);
     
-    import('@/lib/actions/workspaces').then(m => {
-      m.fetchWorkspaceStakeholders(targetId).then(stakeholders => {
+    import('@/lib/actions/workspaces').then(async m => {
+      try {
+        const [stakeholders, tasks] = await Promise.all([
+          m.fetchWorkspaceStakeholders(targetId),
+          m.fetchTasksByWorkspace(targetId, 1, 500, false)
+        ]);
         if (isMounted) {
           setTargetStakeholders(stakeholders);
+          setTargetParentTasks(tasks || []);
           setCheckingScope(false);
         }
-      });
-    }).catch(console.error);
+      } catch (e) {
+        console.error(e);
+      }
+    });
     
     return () => { isMounted = false; };
   }, [targetWorkspaceId, targetSubworkspaceId]);
@@ -130,6 +140,10 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
         targetSubWorkspaceId: targetSubworkspaceId,
       };
 
+      if (targetParentTaskId) {
+        payload.targetParentTaskId = targetParentTaskId;
+      }
+
       if (!validity.isValid && newOwnerId) {
         payload.newOwnerId = newOwnerId;
       }
@@ -148,6 +162,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
         setIsTransferModalOpen(false);
         setSelectedTaskIds(new Set());
         setTargetWorkspaceId('');
+        setTargetSubworkspaceId('');
+        setTargetParentTaskId('');
         setNewOwnerId('');
         router.refresh(); // Refresh the page data
       }
@@ -326,18 +342,37 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                 </select>
               </div>
 
+              {targetWorkspaceId && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Target Parent Task</label>
+                    <p className="text-[10px] text-muted mb-1 leading-tight">If selected, the transferred tasks will become subtasks of this parent task.</p>
+                    <select
+                      value={targetParentTaskId}
+                      onChange={(e) => setTargetParentTaskId(e.target.value)}
+                      className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
+                    >
+                      <option value="">None (Transfer to root)</option>
+                      {targetParentTasks.filter((t: any) => !Array.from(selectedTaskIds).includes(t.id)).map((t: any) => (
+                        <option key={t.id} value={t.id}>
+                          {t.task_code} - {t.subject || t.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
               {targetWorkspaceId && !validity.isValid && (
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mt-4">
+                <div className="bg-warning/10 border border-yellow-500/20 rounded-xl p-4 mt-4">
                   <div className="flex items-start space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-sm font-medium text-yellow-500">Assignees Incompatible</h4>
-                      <p className="text-xs text-yellow-500/80 mt-1">
+                      <h4 className="text-sm font-medium text-warning">Assignees Incompatible</h4>
+                      <p className="text-xs text-warning/80 mt-1">
                         {validity.invalidTaskAssignees.length} tasks have assignees that do not belong to the target workspace. Please select a new assignee.
                       </p>
                       
                       <div className="mt-3">
-                        <label className="block text-sm font-medium text-amber-600 dark:text-amber-500/90 mb-1">New Assignee (Owner)</label>
+                        <label className="block text-sm font-medium text-warning dark:text-warning/90 mb-1">New Assignee (Owner)</label>
                         <select
                           className="w-full bg-background border border-amber-500/20 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-amber-500"
                           value={newOwnerId}

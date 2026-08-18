@@ -55,7 +55,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
   };
 
   return (
-    <div className="theme-card-structural /5 border-white/10 p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="theme-card-structural /5 border-border p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
       <h2 className="text-xl font-bold text-foreground mb-2">Email Provider Setup</h2>
       <p className="text-sm text-muted mb-6">Configure your primary outgoing email service. We recommend Gmail App Passwords or Resend for high deliverability.</p>
       
@@ -76,36 +76,36 @@ export default function NotificationProviderForm({ initialData }: { initialData:
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">SMTP Host</label>
-          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-surface/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">SMTP Port</label>
-          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-surface/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Username / Email</label>
-          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-surface/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">{provider === 'RESEND' ? 'API Key' : 'App Password'}</label>
-          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-surface/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Sender Name</label>
-          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-surface/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Sender Email (From)</label>
-          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-surface/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
         </div>
       </div>
 
-      <div className="mt-8 flex items-center justify-between border-t border-white/10 pt-6">
-        <span className={`text-sm ${message.includes('Error') || message.includes('Failed') ? 'text-red-400' : 'text-green-400'}`}>
+      <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
+        <span className={`text-sm ${message.includes('Error') || message.includes('Failed') ? 'text-danger' : 'text-success'}`}>
           {message}
         </span>
         <div className="flex gap-3">
-          <AppButton onClick={handleTest} disabled={testing} className="px-5 py-2.5 theme-card-structural /5 hover:/10 border-white/10 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
+          <AppButton onClick={handleTest} disabled={testing} className="px-5 py-2.5 theme-card-structural /5 hover:/10 border-border text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
             {testing ? 'Testing...' : 'Test Connection'}
           </AppButton>
           <AppButton onClick={handleSave} disabled={loading} className="px-5 py-2.5 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text text-sm font-medium rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] disabled:opacity-50">

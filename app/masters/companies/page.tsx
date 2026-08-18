@@ -177,7 +177,7 @@ export default function CompanyMasterPage() {
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface"
       }`}>
-        <div className="p-4 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
           <Lock className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
@@ -190,7 +190,7 @@ export default function CompanyMasterPage() {
     <div className={`h-screen overflow-y-auto flex flex-col font-sans p-6 space-y-6 ${
       "bg-surface"
     }`}>
-      <div className="flex items-center justify-between pb-4 border-b border-white/5">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Building2 className={`h-6 w-6 text-theme-icon`} />
@@ -216,13 +216,13 @@ export default function CompanyMasterPage() {
       </div>
 
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-danger/10 border border-rose-500/20 text-rose-300 text-sm flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" /> {errorAlert}
         </div>
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-success/10 border border-emerald-500/20 text-emerald-300 text-sm flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4" /> {successAlert}
         </div>
       )}
@@ -277,13 +277,13 @@ export default function CompanyMasterPage() {
                   </AppTableCell>
                   <AppTableCell className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-rose-400 hover:bg-rose-500/10' : 'text-emerald-400 hover:bg-emerald-500/10'}`}>
+                      <AppButton variant="secondary" onClick={() => toggleActive(c)} className={`p-1.5 rounded-lg transition-colors ${c.is_active ? 'text-danger hover:bg-danger/10' : 'text-success hover:bg-success/10'}`}>
                         {c.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                       </AppButton>
                       <AppButton variant="secondary" onClick={() => openEditModal(c)} className="p-1.5 rounded-lg text-theme-icon hover:bg-theme-btn-primary/10 transition-colors">
                         Edit
                       </AppButton>
-                      <AppButton variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
+                      <AppButton variant="secondary" onClick={() => handleDelete(c)} className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </AppButton>
                     </div>
@@ -337,7 +337,7 @@ export default function CompanyMasterPage() {
               <div className="space-y-1">
                 <label className="text-sm uppercase tracking-wider text-muted font-bold">Physical Address</label>
                 <textarea 
-                  className="w-full bg-surface dark:bg-[#0a0d14] border border-border dark:border-white/10 rounded-xl p-3 text-sm text-foreground dark:text-white focus:border-theme-btn-primary focus:outline-none"
+                  className="w-full bg-surface dark:bg-[#0a0d14] border border-border dark:border-border rounded-xl p-3 text-sm text-foreground dark:text-white focus:border-theme-btn-primary focus:outline-none"
                   rows={2}
                   value={formAddress}
                   onChange={e => setFormAddress(e.target.value)}
@@ -347,14 +347,14 @@ export default function CompanyMasterPage() {
               <div className="space-y-1">
                 <label className="text-sm uppercase tracking-wider text-muted font-bold">Remarks</label>
                 <textarea 
-                  className="w-full bg-surface dark:bg-[#0a0d14] border border-border dark:border-white/10 rounded-xl p-3 text-sm text-foreground dark:text-white focus:border-theme-btn-primary focus:outline-none"
+                  className="w-full bg-surface dark:bg-[#0a0d14] border border-border dark:border-border rounded-xl p-3 text-sm text-foreground dark:text-white focus:border-theme-btn-primary focus:outline-none"
                   rows={2}
                   value={formRemarks}
                   onChange={e => setFormRemarks(e.target.value)}
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                 <AppButton variant="ghost" type="button" onClick={() => setShowModal(false)}>Cancel</AppButton>
                 <AppButton variant="primary" type="submit">Save Company Record</AppButton>
               </div>

@@ -96,7 +96,7 @@ export default function GlobalSettingsPage() {
         <div className="space-y-6">
           {msg && (
             <div className={`p-4 rounded-xl border text-sm font-bold flex items-center gap-3 ${
-              msg.type === 'error' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-700 border-green-200'
+              msg.type === 'error' ? 'bg-red-50 text-danger border-red-100' : 'bg-green-50 text-green-700 border-green-200'
             }`}>
               {msg.type === 'error' ? <AlertTriangle className="h-5 w-5" /> : <ShieldAlert className="h-5 w-5" />}
               {msg.text}
@@ -105,7 +105,7 @@ export default function GlobalSettingsPage() {
 
           <AppCard>
             <AppCardHeader className="border-b border-border py-5">
-              <AppCardTitle className="text-lg flex items-center gap-2 text-rose-600">
+              <AppCardTitle className="text-lg flex items-center gap-2 text-danger">
                 <ShieldAlert className="h-5 w-5" /> Emergency Kill Switches
               </AppCardTitle>
             </AppCardHeader>
@@ -116,7 +116,7 @@ export default function GlobalSettingsPage() {
                 <>
                   <div className="flex items-center justify-between p-5 border border-border rounded-xl bg-surface hover:border-rose-200 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl ${settings.disable_all_emails ? 'bg-rose-100 text-rose-600' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
+                      <div className={`p-3 rounded-xl ${settings.disable_all_emails ? 'bg-rose-100 text-danger' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
                         <Mail className="h-6 w-6" />
                       </div>
                       <div>
@@ -128,13 +128,13 @@ export default function GlobalSettingsPage() {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.disable_all_emails} onChange={() => toggleSetting('disable_all_emails')} className="sr-only peer" />
-                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500"></div>
+                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-danger"></div>
                     </label>
                   </div>
 
                   <div className="flex items-center justify-between p-5 border border-border rounded-xl bg-surface hover:border-amber-200 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl ${settings.disable_all_realtime ? 'bg-amber-100 text-amber-600' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
+                      <div className={`p-3 rounded-xl ${settings.disable_all_realtime ? 'bg-amber-100 text-warning' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
                         <Activity className="h-6 w-6" />
                       </div>
                       <div>
@@ -146,13 +146,13 @@ export default function GlobalSettingsPage() {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.disable_all_realtime} onChange={() => toggleSetting('disable_all_realtime')} className="sr-only peer" />
-                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-500"></div>
+                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-warning"></div>
                     </label>
                   </div>
 
                   <div className="flex items-center justify-between p-5 border border-border rounded-xl bg-surface hover:border-blue-200 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl ${settings.disable_digests ? 'bg-blue-100 text-blue-600' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
+                      <div className={`p-3 rounded-xl ${settings.disable_digests ? 'bg-blue-100 text-accent' : 'bg-theme-btn-primary/10 text-theme-icon'}`}>
                         <Mail className="h-6 w-6" />
                       </div>
                       <div>
@@ -164,7 +164,7 @@ export default function GlobalSettingsPage() {
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={settings.disable_digests} onChange={() => toggleSetting('disable_digests')} className="sr-only peer" />
-                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-500"></div>
+                      <div className="w-14 h-7 bg-elevated peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:border-border after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-theme-btn-primary text-theme-btn-primary-text"></div>
                     </label>
                   </div>
                 </>

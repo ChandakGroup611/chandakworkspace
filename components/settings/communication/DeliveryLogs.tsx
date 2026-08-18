@@ -46,9 +46,9 @@ export default function DeliveryLogs() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'DELIVERED': return <CheckCircle className="w-4 h-4 text-emerald-400" />;
-      case 'FAILED': return <XCircle className="w-4 h-4 text-rose-400" />;
-      case 'PENDING': return <Clock className="w-4 h-4 text-amber-400" />;
+      case 'DELIVERED': return <CheckCircle className="w-4 h-4 text-success" />;
+      case 'FAILED': return <XCircle className="w-4 h-4 text-danger" />;
+      case 'PENDING': return <Clock className="w-4 h-4 text-warning" />;
       default: return <Clock className="w-4 h-4 text-muted" />;
     }
   };

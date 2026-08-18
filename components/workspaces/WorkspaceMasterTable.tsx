@@ -162,7 +162,7 @@ export function WorkspaceMasterTable({
                 <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-white`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : 'var(--accent-primary, #4f46e5)' }}>
                   {uInfo?.profile_photo ? <img src={uInfo.profile_photo} className="h-full w-full rounded-full" alt="" /> : (uInfo?.full_name?.substring(0,2).toUpperCase() || "U")}
                 </div>
-                <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white ${isOnline ? 'bg-success' : 'bg-danger'}`}></div>
               </div>
             );
           })}
@@ -175,7 +175,7 @@ export function WorkspaceMasterTable({
 
         {/* Hover Tooltip */}
         <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] theme-card-structural`}>
-          <div className="text-[10px] font-bold uppercase text-muted mb-2 px-1 border-b pb-1 border-border dark:border-white/10">Assigned Users ({members.length})</div>
+          <div className="text-[10px] font-bold uppercase text-muted mb-2 px-1 border-b pb-1 border-border dark:border-border">Assigned Users ({members.length})</div>
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {
               const uid = m.user_id || m.id;
@@ -183,8 +183,8 @@ export function WorkspaceMasterTable({
               const isOnline = onlineUsers.has(uid);
               return (
                 <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-surface/5 dark:hover:bg-surface/40 backdrop-blur/5">
-                  <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
-                  <span className={`text-[11px] truncate ${isOnline ? ("text-foreground") : 'text-red-500 font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
+                  <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-success shadow-[0_0_4px_#22c55e]' : 'bg-danger shadow-[0_0_4px_#ef4444]'}`} />
+                  <span className={`text-[11px] truncate ${isOnline ? ("text-foreground") : 'text-danger font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
                 </div>
               );
             })}

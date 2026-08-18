@@ -8,7 +8,7 @@ import { AppTable } from "@/components/ui/AppTable";
 
 const ThemePreviewBlock = ({ themeId, themeName, description }: { themeId: string, themeName: string, description: string }) => {
   return (
-    <div data-theme={themeId} className="w-full p-8 rounded-xl border border-white/10 relative overflow-hidden" style={{ minHeight: "400px" }}>
+    <div data-theme={themeId} className="w-full p-8 rounded-xl border border-border relative overflow-hidden" style={{ minHeight: "400px" }}>
       {/* Background layer for the theme */}
       <div className="absolute inset-0 -z-10 bg-[var(--bg-primary)] opacity-50" />
       

@@ -16,7 +16,7 @@ const pricingPlans = [
     price: "$0",
     period: "forever",
     description: "Perfect for individuals and small teams getting started.",
-    icon: <Zap className="w-5 h-5 text-blue-500" />,
+    icon: <Zap className="w-5 h-5 text-accent" />,
     features: [
       "Up to 5 Users",
       "Basic Task Management",
@@ -50,7 +50,7 @@ const pricingPlans = [
     price: "Custom",
     period: "billed annually",
     description: "Maximum security, control, and dedicated support for large organizations.",
-    icon: <Crown className="w-5 h-5 text-amber-500" />,
+    icon: <Crown className="w-5 h-5 text-warning" />,
     features: [
       "Everything in Professional",
       "Single Sign-On (SSO)",

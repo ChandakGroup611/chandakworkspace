@@ -49,7 +49,7 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
         </div>
 
         <div className="p-4 bg-amber-50 border-b border-amber-100 flex items-start gap-3 shrink-0">
-          <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <ShieldAlert className="w-5 h-5 text-warning shrink-0 mt-0.5" />
           <p className="text-xs text-amber-800 font-medium leading-relaxed">
             Deleting a master option is permanent. Ensure no critical existing records rely on these options before removing them.
           </p>
@@ -71,7 +71,7 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
                   <AppButton 
                     variant="outline" 
                     size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 border-transparent bg-transparent shadow-none"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-danger hover:text-danger hover:bg-red-50 hover:border-red-200 border-transparent bg-transparent shadow-none"
                     onClick={() => handleDelete(opt.id, opt.name)}
                     disabled={deletingId === opt.id}
                   >

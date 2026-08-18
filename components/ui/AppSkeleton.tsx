@@ -23,9 +23,9 @@ AppSkeleton.displayName = "AppSkeleton";
 export function AppTableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="w-full space-y-2">
-      <div className="h-8 w-full rounded-lg theme-card-structural /[0.02] border-white/5 animate-pulse" />
+      <div className="h-8 w-full rounded-lg theme-card-structural /[0.02] border-border animate-pulse" />
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-3 rounded-xl theme-card-structural /[0.01] border-white/5">
+        <div key={i} className="flex items-center gap-4 p-3 rounded-xl theme-card-structural /[0.01] border-border">
           <AppSkeleton className="h-4 w-12 rounded-md" />
           <AppSkeleton className="h-4 flex-1 rounded-md" />
           <AppSkeleton className="h-4 w-20 rounded-md" />
@@ -38,7 +38,7 @@ export function AppTableSkeleton({ rows = 5 }: { rows?: number }) {
 // Intelligent compound skeleton template for Bento KPI metrics
 export function AppCardSkeleton() {
   return (
-    <div className="p-5 rounded-2xl border-white/5 theme-card-structural /[0.01] space-y-4 w-full">
+    <div className="p-5 rounded-2xl border-border theme-card-structural /[0.01] space-y-4 w-full">
       <div className="flex items-center justify-between">
         <AppSkeleton className="h-3 w-24 rounded" />
         <AppSkeleton className="h-8 w-8 rounded-xl" />

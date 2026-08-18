@@ -810,15 +810,15 @@ export default function AMCPage() {
       />
 
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3 mb-4">
-          <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-danger/10 border border-rose-500/20 flex items-start gap-3 mb-4">
+          <AlertTriangle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
           <div className="flex-1 text-xs text-rose-200">{errorAlert}</div>
         </div>
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-300 mb-4">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+        <div className="p-4 rounded-xl bg-success/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-300 mb-4">
+          <CheckCircle2 className="h-4 w-4 text-success" />
           <span>{successAlert}</span>
         </div>
       )}
@@ -894,10 +894,10 @@ export default function AMCPage() {
                     <AppTableCell className="p-3 text-right space-x-2">
                       {rec.approval_status === 'Pending Approval' && hasPermission("SUPER_ADMIN") && (
                         <>
-                          <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Active')} className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10">
+                          <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Active')} className="text-success hover:text-success hover:bg-success/10">
                             Approve
                           </AppButton>
-                          <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Rejected')} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
+                          <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Rejected')} className="text-danger hover:text-danger hover:bg-danger/10">
                             Reject
                           </AppButton>
                         </>
@@ -911,7 +911,7 @@ export default function AMCPage() {
                         </AppButton>
                       )}
                       {hasPermission("AMC_DELETE") && (
-                        <AppButton variant="ghost" size="sm" onClick={() => handleDelete(rec.id)} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
+                        <AppButton variant="ghost" size="sm" onClick={() => handleDelete(rec.id)} className="text-danger hover:text-danger hover:bg-danger/10">
                           <Trash2 className="h-3.5 w-3.5" />
                         </AppButton>
                       )}
@@ -952,14 +952,14 @@ export default function AMCPage() {
               <h2 className="text-2xl font-bold text-theme-icon">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
               <p className="text-sm text-muted">Manage the core software record, mid-year transactions, and renewals.</p>
             </div>
-            <AppButton variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-red-500/10 text-muted hover:text-red-500 transition-colors">
+            <AppButton variant="secondary" onClick={() => setShowModal(false)} className="p-2 rounded-full hover:bg-danger/10 text-muted hover:text-danger transition-colors">
               <X className="h-6 w-6" />
             </AppButton>
           </div>
 
           {editRecordId && (
             <div className={`p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border`}>
-              <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-white/5 rounded-xl w-max max-w-full shadow-sm">
+              <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm">
                 {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
                   <AppButton 
                     key={tab}
@@ -967,7 +967,7 @@ export default function AMCPage() {
                     onClick={() => setActiveTab(tab)}
                     className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
                       activeTab === tab 
-                        ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-white/10' 
+                        ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
                         : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
                     }`}
                   >
@@ -990,7 +990,7 @@ export default function AMCPage() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Provider / Vendor <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-muted uppercase">Provider / Vendor <span className="text-danger">*</span></label>
                   <select value={formVendorId} onChange={(e) => handleVendorChange(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select Vendor --</option>
                     {vendors.map(v => (
@@ -999,12 +999,12 @@ export default function AMCPage() {
                   </select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Software Name <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-muted uppercase">Software Name <span className="text-danger">*</span></label>
                   <AppInput value={formSoftwareName} onChange={(e) => setFormSoftwareName(e.target.value)} required placeholder="e.g., Salesforce Enterprise" className="h-11" />
                 </div>
                 <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase mb-2 block">Contract Type <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-bold text-muted uppercase mb-2 block">Contract Type <span className="text-danger">*</span></label>
                     <div className="flex gap-2 h-11">
                       <select 
                         className={`flex-1 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}
@@ -1026,7 +1026,7 @@ export default function AMCPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase">Status <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-bold text-muted uppercase">Status <span className="text-danger">*</span></label>
                     <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                       <option value="Active">Active</option>
                       <option value="Expired">Expired</option>
@@ -1040,7 +1040,7 @@ export default function AMCPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Purchase Date <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-muted uppercase">Purchase Date <span className="text-danger">*</span></label>
                   <AppInput type="date" value={formPurchaseDate} onChange={(e) => setFormPurchaseDate(e.target.value)} className="h-11" />
                 </div>
                 <div className="space-y-2">
@@ -1066,14 +1066,14 @@ export default function AMCPage() {
                   <AppInput type="date" value={formExpiryDate} onChange={(e) => setFormExpiryDate(e.target.value)} className="h-11" />
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Assigned To (Owner) <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-muted uppercase">Assigned To (Owner) <span className="text-danger">*</span></label>
                   <select value={formAssignedTo} onChange={(e) => setFormAssignedTo(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select Owner --</option>
                     {users.map(u => <option key={u.id} value={u.id}>{u.full_name} ({u.email})</option>)}
                   </select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Department <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-muted uppercase">Department <span className="text-danger">*</span></label>
                   <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
                     <option value="">-- Select Department --</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -1267,7 +1267,7 @@ export default function AMCPage() {
                             {item.netAmount.toFixed(2)}
                           </AppTableCell>
                           <AppTableCell className="py-2 px-1 text-right">
-                            <AppButton variant="secondary" type="button" onClick={() => removeLineItem(item.id)} className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors">
+                            <AppButton variant="secondary" type="button" onClick={() => removeLineItem(item.id)} className="p-1.5 rounded bg-danger/10 text-danger hover:bg-danger/20 transition-colors">
                               <X className="h-4 w-4" />
                             </AppButton>
                           </AppTableCell>
@@ -1279,7 +1279,7 @@ export default function AMCPage() {
                     <tfoot>
                       <AppTableRow>
                         <AppTableCell colSpan={8} className="py-4 text-right font-bold text-muted">Total Net Amount:</AppTableCell>
-                        <AppTableCell className="py-4 px-1 text-right font-black text-lg text-emerald-500">
+                        <AppTableCell className="py-4 px-1 text-right font-black text-lg text-success">
                           {solutionLineItems.reduce((sum, i) => sum + i.netAmount, 0).toFixed(2)}
                         </AppTableCell>
                         <AppTableCell></AppTableCell>
@@ -1383,11 +1383,11 @@ export default function AMCPage() {
                   <h5 className="text-sm font-semibold text-theme-icon">Contact Person & Address</h5>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted uppercase">Contact Name <span className="text-red-500">*</span></label>
+                      <label className="text-[10px] font-bold text-muted uppercase">Contact Name <span className="text-danger">*</span></label>
                       <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorContactName} onChange={(e) => setVendorContactName(e.target.value)} placeholder="Full Name" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted uppercase">Contact Email <span className="text-red-500">*</span></label>
+                      <label className="text-[10px] font-bold text-muted uppercase">Contact Email <span className="text-danger">*</span></label>
                       <AppInput type="email" readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorContactEmail} onChange={(e) => setVendorContactEmail(e.target.value)} placeholder="Email Address" />
                     </div>
                     <div className="space-y-2">
@@ -1400,7 +1400,7 @@ export default function AMCPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted uppercase">Phone / Ext <span className="text-red-500">*</span></label>
+                      <label className="text-[10px] font-bold text-muted uppercase">Phone / Ext <span className="text-danger">*</span></label>
                       <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorContactPhone} onChange={(e) => setVendorContactPhone(e.target.value)} placeholder="Contact Number" />
                     </div>
                     <div className="space-y-2">
@@ -1581,7 +1581,7 @@ export default function AMCPage() {
                             onChange={(e) => setAttachments(prev => prev.map(a => a.id === entry.id ? { ...a, file: e.target.files?.[0] || null } : a))} 
                             className="flex-1 w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-icon hover:file:bg-theme-btn-primary/20 cursor-pointer"
                           />
-                          <AppButton variant="secondary" type="button" onClick={() => setAttachments(prev => prev.filter(a => a.id !== entry.id))} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <AppButton variant="secondary" type="button" onClick={() => setAttachments(prev => prev.filter(a => a.id !== entry.id))} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
                             <X className="h-4 w-4" />
                           </AppButton>
                         </div>
@@ -1615,7 +1615,7 @@ export default function AMCPage() {
                               </AppButton>
                               {hasPermission("AMC_DELETE") && (
                                 <AppButton type="button" variant="ghost" size="sm" onClick={() => deleteAttachment(file.name)}>
-                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                  <Trash2 className="h-4 w-4 text-danger" />
                                 </AppButton>
                               )}
                             </div>
@@ -1687,14 +1687,14 @@ export default function AMCPage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-surface/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className={`p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200 bg-surface border-border`}>
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="h-14 w-14 rounded-full bg-rose-500/10 flex items-center justify-center">
-                <AlertTriangle className="h-7 w-7 text-rose-500" />
+              <div className="h-14 w-14 rounded-full bg-danger/10 flex items-center justify-center">
+                <AlertTriangle className="h-7 w-7 text-danger" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-rose-500">Validation Error</h3>
+                <h3 className="text-lg font-bold text-danger">Validation Error</h3>
                 <p className={`text-sm mt-2 text-muted`}>{errorAlert}</p>
               </div>
-              <AppButton variant="primary" className="w-full mt-4 bg-rose-500 hover:bg-rose-600 border-none text-white" onClick={() => setErrorAlert(null)}>
+              <AppButton variant="primary" className="w-full mt-4 bg-danger hover:bg-danger border-none text-white" onClick={() => setErrorAlert(null)}>
                 Okay, got it
               </AppButton>
             </div>

@@ -250,7 +250,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               <h4 className="text-sm font-bold text-theme-icon mb-2">Requirement Details (Mandatory)</h4>
               
               <div className="space-y-2">
-                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-red-500">*</span></label>
+                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-danger">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Why is this requirement needed? (Business Objective)"
@@ -261,7 +261,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               </div>
 
               <div className="space-y-2">
-                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-red-500">*</span></label>
+                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-danger">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[120px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Provide detailed functional scope and technical requirements..."
@@ -272,7 +272,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </div>
             
               <div className="space-y-2 mt-4 pt-4 border-t border-theme-btn-primary/20">
-                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Domain (Scope) <span className="text-red-500">*</span></label>
+                <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Domain (Scope) <span className="text-danger">*</span></label>
                 <select 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${"theme-card-structural text-foreground"}`}
                   value={formData.requirement_domain}
@@ -286,8 +286,8 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               </div>
 
               {formData.requirement_domain === "IT & Software System" && (
-                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-blue-500/5 p-4 rounded-xl border border-blue-500/20">
-                  <h5 className="font-bold text-blue-500">IT & Software System Scope</h5>
+                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary text-theme-btn-primary-text/5 p-4 rounded-xl border border-blue-500/20">
+                  <h5 className="font-bold text-accent">IT & Software System Scope</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Target System / Application</label>
@@ -316,8 +316,8 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               )}
 
               {formData.requirement_domain === "Infrastructure & Hardware" && (
-                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/20">
-                  <h5 className="font-bold text-indigo-500">Infrastructure Scope</h5>
+                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary text-theme-btn-primary-text/5 p-4 rounded-xl border border-indigo-500/20">
+                  <h5 className="font-bold text-accent">Infrastructure Scope</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className={`text-xs font-bold uppercase tracking-wider text-muted`}>Target Environment</label>
@@ -352,7 +352,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Technical Evidence (Screenshots / Logs)</label>
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
                 "border-border hover:border-theme-btn-primary/30 bg-elevated/50"
-              } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-red-500/5' : ''}`}>
+              } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-danger/5' : ''}`}>
                 <input 
                   type="file" 
                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
@@ -374,7 +374,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
                     <AppButton variant="secondary" 
                       type="button"
                       onClick={() => setFormData({ ...formData, attachment: null })}
-                      className="p-1 rounded-md hover:bg-red-500/10 text-red-500 transition-colors relative z-20"
+                      className="p-1 rounded-md hover:bg-danger/10 text-danger transition-colors relative z-20"
                     >
                       <X className="h-4 w-4" />
                     </AppButton>

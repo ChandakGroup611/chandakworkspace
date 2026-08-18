@@ -162,7 +162,7 @@ export default function RegisterPage() {
         
         {/* Abstract Glow Effects */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-theme-btn-primary/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-theme-btn-primary text-theme-btn-primary-text/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
           
@@ -181,7 +181,7 @@ export default function RegisterPage() {
           <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight !text-white mb-12 leading-tight drop-shadow-lg">
               Intelligent Governance <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-cyan-400">
                 & Enterprise Mastery
               </span>
             </h1>
@@ -219,7 +219,7 @@ export default function RegisterPage() {
                 Register new personnel records to enable authenticated platform access.
               </p>
               
-              <div className="p-3 bg-blue-950/30 text-blue-400 rounded-lg text-xs flex items-start text-left gap-2 border border-blue-900/50">
+              <div className="p-3 bg-blue-950/30 text-accent rounded-lg text-xs flex items-start text-left gap-2 border border-blue-900/50">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>
                   <strong>Important:</strong> You must use your official <b>@chandakgroup.com</b> mail ID credentials for access.
@@ -229,7 +229,7 @@ export default function RegisterPage() {
 
             {/* Realtime Alert Displays */}
             {errorMsg && (
-              <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-900/50 text-red-400 text-sm flex items-start gap-3 animate-in fade-in duration-300">
+              <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-900/50 text-danger text-sm flex items-start gap-3 animate-in fade-in duration-300">
                 <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <strong className="font-semibold block">Error</strong>
@@ -239,7 +239,7 @@ export default function RegisterPage() {
             )}
 
             {successMsg && (
-              <div className="mb-6 p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50 text-emerald-400 text-sm flex items-center gap-3 animate-in fade-in duration-300">
+              <div className="mb-6 p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50 text-success text-sm flex items-center gap-3 animate-in fade-in duration-300">
                 <CheckCircle2 className="h-5 w-5 shrink-0" />
                 <span className="font-medium">{successMsg}</span>
               </div>
@@ -258,7 +258,7 @@ export default function RegisterPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     leftIcon={<User className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -273,7 +273,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     leftIcon={<Mail className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -291,7 +291,7 @@ export default function RegisterPage() {
                     <select
                       value={department}
                       onChange={(e) => { setDepartment(e.target.value); setDesignation(""); }}
-                      className="w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] text-white"
+                      className="w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] text-white"
                       required
                     >
                       <option value="" disabled>Select Department</option>
@@ -316,7 +316,7 @@ export default function RegisterPage() {
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
                       disabled={!department}
-                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] text-white ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
+                      className={`w-full h-12 pl-10 pr-3 rounded-xl border text-sm focus:outline-none cursor-pointer transition-colors bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] text-white ${!department ? "opacity-50 cursor-not-allowed" : ""}`}
                       required
                     >
                       <option value="" disabled>Select Designation</option>
@@ -391,7 +391,7 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -406,7 +406,7 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     leftIcon={<Lock className="h-4 w-4" />}
-                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-white/10 focus:bg-[#0A0D14] transition-colors text-white"
+                    className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
                     required
                   />
                 </div>
@@ -418,7 +418,7 @@ export default function RegisterPage() {
                   size="md" 
                   type="submit" 
                   disabled={loading || !!successMsg}
-                  className="w-full h-12 font-bold text-base tracking-wide bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 shadow-lg shadow-purple-500/20 text-white border-none"
+                  className="w-full h-12 font-bold text-base tracking-wide bg-gradient-to-r from-accent to-cyan-600 hover:from-accent hover:to-cyan-500 shadow-lg shadow-purple-500/20 text-white border-none"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">

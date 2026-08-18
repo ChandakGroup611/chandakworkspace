@@ -60,7 +60,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
           </div>
 
           <div className="flex gap-2">
-            <ListChecks className={`h-5 w-5 shrink-0 text-emerald-500`} />
+            <ListChecks className={`h-5 w-5 shrink-0 text-success`} />
             <div>
               <h3 className={`font-semibold text-sm text-foreground`}>Prerequisites</h3>
               <ul className={`text-sm mt-1 space-y-1 list-disc pl-4 text-muted`}>
@@ -100,7 +100,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                   </AppTableCell>
                   <AppTableCell className="px-6 py-4">
                     {field.isRequired ? (
-                      <span className="text-[10px] font-bold uppercase text-rose-500 bg-rose-500/10 px-2 py-1 rounded">Required</span>
+                      <span className="text-[10px] font-bold uppercase text-danger bg-danger/10 px-2 py-1 rounded">Required</span>
                     ) : (
                       <span className="text-[10px] font-bold uppercase text-muted bg-theme-btn-secondary/20 text-theme-btn-secondary-text px-2 py-1 rounded">Optional</span>
                     )}
@@ -147,7 +147,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
           {module.results.map((result, idx) => (
             <div key={idx} className={`p-5 rounded-2xl border flex flex-col h-full bg-elevated border-border`}>
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                 <h3 className={`font-bold text-sm truncate text-foreground`}>{result.action}</h3>
               </div>
               <p className={`text-sm mb-4 flex-1 text-muted`}>

@@ -93,8 +93,8 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
             <AppTableBody>
               {teamStats.map((u: any, i: number) => {
                 const progress = u.closed + u.active > 0 ? Math.round((u.closed / (u.closed + u.active)) * 100) : 0;
-                const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-amber-500', 'bg-theme-btn-primary', 'bg-theme-btn-primary'];
-                const textColors = ['text-emerald-500', 'text-teal-500', 'text-amber-500', 'text-theme-icon', 'text-theme-icon'];
+                const colors = ['bg-success', 'bg-teal-500', 'bg-warning', 'bg-theme-btn-primary', 'bg-theme-btn-primary'];
+                const textColors = ['text-success', 'text-teal-500', 'text-warning', 'text-theme-icon', 'text-theme-icon'];
                 const color = colors[i % colors.length];
                 const textColor = textColors[i % textColors.length];
 

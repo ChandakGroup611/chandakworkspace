@@ -52,7 +52,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "emerald-500",
       gradientLight: "from-white to-emerald-50",
       gradientDark: "from-white/5 to-emerald-500/10",
-      textColor: "text-emerald-500 dark:text-emerald-400",
+      textColor: "text-success dark:text-success",
     },
     {
       id: "inProgress",
@@ -64,7 +64,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "amber-500",
       gradientLight: "from-white to-amber-50",
       gradientDark: "from-white/5 to-amber-500/10",
-      textColor: "text-amber-500 dark:text-amber-400",
+      textColor: "text-warning dark:text-warning",
     },
     {
       id: "blocked",
@@ -76,7 +76,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
       color: "rose-500",
       gradientLight: "from-white to-rose-50",
       gradientDark: "from-white/5 to-rose-500/10",
-      textColor: "text-rose-600 dark:text-rose-400",
+      textColor: "text-danger dark:text-danger",
     }
   ];
 
@@ -117,7 +117,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
                 </div>
                 
                 <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <span className={`flex items-center gap-0.5 ${card.isUp ? "text-emerald-500" : (card.color === 'rose-500' ? "text-rose-500" : "text-amber-500")}`}>
+                  <span className={`flex items-center gap-0.5 ${card.isUp ? "text-success" : (card.color === 'rose-500' ? "text-danger" : "text-warning")}`}>
                     {card.isUp ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                   </span>
                   <span className="text-muted-foreground">{card.delta}</span>

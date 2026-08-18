@@ -25,7 +25,7 @@ const SIZE_MAP = {
 };
 
 const ACCENT_MAP = {
-  purple: "from-purple-600/20 to-transparent",
+  purple: "from-accent/20 to-transparent",
   indigo: "from-indigo-600/20 to-transparent",
   emerald: "from-emerald-600/20 to-transparent",
   amber: "from-amber-600/20 to-transparent",
