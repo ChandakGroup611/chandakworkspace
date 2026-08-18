@@ -909,9 +909,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               <ShieldAlert className="h-6 w-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">Action Required: Your Approval is Pending</h3>
-                <p className="text-xs text-amber-700 dark:text-amber-300 mb-3 mt-1">
-                  This requirement is currently awaiting your review in the workflow sequence. Please provide your mandatory remarks and select an action below.
-                </p>
+
                 <div className="space-y-3">
                   <RichTextEditor
                     value={approvalRemarks}
