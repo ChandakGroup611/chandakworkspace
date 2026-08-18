@@ -80,7 +80,8 @@ export default function LoginPage() {
       } else {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          router.push("/");
+          const next = searchParams.get("next") || "/";
+          router.push(next);
         }
       }
     };
@@ -135,7 +136,9 @@ export default function LoginPage() {
         } catch (e) {}
       }
 
-      window.location.href = "/";
+      const searchParams = new URLSearchParams(window.location.search);
+      const next = searchParams.get("next") || "/";
+      window.location.href = next;
 
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during authentication.");
@@ -148,14 +151,17 @@ export default function LoginPage() {
     try {
       setErrorMsg(null);
       setSsoLoading(true);
+      const searchParams = new URLSearchParams(window.location.search);
+      const next = searchParams.get("next");
+      const callbackUrl = next 
+        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` 
+        : `${window.location.origin}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
           scopes: 'email profile User.Read',
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            prompt: 'consent'
-          }
+          redirectTo: callbackUrl
         }
       });
       if (error) throw error;

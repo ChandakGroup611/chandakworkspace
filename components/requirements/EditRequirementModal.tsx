@@ -114,8 +114,8 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
 
         <div className="flex border-b border-border dark:border-white/10 overflow-x-auto bg-surface/30 px-6 pt-2">
           {['general', 'planning', 'details'].map(tab => {
-            // eslint-disable-next-line no-restricted-syntax
             return (
+              // eslint-disable-next-line no-restricted-syntax
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}

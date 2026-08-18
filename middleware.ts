@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
   if (!user && !isAuthRoute && !isApiRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
+    redirectUrl.searchParams.set("next", pathname + request.nextUrl.search);
     const response = NextResponse.redirect(redirectUrl);
     
     // Copy refreshed Supabase cookies to avoid session desynchronization

@@ -70,14 +70,24 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     // 4. Resolve exact email addresses
     const { data: users } = await supabaseAdmin
       .from("user_master")
-      .select("id, email, first_name")
+      .select("id, email, first_name, full_name")
       .in("id", Array.from(recipientUserIds));
 
     if (!users || users.length === 0) return;
 
+    let creatorName = "System";
+    if (payload.triggering_user_id) {
+       const { data: creator } = await supabaseAdmin.from("user_master").select("full_name").eq("id", payload.triggering_user_id).single();
+       if (creator) creatorName = creator.full_name || "System";
+    }
+
     // 5. Hydrate Templates and Queue
     const queueInserts = users.map(user => {
-      const hydratedPayload = { ...payload, recipient_name: user.first_name };
+      const hydratedPayload = { 
+        ...payload, 
+        recipient_name: user.first_name || user.full_name,
+        creator_name: payload.creator_name || creatorName
+      };
       const subject = template.subject ? hydrateTemplate(template.subject, hydratedPayload) : "System Notification";
       const htmlBody = template.html_body ? hydrateTemplate(template.html_body, hydratedPayload) : null;
       const bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, hydratedPayload) : null;
@@ -160,9 +170,10 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
       // If Task, look up executors
       if (moduleName === "Task" && payload.entity_id) {
         const { data } = await supabaseAdmin
-          .from("task_executors")
+          .from("task_participants")
           .select("user_id")
-          .eq("task_id", payload.entity_id);
+          .eq("task_id", payload.entity_id)
+          .eq("participation_role", "EXECUTOR");
         if (data) data.forEach(d => ids.push(d.user_id));
       }
       break;

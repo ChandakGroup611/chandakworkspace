@@ -199,6 +199,12 @@ export async function createTask(payload: {
       }
     }
     
+    let creatorName = 'System';
+    if (creatorId) {
+       const { data: creator } = await supabaseAdmin.from('user_master').select('full_name').eq('id', creatorId).single();
+       if (creator) creatorName = creator.full_name || 'System';
+    }
+
     // In-app & realtime notifications
     if (task.assigned_to && task.assigned_to !== creatorId) {
       dispatchNotification(
@@ -207,7 +213,8 @@ export async function createTask(payload: {
         `You have been assigned as primary assignee to task "${task.subject}".`,
         `/tasks/${task.id}`,
         'TASK',
-        'ASSIGNED'
+        'ASSIGNED',
+        { task_name: task.subject, status: 'NEW', creator_name: creatorName, _disableEmail: true }
       ).catch(e => console.error("[createTask] dispatchNotification primary failed", e));
     }
 
@@ -220,7 +227,8 @@ export async function createTask(payload: {
             `You have been assigned as ${p.participation_role?.toLowerCase() || 'executor'} to task "${task.subject}".`,
             `/tasks/${task.id}`,
             'TASK',
-            'ASSIGNED'
+            'ASSIGNED',
+            { task_name: task.subject, status: 'NEW', creator_name: creatorName, _disableEmail: true }
           ).catch(e => console.error("[createTask] dispatchNotification participant failed", e));
         }
       }
@@ -1510,7 +1518,8 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
       `You have been assigned as primary assignee to task "${taskSubject}".`,
       `/tasks/${taskId}`,
       'TASK',
-      'ASSIGNED'
+      'ASSIGNED',
+      { _disableEmail: true }
     ).catch(e => console.error("[updateTaskAssignees] dispatchNotification primary failed", e));
   }
 
@@ -1523,7 +1532,8 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
         `You have been assigned as executor on task "${taskSubject}".`,
         `/tasks/${taskId}`,
         'TASK',
-        'ASSIGNED'
+        'ASSIGNED',
+        { _disableEmail: true }
       ).catch(e => console.error("[updateTaskAssignees] dispatchNotification executor failed", e));
     }
   });

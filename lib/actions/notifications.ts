@@ -104,7 +104,8 @@ export async function dispatchNotification(
   message: string, 
   link?: string,
   moduleCode?: string,
-  eventCode?: string
+  eventCode?: string,
+  customPayload?: Record<string, any>
 ) {
   
   // 0. Fail-Fast Trigger Interceptor
@@ -117,13 +118,17 @@ export async function dispatchNotification(
       isEmailEnabled = config.is_email_enabled !== false;
       isInAppEnabled = config.is_inapp_enabled !== false;
     }
+  }
+
+  if (customPayload?._disableEmail) {
+    isEmailEnabled = false;
+  }
     
     // If both are disabled, abort immediately to save resources
     if (!isEmailEnabled && !isInAppEnabled) {
       console.log(`[Notification Engine] Trigger aborted for ${moduleCode}:${eventCode} - both channels disabled.`);
       return;
     }
-  }
 
   // 1. Insert into DB (In-App Queue)
   let notif: any = null;
@@ -206,7 +211,7 @@ export async function dispatchNotification(
           .single();
 
         if (template) {
-          const payload = { title, message, link: absoluteLink, recipient_name: user.full_name || user.email };
+          const payload = { title, message, link: absoluteLink, recipient_name: user.full_name || user.email, ...(customPayload || {}) };
           const hydrate = (text: string) => {
             if (!text) return text;
             let hydrated = text;
