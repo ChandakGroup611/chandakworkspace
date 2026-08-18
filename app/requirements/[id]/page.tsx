@@ -1548,9 +1548,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         
                         // Filter users for this department or fallback to all users if none found
                         let deptUsers = (masters.users || []).filter((u: any) => u.department_id === deptId || u.department === deptName);
-                        if (deptUsers.length === 0) {
-                          deptUsers = masters.users || [];
-                        }
 
                         const selectedApprovers = formData.department_approvers[deptId] || [];
 
@@ -1565,53 +1562,59 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                             </div>
 
                             <div className="flex flex-wrap gap-2 pt-1">
-                              {deptUsers.map((u: any) => {
-                                const isUserSelected = selectedApprovers.includes(u.id);
-                                const orderIndex = selectedApprovers.indexOf(u.id) + 1;
+                              {deptUsers.length === 0 ? (
+                                <div className="text-xs text-muted italic p-2 border border-dashed border-border dark:border-white/10 rounded-lg w-full text-center">
+                                  No users assigned to the {deptName} department.
+                                </div>
+                              ) : (
+                                deptUsers.map((u: any) => {
+                                  const isUserSelected = selectedApprovers.includes(u.id);
+                                  const orderIndex = selectedApprovers.indexOf(u.id) + 1;
 
-                                return (
-                                  <AppButton
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    key={u.id}
-                                    onClick={() => {
-                                      setFormData((prev: any) => {
-                                        const current = prev.department_approvers[deptId] || [];
-                                        if (current.includes(u.id)) {
-                                          return { 
-                                            ...prev, 
-                                            department_approvers: { 
-                                              ...prev.department_approvers, 
-                                              [deptId]: current.filter((id: string) => id !== u.id) 
-                                            } 
-                                          };
-                                        } else {
-                                          return { 
-                                            ...prev, 
-                                            department_approvers: { 
-                                              ...prev.department_approvers, 
-                                              [deptId]: [...current, u.id] 
-                                            } 
-                                          };
-                                        }
-                                      });
-                                    }}
-                                    className={`px-2 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-2 cursor-pointer transition-all ${
-                                      isUserSelected 
-                                        ? "bg-theme-btn-primary border-transparent text-theme-btn-primary-text shadow-xs" 
-                                        : "bg-surface dark:bg-elevated/40 border-border text-foreground hover:border-accent/40"
-                                    }`}
-                                  >
-                                    {isUserSelected && (
-                                      <span className="bg-surface/25 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-extrabold">
-                                        {orderIndex}
-                                      </span>
-                                    )}
-                                    <span>{u.full_name || u.name || 'User'}</span>
-                                  </AppButton>
-                                );
-                              })}
+                                  return (
+                                    <AppButton
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      key={u.id}
+                                      onClick={() => {
+                                        setFormData((prev: any) => {
+                                          const current = prev.department_approvers[deptId] || [];
+                                          if (current.includes(u.id)) {
+                                            return { 
+                                              ...prev, 
+                                              department_approvers: { 
+                                                ...prev.department_approvers, 
+                                                [deptId]: current.filter((id: string) => id !== u.id) 
+                                              } 
+                                            };
+                                          } else {
+                                            return { 
+                                              ...prev, 
+                                              department_approvers: { 
+                                                ...prev.department_approvers, 
+                                                [deptId]: [...current, u.id] 
+                                              } 
+                                            };
+                                          }
+                                        });
+                                      }}
+                                      className={`px-2 py-1 rounded-lg text-[11px] font-semibold border flex items-center gap-2 cursor-pointer transition-all ${
+                                        isUserSelected 
+                                          ? "bg-theme-btn-primary border-transparent text-theme-btn-primary-text shadow-xs" 
+                                          : "bg-surface dark:bg-elevated/40 border-border text-foreground hover:border-accent/40"
+                                      }`}
+                                    >
+                                      {isUserSelected && (
+                                        <span className="bg-surface/25 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-extrabold">
+                                          {orderIndex}
+                                        </span>
+                                      )}
+                                      <span>{u.full_name || u.name || 'User'}</span>
+                                    </AppButton>
+                                  );
+                                })
+                              )}
                             </div>
 
                             {/* Approval Sequence Preview Strip */}
