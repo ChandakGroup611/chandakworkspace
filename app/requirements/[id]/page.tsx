@@ -1730,7 +1730,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* Analysis Action Buttons (Frozen Footer) */}
             {((isSuperAdmin && !isViewMode) || isCurrentApprover) && (
-              <div className="sticky bottom-0 z-[100] -mx-4 sm:-mx-6 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
+              <div className="sticky bottom-0 z-[100] -mx-4 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
                 {isCurrentApprover ? (
                   <>
                     <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
@@ -2018,7 +2018,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             
             {/* Approval Action Buttons (Frozen Footer) */}
             {isCurrentApprover && (
-              <div className="sticky bottom-0 z-[100] -mx-4 sm:-mx-6 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
+              <div className="sticky bottom-0 z-[100] -mx-4 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
                 <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
                   Pending Your Approval
