@@ -1519,9 +1519,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         <AppButton
                           type="button"
                           variant="ghost"
+                          size="sm"
                           key={d.id}
                           onClick={() => handleDepartmentToggle(d.id)}
-                          className={`px-3 py-1.5 rounded-xl text-xs theme-data-value transition-all border flex items-center gap-2 cursor-pointer ${
+                          className={`px-2 py-1 rounded-xl text-[11px] font-semibold transition-all border flex items-center gap-1.5 cursor-pointer ${
                             isSelected 
                               ? "bg-theme-btn-primary border-transparent text-theme-btn-primary-text shadow-sm scale-[1.02]" 
                               : "bg-surface dark:bg-elevated/30 border-border text-muted hover:text-foreground hover:border-accent/40"
@@ -1572,6 +1573,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                   <AppButton
                                     type="button"
                                     variant="ghost"
+                                    size="sm"
                                     key={u.id}
                                     onClick={() => {
                                       setFormData((prev: any) => {
