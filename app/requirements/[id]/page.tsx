@@ -670,7 +670,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const snap = requirement.intake_snapshot || {};
 
   return (
-    <PageContainer strict={false} className="px-4 pb-0 pt-2 min-h-screen overflow-y-auto">
+    <PageContainer strict={true} className="bg-background">
+      <div className="flex-1 overflow-y-auto px-4 pb-12 pt-2">
       <div className="flex items-center justify-between pb-2 mb-2 shrink-0 border-b border-border dark:border-white/5">
         <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-2">
@@ -1731,73 +1732,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
             </AppCard>
 
-            {/* Analysis Action Buttons (Frozen Footer) */}
-            {((isSuperAdmin && !isViewMode) || isCurrentApprover) && (
-              <div className="sticky bottom-0 z-[100] -mx-4 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
-                {isCurrentApprover ? (
-                  <>
-                    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4" />
-                      Pending Your Approval
-                    </span>
-                    <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
-                    <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                    <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
-                  </>
-                ) : (
-                  isEditable ? (
-                    <>
-                      <AppButton
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleAction('SAVE')}
-                        leftIcon={<Save className="w-4 h-4" />}
-                      >
-                        Save Draft
-                      </AppButton>
-                      
-                      {requirement.approval_status !== 'On Hold' && (
-                        <AppButton
-                          type="button"
-                          variant="secondary"
-                          onClick={() => handleAction('HOLD')}
-                          leftIcon={<PauseCircle className="w-4 h-4" />}
-                        >
-                          Hold Requirement
-                        </AppButton>
-                      )}
 
-                      <AppButton
-                        type="button"
-                        variant="destructive"
-                        onClick={() => handleAction('CANCEL')}
-                        leftIcon={<XCircle className="w-4 h-4" />}
-                      >
-                        Reject Requirement
-                      </AppButton>
-
-                      <AppButton
-                        type="button"
-                        variant="primary"
-                        onClick={() => handleAction('ACCEPT')}
-                        leftIcon={<CheckCircle className="w-4 h-4" />}
-                      >
-                        Accept & Initiate Approval
-                      </AppButton>
-                    </>
-                  ) : (
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleAction('SAVE')}
-                      leftIcon={<Save className="w-4 h-4" />}
-                    >
-                      Update Details
-                    </AppButton>
-                  )
-                )}
-              </div>
-            )}
           </div>
         )}
 
@@ -2019,18 +1954,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 </div>
               )}
             
-            {/* Approval Action Buttons (Frozen Footer) */}
-            {isCurrentApprover && (
-              <div className="sticky bottom-0 z-[100] -mx-4 p-4 mt-6 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] flex items-center justify-end gap-3 rounded-t-2xl">
-                <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  Pending Your Approval
-                </span>
-                <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
-                <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
-              </div>
-            )}
+
           </div>
         )}
 
@@ -2180,6 +2104,98 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div> {/* End flex-1 scrollable area */}
+
+      {/* GLOBAL STATIC FOOTERS */}
+      <div className="shrink-0 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-[100] empty:hidden">
+        {activeTab === 'analysis' && (
+          <div className="p-4 flex items-center justify-end gap-3">
+            {((isSuperAdmin && !isViewMode) || isCurrentApprover) && (
+              <>
+                {isCurrentApprover ? (
+                  <>
+                    <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      Pending Your Approval
+                    </span>
+                    <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
+                    <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
+                    <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                  </>
+                ) : (
+                  isEditable ? (
+                    <>
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleAction('SAVE')}
+                        leftIcon={<Save className="w-4 h-4" />}
+                      >
+                        Save Draft
+                      </AppButton>
+                      
+                      {requirement.approval_status !== 'On Hold' && (
+                        <AppButton
+                          type="button"
+                          variant="secondary"
+                          onClick={() => handleAction('HOLD')}
+                          leftIcon={<PauseCircle className="w-4 h-4" />}
+                        >
+                          Hold Requirement
+                        </AppButton>
+                      )}
+
+                      <AppButton
+                        type="button"
+                        variant="destructive"
+                        onClick={() => handleAction('CANCEL')}
+                        leftIcon={<XCircle className="w-4 h-4" />}
+                      >
+                        Reject Requirement
+                      </AppButton>
+
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        onClick={() => handleAction('ACCEPT')}
+                        leftIcon={<CheckCircle className="w-4 h-4" />}
+                      >
+                        Accept & Initiate Approval
+                      </AppButton>
+                    </>
+                  ) : (
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleAction('SAVE')}
+                      leftIcon={<Save className="w-4 h-4" />}
+                    >
+                      Update Details
+                    </AppButton>
+                  )
+                )}
+              </>
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'approval' && (
+          <div className="p-4 flex items-center justify-end gap-3">
+            {isCurrentApprover && (
+              <>
+                <span className="text-sm font-semibold text-amber-600 dark:text-amber-400 mr-auto flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Pending Your Approval
+                </span>
+                <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
+                <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
+                <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
     </PageContainer>
   );
 }
