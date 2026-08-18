@@ -1518,6 +1518,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       return (
                         <AppButton
                           type="button"
+                          variant="ghost"
                           key={d.id}
                           onClick={() => handleDepartmentToggle(d.id)}
                           className={`px-3.5 py-2 rounded-xl theme-data-value transition-all border flex items-center gap-2 cursor-pointer ${
@@ -1570,6 +1571,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                 return (
                                   <AppButton
                                     type="button"
+                                    variant="ghost"
                                     key={u.id}
                                     onClick={() => {
                                       setFormData((prev: any) => {
