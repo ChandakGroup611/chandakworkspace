@@ -165,7 +165,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             </div>
 
             <div className="md:col-span-2 lg:col-span-3 space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Subject</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Subject <span className="text-red-500">*</span></label>
               <AppInput 
                 placeholder="Brief summary of your request"
                 value={formData.subject}
@@ -227,7 +227,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Reason <span className="text-danger">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[100px] resize-none ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
-                  placeholder="Why is this requirement needed? (Business Objective)"
+                  
                   value={formData.business_reason || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, business_reason: e.target.value }))}
                   required
@@ -238,7 +238,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Requirement Details <span className="text-danger">*</span></label>
                 <textarea 
                   className={`w-full p-4 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[120px] resize-none ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
-                  placeholder="Provide detailed functional scope and technical requirements..."
+                  
                   value={formData.requirement_description || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, requirement_description: e.target.value }))}
                 required
