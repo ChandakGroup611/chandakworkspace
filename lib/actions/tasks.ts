@@ -1226,7 +1226,7 @@ export async function propagateTaskDependencies(taskId: string) {
       .eq('task_id', taskId);
 
     if (reqTasks && reqTasks.length > 0) {
-      const { recalculateRequirementCompletion, evaluateRequirementReadyToUse } = await import('@/lib/actions/requirements');
+      const { recalculateRequirementCompletion } = await import('@/lib/actions/requirements');
       
       for (const reqTask of reqTasks) {
         await recalculateRequirementCompletion(reqTask.requirement_id);
@@ -1241,8 +1241,6 @@ export async function propagateTaskDependencies(taskId: string) {
           }
         }
       }
-      
-      await evaluateRequirementReadyToUse(taskId);
     }
 
     // 2. Handle parent task progress
