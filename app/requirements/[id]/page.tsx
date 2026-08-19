@@ -247,7 +247,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           technical_scope: data.technical_scope || "",
           budget_impact: data.budget_impact || "",
           estimated_effort: data.estimated_effort || "",
-          estimated_cost: data.estimated_cost || "",
+          estimated_cost: data.custom_fields?.estimated_cost || "",
           estimated_resources: data.estimated_resources || "",
           dependency_notes: data.dependency_notes || "",
           start_date: data.start_date ? data.start_date.split('T')[0] : "",
@@ -1493,7 +1493,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-accent" /> Estimated Cost
                     </span>
-                    {isEditable || isSuperAdmin ? (
+                    {isEditable ? (
                       <AppInput type="number" placeholder="Amount (e.g. 50000)" value={formData.estimated_cost} onChange={(e) => setFormData({...formData, estimated_cost: e.target.value})} className="w-full" />
                     ) : (
                       <span className="theme-data-value text-foreground truncate">
@@ -1551,7 +1551,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         approvalFlow.map((flow: any, idx: number) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
                             <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
-                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`}
+                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || 'Department'} ({flow.approver?.role?.[0]?.role_master?.role_name || 'Designation'})
                           </span>
                         ))
                       ) : (
@@ -1730,7 +1730,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     onChange={setApprovalRemarks}
                     placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback with rich text decorations..."
                   />
-                    <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
                   </div>
 
                 {/* SECTION 2: Remarks History (Separated, Default Minimized) */}
