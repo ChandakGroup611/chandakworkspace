@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -25,7 +26,7 @@ export default function MigrationClient() {
     if (!file) return;
 
     if (selectedModule === 'TASK' && !targetWorkspaceId) {
-      alert('Please select a Target Workspace before uploading tasks.');
+      toast.warning('Please select a Target Workspace before uploading tasks.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -79,7 +80,7 @@ export default function MigrationClient() {
 
   const generateTemplate = async () => {
     if (selectedModule === 'TASK' && !targetWorkspaceId) {
-      alert("Please select a Target Workspace context first.");
+      toast.warning("Please select a Target Workspace context first.");
       return;
     }
 
@@ -104,7 +105,7 @@ export default function MigrationClient() {
       saveAs(new Blob([buffer]), `${selectedModule}_Migration_Template.xlsx`);
 
     } catch (e: any) {
-      alert("Error generating template: " + e.message);
+      toast.error("Error generating template: " + e.message);
     } finally {
       setIsGenerating(false);
     }

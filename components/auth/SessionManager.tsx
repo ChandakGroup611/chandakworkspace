@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -143,7 +144,7 @@ export function SessionManager() {
           const newSessionToken = payload.new.session_token;
           // If the token changed to something else, we were logged in from another device
           if (newSessionToken !== sessionToken) {
-            alert("You have been logged out because your account was logged in on another device.");
+            toast.warning("You have been logged out because your account was logged in on another device.");
             supabase.auth.signOut().then(() => {
               router.push("/login");
             });

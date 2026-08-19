@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -52,7 +53,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
       setDescription("");
     } catch (e) {
       console.error(e);
-      alert("Failed to create template");
+      toast.error("Failed to create template");
     } finally {
       setIsSubmitting(false);
     }
@@ -65,7 +66,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
       setTemplates(templates.filter(t => t.id !== id));
     } catch (e) {
       console.error(e);
-      alert("Failed to delete template");
+      toast.error("Failed to delete template");
     }
   };
 

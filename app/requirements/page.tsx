@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -203,7 +204,7 @@ export default function RequirementsPage() {
       await deleteRequirement(dbId, user!.id);
       await loadRequirements();
     } catch (err: any) {
-      alert(err.message || "Failed to delete requirement.");
+      toast.error(err.message || "Failed to delete requirement.");
     }
   };
 

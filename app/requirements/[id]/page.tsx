@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -364,7 +365,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   };
 
   const handlePutToUse = async () => {
-    if (!putToUseDate) return alert("Please select a put to use date");
+    if (!putToUseDate) return toast.warning("Please select a put to use date");
     setSubmittingPutToUse(true);
     try {
       const { markRequirementPutToUse } = await import("@/lib/actions/requirements");
@@ -373,14 +374,14 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       setShowPutToUseDialog(false);
       loadData();
     } catch (e: any) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     } finally {
       setSubmittingPutToUse(false);
     }
   };
 
   const handleAmendment = async () => {
-    if (!amendmentDetails.trim()) return alert("Please enter the revised details.");
+    if (!amendmentDetails.trim()) return toast.warning("Please enter the revised details.");
     setSubmittingAmendment(true);
     try {
       let attachmentData = undefined;
@@ -417,7 +418,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       setAmendmentFile(null);
       loadData();
     } catch (e: any) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     } finally {
       setSubmittingAmendment(false);
     }
@@ -459,7 +460,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const handleAction = async (action: 'ACCEPT' | 'HOLD' | 'CANCEL' | 'SAVE') => {
       const currentRemarks = approvalRemarks?.trim() || formData.analysis_remarks?.trim();
       if (!currentRemarks) {
-        alert("Remarks are mandatory before saving or submitting.");
+        toast.warning("Remarks are mandatory before saving or submitting.");
         return;
       }
       
@@ -467,12 +468,12 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
       if (action === 'ACCEPT') {
         if (!payload.impacted_departments.length || !payload.due_date || !payload.dependency_notes?.trim() || !payload.technical_scope?.trim() || !payload.estimated_effort?.trim()) {
-            alert("Impacted Departments, Due Date, Dependency Notes, Technical Scope, and Estimated Effort are mandatory to Accept.");
+            toast.warning("Impacted Departments, Due Date, Dependency Notes, Technical Scope, and Estimated Effort are mandatory to Accept.");
             return;
         }
         for (const deptId of payload.impacted_departments) {
             if (!payload.department_approvers[deptId] || payload.department_approvers[deptId].length === 0) {
-                alert("Please select at least one approver for each Impacted Department.");
+                toast.warning("Please select at least one approver for each Impacted Department.");
                 return;
             }
         }
@@ -481,13 +482,13 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         const start = new Date(formData.start_date);
         start.setHours(0, 0, 0, 0);
         if ((requirement.approval_status === 'Draft' || !requirement.approval_status) && start < today) {
-            alert("Start Date cannot be less than today's date.");
+            toast.error("Start Date cannot be less than today's date.");
             return;
         }
         const due = new Date(formData.due_date);
         due.setHours(0, 0, 0, 0);
         if (due < start) {
-            alert("Due Date cannot be less than Start Date.");
+            toast.error("Due Date cannot be less than Start Date.");
             return;
         }
       }
@@ -498,7 +499,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         const { submitRequirementAnalysis } = await import("@/lib/actions/requirements");
         const { data: { user } } = await supabase.auth.getUser();
         await submitRequirementAnalysis(requirement.id, payload, user!.id, action);
-        alert(`Requirement ${action.toLowerCase()} successfully!`);
+        toast.warning(`Requirement ${action.toLowerCase()} successfully!`);
         await loadData();
       } catch (err: any) {
         setError(err.message || "An error occurred");
@@ -509,7 +510,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
   const submitApproval = async (action: 'Approve' | 'Reject' | 'Hold' | 'SignOff') => {
     if (!approvalRemarks.trim()) {
-      alert("Please provide remarks for your decision.");
+      toast.warning("Please provide remarks for your decision.");
       return;
     }
     setSavingApproval(true);
@@ -518,7 +519,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       await processApprovalAction(requirement.id, action, approvalRemarks, currentUserId);
       setApprovalRemarks("");
       await loadData();
-      alert(`Successfully processed as ${action}`);
+      toast.success(`Successfully processed as ${action}`);
       if (searchParams.get('from') === 'approvals') {
         router.push('/requirements/approvals');
       } else {
@@ -526,7 +527,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to process approval.");
+      toast.error(err.message || "Failed to process approval.");
     } finally {
       setSavingApproval(false);
     }
@@ -571,7 +572,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
   const handleApprovalAction = async (action: 'Approve' | 'Reject' | 'Hold') => {
     if (!approvalRemarks.trim()) {
-      alert("Please provide mandatory analysis remarks before proceeding.");
+      toast.warning("Please provide mandatory analysis remarks before proceeding.");
       return;
     }
     setSavingApproval(true);
@@ -584,7 +585,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       // Also go back to approvals page after processing
       router.push('/requirements/approvals');
     } catch (err: any) {
-      alert(err.message || "Failed to process approval action.");
+      toast.error(err.message || "Failed to process approval action.");
     } finally {
       setSavingApproval(false);
     }
@@ -598,7 +599,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       await deleteRequirement(requirement.id, user!.id);
       router.push('/requirements');
     } catch (err: any) {
-      alert(err.message || "Failed to delete requirement.");
+      toast.error(err.message || "Failed to delete requirement.");
     }
   };
 
@@ -620,7 +621,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         window.open(targetUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (e: any) {
-      alert(`Failed to ${action} attachment: ` + (e.message || "Unknown error"));
+      toast.error(`Failed to ${action} attachment: ` + (e.message || "Unknown error"));
     }
   };
 
@@ -642,7 +643,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       setShowAddMasterModal(false);
       setNewMasterName("");
     } catch (e: any) {
-      alert("Failed to add master: " + e.message);
+      toast.error("Failed to add master: " + e.message);
     } finally {
       setIsAddingMaster(false);
     }
@@ -894,7 +895,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                await createTaskFromRequirement(reqId, selectedWorkspaceId, selectedSubWorkspaceId || null, data);
                loadData(); // Refresh to show newly linked tasks and status update
              } catch (err: any) {
-               alert(err.message || "Failed to create task");
+               toast.error(err.message || "Failed to create task");
              } finally {
                setSaving(false);
              }
@@ -974,7 +975,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {/* DEDICATED CARD: Business Classification */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Target className="w-4 h-4 text-accent" />
@@ -1149,7 +1150,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <div className="flex flex-col space-y-6 animate-in fade-in duration-300">
             {/* 1. CARD: Business Classification */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Target className="w-4 h-4 text-accent" />
@@ -1260,7 +1261,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* 2. CARD: Requirement Reason, Details & Technical Scope */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <FileText className="w-4 h-4 text-accent" />
@@ -1311,7 +1312,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             {/* IT System Conditional Render */}
             {requirement.custom_fields?.requirement_domain === 'IT & Software System' && (
               <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
-                <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                     <Server className="w-4 h-4 text-accent" />
@@ -1350,7 +1351,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             {/* Infrastructure Conditional Render */}
             {requirement.custom_fields?.requirement_domain === 'Infrastructure & Hardware' && (
               <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4 animate-in fade-in zoom-in-95 duration-300">
-                <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+                <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                     <Server className="w-4 h-4 text-accent" />
@@ -1382,7 +1383,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* 3. CARD: Timelines & Resources */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Clock className="w-4 h-4 text-accent" />
@@ -1463,7 +1464,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
             {/* 4. CARD: Impacted Departments & Define Approval Sequence * */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
                   <Briefcase className="w-4 h-4 text-accent" />
@@ -1653,7 +1654,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             {/* 5. CARD: Add New Analysis Remarks (Mandatory for Approvers) & Remarks History */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
               {/* Card Header */}
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs animate-pulse" />
                   <FileText className="w-4 h-4 text-accent" />
@@ -1743,7 +1744,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {/* DEDICATED CARD: Analysis Remarks & Approver History */}
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 backdrop-blur-xl p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl select-none">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2.5">
                   <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs animate-pulse" />
                   <FileText className="w-4 h-4 text-accent" />

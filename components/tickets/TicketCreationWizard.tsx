@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState } from "react";
@@ -179,7 +180,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
       }
     } catch (err: any) {
       console.error("Critical submission error details:", err.message || err);
-      alert(`Failed to initialize operational ticket: ${err.message || "Please verify connectivity"}`);
+      toast.error(`Failed to initialize operational ticket: ${err.message || "Please verify connectivity"}`);
     }
   };
 

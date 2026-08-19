@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect, use } from "react";
@@ -90,7 +91,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
       setIsEditing(false);
       fetchData();
     } catch (err: any) {
-      alert("Failed to save: " + err.message);
+      toast.error("Failed to save: " + err.message);
     }
   };
 

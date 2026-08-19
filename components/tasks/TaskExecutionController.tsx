@@ -1,4 +1,5 @@
 "use client";
+import { toast } from 'react-toastify';
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { AppCard } from "@/components/ui/AppCard";
@@ -613,9 +614,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         ...prev,
         attachments: prev.attachments?.filter((a: any) => a.id !== attachmentId)
       }));
-      alert("Attachment deleted successfully");
+      toast.success("Attachment deleted successfully");
     } catch (err: any) {
-      alert(`Failed to delete attachment: ${err.message}`);
+      toast.error(`Failed to delete attachment: ${err.message}`);
     } finally {
       setSaveRemarksLoading(false);
     }
@@ -643,7 +644,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     if (!task) return;
 
     if (!remarksDraft.trim()) {
-      alert("Task remarks are mandatory to save any updates or status changes. Please scroll down to the 'Task Remarks' section to enter your remarks.");
+      toast.warning("Task remarks are mandatory to save any updates or status changes. Please scroll down to the 'Task Remarks' section to enter your remarks.");
       return;
     }
 
@@ -896,7 +897,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Extended Metadata Section - Dedicated Card with Background Header */}
       <div>
         <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
-          <div className="bg-gradient-to-r from-accent/15 via-surface/90 to-surface/40 dark:from-accent/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+          <div className="bg-gradient-to-r from-accent/15 via-surface/90 to-surface/40 dark:from-accent/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary shadow-xs" />
               <Clock className="w-4 h-4 text-theme-icon" />
@@ -1155,7 +1156,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* 4. Remarks and Updates Group - Dedicated Card with Background-Colored Header */}
       <div>
         <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
-          <div className="bg-gradient-to-r from-amber-500/15 via-surface/90 to-surface/40 dark:from-amber-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+          <div className="bg-gradient-to-r from-amber-500/15 via-surface/90 to-surface/40 dark:from-amber-600/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-warning shadow-xs" />
               <MessageSquare className="w-4 h-4 text-warning dark:text-warning animate-pulse" />
@@ -1589,7 +1590,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* 5. Utilities & Communication Group - Dedicated Card with 7 Tabs */}
       <div>
         <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
-          <div className="bg-gradient-to-r from-emerald-500/15 via-surface/90 to-surface/40 dark:from-emerald-500/25 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center gap-2.5 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-emerald-500/15 via-surface/90 to-surface/40 dark:from-emerald-500/25 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center gap-2.5">
             <div className="w-1.5 h-4 rounded-full bg-success shadow-xs" />
             <ActivitySquare className="w-4 h-4 text-success dark:text-success" />
             <h3 className="font-bold text-sm tracking-wide text-foreground">Utilities & Communication</h3>

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -131,7 +132,7 @@ export default function DesignationsMasterPage() {
       if (!res.success) throw new Error(res.error);
       fetchData();
     } catch (e: any) {
-      alert("Error deleting designation: " + e.message);
+      toast.error("Error deleting designation: " + e.message);
     }
   };
 

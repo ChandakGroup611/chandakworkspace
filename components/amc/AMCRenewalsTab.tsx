@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -77,9 +78,9 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
       
       await fetchRenewals();
       onUpdate(); // Trigger parent refresh (for new expiry date)
-      alert("Renewal logged successfully! Master record expiry date has been pushed forward.");
+      toast.success("Renewal logged successfully! Master record expiry date has been pushed forward.");
     } catch (e: any) {
-      alert("Error logging renewal: " + e.message);
+      toast.error("Error logging renewal: " + e.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +94,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
       await fetchRenewals();
       onUpdate();
     } catch (e: any) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     }
   };
 

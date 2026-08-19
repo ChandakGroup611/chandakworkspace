@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -45,7 +46,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
       await fetchCities();
       onCityChanged();
     } catch (e: any) {
-      alert("Error updating city: " + e.message);
+      toast.error("Error updating city: " + e.message);
     }
   };
 
@@ -58,7 +59,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
       if (rpcError) throw rpcError;
 
       if (isInUse) {
-        alert(`Cannot delete '${city.city_name}' because it is currently assigned to a vendor or AMC. Please deactivate it instead.`);
+        toast.error(`Cannot delete '${city.city_name}' because it is currently assigned to a vendor or AMC. Please deactivate it instead.`);
         return;
       }
 
@@ -70,7 +71,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
       await fetchCities();
       onCityChanged();
     } catch (e: any) {
-      alert("Error deleting city: " + e.message);
+      toast.error("Error deleting city: " + e.message);
     }
   };
 

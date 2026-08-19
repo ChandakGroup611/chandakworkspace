@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef } from "react";
@@ -501,7 +502,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       }
       setTasks(prev => prev.filter(t => t.id !== taskId));
     } catch (e: any) {
-      alert("Status update failed: " + e.message);
+      toast.error("Status update failed: " + e.message);
     } finally {
       setInlineLoading(false);
     }
@@ -535,7 +536,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setSelectedTaskIds(new Set());
       triggerToast(`Successfully deleted tasks.`);
     } catch (e: any) {
-      alert("Bulk delete failed: " + e.message);
+      toast.error("Bulk delete failed: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -599,7 +600,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setBulkStatusModalOpen(false);
       triggerToast(`Successfully updated tasks.`);
     } catch (e: any) {
-      alert("Bulk update failed: " + e.message);
+      toast.error("Bulk update failed: " + e.message);
     } finally {
       setInlineLoading(false);
     }
@@ -626,14 +627,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const handleStatusSave = async () => {
     if (!inlineTask) return;
     if (!inlineRemark || inlineRemark.trim().length === 0) {
-      alert("A remark is required.");
+      toast.warning("A remark is required.");
       return;
     }
 
     setInlineLoading(true);
     const { error } = await updateTaskStatusInline(inlineTask.id, inlineNewStatus, inlineRemark);
     if (error) {
-      alert("Failed to update: " + error);
+      toast.error("Failed to update: " + error);
       setInlineLoading(false);
       return;
     }
@@ -650,7 +651,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const handleDepartmentSave = async () => {
     if (!inlineTask) return;
     if (!inlineRemark || inlineRemark.trim().length === 0) {
-      alert("A remark is required.");
+      toast.warning("A remark is required.");
       return;
     }
 
@@ -684,7 +685,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setDepartmentModalOpen(false);
       triggerToast(`Department updated successfully.`);
     } catch (error: any) {
-      alert("Failed to update: " + error.message);
+      toast.error("Failed to update: " + error.message);
     } finally {
       setInlineLoading(false);
     }
@@ -1228,7 +1229,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                             if (res?.error) throw new Error(res.error);
                                             setTasks(prev => prev.map(t => t.id === task.id ? { ...t, department_id: d.id, department: d } : t));
                                             triggerToast("Department updated");
-                                          } catch (e: any) { alert("Failed: " + e.message); }
+                                          } catch (e: any) { toast.error("Failed: " + e.message); }
                                           finally { setInlineLoading(false); }
                                         }}
                                         className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
@@ -1287,7 +1288,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                             if (error) throw new Error(error);
                                             setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status_id: s.id, status: { name: s.name, code: s.code, status_color: s.color } } : t));
                                             triggerToast("Status updated");
-                                          } catch (e: any) { alert("Failed: " + e.message); }
+                                          } catch (e: any) { toast.error("Failed: " + e.message); }
                                           finally { setInlineLoading(false); }
                                         }}
                                         className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${s.id === task.status_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
@@ -1941,7 +1942,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               fetchTasksData(1, false, selectedWorkspaceId);
             } catch (e: any) {
               console.error("[TaskListViewClient] Error creating task:", e);
-              alert(e.message || "Failed to create task");
+              toast.error(e.message || "Failed to create task");
             }
           }}
         />

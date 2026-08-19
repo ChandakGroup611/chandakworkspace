@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -46,7 +47,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
       setDescription("");
       if (onLogAdded) onLogAdded();
     } catch (e: any) {
-      alert("Failed to log time: " + e.message);
+      toast.error("Failed to log time: " + e.message);
     } finally {
       setIsSubmitting(false);
     }

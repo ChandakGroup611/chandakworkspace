@@ -5,6 +5,7 @@ import { Edit2, Check, X } from 'lucide-react';
 import { AppButton } from "@/components/ui/AppButton";
 import { updateTask } from '@/lib/actions/tasks';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHeading?: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -31,7 +32,7 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
     setIsSaving(false);
     
     if (result && result.error) {
-      alert("Failed to update title: " + result.error);
+      toast.error("Failed to update title: " + result.error);
       setTitle(task.subject || task.title);
     } else {
       router.refresh();

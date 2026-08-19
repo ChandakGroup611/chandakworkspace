@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -112,7 +113,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       setNewFieldName("");
     } catch (e: any) {
       console.error("[TaskCreationWizard] Error:", e);
-      alert("Database Error on Custom Field Creation: " + (e.message || e.details || JSON.stringify(e)));
+      toast.error("Database Error on Custom Field Creation: " + (e.message || e.details || JSON.stringify(e)));
     }
   };
 
@@ -121,32 +122,32 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     if (isLoading) return;
 
     if (!description.trim()) {
-      alert("Execution Notes (Remark) is mandatory.");
+      toast.warning("Execution Notes (Remark) is mandatory.");
       return;
     }
 
     if (!startDate || !endDate) {
-      alert("Start Date and Target Due Date are mandatory.");
+      toast.warning("Start Date and Target Due Date are mandatory.");
       return;
     }
 
     if (startDate && startDate < localTodayString) {
-      alert("Start Date cannot be less than the creation date (today).");
+      toast.error("Start Date cannot be less than the creation date (today).");
       return;
     }
 
     if (startDate && endDate && endDate < startDate) {
-      alert("Target Due Date cannot be earlier than the start date.");
+      toast.error("Target Due Date cannot be earlier than the start date.");
       return;
     }
 
     if (assignees.length === 0) {
-      alert("You must explicitly select at least one Assignee for this task.");
+      toast.warning("You must explicitly select at least one Assignee for this task.");
       return;
     }
 
     if (!priorityId) {
-      alert("You must select a Priority for this task.");
+      toast.warning("You must select a Priority for this task.");
       return;
     }
     

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
@@ -368,7 +369,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     e?.preventDefault();
     if (isSubmitting) return;
     if (newWS.start_date && newWS.end_date && new Date(newWS.end_date) < new Date(newWS.start_date)) {
-      alert("Target End Date cannot be earlier than the Start Date.");
+      toast.error("Target End Date cannot be earlier than the Start Date.");
       return;
     }
     try {

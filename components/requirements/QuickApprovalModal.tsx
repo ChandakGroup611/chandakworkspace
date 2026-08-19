@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState } from "react";
@@ -40,7 +41,7 @@ export function QuickApprovalModal({
 
   const submit = async (action: 'Approve' | 'Reject' | 'Hold') => {
     if (!remarks.trim()) {
-      alert("Remarks are mandatory for approval actions.");
+      toast.warning("Remarks are mandatory for approval actions.");
       return;
     }
     setSaving(true);
@@ -49,7 +50,7 @@ export function QuickApprovalModal({
       await processApprovalAction(reqId, action, remarks, currentUserId);
       onSuccess();
     } catch (err: any) {
-      alert(err.message || "Failed to process approval");
+      toast.error(err.message || "Failed to process approval");
     } finally {
       setSaving(false);
     }

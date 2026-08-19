@@ -268,16 +268,25 @@
 }
 
 /* Universal Scrollbar Hiding */
-::-webkit-scrollbar {
+::-webkit-scrollbar,
+::-webkit-scrollbar-corner,
+::-webkit-resizer,
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-track-piece {
     display: none !important;
+    background: transparent !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 * {
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
+.scrollbar-hide::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar-corner {
+    display: none !important;
+    background: transparent !important;
 }
 .scrollbar-hide {
     -ms-overflow-style: none;

@@ -136,7 +136,7 @@ function BoardColumn({ column, onClick }: { column: any, onClick: (req: any) => 
 
   return (
     <div className="flex flex-col w-[350px] min-w-[350px] bg-surface dark:bg-surface/[0.02] rounded-2xl border border-border dark:border-white/5 h-full">
-      <div className="p-4 border-b border-border dark:border-white/5 flex items-center justify-between bg-surface dark:bg-[#0B0F19] rounded-t-2xl shrink-0 shadow-sm">
+      <div className="p-4 border-b border-border dark:border-white/5 flex items-center justify-between bg-surface dark:bg-[#0B0F19] shrink-0 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: column.color }} />
           <h3 className="font-bold text-[15px] text-foreground tracking-tight">{column.name}</h3>

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -77,9 +78,9 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
       
       await fetchTransactions();
       onUpdate(); // Trigger parent refresh (for Total Licenses)
-      alert("Transaction logged successfully!");
+      toast.success("Transaction logged successfully!");
     } catch (e: any) {
-      alert("Error logging transaction: " + e.message);
+      toast.error("Error logging transaction: " + e.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +94,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
       await fetchTransactions();
       onUpdate();
     } catch (e: any) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     }
   };
 

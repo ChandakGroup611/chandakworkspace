@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
@@ -151,7 +152,7 @@ export default function ReportsClient() {
       setData(result);
       setDynamicFields(customFieldsResult);
     } catch (e: any) {
-      alert("Failed to load report data: " + e.message);
+      toast.error("Failed to load report data: " + e.message);
     } finally {
       setLoading(false);
     }

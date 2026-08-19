@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -73,7 +74,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
       
       await fetchInvoices();
     } catch (e: any) {
-      alert("Error adding invoice: " + e.message);
+      toast.error("Error adding invoice: " + e.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +90,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
       if (!res.success) throw new Error(res.error);
       await fetchInvoices();
     } catch (e: any) {
-      alert("Error marking as paid: " + e.message);
+      toast.error("Error marking as paid: " + e.message);
     } finally {
       setProcessingId(null);
     }
@@ -102,7 +103,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
       if (!res.success) throw new Error(res.error);
       await fetchInvoices();
     } catch (e: any) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     }
   };
 

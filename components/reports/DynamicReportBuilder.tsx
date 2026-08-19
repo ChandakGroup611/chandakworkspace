@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -119,7 +120,7 @@ export default function DynamicReportBuilder({
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Failed to save layout.");
+      toast.error("Failed to save layout.");
     } finally {
       setIsSaving(false);
     }
@@ -133,7 +134,7 @@ export default function DynamicReportBuilder({
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Failed to reset layout.");
+      toast.error("Failed to reset layout.");
     } finally {
       setIsResetting(false);
     }

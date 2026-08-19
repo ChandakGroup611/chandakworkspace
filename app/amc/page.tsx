@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -227,7 +228,7 @@ export default function AMCPage() {
 
   const handleAddCity = async (stateName: string, setter: (city: string) => void) => {
     if (!stateName) {
-      alert("Please select a state first before adding a city.");
+      toast.warning("Please select a state first before adding a city.");
       return;
     }
     const newCity = prompt(`Enter new city name for ${stateName}:`);
@@ -238,7 +239,7 @@ export default function AMCPage() {
       const { data, error } = await supabase.from('master_cities').insert({ state_name: stateName, city_name: cityName }).select().single();
       if (error) {
         if (error.code === '23505') {
-           alert("City already exists in this state!");
+           toast.warning("City already exists in this state!");
            setter(cityName);
         } else throw error;
       }
@@ -248,7 +249,7 @@ export default function AMCPage() {
       }
     } catch(e) {
       console.error(e);
-      alert("Failed to add city.");
+      toast.error("Failed to add city.");
     }
   };
 
@@ -258,7 +259,7 @@ export default function AMCPage() {
     const typeName = newType.trim();
 
     if (masterContractTypes.includes(typeName)) {
-      alert("Contract Type already exists!");
+      toast.warning("Contract Type already exists!");
       setFormContractType(typeName);
       return;
     }
@@ -268,9 +269,9 @@ export default function AMCPage() {
       if (error) {
         if (error.code === '42P01') {
           // Table doesn't exist yet (migration pending)
-          alert("Database migration for Contract Types is pending. Please run the migration first.");
+          toast.warning("Database migration for Contract Types is pending. Please run the migration first.");
         } else {
-          alert("Failed to add Contract Type: " + error.message);
+          toast.error("Failed to add Contract Type: " + error.message);
         }
         return;
       }
@@ -279,7 +280,7 @@ export default function AMCPage() {
       setSuccessAlert(`Contract Type '${typeName}' added successfully.`);
     } catch(e) {
       console.error(e);
-      alert("Failed to add Contract Type.");
+      toast.error("Failed to add Contract Type.");
     }
   };
 
@@ -740,7 +741,7 @@ export default function AMCPage() {
       setSuccessAlert("Record deleted.");
       fetchRecords();
     } catch (err: any) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     }
   };
 
@@ -1355,7 +1356,7 @@ export default function AMCPage() {
                             if (formIndustryType.length > 1) {
                                const choice = prompt(`Which industry does this new Vendor Type belong to?\nAvailable: ${formIndustryType.join(", ")}`);
                                if (!choice || !formIndustryType.includes(choice.trim())) {
-                                 alert("Invalid industry selected. Creation cancelled.");
+                                 toast.error("Invalid industry selected. Creation cancelled.");
                                  return;
                                }
                                targetIndustry = choice.trim();

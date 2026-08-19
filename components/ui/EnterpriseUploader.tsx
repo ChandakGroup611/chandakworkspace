@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -76,7 +77,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
     });
     
     if (safeFiles.length < newFiles.length) {
-      alert("Some files were rejected because executable scripts are not permitted.");
+      toast.warning("Some files were rejected because executable scripts are not permitted.");
     }
 
     if (safeFiles.length === 0) return;

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -80,7 +81,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       setNewSprintEnd("");
     } catch (e) {
       console.error(e);
-      alert("Failed to create sprint");
+      toast.error("Failed to create sprint");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +102,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
       setEditingSprintId(null);
     } catch (e) {
       console.error(e);
-      alert("Failed to update sprint");
+      toast.error("Failed to update sprint");
     } finally {
       setIsUpdatingSprint(false);
     }

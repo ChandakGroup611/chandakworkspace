@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -433,7 +434,7 @@ export default function MastersPage() {
         fetchRecords();
       } catch (err: any) {
         console.warn("Master Update intercepted by sandbox state fallback:", err);
-        alert("Database Error on Update: " + (err.message || err.details || JSON.stringify(err)));
+        toast.error("Database Error on Update: " + (err.message || err.details || JSON.stringify(err)));
         setShowModal(false);
         setEditRecordId(null);
         setFormCode("");
@@ -459,7 +460,7 @@ export default function MastersPage() {
       console.warn("Master Creation validation intercepted:", err);
       
       // ALERTS THE ACTUAL DATABASE ERROR SO THE USER SEES IT IMMEDIATELY
-      alert("Database Error: " + (err.message || err.details || JSON.stringify(err)));
+      toast.error("Database Error: " + (err.message || err.details || JSON.stringify(err)));
 
       setShowModal(false);
       setFormCode("");
@@ -483,7 +484,7 @@ export default function MastersPage() {
       setSuccessAlert(`Record status successfully updated.`);
     } catch (err: any) {
       console.warn("Status toggle backend verification filtered:", err);
-      alert("Database Error on Toggle: " + (err.message || err.details || JSON.stringify(err)));
+      toast.error("Database Error on Toggle: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 
@@ -497,7 +498,7 @@ export default function MastersPage() {
       fetchRecords();
     } catch (err: any) {
       console.warn("Hard delete blocked:", err);
-      alert("Database Error on Deletion: " + (err.message || err.details || JSON.stringify(err)));
+      toast.error("Database Error on Deletion: " + (err.message || err.details || JSON.stringify(err)));
     }
   };
 

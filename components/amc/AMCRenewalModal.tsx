@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState } from "react";
@@ -27,7 +28,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
   const handleRenew = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!purchaseDate || !expiryDate || !cost) {
-      alert("Please fill in all mandatory fields.");
+      toast.warning("Please fill in all mandatory fields.");
       return;
     }
 
@@ -56,10 +57,10 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
       const insertRes = await saveAMCEntity("software_amc", newAmc);
       if (!insertRes.success) throw new Error(insertRes.error);
 
-      alert("Contract renewed successfully! Old record is archived as 'Renewed'.");
+      toast.success("Contract renewed successfully! Old record is archived as 'Renewed'.");
       onRenewed();
     } catch (e: any) {
-      alert("Failed to renew: " + e.message);
+      toast.error("Failed to renew: " + e.message);
     } finally {
       setLoading(false);
     }

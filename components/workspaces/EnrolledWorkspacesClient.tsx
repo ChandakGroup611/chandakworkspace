@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -44,7 +45,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   const handleDelete = (item: any) => {
     // Deletion would require hitting the API
     // We'll stub this out for now, to be implemented via an API route or server action
-    alert(`Delete action requested for ${item.type === 'workspace' ? item.workspace_name : item.name}`);
+    toast.warning(`Delete action requested for ${item.type === 'workspace' ? item.workspace_name : item.name}`);
   };
 
   if (permsLoading) {

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -74,7 +75,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
 
   const handleAllocate = async (userId: string) => {
     if (allocations.length >= totalLicenses && totalLicenses > 0) {
-      alert("No more licenses available to allocate. Please log a Transaction to add more licenses first.");
+      toast.warning("No more licenses available to allocate. Please log a Transaction to add more licenses first.");
       return;
     }
     
@@ -93,7 +94,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
       await fetchData();
       onUpdate();
     } catch (e: any) {
-      alert("Failed to allocate: " + e.message);
+      toast.error("Failed to allocate: " + e.message);
     } finally {
       setProcessingId(null);
     }
@@ -110,7 +111,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
       await fetchData();
       onUpdate();
     } catch (e: any) {
-      alert("Failed to revoke: " + e.message);
+      toast.error("Failed to revoke: " + e.message);
     } finally {
       setProcessingId(null);
     }
@@ -141,7 +142,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
       await fetchData();
       onUpdate();
     } catch (e: any) {
-      alert("Failed to transfer: " + e.message);
+      toast.error("Failed to transfer: " + e.message);
     } finally {
       setProcessingId(null);
     }

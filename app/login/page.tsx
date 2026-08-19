@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -295,7 +296,7 @@ export default function LoginPage() {
                   <label className="text-sm font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
                     Password
                   </label>
-                  <Link href="#" onClick={(e) => { e.preventDefault(); alert("Contact administrator to reset password."); }} className="text-xs font-semibold text-theme-icon hover:text-theme-icon/80 transition-colors">
+                  <Link href="#" onClick={(e) => { e.preventDefault(); toast.warning("Contact administrator to reset password."); }} className="text-xs font-semibold text-theme-icon hover:text-theme-icon/80 transition-colors">
                     Forgot password?
                   </Link>
                 </div>

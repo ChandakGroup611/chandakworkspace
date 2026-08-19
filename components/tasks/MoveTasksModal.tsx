@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -82,7 +83,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
       setStep(2);
     } catch (e) {
       console.error(e);
-      alert("Failed to load stakeholders.");
+      toast.error("Failed to load stakeholders.");
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
     for (const d of taskDetails) {
       const map = mappings[d.id];
       if (d.reqNewExec && !map?.newExecutive) {
-        alert(`Please select a new executive for task ${d.subject || d.id}`);
+        toast.warning(`Please select a new executive for task ${d.subject || d.id}`);
         return;
       }
     }
@@ -106,7 +107,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
       setStep(1);
       setTargetWorkspaceId("");
     } catch (e: any) {
-      alert("Move failed: " + e.message);
+      toast.error("Move failed: " + e.message);
     } finally {
       setLoading(false);
     }

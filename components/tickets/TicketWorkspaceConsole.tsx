@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -150,14 +151,14 @@ export function TicketWorkspaceConsole({
   const executeFieldUpdate = async (fields: any) => {
     if (!ticket?.dbId) return;
     if (!canEditFields) {
-      alert("Permission Denied: Only the Assignee can modify ticket attributes.");
+      toast.error("Permission Denied: Only the Assignee can modify ticket attributes.");
       return;
     }
     try {
       await updateTicketDetails(ticket.dbId, fields);
       onUpdate();
     } catch (err: any) {
-      alert(`Update failed: ${err.message}`);
+      toast.error(`Update failed: ${err.message}`);
     }
   };
 
@@ -173,7 +174,7 @@ export function TicketWorkspaceConsole({
   const commitChanges = async () => {
     if (Object.keys(pendingChanges).length === 0) return;
     if (!updateRemark.trim()) {
-      alert("A remark is mandatory when updating ticket details.");
+      toast.warning("A remark is mandatory when updating ticket details.");
       return;
     }
     setIsSaving(true);
@@ -184,7 +185,7 @@ export function TicketWorkspaceConsole({
       setUpdateRemark("");
       onUpdate();
     } catch (err: any) {
-      alert(`Commit failed: ${err.message}`);
+      toast.error(`Commit failed: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -376,7 +377,7 @@ export function TicketWorkspaceConsole({
                                   setNewRelationCode("");
                                   setShowSuggestions(false);
                                 } catch (err: any) {
-                                  alert("Failed to link: " + err.message);
+                                  toast.error("Failed to link: " + err.message);
                                 } finally {
                                   setIsLinking(false);
                                 }

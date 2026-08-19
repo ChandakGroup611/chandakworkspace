@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
@@ -258,7 +259,7 @@ export default function ClientSessionManager() {
                     const newSessionToken = payload.new?.session_token;
                     if (newSessionToken && newSessionToken !== sessionToken) {
                       // Another device logged in and took over the session
-                      alert("You have been logged out because your account was logged in on another device.");
+                      toast.warning("You have been logged out because your account was logged in on another device.");
                       supabase.auth.signOut().catch(() => {}).finally(() => {
                         window.location.href = "/login?reason=concurrent_login";
                       });

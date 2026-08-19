@@ -93,7 +93,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
         {/* DEDICATED CARD FOR SUBJECT AND DESCRIPTION */}
         <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
-          <div className="bg-gradient-to-r from-accent/15 via-surface/90 to-surface/40 dark:from-accent/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between rounded-t-2xl">
+          <div className="bg-gradient-to-r from-accent/15 via-surface/90 to-surface/40 dark:from-accent/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary text-theme-btn-primary-text shadow-xs" />
               <Type className="w-4 h-4 text-accent dark:text-accent" />

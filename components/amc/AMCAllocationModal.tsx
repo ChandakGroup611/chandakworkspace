@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -79,7 +80,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
 
   const handleAllocate = async (userId: string) => {
     if (allocations.length >= totalLicenses && totalLicenses > 0) {
-      alert("No more licenses available to allocate. Please purchase more or revoke existing ones.");
+      toast.warning("No more licenses available to allocate. Please purchase more or revoke existing ones.");
       return;
     }
     
@@ -98,7 +99,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
       await fetchData();
       onAllocated();
     } catch (e: any) {
-      alert("Failed to allocate: " + e.message);
+      toast.error("Failed to allocate: " + e.message);
     } finally {
       setProcessingId(null);
     }
@@ -115,7 +116,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
       await fetchData();
       onAllocated();
     } catch (e: any) {
-      alert("Failed to revoke: " + e.message);
+      toast.error("Failed to revoke: " + e.message);
     } finally {
       setProcessingId(null);
     }

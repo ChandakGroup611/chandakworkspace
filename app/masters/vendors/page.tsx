@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -122,7 +123,7 @@ export default function VendorMasterPage() {
 
   const handleAddNewCity = async () => {
     if (!formState) {
-      alert("Please select a State first.");
+      toast.warning("Please select a State first.");
       return;
     }
     const newCity = prompt(`Enter new city name for ${formState}:`);
@@ -135,7 +136,7 @@ export default function VendorMasterPage() {
       setFormCity(newCity.trim());
       await fetchCitiesForState(formState);
     } catch (e: any) {
-      alert("Error adding city: " + e.message);
+      toast.error("Error adding city: " + e.message);
     }
   };
 
@@ -167,7 +168,7 @@ export default function VendorMasterPage() {
 
   const handleAddNewBankCity = async () => {
     if (!formBankState) {
-      alert("Please select a Bank State first.");
+      toast.warning("Please select a Bank State first.");
       return;
     }
     const newCity = prompt(`Enter new city name for ${formBankState}:`);
@@ -180,7 +181,7 @@ export default function VendorMasterPage() {
       setFormBankCity(newCity.trim());
       await fetchBankCitiesForState(formBankState);
     } catch (e: any) {
-      alert("Error adding bank city: " + e.message);
+      toast.error("Error adding bank city: " + e.message);
     }
   };
 
@@ -336,7 +337,7 @@ export default function VendorMasterPage() {
       if (!res.success) throw new Error(res.error);
       fetchVendors();
     } catch (e: any) {
-      alert("Error deleting vendor: " + e.message);
+      toast.error("Error deleting vendor: " + e.message);
     }
   };
 
@@ -518,7 +519,7 @@ export default function VendorMasterPage() {
                             if (formIndustryType.length > 1) {
                                const choice = prompt(`Which industry does this new Vendor Type belong to?\nAvailable: ${formIndustryType.join(", ")}`);
                                if (!choice || !formIndustryType.includes(choice.trim())) {
-                                 alert("Invalid industry selected. Creation cancelled.");
+                                 toast.error("Invalid industry selected. Creation cancelled.");
                                  return;
                                }
                                targetIndustry = choice.trim();

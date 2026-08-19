@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -115,7 +116,7 @@ export default function DepartmentsMasterPage() {
       if (!res.success) throw new Error(res.error);
       fetchDepartments();
     } catch (e: any) {
-      alert("Error deleting department: " + e.message);
+      toast.error("Error deleting department: " + e.message);
     }
   };
 

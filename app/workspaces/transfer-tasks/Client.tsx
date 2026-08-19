@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -128,7 +129,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
     // Validate that we have a new owner if it's required
     if (!validity.isValid && !newOwnerId) {
-      alert("Please select a new owner for the tasks since current owners don't have access.");
+      toast.warning("Please select a new owner for the tasks since current owners don't have access.");
       return;
     }
 
@@ -157,7 +158,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
       const res = await moveTasksInBulk(payload);
       if (res.error) {
-        alert("Error transferring tasks: " + res.error);
+        toast.error("Error transferring tasks: " + res.error);
       } else {
         setIsTransferModalOpen(false);
         setSelectedTaskIds(new Set());
@@ -168,7 +169,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
         router.refresh(); // Refresh the page data
       }
     } catch (e: any) {
-      alert("Error: " + e.message);
+      toast.error("Error: " + e.message);
     } finally {
       setIsSubmitting(false);
     }
