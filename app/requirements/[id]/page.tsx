@@ -2166,16 +2166,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         Accept & Initiate Approval
                       </AppButton>
                     </>
-                  ) : (
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleAction('SAVE')}
-                      leftIcon={<Save className="w-4 h-4" />}
-                    >
-                      Update Details
-                    </AppButton>
-                  )
+                  ) : null
                 )}
               </>
             )}
