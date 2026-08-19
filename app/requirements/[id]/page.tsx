@@ -144,6 +144,8 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const [needsReapproval, setNeedsReapproval] = useState(false);
   const [submittingAmendment, setSubmittingAmendment] = useState(false);
   const [amendmentFile, setAmendmentFile] = useState<File | null>(null);
+  const [uatComment, setUatComment] = useState("");
+  const [submittingUat, setSubmittingUat] = useState(false);
   const [formData, setFormData] = useState({
     objective: "",
     business_impact: "",
@@ -377,6 +379,22 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       toast.error("Error: " + e.message);
     } finally {
       setSubmittingPutToUse(false);
+    }
+  };
+
+  const handleUAT = async (result: 'PASS' | 'FAIL') => {
+    if (result === 'FAIL' && !uatComment.trim()) return toast.warning("Please provide a reason for failing UAT.");
+    setSubmittingUat(true);
+    try {
+      const { handleRequirementUAT } = await import("@/lib/actions/requirements");
+      await handleRequirementUAT(reqId as string, result, uatComment, currentUserId);
+      toast.success(`UAT ${result === 'PASS' ? 'Approved' : 'Failed'} Successfully`);
+      setUatComment("");
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to process UAT");
+    } finally {
+      setSubmittingUat(false);
     }
   };
 
@@ -1141,6 +1159,42 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   ))}
                 </div>
               </AppCard>
+            )}
+
+            {/* UAT Block (Conditionally visible based on status) */}
+            {requirement.status?.status_name === 'UAT' && (
+              <section className="bg-amber-900/20 rounded-2xl p-6 border border-amber-500/20 shadow-md">
+                <h3 className="theme-label text-amber-500 mb-2 font-bold text-base flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> User Acceptance Testing (UAT) Action Required
+                </h3>
+                <p className="text-sm text-muted mb-4">Task implementation is complete. Please verify the requirement meets the business justification.</p>
+                <textarea 
+                  className="w-full bg-surface/40 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[100px]"
+                  placeholder="Enter UAT feedback or rejection reasons (Required for Failure)..."
+                  value={uatComment}
+                  onChange={e => setUatComment(e.target.value)}
+                />
+                <div className="flex gap-3">
+                  <AppButton 
+                    onClick={() => handleUAT('PASS')}
+                    disabled={submittingUat}
+                    isLoading={submittingUat}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    leftIcon={<CheckCircle className="w-4 h-4" />}
+                  >
+                    Approve & Close Requirement
+                  </AppButton>
+                  <AppButton 
+                    onClick={() => handleUAT('FAIL')}
+                    disabled={submittingUat}
+                    isLoading={submittingUat}
+                    variant="destructive"
+                    leftIcon={<XCircle className="w-4 h-4" />}
+                  >
+                    Fail & Reopen Task
+                  </AppButton>
+                </div>
+              </section>
             )}
           </div>
         )}
