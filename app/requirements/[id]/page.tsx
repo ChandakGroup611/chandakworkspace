@@ -673,35 +673,35 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   return (
     <PageContainer strict={true} className="bg-background">
       <div className="flex-1 overflow-y-auto px-4 pb-12 pt-2">
-      <div className="flex items-center justify-between pb-2 mb-2 shrink-0 border-b border-border dark:border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-[1.1rem] font-bold text-foreground dark:text-white truncate max-w-2xl leading-tight">
+      <div className="flex flex-wrap items-center justify-between pb-2 mb-2 shrink-0 border-b border-border dark:border-white/5 gap-4">
+        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 min-w-0">
+            <h1 className="text-[1.1rem] font-bold text-foreground dark:text-white truncate max-w-full leading-tight">
               <span className="text-muted mr-2 uppercase text-sm tracking-wider">{requirement.code || reqId}</span>
               {requirement.title || 'Untitled Subject'}
             </h1>
           </div>
-          <AppBadge variant="info">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
-          <div className="flex items-center gap-2 ml-2 border-l border-border dark:border-white/10 pl-3 hidden md:flex">
+          <AppBadge variant="info" className="shrink-0">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
+          <div className="flex flex-wrap items-center gap-2 ml-2 border-l border-border dark:border-white/10 pl-3">
             <span className="theme-label text-muted">Priority:</span>
-            <span className="theme-data-value px-2.5 py-0.5 rounded-full text-foreground tracking-wide shadow-sm" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
+            <span className="theme-data-value px-2.5 py-0.5 rounded-full text-foreground tracking-wide shadow-sm shrink-0" style={{ backgroundColor: requirement.priority?.priority_color || '#ef4444' }}>
               {requirement.priority?.name || requirement.priority?.priority_name || '-'}
             </span>
             <span className="theme-label text-muted ml-2">Created:</span>
-            <span className="text-xs font-semibold text-foreground dark:text-muted">
+            <span className="text-xs font-semibold text-foreground dark:text-muted shrink-0">
               {new Date(requirement.created_at).toLocaleDateString()}
             </span>
             {requirement.put_to_use_date && (
               <>
                 <span className="theme-label text-emerald-500 ml-2">Put to Use:</span>
-                <span className="text-xs font-semibold text-accent">
+                <span className="text-xs font-semibold text-accent shrink-0">
                   {new Date(requirement.put_to_use_date).toLocaleDateString()}
                 </span>
               </>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <AppButton variant="outline" size="sm" onClick={() => router.back()} leftIcon={<ArrowLeft className="h-3.5 w-3.5"/>}>
             Back
           </AppButton>
