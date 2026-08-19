@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify';
 "use client";
+import { toast } from 'react-toastify';
 
 import React, { useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";

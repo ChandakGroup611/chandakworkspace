@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify';
 "use client";
+import { toast } from 'react-toastify';
 
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";

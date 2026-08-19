@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify';
 "use client";
+import { toast } from 'react-toastify';
 
 import { useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";

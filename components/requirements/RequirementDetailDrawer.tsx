@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify';
 "use client";
+import { toast } from 'react-toastify';
 
 import React, { useState, useTransition } from 'react';
 import { RealtimeChat } from '../collaboration/RealtimeChat';

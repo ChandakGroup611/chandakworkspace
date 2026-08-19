@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify';
 "use client";
+import { toast } from 'react-toastify';
 
 import React, { useState, useRef, useEffect } from "react";
 import { AppButton } from '@/components/ui/AppButton';

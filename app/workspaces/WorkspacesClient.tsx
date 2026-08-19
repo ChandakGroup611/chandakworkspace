@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify';
 "use client";
+import { toast } from 'react-toastify';
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import useSWR from 'swr';
