@@ -53,17 +53,15 @@
     color: var(--text-primary) !important;
     border-radius: 12px !important;
     padding: 12px 16px;
-    box-shadow: 
-      inset 6px 6px 10px #08090c,
-      inset -6px -6px 10px #1c1f28 !important;
+    
     transition: all 0.2s;
   }
   [data-theme="dark-neumorphic"] .theme-input-structural:focus {
-    box-shadow: 
-      inset 8px 8px 12px #050608,
-      inset -8px -8px 12px #20232e !important;
+    
     outline: none;
-  }
+  
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
 
   /* Buttons - Tactile Dark Buttons */
   [data-theme="dark-neumorphic"] .theme-button-structural {

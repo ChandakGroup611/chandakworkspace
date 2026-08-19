@@ -52,26 +52,21 @@
   /* Inputs - Complete 4-Side Inset Border & Balanced Inset Shadow */
   [data-theme="light-neumorphic"] .theme-input-structural {
     background: #FAFAFA !important;
-    border: 1px solid transparent !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
     color: #334155 !important;
     border-radius: 10px !important;
-    box-shadow: 
-      inset 4px 4px 8px rgba(51, 65, 85, 0.04),
-      inset -4px -4px 8px rgba(255, 255, 255, 0.9) !important;
+    
     transition: all 0.2s ease;
   }
   [data-theme="light-neumorphic"] .theme-input-structural:hover {
-    box-shadow: 
-      inset 6px 6px 12px rgba(51, 65, 85, 0.05),
-      inset -6px -6px 12px rgba(255, 255, 255, 1) !important;
-  }
+    
+  
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
   [data-theme="light-neumorphic"] .theme-input-structural:focus {
     background: #ffffff !important;
-    border-color: transparent !important;
-    box-shadow: 
-      inset 2px 2px 4px rgba(51, 65, 85, 0.04),
-      inset -2px -2px 4px rgba(255, 255, 255, 0.9),
-      0 0 0 2px rgba(251, 146, 60, 0.2) !important;
+    border-color: rgba(0,0,0,0.2) !important;
+    
     outline: none;
   }
 
