@@ -502,19 +502,18 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
   if (!isSuperAdmin && !canDelete) throw new Error('Only SUPER_ADMIN or users with REQUIREMENTS_DELETE permission can delete requirements.');
 
   // Check cross-logic: Are there any active tasks raised against this requirement?
-  // TEMPORARILY DISABLED: tasks.requirement_id column does not exist yet pending migration.
-  /*
-  const { count: taskCount, error: taskError } = await supabaseAdmin
-    .from('tasks')
-    .select('id', { count: 'exact', head: true })
+  // We check via the `requirement_tasks` pivot table and join with `tasks`
+  const { data: activeTasks, error: taskError } = await supabaseAdmin
+    .from('requirement_tasks')
+    .select('task_id, tasks!inner(is_deleted)')
     .eq('requirement_id', reqId)
-    .eq('is_deleted', false);
+    .eq('tasks.is_deleted', false);
     
   if (taskError) throw new Error('Failed to verify cross-logic: ' + taskError.message);
-  if (taskCount && taskCount > 0) {
-    throw new Error('Cannot delete this requirement because there are active tasks raised against it. Please reassign or delete those tasks first.');
+  
+  if (activeTasks && activeTasks.length > 0) {
+    throw new Error('Cannot delete this requirement because there are active tasks raised against it. Please delete those tasks first.');
   }
-  */
 
   // Soft delete the requirement so it can be viewed in the Trash Data module
   const { error } = await supabaseAdmin.from('requirements').update({ is_deleted: true }).eq('id', reqId);

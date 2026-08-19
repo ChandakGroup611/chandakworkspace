@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { checkServerPermission } from "@/lib/permissions";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 /**
  * AMC Lifecycle Server Actions
@@ -63,6 +64,15 @@ export async function deleteAMCEntity(tableName: string, id: string, hardDelete 
     "amc_renewals",
     "amc_license_allocations"
   ];
+
+  // If we are deleting the main AMC, check for active transactions or invoices
+  if (tableName === 'software_amc' && !hardDelete) {
+    const { data: activeTx } = await supabaseAdmin.from('amc_transactions').select('id').eq('amc_id', id).eq('is_deleted', false).limit(1);
+    if (activeTx && activeTx.length > 0) return { success: false, error: "Cannot delete AMC because it has active transactions." };
+    
+    const { data: activeInv } = await supabaseAdmin.from('amc_invoices').select('id').eq('amc_id', id).eq('is_deleted', false).limit(1);
+    if (activeInv && activeInv.length > 0) return { success: false, error: "Cannot delete AMC because it has active invoices." };
+  }
 
   let res;
   if (hardDelete) {

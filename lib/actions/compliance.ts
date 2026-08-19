@@ -124,9 +124,53 @@ export async function hardDeleteEntity(entityType: ComplianceEntity, ids: string
 /**
  * RESTORES soft-deleted records back to active status.
  */
-export async function restoreEntity(entityType: ComplianceEntity, ids: string[]) {
+export async function restoreEntity(entityType: ComplianceEntity | string, ids: string[]) {
   await verifyAccess("TRASH_UPDATE");
   if (!ids || ids.length === 0) return { success: true };
+
+  // --- Parent Validation Logic ---
+  // Define parent lookups for specific entities to ensure we don't restore orphans
+  const parentChecks: Record<string, { parentTable: string, foreignKey: string, parentName: string }> = {
+    'tasks': { parentTable: 'workspaces', foreignKey: 'workspace_id', parentName: 'Workspace' },
+    'tickets': { parentTable: 'workspaces', foreignKey: 'workspace_id', parentName: 'Workspace' },
+    'sub_tasks': { parentTable: 'tasks', foreignKey: 'parent_task_id', parentName: 'Parent Task' },
+    'workspaces': { parentTable: 'workspaces', foreignKey: 'parent_workspace_id', parentName: 'Parent Workspace' },
+    'amc_transactions': { parentTable: 'software_amc', foreignKey: 'amc_id', parentName: 'AMC' },
+    'amc_renewals': { parentTable: 'software_amc', foreignKey: 'amc_id', parentName: 'AMC' },
+    'amc_invoices': { parentTable: 'software_amc', foreignKey: 'amc_id', parentName: 'AMC' }
+  };
+
+  if (parentChecks[entityType]) {
+    const check = parentChecks[entityType];
+    
+    // 1. Fetch the records we are trying to restore to get their parent IDs
+    const { data: recordsToRestore } = await supabaseAdmin
+      .from(entityType)
+      .select(`id, ${check.foreignKey}`)
+      .in('id', ids);
+
+    if (recordsToRestore && recordsToRestore.length > 0) {
+      // 2. Collect unique parent IDs
+      const parentIds = [...new Set(recordsToRestore.map((r: any) => r[check.foreignKey]).filter(Boolean))];
+      
+      if (parentIds.length > 0) {
+        // 3. Query the parent table to see if any of these parents are soft-deleted
+        const { data: deletedParents } = await supabaseAdmin
+          .from(check.parentTable)
+          .select('id')
+          .in('id', parentIds as string[])
+          .eq('is_deleted', true);
+
+        if (deletedParents && deletedParents.length > 0) {
+          return { 
+            success: false, 
+            error: `Cannot restore these ${entityType} because their parent (${check.parentName}) is in the trash. Please restore the parent first.` 
+          };
+        }
+      }
+    }
+  }
+  // --- End Parent Validation ---
 
   const { error } = await supabaseAdmin
     .from(entityType)

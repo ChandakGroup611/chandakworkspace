@@ -827,6 +827,17 @@ export async function deleteTask(taskId: string) {
       return { error: "Cannot delete task because it has existing dependencies. Please remove dependencies first." };
     }
 
+    // Check cross-logic: Are there active sub-tasks?
+    const { data: activeSubtasks, error: subtasksError } = await supabaseAdmin
+      .from('tasks')
+      .select('id')
+      .eq('parent_task_id', taskId)
+      .eq('is_deleted', false);
+    if (subtasksError) return { error: subtasksError.message };
+    if (activeSubtasks && activeSubtasks.length > 0) {
+      return { error: "Cannot delete this task because it contains active sub-tasks." };
+    }
+
     // Soft delete the task instead of hard deleting it and its related records
     const { error } = await supabaseAdmin.from('tasks').update({ is_deleted: true }).eq('id', taskId);
     if (error) return { error: error.message };
