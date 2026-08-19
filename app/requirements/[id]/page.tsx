@@ -928,13 +928,15 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
             <div className="flex items-start gap-3">
               <ShieldAlert className="h-6 w-6 text-accent shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">Action Required: Your Approval is Pending</h3>
+                <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                  {requirement.approval_status === 'Pending SignOff' ? 'Action Required: Sign Off is Pending' : 'Action Required: Your Approval is Pending'}
+                </h3>
 
                 <div className="space-y-3">
                   <RichTextEditor
                     value={approvalRemarks}
                     onChange={setApprovalRemarks}
-                    placeholder="Enter your mandatory approval or rejection remarks here..."
+                    placeholder={requirement.approval_status === 'Pending SignOff' ? "Enter your mandatory sign-off remarks here..." : "Enter your mandatory approval or rejection remarks here..."}
                   />
                   <div className="flex flex-wrap gap-2">
                     <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
