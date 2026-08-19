@@ -1554,6 +1554,20 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                             {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || 'Department'} ({flow.approver?.role?.[0]?.role_master?.role_name || 'Designation'})
                           </span>
                         ))
+                      ) : (formData.impacted_departments?.length > 0 && Object.values(formData.department_approvers).some((arr: any) => arr.length > 0)) ? (
+                        formData.impacted_departments.flatMap((deptId: string) => {
+                          const dept = masters.departments?.find((d: any) => d.id === deptId);
+                          const approvers = formData.department_approvers[deptId] || [];
+                          return approvers.map((userId: string) => {
+                            const user = masters.users?.find((u: any) => u.id === userId);
+                            return { approver: user, department: dept };
+                          });
+                        }).map((flow: any, idx: number) => (
+                          <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
+                            <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
+                            {flow.approver?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || 'Department'}
+                          </span>
+                        ))
                       ) : (
                         <span className="text-xs font-medium text-muted italic">Department Approver Sequence Configured</span>
                       )}
