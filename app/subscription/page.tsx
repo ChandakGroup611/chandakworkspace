@@ -150,7 +150,7 @@ export default function SubscriptionPage() {
       
       {/* Footer / FAQ Teaser */}
       <div className="mt-16 text-center pb-12">
-        <div className="inline-flex items-center justify-center gap-2 p-4 rounded-2xl bg-surface/30 border border-border/40 backdrop-blur-sm">
+        <div className="inline-flex items-center justify-center gap-2 p-4 rounded-2xl bg-surface/30 border border-border/40">
           <Shield className="w-5 h-5 text-muted" />
           <span className="text-sm font-medium text-muted">All plans include enterprise-grade security and 99.9% uptime SLA.</span>
         </div>

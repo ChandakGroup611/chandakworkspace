@@ -106,7 +106,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
                 <span className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground mix-blend-luminosity opacity-80">
                   {card.label}
                 </span>
-                <div className={`p-2 rounded-xl bg-surface/50 backdrop-blur-sm shadow-sm ring-1 ring-inset ring-black/5 ${card.textColor}`}>
+                <div className={`p-2 rounded-xl bg-surface/50 shadow-sm ring-1 ring-inset ring-black/5 ${card.textColor}`}>
                   <Icon className="h-5 w-5" />
                 </div>
               </div>

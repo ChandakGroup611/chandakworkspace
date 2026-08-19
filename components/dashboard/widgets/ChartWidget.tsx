@@ -98,7 +98,7 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background/95 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl">
+        <div className="bg-background/95 border border-border/50 p-3 rounded-lg shadow-xl">
           <p className="text-sm font-semibold mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-xs">
@@ -118,7 +118,7 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
       const data = payload[0].payload;
       const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
       return (
-        <div className="bg-background/95 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl">
+        <div className="bg-background/95 border border-border/50 p-3 rounded-lg shadow-xl">
           <div className="flex items-center gap-2 text-xs">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
             <span className="text-muted-foreground">{data.name}:</span>

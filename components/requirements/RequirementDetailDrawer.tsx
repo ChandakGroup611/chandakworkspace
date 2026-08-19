@@ -164,7 +164,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                 <div className="animate-in fade-in zoom-in-95 duration-200">
                   {/* Realtime Chat Engine */}
                   <section className="h-[500px] flex flex-col border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="bg-surface/80 p-4 border-b border-white/5 backdrop-blur-xl">
+                    <div className="bg-surface/80 p-4 border-b border-white/5">
                       <h3 className="theme-label text-foreground">Execution Collaboration</h3>
                     </div>
                     <div className="flex-1 bg-surface/20">

@@ -265,14 +265,14 @@ export default function UserProfileEditor() {
     <div className="w-full relative">
       {/* Toast notifications */}
       {successMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-success/90 backdrop-blur-md text-white px-5 py-3.5 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-success/90 text-white px-5 py-3.5 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <Check className="h-4 w-4" />
           <span className="text-sm font-semibold">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-danger/90 backdrop-blur-md text-white px-5 py-3.5 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-danger/90 text-white px-5 py-3.5 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <AlertCircle className="h-4 w-4" />
           <span className="text-sm font-semibold">{errorMsg}</span>
         </div>
@@ -290,7 +290,7 @@ export default function UserProfileEditor() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Avatar & Summary */}
         <div className="lg:col-span-4 space-y-6">
-          <AppCard className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-card/50 backdrop-blur-xl">
+          <AppCard className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             {/* Abstract Background Banner */}
             <div className="h-32 w-full bg-gradient-to-r from-accent/20 via-accent/10 to-transparent relative overflow-hidden">
               <div className="absolute inset-0 bg-grid-white/[0.02]" />
@@ -320,7 +320,7 @@ export default function UserProfileEditor() {
                       )}
                       {/* Loading Overlay */}
                       {photoUploading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-surface/40 backdrop-blur-sm">
+                        <div className="absolute inset-0 flex items-center justify-center bg-surface/40">
                           <Loader2 className="h-8 w-8 text-white animate-spin" />
                         </div>
                       )}
@@ -387,7 +387,7 @@ export default function UserProfileEditor() {
 
         {/* Right Column: Detailed Info Form */}
         <div className="lg:col-span-8 space-y-6 pb-20">
-          <AppCard className="border-0 shadow-lg backdrop-blur-sm bg-card/60">
+          <AppCard className="border-0 shadow-lg bg-card/60">
             <AppCardHeader className="pb-4 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
@@ -434,7 +434,7 @@ export default function UserProfileEditor() {
             </AppCardContent>
           </AppCard>
 
-          <AppCard className="border-0 shadow-lg backdrop-blur-sm bg-card/60">
+          <AppCard className="border-0 shadow-lg bg-card/60">
             <AppCardHeader className="pb-4 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-lg bg-success/10 text-success">

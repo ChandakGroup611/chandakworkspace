@@ -29,7 +29,7 @@ export function CommandPalette() {
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-background/80 transition-opacity"
         onClick={() => setIsOpen(false)}
       />
       

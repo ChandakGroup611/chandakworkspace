@@ -56,7 +56,7 @@ export function SidePeekDrawer({
     <div className="fixed inset-0 z-[100] flex justify-end">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-background/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+        className="absolute inset-0 bg-background/50 transition-opacity animate-in fade-in duration-200"
         onClick={onClose}
       />
       

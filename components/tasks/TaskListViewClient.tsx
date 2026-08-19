@@ -890,7 +890,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         </header>
 
         {/* Command Bar */}
-        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-2 bg-surface/80 backdrop-blur-xl border border-border/50 rounded-2xl shadow-sm mb-6">
+        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-2 bg-surface/80 border border-border/50 rounded-2xl shadow-sm mb-6">
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
             {/* View Toggles */}
             <div className="flex bg-elevated/50 p-1 rounded-xl border border-border/50">
@@ -957,7 +957,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl bg-surface/95 backdrop-blur-xl border border-border/50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
+                <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl bg-surface/95 border border-border/50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
                     <AppButton onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
@@ -1016,7 +1016,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl bg-surface/95 backdrop-blur-xl border border-border/50 shadow-xl min-w-[140px]">
+                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl bg-surface/95 border border-border/50 shadow-xl min-w-[140px]">
                   <AppButton onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
                     <FileSpreadsheet className="h-4 w-4 text-success" /> Export to Excel
                   </AppButton>
@@ -1041,7 +1041,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         {/* Floating Bulk Action Bar */}
         {selectedTaskIds.size > 0 && (
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-300">
-            <div className="flex items-center gap-3 bg-foreground dark:bg-surface/95 dark:backdrop-blur-xl text-background dark:text-foreground px-5 py-3 rounded-full shadow-2xl border border-border/10 dark:border-border">
+            <div className="flex items-center gap-3 bg-foreground dark:bg-surface/95 dark:text-background dark:text-foreground px-5 py-3 rounded-full shadow-2xl border border-border/10 dark:border-border">
               <span className="text-sm font-bold bg-background/20 dark:bg-white/10 px-2.5 py-0.5 rounded-full">
                 {selectedTaskIds.size} Selected
               </span>
@@ -1576,7 +1576,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       {/* Side Drawer Component */}
       {selectedTask && (
         <>
-          <div className="fixed inset-0 z-40 bg-surface/40 backdrop-blur-sm transition-opacity" onClick={() => setSelectedTask(null)} />
+          <div className="fixed inset-0 z-40 bg-surface/40 transition-opacity" onClick={() => setSelectedTask(null)} />
           <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] theme-card-structural dark:bg-[#0B0F19] shadow-2xl border-l border-border dark:border-border flex flex-col animate-in slide-in-from-right duration-200">
             <div className="p-4 border-b border-border dark:border-border flex items-center justify-between bg-surface dark:theme-card-structural /[0.02]">
               <div>

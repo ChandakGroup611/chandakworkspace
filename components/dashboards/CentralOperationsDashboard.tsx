@@ -40,7 +40,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Total Tasks</h3>
-                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-theme-icon">
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-theme-icon">
                   <Target className="h-5 w-5" />
                 </div>
               </div>
@@ -74,7 +74,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Enrolled Workspaces</h3>
-                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-success">
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-success">
                   <FolderOpen className="h-5 w-5" />
                 </div>
               </div>
@@ -107,7 +107,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Tickets & Reqs</h3>
-                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-theme-icon">
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-theme-icon">
                   <LayoutDashboard className="h-5 w-5" />
                 </div>
               </div>
@@ -142,7 +142,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
             <div className="p-5 relative z-10 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1 opacity-80 mix-blend-luminosity">Escalated / SLA</h3>
-                <div className="p-2 rounded-xl bg-background/50 backdrop-blur-md shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-danger">
+                <div className="p-2 rounded-xl bg-background/50 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/10 text-danger">
                   <AlertTriangle className="h-5 w-5" />
                 </div>
               </div>

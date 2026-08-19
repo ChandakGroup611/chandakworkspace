@@ -165,7 +165,7 @@ export default function WorkspaceTestingUI() {
           </div>
           
           {/* Gauges Card */}
-          <div className="flex items-center gap-6 px-7 py-5 rounded-2xl border border-border bg-[#121620]/60 backdrop-blur-xl shadow-2xl">
+          <div className="flex items-center gap-6 px-7 py-5 rounded-2xl border border-border bg-[#121620]/60 shadow-2xl">
             <CircularGauge percentage={95} color="#00f0ff" label="Total Projects Active" />
             <CircularGauge percentage={20} color="#ff00a0" label="Total Tasks Overdue" />
             <CircularGauge percentage={35} color="#00ff88" label="Team Availability" />
@@ -173,7 +173,7 @@ export default function WorkspaceTestingUI() {
         </div>
 
         {/* Hierarchy Table */}
-        <div className="bg-[#121620]/70 backdrop-blur-xl rounded-2xl border border-border p-6 shadow-2xl">
+        <div className="bg-[#121620]/70 rounded-2xl border border-border p-6 shadow-2xl">
           <div className="text-[11px] tracking-[0.2em] text-muted mb-6 uppercase font-semibold">Project Hierarchy</div>
           
           <div className="w-full">

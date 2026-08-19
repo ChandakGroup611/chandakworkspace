@@ -51,7 +51,7 @@ export function EnterpriseDrawerShell({
     <div className="fixed inset-0 z-[999999] flex justify-end">
       {/* Backdrop */}
       <div 
-        className={`absolute inset-0 backdrop-blur-sm animate-in fade-in duration-300 ${
+        className={`absolute inset-0 animate-in fade-in duration-300 ${
           "bg-surface/40"
         }`} 
         onClick={onClose} 

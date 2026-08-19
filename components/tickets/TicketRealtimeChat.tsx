@@ -468,13 +468,13 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
                                     <img src={att.url} alt={att.name} className="max-w-full max-h-48 object-contain bg-surface/5 dark:bg-surface/5 transition-transform duration-300 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-surface/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity">
                                       <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="View Full Image">
-                                        <div className="p-2 bg-surface/20 rounded-full backdrop-blur-sm shadow-lg">
+                                        <div className="p-2 bg-surface/20 rounded-full shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                         </div>
                                         <span className="text-[10px] font-semibold uppercase tracking-wider">View</span>
                                       </a>
                                       <a href={`${att.url}${att.url.includes('?') ? '&' : '?'}download=1`} download={att.name} className="flex flex-col items-center gap-1 p-2 hover:bg-surface/10 rounded-lg text-white transition-colors" title="Download Image">
-                                        <div className="p-2 bg-surface/20 rounded-full backdrop-blur-sm shadow-lg">
+                                        <div className="p-2 bg-surface/20 rounded-full shadow-lg">
                                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                         </div>
                                         <span className="text-[10px] font-semibold uppercase tracking-wider">Download</span>

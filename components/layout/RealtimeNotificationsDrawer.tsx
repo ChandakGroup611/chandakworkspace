@@ -233,7 +233,7 @@ export default function RealtimeNotificationsDrawer() {
             <div
               key={toast.id}
               onClick={() => handleConsumeNotification(toast)}
-              className={`pointer-events-auto flex items-start gap-3 rounded-2xl p-4 shadow-2xl backdrop-blur-xl transform transition-all duration-300 cursor-pointer hover:scale-[1.02] active:scale-95 group ${ "theme-card-structural /95 /80 text-foreground shadow-indigo-500/10 animate-in slide-in-from-right-12 duration-300" }`}
+              className={`pointer-events-auto flex items-start gap-3 rounded-2xl p-4 shadow-2xl transform transition-all duration-300 cursor-pointer hover:scale-[1.02] active:scale-95 group ${ "theme-card-structural /95 /80 text-foreground shadow-indigo-500/10 animate-in slide-in-from-right-12 duration-300" }`}
             >
               <div className="shrink-0 mt-0.5">
                 <div className={`p-2 rounded-xl ${

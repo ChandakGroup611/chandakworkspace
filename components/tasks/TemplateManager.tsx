@@ -71,7 +71,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/60 p-4 overflow-y-auto">
       <AppCard className="w-full max-w-2xl mt-10 mb-10 overflow-hidden flex flex-col max-h-[90vh]">
         <div className={`p-4 border-b flex justify-between items-center bg-elevated border-border`}>
           <div className="flex items-center gap-2">

@@ -170,7 +170,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
   const labelClass = `text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-muted`;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/60 p-4 overflow-y-auto">
       <AppCard className={`w-full max-w-5xl border shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col ${
         "bg-surface border-border"
       }`}>

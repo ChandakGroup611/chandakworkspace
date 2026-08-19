@@ -68,7 +68,7 @@ export function GlobalCommandCenter() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-surface/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-surface/60 animate-in fade-in duration-200">
       
       {/* Click away overlay */}
       <div className="absolute inset-0 z-0" onClick={() => setIsOpen(false)} />

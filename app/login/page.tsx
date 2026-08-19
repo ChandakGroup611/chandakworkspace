@@ -344,7 +344,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#0F131E] lg:bg-[#0A0D14] px-4 font-semibold tracking-widest backdrop-blur-sm" style={{ color: '#9ca3af' }}>
+                <span className="bg-[#0F131E] lg:bg-[#0A0D14] px-4 font-semibold tracking-widest" style={{ color: '#9ca3af' }}>
                   Or Continue With
                 </span>
               </div>

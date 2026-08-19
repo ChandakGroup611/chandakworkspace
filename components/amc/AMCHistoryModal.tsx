@@ -73,7 +73,7 @@ export function AMCHistoryModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 animate-in fade-in duration-200">
       <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden ${ "theme-card-structural " } border`}>
         
         {/* Header */}

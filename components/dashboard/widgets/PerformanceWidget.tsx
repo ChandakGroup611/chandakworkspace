@@ -84,7 +84,7 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
       >
         <div className="w-full overflow-auto h-full custom-scrollbar">
           <AppTable className="border-b-0">
-            <AppTableHeader className="sticky top-0 z-10 bg-surface/90 dark:bg-[#0B0F19]/90 backdrop-blur-md shadow-sm">
+            <AppTableHeader className="sticky top-0 z-10 bg-surface/90 dark:bg-[#0B0F19]/90 shadow-sm">
               <AppTableRow className="border-b border-border/50">
                 <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent">Member</AppTableHead>
                 <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Closed</AppTableHead>

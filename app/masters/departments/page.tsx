@@ -210,7 +210,7 @@ export default function DepartmentsMasterPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-surface/40">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-surface/40">
           <div className="bg-surface border border-border shadow-2xl rounded-2xl w-full max-w-lg flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between p-5 border-b border-border shrink-0">

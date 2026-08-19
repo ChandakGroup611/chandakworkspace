@@ -58,7 +58,7 @@ export default function LearningHubClient() {
           </AppButton>
 
           {isDropdownOpen && (
-            <div className={`absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl border shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200 ${
+            <div className={`absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl border shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${
               "bg-surface/90 border-border"
             }`}>
               <div className="space-y-1">

@@ -915,7 +915,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
               
               {/* 1. Creator */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 border border-theme-btn-primary/20 hover:border-theme-btn-primary/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 border border-theme-btn-primary/20 hover:border-theme-btn-primary/40 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Creator</span>
                 </span>
@@ -925,7 +925,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 2. Created At */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-surface/5 dark:bg-surface/10 border border-border/60 hover:border-border transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-surface/5 dark:bg-surface/10 border border-border/60 hover:border-border transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Created At</span>
                 </span>
@@ -935,7 +935,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 3. Last Status */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-tab-active/5 dark:bg-theme-tab-active/10 border border-theme-tab-active/20 hover:border-theme-tab-active/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-tab-active/5 dark:bg-theme-tab-active/10 border border-theme-tab-active/20 hover:border-theme-tab-active/40 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Last Status</span>
                 </span>
@@ -945,7 +945,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 4. Last Updated */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-secondary/5 dark:bg-theme-btn-secondary/10 border border-theme-btn-secondary/20 hover:border-theme-btn-secondary/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-secondary/5 dark:bg-theme-btn-secondary/10 border border-theme-btn-secondary/20 hover:border-theme-btn-secondary/40 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Last Updated</span>
                 </span>
@@ -955,7 +955,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 5. Priority */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-danger/5 dark:bg-danger/10 border border-rose-200/60 dark:border-rose-800/40 hover:border-rose-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-danger/5 dark:bg-danger/10 border border-rose-200/60 dark:border-rose-800/40 hover:border-rose-400/80 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Flag className="w-3.5 h-3.5 text-danger" /> <span className="text-danger font-bold">Priority</span>
                 </span>
@@ -968,7 +968,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 6. Duration */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-cyan-500/5 dark:bg-cyan-500/10 border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-cyan-500/5 dark:bg-cyan-500/10 border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-400/80 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> <span className="text-cyan-600 dark:text-cyan-400 font-bold">Duration</span>
                 </span>
@@ -1001,7 +1001,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 7. Start Date */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-success/5 dark:bg-success/10 border border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-success/5 dark:bg-success/10 border border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-400/80 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <CalendarDays className="w-3.5 h-3.5 text-success" /> <span className="text-success dark:text-success font-bold">Start Date</span> <span className="text-danger">*</span>
                 </span>
@@ -1026,7 +1026,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 8. Due Date */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-warning/5 dark:bg-warning/10 border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-400/80 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-warning/5 dark:bg-warning/10 border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-400/80 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <CalendarCheck className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Due Date</span> <span className="text-danger">*</span>
                 </span>
@@ -1053,7 +1053,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 9. Primary Assignee */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 border border-theme-btn-primary/20 hover:border-theme-btn-primary/40 transition-all duration-200 min-h-[76px] justify-center backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 border border-theme-btn-primary/20 hover:border-theme-btn-primary/40 transition-all duration-200 min-h-[76px] justify-center-xs">
                 <div className="flex items-center justify-between">
                   <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary Assignee</span>
@@ -1103,7 +1103,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 10. Executors */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-success/5 dark:bg-success/10 border border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-400/80 transition-all duration-200 min-h-[76px] justify-center relative backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-success/5 dark:bg-success/10 border border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-400/80 transition-all duration-200 min-h-[76px] justify-center relative-xs">
                 <div className="flex items-center justify-between">
                   <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-success" /> <span className="text-success dark:text-success font-bold">Executors</span>
@@ -1137,7 +1137,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
               
               {/* 11. Watchers (Team) */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-warning/5 dark:bg-warning/10 border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-400/80 transition-all duration-200 min-h-[76px] justify-center sm:col-span-2 lg:col-span-2 backdrop-blur-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl bg-warning/5 dark:bg-warning/10 border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-400/80 transition-all duration-200 min-h-[76px] justify-center sm:col-span-2 lg:col-span-2-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Watchers (Team)</span>
                 </span>
@@ -1826,7 +1826,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Dedicated High-Clarity Assignee & Executor Management Modal */}
       {isAssigneeModalOpen && (
         <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 animate-in fade-in duration-200"
           onClick={() => setIsAssigneeModalOpen(false)}
         >
           <div 

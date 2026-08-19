@@ -189,7 +189,7 @@ export function UserPerformanceWorkingSheetModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 backdrop-blur-md bg-black/60 flex items-center justify-center p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
       <div className="w-full max-w-6xl max-h-[92vh] bg-surface dark:bg-[#0B0F19] border border-border/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         
         {/* MODAL HEADER */}
@@ -573,7 +573,7 @@ export function UserPerformanceWorkingSheetModal({
                   <div className="border border-border/70 rounded-2xl overflow-hidden bg-surface dark:bg-[#111625] shadow-sm">
                     <div className="max-h-[380px] overflow-y-auto custom-scrollbar">
                       <AppTable>
-                        <AppTableHeader className="sticky top-0 z-10 bg-surface/95 dark:bg-[#111625]/95 backdrop-blur-md">
+                        <AppTableHeader className="sticky top-0 z-10 bg-surface/95 dark:bg-[#111625]/95">
                           <AppTableRow>
                             <AppTableHead className="w-28">Item Code</AppTableHead>
                             <AppTableHead className="w-24">Module</AppTableHead>

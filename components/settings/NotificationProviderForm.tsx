@@ -55,7 +55,7 @@ export default function NotificationProviderForm({ initialData }: { initialData:
   };
 
   return (
-    <div className="theme-card-structural /5 border-border p-6 rounded-xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="theme-card-structural /5 border-border p-6 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
       <h2 className="text-xl font-bold text-foreground mb-2">Email Provider Setup</h2>
       <p className="text-sm text-muted mb-6">Configure your primary outgoing email service. We recommend Gmail App Passwords or Resend for high deliverability.</p>
       

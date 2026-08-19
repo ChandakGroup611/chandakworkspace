@@ -47,7 +47,7 @@ export function EnterpriseModalShell({
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 md:p-8">
       {/* Backdrop */}
       <div 
-        className={`absolute inset-0 backdrop-blur-sm animate-in fade-in duration-300 ${
+        className={`absolute inset-0 animate-in fade-in duration-300 ${
           "bg-surface/40"
         }`} 
         onClick={onClose} 

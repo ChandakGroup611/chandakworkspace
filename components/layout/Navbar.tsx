@@ -85,7 +85,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`bg-background/80 backdrop-blur-xl border-b border-border/20 sticky top-0 z-40 flex h-14 w-full shrink-0 font-sans items-center justify-between transition-all duration-300 px-6`}
+        className={`bg-background/80 border-b border-border/20 sticky top-0 z-40 flex h-14 w-full shrink-0 font-sans items-center justify-between transition-all duration-300 px-6`}
       >
         <div className="flex items-center gap-4 flex-1 max-w-lg">
           <div className="relative flex items-center w-full group cursor-text">

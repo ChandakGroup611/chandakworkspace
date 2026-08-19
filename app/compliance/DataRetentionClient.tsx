@@ -246,7 +246,7 @@ export default function DataRetentionClient() {
       
       {/* Error Popup Modal */}
       {showErrorModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/60">
           <div className="bg-rose-950 border border-rose-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-rose-900/20">
             <div className="flex items-center gap-3 text-danger mb-4">
               <ShieldAlert className="h-8 w-8" />
