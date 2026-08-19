@@ -260,7 +260,26 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         });
 
         const { fetchAttachments } = await import("@/lib/actions/attachments");
+        let allAttachments: any[] = [];
+        
+        // Fetch requirement-level attachments
         const attRes = await fetchAttachments('requirement', data.id, Date.now());
+        if (attRes) allAttachments = [...allAttachments, ...attRes];
+
+        // Fetch ticket-level attachments if this requirement was created from a ticket
+        const { data: linkedTickets } = await supabase
+          .from('ticket_requirements')
+          .select('ticket_id')
+          .eq('requirement_id', data.id);
+          
+        if (linkedTickets && linkedTickets.length > 0) {
+          for (const link of linkedTickets) {
+            const ticketAtts = await fetchAttachments('ticket', link.ticket_id, Date.now());
+            if (ticketAtts) {
+              allAttachments = [...allAttachments, ...ticketAtts];
+            }
+          }
+        }
         
         const { data: approvalFlow } = await supabase
         .from('requirement_approval_flow')
@@ -269,7 +288,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         .order('level', { ascending: true });
         
         setApprovalFlow(approvalFlow || []);
-        setAttachments(attRes || []);
+        setAttachments(allAttachments);
       }
 
       // Fetch audit logs
