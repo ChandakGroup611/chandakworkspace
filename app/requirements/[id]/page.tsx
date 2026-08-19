@@ -281,6 +281,15 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         console.error("Failed to fetch audit logs", e);
       }
 
+      // Fetch approval flow using Server Action (bypasses RLS) with cache-busting timestamp
+      try {
+        const { fetchRequirementApprovalFlow } = await import("@/lib/actions/requirements");
+        const flow = await fetchRequirementApprovalFlow(reqId, Date.now());
+        setApprovalFlow(flow || []);
+      } catch(e) {
+        console.error("Failed to fetch approval flow", e);
+      }
+
       // Fetch workspaces, subWorkspaces, and linked tasks
       try {
         const { fetchLinkedTasks } = await import("@/lib/actions/requirements");

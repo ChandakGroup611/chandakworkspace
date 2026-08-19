@@ -785,7 +785,7 @@ export async function processApprovalAction(reqId: string, action: string, remar
   return { success: true };
 }
 
-export async function fetchRequirementApprovalFlow(reqId: string) {
+export async function fetchRequirementApprovalFlow(reqId: string, _timestamp?: number) {
   const { unstable_noStore: noStore } = await import('next/cache');
   noStore();
   const { data, error } = await supabaseAdmin
