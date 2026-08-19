@@ -897,7 +897,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         <TaskCreationWizard 
            workspaceId={selectedSubWorkspaceId || selectedWorkspaceId}
            initialTaskName={requirement.title || requirement.code}
-           initialDescription={`Requirement Reason:\n${requirement.requirement_reason || requirement.custom_fields?.business_reason || '-'}\n\nRequirement Details:\n${requirement.requirement_details || requirement.functional_scope || '-'}`}
+           initialDescription={`Requirement Reason:\n${requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.custom_fields?.custom_fields?.business_reason || '-'}\n\nRequirement Details:\n${requirement.requirement_details || requirement.custom_fields?.requirement_details || requirement.custom_fields?.requirement_description || requirement.custom_fields?.custom_fields?.requirement_description || requirement.functional_scope || '-'}`}
            initialAttachments={attachments.map(att => ({
              file_name: att.original_file_name || att.file_name,
              file_url: "storage:requirement-files:" + (att.storage_path || att.file_name),
@@ -1332,7 +1332,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
+                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.custom_fields?.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
                     </div>
                   </div>
 
@@ -1341,7 +1341,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || 'Detailed requirement workflow description.'}
+                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || requirement.custom_fields?.requirement_description || requirement.custom_fields?.custom_fields?.requirement_description || 'Detailed requirement workflow description.'}
                     </div>
                   </div>
                 </div>
