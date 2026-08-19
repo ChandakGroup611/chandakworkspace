@@ -98,13 +98,14 @@ export async function recalculateRequirementCompletion(reqId: string) {
   const { data: tasks } = await supabaseAdmin
     .from('tasks')
     .select('status_id, status_master(is_closed)')
-    .in('id', taskIds);
+    .in('id', taskIds)
+    .eq('is_deleted', false);
 
   if (!tasks) return;
 
   const total = tasks.length;
   const completed = tasks.filter(t => (t.status_master as any)?.is_closed).length;
-  const percentage = Math.round((completed / total) * 100);
+  const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   const { data: reqToUpdate } = await supabaseAdmin.from('requirements').select('custom_fields').eq('id', reqId).single();
   const customFields = reqToUpdate?.custom_fields || {};

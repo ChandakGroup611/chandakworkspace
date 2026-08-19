@@ -1220,26 +1220,29 @@ export async function logTaskTime(taskId: string, hours: number, description: st
 export async function propagateTaskDependencies(taskId: string) {
   try {
     // 1. Handle requirement updates
-    const { data: reqTask } = await supabaseAdmin
+    const { data: reqTasks } = await supabaseAdmin
       .from('requirement_tasks')
       .select('requirement_id')
-      .eq('task_id', taskId)
-      .maybeSingle();
+      .eq('task_id', taskId);
 
-    if (reqTask && reqTask.requirement_id) {
+    if (reqTasks && reqTasks.length > 0) {
       const { recalculateRequirementCompletion, evaluateRequirementReadyToUse } = await import('@/lib/actions/requirements');
-      await recalculateRequirementCompletion(reqTask.requirement_id);
-      await evaluateRequirementReadyToUse(taskId);
+      
+      for (const reqTask of reqTasks) {
+        await recalculateRequirementCompletion(reqTask.requirement_id);
 
-      const { data: req } = await supabaseAdmin.from('requirements').select('custom_fields, status_id').eq('id', reqTask.requirement_id).single();
-      const completion_percentage = (req?.custom_fields as any)?.completion_percentage || 0;
-      if (req && completion_percentage === 100) {
-        const { data: uatStatus } = await supabaseAdmin.from('status_master').select('id').eq('status_code', 'UAT').eq('scope_type', 'REQUIREMENT').single();
-        if (uatStatus && req.status_id !== uatStatus.id) {
-          await supabaseAdmin.from('requirements').update({ status_id: uatStatus.id }).eq('id', reqTask.requirement_id);
-          await logActivityEvent('REQUIREMENT', reqTask.requirement_id, 'STATUS_CHANGE', { status_id: req.status_id }, { status_id: uatStatus.id, auto_transition: true }, 'system');
+        const { data: req } = await supabaseAdmin.from('requirements').select('custom_fields, status_id').eq('id', reqTask.requirement_id).single();
+        const completion_percentage = (req?.custom_fields as any)?.completion_percentage || 0;
+        if (req && completion_percentage === 100) {
+          const { data: uatStatus } = await supabaseAdmin.from('status_master').select('id').eq('status_code', 'REQ_UAT').eq('scope_type', 'REQUIREMENT').maybeSingle();
+          if (uatStatus && req.status_id !== uatStatus.id) {
+            await supabaseAdmin.from('requirements').update({ status_id: uatStatus.id }).eq('id', reqTask.requirement_id);
+            await logActivityEvent('REQUIREMENT', reqTask.requirement_id, 'STATUS_CHANGE', { status_id: req.status_id }, { status_id: uatStatus.id, auto_transition: true }, 'system');
+          }
         }
       }
+      
+      await evaluateRequirementReadyToUse(taskId);
     }
 
     // 2. Handle parent task progress
