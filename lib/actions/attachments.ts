@@ -218,7 +218,7 @@ export async function getAttachmentDownloadUrl(attachmentId: string, forceDownlo
 /**
  * Fetches attachments for a given module and record, bypassing RLS and supporting dual IDs (UUID & Code).
  */
-export async function fetchAttachments(moduleType: string, recordId: string) {
+export async function fetchAttachments(moduleType: string, recordId: string, _timestamp?: number) {
   if (!recordId) return [];
 
   const candidateIds = new Set<string>([recordId]);

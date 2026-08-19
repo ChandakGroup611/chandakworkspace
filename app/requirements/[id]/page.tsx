@@ -260,7 +260,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         });
 
         const { fetchAttachments } = await import("@/lib/actions/attachments");
-        const attRes = await fetchAttachments('requirement', data.id);
+        const attRes = await fetchAttachments('requirement', data.id, Date.now());
         
         const { data: approvalFlow } = await supabase
         .from('requirement_approval_flow')
@@ -1032,7 +1032,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <Target className="w-3.5 h-3.5 text-accent" /> Business Value
                     </span>
                     <span className="theme-data-value text-foreground break-all">
-                      {requirement.business_value?.name || requirement.custom_fields?.business_value || 'Cost Optimization & Efficiency'}
+                      {requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value || 'Cost Optimization & Efficiency'}
                     </span>
                   </div>
 
@@ -1060,9 +1060,10 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture <span className="text-red-500">*</span>
                     </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, schema specifications, and API integration scope.'}
-                    </div>
+                    <div 
+                      className="theme-data-value text-foreground leading-relaxed break-words quill-rendered-content"
+                      dangerouslySetInnerHTML={{ __html: requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, schema specifications, and API integration scope.' }}
+                    />
                   </div>
                 </div>
               </div>
