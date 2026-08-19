@@ -690,7 +690,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
   return (
     <PageContainer strict={true} className="bg-background">
-      <div className="flex-1 overflow-y-auto px-4 pb-12 pt-2">
+      <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-12 pt-6 md:pt-8">
       <div className="flex flex-wrap items-center justify-between pb-2 mb-2 shrink-0 border-b border-border dark:border-white/5 gap-4">
         <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
           <div className="flex items-baseline gap-2 min-w-0">
@@ -2164,7 +2164,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       </div> {/* End flex-1 scrollable area */}
 
       {/* GLOBAL STATIC FOOTERS */}
-      <div className="shrink-0 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-[100] empty:hidden">
+      <div className="shrink-0 bg-background/95 dark:bg-background/90 backdrop-blur-md border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-[100] empty:hidden px-6 md:px-8">
         {activeTab === 'analysis' && (
           <div className="p-4 flex items-center justify-end gap-3">
             {((isSuperAdmin && !isViewMode) || isCurrentApprover) && (

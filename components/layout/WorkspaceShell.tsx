@@ -14,6 +14,8 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
   const pathname = usePathname();
   const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const isAuthRoute = pathname === "/login" || pathname === "/register";
+  const isRequirementDetailsRoute = pathname.startsWith('/requirements/') && pathname.split('/').length === 3 && !['reports', 'approvals', 'grooming'].includes(pathname.split('/')[2]);
+  const isZeroPaddingRoute = isAuthRoute || isRequirementDetailsRoute;
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         {!isAuthRoute && <Navbar />}
 
         {/* Dynamic Scrollable Content Workspace */}
-        <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${isAuthRoute ? 'p-0' : 'p-6 md:p-8 bg-transparent'}`}>
+        <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${isZeroPaddingRoute ? 'p-0' : 'p-6 md:p-8 bg-transparent'}`}>
           {children}
         </main>
       </div>
