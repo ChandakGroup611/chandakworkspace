@@ -1011,7 +1011,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </span>
                     <div>
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
-                        {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || 'Standard Business Request'}
+                        {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || '-'}
                       </span>
                     </div>
                   </div>
@@ -1022,7 +1022,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </span>
                     <div>
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
-                        {requirement.business_criticality?.name || requirement.priority?.name || 'HIGH'}
+                        {requirement.business_criticality?.name || requirement.priority?.name || '-'}
                       </span>
                     </div>
                   </div>
@@ -1032,7 +1032,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <Target className="w-3.5 h-3.5 text-accent" /> Business Value
                     </span>
                     <span className="theme-data-value text-foreground break-all">
-                      {requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value || 'Cost Optimization & Efficiency'}
+                      {requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value || '-'}
                     </span>
                   </div>
 
@@ -1041,7 +1041,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <Target className="w-3.5 h-3.5 text-accent" /> Business Impact
                     </span>
                     <span className="theme-data-value text-foreground break-all">
-                      {requirement.business_impact || requirement.custom_fields?.business_impact || 'No immediate impact details provided.'}
+                      {requirement.business_impact || requirement.custom_fields?.business_impact || '-'}
                     </span>
                   </div>
                 </div>
@@ -1052,7 +1052,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-red-500">*</span>
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || 'Requires integration approval and system setup verification.'}
+                      {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || '-'}
                     </div>
                   </div>
 
@@ -1062,7 +1062,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </span>
                     <div 
                       className="theme-data-value text-foreground leading-relaxed break-words quill-rendered-content"
-                      dangerouslySetInnerHTML={{ __html: requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || 'Technical architecture, schema specifications, and API integration scope.' }}
+                      dangerouslySetInnerHTML={{ __html: requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || '-' }}
                     />
                   </div>
                 </div>
@@ -1239,7 +1239,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       </select>
                     ) : (
                       <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
-                        {masters.issue_types?.find((t: any) => t.id === formData.requirement_type_id)?.name || requirement.business_classification?.name || requirement.requirement_type?.name || 'Standard Business Request'}
+                        {masters.issue_types?.find((t: any) => t.id === formData.requirement_type_id)?.name || requirement.business_classification?.name || requirement.requirement_type?.name || '-'}
                       </div>
                     )}
                   </div>
@@ -1261,7 +1261,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       </select>
                     ) : (
                       <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
-                        {masters.priority_master?.find((p: any) => p.id === formData.business_criticality_id)?.name || requirement.business_criticality?.name || requirement.priority?.name || 'Not specified'}
+                        {masters.priority_master?.find((p: any) => p.id === formData.business_criticality_id)?.name || requirement.business_criticality?.name || requirement.priority?.name || '-'}
                       </div>
                     )}
                   </div>
@@ -1288,7 +1288,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       </select>
                     ) : (
                       <div className="p-2.5 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm font-medium">
-                        {masters.business_values?.find((b: any) => b.id === formData.business_value_id)?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || 'Not specified'}
+                        {masters.business_values?.find((b: any) => b.id === formData.business_value_id)?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || '-'}
                       </div>
                     )}
                   </div>
@@ -1308,7 +1308,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       />
                     ) : (
                       <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm whitespace-pre-wrap">
-                        {formData.dependency_notes || 'No dependency notes.'}
+                        {formData.dependency_notes || '-'}
                       </div>
                     )}
                   </div>
@@ -1332,7 +1332,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.custom_fields?.custom_fields?.business_reason || requirement.objective || 'Provide operational justification for requirement execution.'}
+                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.custom_fields?.custom_fields?.business_reason || requirement.objective || '-'}
                     </div>
                   </div>
 
@@ -1341,7 +1341,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || requirement.custom_fields?.requirement_description || requirement.custom_fields?.custom_fields?.requirement_description || 'Detailed requirement workflow description.'}
+                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || requirement.custom_fields?.requirement_description || requirement.custom_fields?.custom_fields?.requirement_description || '-'}
                     </div>
                   </div>
                 </div>
@@ -1380,11 +1380,11 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Target System / Application</span>
-                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_system || 'Not specified'}</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_system || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Data Privacy & Security</span>
-                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.data_privacy || 'Not specified'}</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.data_privacy || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Software License Cost</span>
@@ -1419,11 +1419,11 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Target Environment</span>
-                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_environment || 'Not specified'}</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.target_environment || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">Hardware & Capacity Needs</span>
-                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.hardware_needs || 'Not specified'}</span>
+                      <span className="theme-data-value text-foreground">{requirement.custom_fields?.hardware_needs || '-'}</span>
                     </div>
                     <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 backdrop-blur-md border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                       <span className="theme-label mb-1.5 text-muted">CAPEX Amount</span>
@@ -1510,7 +1510,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       <AppInput placeholder="e.g. 2 Developers" value={formData.estimated_resources} onChange={(e) => setFormData({...formData, estimated_resources: e.target.value})} className="w-full" />
                     ) : (
                       <span className="theme-data-value text-foreground truncate">
-                        {requirement.estimated_resources || requirement.custom_fields?.estimated_resources || 'Standard Team'}
+                        {requirement.estimated_resources || requirement.custom_fields?.estimated_resources || '-'}
                       </span>
                     )}
                   </div>
@@ -1537,7 +1537,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="px-3 py-1 rounded-full theme-data-value bg-indigo-600 text-white shadow-xs">
-                        {requirement.department?.name || snap.department || 'IT & Digital Transformation'}
+                        {requirement.department?.name || snap.department || '-'}
                       </span>
                     </div>
                   </div>
@@ -1551,7 +1551,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         approvalFlow.map((flow: any, idx: number) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
                             <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
-                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || 'Department'} ({flow.approver?.role?.[0]?.role_master?.role_name || 'Designation'})
+                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.role?.[0]?.role_master?.role_name || '-'})
                           </span>
                         ))
                       ) : (formData.impacted_departments?.length > 0 && Object.values(formData.department_approvers).some((arr: any) => arr.length > 0)) ? (
@@ -1565,7 +1565,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                         }).map((flow: any, idx: number) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
                             <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
-                            {flow.approver?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || 'Department'}
+                            {flow.approver?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'}
                           </span>
                         ))
                       ) : (
@@ -1618,7 +1618,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                       </label>
                       {formData.impacted_departments.map((deptId: string) => {
                         const dept = masters.departments?.find((d: any) => d.id === deptId);
-                        const deptName = dept?.name || 'Department';
+                        const deptName = dept?.name || '-';
                         
                         // Filter users for this department or fallback to all users if none found
                         let deptUsers = (masters.users || []).filter((u: any) => u.department_id === deptId || u.department === deptName);
@@ -1788,7 +1788,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                   <span className="theme-label text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
                                 </div>
                                 <div className="theme-data-value text-muted-foreground leading-relaxed break-words">
-                                  <SafeHtml html={log.action || log.remarks || log.message || 'Updated requirement parameters.'} />
+                                  <SafeHtml html={log.action || log.remarks || log.message || '-'} />
                                 </div>
                               </div>
                             </div>
@@ -1872,7 +1872,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                 <div className="space-y-6">
                   {Object.entries(
                     approvalFlow.reduce((acc, flow) => {
-                      const deptName = flow.department?.name || 'Unknown Department';
+                      const deptName = flow.department?.name || '-';
                       if (!acc[deptName]) acc[deptName] = [];
                       acc[deptName].push(flow);
                       return acc;
@@ -1913,7 +1913,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                                 </div>
                                 <div className={`flex-1 p-3 rounded-lg border ${statusColor} transition-colors`}>
                                   <div className="flex justify-between items-start mb-1">
-                                    <div className="font-semibold text-sm">Level {flow.level}: {flow.approver?.full_name || 'Unknown User'}</div>
+                                    <div className="font-semibold text-sm">Level {flow.level}: {flow.approver?.full_name || '-'}</div>
                                     <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface/50 dark:bg-surface/20">
                                       {icon} {flow.status}
                                     </div>
