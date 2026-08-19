@@ -281,15 +281,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         console.error("Failed to fetch audit logs", e);
       }
 
-      // Fetch approval flow
-      try {
-        const { fetchRequirementApprovalFlow } = await import("@/lib/actions/requirements");
-        const flow = await fetchRequirementApprovalFlow(reqId);
-        setApprovalFlow(flow || []);
-      } catch(e) {
-        console.error("Failed to fetch approval flow", e);
-      }
-
       // Fetch workspaces, subWorkspaces, and linked tasks
       try {
         const { fetchLinkedTasks } = await import("@/lib/actions/requirements");
@@ -1836,11 +1827,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <label className="theme-data-value uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-accent" /> New Analysis Remarks / Approver Feedback <span className="text-red-500">*</span>
                     </label>
-                    <textarea
+                    <RichTextEditor
                       value={approvalRemarks}
-                      onChange={(e) => setApprovalRemarks(e.target.value)}
-                      className="w-full text-xs font-medium p-3.5 rounded-xl border border-border bg-surface text-foreground placeholder:text-muted focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all leading-relaxed"
-                      rows={3}
+                      onChange={setApprovalRemarks}
                       placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback..."
                     />
                     <span className="theme-label text-muted">Mandatory entry for workflow signoff and audit trail logging.</span>
