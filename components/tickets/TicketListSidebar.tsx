@@ -41,7 +41,7 @@ export function TicketListSidebar({
           <input 
             type="text"
             placeholder="Search tickets..."
-            className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+            className={`w-full h-10 pl-10 pr-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />

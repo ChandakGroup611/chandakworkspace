@@ -76,27 +76,27 @@ export default function NotificationProviderForm({ initialData }: { initialData:
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">SMTP Host</label>
-          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">SMTP Port</label>
-          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Username / Email</label>
-          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">{provider === 'RESEND' ? 'API Key' : 'App Password'}</label>
-          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Sender Name</label>
-          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
         </div>
         <div>
           <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Sender Email (From)</label>
-          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all" />
+          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-surface/40 border border-border rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
         </div>
       </div>
 

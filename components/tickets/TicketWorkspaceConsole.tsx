@@ -293,7 +293,7 @@ export function TicketWorkspaceConsole({
                     value={newSubTask}
                     onChange={(e) => setNewSubTask(e.target.value)}
                     placeholder="Add a new sub-task..."
-                    className="flex-1 border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all"
+                    className="flex-1 border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all"
                   />
                   <AppButton type="submit" variant="primary" disabled={!newSubTask.trim()}>
                     Add
@@ -337,7 +337,7 @@ export function TicketWorkspaceConsole({
                     <select 
                       value={newRelationType}
                       onChange={(e) => setNewRelationType(e.target.value as any)}
-                      className="border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground outline-none w-32 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all"
+                      className="border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground outline-none w-32 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all"
                     >
                       <option value="RELATED">Relates to</option>
                       <option value="BLOCKS">Blocks</option>
@@ -354,7 +354,7 @@ export function TicketWorkspaceConsole({
                         }}
                         onFocus={() => setShowSuggestions(true)}
                         placeholder="Search by ticket code or subject..."
-                        className="w-full border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all"
+                        className="w-full border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all"
                       />
                       {isSearching && (
                         <div className="absolute right-3 top-2.5">
@@ -493,7 +493,7 @@ export function TicketWorkspaceConsole({
                     handleFieldUpdate(updates);
                   }}
                   disabled={!canEditFields}
-                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary bg-background border-border text-foreground"
+                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary theme-input-structural text-foreground"
                 >
                   <option value="">Unassigned</option>
                   {assigneesList.map(a => (
@@ -508,7 +508,7 @@ export function TicketWorkspaceConsole({
                   value={ticket.status_id}
                   onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
                   disabled={!canEditFields}
-                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary bg-background border-border text-foreground"
+                  className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary theme-input-structural text-foreground"
                 >
                   {states.map((s: any) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
@@ -526,7 +526,7 @@ export function TicketWorkspaceConsole({
                       value={newTimeLog}
                       onChange={(e) => setNewTimeLog(e.target.value)}
                       placeholder="e.g. 30"
-                      className="w-full border rounded-lg px-3 py-2 text-xs bg-background border-border text-foreground focus:border-theme-btn-primary outline-none"
+                      className="w-full border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-theme-btn-primary outline-none"
                     />
                     <AppButton type="submit" variant="outline" size="sm" disabled={!newTimeLog || isLoggingTime}>
                       {isLoggingTime ? "..." : "Log"}
@@ -552,7 +552,7 @@ export function TicketWorkspaceConsole({
                     value={pendingChanges.department_id !== undefined ? pendingChanges.department_id : defaultDeptId}
                     onChange={(e) => handleFieldUpdate({ department_id: e.target.value })}
                     disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-background border-border text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
                   >
                     <option value="">Select Department</option>
                     {departments?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -564,7 +564,7 @@ export function TicketWorkspaceConsole({
                     value={pendingChanges.issue_type_id !== undefined ? pendingChanges.issue_type_id : defaultIssueTypeId}
                     onChange={(e) => handleFieldUpdate({ issue_type_id: e.target.value })}
                     disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-background border-border text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
                   >
                     <option value="">Select Issue Type</option>
                     {issueTypes?.map((it: any) => <option key={it.id} value={it.id}>{it.name}</option>)}
@@ -578,7 +578,7 @@ export function TicketWorkspaceConsole({
                     value={pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId}
                     onChange={(e) => handleFieldUpdate({ category_id: e.target.value, sub_category_id: null })}
                     disabled={isClassificationLocked}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-background border-border text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
                   >
                     <option value="">Select Category</option>
                     {categories?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -590,7 +590,7 @@ export function TicketWorkspaceConsole({
                     value={pendingChanges.sub_category_id !== undefined ? pendingChanges.sub_category_id : defaultSubCategoryId}
                     onChange={(e) => handleFieldUpdate({ sub_category_id: e.target.value })}
                     disabled={isClassificationLocked || !(pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId)}
-                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-background border-border text-foreground"
+                    className="w-full border rounded-lg p-2.5 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 theme-input-structural text-foreground"
                   >
                     <option value="">Select Subcategory</option>
                     {subcategories?.filter((sc: any) => sc.category_id === (pendingChanges.category_id !== undefined ? pendingChanges.category_id : defaultCategoryId)).map((sc: any) => (
@@ -675,7 +675,7 @@ export function TicketWorkspaceConsole({
           value={updateRemark}
           onChange={e => setUpdateRemark(e.target.value)}
           disabled={!canEditFields}
-          className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-theme-btn-primary transition-colors bg-background border-border text-foreground ${!canEditFields ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`w-full min-h-[64px] p-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-theme-btn-primary transition-colors theme-input-structural text-foreground ${!canEditFields ? 'opacity-50 cursor-not-allowed' : ''}`}
           placeholder={!canEditFields ? "Ticket is frozen/read-only." : "Add update notes or operational remarks..."}
         />
         <div className="flex items-center justify-between gap-3">

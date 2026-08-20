@@ -134,7 +134,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                       <h3 className="theme-label text-amber-500 mb-2">User Acceptance Testing (UAT)</h3>
                       <p className="text-xs text-muted mb-4">Implementation complete. Please verify the requirement meets the business justification.</p>
                       <textarea 
-                        className="w-full bg-surface/40 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500"
+                        className="w-full bg-surface/40 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 theme-input-structural text-foreground"
                         placeholder="Enter UAT feedback or rejection reasons..."
                         value={uatComment}
                         onChange={e => setUatComment(e.target.value)}

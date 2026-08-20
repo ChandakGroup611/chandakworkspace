@@ -231,10 +231,7 @@ export async function fetchAttachments(moduleType: string, recordId: string, _ti
         .or(`id.eq.${recordId},code.eq.${recordId}`)
         .limit(1)
         .maybeSingle();
-      if (t) {
-        if (t.id) candidateIds.add(t.id);
-        if (t.code) candidateIds.add(t.code);
-      }
+      if (t && t.id) candidateIds.add(t.id);
     } else if (moduleType === 'requirement') {
       const { data: r } = await supabaseAdmin
         .from('requirements')
@@ -242,10 +239,7 @@ export async function fetchAttachments(moduleType: string, recordId: string, _ti
         .or(`id.eq.${recordId},code.eq.${recordId}`)
         .limit(1)
         .maybeSingle();
-      if (r) {
-        if (r.id) candidateIds.add(r.id);
-        if (r.code) candidateIds.add(r.code);
-      }
+      if (r && r.id) candidateIds.add(r.id);
     } else if (moduleType === 'task') {
       const { data: tk } = await supabaseAdmin
         .from('tasks')
@@ -253,16 +247,15 @@ export async function fetchAttachments(moduleType: string, recordId: string, _ti
         .or(`id.eq.${recordId},task_code.eq.${recordId}`)
         .limit(1)
         .maybeSingle();
-      if (tk) {
-        if (tk.id) candidateIds.add(tk.id);
-        if (tk.task_code) candidateIds.add(tk.task_code);
-      }
+      if (tk && tk.id) candidateIds.add(tk.id);
     }
   } catch (e) {
     console.error("[Attachments] Candidate ID resolution:", e);
   }
 
-  const idsArray = Array.from(candidateIds);
+  // Filter out any non-UUID values from candidateIds to prevent Postgres 22P02 errors
+  const isValidUUID = (uuid: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
+  const idsArray = Array.from(candidateIds).filter(isValidUUID);
 
   const { data: unifiedData } = await supabaseAdmin
     .from('attachments')

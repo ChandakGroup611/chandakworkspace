@@ -11,7 +11,7 @@ export const AppCard = React.forwardRef<
     ref={ref}
     className={cn(
       "theme-card-structural",
-      "rounded-2xl relative transition-all duration-300",
+      "rounded-2xl overflow-hidden relative transition-all duration-300",
       className
     )}
     {...props}

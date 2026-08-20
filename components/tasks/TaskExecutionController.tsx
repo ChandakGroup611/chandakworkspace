@@ -977,7 +977,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     <div className="flex items-center gap-1 text-xs">
                       <input
                         type="number"
-                        className="w-16 px-2 py-0.5 border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-theme-btn-primary text-center font-bold text-foreground"
+                        className="w-16 px-2 py-0.5 border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-theme-btn-primary text-center font-bold text-foreground theme-input-structural text-foreground"
                         value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
                         onChange={(e) => {
                           if (!task.start_date) return;
@@ -1009,7 +1009,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {task.currentUserIsSuperAdmin ? (
                     <input
                       type="date"
-                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
+                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all theme-input-structural text-foreground"
                       value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newStartDate = e.target.value;
@@ -1034,7 +1034,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {task.currentUserIsSuperAdmin ? (
                     <input
                       type="date"
-                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all"
+                      className="w-full h-9 px-2.5 rounded-lg border border-border bg-surface text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all theme-input-structural text-foreground"
                       value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newEndDate = e.target.value;

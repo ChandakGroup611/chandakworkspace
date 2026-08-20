@@ -151,7 +151,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Service Sub-Area</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.submoduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, submoduleId: e.target.value }))}
                 required
@@ -194,7 +194,7 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Detail Classification</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.issueSubtypeId}
                 onChange={(e) => setFormData(prev => ({ ...prev, issueSubtypeId: e.target.value }))}
                 required

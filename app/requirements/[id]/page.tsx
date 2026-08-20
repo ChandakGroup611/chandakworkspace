@@ -371,15 +371,18 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
     loadData();
   }, [reqId]);
 
+  const isReadyToPutToUse = requirement?.approval_status === 'Ready to Put to Use' || 
+    (requirement?.custom_fields?.completion_percentage === 100 && linkedTasks?.length > 0 && requirement?.approval_status !== 'Closed');
+
   useEffect(() => {
-    if (requirement?.approval_status === 'Ready to Put to Use') {
-      const notifiedKey = `req-ready-notified-${requirement.id}`;
+    if (isReadyToPutToUse) {
+      const notifiedKey = `req-ready-notified-${requirement?.id}`;
       if (!localStorage.getItem(notifiedKey)) {
         setShowReadyNotification(true);
         localStorage.setItem(notifiedKey, 'true');
       }
     }
-  }, [requirement]);
+  }, [requirement, isReadyToPutToUse]);
 
   const handleUpdateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -757,7 +760,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               Change Requirement
             </AppButton>
           )}
-          {!isViewMode && (requirement.approval_status === 'Ready to Put to Use') && (
+          {!isViewMode && isReadyToPutToUse && (
             <AppButton variant="primary" size="sm" leftIcon={<CheckCircle className="h-4 w-4"/>} onClick={() => setShowPutToUseDialog(true)}>
               Put to Use
             </AppButton>

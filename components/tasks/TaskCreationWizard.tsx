@@ -222,7 +222,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Parent Task Link</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${ "theme-input-structural text-foreground" }`}
                   value={parentTaskId}
                   onChange={e => setParentTaskId(e.target.value)}
                   disabled={!!initialParentTaskId}
@@ -236,7 +236,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Assign to Sprint</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={sprintId}
                   onChange={e => setSprintId(e.target.value)}
                 >
@@ -304,7 +304,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Priority</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={priorityId}
                   onChange={e => setPriorityId(e.target.value)}
                 >
@@ -317,7 +317,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Department</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={departmentId}
                   onChange={e => setDepartmentId(e.target.value)}
                 >
@@ -330,7 +330,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Status</label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-card-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={statusId}
                   onChange={e => setStatusId(e.target.value)}
                 >
@@ -632,7 +632,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <div className="w-full sm:flex-1 space-y-1.5">
                       <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Data Type</label>
                       <select 
-                        className="w-full h-9 px-3 rounded-md text-[12px] bg-surface border border-border/60 focus:border-theme-icon focus:outline-none transition-colors"
+                        className="w-full h-9 px-3 rounded-md text-[12px] bg-surface border border-border/60 focus:border-theme-icon focus:outline-none transition-colors theme-input-structural text-foreground"
                         value={newFieldType}
                         onChange={e => setNewFieldType(e.target.value)}
                       >

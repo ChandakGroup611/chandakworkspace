@@ -51,8 +51,9 @@
 
   /* Inputs - Complete 4-Side Inset Border & Balanced Inset Shadow */
   [data-theme="light-neumorphic"] .theme-input-structural {
+    border: 1px solid rgba(150, 150, 150, 0.3) !important;
     background: #FAFAFA !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
+    
     color: #334155 !important;
     border-radius: 10px !important;
     
@@ -65,10 +66,11 @@
 }
   [data-theme="light-neumorphic"] .theme-input-structural:focus {
     background: #ffffff !important;
-    border-color: rgba(0,0,0,0.2) !important;
-    
-    outline: none;
-  }
+  
+    outline: none !important;
+    border: 1px solid var(--btn-primary-bg, #6366f1) !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
 
   /* Primary Buttons - Complete 360-Degree Border Pill */
   [data-theme="light-neumorphic"] .theme-button-structural {

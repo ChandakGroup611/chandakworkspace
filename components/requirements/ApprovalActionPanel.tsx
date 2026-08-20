@@ -118,7 +118,7 @@ export default function ApprovalActionPanel({
 
               <div>
                 <textarea
-                  className={`w-full p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[80px] resize-none ${ "theme-card-structural text-foreground placeholder:text-muted" }`}
+                  className={`w-full p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 min-h-[80px] resize-none ${ "theme-input-structural text-foreground placeholder:text-muted" }`}
                   placeholder="Enter mandatory justification or remarks..."
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}

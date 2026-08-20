@@ -161,7 +161,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Module</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.moduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, moduleId: e.target.value, submoduleId: "" }))}
                 required
@@ -177,7 +177,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Submodule</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.submoduleId}
                 onChange={(e) => setFormData(prev => ({ ...prev, submoduleId: e.target.value }))}
                 required
@@ -209,7 +209,7 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             <div className="space-y-2">
               <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Sub Category</label>
               <select 
-                className="w-full h-11 px-4 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50"
+                className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 disabled:opacity-50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.subcategoryId}
                 onChange={(e) => setFormData(prev => ({ ...prev, subcategoryId: e.target.value }))}
                 required
