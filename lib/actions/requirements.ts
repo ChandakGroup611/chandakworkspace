@@ -425,8 +425,8 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
             department_id: deptId, 
             status: currentLevel === 1 ? 'Pending' : 'Awaiting Previous Level'
           });
+          currentLevel++;
         }
-        currentLevel++;
       }
     }
     if (flowInserts.length > 0) {

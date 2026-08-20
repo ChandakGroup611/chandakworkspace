@@ -281,13 +281,20 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
           }
         }
         
-        const { data: approvalFlow } = await supabase
-        .from('requirement_approval_flow')
-        .select('*, approver:user_master!requirement_approval_flow_approver_id_fkey(id, full_name, role:user_roles(role_master(role_name))), department:departments!requirement_approval_flow_department_id_fkey(name)')
-        .eq('requirement_id', reqId)
-        .order('level', { ascending: true });
-        
-        setApprovalFlow(approvalFlow || []);
+        const fetchFlow = async () => {
+          try {
+            const { data: approvalFlow } = await supabase
+            .from('requirement_approval_flow')
+            .select('*, approver:user_master!requirement_approval_flow_approver_id_fkey(id, full_name), department:departments!requirement_approval_flow_department_id_fkey(name)')
+            .eq('requirement_id', reqId)
+            .order('level', { ascending: true });
+
+            if (approvalFlow) setApprovalFlow(approvalFlow);
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        fetchFlow();
         setAttachments(allAttachments);
       }
 
@@ -298,15 +305,6 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         setAuditLogs(logs || []);
       } catch(e) {
         console.error("Failed to fetch audit logs", e);
-      }
-
-      // Fetch approval flow using Server Action (bypasses RLS) with cache-busting timestamp
-      try {
-        const { fetchRequirementApprovalFlow } = await import("@/lib/actions/requirements");
-        const flow = await fetchRequirementApprovalFlow(reqId, Date.now());
-        setApprovalFlow(flow || []);
-      } catch(e) {
-        console.error("Failed to fetch approval flow", e);
       }
 
       // Fetch workspaces, subWorkspaces, and linked tasks
