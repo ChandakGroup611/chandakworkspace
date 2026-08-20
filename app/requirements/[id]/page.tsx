@@ -1833,56 +1833,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
 
 
 
-        <div className={`rounded-lg mb-10 ${activeTab !== 'analysis' ? 'bg-surface dark:bg-[#050505] border border-border/50 dark:border-white/5 p-3 shadow-sm' : ''}`}>
-          {activeTab === 'details' && (
-            <div className="flex flex-col h-full animate-in fade-in duration-300 gap-4 p-2">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-2">
-                  <Paperclip className="h-4 w-4 text-theme-icon" /> Associated Files & Attachments ({attachments.length})
-                </h3>
-              </div>
-
-              {attachments.length > 0 ? (
-                <div className="flex gap-3 flex-wrap">
-                  {attachments.map(att => (
-                    <div
-                      key={att.id}
-                      className="flex items-center gap-2 pl-3 pr-1 py-1.5 bg-surface dark:bg-elevated/40 border border-border/60 rounded-xl text-xs shadow-2xs hover:border-border transition-all"
-                    >
-                      <Paperclip className="h-4 w-4 text-theme-icon" />
-                      <span className="text-foreground font-semibold truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
-                      <span className="text-[10px] text-muted mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
-                      <div className="flex items-center gap-1 border-l border-border/60 pl-2">
-                        <AppButton 
-                          variant="ghost" size="sm"
-                          onClick={() => handleAttachmentAction(att.id, 'view')}
-                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
-                          title="View Attachment"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </AppButton>
-                        <AppButton 
-                          variant="ghost" size="sm"
-                          onClick={() => handleAttachmentAction(att.id, 'download')}
-                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
-                          title="Download Attachment"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </AppButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 rounded-xl bg-surface/50 border border-border/50 text-center text-xs text-muted font-medium italic">
-                  No attachments associated with this requirement.
-                </div>
-              )}
-            </div>
-          )}
-
-          
-
+        <div className={`rounded-lg mb-10 ${['approval', 'tasks', 'audit'].includes(activeTab) ? 'bg-surface dark:bg-[#050505] border border-border/50 dark:border-white/5 p-3 shadow-sm' : ''}`}>
           {activeTab === 'approval' && (
             <div className="space-y-6 animate-in fade-in duration-300">
               {approvalFlow.length === 0 ? (
