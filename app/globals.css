@@ -93,6 +93,15 @@
   textarea {
     background-color: var(--color-surface);
     color: var(--color-foreground);
+    transition: all 0.2s ease !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):focus,
+  select:focus,
+  textarea:focus {
+    outline: none !important;
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 0 0 2px var(--color-accent) !important;
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not(:focus),
@@ -102,7 +111,6 @@
     border-style: solid !important;
     border-color: rgba(0, 0, 0, 0.1) !important;
     box-shadow: none !important;
-    transition: all 0.2s ease !important;
   }
 
   .theme-dark input:not([type="checkbox"]):not([type="radio"]):not(:focus),
