@@ -1243,9 +1243,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <label className="theme-label text-muted flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-accent" /> Business Classification <span className="text-red-500">*</span></span>
                       {isEditable && (
-                        <button type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10">
+                        <AppButton variant="ghost" type="button" onClick={() => { setMasterModalType('issue_type'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10 h-auto min-h-0 min-w-0">
                           <Plus className="w-3.5 h-3.5" />
-                        </button>
+                        </AppButton>
                       )}
                     </label>
                     {isEditable ? (
@@ -1292,9 +1292,9 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                     <label className="theme-label text-muted flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-accent" /> Business Value</span>
                       {isEditable && (
-                        <button type="button" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10">
+                        <AppButton variant="ghost" type="button" onClick={() => { setMasterModalType('business_value'); setShowAddMasterModal(true); }} className="text-accent hover:text-accent/80 p-0.5 rounded-full hover:bg-accent/10 h-auto min-h-0 min-w-0">
                           <Plus className="w-3.5 h-3.5" />
-                        </button>
+                        </AppButton>
                       )}
                     </label>
                     {isEditable ? (
