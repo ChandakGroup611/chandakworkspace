@@ -1016,6 +1016,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
         {activeTab === 'details' && (
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
             {/* DEDICATED CARD: Business Classification */}
+            {(requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || requirement.business_criticality?.name || requirement.priority?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || requirement.business_impact || requirement.custom_fields?.business_impact || requirement.dependency_notes || requirement.custom_fields?.dependency_notes || requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope) && (
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
               <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -1026,70 +1027,90 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
               </div>
 
               <div className="p-5 space-y-4">
+                {((requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name) ||
+                  (requirement.business_criticality?.name || requirement.priority?.name) ||
+                  (requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value) ||
+                  (requirement.business_impact || requirement.custom_fields?.business_impact)) && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5">
+                  {(requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <Briefcase className="w-3.5 h-3.5 text-accent" /> Business Classification
                     </span>
                     <div>
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
-                        {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || '-'}
+                        {requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name}
                       </span>
                     </div>
                   </div>
+                  )}
 
+                  {(requirement.business_criticality?.name || requirement.priority?.name) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-2 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Business Criticality <span className="text-red-500">*</span>
                     </span>
                     <div>
                       <span className="inline-flex items-center px-2.5 py-1 rounded-md theme-data-value bg-surface dark:bg-elevated text-foreground border border-border/60">
-                        {requirement.business_criticality?.name || requirement.priority?.name || '-'}
+                        {requirement.business_criticality?.name || requirement.priority?.name}
                       </span>
                     </div>
                   </div>
+                  )}
 
+                  {(requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-accent" /> Business Value
                     </span>
                     <span className="theme-data-value text-foreground break-all">
-                      {requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value || '-'}
+                      {requirement.business_value?.name || masters.business_values?.find((b: any) => b.id === requirement.custom_fields?.business_value)?.name || requirement.custom_fields?.business_value}
                     </span>
                   </div>
+                  )}
 
+                  {(requirement.business_impact || requirement.custom_fields?.business_impact) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Target className="w-3.5 h-3.5 text-accent" /> Business Impact
                     </span>
                     <span className="theme-data-value text-foreground break-all">
-                      {requirement.business_impact || requirement.custom_fields?.business_impact || '-'}
+                      {requirement.business_impact || requirement.custom_fields?.business_impact}
                     </span>
                   </div>
+                  )}
                 </div>
+                )}
 
+                {((requirement.dependency_notes || requirement.custom_fields?.dependency_notes) || (requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope)) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {(requirement.dependency_notes || requirement.custom_fields?.dependency_notes) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-red-500">*</span>
                     </span>
                     <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.dependency_notes || requirement.custom_fields?.dependency_notes || '-'}
+                      {requirement.dependency_notes || requirement.custom_fields?.dependency_notes}
                     </div>
                   </div>
+                  )}
 
+                  {(requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope) && (
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture <span className="text-red-500">*</span>
                     </span>
                     <div 
                       className="theme-data-value text-foreground leading-relaxed break-words quill-rendered-content"
-                      dangerouslySetInnerHTML={{ __html: requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope || '-' }}
+                      dangerouslySetInnerHTML={{ __html: requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope }}
                     />
                   </div>
+                  )}
                 </div>
+                )}
               </div>
             </AppCard>
+            )}
 
             {/* DEDICATED CARD: Scope & Classification Grid */}
             <AppCard className="overflow-hidden border border-border/60 shadow-md p-5 mb-4">
@@ -1316,7 +1337,25 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 mt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-accent" /> Business Impact</span>
+                    </label>
+                    {isEditable ? (
+                      <textarea
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.business_impact}
+                        onChange={(e) => handleUpdateField('business_impact', e.target.value)}
+                        placeholder="Enter business impact details..."
+                      />
+                    ) : (
+                      <div className="p-3 rounded-lg border border-border/50 bg-surface dark:bg-elevated/20 text-foreground text-sm whitespace-pre-wrap">
+                        {formData.business_impact || '-'}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-accent" /> Dependency Notes <span className="text-red-500">*</span></span>
