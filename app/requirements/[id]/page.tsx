@@ -23,10 +23,26 @@ import 'react-quill-new/dist/quill.snow.css';
 
 const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }: { value: string, onChange: (val: string) => void, readOnly?: boolean, placeholder?: string }) => {
   const [mounted, setMounted] = useState(false);
+  const [localValue, setLocalValue] = useState(value);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (value !== localValue) {
+      setLocalValue(value || "");
+    }
+  }, [value]);
+
+  const handleChange = (content: string) => {
+    setLocalValue(content);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onChange(content);
+    }, 500);
+  };
 
   if (!mounted) {
     return <div className="p-4 border rounded-xl animate-pulse bg-surface dark:bg-elevated/40 h-32 text-xs font-semibold text-muted flex items-center justify-center">Loading editor...</div>;
@@ -69,8 +85,8 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
       `}</style>
       <ReactQuill 
         theme="snow" 
-        value={value} 
-        onChange={onChange}
+        value={localValue} 
+        onChange={handleChange}
         readOnly={readOnly}
         placeholder={placeholder}
         modules={{
@@ -87,7 +103,7 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
   );
 };
 
-export default function RequirementAnalyzePage({ params }: { params: Promise<{ id: string }> }) {
+function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: string }> }) {
   const [reqId, setReqId] = useState<string>("");
   const router = useRouter();
   const supabase = createClient();
@@ -2184,5 +2200,13 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
       </div>
 
     </PageContainer>
+  );
+}
+
+export default function RequirementAnalyzePage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <React.Suspense fallback={<div className="flex h-[calc(100vh-100px)] items-center justify-center"><RefreshCw className="h-8 w-8 animate-spin text-theme-btn-primary" /></div>}>
+      <RequirementAnalyzePageContent params={params} />
+    </React.Suspense>
   );
 }
