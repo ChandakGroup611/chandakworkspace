@@ -361,7 +361,7 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
         supabase.from('departments').select('id, name').eq('is_deleted', false),
         issueQuery,
         priQuery,
-        supabase.from('user_master').select('id, full_name, department_id, email, designation_id, designation:designations(name)').eq('is_active', true).eq('is_deleted', false),
+        supabase.from('user_master').select('id, full_name, department_id, email, designation_id, designation:designations!fk_user_master_designation(name)').eq('is_active', true).eq('is_deleted', false),
         supabase.from('business_values').select('id, name').eq('is_deleted', false).order('name')
       ]);
 
@@ -1760,7 +1760,7 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
                                           {orderIndex}
                                         </span>
                                       )}
-                                      <span>{u.full_name || u.name || 'User'}</span>
+                                      <span>{u.full_name || u.name || 'User'} {u.designation?.name ? `(${u.designation.name})` : ''}</span>
                                     </AppButton>
                                   );
                                 })
@@ -1780,7 +1780,7 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
                                     return (
                                       <div key={id} className="flex items-center gap-1.5">
                                         <span className="text-accent font-bold">{roleLabel}:</span>
-                                        <span className="bg-surface dark:bg-elevated px-2 py-0.5 rounded border border-border">{user?.full_name || user?.name || 'User'}</span>
+                                        <span className="bg-surface dark:bg-elevated px-2 py-0.5 rounded border border-border">{user?.full_name || user?.name || 'User'} {user?.designation?.name ? `(${user.designation.name})` : ''}</span>
                                         {index < selectedApprovers.length - 1 && <span className="text-muted font-bold">→</span>}
                                       </div>
                                     );

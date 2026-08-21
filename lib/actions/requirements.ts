@@ -797,7 +797,7 @@ export async function fetchRequirementApprovalFlow(reqId: string, _timestamp?: n
     .from('requirement_approval_flow')
     .select(`
       id, level, status, actioned_at, remarks, 
-      approver:user_master!requirement_approval_flow_approver_id_fkey(id, full_name, profile_photo, role:user_roles(role_master(role_name)), designation:designations(name)),
+      approver:user_master!requirement_approval_flow_approver_id_fkey(id, full_name, profile_photo, designation:designations!fk_user_master_designation(name)),
       department:departments!requirement_approval_flow_department_id_fkey(id, name)
     `)
     .eq('requirement_id', reqId)
