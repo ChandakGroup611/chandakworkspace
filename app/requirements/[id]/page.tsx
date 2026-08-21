@@ -361,7 +361,7 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
         supabase.from('departments').select('id, name').eq('is_deleted', false),
         issueQuery,
         priQuery,
-        supabase.from('user_master').select('id, full_name, department_id, email, designation_id').eq('is_active', true).eq('is_deleted', false),
+        supabase.from('user_master').select('id, full_name, department_id, email, designation_id, designation:designations(name)').eq('is_active', true).eq('is_deleted', false),
         supabase.from('business_values').select('id, name').eq('is_deleted', false).order('name')
       ]);
 
@@ -1627,7 +1627,7 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
                         approvalFlow.map((flow: any, idx: number) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
                             <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
-                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.role?.[0]?.role_master?.role_name || '-'})
+                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.designation?.name || '-'})
                           </span>
                         ))
                       ) : (formData.impacted_departments?.length > 0 && Object.values(formData.department_approvers).some((arr: any) => arr.length > 0)) ? (
@@ -1641,7 +1641,7 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
                         }).map((flow: any, idx: number) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
                             <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
-                            {flow.approver?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'}
+                            {flow.approver?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.designation?.name || '-'})
                           </span>
                         ))
                       ) : (
