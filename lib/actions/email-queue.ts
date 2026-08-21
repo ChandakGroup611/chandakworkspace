@@ -145,7 +145,8 @@ async function dispatchEmail(item: any, provider: any) {
   if (provider.provider_name === "SMTP" || provider.provider_name === "Microsoft 365" || provider.provider_name === "Resend" || provider.provider_name === "SendGrid") {
     // Note: the original codebase didn't support Resend via API, it just threw an error. 
     // We will assume "Resend" uses SMTP config here just like SMTP does, because the UI says "SMTP Host: smtp.resend.com"
-    const nodemailer = (await import('nodemailer')).default;
+    const nodemailerRaw = await import('nodemailer');
+    const nodemailer = nodemailerRaw.default || nodemailerRaw;
     
     let transportConfig: any = {
       host: provider.config.host || provider.config.smtp_host,
