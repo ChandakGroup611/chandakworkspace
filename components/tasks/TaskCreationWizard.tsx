@@ -6,7 +6,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { Plus, X, Activity, Paperclip, LayoutTemplate, CalendarDays, Users, LayoutList, AlignLeft, Search } from "lucide-react";
+import { Plus, X, Activity, Paperclip, LayoutTemplate, CalendarDays, Users, LayoutList, AlignLeft, Search, Eye, Download } from "lucide-react";
 import { fetchCustomFields, createCustomField, getDepartments } from "@/lib/actions/tasks";
 import { fetchPriorities, fetchTasksByWorkspace, fetchStatusesByScope } from "@/lib/actions/workspaces";
 import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
@@ -583,13 +583,39 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                           <span className="text-[10px] text-muted">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Unknown size"}</span>
                         </div>
                       </div>
-                      <AppButton variant="secondary"
-                        type="button"
-                        onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
-                        className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-danger hover:bg-danger/10 transition-all"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </AppButton>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AppButton variant="secondary"
+                          type="button"
+                          onClick={() => window.open(item.file_url, '_blank')}
+                          className="shrink-0 p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-all"
+                          title="View"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </AppButton>
+                        <AppButton variant="secondary"
+                          type="button"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = item.file_url;
+                            link.download = item.file_name;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }}
+                          className="shrink-0 p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-all"
+                          title="Download"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </AppButton>
+                        <AppButton variant="secondary"
+                          type="button"
+                          onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
+                          className="shrink-0 p-1.5 rounded-md text-danger hover:bg-danger/10 transition-all"
+                          title="Remove"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </AppButton>
+                      </div>
                     </div>
                   ))}
                 </div>
