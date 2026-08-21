@@ -237,9 +237,10 @@ export async function dispatchNotification(
         is_sent: false
       }]);
       
-      // Async trigger the cron job via localhost to avoid Hairpin NAT/SSL issues on self-hosted environments
-      const triggerUrl = process.env.INTERNAL_CRON_URL || "http://127.0.0.1:3000";
-      fetch(`${triggerUrl}/api/cron/process-email-queue`, { method: 'POST' }).catch((e) => console.error("Instant cron trigger failed:", e));
+      // Async trigger the queue processor in the background
+      import('./email-queue').then(module => {
+        module.processEmailQueueAsync().catch((e) => console.error("Instant cron trigger failed:", e));
+      });
       
     } catch (e) {
       console.error('Failed to insert into email_queue', e);
