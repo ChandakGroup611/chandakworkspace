@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/service_role";
+import { processEmailQueueAsync } from "./email-queue";
 
 export async function fetchSystemEmailConfig() {
   const { data, error } = await supabaseAdmin
@@ -195,12 +196,20 @@ export async function fetchEmailProviders() {
 export async function saveEmailProvider(payload: any) {
   const { data, error } = await supabaseAdmin.from("email_providers").insert([payload]).select().single();
   if (error) throw new Error(error.message);
+  
+  // Try to clear backlog if there was any
+  processEmailQueueAsync().catch(console.error);
+  
   return { success: true, data };
 }
 
 export async function updateEmailProvider(id: string, payload: any) {
   const { data, error } = await supabaseAdmin.from("email_providers").update(payload).eq("id", id).select().single();
   if (error) throw new Error(error.message);
+
+  // Try to clear backlog if there was any
+  processEmailQueueAsync().catch(console.error);
+
   return { success: true, data };
 }
 

@@ -120,17 +120,11 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 // Fire and forget function to kick off the background queue processor
 function triggerBackgroundProcessor() {
   try {
-    // We don't await this. We let it run in the background.
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    fetch(`${baseUrl}/api/cron/process-email-queue`, {
-      method: 'POST',
-      // Small timeout so it doesn't block the calling thread
-      signal: AbortSignal.timeout(100) 
-    }).catch(() => {
-      // Ignore AbortError. The server will still process the request if it reached the API route.
+    import('./email-queue').then(module => {
+      module.processEmailQueueAsync().catch((e) => console.error("Instant cron trigger failed:", e));
     });
   } catch (e) {
-    // Ignore fetch errors
+    // Ignore dynamic import errors
   }
 }
 
@@ -144,7 +138,7 @@ function hydrateTemplate(text: string, data: any): string {
   if (matches) {
     matches.forEach(match => {
       const key = match.replace(/[{}]/g, "").trim();
-      const value = data[key] || "";
+      const value = data[key] !== undefined && data[key] !== null ? data[key] : match;
       hydrated = hydrated.replace(match, String(value));
     });
   }

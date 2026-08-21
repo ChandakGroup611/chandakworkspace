@@ -219,7 +219,8 @@ export async function dispatchNotification(
             if (matches) {
               matches.forEach(match => {
                 const key = match.replace(/[{}]/g, "").trim();
-                hydrated = hydrated.replace(match, String(payload[key as keyof typeof payload] || ""));
+                const value = payload[key as keyof typeof payload] !== undefined && payload[key as keyof typeof payload] !== null ? payload[key as keyof typeof payload] : match;
+                hydrated = hydrated.replace(match, String(value));
               });
             }
             return hydrated;
