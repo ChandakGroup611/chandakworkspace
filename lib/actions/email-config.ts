@@ -41,7 +41,8 @@ export async function saveSystemEmailConfig(payload: any) {
 
 export async function testEmailConnection(config: any) {
   try {
-    const nodemailer = (await import('nodemailer')).default;
+    const nodemailerRaw = await import('nodemailer');
+    const nodemailer = nodemailerRaw.default || nodemailerRaw;
     let transportConfig: any = {
       host: config.smtp_host,
       port: config.smtp_port,
@@ -206,7 +207,8 @@ export async function updateEmailProvider(id: string, payload: any) {
 export async function testProviderConnection(providerName: string, config: any) {
   try {
     if (providerName === "SMTP" || providerName === "Microsoft 365") {
-      const nodemailer = (await import('nodemailer')).default;
+      const nodemailerRaw = await import('nodemailer');
+      const nodemailer = nodemailerRaw.default || nodemailerRaw;
       const transporter = nodemailer.createTransport({
         host: config.host,
         port: Number(config.port),
