@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { canModifyRequirement } from '@/lib/repositories/requirements';
 import { logActivityEvent } from '@/lib/actions/tasks'; // Assuming we re-use the generic activity logger
 import { dispatchNotification } from '@/lib/actions/notifications';
+import { queueBusinessEvent } from '@/lib/actions/notification-engine';
 import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 
@@ -444,7 +445,17 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
       const { dispatchNotification } = await import('@/lib/actions/notifications');
       const l1Approvers = flowInserts.filter((f: any) => f.level === 1);
       for (const approver of l1Approvers) {
-        await dispatchNotification(approver.approver_id, 'Requirement Approval Pending', `Requirement ${currentReq?.code || reqId} ("${currentReq?.title || 'Untitled'}") is awaiting your approval.`, `/requirements/${reqId}?tab=approval`, 'REQUIREMENT', 'APPROVAL_PENDING').catch((e: any) => console.error("Failed to notify approver", e));
+        await dispatchNotification(approver.approver_id, 'Requirement Approval Pending', `Requirement ${currentReq?.code || reqId} ("${currentReq?.title || 'Untitled'}") is awaiting your approval.`, `/requirements/${reqId}?tab=approval`, 'REQUIREMENT', 'APPROVAL_PENDING', { _disableEmail: true }).catch((e: any) => console.error("Failed to notify approver in-app", e));
+        
+        queueBusinessEvent("Requirement", "Approval Requested", {
+          entity_id: reqId,
+          triggering_user_id: user.id,
+          req_code: currentReq?.code || reqId,
+          req_title: currentReq?.title || 'Untitled',
+          assigned_to: approver.approver_id,
+          creator_name: user.email,
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${reqId}?tab=approval`
+        }).catch(e => console.error("Requirement Approval Pending event failed", e));
       }
     } else {
       throw new Error("Please select at least one approver for the impacted departments.");
@@ -715,7 +726,17 @@ export async function processApprovalAction(reqId: string, action: string, remar
      await supabaseAdmin.from('requirements').update({ approval_status: 'Approved', current_assignee_id: null }).eq('id', finalReqId);
      await logActivityEvent('REQUIREMENT', finalReqId, 'APPROVAL_SIGNOFF', null, { remarks, override: true }, performedBy);
      if (req.requester_id && req.requester_id !== performedBy) {
-       await dispatchNotification(req.requester_id, 'Requirement Signed Off', `Requirement ${req.code} has been completely Signed Off.`, `/requirements/${finalReqId}`, 'REQUIREMENT', 'STATUS_SIGNOFF').catch((e: any) => console.error(e));
+       await dispatchNotification(req.requester_id, 'Requirement Signed Off', `Requirement ${req.code} has been completely Signed Off.`, `/requirements/${finalReqId}`, 'REQUIREMENT', 'STATUS_SIGNOFF', { _disableEmail: true }).catch((e: any) => console.error(e));
+       
+       queueBusinessEvent("Requirement", "Signed Off", {
+         entity_id: finalReqId,
+         triggering_user_id: user.id,
+         req_code: req.code,
+         req_title: req.title,
+         assigned_to: req.requester_id,
+         creator_name: user.email,
+         link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}`
+       }).catch(e => console.error(e));
      }
 
      const { data: reqCheck } = await supabaseAdmin.from('requirements').select('amendment_version').eq('id', finalReqId).single();
@@ -775,7 +796,17 @@ export async function processApprovalAction(reqId: string, action: string, remar
 
       const { dispatchNotification } = await import('@/lib/actions/notifications');
       for (const flow of nextFlows) {
-        await dispatchNotification(flow.approver_id, 'Requirement Approval Pending', `Requirement ${req.code} ("${req.title}") has reached level ${nextLevel} and is awaiting your approval.`, `/requirements/${finalReqId}?tab=approval`, 'REQUIREMENT', 'APPROVAL_PENDING').catch((e: any) => console.error("Failed to notify approver", e));
+        await dispatchNotification(flow.approver_id, 'Requirement Approval Pending', `Requirement ${req.code} ("${req.title}") has reached level ${nextLevel} and is awaiting your approval.`, `/requirements/${finalReqId}?tab=approval`, 'REQUIREMENT', 'APPROVAL_PENDING', { _disableEmail: true }).catch((e: any) => console.error("Failed to notify approver in-app", e));
+        
+        queueBusinessEvent("Requirement", "Approval Requested", {
+          entity_id: finalReqId,
+          triggering_user_id: user.id,
+          req_code: req.code,
+          req_title: req.title,
+          assigned_to: flow.approver_id,
+          creator_name: user.email,
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}?tab=approval`
+        }).catch(e => console.error(e));
       }
     } else {
       await supabaseAdmin.from('requirements').update({ approval_status: 'Pending SignOff', current_assignee_id: null }).eq('id', finalReqId);
@@ -784,7 +815,19 @@ export async function processApprovalAction(reqId: string, action: string, remar
   }
   await logActivityEvent('REQUIREMENT', finalReqId, 'APPROVAL_ACTION', null, { action, level: currentLevel, remarks, override: isAdmin && targetFlow.approver_id !== performedBy }, performedBy);
   if (req.requester_id && req.requester_id !== performedBy) {
-    await dispatchNotification(req.requester_id, `Requirement ${action}`, `Requirement ${req.code} ("${req.title}") has been marked as ${action}.`, `/requirements/${finalReqId}`, 'REQUIREMENT', `STATUS_${action.toUpperCase()}`).catch((e: any) => console.error("Failed to notify requester", e));
+    await dispatchNotification(req.requester_id, `Requirement ${action}`, `Requirement ${req.code} ("${req.title}") has been marked as ${action}.`, `/requirements/${finalReqId}`, 'REQUIREMENT', `STATUS_${action.toUpperCase()}`, { _disableEmail: true }).catch((e: any) => console.error("Failed to notify requester in-app", e));
+    
+    // Fire event depending on action
+    const eventName = action.toLowerCase() === 'approved' ? 'Approved' : 'Rejected';
+    queueBusinessEvent("Requirement", eventName, {
+      entity_id: finalReqId,
+      triggering_user_id: user.id,
+      req_code: req.code,
+      req_title: req.title,
+      assigned_to: req.requester_id,
+      creator_name: user.email,
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}`
+    }).catch(e => console.error(e));
   }
   revalidatePath(`/requirements/${finalReqId}`);
   return { success: true };

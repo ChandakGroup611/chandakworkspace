@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { dispatchNotification } from "@/lib/actions/notifications";
+import { queueBusinessEvent } from "@/lib/actions/notification-engine";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { revalidatePath } from "next/cache";
 import { getCachedUser } from "@/lib/auth/cached-user";

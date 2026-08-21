@@ -3,6 +3,7 @@
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { queueBusinessEvent } from "@/lib/actions/notification-engine";
 
 import { hasPermission } from "@/lib/permissions";
 
