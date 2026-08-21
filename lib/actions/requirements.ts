@@ -733,19 +733,24 @@ export async function processApprovalAction(reqId: string, action: string, remar
   const levelFlows = activeFlows.filter(f => f.level === currentLevel);
   let targetFlow = levelFlows.find(f => f.approver_id === performedBy);
   if (!targetFlow) {
-    await logActivityEvent(
-      'REQUIREMENT', 
-      finalReqId, 
-      'UNAUTHORIZED_APPROVAL_ATTEMPT', 
-      null, 
-      { 
-        action_attempted: action, 
-        approval_level: currentLevel,
-        role: isAdmin ? 'ADMIN' : 'USER'
-      }, 
-      performedBy
-    );
-    throw new Error("You are not authorized to approve at the current level.");
+    if (isAdmin) {
+      // Allow Admin to override and pick the first pending flow to progress the level
+      targetFlow = levelFlows[0];
+    } else {
+      await logActivityEvent(
+        'REQUIREMENT', 
+        finalReqId, 
+        'UNAUTHORIZED_APPROVAL_ATTEMPT', 
+        null, 
+        { 
+          action_attempted: action, 
+          approval_level: currentLevel,
+          role: isAdmin ? 'ADMIN' : 'USER'
+        }, 
+        performedBy
+      );
+      throw new Error("You are not authorized to approve at the current level.");
+    }
   }
   const mappedStatus = action === 'Approve' ? 'Approved' : action === 'Reject' ? 'Rejected' : action === 'Hold' ? 'Hold' : 'Clarification';
   await supabaseAdmin.from('requirement_approval_flow').update({ status: mappedStatus, remarks: remarks, actioned_at: new Date().toISOString() }).eq('id', targetFlow.id);
