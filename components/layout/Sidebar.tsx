@@ -213,20 +213,20 @@ export default function Sidebar() {
       className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-surface/40 border-r border-border/30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${ isCompact ? "w-16" : "w-[240px]" }`}
     >
       {/* Sidebar Top Master Header */}
-      <div className={`flex h-14 items-center justify-between px-4 shrink-0`}>
+      <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-2 px-4 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
         {!isCompact ? (
-          <Link href="/" className="flex items-center gap-2 overflow-hidden">
-            <div className={`flex items-center justify-center transition-all duration-300 h-8 w-8 shrink-0 bg-white rounded-md p-1 shadow-sm border border-border/30`}>
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-auto object-contain" />
+          <Link href="/" className="flex flex-col gap-3 overflow-hidden">
+            <div className={`flex items-center justify-start transition-all duration-300 h-14 w-[180px] shrink-0 bg-white rounded-lg p-2 shadow-sm border border-border/30`}>
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-full object-contain" />
             </div>
-            <div className="flex flex-col min-w-0 justify-center">
-              <span className={`text-[14px] font-semibold tracking-tight truncate text-foreground`}>
+            <div className="flex flex-col min-w-0 justify-start px-1">
+              <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
                 Chandak Workspace
               </span>
             </div>
           </Link>
         ) : (
-          <Link href="/" className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center">
+          <Link href="/" className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center mt-2">
             <div className="h-10 w-10 mx-auto flex items-center justify-center bg-white rounded-lg p-1 shadow-xs border border-border/30 mb-2">
               <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-full object-contain" />
             </div>

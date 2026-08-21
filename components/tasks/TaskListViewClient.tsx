@@ -744,7 +744,8 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       case "duration": {
         if (!t.start_date || !t.end_date) return "—";
         const diff = Math.ceil((new Date(t.end_date).getTime() - new Date(t.start_date).getTime()) / (1000 * 60 * 60 * 24));
-        return `${diff} day(s)`;
+        const days = Math.max(1, diff);
+        return `${days} day(s)`;
       }
       case "progress": return `${t.progress_percentage || 0}%`;
       case "executors": return t.executors?.map((u: any) => u.full_name).join(", ") || "—";

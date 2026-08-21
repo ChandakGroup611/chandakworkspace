@@ -103,7 +103,8 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
     
     if (start && due && !isNaN(start.getTime()) && !isNaN(due.getTime())) {
       const diffTime = due.getTime() - start.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays === 0) diffDays = 1;
       if (diffDays >= 0) {
         newFormData.estimated_effort = diffDays.toString();
       }

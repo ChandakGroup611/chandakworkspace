@@ -124,11 +124,12 @@ export default function RequirementsPage() {
         const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
         const ageingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        let statusStr = d.approval_status || 'Draft';
-        if (d.requirement_approval_flow && d.requirement_approval_flow.length > 0) {
+        let statusStr = d?.approval_status || 'Draft';
+        if (d?.requirement_approval_flow && Array.isArray(d.requirement_approval_flow) && d.requirement_approval_flow.length > 0) {
           if (statusStr === 'Pending' || statusStr === 'Pending Approval') {
-            const pendingLevel = d.requirement_approval_flow.find((f: any) => f.status === 'Pending')?.level;
-            const totalLevels = Math.max(...d.requirement_approval_flow.map((f: any) => f.level));
+            const pendingLevel = d.requirement_approval_flow.find((f: any) => f?.status === 'Pending')?.level;
+            const levels = d.requirement_approval_flow.map((f: any) => f?.level).filter((l: any) => typeof l === 'number');
+            const totalLevels = levels.length > 0 ? Math.max(...levels) : 1;
             if (pendingLevel) {
               statusStr = `${statusStr.toUpperCase()} (L${pendingLevel}/${totalLevels})`;
             }
@@ -136,23 +137,23 @@ export default function RequirementsPage() {
         }
 
         return {
-          id: d.code || d.requirement_code || d.id,
-          dbId: d.id,
-          title: d.title || 'Untitled',
-          scope: d.scope || '-',
-          softwareSystem: d.software_system?.name || '-',
-          module: d.module?.name || '-',
-          subModule: d.sub_module?.name || '-',
-          category: d.category?.name || '-',
-          subCategory: d.sub_category?.name || '-',
-          priority: d.priority?.name || '-',
-          priorityColor: d.priority?.priority_color || null,
-          department: d.department?.name || '-',
-          createdBy: d.creator?.full_name || d.requester?.full_name || '-',
-          createdById: d.requester_id || d.creator_id || null,
-          stage: d.current_stage || d.status?.status_name || 'Requirement Registration',
+          id: d?.code || d?.requirement_code || d?.id,
+          dbId: d?.id,
+          title: d?.title || 'Untitled',
+          scope: d?.scope || '-',
+          softwareSystem: d?.software_system?.name || '-',
+          module: d?.module?.name || '-',
+          subModule: d?.sub_module?.name || '-',
+          category: d?.category?.name || '-',
+          subCategory: d?.sub_category?.name || '-',
+          priority: d?.priority?.name || '-',
+          priorityColor: d?.priority?.priority_color || null,
+          department: d?.department?.name || '-',
+          createdBy: d?.creator?.full_name || d?.requester?.full_name || '-',
+          createdById: d?.requester_id || d?.creator_id || null,
+          stage: d?.current_stage || d?.status?.status_name || 'Requirement Registration',
           approvalStatus: statusStr,
-          currentApprover: d.current_assignee_id ? 'Assigned' : '-', 
+          currentApprover: d?.current_assignee_id ? 'Assigned' : '-', 
           currentApproverId: d.current_assignee_id,
           createdAt: createdDate.toLocaleDateString(),
           ageing: ageingDays,
