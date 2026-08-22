@@ -73,7 +73,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     // 4. Resolve exact email addresses
     const { data: users } = await supabaseAdmin
       .from("user_master")
-      .select("id, email, first_name, full_name")
+      .select("id, email, full_name")
       .in("id", Array.from(recipientUserIds));
 
     if (!users || users.length === 0) return;
@@ -88,7 +88,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     const queueInserts = users.map(user => {
       const hydratedPayload = { 
         ...payload, 
-        recipient_name: user.first_name || user.full_name,
+        recipient_name: user.full_name,
         creator_name: payload.creator_name || creatorName
       };
       const subject = template.subject ? hydrateTemplate(template.subject, hydratedPayload) : "System Notification";

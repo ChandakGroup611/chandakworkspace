@@ -256,9 +256,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detailed execution instructions, context, or constraints..."
-                className={`w-full min-h-[120px] p-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y ${
-                  "bg-[#f8fafc] border-[#e2e8f0] text-foreground"
-                }`}
+                className={`w-full min-h-[120px] p-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y theme-input-structural bg-surface text-foreground placeholder-muted`}
               />
             </div>
             </div>
