@@ -99,6 +99,7 @@ export default function AMCPage() {
   const [editRecordId, setEditRecordId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("Master");
   const [mounted, setMounted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   
   // Phase 1 Fields
   const [formSoftwareName, setFormSoftwareName] = useState("");
@@ -585,26 +586,22 @@ export default function AMCPage() {
     setSolutionLineItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formVendorId.trim()) {
-      setErrorAlert("Provider / Vendor Name is mandatory.");
-      return;
+  const handleSave = async (e?: React.FormEvent, isDraftAndNext = false) => {
+    if (e) e.preventDefault();
+    
+    // Only strict validate on Step 1 (or if they somehow bypassed it)
+    if (currentStep === 1 || !editRecordId) {
+      if (!formVendorId.trim()) { setErrorAlert("Provider / Vendor Name is mandatory."); return; }
+      if (!formSoftwareName.trim()) { setErrorAlert("Software Name is mandatory."); return; }
+      if (!formContractType) { setErrorAlert("Contract Type is mandatory."); return; }
+      if (!formStatus) { setErrorAlert("Status is mandatory."); return; }
+      if (!formPurchaseDate) { setErrorAlert("Purchase Date is mandatory."); return; }
+      if (!formAssignedTo) { setErrorAlert("Assigned To (Owner) is mandatory."); return; }
+      if (!formDepartmentId) { setErrorAlert("Department is mandatory."); return; }
+      if (!vendorContactName.trim()) { setErrorAlert("Contact Name is mandatory. Please update the Vendor Master profile to include a Contact Name."); return; }
+      if (!vendorContactEmail.trim()) { setErrorAlert("Contact Email is mandatory. Please update the Vendor Master profile to include a Contact Email."); return; }
+      if (!vendorContactPhone.trim()) { setErrorAlert("Contact Phone / Ext is mandatory. Please update the Vendor Master profile to include a Phone Number."); return; }
     }
-    if (!formSoftwareName.trim()) {
-      setErrorAlert("Software Name is mandatory.");
-      return;
-    }
-
-    if (!formContractType) { setErrorAlert("Contract Type is mandatory."); return; }
-    if (!formStatus) { setErrorAlert("Status is mandatory."); return; }
-    if (!formPurchaseDate) { setErrorAlert("Purchase Date is mandatory."); return; }
-    if (!formAssignedTo) { setErrorAlert("Assigned To (Owner) is mandatory."); return; }
-    if (!formDepartmentId) { setErrorAlert("Department is mandatory."); return; }
-
-    if (!vendorContactName.trim()) { setErrorAlert("Contact Name is mandatory. Please update the Vendor Master profile to include a Contact Name."); return; }
-    if (!vendorContactEmail.trim()) { setErrorAlert("Contact Email is mandatory. Please update the Vendor Master profile to include a Contact Email."); return; }
-    if (!vendorContactPhone.trim()) { setErrorAlert("Contact Phone / Ext is mandatory. Please update the Vendor Master profile to include a Phone Number."); return; }
 
     let finalLineItems = [...solutionLineItems];
     if (finalLineItems.length === 0) {
@@ -695,12 +692,13 @@ export default function AMCPage() {
       if (editRecordId) {
         const res = await saveAMCEntity("software_amc", payload, editRecordId);
         if (!res.success) throw new Error(res.error);
-        setSuccessAlert("Subscription updated successfully.");
+        if (!isDraftAndNext) setSuccessAlert("Subscription updated successfully.");
       } else {
         const res = await saveAMCEntity("software_amc", payload);
         if (!res.success) throw new Error(res.error);
         currentEditId = res.data?.id;
-        setSuccessAlert("Subscription created successfully.");
+        setEditRecordId(currentEditId);
+        if (!isDraftAndNext) setSuccessAlert("Subscription created successfully.");
       }
 
       // Handle File Uploads
@@ -713,8 +711,14 @@ export default function AMCPage() {
         }
       }
 
-      setShowModal(false);
-      fetchRecords();
+      if (isDraftAndNext) {
+        setSuccessAlert("Draft saved successfully.");
+        setCurrentStep(prev => prev + 1);
+        setTimeout(() => setSuccessAlert(null), 2000);
+      } else {
+        setShowModal(false);
+        fetchRecords();
+      }
     } catch (err: any) {
       setErrorAlert("Failed to save record: " + err.message);
     } finally {
@@ -981,8 +985,38 @@ export default function AMCPage() {
           
           <div className="flex-1 overflow-y-auto w-full max-w-[98%] mx-auto pb-32">
             <div className={activeTab === 'Master' ? 'block' : 'hidden'}>
-              <form onSubmit={handleSave} className="p-6 md:p-8 space-y-12">
+              <form onSubmit={(e) => handleSave(e, false)} className="p-6 md:p-8 space-y-12">
             
+              {/* VISUAL STEPPER */}
+              <div className="flex items-center justify-between relative mb-8">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-border rounded-full -z-10"></div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-theme-btn-primary rounded-full -z-10 transition-all duration-500" style={{ width: `${((currentStep - 1) / 3) * 100}%` }}></div>
+                
+                {[
+                  { step: 1, label: "Core Configuration" },
+                  { step: 2, label: "Economics & Solutions" },
+                  { step: 3, label: "Billing & Tax" },
+                  { step: 4, label: "Governance" }
+                ].map((s) => (
+                  <div key={s.step} className="flex flex-col items-center gap-2 bg-surface px-4 z-10">
+                    <button
+                      type="button"
+                      disabled={!editRecordId && s.step > 1}
+                      onClick={() => setCurrentStep(s.step)}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm
+                        ${currentStep === s.step ? 'bg-theme-btn-primary text-white scale-110 shadow-theme-btn-primary/30 ring-4 ring-theme-btn-primary/10' : 
+                          s.step < currentStep ? 'bg-theme-btn-primary text-white' : 
+                          'bg-elevated text-muted border border-border disabled:opacity-50 disabled:cursor-not-allowed'}
+                      `}
+                    >
+                      {s.step < currentStep ? <Check className="h-5 w-5" /> : s.step}
+                    </button>
+                    <span className={`text-xs font-semibold ${currentStep === s.step ? 'text-theme-icon' : 'text-muted'}`}>{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            {currentStep === 1 && (
+              <>
             {/* SECTION: GENERAL & CONTRACT DETAILS */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
@@ -1093,7 +1127,10 @@ export default function AMCPage() {
                 </div>
               </div>
             </div>
+            </>)}
 
+            {currentStep === 2 && (
+              <>
             {/* SECTION: LICENSE & USAGE TRACKING */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
@@ -1290,7 +1327,10 @@ export default function AMCPage() {
                 </AppTable>
               </div>
             </div>
+            </>)}
 
+            {currentStep === 1 && (
+              <>
             {/* SECTION: VENDOR DETAILS */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
@@ -1435,7 +1475,10 @@ export default function AMCPage() {
                 
               </div>
             </div>
+            </>)}
 
+            {currentStep === 3 && (
+              <>
             {/* SECTION: FINANCIALS */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
@@ -1541,7 +1584,10 @@ export default function AMCPage() {
                 </div>
               </div>
             </div>
+            </>)}
 
+            {currentStep === 4 && (
+              <>
             {/* SECTION: ATTACHMENTS & MISC */}
             <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
               <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
@@ -1633,16 +1679,33 @@ export default function AMCPage() {
                 </div>
               </div>
             </div>
+            </>)}
 
-            <div className={`fixed bottom-0 left-0 w-full p-4 border-t shadow-2xl flex items-center justify-end gap-4 z-50 bg-surface/90 border-border`}>
-              <div className="w-full max-w-[98%] mx-auto flex justify-end items-center gap-4">
+            <div className={`fixed bottom-0 left-0 w-full p-4 border-t shadow-2xl flex items-center justify-between gap-4 z-50 bg-surface/90 border-border backdrop-blur-md`}>
+              <div className="w-full max-w-[98%] mx-auto flex justify-between items-center gap-4">
+                <div className="text-sm font-medium text-muted">
+                  Step {currentStep} of 4
+                </div>
                 <div className="flex justify-end gap-4 shrink-0">
                   <AppButton type="button" variant="outline" size="lg" onClick={() => setShowModal(false)} disabled={uploading}>
                     Cancel
                   </AppButton>
-                  <AppButton type="submit" variant="primary" size="lg" disabled={uploading} leftIcon={uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : undefined} className="min-w-[200px]">
-                    {uploading ? 'Saving Data...' : 'Save Subscription Record'}
-                  </AppButton>
+                  
+                  {currentStep > 1 && (
+                    <AppButton type="button" variant="secondary" size="lg" onClick={() => setCurrentStep(prev => prev - 1)} disabled={uploading}>
+                      Previous
+                    </AppButton>
+                  )}
+                  
+                  {currentStep < 4 ? (
+                    <AppButton type="button" variant="primary" size="lg" onClick={(e) => handleSave(e, true)} disabled={uploading} leftIcon={uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : undefined} className="min-w-[200px]">
+                      {uploading ? 'Saving Data...' : 'Save & Next'}
+                    </AppButton>
+                  ) : (
+                    <AppButton type="submit" variant="primary" size="lg" disabled={uploading} leftIcon={uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />} className="min-w-[200px]">
+                      {uploading ? 'Finalizing...' : 'Complete & Save'}
+                    </AppButton>
+                  )}
                 </div>
               </div>
             </div>
