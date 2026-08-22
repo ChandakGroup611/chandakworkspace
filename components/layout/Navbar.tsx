@@ -31,7 +31,7 @@ import { AppButton } from "@/components/ui/AppButton";
 export default function Navbar() {
   const router = useRouter();
   const supabase = createClient();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, density, tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize } = useTheme();
   const { data: profileData } = useProfile();
   const userData = profileData || null;
 
@@ -74,11 +74,24 @@ export default function Navbar() {
     window.location.href = "/login?action=logout";
   };
 
-  const toggleQuickTheme = () => {
-    if (isLight) {
-      setTheme("cyberpunk");
-    } else {
-      setTheme("light-neumorphic");
+  const toggleQuickTheme = async () => {
+    const newTheme = isLight ? "cyberpunk" : "light-neumorphic";
+    setTheme(newTheme);
+
+    try {
+      const { saveDesignPreferences } = await import("@/lib/actions/preferences");
+      await saveDesignPreferences({
+        theme: newTheme,
+        density,
+        tactile: tactileFeedback,
+        fontFamily,
+        fontWeightProfile,
+        accentColor,
+        baseFontSize,
+        subtextFontSize
+      });
+    } catch (e) {
+      console.error("Failed to auto-save theme preference", e);
     }
   };
 

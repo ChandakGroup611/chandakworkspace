@@ -49,19 +49,12 @@ export async function fetchDesignPreferences() {
     .single();
 
   if (error || !data) {
-    // If no preferences exist, return defaults so we don't inherit another user's local storage
+    // If no preferences exist, return null instead of defaults.
+    // This ensures we do not overwrite a new user's valid localStorage (e.g. they clicked Sun/Moon toggle)
+    // with hardcoded defaults before they have actively saved to the DB.
     return { 
       success: true, 
-      data: {
-        theme: "light-neumorphic",
-        density: "comfortable",
-        tactile: true,
-        fontFamily: "inter",
-        fontWeightProfile: "heavy",
-        accentColor: "theme-default",
-        baseFontSize: 16,
-        subtextFontSize: 14
-      } 
+      data: null 
     };
   }
 
