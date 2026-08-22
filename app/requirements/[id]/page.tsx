@@ -1007,7 +1007,7 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
                 type="button"
                 variant={isActive ? "primary" : "ghost"}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer select-none ${
+                className={`theme-tab-standard rounded-xl ${
                   isActive ? "shadow-md scale-[1.02] border-transparent" : "border border-transparent hover:border-border/60"
                 }`}
               >

@@ -259,6 +259,11 @@
   .theme-light .recharts-tooltip-label {
     color: var(--color-subtle) !important;
   }
+  
+  /* Standardized Universal Application Tabs */
+  .theme-tab-standard {
+    @apply flex items-center justify-center gap-2 px-5 py-2.5 text-[13px] font-bold transition-all duration-200 whitespace-nowrap select-none cursor-pointer;
+  }
 }
 
 /* Universal Scrollbar Hiding */

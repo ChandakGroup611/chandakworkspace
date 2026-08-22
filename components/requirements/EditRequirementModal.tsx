@@ -119,7 +119,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                className={`theme-tab-standard border-b-2 ${
                   activeTab === tab 
                     ? 'border-theme-btn-primary text-theme-icon' 
                     : 'border-transparent text-muted hover:text-foreground hover:border-border'

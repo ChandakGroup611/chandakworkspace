@@ -1617,7 +1617,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     type="button"
                     variant={isActive ? "primary" : "ghost"}
                     onClick={() => setActiveTab(t.id as any)}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer select-none ${
+                    className={`theme-tab-standard rounded-xl ${
                       isActive ? "shadow-md scale-[1.02] border-transparent" : "border border-transparent hover:border-border/60"
                     }`}
                   >
@@ -1861,7 +1861,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <AppButton
                 type="button"
                 onClick={() => setAssigneeModalTab('primary')}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
+                className={`theme-tab-standard rounded-t-xl border-b-2 ${
                   assigneeModalTab === 'primary' 
                     ? 'border-theme-btn-primary text-theme-icon bg-surface dark:bg-elevated shadow-xs' 
                     : 'border-transparent text-muted hover:text-foreground'
@@ -1876,7 +1876,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               <AppButton
                 type="button"
                 onClick={() => setAssigneeModalTab('executors')}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
+                className={`theme-tab-standard rounded-t-xl border-b-2 ${
                   assigneeModalTab === 'executors' 
                     ? 'border-emerald-500 text-success dark:text-success bg-surface dark:bg-elevated shadow-xs' 
                     : 'border-transparent text-muted hover:text-foreground'

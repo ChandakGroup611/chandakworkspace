@@ -420,13 +420,13 @@ export default function TemplateDesigner() {
             <div className="flex border-b border-border bg-background">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'code' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'code' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab[tpl.id] === 'preview' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'preview' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview (Dynamic)
               </AppButton>

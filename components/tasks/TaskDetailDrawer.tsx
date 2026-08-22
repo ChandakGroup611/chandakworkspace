@@ -32,7 +32,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <AppButton
                   variant={activeTab === "details" ? "primary" : "ghost"}
                   onClick={() => setActiveTab("details")}
-                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all flex items-center gap-2 ${
+                  className={`theme-tab-standard tracking-wide ${
                     activeTab === "details"
                       ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]"
                       : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
@@ -44,7 +44,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <AppButton
                   variant={activeTab === "collaboration" ? "primary" : "ghost"}
                   onClick={() => setActiveTab("collaboration")}
-                  className={`px-5 py-2 text-sm font-bold tracking-wide transition-all flex items-center gap-2 ${
+                  className={`theme-tab-standard tracking-wide ${
                     activeTab === "collaboration"
                       ? "shadow-theme-btn-primary/20 shadow-md scale-[1.02]"
                       : "text-muted hover:text-foreground border border-transparent hover:border-border/60"
