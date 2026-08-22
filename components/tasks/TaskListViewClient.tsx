@@ -1149,7 +1149,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                     const renderCell = () => {
                       switch(col.field_key) {
                       case "code": return (
-                        <AppTableCell className="font-mono text-[13px] font-bold text-theme-icon whitespace-nowrap text-center">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                        <AppTableCell className="font-mono font-bold text-theme-icon whitespace-nowrap text-center">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
                       );
                       case "title_description": return (
                         <AppTableCell className="text-left">
@@ -1176,7 +1176,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         const parts = wsName.split(' - ');
                         const mainWorkspace = parts[0];
                         return (
-                          <AppTableCell className="text-[13px] text-subtle text-center truncate max-w-[0px] px-2" title={mainWorkspace}>{mainWorkspace}</AppTableCell>
+                          <AppTableCell className="text-subtle text-center truncate max-w-[0px] px-2" title={mainWorkspace}>{mainWorkspace}</AppTableCell>
                         );
                       }
                       case "sub_workspace": {
@@ -1193,11 +1193,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         const subParts = subName.split(' - ');
                         const finalSubName = subParts[subParts.length - 1]?.trim() || subName;
                         return (
-                          <AppTableCell className="text-[13px] text-subtle text-center truncate max-w-[0px] px-2" title={finalSubName}>{finalSubName}</AppTableCell>
+                          <AppTableCell className="text-subtle text-center truncate max-w-[0px] px-2" title={finalSubName}>{finalSubName}</AppTableCell>
                         );
                       }
                       case "department": return (
-                        <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center truncate max-w-[0px] px-2">
+                        <AppTableCell className="text-subtle whitespace-nowrap text-center truncate max-w-[0px] px-2">
                           <Popover.Root>
                             <Popover.Trigger asChild>
                               <AppButton variant="secondary" 
@@ -1254,7 +1254,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "due_date": return (
-                        <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
+                        <AppTableCell className="text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
                       );
                       case "status": return (
                         <AppTableCell className="whitespace-nowrap text-center">
@@ -1335,10 +1335,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "creator_name": return (
-                        <AppTableCell className="text-[13px] text-subtle text-center">{task.creator?.full_name || '—'}</AppTableCell>
+                        <AppTableCell className="text-subtle text-center">{task.creator?.full_name || '—'}</AppTableCell>
                       );
                       case "start_date": return (
-                        <AppTableCell className="text-[13px] text-subtle whitespace-nowrap text-center">{formatDate(task.start_date)}</AppTableCell>
+                        <AppTableCell className="text-subtle whitespace-nowrap text-center">{formatDate(task.start_date)}</AppTableCell>
                       );
                       case "duration": {
                         let text = "—";
@@ -1346,7 +1346,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                           const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
                           text = `${diff} day(s)`;
                         }
-                        return <AppTableCell className="text-xs text-subtle ">{text}</AppTableCell>;
+                        return <AppTableCell className="text-subtle ">{text}</AppTableCell>;
                       }
                       case "progress": return (
                         <AppTableCell className="w-[120px]">
@@ -1425,7 +1425,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "external_link": return (
-                        <AppTableCell className="text-xs">
+                        <AppTableCell >
                           {task.custom_fields?.link_url ? (
                             <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="text-theme-icon hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
                               <ExternalLink className="h-3 w-3 flex-shrink-0" />
@@ -1435,10 +1435,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "created_at": return (
-                        <AppTableCell className="text-right text-muted text-[13px] whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                        <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
                       );
                       case "updated_at": return (
-                        <AppTableCell className="text-right text-muted text-[13px] whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
+                        <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
                       );
                       case "actions": return (
                         <AppTableCell className="text-right">
@@ -1489,7 +1489,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         else if (col.data_type === "date") val = formatDate(val);
                         
                         return (
-                          <AppTableCell className="text-[13px] text-subtle ">
+                          <AppTableCell className="text-subtle ">
                             <div className="truncate max-w-[200px]" title={String(val)}>
                               {col.data_type === "link" && val !== "—" ? (
                                 <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>

@@ -141,7 +141,7 @@ export default function WorkspaceTestingUI() {
              }}>
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d14] via-transparent to-[#0a0d14] opacity-80"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0d14] via-[#0a0d14]/50 to-[#0a0d14] opacity-80"></div>
+        <div className="absolute inset-0 bg-surface border border-border/50 text-foreground from-[#0a0d14] via-[#0a0d14]/50 to-[#0a0d14] opacity-80"></div>
         
         {/* Glow Orbs */}
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#00f0ff] opacity-10 blur-[120px] rounded-full"></div>

@@ -292,7 +292,7 @@ export default function UserProfileEditor() {
         <div className="lg:col-span-4 space-y-6">
           <AppCard className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             {/* Abstract Background Banner */}
-            <div className="h-32 w-full bg-gradient-to-r from-accent/20 via-accent/10 to-transparent relative overflow-hidden">
+            <div className="h-32 w-full bg-surface border border-border/50 text-foreground from-accent/20 via-accent/10 to-transparent relative overflow-hidden">
               <div className="absolute inset-0 bg-grid-white/[0.02]" />
             </div>
             

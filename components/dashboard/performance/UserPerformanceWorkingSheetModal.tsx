@@ -321,7 +321,7 @@ export function UserPerformanceWorkingSheetModal({
                   </div>
                   <div className="mt-2.5 w-full bg-surface dark:bg-surface/20 h-1.5 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-primary to-emerald-500 rounded-full transition-all duration-1000"
+                      className="h-full bg-surface border border-border/50 text-foreground from-primary to-emerald-500 rounded-full transition-all duration-1000"
                       style={{ width: `${data.ratios.overallPerformanceRatio}%` }}
                     />
                   </div>

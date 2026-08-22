@@ -531,7 +531,6 @@ export default function MastersPage() {
           <Lock className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
-        <p className="text-xs text-muted">You do not have capabilities to view the Master Data Configuration Directory.</p>
       </div>
     );
   }
@@ -539,10 +538,8 @@ export default function MastersPage() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Master Data Configuration Directory"
-        description="Manage core business definitions, categories, and dropdown options utilized across the operational platform."
+        title="Master Data Configuration"
         icon={<Database className="h-6 w-6" />}
-        badge={<AppBadge variant="success">Active Directory</AppBadge>}
         actions={
           <>
             <AppButton 
@@ -551,7 +548,7 @@ export default function MastersPage() {
               leftIcon={<RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-theme-icon' : ''}`} />}
               onClick={fetchRecords}
             >
-              Refresh Data
+              Refresh
             </AppButton>
             <AppButton 
               variant="primary" 
@@ -560,7 +557,7 @@ export default function MastersPage() {
               onClick={openCreateModal}
               disabled={!hasPermission("MASTERS_CREATE")}
             >
-              Add New Record
+              Add Record
             </AppButton>
           </>
         }
@@ -571,7 +568,6 @@ export default function MastersPage() {
         <div className="p-4 rounded-xl bg-danger/10 border border-rose-500/20 flex items-start gap-3 animate-in fade-in-20">
           <AlertTriangle className="h-4 w-4 text-danger dark:text-danger shrink-0 mt-0.5" />
           <div className="flex-1 text-xs text-rose-700 dark:text-rose-200">
-            <strong className="font-semibold block text-danger dark:text-rose-300">Governance Integrity Notice:</strong>
             {errorAlert}
           </div>
           <AppButton variant="secondary" onClick={() => setErrorAlert(null)} className="text-muted hover:text-foreground dark:hover:text-white">
@@ -596,26 +592,16 @@ export default function MastersPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
         {/* Left Column Span 4: Navigational Tab Controller */}
         <div className="lg:col-span-4 space-y-4 flex flex-col min-h-0">
-          <AppCard className="flex-1 p-4 space-y-3 flex flex-col min-h-0 overflow-hidden">
-            <div className={`flex items-center justify-between pb-2 border-b ${
-              "border-border"
-            }`}>
-              <span className={`text-[0.8rem] font-bold tracking-wider uppercase select-none ${
-                "text-muted"
-              }`}>
-                Configuration Groups
-              </span>
-              <span className="text-xs text-muted font-mono font-semibold">{MASTER_TABLES.length} Registered</span>
-            </div>
-
+          <AppCard className="flex-1 p-4 space-y-4 flex flex-col min-h-0 overflow-hidden border-none shadow-none bg-surface/50">
+            
             {/* Category Tier Selector Tabs */}
-            <div className={`p-1.5 rounded-xl grid grid-cols-2 gap-1 text-xs font-bold tracking-tight ${
+            <div className={`p-1 rounded-xl grid grid-cols-2 gap-1 text-xs font-bold tracking-tight ${
               "bg-elevated/80 text-muted"
             }`}>
               {[
-                { id: "ALL", label: "All Tiers" },
+                { id: "ALL", label: "All Configs" },
                 { id: "IT INFRA", label: "IT Infra" },
-                { id: "ERP", label: "ERP/Soft" },
+                { id: "ERP", label: "Software" },
                 { id: "USERS", label: "Users" },
                 { id: "OTHERS", label: "Other" }
               ].map(tier => {
@@ -632,9 +618,9 @@ export default function MastersPage() {
                         if (firstItem) setActiveTab(firstItem.id);
                       }
                     }}
-                    className={`py-1 px-2 rounded-lg text-center transition-all truncate ${tier.id === "ALL" ? "col-span-2" : ""} ${
+                    className={`py-1.5 px-2 rounded-lg text-center transition-all truncate ${tier.id === "ALL" ? "col-span-2" : ""} ${
                       isSelected
-                        ? ("bg-surface text-theme-icon shadow-sm")
+                        ? ("bg-surface text-theme-icon shadow-sm ring-1 ring-border/50")
                         : ("hover:text-foreground hover:bg-surface/50")
                     }`}
                   >
@@ -653,14 +639,13 @@ export default function MastersPage() {
                 if (groupItems.length === 0) return null;
 
                 return (
-                  <div key={groupCategory} className="space-y-1.5">
-                    <div className="flex items-center gap-2 px-1 pt-1">
-                      <span className={`text-[0.7rem] font-bold tracking-widest uppercase font-mono ${
-                        "text-theme-icon"
+                  <div key={groupCategory} className="space-y-1.5 mb-4">
+                    <div className="flex items-center gap-2 px-1 pb-1">
+                      <span className={`text-[10px] font-bold tracking-widest uppercase ${
+                        "text-theme-icon opacity-80"
                       }`}>
-                        ■ {groupCategory} CATEGORY
+                        {groupCategory}
                       </span>
-                      <div className={`h-[1px] flex-1 bg-elevated`} />
                     </div>
 
                     {groupItems.map((tab) => {
@@ -674,30 +659,39 @@ export default function MastersPage() {
                             setActiveTab(tab.id);
                             setSearchQuery("");
                           }}
-                          className={`w-full p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-3 ${
-                            (isActive ? "bg-theme-btn-primary/10 border-theme-btn-primary/30 shadow-sm" : "bg-surface border-border/50 hover:border-border hover:bg-surface")
+                          className={`w-full p-3 rounded-xl border text-left transition-all duration-300 cursor-pointer flex items-start gap-3 group relative overflow-hidden ${
+                            isActive 
+                              ? "theme-card-structural border-theme-btn-primary/30 ring-1 ring-theme-btn-primary/10 shadow-[0_0_15px_rgba(var(--theme-accent-raw),0.1)]" 
+                              : "bg-surface/40 border-transparent hover:bg-elevated hover:border-border/40 hover:shadow-sm"
                           }`}
                         >
-                          <div className={`p-2 rounded-lg mt-0.5 ${
-                            (isActive ? "bg-theme-btn-primary/10 text-theme-icon" : "bg-surface text-muted")
+                          {isActive && (
+                            <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-theme-btn-primary to-theme-btn-secondary shadow-[0_0_10px_rgba(var(--theme-accent-raw),0.8)]" />
+                          )}
+                          <div className={`p-2.5 rounded-xl mt-0.5 transition-colors ${
+                            isActive 
+                              ? "bg-theme-btn-primary/10 text-theme-icon" 
+                              : "bg-elevated/80 text-muted group-hover:text-foreground group-hover:bg-surface"
                           }`}>
                             <IconComponent className="h-4 w-4 shrink-0" />
                           </div>
-                          <div className="space-y-0.5 flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className={`text-xs font-bold truncate block ${
-                                (isActive ? "text-foreground" : "text-muted")
+                          <div className="space-y-1 flex-1 min-w-0 pr-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-[13px] font-bold tracking-tight truncate block ${
+                                isActive ? "text-foreground" : "text-muted group-hover:text-foreground"
                               }`}>
                                 {tab.label}
                               </span>
-                              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-theme-btn-primary shrink-0" />}
                             </div>
-                            <p className="text-xs text-muted font-medium line-clamp-1">{tab.desc}</p>
+                            <p className="text-[11px] text-muted font-medium line-clamp-2 leading-relaxed opacity-80">{tab.desc}</p>
                             {tab.parentTable && (
-                              <span className={`text-[0.65rem] font-mono px-1 py-0.2 rounded border inline-block mt-1 ${
-                                "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
+                              <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md border inline-flex items-center gap-1 mt-1.5 transition-colors ${
+                                isActive
+                                  ? "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
+                                  : "text-muted bg-surface/50 border-border/50"
                               }`}>
-                                ↳ Dependent on {tab.parentTable}
+                                <div className="w-1 h-1 rounded-full bg-current opacity-50" />
+                                Depends on {tab.parentTable}
                               </span>
                             )}
                           </div>
@@ -713,37 +707,32 @@ export default function MastersPage() {
         </div>
 
         {/* Right Column Span 8: Table Data Inspector */}
-        <div className="lg:col-span-8 flex flex-col space-y-4">
+        <div className="lg:col-span-8 flex flex-col min-h-0 space-y-4">
           <AppCard className={`flex-1 flex flex-col justify-between overflow-hidden shadow-xl ${
             "border-border"
           }`}>
             {/* Unified Filter Box Header */}
-            <div className="bg-surface dark:bg-surface/5 p-3 rounded-t-xl border-b border-border dark:border-border flex flex-col gap-3 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-bold text-foreground dark:text-white">
-                      {currentConfig.label}
-                    </h2>
-                    <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider py-0 px-1.5 h-4 min-h-0 border border-theme-btn-primary/30">
-                      {activeTab.replace(/_/g, ' ')}
-                    </AppBadge>
-                  </div>
-                  <p className="text-[10px] text-muted font-medium">
-                    Active configuration choices currently live for staff use across the platform.
-                  </p>
+            <div className="bg-surface dark:bg-surface/5 p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-bold text-foreground tracking-tight">
+                    {currentConfig.label}
+                  </h2>
+                  <AppBadge variant="info" className="uppercase font-mono text-[10px] tracking-wider border border-theme-btn-primary/20">
+                    {activeTab.replace(/_/g, ' ')}
+                  </AppBadge>
                 </div>
-              </div>
-
-              {/* Dynamic Quick Text Search bar */}
-              <div className="flex items-center pt-2 mt-1 border-t border-border dark:border-border">
-                <AppInput 
-                  placeholder="Filter records by string parameters..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  leftIcon={<Search className="h-3.5 w-3.5" />}
-                  className="w-full h-9 text-xs bg-surface dark:bg-[#0f111a]"
-                />
+                
+                {/* Dynamic Quick Text Search bar */}
+                <div className="w-64">
+                  <AppInput 
+                    placeholder="Search records..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    leftIcon={<Search className="h-4 w-4 text-muted" />}
+                    className="w-full h-9 bg-elevated/50 border-none"
+                  />
+                </div>
               </div>
             </div>
 
@@ -757,27 +746,28 @@ export default function MastersPage() {
               ) : (
                 <>
                   {records.length === 0 ? (
-                    <div className={`py-16 px-4 text-center space-y-3 border border-dashed rounded-2xl ${
-                      "bg-elevated border-border"
-                    }`}>
-                      <div className="h-10 w-10 rounded-full bg-warning/10 border border-amber-500/20 flex items-center justify-center mx-auto text-warning font-bold">
-                        !
+                    <div className="py-20 px-6 text-center flex flex-col items-center justify-center relative overflow-hidden rounded-3xl theme-card-structural border border-dashed border-theme-btn-primary/30 bg-surface/30 group">
+                      <div className="absolute inset-0 bg-gradient-to-br from-theme-btn-primary/5 via-transparent to-theme-accent-raw/5 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="relative z-10 space-y-6 flex flex-col items-center">
+                        <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-theme-btn-primary/20 to-theme-btn-primary/5 border border-theme-btn-primary/20 flex items-center justify-center shadow-[0_0_20px_rgba(var(--theme-accent-raw),0.15)] group-hover:shadow-[0_0_30px_rgba(var(--theme-accent-raw),0.3)] transition-shadow duration-500">
+                          <span className="text-2xl font-bold text-theme-icon">!</span>
+                        </div>
+                        <div className="space-y-2 max-w-md">
+                          <h4 className="text-lg font-bold text-foreground tracking-tight">No Master Data Configured</h4>
+                          <p className="text-sm text-muted leading-relaxed">
+                            No operational items are currently defined in this directory. Add your first record to make it available for workspace selection.
+                          </p>
+                        </div>
+                        <AppButton 
+                          variant="primary" 
+                          size="md" 
+                          leftIcon={<Plus className="h-4 w-4" />}
+                          onClick={openCreateModal}
+                          className="shadow-[0_0_20px_rgba(var(--theme-accent-raw),0.3)] hover:shadow-[0_0_30px_rgba(var(--theme-accent-raw),0.5)] transition-all duration-300"
+                        >
+                          Create Initial Record
+                        </AppButton>
                       </div>
-                      <div className="space-y-1 max-w-sm mx-auto">
-                        <h4 className={`text-xs font-bold ${"text-foreground"}`}>No Master Data Configured</h4>
-                        <p className={`text-[0.8rem] ${"text-muted"}`}>
-                          No operational items are currently defined in this directory. Add your first record to make it available for workspace selection.
-                        </p>
-                      </div>
-                      <AppButton 
-                        variant="primary" 
-                        size="sm" 
-                        leftIcon={<Plus className="h-3 w-3" />}
-                        onClick={openCreateModal}
-                        className="mx-auto"
-                      >
-                        Create Initial Record
-                      </AppButton>
                     </div>
                   ) : (
                     <AppTableContainer>
@@ -949,36 +939,33 @@ export default function MastersPage() {
       {/* ── Dynamic Overlay Append Modal ── */}
       {showModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-start pt-24 pb-24 overflow-y-auto justify-center px-4 p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 p-4 overflow-y-auto"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
         >
-          <div className={`relative w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200 ${
-            "bg-surface border-border text-foreground"
-          }`}>
+          <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl theme-card-structural border border-border/50 shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-300">
             {/* Header */}
-            <div className={`flex items-center justify-between px-6 py-4 border-b ${
-              "border-border bg-elevated"
-            }`}>
-              <div className="space-y-0.5">
-                <h3 className={`text-sm font-bold ${"text-foreground"}`}>
+            <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-5 border-b border-border/50 bg-surface/80 backdrop-blur-xl">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-theme-btn-primary shadow-[0_0_10px_rgba(var(--theme-accent-raw),0.8)]" />
                   {editRecordId ? "Edit Details:" : "Add New"} {currentConfig.label}
                 </h3>
-                <p className={`text-xs ${"text-muted"}`}>
+                <p className="text-xs text-muted font-medium">
                   {editRecordId ? "Modify specific attributes of this pre-existing record." : "Enter the specific details to create this record in the company directory."}
                 </p>
               </div>
               <AppButton variant="secondary" 
                 type="button" 
                 onClick={() => setShowModal(false)}
-                className="p-1.5 rounded-lg text-muted hover:text-foreground dark:hover:text-white"
+                className="p-2 rounded-xl bg-elevated/50 hover:bg-elevated border-transparent hover:border-border/50 transition-all text-muted hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </AppButton>
             </div>
 
             {/* Input elements form */}
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
+            <form onSubmit={handleCreate} className="p-6 space-y-6">
               {/* Code */}
               <div className="space-y-1.5">
                 <label className="text-[0.8rem] font-bold text-muted uppercase tracking-wider block">

@@ -21,7 +21,7 @@ export default function GlobalError({ error, reset }: {
       )}
       <AppButton
         onClick={() => reset()}
-        className="rounded bg-theme-btn-primary px-4 py-2 text-sm font-medium text-white hover:bg-theme-btn-primary-secondary"
+        className="rounded bg-theme-btn-primary  theme-tab-standard    text-white hover:bg-theme-btn-primary-secondary"
       >
         Try again
       </AppButton>

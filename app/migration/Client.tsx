@@ -297,7 +297,7 @@ export default function MigrationClient() {
             <div className="pt-4 mt-4 border-t border-border">
               <AppButton 
                 variant="primary" 
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium shadow-lg shadow-indigo-900/20"
+                className="w-full bg-surface border border-border/50 text-foreground from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium shadow-lg shadow-indigo-900/20"
                 onClick={generateTemplate}
                 disabled={isGenerating}
               >

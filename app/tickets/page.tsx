@@ -205,7 +205,7 @@ export default function TicketsPage() {
                 size="sm" 
                 onClick={() => setShowWizard(true)}
                 leftIcon={<Plus className="h-4 w-4" />}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold tracking-wide shadow-[0_0_15px_rgba(99,102,241,0.3)] border-none transition-all hover:scale-105"
+                className=" bg-surface border border-border/50 text-foreground from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold tracking-wide shadow-[0_0_15px_rgba(99,102,241,0.3)] border-none transition-all hover:scale-105"
               >
                 Initialize Ticket
               </AppButton>

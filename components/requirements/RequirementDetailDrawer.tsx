@@ -109,7 +109,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                     </div>
                     <div className="h-2 w-full bg-surface rounded-full overflow-hidden mb-6">
                       <div 
-                        className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 transition-all duration-700" 
+                        className="h-full bg-surface border border-border/50 text-foreground from-indigo-600 to-indigo-400 transition-all duration-700" 
                         style={{ width: `${requirement.completion_percentage}%` }}
                       />
                     </div>

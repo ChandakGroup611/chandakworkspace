@@ -453,7 +453,7 @@ export default function IAMGovernanceCockpit({
               {isSaving ? "Syncing Logic Gates..." : "Snapshot Synced"}
             </span>
           </div>
-          <AppButton variant="primary" className="bg-gradient-to-r from-indigo-600 to-accent hover:from-indigo-500 hover:to-accent border-none shadow-lg shadow-indigo-500/10">
+          <AppButton variant="primary" className=" bg-surface border border-border/50 text-foreground from-indigo-600 to-accent hover:from-indigo-500 hover:to-accent border-none shadow-lg shadow-indigo-500/10">
             Audit Export
           </AppButton>
         </div>

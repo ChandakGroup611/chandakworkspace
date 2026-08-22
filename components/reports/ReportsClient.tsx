@@ -476,7 +476,7 @@ export default function ReportsClient() {
                     {visibleColumns.map(col => {
                       switch(col.field_key) {
                         case "code": return (
-                          <AppTableCell key={col.field_id} className="font-mono text-[13px] font-bold text-theme-icon whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="font-mono  font-bold text-theme-icon whitespace-nowrap">
                             {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
                           </AppTableCell>
                         );
@@ -486,19 +486,19 @@ export default function ReportsClient() {
                           </AppTableCell>
                         );
                         case "description": return (
-                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle">
+                          <AppTableCell key={col.field_id} className="text-subtle">
                             <div className="truncate max-w-[300px]" title={item.description ? item.description.replace(/<[^>]*>?/gm, '') : ''}>
                               {item.description ? item.description.replace(/<[^>]*>?/gm, '') : '—'}
                             </div>
                           </AppTableCell>
                         );
                         case "workspace": return (
-                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle" title={item.workspace}>
+                          <AppTableCell key={col.field_id} className="text-subtle" title={item.workspace}>
                             <div className="truncate max-w-[150px]">{item.workspace}</div>
                           </AppTableCell>
                         );
                         case "department": return (
-                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle">
+                          <AppTableCell key={col.field_id} className="text-subtle">
                             <div className="truncate max-w-[150px]" title={item.department}>{item.department}</div>
                           </AppTableCell>
                         );
@@ -508,12 +508,12 @@ export default function ReportsClient() {
                           </AppTableCell>
                         );
                         case "due_date": return (
-                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap">
                             {formatDate(item.end_date)}
                           </AppTableCell>
                         );
                         case "start_date": return (
-                          <AppTableCell key={col.field_id} className="text-right text-[13px] text-subtle whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="text-right  text-subtle whitespace-nowrap">
                             {formatDate(item.start_date)}
                           </AppTableCell>
                         );
@@ -530,22 +530,22 @@ export default function ReportsClient() {
                           </AppTableCell>
                         );
                         case "creator_name": return (
-                          <AppTableCell key={col.field_id} className="text-[13px] font-medium text-foreground whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="font-medium text-foreground whitespace-nowrap">
                             {item.creator_name}
                           </AppTableCell>
                         );
                         case "assigned_to": return (
-                          <AppTableCell key={col.field_id} className="text-[13px] text-subtle whitespace-nowrap" title={item.assigned_to}>
+                          <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap" title={item.assigned_to}>
                             {item.assigned_to}
                           </AppTableCell>
                         );
                         case "created_at": return (
-                          <AppTableCell key={col.field_id} className="text-right text-[13px] text-muted whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="text-right  text-muted whitespace-nowrap">
                             {formatDate(item.created_at)}
                           </AppTableCell>
                         );
                         case "updated_at": return (
-                          <AppTableCell key={col.field_id} className="text-right text-[13px] text-muted whitespace-nowrap">
+                          <AppTableCell key={col.field_id} className="text-right  text-muted whitespace-nowrap">
                             {formatDate(item.updated_at)}
                           </AppTableCell>
                         );
@@ -561,7 +561,7 @@ export default function ReportsClient() {
                           else if (typeof val === "object") val = JSON.stringify(val);
                           
                           return (
-                            <AppTableCell key={col.field_id} className="text-[13px] text-subtle ">
+                            <AppTableCell key={col.field_id} className="text-subtle">
                               <div className="truncate max-w-[200px]" title={String(val)}>
                                 {col.data_type === "link" && val !== "—" ? (
                                   <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>

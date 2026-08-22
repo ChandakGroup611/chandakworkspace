@@ -280,7 +280,7 @@ export function WorkspaceMasterTable({
           })}
 
           {/* Entity Name */}
-          <div className="py-2 px-2 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 2.5 + 1.2}rem` }}>
+          <div className="py-3 px-4 flex items-center min-w-0 relative" style={{ paddingLeft: `${depth * 2.5 + 1.2}rem` }}>
             <div className="flex items-start gap-2 min-w-0 w-full">
               <div className="mt-0.5 flex-shrink-0 z-10 bg-transparent">
                 {(isWorkspaceType ? (totalTaskCount > 0 || subWsCount > 0) : (childTaskCount > 0 || hasChildren)) ? (
@@ -312,7 +312,7 @@ export function WorkspaceMasterTable({
                     }`} />
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className={`truncate ${
-                        isWorkspaceType ? 'font-semibold tracking-tight text-[14px]' : 
+                        isWorkspaceType ? 'font-semibold tracking-tight text-sm' : 
                         isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
                         'text-[13px] font-normal'
                       } ${
@@ -395,29 +395,29 @@ export function WorkspaceMasterTable({
           </div>
           
           {/* Created Date */}
-          <div className="py-1 px-2 text-[12px] text-muted whitespace-nowrap" title={fullDate}>
+          <div className="py-3 px-4 text-[13px] text-muted whitespace-nowrap" title={fullDate}>
             {shortDate}
           </div>
 
           {/* Created By */}
-          <div className="py-1 px-2 text-xs font-bold text-theme-icon whitespace-nowrap">
+          <div className="py-3 px-4 text-[13px] font-bold text-theme-icon whitespace-nowrap">
             {creatorId ? getUserName(creatorId) : "System"}
           </div>
 
           {/* Assignees */}
-          <div className="py-1 px-2 flex items-center">
+          <div className="py-3 px-4 flex items-center">
             {renderAssignees(node)}
           </div>
 
           {/* Create Sub-Items */}
-          <div className="py-1 px-2">
+          <div className="py-3 px-4">
             <div className="flex items-center justify-center gap-1 whitespace-nowrap">
               {isWorkspaceType && onCreateSubWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE')) && (
                 <AppButton
                   variant="outline"
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
-                  className={`h-6 px-2 text-[10px] font-medium uppercase ${
+                  className={`h-7 px-3 text-[10px] font-medium uppercase ${
                     "border-theme-icon/30 text-theme-icon hover:opacity-90/10"
                   }`}
                 >
@@ -429,7 +429,7 @@ export function WorkspaceMasterTable({
                   variant="outline"
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
-                  className={`h-6 px-2 text-[10px] font-medium uppercase ${
+                  className={`h-7 px-3 text-[10px] font-medium uppercase ${
                     "border-theme-icon/30 text-theme-icon hover:opacity-90/10"
                   }`}
                 >
@@ -549,15 +549,15 @@ export function WorkspaceMasterTable({
     <div className="w-full font-sans overflow-visible">
       <div className="w-full flex flex-col min-w-[1050px]">
         {/* Header */}
-        <div className={`sticky top-0 z-20 grid items-center text-[11px] tracking-widest font-semibold uppercase border-b border-border/50 pb-2 mb-1 ${
+        <div className={`sticky top-0 z-20 grid items-center text-[13px] tracking-wider font-bold uppercase text-muted border-b border-border/50 pb-2 mb-1 ${
           "bg-background/90 text-muted"
         }`} style={{ gridTemplateColumns: gridCols }}>
-          <div className="py-2 px-2 pl-[64px]">Entity Name</div>
-          <div className="py-2 px-2">Created Date</div>
-          <div className="py-2 px-2">Created By</div>
-          <div className="py-2 px-2 text-center">Assign</div>
-          <div className="py-2 px-2 text-center">Create</div>
-          <div className="py-2 px-1 text-center">Actions</div>
+          <div className="py-3 px-4 pl-[64px]">Entity Name</div>
+          <div className="py-3 px-4">Created Date</div>
+          <div className="py-3 px-4">Created By</div>
+          <div className="py-3 px-4 text-center">Assign</div>
+          <div className="py-3 px-4 text-center">Create</div>
+          <div className="py-3 px-4 text-center">Actions</div>
         </div>
 
         {/* Body */}

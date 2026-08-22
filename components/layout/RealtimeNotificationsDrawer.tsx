@@ -216,7 +216,7 @@ export default function RealtimeNotificationsDrawer() {
       >
         <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-warning animate-bounce" : ""}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-surface border border-border/50 text-foreground from-amber-500 to-orange-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
             {unreadCount}
           </span>
         )}
@@ -283,7 +283,7 @@ export default function RealtimeNotificationsDrawer() {
         <EnterpriseDrawerShell
           title={
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-warning dark:text-warning shrink-0">
+              <div className="p-1.5 rounded-lg bg-surface border border-border/50 text-foreground from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-warning dark:text-warning shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
               <span className={`text-lg font-bold tracking-wider ${"text-foreground"}`}>Enterprise Stream</span>

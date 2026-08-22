@@ -54,10 +54,10 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
           <p className="text-sm text-muted mt-1">Workspace operations and execution center</p>
         </div>
         <div className="flex gap-4">
-          <AppButton variant="secondary" className="px-4 py-2 rounded-xl text-sm font-medium transition-colors" leftIcon={<Activity className="h-4 w-4" />}>
+          <AppButton variant="secondary" className=" theme-tab-standard  rounded-xl   transition-colors" leftIcon={<Activity className="h-4 w-4" />}>
             Check Availability
           </AppButton>
-          <AppButton variant="primary" className="px-4 py-2 bg-theme-btn-primary text-theme-btn-primary-text rounded-xl text-sm font-medium hover:opacity-90 transition-colors shadow-lg shadow-indigo-500/20" leftIcon={<Plus className="h-4 w-4" />}>
+          <AppButton variant="primary" className=" theme-tab-standard  bg-theme-btn-primary text-theme-btn-primary-text rounded-xl   hover:opacity-90 transition-colors shadow-lg shadow-indigo-500/20" leftIcon={<Plus className="h-4 w-4" />}>
             New Task
           </AppButton>
         </div>
