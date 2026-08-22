@@ -798,7 +798,6 @@ export default function MastersPage() {
                               <AppTableCell>
                                 <div className="space-y-0.5">
                                   <span className={`font-mono text-xs font-bold block text-theme-icon`}>{rec.code}</span>
-                                  <span className="text-[0.7rem] text-muted font-mono block truncate max-w-[120px]">{rec.id}</span>
                                 </div>
                               </AppTableCell>
                               <AppTableCell>
@@ -830,8 +829,10 @@ export default function MastersPage() {
                                 <AppTableCell>
                                   <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block truncate max-w-[120px] ${
                                     "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
-                                  }`}>
-                                    {rec[currentConfig.parentKey!] || "Unmapped"}
+                                  }`} title={rec[currentConfig.parentKey!]}>
+                                    {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || 
+                                     parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || 
+                                     rec[currentConfig.parentKey!] || "Unmapped"}
                                   </span>
                                 </AppTableCell>
                               )}

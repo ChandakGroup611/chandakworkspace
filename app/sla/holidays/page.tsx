@@ -151,7 +151,6 @@ export default function HolidayCalendar() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="font-bold text-lg">{wh.name}</h3>
-                      <AppBadge variant="warning" className="mt-1 font-mono">{wh.id}</AppBadge>
                     </div>
                     <AppBadge variant="info">{wh.timezone}</AppBadge>
                   </div>
