@@ -1025,8 +1025,8 @@ export default function AMCPage() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Provider / Vendor <span className="text-danger">*</span></label>
-                  <select value={formVendorId} onChange={(e) => handleVendorChange(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Provider / Vendor <span className="text-danger">*</span></label>
+                  <select value={formVendorId} onChange={(e) => handleVendorChange(e.target.value)} required className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="">-- Select Vendor --</option>
                     {vendors.map(v => (
                       <option key={v.id} value={v.id}>{v.name}</option>
@@ -1034,15 +1034,15 @@ export default function AMCPage() {
                   </select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Software Name <span className="text-danger">*</span></label>
+                  <label className="theme-label">Software Name <span className="text-danger">*</span></label>
                   <AppInput value={formSoftwareName} onChange={(e) => setFormSoftwareName(e.target.value)} required placeholder="e.g., Salesforce Enterprise" className="h-11" />
                 </div>
                 <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase mb-2 block">Contract Type <span className="text-danger">*</span></label>
+                    <label className="theme-label mb-2 block">Contract Type <span className="text-danger">*</span></label>
                     <div className="flex gap-2 h-11">
                       <select 
-                        className={`flex-1 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}
+                        className={`flex-1 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}
                         value={formContractType}
                         onChange={e => setFormContractType(e.target.value)}
                       >
@@ -1061,8 +1061,8 @@ export default function AMCPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase">Status <span className="text-danger">*</span></label>
-                    <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                    <label className="theme-label">Status <span className="text-danger">*</span></label>
+                    <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                       <option value="Active">Active</option>
                       <option value="Expired">Expired</option>
                       <option value="Renewed">Renewed</option>
@@ -1070,24 +1070,24 @@ export default function AMCPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted uppercase">Software / AMC Specification</label>
+                    <label className="theme-label">Software / AMC Specification</label>
                     <AppInput value={formSpecifications} onChange={(e) => setFormSpecifications(e.target.value)} placeholder="Detailed requirements or specs..." className="h-11" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Purchase Date <span className="text-danger">*</span></label>
+                  <label className="theme-label">Purchase Date <span className="text-danger">*</span></label>
                   <AppInput type="date" value={formPurchaseDate} onChange={(e) => setFormPurchaseDate(e.target.value)} className="h-11" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Put to Use Date</label>
+                  <label className="theme-label">Put to Use Date</label>
                   <AppInput type="date" value={formPutToUseDate} onChange={(e) => {
                     setFormPutToUseDate(e.target.value);
                     if (formRenewalPeriodType) handleRenewalChange(formRenewalPeriodType, e.target.value);
                   }} className="h-11" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Renewal Period</label>
-                  <select value={formRenewalPeriodType} onChange={(e) => handleRenewalChange(e.target.value, formPutToUseDate)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Renewal Period</label>
+                  <select value={formRenewalPeriodType} onChange={(e) => handleRenewalChange(e.target.value, formPutToUseDate)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="">-- Select --</option>
                     <option value="Yearly">Yearly</option>
                     <option value="Half-Yearly">Half-Yearly</option>
@@ -1097,32 +1097,32 @@ export default function AMCPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Expiry Date</label>
+                  <label className="theme-label">Expiry Date</label>
                   <AppInput type="date" value={formExpiryDate} onChange={(e) => setFormExpiryDate(e.target.value)} className="h-11" />
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Assigned To (Owner) <span className="text-danger">*</span></label>
-                  <select value={formAssignedTo} onChange={(e) => setFormAssignedTo(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Assigned To (Owner) <span className="text-danger">*</span></label>
+                  <select value={formAssignedTo} onChange={(e) => setFormAssignedTo(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="">-- Select Owner --</option>
                     {users.map(u => <option key={u.id} value={u.id}>{u.full_name} ({u.email})</option>)}
                   </select>
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Department <span className="text-danger">*</span></label>
-                  <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Department <span className="text-danger">*</span></label>
+                  <select value={formDepartmentId} onChange={(e) => setFormDepartmentId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="">-- Select Department --</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Cost Center</label>
-                  <select value={formCostCenterId} onChange={(e) => setFormCostCenterId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Cost Center</label>
+                  <select value={formCostCenterId} onChange={(e) => setFormCostCenterId(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="">-- Select Cost Center --</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Remind Before (Days)</label>
+                  <label className="theme-label">Remind Before (Days)</label>
                   <AppInput type="number" value={formNotifyBeforeDays} onChange={(e) => setFormNotifyBeforeDays(e.target.value)} min="1" max="365" className="h-11" />
                 </div>
               </div>
@@ -1139,19 +1139,19 @@ export default function AMCPage() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Total Licenses Purchased</label>
+                  <label className="theme-label">Total Licenses Purchased</label>
                   <AppInput type="number" value={formTotalLicenses} onChange={(e) => setFormTotalLicenses(e.target.value)} placeholder="e.g., 50" min="0" className="h-11" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Licenses In-Use</label>
+                  <label className="theme-label">Licenses In-Use</label>
                   <AppInput type="number" value={formUsedLicenses} onChange={(e) => setFormUsedLicenses(e.target.value)} placeholder="e.g., 42" min="0" className="h-11" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Cost Per License</label>
+                  <label className="theme-label">Cost Per License</label>
                   <AppInput type="number" value={computedCostPerLicense} onChange={(e) => setFormCostPerLicense(e.target.value)} placeholder="Auto-calculated" readOnly className="h-11 opacity-70" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">License Key</label>
+                  <label className="theme-label">License Key</label>
                   <div className="relative">
                     <AppInput type={showLicenseKey ? "text" : "password"} value={formLicenseKey} onChange={(e) => setFormLicenseKey(e.target.value)} placeholder="Enter License Key" className="h-11 pr-10" />
                     {formLicenseKey && (
@@ -1172,8 +1172,8 @@ export default function AMCPage() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Currency</label>
-                  <select value={formCurrency} onChange={(e) => setFormCurrency(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Currency</label>
+                  <select value={formCurrency} onChange={(e) => setFormCurrency(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
@@ -1181,8 +1181,8 @@ export default function AMCPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Payment Terms</label>
-                  <select value={formPaymentTerms} onChange={(e) => setFormPaymentTerms(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Payment Terms</label>
+                  <select value={formPaymentTerms} onChange={(e) => setFormPaymentTerms(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="">-- Select --</option>
                     <option value="100% Advance">100% Advance</option>
                     <option value="Net 15">Net 15</option>
@@ -1194,8 +1194,8 @@ export default function AMCPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Support Tier</label>
-                  <select value={formSupportTier} onChange={(e) => setFormSupportTier(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:ring-2 outline-none bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                  <label className="theme-label">Support Tier</label>
+                  <select value={formSupportTier} onChange={(e) => setFormSupportTier(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
                     <option value="">-- Select --</option>
                     <option value="Standard Business Hours">Standard Business Hours</option>
                     <option value="Premium 24x5">Premium 24x5</option>
@@ -1203,11 +1203,11 @@ export default function AMCPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Guaranteed Uptime (%)</label>
+                  <label className="theme-label">Guaranteed Uptime (%)</label>
                   <AppInput type="number" step="0.01" value={formSlaUptime} onChange={(e) => setFormSlaUptime(e.target.value)} placeholder="e.g., 99.9" min="0" max="100" className="h-11" />
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <label className="text-sm font-bold text-muted uppercase">Resolution TAT (Turnaround Time)</label>
+                  <label className="theme-label">Resolution TAT (Turnaround Time)</label>
                   <AppInput value={formSlaTat} onChange={(e) => setFormSlaTat(e.target.value)} placeholder="e.g., 4 Hours for P1, 24 Hours for P2" className="h-11" />
                 </div>
               </div>
@@ -1343,7 +1343,7 @@ export default function AMCPage() {
                 <div className="space-y-4 col-span-1 md:col-span-3">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2 col-span-2">
-                      <label className="text-sm font-bold text-muted uppercase">Industry Type</label>
+                      <label className="theme-label">Industry Type</label>
                       <div className="flex gap-2">
                         <FormMultiSelect 
                           options={masterIndustryTypes.map(i => ({ value: i.name, label: i.name }))}
@@ -1377,7 +1377,7 @@ export default function AMCPage() {
                       </div>
                     </div>
                     <div className="space-y-2 col-span-2">
-                      <label className="text-sm font-bold text-muted uppercase">Vendor Type (Multi-Select)</label>
+                      <label className="theme-label">Vendor Type (Multi-Select)</label>
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <FormMultiSelect 
@@ -1599,7 +1599,7 @@ export default function AMCPage() {
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold text-muted uppercase">Documents & Attachments</label>
+                      <label className="theme-label">Documents & Attachments</label>
                       <AppButton type="button" variant="outline" size="sm" onClick={() => {
                         setAttachments(prev => [...prev, { id: Math.random().toString(36).substring(2, 9), docName: "", file: null }]);
                       }} leftIcon={<Plus className="h-4 w-4" />}>
@@ -1643,7 +1643,7 @@ export default function AMCPage() {
 
                   {existingAttachments.length > 0 && (
                     <div className="space-y-2 pt-4">
-                      <label className="text-sm font-bold text-muted uppercase">Existing Attachments</label>
+                      <label className="theme-label">Existing Attachments</label>
                       <div className="flex flex-col gap-2">
                         {existingAttachments.map((file, idx) => (
                           <div key={idx} className={`flex items-center justify-between p-3 rounded-xl border bg-elevated border-border`}>
@@ -1674,7 +1674,7 @@ export default function AMCPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted uppercase">Additional Notes</label>
+                  <label className="theme-label">Additional Notes</label>
                   <textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className={`w-full p-4 rounded-xl text-sm transition-all focus:ring-2 outline-none resize-none h-full min-h-[150px] bg-elevated border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`} placeholder="Any additional details, terms and conditions, or internal comments..." />
                 </div>
               </div>

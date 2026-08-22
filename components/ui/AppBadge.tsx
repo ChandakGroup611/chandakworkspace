@@ -49,7 +49,7 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       <span
         ref={ref}
         className={cn(
-          "theme-badge-structural inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-wider uppercase select-none transition-colors whitespace-nowrap",
+          "inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider uppercase select-none transition-colors whitespace-nowrap",
           customColor ? "bg-transparent" : variants[variant],
           className
         )}

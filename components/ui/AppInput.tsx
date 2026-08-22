@@ -61,7 +61,7 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
               "theme-input-structural",
               "h-10 w-full rounded-xl theme-data-value focus:outline-none transition-all duration-300",
               "bg-surface text-foreground placeholder-muted",
-              "focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary",
+              "focus:border-theme-btn-primary",
               leftIcon ? "pl-10" : "pl-3",
               rightIcon ? "pr-10" : "pr-3.5",
               error ? "border-danger focus:border-danger bg-danger/[0.02]" : "",

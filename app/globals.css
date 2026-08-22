@@ -58,17 +58,17 @@
 
   /* Universal Premium Typography for Labels & Data Fields */
   label, .theme-label {
-    /* Bind directly to the user's selected subtext slider */
-    font-size: var(--subtext-font-size, 12px) !important;
-    font-weight: var(--ui-weight-bold, 700) !important;
+    font-size: 0.75rem !important; /* text-xs */
+    font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
+    color: var(--color-muted) !important;
   }
 
   .theme-data-value {
-    /* Data values sit between subtext and base, usually 14px default */
-    font-size: calc(var(--subtext-font-size, 12px) + 2px) !important;
-    font-weight: var(--ui-weight-semibold, 600) !important;
+    font-size: 0.875rem !important; /* text-sm */
+    font-weight: 600 !important;
+    color: var(--color-foreground) !important;
   }
 
   /* Premium Global Text Selection */
@@ -93,43 +93,29 @@
   textarea {
     background-color: var(--color-surface);
     color: var(--color-foreground);
-    transition: all 0.2s ease !important;
+    transition: all 0.2s ease;
   }
 
+  /* Soft focus ring for inputs */
   input:not([type="checkbox"]):not([type="radio"]):focus,
   select:focus,
   textarea:focus {
-    outline: none !important;
-    border-color: var(--color-accent) !important;
-    box-shadow: 0 0 0 2px var(--color-accent) !important;
+    outline: none;
+    border-color: var(--color-theme-btn-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-theme-btn-primary-rgb, 0,0,0), 0.2);
   }
 
+  /* Base borders */
   input:not([type="checkbox"]):not([type="radio"]):not(:focus),
   select:not(:focus),
   textarea:not(:focus) {
-    border-width: 1px !important;
-    border-style: solid !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
-    box-shadow: none !important;
-  }
-
-  .theme-dark input:not([type="checkbox"]):not([type="radio"]):not(:focus),
-  .theme-dark select:not(:focus),
-  .theme-dark textarea:not(:focus) {
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    box-shadow: none !important;
-  }
-
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--color-border);
   input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
   select:not(:focus):hover,
   textarea:not(:focus):hover {
-    border-color: rgba(0, 0, 0, 0.2) !important;
-  }
-
-  .theme-dark input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
-  .theme-dark select:not(:focus):hover,
-  .theme-dark textarea:not(:focus):hover {
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: var(--color-border-active);
   }
 }
 

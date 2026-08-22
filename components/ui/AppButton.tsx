@@ -33,11 +33,11 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       "inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
 
     const variants = {
-      primary: "theme-button-structural theme-btn-primary bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_1px_2px_rgba(0,0,0,0.05)]",
-      secondary: "theme-btn-secondary bg-surface text-foreground hover:bg-surface-hover border border-border/60 shadow-sm",
-      ghost: "theme-btn-ghost bg-transparent text-muted hover:bg-surface-hover hover:text-foreground",
-      destructive: "theme-btn-destructive bg-danger text-white hover:bg-danger/90 shadow-sm",
-      outline: "theme-btn-outline bg-transparent border border-border/60 text-foreground hover:bg-surface-hover shadow-sm",
+      primary: "bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-sm",
+      secondary: "bg-surface text-foreground hover:bg-surface-hover border border-border shadow-sm",
+      ghost: "bg-transparent text-muted hover:bg-surface-hover hover:text-foreground",
+      destructive: "bg-danger text-white hover:bg-danger/90 shadow-sm",
+      outline: "bg-transparent border border-border text-foreground hover:bg-surface-hover shadow-sm",
     };
 
     const sizes = {
