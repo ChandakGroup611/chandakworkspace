@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
       return NextResponse.redirect(`${origin}${next}`);
     } else {
-      console.error("Auth Callback Error:", error.message);
+      console.error("Auth Callback Error:", error?.message || "User data missing in session");
     }
   }
 
