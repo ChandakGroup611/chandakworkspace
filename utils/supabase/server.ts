@@ -18,6 +18,7 @@ export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) =
             cookiesToSet.forEach(({ name, value, options }) => {
               const sessionOptions = { ...options };
               delete sessionOptions.maxAge; // Force session cookie
+              delete sessionOptions.expires; // Also delete expires
               cookieStore.set(name, value, sessionOptions);
             })
           } catch {

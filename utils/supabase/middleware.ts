@@ -23,6 +23,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => {
             const sessionOptions = { ...options };
             delete sessionOptions.maxAge; // Force session cookie
+            delete sessionOptions.expires; // Also delete expires
             request.cookies.set({ name, value, ...sessionOptions });
           })
           supabaseResponse = NextResponse.next({
@@ -31,6 +32,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => {
             const sessionOptions = { ...options };
             delete sessionOptions.maxAge; // Force session cookie
+            delete sessionOptions.expires; // Also delete expires
             supabaseResponse.cookies.set(name, value, sessionOptions)
           })
         },

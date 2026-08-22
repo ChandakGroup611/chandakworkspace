@@ -50,7 +50,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
   return (
     <div className="space-y-6 pb-6 pt-2">
-      <AppCard className="p-6 mb-6 border border-border/60 shadow-md">
+      <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl transition-all duration-500 bg-surface/40 p-6 mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-5">
           <div className="flex flex-wrap items-center gap-4">
             <Link
@@ -92,11 +92,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
       <div className="space-y-6">
 
         {/* DEDICATED CARD FOR SUBJECT AND DESCRIPTION */}
-        <AppCard className="overflow-hidden border border-border/60 shadow-md p-0">
-          <div className="bg-gradient-to-r from-accent/15 via-surface/90 to-surface/40 dark:from-accent/30 dark:via-elevated/90 dark:to-elevated/40 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+        <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
+          <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary text-theme-btn-primary-text shadow-xs" />
-              <Type className="w-4 h-4 text-accent dark:text-accent" />
+              <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+              <Type className="w-4 h-4 text-accent" />
               <h3 className="font-bold text-sm tracking-wide text-foreground">Task Subject & Description</h3>
             </div>
             <span className="text-[10px] font-mono font-bold tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2.5 py-0.5 rounded-full border border-theme-btn-primary/20">
