@@ -287,6 +287,15 @@ export async function createWorkspace(formData: any) {
           message,
           `/workspaces`
         );
+        
+        await queueBusinessEvent("Workspace", "Assigned", {
+          entity_id: data.id,
+          triggering_user_id: userId,
+          assigned_to: assigneeId,
+          workspace_name: data.workspace_name,
+          workspace_code: data.workspace_code,
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/workspaces`
+        });
       } catch (e) {
         console.error("Failed to dispatch notification to", assigneeId, e);
       }

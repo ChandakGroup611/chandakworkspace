@@ -346,6 +346,8 @@ export async function createRequirement(payload: {
 }
 
 export async function submitRequirementAnalysis(reqId: string, payload: any, performedBy: string, action?: 'ACCEPT' | 'HOLD' | 'CANCEL' | 'SAVE') {
+  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(performedBy);
+  const user = authUser?.user || { id: performedBy, email: 'system' };
   const { hasPermission } = await import('@/lib/permissions');
   const isSuperAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
   if (!isSuperAdmin) throw new Error("Only SUPER_ADMIN can submit Requirement Analysis.");
@@ -707,6 +709,8 @@ export async function fetchRequirement(reqId: string) {
 }
 
 export async function processApprovalAction(reqId: string, action: string, remarks: string, performedBy: string) {
+  const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(performedBy);
+  const user = authUser?.user || { id: performedBy, email: 'system' };
   let finalReqId = reqId;
   if (!reqId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
     const { data: idLookup } = await supabaseAdmin.from('requirements').select('id').eq('code', reqId).single();
@@ -1054,7 +1058,7 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   if (!user) return { error: 'Unauthenticated' };
   
-  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, code').eq('id', reqId).single();
+  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, code, created_by').eq('id', reqId).single();
   if (!req) return { error: 'Requirement not found' };
 
   const newVersion = (req.amendment_version || 0) + 1;
@@ -1081,6 +1085,15 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
      // If no re-approval needed, auto-approve and immediately sync tasks
      await syncAmendmentToTasks(reqId, user.id, attachmentData);
   }
+
+  // FIRE BUSINESS EVENT FOR AMENDMENT
+  queueBusinessEvent("Requirement", "Amended", {
+    entity_id: reqId,
+    triggering_user_id: user.id,
+    amendment_version: newVersion,
+    status: 'Amended',
+    requester_id: req.created_by // Assumes requirement has created_by
+  });
 
   revalidatePath(`/requirements/${reqId}`);
   return { success: true };

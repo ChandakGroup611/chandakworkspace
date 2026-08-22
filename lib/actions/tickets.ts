@@ -673,17 +673,63 @@ export async function createEnterpriseTicket(payload: any) {
   }
 
   // Trigger Ticket Notifications asynchronously
-  if (creatorInfo?.manager_id && !isRequirement) {
-    supabaseAdmin.from('notification_queue').insert({
-      recipient_id: creatorInfo.manager_id,
-      payload: {
-        type: 'TICKET_ASSIGNED',
-        message: `New ticket ${ticket.code} arrived in your queue.`,
-        ticket_id: ticket.id
-      },
-      status: 'pending'
-    }).then(() => {}, (e) => console.error("Async notification failed:", e));
-  }
+  Promise.resolve().then(async () => {
+    try {
+      const { dispatchNotification } = await import('@/lib/actions/notifications');
+      
+      // Fire generic 'Created' event
+      await queueBusinessEvent("Ticket", "Created", {
+        entity_id: ticket.id,
+        triggering_user_id: user.id,
+        ticket_code: ticket.code,
+        ticket_title: ticket.title || ticket.subject || 'Untitled',
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tickets/${ticket.id}`
+      });
+
+      // If there's an assignee, notify them
+      if (finalAssigneeId) {
+        await dispatchNotification(
+          finalAssigneeId,
+          'Ticket Assigned',
+          `You have been assigned to Ticket ${ticket.code}.`,
+          `/tickets/${ticket.id}`,
+          'TICKET',
+          'ASSIGNED'
+        ).catch((e: any) => console.error("In-app notification failed:", e));
+        
+        await queueBusinessEvent("Ticket", "Assigned", {
+          entity_id: ticket.id,
+          triggering_user_id: user.id,
+          assigned_to: finalAssigneeId,
+          ticket_code: ticket.code,
+          ticket_title: ticket.title || ticket.subject || 'Untitled',
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tickets/${ticket.id}`
+        });
+      }
+      // Or if it went to manager queue
+      else if (creatorInfo?.manager_id && !isRequirement) {
+        await dispatchNotification(
+          creatorInfo.manager_id,
+          'Ticket in Queue',
+          `New ticket ${ticket.code} arrived in your queue.`,
+          `/tickets/${ticket.id}`,
+          'TICKET',
+          'QUEUED'
+        ).catch((e: any) => console.error("In-app notification failed:", e));
+
+        await queueBusinessEvent("Ticket", "Assigned", {
+          entity_id: ticket.id,
+          triggering_user_id: user.id,
+          assigned_to: creatorInfo.manager_id,
+          ticket_code: ticket.code,
+          ticket_title: ticket.title || ticket.subject || 'Untitled',
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tickets/${ticket.id}`
+        });
+      }
+    } catch (e) {
+      console.error("Async ticket notifications failed:", e);
+    }
+  });
 
   revalidatePath("/tickets");
   return { success: true, ticket };

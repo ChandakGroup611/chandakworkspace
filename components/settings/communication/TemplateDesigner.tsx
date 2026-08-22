@@ -5,8 +5,19 @@ import { AppTable } from "@/components/ui/AppTable";
 import { AppButton } from '@/components/ui/AppButton';
 import DOMPurify from 'dompurify';
 import { Save, Loader2, Play, Plus, Trash2, Code2, Eye, LayoutTemplate, ArrowLeft, Edit2 } from "lucide-react";
-import { saveSettingsEntity, deleteSettingsEntity, getTemplates } from "@/lib/actions/settings";
+import { saveSettingsEntity, deleteSettingsEntity, getTemplates, saveTemplateAndRules } from "@/lib/actions/settings";
 import { previewEmailTemplate } from "@/lib/actions/email-config";
+
+const RECIPIENT_OPTIONS = [
+  "Creator",
+  "Assigned User",
+  "Executors",
+  "Watchers",
+  "Workspace Owner",
+  "Department Admin",
+  "Specific Approver",
+  "Requester"
+];
 
 const MODULES = [
   "Task", 
@@ -55,6 +66,7 @@ const EVENTS = [
   "Approval Requested",
   "Approved",
   "Rejected",
+  "Amended",
   
   // SLA Specific
   "SLA Warning",
@@ -124,7 +136,8 @@ export default function TemplateDesigner() {
         subject: "New Task Assigned: {{task_name}}",
         html_body: `<div style="font-family: sans-serif; padding: 20px;">\n  <h2>You have a new task</h2>\n  <p><strong>Task:</strong> {{task_name}}</p>\n  <p><strong>Status:</strong> {{status}}</p>\n  <p><strong>Assigned By:</strong> {{creator_name}}</p>\n  <br/>\n  <a href="{{link}}" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Task</a>\n</div>`,
         is_active: true,
-        is_new: true
+        is_new: true,
+        recipient_types: []
       },
       ...prev
     ]);
@@ -144,15 +157,16 @@ export default function TemplateDesigner() {
         template_name: template.template_name,
         subject: template.subject,
         html_body: template.html_body,
-        is_active: template.is_active
+        is_active: template.is_active,
+        recipient_types: template.recipient_types || []
       };
 
       if (template.is_new) {
-        const res = await saveSettingsEntity("email_templates", payload, undefined, "/settings/communication/templates");
+        const res = await saveTemplateAndRules(payload);
         if (!res.success) throw new Error(res.error);
         triggerToast("Template created successfully");
       } else {
-        const res = await saveSettingsEntity("email_templates", payload, template.id, "/settings/communication/templates");
+        const res = await saveTemplateAndRules(payload, template.id);
         if (!res.success) throw new Error(res.error);
         triggerToast("Template updated successfully");
       }
@@ -350,6 +364,32 @@ export default function TemplateDesigner() {
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary font-mono"
                   placeholder="e.g. Action Required: {{task_name}}"
                 />
+              </div>
+
+              {/* Target Recipients Checkboxes */}
+              <div className="md:col-span-3 space-y-2 mt-2">
+                <label className="text-sm font-bold text-muted uppercase">Target Recipients (Dynamic)</label>
+                <div className="flex flex-wrap gap-3">
+                  {RECIPIENT_OPTIONS.map(opt => (
+                    <label key={opt} className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-border rounded-md bg-background hover:border-theme-btn-primary transition-colors select-none">
+                      <input 
+                        type="checkbox"
+                        checked={tpl.recipient_types?.includes(opt) || false}
+                        onChange={(e) => {
+                          const current = tpl.recipient_types || [];
+                          if (e.target.checked) {
+                            updateLocal(tpl.id, "recipient_types", [...current, opt]);
+                          } else {
+                            updateLocal(tpl.id, "recipient_types", current.filter((r: string) => r !== opt));
+                          }
+                        }}
+                        className="accent-theme-btn-primary w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-foreground">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-muted">Select which dynamic roles should receive this email when the event triggers.</p>
               </div>
             </div>
 

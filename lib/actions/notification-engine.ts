@@ -38,18 +38,21 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     if (matchedRules.length === 0) return;
 
     // 2. Fetch the active template for this event
-    const { data: template } = await supabaseAdmin
+    const { data: templates } = await supabaseAdmin
       .from("email_templates")
       .select("*")
       .eq("module", moduleName)
       .eq("event", eventName)
       .eq("is_active", true)
-      .single();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (!template) {
+    if (!templates || templates.length === 0) {
       console.warn(`[NotificationEngine] No active template found for ${moduleName} - ${eventName}`);
       return;
     }
+    
+    const template = templates[0];
 
     // 3. Resolve all recipients across all matched rules
     const recipientUserIds = new Set<string>();
@@ -77,7 +80,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 
     let creatorName = "System";
     if (payload.triggering_user_id) {
-       const { data: creator } = await supabaseAdmin.from("user_master").select("full_name").eq("id", payload.triggering_user_id).single();
+       const { data: creator } = await supabaseAdmin.from("user_master").select("full_name").eq("id", payload.triggering_user_id).maybeSingle();
        if (creator) creatorName = creator.full_name || "System";
     }
 
@@ -157,11 +160,27 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
       break;
       
     case "Assigned User":
+      if (payload.assigned_to) {
+        ids.push(payload.assigned_to);
+      } else if (moduleName === "Requirement" && payload.entity_id) {
+        const { data: tasks } = await supabaseAdmin.from("requirement_tasks").select("task_id").eq("requirement_id", payload.entity_id);
+        if (tasks && tasks.length > 0) {
+           const { data: assigned } = await supabaseAdmin.from("tasks").select("assigned_to").in("id", tasks.map(t => t.task_id));
+           if (assigned) assigned.forEach(a => { if(a.assigned_to) ids.push(a.assigned_to); });
+        }
+      }
+      break;
+
+    case "Specific Approver":
       if (payload.assigned_to) ids.push(payload.assigned_to);
       break;
 
+    case "Requester":
+      if (payload.requester_id) ids.push(payload.requester_id);
+      else if (payload.assigned_to) ids.push(payload.assigned_to); // Fallback for backwards compatibility
+      break;
+
     case "Executors":
-      // If Task, look up executors
       if (moduleName === "Task" && payload.entity_id) {
         const { data } = await supabaseAdmin
           .from("task_participants")
@@ -169,6 +188,12 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
           .eq("task_id", payload.entity_id)
           .eq("participation_role", "EXECUTOR");
         if (data) data.forEach(d => ids.push(d.user_id));
+      } else if (moduleName === "Requirement" && payload.entity_id) {
+        const { data: tasks } = await supabaseAdmin.from("requirement_tasks").select("task_id").eq("requirement_id", payload.entity_id);
+        if (tasks && tasks.length > 0) {
+           const { data: execs } = await supabaseAdmin.from("task_participants").select("user_id").in("task_id", tasks.map(t => t.task_id)).eq("participation_role", "EXECUTOR");
+           if (execs) execs.forEach(e => ids.push(e.user_id));
+        }
       }
       break;
 
@@ -178,7 +203,7 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
           .from("workspaces")
           .select("owner_id")
           .eq("id", payload.entity_id)
-          .single();
+          .maybeSingle();
         if (data && data.owner_id) ids.push(data.owner_id);
       }
       break;

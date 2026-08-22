@@ -17,12 +17,31 @@ export async function processEmailQueueAsync() {
     }
     
     // 1. Fetch pending queue items (Limit to 10 for batch processing)
-    const { data: queueItems, error: fetchErr } = await supabaseAdmin
+    // We try to exclude FAILED items. If 'status' column doesn't exist, we'll fall back to just is_sent = false
+    let queueItems: any = null;
+    let fetchErr: any = null;
+    
+    const { data: dataWithStatus, error: errWithStatus } = await supabaseAdmin
       .from("email_queue")
       .select("*")
       .eq("is_sent", false)
+      .neq("status", "FAILED")
       .order("created_at", { ascending: true })
       .limit(10);
+
+    if (errWithStatus && errWithStatus.code === '42703') { // undefined_column
+       const { data: dataFallback, error: errFallback } = await supabaseAdmin
+        .from("email_queue")
+        .select("*")
+        .eq("is_sent", false)
+        .order("created_at", { ascending: true })
+        .limit(10);
+       queueItems = dataFallback;
+       fetchErr = errFallback;
+    } else {
+       queueItems = dataWithStatus;
+       fetchErr = errWithStatus;
+    }
 
     if (fetchErr) {
        console.error("Fetch Error:", fetchErr);
@@ -98,23 +117,41 @@ export async function processEmailQueueAsync() {
           status: "FAILED"
         });
 
-        const failPayload: any = { is_sent: false };
         if (hasStatusColumn) {
-           failPayload.status = "FAILED";
-           failPayload.error_message = lastError || "All configured fallback providers failed.";
-           failPayload.processed_at = new Date().toISOString();
+           const failPayload: any = { 
+             is_sent: false,
+             status: "FAILED",
+             error_message: lastError || "All configured fallback providers failed.",
+             processed_at: new Date().toISOString()
+           };
+           await supabaseAdmin.from("email_queue").update(failPayload).eq("id", item.id);
+        } else {
+           // Legacy schema has no status column. Delete to prevent infinite poison loop.
+           await supabaseAdmin.from("email_queue").delete().eq("id", item.id);
         }
-        await supabaseAdmin.from("email_queue").update(failPayload).eq("id", item.id);
       }
     }
 
     // If there are more pending, trigger itself recursively
-    const { count } = await supabaseAdmin
+    let pendingCount = 0;
+    
+    const { count: countWithStatus, error: countErrWithStatus } = await supabaseAdmin
       .from("email_queue")
       .select("*", { count: 'exact', head: true })
-      .eq("is_sent", false);
+      .eq("is_sent", false)
+      .neq("status", "FAILED");
+
+    if (countErrWithStatus && countErrWithStatus.code === '42703') {
+       const { count: fallbackCount } = await supabaseAdmin
+         .from("email_queue")
+         .select("*", { count: 'exact', head: true })
+         .eq("is_sent", false);
+       pendingCount = fallbackCount || 0;
+    } else {
+       pendingCount = countWithStatus || 0;
+    }
       
-    if (count && count > 0) {
+    if (pendingCount > 0) {
       // Background recursive call
       setTimeout(() => {
         processEmailQueueAsync().catch(console.error);
