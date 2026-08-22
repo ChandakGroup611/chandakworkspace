@@ -112,6 +112,8 @@
     border-width: 1px;
     border-style: solid;
     border-color: var(--color-border);
+  }
+
   input:not([type="checkbox"]):not([type="radio"]):not(:focus):hover,
   select:not(:focus):hover,
   textarea:not(:focus):hover {
