@@ -85,9 +85,16 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     }
 
     // 5. Hydrate Templates and Queue
+    let humanReadableStatus = payload.status;
+    if (humanReadableStatus && humanReadableStatus.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+       const { data: sm } = await supabaseAdmin.from('status_master').select('name').eq('id', humanReadableStatus).maybeSingle();
+       if (sm && sm.name) humanReadableStatus = sm.name;
+    }
+
     const queueInserts = users.map(user => {
       const hydratedPayload = { 
         ...payload, 
+        status: humanReadableStatus,
         recipient_name: user.full_name,
         creator_name: payload.creator_name || creatorName
       };
