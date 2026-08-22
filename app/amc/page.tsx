@@ -71,6 +71,7 @@ interface SolutionLineItem {
   netAmount: number;
   renewalPeriodType?: string;
   customRenewalDate?: string;
+  licenseKey?: string;
 }
 
 export default function AMCPage() {
@@ -117,29 +118,40 @@ export default function AMCPage() {
   const [formTotalLicenses, setFormTotalLicenses] = useState("");
   const [formUsedLicenses, setFormUsedLicenses] = useState("");
   const [formCostPerLicense, setFormCostPerLicense] = useState("");
-  const [formLicenseKey, setFormLicenseKey] = useState("");
   const [formPaymentTerms, setFormPaymentTerms] = useState("");
   const [formSupportTier, setFormSupportTier] = useState("");
   const [formSlaUptime, setFormSlaUptime] = useState("");
   const [formSlaTat, setFormSlaTat] = useState("");
   const [formCostCenterId, setFormCostCenterId] = useState("");
   const [formNotifyBeforeDays, setFormNotifyBeforeDays] = useState("30");
-  const [showLicenseKey, setShowLicenseKey] = useState(false);
 
-  const handleRevealLicenseKey = async () => {
-    if (confirm("Are you sure you want to reveal the license key? This action will be logged.")) {
-       setShowLicenseKey(true);
-       if (editRecordId) {
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-               await supabase.from('amc_license_views').insert([{
-                 amc_id: editRecordId,
-                 user_id: user.id
-               }]);
-            }
-          } catch(e) { console.error("Failed to log view", e); }
-       }
+  const [revealedLicenseKeys, setRevealedLicenseKeys] = useState<Record<string, boolean>>({});
+  const [revealLicenseModal, setRevealLicenseModal] = useState<{ show: boolean, lineItemId: string, amcId: string } | null>(null);
+  const [revealLicenseRemark, setRevealLicenseRemark] = useState("");
+
+  const handleRevealLicenseSubmit = async () => {
+    if (!revealLicenseRemark.trim()) {
+      toast.error("Please provide a remark/reason to view the license key.");
+      return;
+    }
+    if (revealLicenseModal) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+           await supabase.from('amc_license_views').insert([{
+             amc_id: revealLicenseModal.amcId || editRecordId || "00000000-0000-0000-0000-000000000000",
+             user_id: user.id,
+             line_item_id: revealLicenseModal.lineItemId,
+             remark: revealLicenseRemark
+           }]);
+        }
+        setRevealedLicenseKeys(prev => ({ ...prev, [revealLicenseModal.lineItemId]: true }));
+        setRevealLicenseModal(null);
+        setRevealLicenseRemark("");
+      } catch(e) { 
+        console.error("Failed to log view", e); 
+        toast.error("Failed to log view and reveal key.");
+      }
     }
   };
 
@@ -393,14 +405,13 @@ export default function AMCPage() {
     setFormTotalLicenses("");
     setFormUsedLicenses("");
     setFormCostPerLicense("");
-    setFormLicenseKey("");
     setFormPaymentTerms("");
     setFormSupportTier("");
     setFormSlaUptime("");
     setFormSlaTat("");
     setFormCostCenterId("");
     setFormNotifyBeforeDays("30");
-    setShowLicenseKey(false);
+    setRevealedLicenseKeys({});
     
     setSolutionLineItems([]);
     setFormPoNumber("");
@@ -488,14 +499,13 @@ export default function AMCPage() {
     setFormTotalLicenses(rec.total_licenses?.toString() || "");
     setFormUsedLicenses(rec.used_licenses?.toString() || "");
     setFormCostPerLicense(rec.cost_per_license?.toString() || "");
-    setFormLicenseKey(rec.license_key || "");
     setFormPaymentTerms(rec.payment_terms || "");
     setFormSupportTier(rec.support_tier || "");
     setFormSlaUptime(rec.sla_uptime?.toString() || "");
     setFormSlaTat(rec.sla_tat || "");
     setFormCostCenterId(rec.cost_center_id || "");
     setFormNotifyBeforeDays(rec.notify_before_days?.toString() || "30");
-    setShowLicenseKey(false);
+    setRevealedLicenseKeys({});
 
     setSolutionLineItems(rec.solution_line_items || []);
     setFormPoNumber(rec.po_number || "");
@@ -649,7 +659,6 @@ export default function AMCPage() {
       total_licenses: formTotalLicenses ? parseInt(formTotalLicenses) : null,
       used_licenses: formUsedLicenses ? parseInt(formUsedLicenses) : null,
       cost_per_license: computedCostPerLicense ? parseFloat(computedCostPerLicense) : null,
-      license_key: formLicenseKey || null,
       payment_terms: formPaymentTerms || null,
       support_tier: formSupportTier || null,
       sla_uptime: formSlaUptime ? parseFloat(formSlaUptime) : null,
@@ -1150,17 +1159,6 @@ export default function AMCPage() {
                   <label className="theme-label">Cost Per License</label>
                   <AppInput type="number" value={computedCostPerLicense} onChange={(e) => setFormCostPerLicense(e.target.value)} placeholder="Auto-calculated" readOnly className="h-11 opacity-70" />
                 </div>
-                <div className="space-y-2">
-                  <label className="theme-label">License Key</label>
-                  <div className="relative">
-                    <AppInput type={showLicenseKey ? "text" : "password"} value={formLicenseKey} onChange={(e) => setFormLicenseKey(e.target.value)} placeholder="Enter License Key" className="h-11 pr-10" />
-                    {formLicenseKey && (
-                      <AppButton variant="secondary" type="button" onClick={showLicenseKey ? () => setShowLicenseKey(false) : handleRevealLicenseKey} className="absolute right-3 top-2.5 text-muted hover:text-subtle">
-                        {showLicenseKey ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </AppButton>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -1224,107 +1222,113 @@ export default function AMCPage() {
                   Add Line Item
                 </AppButton>
               </div>
-              
-              <div className="overflow-x-auto pb-4">
-                <AppTable className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
-                  <AppTableHeader>
-                    <AppTableRow className="text-xs text-muted uppercase tracking-wider border-b border-border">
-                      <AppTableHead className="pb-3 px-2 font-bold w-64">Resolution Name</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-48">Remark</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-32">Renewal Period</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-32">Renewal Date</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-20">Qty</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-28">Rate</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-32">CGST (%)</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-32">SGST (%)</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-32">IGST (%)</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-28">Discount</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-32 text-right">Net Amount</AppTableHead>
-                      <AppTableHead className="pb-3 px-2 font-bold w-12"></AppTableHead>
-                    </AppTableRow>
-                  </AppTableHeader>
-                  <AppTableBody>
-                    {solutionLineItems.length === 0 ? (
-                      <AppTableRow>
-                        <AppTableCell colSpan={10} className="py-8 text-center text-muted italic">No line items added. Click "Add Line Item" to begin.</AppTableCell>
-                      </AppTableRow>
-                    ) : (
-                      solutionLineItems.map((item, index) => (
-                        <AppTableRow key={item.id} className="border-b border-border/50">
-                          <AppTableCell className="py-2 px-1">
-                            <AppInput value={item.resolutionName} onChange={(e) => handleLineItemChange(item.id, "resolutionName", e.target.value)} placeholder="Name" className="h-9 text-xs" />
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark" className="h-9 text-xs" />
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-9 px-2 rounded-lg text-xs transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
-                              <option value="">-- Select --</option>
-                              <option value="Yearly">Yearly</option>
-                              <option value="Half-Yearly">Half-Yearly</option>
-                              <option value="Quarterly">Quarterly</option>
-                              <option value="Monthly">Monthly</option>
-                              <option value="Custom">Custom</option>
-                            </select>
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            {item.renewalPeriodType === "Custom" ? (
-                              <AppInput type="date" value={item.customRenewalDate || ""} onChange={(e) => handleLineItemChange(item.id, "customRenewalDate", e.target.value)} className="h-9 text-xs" />
-                            ) : (
-                              <span className="text-muted text-xs">-</span>
+              <div className="space-y-4">
+                {solutionLineItems.length === 0 ? (
+                  <div className="py-8 text-center text-muted border border-dashed border-border rounded-xl">
+                    No line items added. Click "Add Line Item" to begin.
+                  </div>
+                ) : (
+                  solutionLineItems.map((item, index) => (
+                    <div key={item.id} className="p-5 border border-border bg-background/50 rounded-xl space-y-4 relative group hover:border-theme-btn-primary/30 transition-colors">
+                      <div className="absolute top-3 right-3 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <AppButton variant="secondary" type="button" onClick={() => removeLineItem(item.id)} className="p-1.5 rounded bg-danger/10 text-danger hover:bg-danger/20 transition-colors">
+                          <X className="h-4 w-4" />
+                        </AppButton>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">Resolution Name</label>
+                          <AppInput value={item.resolutionName} onChange={(e) => handleLineItemChange(item.id, "resolutionName", e.target.value)} placeholder="Name" className="h-10 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">License Key</label>
+                          <div className="relative">
+                            <AppInput type={revealedLicenseKeys[item.id] ? "text" : "password"} value={item.licenseKey || ""} onChange={(e) => handleLineItemChange(item.id, "licenseKey", e.target.value)} placeholder="License Key" className="h-10 text-sm pr-8" />
+                            {item.licenseKey && (
+                              <AppButton variant="secondary" type="button" onClick={revealedLicenseKeys[item.id] ? () => setRevealedLicenseKeys(p => ({...p, [item.id]: false})) : () => setRevealLicenseModal({ show: true, lineItemId: item.id, amcId: editRecordId || "" })} className="absolute right-1 top-1.5 text-muted hover:text-subtle p-1 h-7">
+                                {revealedLicenseKeys[item.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </AppButton>
                             )}
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <AppInput type="number" value={item.qty} onChange={(e) => handleLineItemChange(item.id, "qty", e.target.value)} className="h-9 text-xs" min={1} />
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <AppInput type="number" value={item.rate} onChange={(e) => handleLineItemChange(item.id, "rate", e.target.value)} className="h-9 text-xs" />
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <div className="flex items-center gap-1">
-                              <AppInput type="number" value={item.cgstPercent} onChange={(e) => handleLineItemChange(item.id, "cgstPercent", e.target.value)} className="h-9 text-xs w-16" placeholder="%" />
-                              <span className="text-xs text-muted w-16 truncate">({item.cgstAmount.toFixed(2)})</span>
-                            </div>
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <div className="flex items-center gap-1">
-                              <AppInput type="number" value={item.sgstPercent} onChange={(e) => handleLineItemChange(item.id, "sgstPercent", e.target.value)} className="h-9 text-xs w-16" placeholder="%" />
-                              <span className="text-xs text-muted w-16 truncate">({item.sgstAmount.toFixed(2)})</span>
-                            </div>
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <div className="flex items-center gap-1">
-                              <AppInput type="number" value={item.igstPercent} onChange={(e) => handleLineItemChange(item.id, "igstPercent", e.target.value)} className="h-9 text-xs w-16" placeholder="%" />
-                              <span className="text-xs text-muted w-16 truncate">({item.igstAmount.toFixed(2)})</span>
-                            </div>
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1">
-                            <AppInput type="number" value={item.discount} onChange={(e) => handleLineItemChange(item.id, "discount", e.target.value)} className="h-9 text-xs" />
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1 text-right font-bold text-theme-icon">
-                            {item.netAmount.toFixed(2)}
-                          </AppTableCell>
-                          <AppTableCell className="py-2 px-1 text-right">
-                            <AppButton variant="secondary" type="button" onClick={() => removeLineItem(item.id)} className="p-1.5 rounded bg-danger/10 text-danger hover:bg-danger/20 transition-colors">
-                              <X className="h-4 w-4" />
-                            </AppButton>
-                          </AppTableCell>
-                        </AppTableRow>
-                      ))
-                    )}
-                  </AppTableBody>
-                  {solutionLineItems.length > 0 && (
-                    <tfoot>
-                      <AppTableRow>
-                        <AppTableCell colSpan={8} className="py-4 text-right font-bold text-muted">Total Net Amount:</AppTableCell>
-                        <AppTableCell className="py-4 px-1 text-right font-black text-lg text-success">
-                          {solutionLineItems.reduce((sum, i) => sum + i.netAmount, 0).toFixed(2)}
-                        </AppTableCell>
-                        <AppTableCell></AppTableCell>
-                      </AppTableRow>
-                    </tfoot>
-                  )}
-                </AppTable>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">Remark</label>
+                          <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark" className="h-10 text-sm" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 items-start">
+                        <div className="space-y-1.5 col-span-2">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">Renewal Period</label>
+                          <select value={item.renewalPeriodType || ""} onChange={(e) => handleLineItemChange(item.id, "renewalPeriodType", e.target.value)} className={`w-full h-10 px-2 rounded-lg text-sm transition-all focus:ring-2 outline-none bg-surface border-border text-foreground focus:border-theme-btn-primary focus:ring-theme-btn-primary/20 border`}>
+                            <option value="">-- Select --</option>
+                            <option value="Yearly">Yearly</option>
+                            <option value="Half-Yearly">Half-Yearly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Custom">Custom</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1.5 col-span-2">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">Renewal Date</label>
+                          {item.renewalPeriodType === "Custom" ? (
+                            <AppInput type="date" value={item.customRenewalDate || ""} onChange={(e) => handleLineItemChange(item.id, "customRenewalDate", e.target.value)} className="h-10 text-sm" />
+                          ) : (
+                            <div className="h-10 flex items-center px-3 border border-transparent text-muted bg-surface/50 rounded-lg text-sm">-</div>
+                          )}
+                        </div>
+                        <div className="space-y-1.5 col-span-1">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">Qty</label>
+                          <AppInput type="number" value={item.qty} onChange={(e) => handleLineItemChange(item.id, "qty", e.target.value)} className="h-10 text-sm" min={1} />
+                        </div>
+                        <div className="space-y-1.5 col-span-1 md:col-span-3 lg:col-span-1">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">Rate</label>
+                          <AppInput type="number" value={item.rate} onChange={(e) => handleLineItemChange(item.id, "rate", e.target.value)} className="h-10 text-sm px-2" />
+                        </div>
+                        <div className="space-y-1.5 col-span-1 lg:col-span-1">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">CGST (%)</label>
+                          <div className="flex flex-col gap-1">
+                            <AppInput type="number" value={item.cgstPercent} onChange={(e) => handleLineItemChange(item.id, "cgstPercent", e.target.value)} className="h-10 text-sm px-2" placeholder="%" />
+                            <span className="text-[10px] text-muted truncate leading-none">Amt: {item.cgstAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 col-span-1 lg:col-span-1">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">SGST (%)</label>
+                          <div className="flex flex-col gap-1">
+                            <AppInput type="number" value={item.sgstPercent} onChange={(e) => handleLineItemChange(item.id, "sgstPercent", e.target.value)} className="h-10 text-sm px-2" placeholder="%" />
+                            <span className="text-[10px] text-muted truncate leading-none">Amt: {item.sgstAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 col-span-1 lg:col-span-1">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">IGST (%)</label>
+                          <div className="flex flex-col gap-1">
+                            <AppInput type="number" value={item.igstPercent} onChange={(e) => handleLineItemChange(item.id, "igstPercent", e.target.value)} className="h-10 text-sm px-2" placeholder="%" />
+                            <span className="text-[10px] text-muted truncate leading-none">Amt: {item.igstAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 col-span-1 lg:col-span-1">
+                          <label className="text-xs font-semibold text-muted uppercase tracking-wider">Discount</label>
+                          <AppInput type="number" value={item.discount} onChange={(e) => handleLineItemChange(item.id, "discount", e.target.value)} className="h-10 text-sm px-2" />
+                        </div>
+                      </div>
+                      
+                      <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-end">
+                        <div className="text-sm font-semibold text-muted mr-3 uppercase tracking-wider">Net Amount:</div>
+                        <div className="text-xl font-bold text-theme-icon">{item.netAmount.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                {solutionLineItems.length > 0 && (
+                  <div className="p-5 border border-border bg-surface rounded-xl flex items-center justify-end shadow-sm">
+                    <div className="text-base font-bold text-muted mr-4 uppercase tracking-wider">Total Net Amount:</div>
+                    <div className="text-2xl font-black text-success">
+                      {solutionLineItems.reduce((sum, i) => sum + i.netAmount, 0).toFixed(2)}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             </>)}
@@ -1765,7 +1769,42 @@ export default function AMCPage() {
           </div>
         </div>
       )}
+
+      {/* Reveal License Modal */}
+      {revealLicenseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border/50">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Lock className="h-5 w-5 text-theme-icon" /> Reveal License Key
+              </h2>
+              <button onClick={() => setRevealLicenseModal(null)} className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface/5 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-muted">
+                You are about to view a restricted license key. Please provide a reason or remark for this action. This will be recorded in the audit trail.
+              </p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Reason / Remark</label>
+                <AppInput 
+                  value={revealLicenseRemark} 
+                  onChange={(e) => setRevealLicenseRemark(e.target.value)} 
+                  placeholder="e.g., Troubleshooting issue #1234" 
+                  className="h-11"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t border-border/50 flex justify-end gap-3 bg-elevated">
+              <AppButton variant="secondary" onClick={() => setRevealLicenseModal(null)}>Cancel</AppButton>
+              <AppButton variant="primary" onClick={handleRevealLicenseSubmit}>Confirm & Reveal</AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+
     </PageContainer>
   );
 }
-

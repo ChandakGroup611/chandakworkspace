@@ -152,10 +152,19 @@ export default function LoginPage() {
     try {
       setErrorMsg(null);
       setSsoLoading(true);
+
       const searchParams = new URLSearchParams(window.location.search);
-      const next = searchParams.get("next");
-      const callbackUrl = next 
-        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` 
+      const next = searchParams.get("next") || "/";
+
+      // Check if user is already authenticated before initiating SSO
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push(next);
+        return;
+      }
+
+      const callbackUrl = searchParams.has("next") 
+        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(searchParams.get("next")!)}` 
         : `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOAuth({
