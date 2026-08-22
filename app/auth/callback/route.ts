@@ -15,9 +15,28 @@ export async function GET(request: Request) {
     const supabase = createClient(cookieStore);
     
     // Exchange the auth code for a user session
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
     
-    if (!error) {
+    if (!error && sessionData?.user) {
+      // Check if user is registered in the system
+      const { data: userRecord } = await supabase
+        .from('user_master')
+        .select('id, is_active, is_deleted')
+        .eq('id', sessionData.user.id)
+        .maybeSingle();
+
+      if (!userRecord) {
+        // User not found in user_master
+        await supabase.auth.signOut();
+        return NextResponse.redirect(`${origin}/login?error=not-registered`);
+      }
+
+      if (userRecord.is_deleted || userRecord.is_active === false) {
+        // User is deactivated or deleted
+        await supabase.auth.signOut();
+        return NextResponse.redirect(`${origin}/login?error=account-disabled`);
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     } else {
       console.error("Auth Callback Error:", error.message);

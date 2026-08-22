@@ -48,7 +48,15 @@ export default function LoginPage() {
 
       const finalError = urlErrorDesc || urlError || hashErrorDesc || hashError;
       if (finalError) {
-        setErrorMsg(`Authentication failed: ${finalError.replace(/\+/g, ' ')}`);
+        if (finalError === "not-registered") {
+          setErrorMsg("Your account is not registered in our system. Please contact your administrator.");
+        } else if (finalError === "account-disabled") {
+          setErrorMsg("Your account has been disabled. Please contact your administrator.");
+        } else if (finalError === "account-deleted") {
+          setErrorMsg("Your account has been deleted. Please contact your administrator.");
+        } else {
+          setErrorMsg(`Authentication failed: ${finalError.replace(/\+/g, ' ')}`);
+        }
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isLogout) {
         const { data: { session } } = await supabase.auth.getSession();

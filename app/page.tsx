@@ -20,8 +20,13 @@ export default async function Page() {
       .from("user_master")
       .select("department_id, designation_id, manager_id, role_id, is_deleted")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
       
+    if (!profile) {
+      await supabase.auth.signOut();
+      redirect("/login?error=not-registered");
+    }
+
     if (profile?.is_deleted) {
       await supabase.auth.signOut();
       redirect("/login?error=account-deleted");
