@@ -218,25 +218,25 @@ export default function LoginPage() {
         }
       `}} />
       {/* LEFT PANEL - Branding / Image Split */}
-      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-[#020617] text-white">
+      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-surface text-foreground">
         <Image 
           src="/login-bg.png"
           alt="Abstract Background"
           fill
           priority
-          className="object-cover opacity-90"
+          className="object-cover opacity-10 dark:opacity-30 mix-blend-luminosity"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/70 to-slate-900/40"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/80 to-surface/20"></div>
         
         {/* Abstract Glow Effects */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-theme-btn-primary/30 blur-[120px] animate-pulse duration-[10000ms]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-theme-btn-primary text-theme-btn-primary-text/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-theme-btn-primary/20 blur-[150px] animate-pulse duration-[12000ms]"></div>
 
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
           
           {/* Logo - Pushed to Absolute Top */}
           <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
-            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-white rounded-2xl p-4 shadow-2xl border border-white/30 flex items-center justify-center">
+            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-background rounded-2xl p-4 shadow-xl border border-border flex items-center justify-center">
               <img 
                 src="/Chandak-Group-Final-Logo.svg" 
                 alt="Chandak Logo" 
@@ -247,13 +247,13 @@ export default function LoginPage() {
 
           {/* Main Text - Perfectly Centered */}
           <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-[#FFFFFF] mb-12 leading-tight drop-shadow-lg">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-12 leading-tight drop-shadow-sm">
               Intelligent Governance <br />
               <span className="text-transparent bg-clip-text bg-surface border border-border/50 text-foreground from-accent to-cyan-400">
                 & Enterprise Mastery
               </span>
             </h1>
-            <p className="text-[#E2E8F0] text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-md">
+            <p className="text-muted-foreground text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-sm">
               Securely orchestrate enterprise operations, manage identities, and automate workflows in one unified platform.
             </p>
           </div>
