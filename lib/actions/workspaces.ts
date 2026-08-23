@@ -1256,7 +1256,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
         priority:priority_master(name:priority_name, code:priority_code, priority_color),
         department:departments(id, name),
         participants:task_participants(user_id, participation_role),
-        workspace:workspaces(id, workspace_name, workspace_code, parent_workspace_id)
+        workspace:workspaces(id, name:workspace_name, code:workspace_code, parent_workspace_id)
       `)
       .in("workspace_id", targetWorkspaceIds)
       .eq("is_deleted", false);
@@ -1425,7 +1425,7 @@ export async function fetchAllTasks() {
       priority:priority_master(name:priority_name, code:priority_code, priority_color),
       department:departments(id, name),
       participants:task_participants(user_id, participation_role),
-      workspace:workspaces(id, workspace_name, workspace_code, parent_workspace_id)
+      workspace:workspaces(id, name:workspace_name, code:workspace_code, parent_workspace_id)
     `)
     .eq("is_deleted", false);
 
