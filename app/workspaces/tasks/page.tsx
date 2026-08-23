@@ -8,9 +8,16 @@ export const metadata: Metadata = {
   description: "Detailed and filterable list of all workspace tasks.",
 };
 
-import { fetchAllTasks } from "@/lib/actions/workspaces";
+import { fetchAllTasks, fetchTasksByWorkspace } from "@/lib/actions/workspaces";
 
-export default async function TasksPage() {
+interface TasksPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function TasksPage({ searchParams }: TasksPageProps) {
+  const sp = await searchParams;
+  const workspaceId = typeof sp?.workspaceId === "string" ? sp.workspaceId : null;
+
   const canAccess = await checkServerPermission("TASKS_VIEW");
   if (!canAccess) {
     return (
@@ -23,7 +30,7 @@ export default async function TasksPage() {
     );
   }
 
-  const tasks = await fetchAllTasks();
+  const tasks = workspaceId ? await fetchTasksByWorkspace(workspaceId, 1, 50, true) : await fetchAllTasks();
   
   return (
     <div className="w-full h-full animate-in fade-in-50 duration-500">
@@ -33,4 +40,3 @@ export default async function TasksPage() {
     </div>
   );
 }
-
