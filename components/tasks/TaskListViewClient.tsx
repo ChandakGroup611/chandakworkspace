@@ -1177,7 +1177,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         const parts = wsName.split(' - ');
                         const mainWorkspace = parts[0];
                         return (
-                          <AppTableCell className="text-subtle text-center truncate max-w-[0px] px-2" title={mainWorkspace}>{mainWorkspace}</AppTableCell>
+                          <AppTableCell className="text-subtle text-center px-2" title={mainWorkspace}>
+                            <div className="max-w-[120px] truncate mx-auto">{mainWorkspace}</div>
+                          </AppTableCell>
                         );
                       }
                       case "sub_workspace": {
@@ -1194,11 +1196,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         const subParts = subName.split(' - ');
                         const finalSubName = subParts[subParts.length - 1]?.trim() || subName;
                         return (
-                          <AppTableCell className="text-subtle text-center truncate max-w-[0px] px-2" title={finalSubName}>{finalSubName}</AppTableCell>
+                          <AppTableCell className="text-subtle text-center px-2" title={finalSubName}>
+                            <div className="max-w-[120px] truncate mx-auto">{finalSubName}</div>
+                          </AppTableCell>
                         );
                       }
                       case "department": return (
-                        <AppTableCell className="text-subtle whitespace-nowrap text-center truncate max-w-[0px] px-2">
+                        <AppTableCell className="text-subtle whitespace-nowrap text-center px-2">
                           <Popover.Root>
                             <Popover.Trigger asChild>
                               <AppButton variant="secondary" 

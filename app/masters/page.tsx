@@ -819,7 +819,7 @@ export default function MastersPage() {
                                     </span>
                                   </div>
                                   {rec.description && (
-                                    <span className={`text-xs block line-clamp-1 max-w-[180px] ${"text-muted"}`}>{rec.description}</span>
+                                    <span className={`text-xs block whitespace-normal break-words text-muted`}>{rec.description}</span>
                                   )}
                                 </div>
                               </AppTableCell>
@@ -827,7 +827,7 @@ export default function MastersPage() {
                               {/* Dynamic Render based on specific column mappings */}
                               {currentConfig.parentTable && (
                                 <AppTableCell>
-                                  <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block truncate max-w-[120px] ${
+                                  <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block whitespace-normal break-words ${
                                     "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
                                   }`} title={rec[currentConfig.parentKey!]}>
                                     {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || 
