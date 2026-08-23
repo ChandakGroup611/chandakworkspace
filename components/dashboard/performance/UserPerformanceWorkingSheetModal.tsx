@@ -274,7 +274,7 @@ export function UserPerformanceWorkingSheetModal({
               Print
             </AppButton>
 
-            <AppButton
+            <AppButton variant="ghost"
               onClick={onClose}
               className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface dark:hover:bg-surface/10 transition-colors ml-1"
             >

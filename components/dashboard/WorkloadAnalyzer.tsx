@@ -56,7 +56,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               <p className="text-xs text-muted">Capacity & bandwidth analysis</p>
             </div>
           </div>
-          <AppButton onClick={onClose} className="p-1 rounded hover:bg-surface dark:hover:bg-surface/10 text-muted transition-colors">
+          <AppButton variant="ghost" onClick={onClose} className="p-1 rounded hover:bg-surface dark:hover:bg-surface/10 text-muted transition-colors">
             <X className="h-4 w-4" />
           </AppButton>
         </div>
@@ -116,7 +116,7 @@ export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, 
               </div>
             </div>
 
-            <AppButton 
+            <AppButton variant="ghost" 
               onClick={onClose}
               className={`w-full py-2 rounded-lg text-sm font-bold transition-colors ${
                 "bg-elevated text-muted hover:bg-elevated"

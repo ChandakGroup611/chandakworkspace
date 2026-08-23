@@ -925,6 +925,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
                 <AppButton
                   key={sc}
+                  variant="ghost"
                   onClick={() => setScope(sc)}
                   className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap ${scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
                 >

@@ -67,7 +67,7 @@ export function EnterpriseDrawerShell({
             {title && <h2 className={`text-xl font-extrabold tracking-tight ${"text-theme-heading"}`}>{title}</h2>}
             {subtitle && <div className="text-sm text-muted mt-1">{subtitle}</div>}
           </div>
-          <AppButton 
+          <AppButton variant="ghost" 
             onClick={onClose}
             type="button"
             className={`p-2 rounded-xl transition-colors shrink-0 ${

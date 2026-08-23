@@ -81,7 +81,7 @@ export function EnterpriseWizardShell({
             {title && <div className={`text-xl font-semibold tracking-tight ${"text-theme-heading"}`}>{title}</div>}
             {subtitle && <div className={`mt-1 text-sm ${"text-muted"}`}>{subtitle}</div>}
           </div>
-          <AppButton 
+          <AppButton variant="ghost" 
             onClick={onClose}
             type="button"
             className="relative z-10 p-2 rounded-md transition-all shrink-0 active:scale-95 text-muted-foreground hover:text-foreground hover:bg-surface"

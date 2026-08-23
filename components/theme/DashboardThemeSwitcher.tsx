@@ -21,7 +21,7 @@ export function DashboardThemeSwitcher() {
 
   return (
     <div className="relative group">
-      <AppButton className="flex items-center justify-center p-2 rounded-xl bg-surface/50 hover:bg-surface transition-colors border border-border text-muted">
+      <AppButton variant="ghost" className="flex items-center justify-center p-2 rounded-xl bg-surface/50 hover:bg-surface transition-colors border border-border text-muted">
         <Palette className="w-5 h-5" />
       </AppButton>
 

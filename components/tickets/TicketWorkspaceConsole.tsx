@@ -714,7 +714,7 @@ export function TicketWorkspaceConsole({
               )}
             </div>
             
-            <AppButton 
+            <AppButton variant="ghost" 
               type="button"
               className="p-1 rounded-lg transition-colors hover:bg-surface/5 dark:hover:theme-card-structural/10 text-muted-foreground"
             >

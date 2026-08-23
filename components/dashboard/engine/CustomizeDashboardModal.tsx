@@ -88,7 +88,7 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
             <h2 className="text-lg font-bold text-foreground tracking-tight">Customize Dashboard</h2>
             <p className="text-xs text-muted-foreground mt-1">Drag to reorder widgets. Set widths for your command center.</p>
           </div>
-          <AppButton variant="primary" onClick={onClose} className="p-2 text-muted-foreground hover:opacity-90/10 hover:text-theme-icon rounded-full transition-colors">
+          <AppButton variant="ghost" onClick={onClose} className="p-2 text-muted-foreground hover:opacity-90/10 hover:text-theme-icon rounded-full transition-colors">
             <X className="w-5 h-5" />
           </AppButton>
         </div>

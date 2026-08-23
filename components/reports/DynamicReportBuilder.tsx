@@ -153,7 +153,7 @@ export default function DynamicReportBuilder({
             </h2>
             <p className="text-xs text-muted mt-1 font-medium">Add, remove, or drag columns to rearrange your personal view.</p>
           </div>
-          <AppButton variant="primary" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-surface/10 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+          <AppButton variant="ghost" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-surface/10 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </AppButton>
         </div>

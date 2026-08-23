@@ -78,7 +78,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
             <LayoutTemplate className="h-5 w-5 text-theme-icon" />
             <h2 className="font-bold text-lg">Task Templates Manager</h2>
           </div>
-          <AppButton variant="primary" onClick={onClose} className="p-1 rounded-md hover:bg-surface/10 dark:hover:bg-surface/10 transition-colors">
+          <AppButton variant="ghost" onClick={onClose} className="p-1 rounded-md hover:bg-surface/10 dark:hover:bg-surface/10 transition-colors">
             <X className="h-5 w-5" />
           </AppButton>
         </div>

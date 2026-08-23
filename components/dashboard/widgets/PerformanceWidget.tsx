@@ -74,7 +74,7 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
         className="h-[400px]"
         noPadding
         headerRight={
-          <AppButton 
+          <AppButton variant="ghost" 
             onClick={handleOpenTopPerformer}
             className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1 bg-transparent border-0 p-0"
           >

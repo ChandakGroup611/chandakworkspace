@@ -414,7 +414,7 @@ export default function RegisterPage() {
 
               <div className="pt-6">
                 <AppButton 
-                  variant="primary" 
+                  variant="ghost" 
                   size="md" 
                   type="submit" 
                   disabled={loading || !!successMsg}

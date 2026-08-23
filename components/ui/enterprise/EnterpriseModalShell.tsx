@@ -69,7 +69,7 @@ export function EnterpriseModalShell({
               {title && <h2 className={`text-lg font-bold tracking-tight ${"text-theme-heading"}`}>{title}</h2>}
               {subtitle && <div className="text-xs text-muted mt-1">{subtitle}</div>}
             </div>
-            <AppButton 
+            <AppButton variant="ghost" 
               onClick={onClose}
               type="button"
               className={`p-2 rounded-xl transition-colors ${
