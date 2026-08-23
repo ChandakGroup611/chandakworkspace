@@ -24,7 +24,6 @@ export default function LoginPage() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mounted, setMounted] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
@@ -33,7 +32,6 @@ export default function LoginPage() {
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const checkSession = async () => {
       if (typeof window === "undefined") return;
       
@@ -203,16 +201,6 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-4">
           <span className="h-10 w-10 rounded-full border-4 border-current border-t-transparent animate-spin text-theme-icon" />
           <p className="text-lg font-semibold tracking-wide text-muted-foreground">Completing sign in...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!mounted) {
-    return (
-      <div className="flex h-screen w-full bg-[#020617] text-white font-sans overflow-hidden items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <span className="h-10 w-10 rounded-full border-4 border-current border-t-transparent animate-spin" />
         </div>
       </div>
     );
