@@ -213,7 +213,7 @@ export default function Sidebar() {
       className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none bg-surface/40 border-r border-border/30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${ isCompact ? "w-16" : "w-[240px]" }`}
     >
       {/* Sidebar Top Master Header */}
-      <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-2 px-4 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
+      <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-0 px-4 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
         {!isCompact ? (
           <Link href="/" className="flex flex-col gap-3 overflow-hidden">
             <div className={`flex items-center justify-start transition-all duration-300 h-14 w-[180px] shrink-0 bg-white rounded-lg p-2 shadow-sm border border-border/30`}>
@@ -245,7 +245,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation Group Links */}
-      <div className="flex-1 px-3 py-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <div className="flex-1 px-3 pt-2 pb-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {visibleNavTree.map((group, groupIdx) => {
           const groupColorClass = groupIdx === 0 
             ? "text-accent dark:text-accent" 
@@ -256,7 +256,7 @@ export default function Sidebar() {
           return (
             <div key={groupIdx} className="flex flex-col mb-2">
               {!isCompact && (
-                <div className="px-3 mb-2 mt-5 flex items-center gap-1.5">
+                <div className={`px-3 mb-2 ${groupIdx === 0 ? "mt-1" : "mt-5"} flex items-center gap-1.5`}>
                   <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted/70">
                     {group.label}
                   </span>
