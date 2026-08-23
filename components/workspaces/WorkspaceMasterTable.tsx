@@ -159,7 +159,7 @@ export function WorkspaceMasterTable({
             const isOnline = onlineUsers.has(uid);
             return (
               <div key={idx} className="relative">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white border-2 border-white`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : 'var(--accent-primary, #4f46e5)' }}>
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-[#ffffff] border-2 border-white`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : 'var(--accent-primary, #4f46e5)' }}>
                   {uInfo?.profile_photo ? <img src={uInfo.profile_photo} className="h-full w-full rounded-full" alt="" /> : (uInfo?.full_name?.substring(0,2).toUpperCase() || "U")}
                 </div>
                 <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white ${isOnline ? 'bg-success' : 'bg-danger'}`}></div>
@@ -167,7 +167,7 @@ export function WorkspaceMasterTable({
             );
           })}
           {extraCount > 0 && (
-            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-subtle bg-elevated border-2 border-white`}>
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-[#ffffff] border-2 border-white`} style={{ backgroundColor: 'var(--accent-primary, #4f46e5)' }}>
               +{extraCount}
             </div>
           )}
@@ -287,9 +287,7 @@ export function WorkspaceMasterTable({
                   <AppButton 
                     onClick={(e) => toggleNode(node, e)}
                     disabled={loadingNodes[node.id]}
-                    className={`p-0.5 rounded-md transition-colors relative z-20 ${
-                      "text-muted hover:bg-surface-hover hover:text-foreground"
-                    } ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
+                    className={`p-0.5 rounded-md transition-colors relative z-20 text-white hover:brightness-110 ${loadingNodes[node.id] ? 'opacity-50' : ''}`}
                   >
                     {loadingNodes[node.id] ? (
                       <div className="h-4 w-4 rounded-full border-2 border-theme-icon border-t-transparent animate-spin" />
@@ -310,11 +308,11 @@ export function WorkspaceMasterTable({
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
                       isWorkspaceType ? (depth === 0 ? 'text-theme-icon dark:text-theme-icon' : 'text-theme-icon/80') : 'text-success'
                     }`} />
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className={`truncate ${
-                        isWorkspaceType ? 'font-semibold tracking-tight text-sm' : 
-                        isSubWorkspace ? 'font-medium tracking-tight text-[13px]' : 
-                        'text-[13px] font-normal'
+                    <div className="flex items-center gap-2 min-w-0 flex-1 py-1">
+                      <span className={`${
+                        isWorkspaceType ? 'truncate font-semibold tracking-tight text-sm' : 
+                        isSubWorkspace ? 'truncate font-medium tracking-tight text-[13px]' : 
+                        'whitespace-normal break-words text-[13px] font-normal leading-snug'
                       } ${
                         (depth === 0 ? 'text-foreground group-hover:text-theme-icon transition-colors' : 'text-foreground/80 group-hover:text-foreground transition-colors')
                       }`}>
