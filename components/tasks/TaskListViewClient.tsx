@@ -962,7 +962,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl bg-surface/95 border border-border/50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
-                    <AppButton onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
+                    <AppButton onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); fetchTasksData(1, false, null); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
                       <RotateCcw className="h-3 w-3" /> Reset
                     </AppButton>
                   </div>
