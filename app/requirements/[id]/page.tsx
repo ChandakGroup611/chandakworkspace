@@ -1861,10 +1861,10 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-1">
                                   <span className="theme-data-value text-foreground truncate">{log.user?.full_name || log.actor_name || 'System Actor'}</span>
-                                  <span className="theme-label text-muted">{new Date(log.created_at || log.timestamp).toLocaleString()}</span>
+                                  <span className="theme-label text-muted">{new Date(log.performed_at || log.created_at || log.timestamp).toLocaleString()}</span>
                                 </div>
                                 <div className="theme-data-value text-muted-foreground leading-relaxed break-words">
-                                  <SafeHtml html={log.action || log.remarks || log.message || '-'} />
+                                  <SafeHtml html={log.new_value?.remarks || log.new_value?.message || log.action || log.remarks || log.message || '-'} />
                                 </div>
                               </div>
                             </div>

@@ -80,6 +80,14 @@ export function TicketWorkspaceConsole({
       if (!ticket?.dbId) return;
       const activeAssignees = await fetchAssignees();
       setAssigneesList(activeAssignees);
+      try {
+        const comments = await fetchTicketComments(ticket.dbId);
+        setRemarksHistory(comments);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingRemarksHistory(false);
+      }
     }
     loadInitialData();
   }, [ticket]);
