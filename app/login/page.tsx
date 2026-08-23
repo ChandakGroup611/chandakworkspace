@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [ssoLoading, setSsoLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isOAuthCallback, setIsOAuthCallback] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -45,6 +46,11 @@ export default function LoginPage() {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const hashError = hashParams.get("error");
       const hashErrorDesc = hashParams.get("error_description");
+      const accessToken = hashParams.get("access_token");
+
+      if (accessToken) {
+        setIsOAuthCallback(true);
+      }
 
       const finalError = urlErrorDesc || urlError || hashErrorDesc || hashError;
       if (finalError) {
@@ -189,19 +195,30 @@ export default function LoginPage() {
     }
   };
 
+  if (isOAuthCallback) {
+    return (
+      <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <span className="h-10 w-10 rounded-full border-4 border-current border-t-transparent animate-spin text-theme-icon" />
+          <p className="text-lg font-semibold tracking-wide text-muted-foreground">Completing sign in...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="dark theme-dark flex h-screen w-full bg-[#0A0D14] text-white font-sans overflow-hidden" data-theme="glass-intelligence" style={{ colorScheme: 'dark' }}>
+    <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
         input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #0A0D14 inset !important;
-            -webkit-text-fill-color: white !important;
+            -webkit-box-shadow: 0 0 0 30px var(--color-surface) inset !important;
+            -webkit-text-fill-color: var(--color-foreground) !important;
         }
       `}} />
       {/* LEFT PANEL - Branding / Image Split */}
-      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-slate-950">
+      <div className="relative hidden lg:flex flex-col w-1/2 h-full overflow-hidden bg-[#020617] text-white">
         <Image 
           src="/login-bg.png"
           alt="Abstract Background"
@@ -230,13 +247,13 @@ export default function LoginPage() {
 
           {/* Main Text - Perfectly Centered */}
           <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight !text-white mb-12 leading-tight drop-shadow-lg">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-[#FFFFFF] mb-12 leading-tight drop-shadow-lg">
               Intelligent Governance <br />
               <span className="text-transparent bg-clip-text bg-surface border border-border/50 text-foreground from-accent to-cyan-400">
                 & Enterprise Mastery
               </span>
             </h1>
-            <p className="!text-slate-200 text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-md">
+            <p className="text-[#E2E8F0] text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-md">
               Securely orchestrate enterprise operations, manage identities, and automate workflows in one unified platform.
             </p>
           </div>
@@ -245,7 +262,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT PANEL - Authentication Form */}
-      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-[#0F131E] lg:bg-[#0A0D14] relative text-white">
+      <div className="w-full lg:w-1/2 h-full flex flex-col overflow-y-auto bg-background relative text-foreground">
         {/* Subtle grid on right panel for texture */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20 pointer-events-none"></div>
 
@@ -263,10 +280,10 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-10 lg:mb-12">
-              <h2 className="text-3xl font-bold mb-2" style={{ color: '#ffffff' }}>
+              <h2 className="text-3xl font-bold mb-2 text-foreground">
                 Welcome back
               </h2>
-              <p className="mb-4" style={{ color: '#9ca3af' }}>
+              <p className="mb-4 text-muted-foreground">
                 Please enter your details to sign in to your workspace.
               </p>
             </div>
@@ -293,7 +310,7 @@ export default function LoginPage() {
             <form onSubmit={handleStandardAuthSubmit} className="space-y-5" autoComplete="off">
 
               <div className="space-y-2">
-                <label className="text-sm font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
+                <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   Email Address
                 </label>
                 <AppInput 
@@ -303,14 +320,14 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12 bg-surface border-border focus:bg-surface transition-colors text-foreground"
                   required
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold uppercase tracking-wider" style={{ color: '#9ca3af' }}>
+                  <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     Password
                   </label>
                   <Link href="#" onClick={(e) => { e.preventDefault(); toast.warning("Contact administrator to reset password."); }} className="text-xs font-semibold text-theme-icon hover:text-theme-icon/80 transition-colors">
@@ -324,7 +341,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4 text-muted-foreground" />}
-                  className="h-12 bg-[#0A0D14] lg:bg-surface/5 border-border focus:bg-[#0A0D14] transition-colors text-white"
+                  className="h-12 bg-surface border-border focus:bg-surface transition-colors text-foreground"
                   required
                 />
               </div>
@@ -361,7 +378,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-border"></span>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#0F131E] lg:bg-[#0A0D14] px-4 font-semibold tracking-widest" style={{ color: '#9ca3af' }}>
+                <span className="bg-background px-4 font-semibold tracking-widest text-muted-foreground">
                   Or Continue With
                 </span>
               </div>
@@ -372,15 +389,15 @@ export default function LoginPage() {
               variant="outline"
               onClick={handleMicrosoftLogin}
               disabled={ssoLoading}
-              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-surface/5 font-semibold bg-[#0A0D14] lg:bg-transparent border border-border"
+              className="w-full h-12 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-surface/50 font-semibold bg-transparent border border-border text-foreground"
             >
               {ssoLoading ? (
-                <div className="flex items-center gap-2 text-white">
+                <div className="flex items-center gap-2 text-foreground">
                   <span className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
                   Connecting to Microsoft...
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-white">
+                <div className="flex items-center gap-2 text-foreground">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 21 21">
                     <path fill="#f25022" d="M1 1h9v9H1z"/>
                     <path fill="#00a4ef" d="M1 11h9v9H1z"/>

@@ -57,12 +57,16 @@
     
     transition: all 0.2s;
   }
-  [data-theme="dark-neumorphic"] .theme-input-structural:focus {
-
+  [data-theme="dark-neumorphic"] .theme-input-structural:focus:not(:disabled) {
     outline: none !important;
-    border: 1px solid var(--btn-primary-bg, #6366f1) !important;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
-}
+    border: 1px solid var(--btn-primary-bg, #10b981) !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+  }
+  [data-theme="dark-neumorphic"] .theme-input-structural:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #1e212b !important;
+  }
 
   /* Buttons - Tactile Dark Buttons */
   [data-theme="dark-neumorphic"] .theme-button-structural {
@@ -77,16 +81,26 @@
       -6px -6px 10px #1c1f28 !important;
     transition: all 0.2s ease;
   }
-  [data-theme="dark-neumorphic"] .theme-button-structural:hover {
+  [data-theme="dark-neumorphic"] .theme-button-structural:hover:not(:disabled) {
     box-shadow: 
       4px 4px 6px #08090c,
       -4px -4px 6px #1c1f28 !important;
     transform: translateY(2px);
   }
-  [data-theme="dark-neumorphic"] .theme-button-structural:active {
+  [data-theme="dark-neumorphic"] .theme-button-structural:active:not(:disabled) {
     box-shadow: 
       inset 4px 4px 6px #08090c,
       inset -4px -4px 6px #1c1f28 !important;
+  }
+  [data-theme="dark-neumorphic"] .theme-button-structural:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+  }
+  [data-theme="dark-neumorphic"] .theme-button-structural:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
   }
   
   [data-theme="dark-neumorphic"] .theme-button-structural.theme-btn-primary {
@@ -96,7 +110,7 @@
       6px 6px 10px rgba(16, 185, 129, 0.15),
       -6px -6px 10px #1c1f28 !important;
   }
-  [data-theme="dark-neumorphic"] .theme-button-structural.theme-btn-primary:active {
+  [data-theme="dark-neumorphic"] .theme-button-structural.theme-btn-primary:active:not(:disabled) {
     box-shadow: 
       inset 4px 4px 6px rgba(0,0,0,0.4),
       inset -4px -4px 6px rgba(255,255,255,0.05) !important;

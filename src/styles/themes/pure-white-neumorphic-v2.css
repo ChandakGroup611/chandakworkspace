@@ -5,7 +5,7 @@
     --bg-elevated: #ffffff;
     --text-primary: #1e293b;
     --btn-primary-bg: #10b981;
-    --btn-primary-text: #ffffff;
+    --btn-primary-text: #022c22;
     --btn-secondary-bg: #F5F5F5;
     --btn-secondary-text: #0f172a;
     --tab-active-bg: #ecfdf5;
@@ -57,12 +57,16 @@
     
     transition: all 0.2s;
   }
-  [data-theme="pure-white-neumorphic"] .theme-input-structural:focus {
-  
+  [data-theme="pure-white-neumorphic"] .theme-input-structural:focus:not(:disabled) {
     outline: none !important;
-    border: 1px solid var(--btn-primary-bg, #6366f1) !important;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
-}
+    border: 1px solid var(--btn-primary-bg, #10b981) !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+  }
+  [data-theme="pure-white-neumorphic"] .theme-input-structural:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f8fafc !important;
+  }
 
   /* Buttons - Tactile Neumorphic Buttons */
   [data-theme="pure-white-neumorphic"] .theme-button-structural {
@@ -77,16 +81,26 @@
       -6px -6px 10px 0 rgba(255, 255, 255, 1) !important;
     transition: all 0.2s ease;
   }
-  [data-theme="pure-white-neumorphic"] .theme-button-structural:hover {
+  [data-theme="pure-white-neumorphic"] .theme-button-structural:hover:not(:disabled) {
     box-shadow: 
       4px 4px 6px 0 rgba(148, 163, 184, 0.25),
       -4px -4px 6px 0 rgba(255, 255, 255, 1) !important;
     transform: translateY(2px);
   }
-  [data-theme="pure-white-neumorphic"] .theme-button-structural:active {
+  [data-theme="pure-white-neumorphic"] .theme-button-structural:active:not(:disabled) {
     box-shadow: 
       inset 4px 4px 6px 0 rgba(148, 163, 184, 0.25),
       inset -4px -4px 6px 0 rgba(255, 255, 255, 1) !important;
+  }
+  [data-theme="pure-white-neumorphic"] .theme-button-structural:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+  }
+  [data-theme="pure-white-neumorphic"] .theme-button-structural:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
   }
   
   /* Primary Button is slightly colored but still neumorphic */
@@ -97,7 +111,7 @@
       6px 6px 10px 0 rgba(16, 185, 129, 0.3),
       -6px -6px 10px 0 rgba(255, 255, 255, 1) !important;
   }
-  [data-theme="pure-white-neumorphic"] .theme-button-structural.theme-btn-primary:active {
+  [data-theme="pure-white-neumorphic"] .theme-button-structural.theme-btn-primary:active:not(:disabled) {
     box-shadow: 
       inset 4px 4px 6px 0 rgba(0, 0, 0, 0.2),
       inset -4px -4px 6px 0 rgba(255, 255, 255, 0.2) !important;

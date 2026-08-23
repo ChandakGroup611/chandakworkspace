@@ -5,7 +5,7 @@
     --bg-elevated: rgba(30, 30, 30, 0.6);
     --text-primary: #ffffff;
     --btn-primary-bg: #0ea5e9;
-    --btn-primary-text: #ffffff;
+    --btn-primary-text: #0f172a;
     --btn-secondary-bg: rgba(255, 255, 255, 0.1);
     --btn-secondary-text: #ffffff;
     --tab-active-bg: rgba(14, 165, 233, 0.15);
@@ -78,13 +78,17 @@
     
     transition: all 0.2s;
   }
-  [data-theme="industrial-control"] .theme-input-structural:focus {
+  [data-theme="industrial-control"] .theme-input-structural:focus:not(:disabled) {
     background: rgba(10, 10, 10, 0.8) !important;
-  
     outline: none !important;
-    border: 1px solid var(--btn-primary-bg, #6366f1) !important;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
-}
+    border: 1px solid var(--btn-primary-bg, #0ea5e9) !important;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.25) !important;
+  }
+  [data-theme="industrial-control"] .theme-input-structural:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.3) !important;
+  }
 
   /* Buttons - Glowing Glass Pills */
   [data-theme="industrial-control"] .theme-button-structural {
@@ -101,7 +105,7 @@
       0 4px 15px rgba(0,0,0,0.5) !important;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  [data-theme="industrial-control"] .theme-button-structural:hover {
+  [data-theme="industrial-control"] .theme-button-structural:hover:not(:disabled) {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)) !important;
     border-color: rgba(255, 255, 255, 0.3) !important;
     box-shadow: 
@@ -109,6 +113,16 @@
       0 8px 25px rgba(0,0,0,0.6),
       0 0 15px rgba(255,255,255,0.05) !important;
     transform: translateY(-1px);
+  }
+  [data-theme="industrial-control"] .theme-button-structural:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.4) !important;
+  }
+  [data-theme="industrial-control"] .theme-button-structural:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
   }
   [data-theme="industrial-control"] .theme-button-structural.theme-btn-primary {
     background: var(--btn-primary-bg) !important;
@@ -118,7 +132,7 @@
       inset 1px 1px 0 rgba(255,255,255,0.4),
       0 8px 20px rgba(99, 102, 241, 0.4) !important;
   }
-  [data-theme="industrial-control"] .theme-button-structural.theme-btn-primary:hover {
+  [data-theme="industrial-control"] .theme-button-structural.theme-btn-primary:hover:not(:disabled) {
     background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(14, 165, 233, 1)) !important;
     box-shadow: 
       inset 1px 1px 0 rgba(255,255,255,0.6),
