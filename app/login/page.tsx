@@ -24,6 +24,7 @@ export default function LoginPage() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mounted, setMounted] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [ssoLoading, setSsoLoading] = useState(false);
