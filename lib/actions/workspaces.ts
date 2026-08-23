@@ -1247,8 +1247,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
     const startIdx = (page - 1) * limit;
     const endIdx = startIdx + limit - 1;
 
-    // We select exact columns needed + related embedded resources to avoid N+1 queries.
-    const { data: workspaceTasks, error: tasksError } = await supabase
+    let query = supabase
       .from("tasks")
       .select(`
         id, subject, task_code, created_at, updated_at, start_date, end_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted, custom_fields,
@@ -1260,7 +1259,27 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
         workspace:workspaces(id, workspace_name, workspace_code, parent_workspace_id)
       `)
       .in("workspace_id", targetWorkspaceIds)
-      .eq("is_deleted", false)
+      .eq("is_deleted", false);
+
+    if (!canManageAll) {
+      const visibleWorkspaces = await getVisibleWorkspaces(userData.user.id);
+      const visibleWsIds = visibleWorkspaces.map((w: any) => w.id);
+
+      const { data: partData } = await supabaseAdmin.from("task_participants").select("task_id").eq("user_id", userData.user.id);
+      const partTaskIds = partData ? partData.map((p: any) => p.task_id) : [];
+
+      if (visibleWsIds.length > 0 && partTaskIds.length > 0) {
+        query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),id.in.(${partTaskIds.join(',')}),assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
+      } else if (visibleWsIds.length > 0) {
+        query = query.or(`workspace_id.in.(${visibleWsIds.join(',')}),assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
+      } else if (partTaskIds.length > 0) {
+        query = query.or(`id.in.(${partTaskIds.join(',')}),assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
+      } else {
+        query = query.or(`assigned_to.eq.${userData.user.id},owner_id.eq.${userData.user.id}`);
+      }
+    }
+
+    const { data: workspaceTasks, error: tasksError } = await query
       .order("created_at", { ascending: false })
       .range(startIdx, endIdx);
 
