@@ -217,7 +217,7 @@ export default function Sidebar() {
         {!isCompact ? (
           <Link href="/" className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
             <div className={`flex items-center justify-center transition-all duration-300 h-[64px] w-[180px] mx-auto shrink-0 px-2`}>
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain" />
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" />
             </div>
             <div className="flex flex-col min-w-0 justify-center items-center px-1">
               <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
@@ -228,7 +228,7 @@ export default function Sidebar() {
         ) : (
           <Link href="/" className="flex h-14 w-14 mx-auto shrink-0 items-center justify-center mt-1">
             <div className="h-12 w-12 mx-auto flex items-center justify-center rounded-lg mb-2 overflow-hidden px-1">
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain" />
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" />
             </div>
           </Link>
         )}

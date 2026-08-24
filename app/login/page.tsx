@@ -240,7 +240,7 @@ export default function LoginPage() {
               <img 
                 src="/Chandak-Group-Final-Logo.svg" 
                 alt="Chandak Logo" 
-                className="h-full w-auto max-w-full object-contain p-2"
+                className="h-full w-auto max-w-full object-contain p-2 dark:brightness-0 dark:invert"
               />
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function LoginPage() {
                 <img 
                   src="/Chandak-Group-Final-Logo.svg" 
                   alt="Chandak Logo" 
-                  className="h-full w-auto max-w-full object-contain"
+                  className="h-full w-auto max-w-full object-contain dark:brightness-0 dark:invert"
                 />
               </div>
             </div>
