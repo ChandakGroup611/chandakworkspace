@@ -339,7 +339,9 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     return Array.from(map.values()) as any[];
   }, [initialTasks]);
 
-  const filtered = useMemo(() => {
+  const [kpiFilter, setKpiFilter] = useState<string | null>(null);
+
+  const baseFiltered = useMemo(() => {
     return tasks.filter(t => {
       if (scope === "ASSIGNEE") {
         const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
@@ -424,18 +426,28 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   }, [tasks, scope, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo, columnFilters, combinedFields]);
 
   const kpis = useMemo(() => {
-    const total = filtered.length;
-    const open = filtered.filter(t => !t.status?.is_closed && !t.status?.name?.toLowerCase().includes('progress')).length;
-    const inProgress = filtered.filter(t => t.status?.name?.toLowerCase().includes('progress')).length;
-    const completed = filtered.filter(t => t.status?.is_closed || t.status?.name?.toLowerCase().includes('done')).length;
+    const total = baseFiltered.length;
+    const open = baseFiltered.filter(t => !t.status?.is_closed && !t.status?.name?.toLowerCase().includes('progress') && !t.status?.name?.toLowerCase().includes('done')).length;
+    const inProgress = baseFiltered.filter(t => t.status?.name?.toLowerCase().includes('progress')).length;
+    const completed = baseFiltered.filter(t => t.status?.is_closed || t.status?.name?.toLowerCase().includes('done')).length;
     
     return [
-      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-sky-500/10", iconColorClass: "text-sky-600 dark:text-sky-400" },
-      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon" },
-      { label: "In Progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-warning/10", iconColorClass: "text-warning dark:text-warning" },
-      { label: "Completed", value: completed, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-success/10", iconColorClass: "text-success dark:text-success" },
+      { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-sky-500/10", iconColorClass: "text-sky-600 dark:text-sky-400", onClick: () => setKpiFilter(null), isActive: kpiFilter === null },
+      { label: "Open", value: open, icon: <Layers className="h-5 w-5" />, iconBgClass: "bg-theme-btn-primary/10", iconColorClass: "text-theme-icon", onClick: () => setKpiFilter(kpiFilter === 'Open' ? null : 'Open'), isActive: kpiFilter === 'Open' },
+      { label: "In Progress", value: inProgress, icon: <Loader2 className="h-5 w-5" />, iconBgClass: "bg-warning/10", iconColorClass: "text-warning dark:text-warning", onClick: () => setKpiFilter(kpiFilter === 'In Progress' ? null : 'In Progress'), isActive: kpiFilter === 'In Progress' },
+      { label: "Completed", value: completed, icon: <CheckCircle2 className="h-5 w-5" />, iconBgClass: "bg-success/10", iconColorClass: "text-success dark:text-success", onClick: () => setKpiFilter(kpiFilter === 'Completed' ? null : 'Completed'), isActive: kpiFilter === 'Completed' },
     ];
-  }, [filtered]);
+  }, [baseFiltered, kpiFilter]);
+
+  const filtered = useMemo(() => {
+    if (!kpiFilter) return baseFiltered;
+    return baseFiltered.filter(t => {
+      if (kpiFilter === 'Open') return !t.status?.is_closed && !t.status?.name?.toLowerCase().includes('progress') && !t.status?.name?.toLowerCase().includes('done');
+      if (kpiFilter === 'In Progress') return t.status?.name?.toLowerCase().includes('progress');
+      if (kpiFilter === 'Completed') return t.status?.is_closed || t.status?.name?.toLowerCase().includes('done');
+      return true;
+    });
+  }, [baseFiltered, kpiFilter]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
