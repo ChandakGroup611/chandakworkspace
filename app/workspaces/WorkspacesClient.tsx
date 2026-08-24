@@ -841,6 +841,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               New Workspace
             </AppButton>
             
+            {savedFilters.length > 0 && <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>}
+            
+            {savedFilters.map(f => (
+              <AppButton
+                key={f.id}
+                variant="ghost"
+                onClick={() => applyFilter(f)}
+                className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+              >
+                {f.name}
+              </AppButton>
+            ))}
+
             <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
             
             <SavedFiltersDropdown

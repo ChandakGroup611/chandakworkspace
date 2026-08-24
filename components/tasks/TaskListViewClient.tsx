@@ -977,16 +977,29 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             <div className="h-6 w-[1px] bg-border mx-1"></div>
 
-            {/* Scope Toggles */}
-            <div className="flex items-center gap-1 bg-elevated/50 p-1 rounded-xl border border-border/50">
+            {/* Scope Toggles & Saved Filter Tabs */}
+            <div className="flex items-center gap-1 bg-elevated/50 p-1 rounded-xl border border-border/50 overflow-x-auto custom-scrollbar">
               {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
                 <AppButton
                   key={sc}
                   variant="ghost"
                   onClick={() => setScope(sc)}
-                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap ${scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap ${!activeSavedFilterId && scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
                 >
                   {sc === "ALL" ? "All" : sc === "ASSIGNEE" ? "Assigned to Me" : "Enrolled"}
+                </AppButton>
+              ))}
+              
+              {savedFilters.length > 0 && <div className="h-4 w-[1px] bg-border/80 mx-1 shrink-0"></div>}
+              
+              {savedFilters.map(f => (
+                <AppButton
+                  key={f.id}
+                  variant="ghost"
+                  onClick={() => applyFilter(f)}
+                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                >
+                  {f.name}
                 </AppButton>
               ))}
             </div>

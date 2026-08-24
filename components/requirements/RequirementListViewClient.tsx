@@ -430,9 +430,21 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                 <AppButton variant="secondary"
                   key={sc}
                   onClick={() => setScope(sc)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${!activeSavedFilterId && scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Requirements" : sc === "REQUESTER" ? "My Requests" : "Pending My Approval"}
+                </AppButton>
+              ))}
+
+              {savedFilters.length > 0 && <div className="h-4 w-px bg-border mx-2"></div>}
+              
+              {savedFilters.map(f => (
+                <AppButton variant="secondary"
+                  key={f.id}
+                  onClick={() => applyFilter(f)}
+                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${activeSavedFilterId === f.id ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
+                >
+                  {f.name}
                 </AppButton>
               ))}
               
