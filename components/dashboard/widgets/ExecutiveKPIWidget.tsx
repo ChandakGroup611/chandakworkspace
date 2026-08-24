@@ -83,7 +83,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       </Link>
 
       {/* Tasks KPI */}
-      <Link href="/tasks" className="block group">
+      <Link href="/workspaces/tasks" className="block group">
         <BaseWidget 
           id="kpi-tasks" 
           className="h-[120px] overflow-hidden relative theme-card-structural"
@@ -119,7 +119,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       </Link>
 
       {/* Sub Tasks KPI */}
-      <Link href="/tasks" className="block group">
+      <Link href="/workspaces/tasks" className="block group">
         <BaseWidget 
           id="kpi-sub-tasks" 
           className="h-[120px] overflow-hidden relative theme-card-structural"
