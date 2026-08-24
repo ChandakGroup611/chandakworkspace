@@ -700,20 +700,28 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     }
 
     setInlineLoading(true);
-    const { error } = await updateTaskStatusInline(inlineTask.id, inlineNewStatus, inlineRemark);
-    if (error) {
-      toast.error("Failed to update: " + error);
+    try {
+      const { error } = await updateTaskStatusInline(inlineTask.id, inlineNewStatus, inlineRemark);
+      if (error) {
+        toast.error("Failed to update: " + error);
+        return;
+      }
+
+      const stMaster = masterStatuses.find(s => s.id === inlineNewStatus);
+      const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
+
+      setTasks(prev => prev.map(t => t.id === inlineTask.id ? { ...t, status_id: inlineNewStatus, status: mappedStatus || t.status } : t));
+      setStatusModalOpen(false);
+      triggerToast(`Status updated successfully.`);
+    } catch (error: any) {
+      if (error.message && error.message.includes("was not found on the server")) {
+         window.location.reload();
+         return;
+      }
+      toast.error("Failed to update: " + error.message);
+    } finally {
       setInlineLoading(false);
-      return;
     }
-
-    const stMaster = masterStatuses.find(s => s.id === inlineNewStatus);
-    const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
-
-    setTasks(prev => prev.map(t => t.id === inlineTask.id ? { ...t, status_id: inlineNewStatus, status: mappedStatus || t.status } : t));
-    setStatusModalOpen(false);
-    setInlineLoading(false);
-    triggerToast(`Status updated successfully.`);
   };
 
   const handleDepartmentSave = async () => {
@@ -753,6 +761,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setDepartmentModalOpen(false);
       triggerToast(`Department updated successfully.`);
     } catch (error: any) {
+      if (error.message && error.message.includes("was not found on the server")) {
+         window.location.reload();
+         return;
+      }
       toast.error("Failed to update: " + error.message);
     } finally {
       setInlineLoading(false);
