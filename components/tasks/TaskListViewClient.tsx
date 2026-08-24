@@ -23,7 +23,7 @@ import { deleteTask, getTaskStatuses, updateTaskStatusInline, getDepartments, ex
 import { fetchTasksByWorkspace, fetchAllTasks, fetchWorkspaces } from "@/lib/actions/workspaces";
 import { createClient } from "@/utils/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
@@ -213,6 +213,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("create") === "true") {
+      setShowWorkspaceSelector(true);
+    }
+  }, [searchParams]);
+
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
   const handleColumnFilterChange = (fieldId: string, values: string[]) => {
     setColumnFilters(prev => ({ ...prev, [fieldId]: values }));

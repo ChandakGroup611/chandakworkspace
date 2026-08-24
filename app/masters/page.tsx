@@ -2,6 +2,7 @@
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
 import { executeMasterMutation } from "@/lib/actions/masters";
 import { AppBadge } from "@/components/ui/AppBadge";
@@ -138,6 +139,13 @@ export default function MastersPage() {
   const [formModule, setFormModule] = useState("tickets");
   const [formScopeId, setFormScopeId] = useState<string | number | null>("e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1");
   const [formColor, setFormColor] = useState<string>("#808080");
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("create") === "true") {
+      setShowModal(true);
+    }
+  }, [searchParams]);
 
   const currentConfig = MASTER_TABLES.find(t => t.id === activeTab)!;
 

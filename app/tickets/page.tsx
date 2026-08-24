@@ -6,7 +6,7 @@ import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceCons
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { AppButton } from "@/components/ui/AppButton";
 import { Plus, RefreshCw, CheckCircle2, Database, Loader2, ArrowLeft, Search, Filter } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchTicketDashboardData } from "@/lib/actions/tickets";
@@ -43,6 +43,13 @@ export default function TicketsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("create") === "true") {
+      setShowWizard(true);
+    }
+  }, [searchParams]);
+
   // Transition States for Drawer (Removed)
 
   useEffect(() => {

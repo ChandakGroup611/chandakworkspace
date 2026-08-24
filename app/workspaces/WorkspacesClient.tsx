@@ -34,7 +34,7 @@ import TaskExecutionController from "@/components/tasks/TaskExecutionController"
 import { TaskDetailDrawer } from "@/components/tasks/TaskDetailDrawer";
 import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
 import { getTaskDetails, updateNodeStatus, deleteTask, createTask } from "@/lib/actions/tasks";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
 import { SprintBoard } from "@/components/workspaces/sprints/SprintBoard";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -78,6 +78,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("create") === "true") {
+      setWsModalMode("ROOT");
+    }
+  }, [searchParams]);
+
   const [filters, setFilters] = useState<HierarchyFilterOptions>({
     entityType: 'ALL',
     statusId: '',

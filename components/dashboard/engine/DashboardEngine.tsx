@@ -87,7 +87,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   };
 
   return (
-    <div className="w-full relative animate-in fade-in duration-700">
+    <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-2 rounded-xl">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground">Workspace / Enterprise Overview</h1>

@@ -11,7 +11,7 @@ import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Eye, Edit2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
@@ -94,6 +94,13 @@ export default function RequirementsPage() {
   const [editReqId, setEditReqId] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [filter, setFilter] = useState({ search: "", system: "", status: "", priority: "", department: "", stage: "" });
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams?.get("create") === "true") {
+      setShowWizard(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setMounted(true);

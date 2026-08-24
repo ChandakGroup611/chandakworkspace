@@ -248,55 +248,118 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
               placeholder="Users"
             />
 
-            <AppButton 
-              variant="outline" 
-              size="sm" 
-              leftIcon={<Download className="h-3.5 w-3.5" />}
-              onClick={() => {
-                if (!filteredMetrics || filteredMetrics.length === 0) {
-                  alert("No data available to export with current filters.");
-                  return;
-                }
-                
-                try {
-                  const headers = ["Module", "ID", "Code", "Title", "Status", "User", "Role", "Priority", "Created At", "Updated At", "Due Date", "Overdue"];
-                  const csvRows = [headers.join(",")];
-                  
-                  filteredMetrics.forEach(m => {
-                    const row = [
-                      `"${m.module || ''}"`,
-                      `"${m.id || ''}"`,
-                      `"${m.code || ''}"`,
-                      `"${(m.title || '').replace(/"/g, '""')}"`,
-                      `"${m.status || ''}"`,
-                      `"${m.user || ''}"`,
-                      `"${m.userRole || ''}"`,
-                      `"${m.priority || ''}"`,
-                      `"${m.createdAt || ''}"`,
-                      `"${m.updatedAt || ''}"`,
-                      `"${m.dueDate || ''}"`,
-                      `"${m.isOverdue ? 'Yes' : 'No'}"`
-                    ];
-                    csvRows.push(row.join(","));
-                  });
-                  
-                  const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.setAttribute('download', `TaskForge_Metrics_Export_${new Date().toISOString().split('T')[0]}.csv`);
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  window.URL.revokeObjectURL(url);
-                } catch (err) {
-                  console.error("Export failed:", err);
-                  alert("Failed to generate CSV export.");
-                }
-              }}
-            >
-              Export
-            </AppButton>
+            <div className="relative">
+              <AppButton 
+                variant="outline" 
+                size="sm" 
+                leftIcon={<Download className="h-3.5 w-3.5" />}
+                onClick={(e) => {
+                  const el = e.currentTarget.nextElementSibling;
+                  if (el) el.classList.toggle('hidden');
+                }}
+              >
+                Export
+              </AppButton>
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 hidden z-50">
+                <div className="py-1" role="menu" aria-orientation="vertical">
+                  <button 
+                    onClick={async (e) => {
+                      e.currentTarget.closest('.relative')?.querySelector('.hidden')?.classList.add('hidden');
+                      const exportArea = document.getElementById('dashboard-export-area');
+                      if (!exportArea) {
+                        alert("Dashboard export area not found.");
+                        return;
+                      }
+                      
+                      try {
+                        // Dynamically import to avoid SSR issues
+                        const html2canvas = (await import('html2canvas')).default;
+                        const { jsPDF } = await import('jspdf');
+                        
+                        alert("Generating PDF... this may take a few seconds.");
+                        
+                        const canvas = await html2canvas(exportArea, {
+                          scale: 2,
+                          useCORS: true,
+                          logging: false
+                        });
+                        
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        
+                        // Calculate standard A4 dimensions (210x297mm)
+                        const pdf = new jsPDF({
+                          orientation: 'portrait',
+                          unit: 'mm',
+                          format: 'a4'
+                        });
+                        
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                        
+                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                        pdf.save(`Dashboard_Export_${new Date().toISOString().split('T')[0]}.pdf`);
+                      } catch (err) {
+                        console.error("PDF Export failed:", err);
+                        alert("Failed to generate PDF export.");
+                      }
+                    }}
+                    className="w-full text-left block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10"
+                    role="menuitem"
+                  >
+                    Export as PDF (Layout)
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.currentTarget.closest('.relative')?.querySelector('.hidden')?.classList.add('hidden');
+                      if (!filteredMetrics || filteredMetrics.length === 0) {
+                        alert("No data available to export with current filters.");
+                        return;
+                      }
+                      
+                      try {
+                        const headers = ["Module", "ID", "Code", "Title", "Status", "User", "Role", "Priority", "Created At", "Updated At", "Due Date", "Overdue"];
+                        const csvRows = [headers.join(",")];
+                        
+                        filteredMetrics.forEach(m => {
+                          const row = [
+                            `"${m.module || ''}"`,
+                            `"${m.id || ''}"`,
+                            `"${m.code || ''}"`,
+                            `"${(m.title || '').replace(/"/g, '""')}"`,
+                            `"${m.status || ''}"`,
+                            `"${m.user || ''}"`,
+                            `"${m.userRole || ''}"`,
+                            `"${m.priority || ''}"`,
+                            `"${m.createdAt || ''}"`,
+                            `"${m.updatedAt || ''}"`,
+                            `"${m.dueDate || ''}"`,
+                            `"${m.isOverdue ? 'Yes' : 'No'}"`
+                          ];
+                          csvRows.push(row.join(","));
+                        });
+                        
+                        const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.setAttribute('download', `TaskForge_Metrics_Export_${new Date().toISOString().split('T')[0]}.csv`);
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                      } catch (err) {
+                        console.error("CSV Export failed:", err);
+                        alert("Failed to generate CSV export.");
+                      }
+                    }}
+                    className="w-full text-left block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10"
+                    role="menuitem"
+                  >
+                    Export as CSV (Data)
+                  </button>
+                </div>
+              </div>
+            </div>
             
             <div className="relative">
               <AppButton 
@@ -312,12 +375,12 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
               </AppButton>
               <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 hidden z-50">
                 <div className="py-1" role="menu" aria-orientation="vertical">
-                  <a href="/workspaces" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Workspace</a>
-                  <a href="/tasks" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Task</a>
-                  <a href="/tickets" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Ticket</a>
-                  <a href="/requirements" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Requirement</a>
+                  <a href="/workspaces?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Workspace</a>
+                  <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Task</a>
+                  <a href="/tickets?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Ticket</a>
+                  <a href="/requirements?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Requirement</a>
                   <div className="border-t border-border my-1"></div>
-                  <a href="/masters" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">Master Configuration</a>
+                  <a href="/masters?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">Master Configuration</a>
                 </div>
               </div>
             </div>
