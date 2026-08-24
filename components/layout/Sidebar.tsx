@@ -216,8 +216,8 @@ export default function Sidebar() {
       <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-0 px-4 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
         {!isCompact ? (
           <Link href="/" className="flex flex-col gap-3 overflow-hidden">
-            <div className={`flex items-center justify-start transition-all duration-300 h-14 w-[180px] shrink-0 bg-white rounded-lg p-2 shadow-sm border border-border/30`}>
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-full object-contain" />
+            <div className={`flex items-center justify-start transition-all duration-300 h-16 w-full max-w-[200px] shrink-0 bg-white rounded-lg p-0.5 shadow-sm border border-border/30`}>
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-full object-contain p-1" />
             </div>
             <div className="flex flex-col min-w-0 justify-start px-1">
               <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
@@ -226,9 +226,9 @@ export default function Sidebar() {
             </div>
           </Link>
         ) : (
-          <Link href="/" className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center mt-2">
-            <div className="h-10 w-10 mx-auto flex items-center justify-center bg-white rounded-lg p-1 shadow-xs border border-border/30 mb-2">
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-full object-contain" />
+          <Link href="/" className="flex h-12 w-12 mx-auto shrink-0 items-center justify-center mt-2">
+            <div className="h-12 w-12 mx-auto flex items-center justify-center bg-white rounded-lg p-0.5 shadow-xs border border-border/30 mb-2">
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-full w-full object-contain p-0.5" />
             </div>
           </Link>
         )}
