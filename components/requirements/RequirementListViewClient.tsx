@@ -154,7 +154,14 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     saveCurrentFilter,
     applySavedFilter,
     deleteSavedFilter
-  } = useSavedFilters<ReqFilterPayload>("chandak_reqs", currentUserId);
+  } = useSavedFilters<ReqFilterPayload>("chandak_reqs", currentUserId, (payload) => {
+    setScope(payload.scope);
+    setQuery(payload.query);
+    setSelectedStatus(payload.selectedStatus || "");
+    setSelectedPriority(payload.selectedPriority || "");
+    setDateFrom(payload.dateFrom || "");
+    setDateTo(payload.dateTo || "");
+  });
 
   const handleSaveCurrentFilter = () => {
     saveCurrentFilter({

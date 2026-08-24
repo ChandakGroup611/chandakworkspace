@@ -212,13 +212,37 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
+  const handleColumnFilterChange = (fieldId: string, values: string[]) => {
+    setColumnFilters(prev => ({ ...prev, [fieldId]: values }));
+  };
+
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedPriority, setSelectedPriority] = useState<string>("");
+  const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [viewState, setViewState] = useState<any>(null);
+  
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
+
   const {
     savedFilters,
     activeSavedFilterId,
     saveCurrentFilter,
     applySavedFilter,
     deleteSavedFilter
-  } = useSavedFilters<TaskFilterPayload>("chandak_tasks", currentUserId);
+  } = useSavedFilters<TaskFilterPayload>("chandak_tasks", currentUserId, (payload) => {
+    setScope(payload.scope);
+    setQuery(payload.query);
+    setColumnFilters(payload.columnFilters || {});
+    setKpiFilter(payload.kpiFilter);
+    setSelectedWorkspaceId(payload.selectedWorkspaceId || "");
+    setSelectedStatus(payload.selectedStatus || "");
+    setSelectedPriority(payload.selectedPriority || "");
+  });
 
   const handleSaveCurrentFilter = () => {
     saveCurrentFilter({
@@ -250,23 +274,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     );
   };
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
-  const handleColumnFilterChange = (fieldId: string, values: string[]) => {
-    setColumnFilters(prev => ({ ...prev, [fieldId]: values }));
-  };
-
-
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
-  const [selectedPriority, setSelectedPriority] = useState<string>("");
-  const [showEscalatedOnly, setShowEscalatedOnly] = useState<boolean>(false);
-  const [dateFrom, setDateFrom] = useState<string>("");
-  const [dateTo, setDateTo] = useState<string>("");
-
-  const [viewState, setViewState] = useState<any>(null);
-  
-  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
 
   const [masterStatuses, setMasterStatuses] = useState<any[]>([]);
   const [statusModalOpen, setStatusModalOpen] = useState(false);

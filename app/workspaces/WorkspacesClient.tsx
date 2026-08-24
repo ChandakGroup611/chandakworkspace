@@ -147,7 +147,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     saveCurrentFilter,
     applySavedFilter,
     deleteSavedFilter
-  } = useSavedFilters<{ searchQuery: string, filters: HierarchyFilterOptions }>("chandak_workspaces", currentUser?.id || null);
+  } = useSavedFilters<{ searchQuery: string, filters: HierarchyFilterOptions }>("chandak_workspaces", currentUser?.id || null, (payload) => {
+    setSearchQuery(payload.searchQuery || "");
+    setFilters(payload.filters || {
+      entityType: 'ALL',
+      statusId: '',
+      priorityId: '',
+      assigneeId: '',
+      myTasksOnly: false
+    });
+    if (payload.searchQuery || Object.values(payload.filters || {}).some(v => v !== '' && v !== false && v !== 'ALL')) {
+        setShowFilters(true);
+    }
+  });
 
   const handleSaveCurrentFilter = () => {
     saveCurrentFilter({
