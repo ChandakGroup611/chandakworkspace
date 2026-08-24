@@ -93,16 +93,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const res = await fetchDesignPreferences();
         if (res?.success && res.data) {
           const dbPrefs = res.data;
-          applyState(dbPrefs);
-          // Sync DB prefs to local storage
-          if (dbPrefs.theme) localStorage.setItem("app_theme", dbPrefs.theme);
-          if (dbPrefs.density) localStorage.setItem("app_density", dbPrefs.density);
-          if (dbPrefs.tactile !== undefined) localStorage.setItem("app_tactile", String(dbPrefs.tactile));
-          if (dbPrefs.fontFamily) localStorage.setItem("app_font", dbPrefs.fontFamily);
-          if (dbPrefs.fontWeightProfile) localStorage.setItem("app_font_weight_profile", dbPrefs.fontWeightProfile);
-          if (dbPrefs.accentColor) localStorage.setItem("app_accent_color", dbPrefs.accentColor);
-          if (dbPrefs.baseFontSize) localStorage.setItem("app_base_font_size", String(dbPrefs.baseFontSize));
-          if (dbPrefs.subtextFontSize) localStorage.setItem("app_subtext_font_size", String(dbPrefs.subtextFontSize));
+          
+          // ONLY apply DB theme if local storage was totally empty (first time load on new device)
+          // Otherwise, local storage wins to prevent flashing / sudden theme changes
+          if (!storedTheme && dbPrefs.theme) {
+            applyState({ theme: dbPrefs.theme });
+            localStorage.setItem("app_theme", dbPrefs.theme);
+          }
+          if (!storedDensity && dbPrefs.density) {
+            applyState({ density: dbPrefs.density });
+            localStorage.setItem("app_density", dbPrefs.density);
+          }
+          if (!storedTactile && dbPrefs.tactile !== undefined) {
+            applyState({ tactile: dbPrefs.tactile });
+            localStorage.setItem("app_tactile", String(dbPrefs.tactile));
+          }
+          if (!storedFont && dbPrefs.fontFamily) {
+            applyState({ fontFamily: dbPrefs.fontFamily });
+            localStorage.setItem("app_font", dbPrefs.fontFamily);
+          }
+          if (!storedFontWeight && dbPrefs.fontWeightProfile) {
+            applyState({ fontWeightProfile: dbPrefs.fontWeightProfile });
+            localStorage.setItem("app_font_weight_profile", dbPrefs.fontWeightProfile);
+          }
+          if (!storedAccent && dbPrefs.accentColor) {
+            applyState({ accentColor: dbPrefs.accentColor });
+            localStorage.setItem("app_accent_color", dbPrefs.accentColor);
+          }
         }
       } catch (e) {
         // Silent catch

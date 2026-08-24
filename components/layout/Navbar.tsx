@@ -184,7 +184,7 @@ export default function Navbar() {
   };
 
   const toggleQuickTheme = async () => {
-    const newTheme = isLight ? "cyberpunk" : "light-neumorphic";
+    const newTheme = isLight ? "amazon" : "amazon-prime-upi";
     setTheme(newTheme);
 
     try {
