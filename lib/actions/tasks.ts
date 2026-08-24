@@ -85,6 +85,23 @@ export async function createTask(payload: {
     // Create Task
     const cleanUUID = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
     const finalWorkspaceId = cleanUUID(payload.sub_workspace_id) || cleanUUID(payload.workspace_id);
+    
+    // Prevent duplicate task creation (Idempotency / Retry Protection)
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const taskSubject = payload.subject || payload.title || 'Untitled Task';
+    const { data: existingTask } = await supabaseAdmin
+      .from('tasks')
+      .select('id')
+      .eq('subject', taskSubject)
+      .eq('workspace_id', finalWorkspaceId)
+      .eq('created_by', creatorId)
+      .gte('created_at', twoMinutesAgo)
+      .limit(1);
+
+    if (existingTask && existingTask.length > 0) {
+      console.warn("[createTask] Prevented duplicate task creation");
+      return { success: true, warning: "Task was already created recently. Duplicate prevented." };
+    }
     const { data: task, error } = await supabaseAdmin
       .from('tasks')
       .insert([{

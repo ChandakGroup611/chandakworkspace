@@ -2011,6 +2011,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               fetchTasksData(selectedWorkspaceId);
             } catch (e: any) {
               console.error("[TaskListViewClient] Error creating task:", e);
+              if (e.message && e.message.includes("was not found on the server")) {
+                 window.location.reload();
+                 return;
+              }
               toast.error(e.message || "Failed to create task");
             }
           }}

@@ -542,6 +542,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       setAssigneeDropdownOpen(false);
     } catch (err: any) {
       console.warn("[Workspace Creation] Intercepted:", err.message || err);
+      if (err.message && err.message.includes("was not found on the server")) {
+         window.location.reload();
+         return;
+      }
       triggerErrorToast("Database Error on Workspace Save: " + (err.message || err.details || JSON.stringify(err)));
     } finally {
       setIsSubmitting(false);
@@ -746,10 +750,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           });
         }
       });
-    } catch (err: any) {
-      console.warn("[Task Creation] Intercepted:", err.message || err);
-      triggerErrorToast("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
-    }
+      } catch (err: any) {
+        console.warn("[Task Creation] Intercepted:", err.message || err);
+        if (err.message && err.message.includes("was not found on the server")) {
+           window.location.reload();
+           return;
+        }
+        triggerErrorToast("Database Error on Task Creation: " + (err.message || err.details || JSON.stringify(err)));
+      }
   };
 
   if (!mounted || permsLoading || loading) {
