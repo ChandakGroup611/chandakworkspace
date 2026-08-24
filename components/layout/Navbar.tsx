@@ -101,7 +101,10 @@ export default function Navbar() {
         className={`bg-background/80 border-b border-border/20 sticky top-0 z-40 flex h-14 w-full shrink-0 font-sans items-center justify-between transition-all duration-300 px-6`}
       >
         <div className="flex items-center gap-4 flex-1 max-w-lg">
-          <div className="relative flex items-center w-full group cursor-text">
+          <div 
+            className="relative flex items-center w-full group cursor-pointer"
+            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+          >
             <Search className="absolute left-3 h-4 w-4 text-muted group-hover:text-theme-icon transition-colors" />
             <div 
               className={`flex items-center h-9 w-full rounded-full pl-9 pr-12 text-[13px] /30 theme-card-structural /50 hover: hover:border-theme-icon/50 transition-all duration-300 text-muted shadow-sm`}

@@ -3,10 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { Search, Terminal, FileText, CheckSquare, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { globalSearch } from "@/lib/actions/search";
+import type { SearchResult } from "@/lib/repositories/search";
 
 export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -22,6 +26,25 @@ export function CommandPalette() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!query) {
+      setResults([]);
+      return;
+    }
+    const handler = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await globalSearch(query);
+        setResults(res);
+      } catch (err) {
+        console.error("Search failed:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [query]);
 
   if (!isOpen) return null;
 
@@ -58,16 +81,31 @@ export function CommandPalette() {
             <>
               <div className="mb-2 px-2 text-xs font-semibold text-muted uppercase tracking-wider">Quick Actions</div>
               <div className="space-y-1">
-                <CommandItem icon={<Terminal />} label="Create New Workspace" shortcut="W" onClick={() => setIsOpen(false)} />
-                <CommandItem icon={<CheckSquare />} label="Create New Task" shortcut="T" onClick={() => setIsOpen(false)} />
-                <CommandItem icon={<FileText />} label="View Documentation" shortcut="D" onClick={() => setIsOpen(false)} />
+                <CommandItem icon={<Terminal />} label="Create New Workspace" shortcut="W" onClick={() => { setIsOpen(false); router.push('/workspaces'); }} />
+                <CommandItem icon={<CheckSquare />} label="Create New Task" shortcut="T" onClick={() => { setIsOpen(false); router.push('/workspaces'); }} />
               </div>
             </>
           ) : (
             <>
-              <div className="mb-2 px-2 text-xs font-semibold text-muted uppercase tracking-wider">Search Results for "{query}"</div>
+              <div className="mb-2 px-2 text-xs font-semibold text-muted uppercase tracking-wider">
+                {isSearching ? 'Searching...' : `Search Results for "${query}"`}
+              </div>
               <div className="space-y-1">
-                <CommandItem icon={<Search />} label={`Search for "${query}" across all workspaces`} onClick={() => setIsOpen(false)} />
+                {results.length > 0 ? (
+                  results.map((r) => (
+                    <CommandItem 
+                      key={r.id}
+                      icon={r.type === 'TASK' ? <CheckSquare /> : r.type === 'TICKET' ? <FileText /> : <Terminal />} 
+                      label={`${r.code ? r.code + ': ' : ''}${r.title}`} 
+                      onClick={() => {
+                        setIsOpen(false);
+                        router.push(r.url);
+                      }} 
+                    />
+                  ))
+                ) : !isSearching ? (
+                  <div className="px-3 py-4 text-center text-sm text-muted">No results found</div>
+                ) : null}
               </div>
             </>
           )}
