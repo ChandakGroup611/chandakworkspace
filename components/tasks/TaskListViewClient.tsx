@@ -53,9 +53,21 @@ import { getAllReportCustomFields } from "@/lib/actions/workspace_reports";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskBoardView from "@/components/tasks/TaskBoardView";
 import TaskTimelineView from "@/components/tasks/TaskTimelineView";
-import { LayoutGrid, List as ListIcon, CalendarDays } from "lucide-react";
+import { LayoutGrid, List as ListIcon, CalendarDays, Bookmark, BookmarkPlus } from "lucide-react";
 
 type Task = any;
+
+interface SavedFilter {
+  id: string;
+  name: string;
+  scope: "ALL" | "ASSIGNEE" | "ENROLLED";
+  query: string;
+  columnFilters: Record<string, string[]>;
+  kpiFilter: string | null;
+  selectedWorkspaceId: string | null;
+  selectedStatus: string;
+  selectedPriority: string;
+}
 
 const getSubWorkspaceName = (t: Task) => {
   let subName = '—';
@@ -196,6 +208,76 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(null), 3000);
   };
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
+  
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
+  const [activeSavedFilterId, setActiveSavedFilterId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    try {
+      const stored = localStorage.getItem(`chandak_saved_task_filters_${currentUserId}`);
+      if (stored) setSavedFilters(JSON.parse(stored));
+    } catch (e) { console.error(e); }
+  }, [currentUserId]);
+
+  const handleSaveCurrentFilter = () => {
+    const name = window.prompt("Enter a name for this saved filter:");
+    if (!name || !name.trim()) return;
+    const newFilter: SavedFilter = {
+      id: Math.random().toString(36).substring(7),
+      name: name.trim(),
+      scope,
+      query,
+      columnFilters,
+      kpiFilter,
+      selectedWorkspaceId,
+      selectedStatus,
+      selectedPriority
+    };
+    const updated = [...savedFilters, newFilter];
+    setSavedFilters(updated);
+    setActiveSavedFilterId(newFilter.id);
+    if (currentUserId) {
+      localStorage.setItem(`chandak_saved_task_filters_${currentUserId}`, JSON.stringify(updated));
+    }
+    triggerToast("Filter saved successfully!");
+  };
+
+  const applySavedFilter = (f: SavedFilter) => {
+    if (activeSavedFilterId === f.id) {
+       setActiveSavedFilterId(null);
+       setScope("ALL");
+       setQuery("");
+       setColumnFilters({});
+       setKpiFilter(null);
+       setSelectedWorkspaceId("");
+       setSelectedStatus("");
+       setSelectedPriority("");
+       return;
+    }
+    setActiveSavedFilterId(f.id);
+    setScope(f.scope);
+    setQuery(f.query);
+    setColumnFilters(f.columnFilters || {});
+    setKpiFilter(f.kpiFilter);
+    setSelectedWorkspaceId(f.selectedWorkspaceId || "");
+    setSelectedStatus(f.selectedStatus || "");
+    setSelectedPriority(f.selectedPriority || "");
+  };
+  
+  const deleteSavedFilter = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this saved filter?")) return;
+    const updated = savedFilters.filter(f => f.id !== id);
+    setSavedFilters(updated);
+    if (activeSavedFilterId === id) setActiveSavedFilterId(null);
+    if (currentUserId) {
+      localStorage.setItem(`chandak_saved_task_filters_${currentUserId}`, JSON.stringify(updated));
+    }
+  };
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
@@ -204,7 +286,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   };
 
 
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [selectedPriority, setSelectedPriority] = useState<string>("");
@@ -931,6 +1012,49 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </AppButton>
               ))}
             </div>
+
+            <div className="h-6 w-[1px] bg-border mx-1"></div>
+
+            {/* Saved Filters */}
+            <Popover.Root>
+              <Popover.Trigger asChild>
+                <AppButton variant="outline" className={`h-8 px-3 rounded-xl border border-border/50 text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 ${activeSavedFilterId ? 'bg-primary/10 text-primary border-primary/30' : 'bg-elevated/50 text-foreground hover:bg-surface'}`}>
+                  <Bookmark className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Saved Filters</span>
+                  {activeSavedFilterId && <span className="w-2 h-2 rounded-full bg-primary ml-1"></span>}
+                </AppButton>
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Content align="start" sideOffset={8} className="z-50 w-64 p-2 rounded-2xl theme-card-structural /95 /50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-2">
+                  <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/50 pb-2">
+                    <h4 className="text-xs font-bold text-foreground">My Saved Filters</h4>
+                    <AppButton variant="ghost" onClick={handleSaveCurrentFilter} className="h-6 px-2 text-[10px] bg-primary/10 text-primary hover:bg-primary/20 rounded-md">
+                      <BookmarkPlus className="h-3 w-3 mr-1" /> Save Current
+                    </AppButton>
+                  </div>
+                  
+                  {savedFilters.length === 0 ? (
+                    <div className="text-center py-4 text-xs text-muted">
+                      No saved filters yet.<br/>Configure your view and click "Save Current".
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+                      {savedFilters.map(f => (
+                        <div key={f.id} className={`group flex items-center justify-between p-2 rounded-xl transition-all cursor-pointer ${activeSavedFilterId === f.id ? 'bg-primary/10 text-primary' : 'hover:bg-elevated/80 text-foreground'}`} onClick={() => applySavedFilter(f)}>
+                          <span className="text-sm font-semibold truncate pr-2">{f.name}</span>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <AppButton variant="ghost" className="h-6 w-6 p-0 text-muted hover:text-danger rounded-md" onClick={(e) => deleteSavedFilter(f.id, e)}>
+                              <Trash2 className="h-3 w-3" />
+                            </AppButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Popover.Content>
+              </Popover.Portal>
+            </Popover.Root>
+
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
