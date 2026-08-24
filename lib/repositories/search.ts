@@ -32,16 +32,18 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
 
   // Filter Tickets
   for (const t of (tickets as any[])) {
+    const title = t.title || t.subject || '';
+    const code = t.code || t.ticket_code || '';
     if (
-      t.code?.toLowerCase().includes(searchTerm) || 
-      t.subject?.toLowerCase().includes(searchTerm) || 
-      t.description?.toLowerCase().includes(searchTerm)
+      code.toLowerCase().includes(searchTerm) || 
+      title.toLowerCase().includes(searchTerm) || 
+      (t.description || '').toLowerCase().includes(searchTerm)
     ) {
       results.push({
         id: t.id,
         type: 'TICKET',
-        title: t.subject || 'Untitled Ticket',
-        code: t.code,
+        title: title || 'Untitled Ticket',
+        code: code,
         status: t.status?.status_name || 'UNKNOWN',
         url: `/tickets/${t.id}`,
         metadata: { priority: t.priority?.priority_name, department: t.department?.name }
@@ -51,14 +53,18 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
 
   // Filter Tasks
   for (const t of (tasks as any[])) {
+    const title = t.title || t.subject || '';
+    const code = t.code || t.task_code || '';
     if (
-      t.subject?.toLowerCase().includes(searchTerm) || 
-      t.description?.toLowerCase().includes(searchTerm)
+      code.toLowerCase().includes(searchTerm) ||
+      title.toLowerCase().includes(searchTerm) || 
+      (t.description || '').toLowerCase().includes(searchTerm)
     ) {
       results.push({
         id: t.id,
         type: 'TASK',
-        title: t.subject || 'Untitled Task',
+        title: title || 'Untitled Task',
+        code: code,
         status: t.status?.status_name || 'UNKNOWN',
         url: `/tasks/${t.id}`,
         metadata: { priority: t.priority?.priority_name }
@@ -68,16 +74,18 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
 
   // Filter Requirements
   for (const r of (requirements as any[])) {
+    const title = r.title || r.subject || '';
+    const code = r.code || r.requirement_code || '';
     if (
-      r.requirement_code?.toLowerCase().includes(searchTerm) || 
-      r.title?.toLowerCase().includes(searchTerm) || 
-      r.description?.toLowerCase().includes(searchTerm)
+      code.toLowerCase().includes(searchTerm) || 
+      title.toLowerCase().includes(searchTerm) || 
+      (r.description || '').toLowerCase().includes(searchTerm)
     ) {
       results.push({
         id: r.id,
         type: 'REQUIREMENT',
-        title: r.title || 'Untitled Requirement',
-        code: r.requirement_code,
+        title: title || 'Untitled Requirement',
+        code: code,
         status: r.status?.status_name || 'UNKNOWN',
         url: `/requirements/${r.id}`,
         metadata: { priority: r.priority?.priority_name, analyst: r.analyst?.full_name }
