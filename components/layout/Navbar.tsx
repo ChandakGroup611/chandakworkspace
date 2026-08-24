@@ -104,7 +104,7 @@ export default function Navbar() {
           <div className="relative flex items-center w-full group cursor-text">
             <Search className="absolute left-3 h-4 w-4 text-muted group-hover:text-theme-icon transition-colors" />
             <div 
-              className={`flex items-center h-9 w-full rounded-full pl-9 pr-12 text-[13px] border border-border/30 bg-surface/50 hover:bg-surface hover:border-theme-icon/50 transition-all duration-300 text-muted shadow-sm`}
+              className={`flex items-center h-9 w-full rounded-full pl-9 pr-12 text-[13px] /30 theme-card-structural /50 hover: hover:border-theme-icon/50 transition-all duration-300 text-muted shadow-sm`}
             >
               Search or jump to...
             </div>
@@ -137,7 +137,7 @@ export default function Navbar() {
           <div className="relative ml-2" ref={dropdownRef}>
             <div 
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-hover text-xs font-medium text-foreground cursor-pointer border border-border/50 hover:border-border transition-all overflow-hidden shadow-sm"
+              className="flex h-8 w-8 items-center justify-center rounded-full theme-card-structural -hover text-xs font-medium text-foreground cursor-pointer /50 hover: transition-all overflow-hidden shadow-sm"
             >
               {userData?.profile_photo ? (
                 <img src={userData.profile_photo} alt="Profile" className="h-full w-full object-cover" />

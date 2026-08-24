@@ -78,6 +78,30 @@ export async function POST(req: Request) {
             if (insertError) throw insertError;
           }
         }
+      } else if (event.event_type === 'AMC_EXPIRATION_ALERT' || event.event_type === 'AMC_RENEWAL_AUTO_GENERATED') {
+        const amcId = event.payload.amc_id;
+        const targetUserId = event.payload.assigned_to;
+        
+        if (targetUserId) {
+          const insertPayload = {
+            entity_type: 'software_amc',
+            entity_id: String(amcId),
+            module: 'amc',
+            action_type: event.event_type.toLowerCase(),
+            actor: 'System',
+            target_user_id: targetUserId,
+            payload: event.payload,
+            redirect_url: `/amc`,
+            priority_level: event.event_type === 'AMC_RENEWAL_AUTO_GENERATED' ? 'HIGH' : 'MEDIUM',
+            is_read: false
+          };
+
+          const { error: insertError } = await supabase
+            .from('notification_queue')
+            .insert([insertPayload]);
+
+          if (insertError) throw insertError;
+        }
       }
 
       // 3. Mark as COMPLETED

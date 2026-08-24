@@ -78,7 +78,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/50 p-4">
       <div className="theme-card-structural w-full max-w-lg rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between p-6 border-b border-border bg-surface/50 shrink-0">
+        <div className="flex items-center justify-between p-6 border-b theme-card-structural /50 shrink-0">
           <h2 className="text-xl font-black text-foreground">
             Manage Cities for {stateName}
           </h2>

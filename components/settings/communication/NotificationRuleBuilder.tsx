@@ -139,7 +139,7 @@ export default function NotificationRuleBuilder() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-surface dark:bg-[#0A0D14] border border-border dark:border-border p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between items-center theme-card-structural dark:bg-[#0A0D14] dark: p-4 rounded-xl shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-foreground">Rule Engine</h2>
           <p className="text-xs text-muted">Configure declarative IF-THEN routing constraints.</p>
@@ -167,7 +167,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.module}
                     onChange={(e) => updateLocalRule(rule.id, "module", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {Object.keys(MODULE_CONFIG).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
@@ -180,7 +180,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.event}
                     onChange={(e) => updateLocalRule(rule.id, "event", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {config.events.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
@@ -193,7 +193,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.status_trigger || "ANY"}
                     onChange={(e) => updateLocalRule(rule.id, "status_trigger", e.target.value)}
-                    className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
                   >
                     {config.statuses.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -236,7 +236,7 @@ export default function NotificationRuleBuilder() {
                         type="checkbox" 
                         checked={rule.delivery_method.includes("EMAIL")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "EMAIL")}
-                        className="rounded border-border bg-surface text-theme-icon focus:ring-theme-btn-primary"
+                        className="rounded theme-card-structural text-theme-icon focus:ring-theme-btn-primary"
                       />
                       <span className="text-sm text-muted font-medium">Email Dispatch</span>
                     </label>
@@ -245,7 +245,7 @@ export default function NotificationRuleBuilder() {
                         type="checkbox" 
                         checked={rule.delivery_method.includes("IN_APP")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "IN_APP")}
-                        className="rounded border-border bg-surface text-theme-icon focus:ring-theme-btn-primary"
+                        className="rounded theme-card-structural text-theme-icon focus:ring-theme-btn-primary"
                       />
                       <span className="text-sm text-muted font-medium">In-App Notification</span>
                     </label>
@@ -254,7 +254,7 @@ export default function NotificationRuleBuilder() {
               </div>
 
               {/* Actions Footer */}
-              <div className="bg-surface dark:bg-[#0A0D14] px-6 py-3 border-t border-border dark:border-border flex justify-between items-center">
+              <div className="theme-card-structural dark:bg-[#0A0D14] px-6 py-3 border-t dark: flex justify-between items-center">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-success' : 'bg-gray-600'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />

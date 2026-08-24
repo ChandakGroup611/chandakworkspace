@@ -432,13 +432,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                     </div>
                   )}
                   
-                  <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
-                    isSender 
-                      ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border border-theme-btn-primary/30"
-                      : isMention
-                        ? ("bg-theme-btn-primary/10 border border-indigo-100 text-theme-icon-secondary rounded-tl-sm")
-                        : ("bg-surface text-foreground rounded-tl-sm")
-                  }`}>
+                  <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${ isSender ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border-theme-btn-primary/30" : isMention ? ("bg-theme-btn-primary/10 border-indigo-100 text-theme-icon-secondary rounded-tl-sm") : ("theme-card-structural text-foreground rounded-tl-sm") }`}>
                     {(() => {
                       const parts = m.message.split("|||ATTACHMENTS|||");
                       let text = parts[0];
@@ -503,7 +497,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
       </div>
 
       {/* Chat Input Area */}
-      <div className={`p-3 border-t shrink-0 relative border-border bg-surface/50`}>
+      <div className={`p-3 border-t shrink-0 relative theme-card-structural /50`}>
         
         {/* Mentions Dropdown */}
         {showMentions && (

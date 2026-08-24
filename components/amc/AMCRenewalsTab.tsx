@@ -14,13 +14,15 @@ interface AMCRenewalsTabProps {
   isLightMode: boolean;
   onUpdate: () => void;
   currentExpiryDate?: string;
+  currency?: string;
 }
 
-export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate }: AMCRenewalsTabProps) {
+export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate, currency = 'INR' }: AMCRenewalsTabProps) {
   const supabase = createClient();
   const [renewals, setRenewals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   // New Renewal Form
   const [poNumber, setPoNumber] = useState("");
@@ -28,6 +30,7 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
   const [newExpiry, setNewExpiry] = useState("");
   const [renewalDate, setRenewalDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState("");
+  const [exchangeRate, setExchangeRate] = useState("1.0");
 
   useEffect(() => {
     fetchRenewals();
@@ -58,23 +61,33 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const res = await saveAMCEntity("amc_renewals", {
+      const payload: any = {
         amc_id: amcId,
         po_number: poNumber,
         renewal_cost: parseFloat(renewalCost) || 0,
-        previous_expiry: currentExpiryDate || null,
         new_expiry: newExpiry,
         renewal_date: renewalDate,
         notes,
-        created_by: user.id
-      });
+        base_currency: 'INR',
+        exchange_rate: parseFloat(exchangeRate) || 1.0,
+        base_currency_amount: (parseFloat(renewalCost) || 0) * (parseFloat(exchangeRate) || 1.0)
+      };
+
+      if (!editId) {
+        payload.previous_expiry = currentExpiryDate || null;
+        payload.created_by = user.id;
+      }
+
+      const res = await saveAMCEntity("amc_renewals", payload, editId || undefined);
       if (!res.success) throw new Error(res.error);
 
       // Reset form
+      setEditId(null);
       setPoNumber("");
       setRenewalCost("");
       setNewExpiry("");
       setNotes("");
+      setExchangeRate("1.0");
       
       await fetchRenewals();
       onUpdate(); // Trigger parent refresh (for new expiry date)
@@ -84,6 +97,25 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEdit = (rn: any) => {
+    setEditId(rn.id);
+    setPoNumber(rn.po_number || "");
+    setRenewalCost(String(rn.renewal_cost || ""));
+    setNewExpiry(rn.new_expiry ? new Date(rn.new_expiry).toISOString().split('T')[0] : "");
+    setRenewalDate(rn.renewal_date ? new Date(rn.renewal_date).toISOString().split('T')[0] : "");
+    setNotes(rn.notes || "");
+    setExchangeRate(String(rn.exchange_rate || "1.0"));
+  };
+
+  const handleCancelEdit = () => {
+    setEditId(null);
+    setPoNumber("");
+    setRenewalCost("");
+    setNewExpiry("");
+    setNotes("");
+    setExchangeRate("1.0");
   };
 
   const handleDelete = async (id: string) => {
@@ -100,11 +132,11 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
 
   return (
     <div className="space-y-8">
-      {/* Add New Renewal */}
+      {/* Add/Edit Renewal */}
       <AppCard className={`p-6 theme-card-structural`}>
         <h3 className="text-lg font-bold text-success mb-4 flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Log AMC Renewal
+          {editId ? "Edit Renewal Record" : "Log AMC Renewal"}
         </h3>
         <form onSubmit={handleAddRenewal} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -123,18 +155,29 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted uppercase">Renewal Cost *</label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                <AppInput type="number" step="0.01" value={renewalCost} onChange={(e) => setRenewalCost(e.target.value)} required className="pl-9" placeholder="0.00" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">{currency}</span>
+                <AppInput type="number" step="0.01" value={renewalCost} onChange={(e) => setRenewalCost(e.target.value)} required className="pl-12" placeholder="0.00" />
               </div>
             </div>
+            {currency !== 'INR' && (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-muted uppercase">Exchange Rate (to INR) *</label>
+                <AppInput type="number" step="0.0001" value={exchangeRate} onChange={(e) => setExchangeRate(e.target.value)} required />
+              </div>
+            )}
             <div className="space-y-2 lg:col-span-4">
               <label className="text-sm font-bold text-muted uppercase">Notes / Remarks</label>
               <AppInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="E.g., Price locked in for 3 years" />
             </div>
           </div>
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-2 gap-2">
+            {editId && (
+              <AppButton type="button" variant="ghost" onClick={handleCancelEdit}>
+                Cancel
+              </AppButton>
+            )}
             <AppButton type="submit" variant="primary" disabled={isSubmitting} leftIcon={isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}>
-              Process Renewal
+              {editId ? "Update Renewal" : "Process Renewal"}
             </AppButton>
           </div>
         </form>
@@ -169,13 +212,23 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
                 <div className="flex items-center gap-6">
                   <div className="text-right">
                     <div className="font-black text-lg text-success">
-                      {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(rn.renewal_cost)}
+                      {new Intl.NumberFormat('en-IN', { style: 'currency', currency: currency || 'INR', maximumFractionDigits: 2 }).format(rn.renewal_cost)}
                     </div>
+                    {rn.exchange_rate && rn.exchange_rate !== 1 && rn.base_currency_amount && (
+                      <div className="text-[10px] text-muted font-mono">
+                        Base (INR): {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(rn.base_currency_amount)}
+                      </div>
+                    )}
                     <div className="text-[10px] text-muted">Processed by {rn.user_master?.full_name}</div>
                   </div>
-                  <AppButton variant="secondary" onClick={() => handleDelete(rn.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">
-                    <Trash2 className="h-4 w-4" />
-                  </AppButton>
+                  <div className="flex gap-2">
+                    <AppButton variant="secondary" onClick={() => handleEdit(rn)} className="p-2 text-theme-icon hover:bg-elevated rounded-lg transition-colors" title="Edit Renewal">
+                      <FileText className="h-4 w-4" />
+                    </AppButton>
+                    <AppButton variant="secondary" onClick={() => handleDelete(rn.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Delete Renewal">
+                      <Trash2 className="h-4 w-4" />
+                    </AppButton>
+                  </div>
                 </div>
               </AppCard>
             ))}

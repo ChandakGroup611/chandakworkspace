@@ -190,10 +190,10 @@ export function UserPerformanceWorkingSheetModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
-      <div className="w-full max-w-6xl max-h-[92vh] bg-surface dark:bg-[#0B0F19] border border-border/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-6xl max-h-[92vh] theme-card-structural dark:bg-[#0B0F19] /80 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         
         {/* MODAL HEADER */}
-        <div className="p-4 md:p-5 border-b border-border/60 flex flex-wrap items-center justify-between gap-4 bg-surface/50 dark:bg-[#0E1320]/80">
+        <div className="p-4 md:p-5 border-b /60 flex flex-wrap items-center justify-between gap-4 theme-card-structural /50 dark:bg-[#0E1320]/80">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-emerald-500/20 border border-primary/30 flex items-center justify-center text-primary font-black text-lg shadow-sm">
               {data?.user?.fullName ? data.user.fullName.substring(0, 2).toUpperCase() : (userNameOrId?.substring(0, 2).toUpperCase() || "UP")}
@@ -228,7 +228,7 @@ export function UserPerformanceWorkingSheetModal({
 
           {/* PERIOD SELECTOR & ACTIONS */}
           <div className="flex items-center gap-2 ml-auto">
-            <div className="flex items-center gap-1 bg-surface dark:bg-[#131927] border border-border rounded-xl p-1 text-xs">
+            <div className="flex items-center gap-1 theme-card-structural dark:bg-[#131927] rounded-xl p-1 text-xs">
               <Calendar className="w-3.5 h-3.5 ml-2 text-muted-foreground" />
               <select
                 value={timeRange}
@@ -321,14 +321,14 @@ export function UserPerformanceWorkingSheetModal({
                   </div>
                   <div className="mt-2.5 w-full bg-surface dark:bg-surface/20 h-1.5 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-surface border border-border/50 text-foreground from-primary to-emerald-500 rounded-full transition-all duration-1000"
+                      className="h-full theme-card-structural /50 text-foreground from-primary to-emerald-500 rounded-full transition-all duration-1000"
                       style={{ width: `${data.ratios.overallPerformanceRatio}%` }}
                     />
                   </div>
                 </div>
 
                 {/* On-Time Delivery Rate */}
-                <div className="p-4 rounded-2xl bg-surface dark:bg-[#111625] border border-border/70 shadow-sm">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">On-Time Delivery</span>
                     <CheckCircle2 className="w-4 h-4 text-success" />
@@ -350,7 +350,7 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 {/* SLA Compliance */}
-                <div className="p-4 rounded-2xl bg-surface dark:bg-[#111625] border border-border/70 shadow-sm">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">SLA Compliance</span>
                     <ShieldCheck className="w-4 h-4 text-theme-icon" />
@@ -370,7 +370,7 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 {/* Completion Volume */}
-                <div className="p-4 rounded-2xl bg-surface dark:bg-[#111625] border border-border/70 shadow-sm">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Resolved Volume</span>
                     <TrendingUp className="w-4 h-4 text-primary" />
@@ -392,7 +392,7 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 {/* Active & Risk Load */}
-                <div className="p-4 rounded-2xl bg-surface dark:bg-[#111625] border border-border/70 shadow-sm col-span-2 lg:col-span-1">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm col-span-2 lg:col-span-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Active & Overdue</span>
                     <AlertTriangle className={cn("w-4 h-4", data.metrics.totalOverdue > 0 ? "text-danger" : "text-warning")} />
@@ -417,38 +417,38 @@ export function UserPerformanceWorkingSheetModal({
               </div>
 
               {/* MODULE BREAKDOWN PILLS */}
-              <div className="flex flex-wrap items-center gap-2 p-3 bg-surface/50 dark:bg-[#0E1320] border border-border/60 rounded-2xl text-xs">
+              <div className="flex flex-wrap items-center gap-2 p-3 theme-card-structural /50 dark:bg-[#0E1320] /60 rounded-2xl text-xs">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-2">Output Breakdown:</span>
                 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl theme-card-structural dark:bg-[#131927] font-medium">
                   <Layers className="w-3.5 h-3.5 text-theme-icon" />
                   <span className="text-foreground font-semibold">Tasks:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.tasks.completed}/{data.moduleBreakdown.tasks.total}</span>
                   <span className="text-muted-foreground text-[10px]">({data.moduleBreakdown.tasks.rate}%)</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl theme-card-structural dark:bg-[#131927] font-medium">
                   <ListTodo className="w-3.5 h-3.5 text-teal-500" />
                   <span className="text-foreground font-semibold">Subtasks:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.subTasks.completed}/{data.moduleBreakdown.subTasks.total}</span>
                   <span className="text-muted-foreground text-[10px]">({data.moduleBreakdown.subTasks.rate}%)</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl theme-card-structural dark:bg-[#131927] font-medium">
                   <Briefcase className="w-3.5 h-3.5 text-warning" />
                   <span className="text-foreground font-semibold">Tickets:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.tickets.resolved}/{data.moduleBreakdown.tickets.total}</span>
                   <span className="text-muted-foreground text-[10px]">({data.moduleBreakdown.tickets.rate}%)</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl theme-card-structural dark:bg-[#131927] font-medium">
                   <FileText className="w-3.5 h-3.5 text-danger" />
                   <span className="text-foreground font-semibold">Requirements:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.requirements.completed}/{data.moduleBreakdown.requirements.total}</span>
                   <span className="text-muted-foreground text-[10px]">({data.moduleBreakdown.requirements.rate}%)</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-surface dark:bg-[#131927] border border-border font-medium">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl theme-card-structural dark:bg-[#131927] font-medium">
                   <Building2 className="w-3.5 h-3.5 text-accent" />
                   <span className="text-foreground font-semibold">Workspaces:</span>
                   <span className="text-primary font-bold">{data.moduleBreakdown.workspaces.total} Enrolled</span>
@@ -509,14 +509,14 @@ export function UserPerformanceWorkingSheetModal({
                           placeholder="Search activities..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-8 pr-3 py-1.5 bg-surface dark:bg-[#111625] border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary outline-none"
+                          className="w-full pl-8 pr-3 py-1.5 theme-card-structural dark:bg-[#111625] rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary outline-none"
                         />
                       </div>
 
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-surface dark:bg-[#111625] border border-border rounded-xl px-2.5 py-1.5 text-xs text-foreground font-medium outline-none cursor-pointer"
+                        className="theme-card-structural dark:bg-[#111625] rounded-xl px-2.5 py-1.5 text-xs text-foreground font-medium outline-none cursor-pointer"
                       >
                         <option value="all">All Statuses</option>
                         <option value="resolved">Resolved</option>
@@ -529,7 +529,7 @@ export function UserPerformanceWorkingSheetModal({
                       <select
                         value={priorityFilter}
                         onChange={(e) => setPriorityFilter(e.target.value)}
-                        className="bg-surface dark:bg-[#111625] border border-border rounded-xl px-2.5 py-1.5 text-xs text-foreground font-medium outline-none cursor-pointer"
+                        className="theme-card-structural dark:bg-[#111625] rounded-xl px-2.5 py-1.5 text-xs text-foreground font-medium outline-none cursor-pointer"
                       >
                         <option value="all">All Priorities</option>
                         <option value="urgent">Urgent</option>
@@ -545,7 +545,7 @@ export function UserPerformanceWorkingSheetModal({
                 {/* TAB CONTENT */}
                 {activeTab === "trends" ? (
                   /* MONTHLY TRENDS VIEW */
-                  <div className="p-5 bg-surface dark:bg-[#111625] border border-border/70 rounded-2xl space-y-6">
+                  <div className="p-5 theme-card-structural dark:bg-[#111625] /70 rounded-2xl space-y-6">
                     <div>
                       <h4 className="text-sm font-bold text-foreground">Monthly Output & Resolution Velocity</h4>
                       <p className="text-xs text-muted-foreground mt-0.5">Historical activity volume and resolution performance over the last 6 months.</p>
@@ -553,7 +553,7 @@ export function UserPerformanceWorkingSheetModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                       {data.monthlyTrends.map((trend, idx) => (
-                        <div key={idx} className="p-4 rounded-xl bg-surface/50 dark:bg-[#0E1320] border border-border text-center space-y-2">
+                        <div key={idx} className="p-4 rounded-xl theme-card-structural /50 dark:bg-[#0E1320] text-center space-y-2">
                           <span className="text-xs font-bold font-mono text-muted-foreground uppercase">{trend.month}</span>
                           <div className="text-2xl font-black text-foreground">{trend.total}</div>
                           <div className="text-[11px] text-muted-foreground">
@@ -570,7 +570,7 @@ export function UserPerformanceWorkingSheetModal({
                   </div>
                 ) : (
                   /* TABULAR WORKING SHEET */
-                  <div className="border border-border/70 rounded-2xl overflow-hidden bg-surface dark:bg-[#111625] shadow-sm">
+                  <div className="/70 rounded-2xl overflow-hidden theme-card-structural dark:bg-[#111625] shadow-sm">
                     <div className="max-h-[380px] overflow-y-auto custom-scrollbar">
                       <AppTable>
                         <AppTableHeader className="sticky top-0 z-10 bg-surface/95 dark:bg-[#111625]/95">
@@ -707,7 +707,7 @@ export function UserPerformanceWorkingSheetModal({
                     </div>
 
                     {/* TABLE FOOTER SUMMARY */}
-                    <div className="p-3 bg-surface/50 dark:bg-[#0E1320] border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="p-3 theme-card-structural /50 dark:bg-[#0E1320] border-t /60 flex items-center justify-between text-xs text-muted-foreground">
                       <span>Showing <strong>{filteredActivities.length}</strong> of <strong>{data.activities.length}</strong> recorded activities</span>
                       <span className="font-mono text-[11px]">User Performance Working Sheet</span>
                     </div>
@@ -721,7 +721,7 @@ export function UserPerformanceWorkingSheetModal({
         </div>
 
         {/* MODAL FOOTER */}
-        <div className="p-4 border-t border-border/60 flex items-center justify-between bg-surface/50 dark:bg-[#0E1320]/80">
+        <div className="p-4 border-t /60 flex items-center justify-between theme-card-structural /50 dark:bg-[#0E1320]/80">
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
             <span>TaskForge Intelligence Governance • Realtime Multi-Module Sync</span>

@@ -13,9 +13,10 @@ interface AMCTransactionsTabProps {
   amcId: string;
   isLightMode: boolean;
   onUpdate: () => void;
+  currency?: string;
 }
 
-export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransactionsTabProps) {
+export function AMCTransactionsTab({ amcId, isLightMode, onUpdate, currency = 'INR' }: AMCTransactionsTabProps) {
   const supabase = createClient();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +29,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
   const [licensesAdded, setLicensesAdded] = useState("0");
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState("");
+  const [exchangeRate, setExchangeRate] = useState("1.0");
 
   useEffect(() => {
     fetchTransactions();
@@ -66,7 +68,10 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
         licenses_added: parseInt(licensesAdded) || 0,
         transaction_date: transactionDate,
         notes,
-        created_by: user.id
+        created_by: user.id,
+        base_currency: 'INR',
+        exchange_rate: parseFloat(exchangeRate) || 1.0,
+        base_currency_amount: (parseFloat(cost) || 0) * (parseFloat(exchangeRate) || 1.0)
       });
       if (!res.success) throw new Error(res.error);
 
@@ -75,6 +80,7 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
       setCost("");
       setLicensesAdded("0");
       setNotes("");
+      setExchangeRate("1.0");
       
       await fetchTransactions();
       onUpdate(); // Trigger parent refresh (for Total Licenses)
@@ -125,10 +131,16 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted uppercase">Cost (Total) *</label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required className="pl-9" placeholder="0.00" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">{currency}</span>
+                <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required className="pl-12" placeholder="0.00" />
               </div>
             </div>
+            {currency !== 'INR' && (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-muted uppercase">Exchange Rate (to INR) *</label>
+                <AppInput type="number" step="0.0001" value={exchangeRate} onChange={(e) => setExchangeRate(e.target.value)} required />
+              </div>
+            )}
             {type === 'Add-on Licenses' && (
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Licenses Added *</label>
@@ -177,8 +189,13 @@ export function AMCTransactionsTab({ amcId, isLightMode, onUpdate }: AMCTransact
                 <div className="flex items-center gap-6">
                   <div className="text-right">
                     <div className="font-black text-lg text-success">
-                      {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(tx.cost)}
+                      {new Intl.NumberFormat('en-IN', { style: 'currency', currency: currency || 'INR', maximumFractionDigits: 2 }).format(tx.cost)}
                     </div>
+                    {tx.exchange_rate && tx.exchange_rate !== 1 && tx.base_currency_amount && (
+                      <div className="text-[10px] text-muted font-mono">
+                        Base (INR): {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(tx.base_currency_amount)}
+                      </div>
+                    )}
                     <div className="text-[10px] text-muted">Logged by {tx.user_master?.full_name}</div>
                   </div>
                   <AppButton variant="secondary" onClick={() => handleDelete(tx.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors">

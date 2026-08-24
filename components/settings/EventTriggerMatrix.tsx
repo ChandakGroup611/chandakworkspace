@@ -52,7 +52,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
           const modConfigs = configs.filter(c => c.module_code === mod);
           return (
             <div key={mod} className="border border-border rounded-lg overflow-hidden">
-              <div className="bg-surface/30 px-4 py-3 border-b border-border">
+              <div className="theme-card-structural /30 px-4 py-3 border-b">
                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">{mod}</h3>
               </div>
               <div className="divide-y divide-white/5">
@@ -70,7 +70,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                         <span className="text-xs font-medium text-muted uppercase">In-App</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-white/20 bg-surface/50 text-theme-icon focus:ring-theme-btn-primary/50" 
+                          className="w-4 h-4 rounded border-white/20 theme-card-structural /50 text-theme-icon focus:ring-theme-btn-primary/50" 
                           checked={config.is_inapp_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_inapp_enabled', config.is_inapp_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}
@@ -80,7 +80,7 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
                         <span className="text-xs font-medium text-muted uppercase">Email</span>
                         <input 
                           type="checkbox" 
-                          className="w-4 h-4 rounded border-white/20 bg-surface/50 text-theme-icon focus:ring-theme-btn-primary/50" 
+                          className="w-4 h-4 rounded border-white/20 theme-card-structural /50 text-theme-icon focus:ring-theme-btn-primary/50" 
                           checked={config.is_email_enabled !== false}
                           onChange={() => handleToggle(config.id, 'is_email_enabled', config.is_email_enabled !== false)}
                           disabled={loadingId === config.id || !canManage}

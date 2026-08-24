@@ -390,7 +390,7 @@ export function TicketWorkspaceConsole({
                                   setIsLinking(false);
                                 }
                               }}
-                              className="p-3 border-b hover:bg-surface/5 dark:hover:theme-card-structural /5 cursor-pointer transition-colors"
+                              className="p-3 border-b hover:theme-card-structural/5 dark:hover:theme-card-structural /5 cursor-pointer transition-colors"
                             >
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs font-bold text-pink-500">{t.code}</span>
@@ -716,7 +716,7 @@ export function TicketWorkspaceConsole({
             
             <AppButton variant="ghost" 
               type="button"
-              className="p-1 rounded-lg transition-colors hover:bg-surface/5 dark:hover:theme-card-structural/10 text-muted-foreground"
+              className="p-1 rounded-lg transition-colors hover:theme-card-structural/5 dark:hover:theme-card-structural/10 text-muted-foreground"
             >
               {isHistoryCollapsed ? (
                 <ChevronDown className="h-4 w-4" />

@@ -92,7 +92,7 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
         {messages.map((msg, i) => {
           const isChat = msg.event_type === 'CHAT' || msg.event_type === 'COMMENT';
           return (
-            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-indigo-900/30 border-theme-btn-primary/30' : 'bg-surface/40 border-border/30'} border rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
+            <div key={msg.id || i} className={`text-sm ${isChat ? 'bg-indigo-900/30 border-theme-btn-primary/30' : 'theme-card-structural /40 /30'} rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-bold text-xs text-muted">
                   {msg.performed_by?.full_name || 'System User'}
@@ -113,13 +113,13 @@ export function RealtimeChat({ recordId, moduleType }: { recordId: string, modul
         })}
       </div>
       
-      <form onSubmit={handleSend} className="p-3 bg-surface border-t border-border flex gap-2">
+      <form onSubmit={handleSend} className="p-3 theme-card-structural border-t flex gap-2">
         <input 
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message or @mention someone..."
-          className="flex-1 bg-surface/40 border border-border rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-theme-btn-primary"
+          className="flex-1 theme-card-structural /40 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-theme-btn-primary"
         />
         <AppButton type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text px-4 py-2 rounded-xl text-sm font-semibold transition-colors">
           Send

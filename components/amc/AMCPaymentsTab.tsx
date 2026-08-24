@@ -12,20 +12,16 @@ import { createClient } from "@/utils/supabase/client";
 interface AMCPaymentsTabProps {
   amcId: string;
   isLightMode: boolean;
+  currency?: string;
 }
 
-export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
+export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaymentsTabProps) {
   const supabase = createClient();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // New Invoice Form
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   useEffect(() => {
     fetchInvoices();
@@ -49,36 +45,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
     }
   };
 
-  const handleAddInvoice = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
-      const res = await saveAMCEntity("amc_invoices", {
-        amc_id: amcId,
-        description,
-        amount: parseFloat(amount) || 0,
-        due_date: dueDate,
-        invoice_number: invoiceNumber,
-        status: 'Pending',
-        created_by: user.id
-      });
-      if (!res.success) throw new Error(res.error);
-
-      setDescription("");
-      setAmount("");
-      setDueDate("");
-      setInvoiceNumber("");
-      
-      await fetchInvoices();
-    } catch (e: any) {
-      toast.error("Error adding invoice: " + e.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleMarkPaid = async (id: string) => {
     setProcessingId(id);
@@ -120,38 +87,7 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
 
   return (
     <div className="space-y-8">
-      {/* Add Manual Invoice */}
-      <AppCard className={`p-6 theme-card-structural`}>
-        <h3 className="text-lg font-bold text-theme-icon mb-4">Add Custom Invoice</h3>
-        <form onSubmit={handleAddInvoice} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-muted uppercase">Description *</label>
-              <AppInput value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="e.g. Q1 Installment" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-muted uppercase">Amount *</label>
-              <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                <AppInput type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required className="pl-9" placeholder="0.00" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-muted uppercase">Due Date *</label>
-              <AppInput type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-muted uppercase">Invoice Number</label>
-              <AppInput value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="e.g. INV-2026-001" />
-            </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <AppButton type="submit" disabled={isSubmitting} leftIcon={isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}>
-              Add Invoice
-            </AppButton>
-          </div>
-        </form>
-      </AppCard>
+
 
       {/* Invoice Ledger */}
       <div className="space-y-4">
@@ -170,9 +106,14 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
                   <div className="flex items-center gap-3">
                     {getStatusBadge(inv.status, inv.due_date)}
                     <span className="font-semibold text-sm">{inv.description}</span>
+                    {inv.payment_type && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20">
+                        {inv.payment_type}
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-muted mt-2 flex items-center gap-4">
-                    <span>Due: {new Date(inv.due_date).toLocaleDateString()}</span>
+                    <span>Payment Date: {new Date(inv.due_date).toLocaleDateString()}</span>
                     {inv.invoice_number && <span>Invoice #: {inv.invoice_number}</span>}
                     {inv.payment_date && <span className="text-success font-semibold">Paid On: {new Date(inv.payment_date).toLocaleDateString()}</span>}
                   </div>
@@ -180,8 +121,13 @@ export function AMCPaymentsTab({ amcId, isLightMode }: AMCPaymentsTabProps) {
                 <div className="flex items-center gap-6">
                   <div className="text-right">
                     <div className="font-black text-lg">
-                      {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(inv.amount)}
+                      {new Intl.NumberFormat('en-IN', { style: 'currency', currency: currency || 'INR', maximumFractionDigits: 2 }).format(inv.amount)}
                     </div>
+                    {inv.exchange_rate && inv.exchange_rate !== 1 && inv.base_currency_amount && (
+                      <div className="text-[10px] text-muted font-mono mt-1">
+                        Base (INR): {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(inv.base_currency_amount)}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-2">

@@ -463,32 +463,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     }
   };
 
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-
-  const fetchTasksData = async (pageNum: number, isLoadMore = false, overrideWsId?: string | null) => {
+  const fetchTasksData = async (overrideWsId?: string | null) => {
     setLoading(true);
     const currentWsId = overrideWsId !== undefined ? overrideWsId : selectedWorkspaceId;
 
     try {
       let newTasks: any[] = [];
       if (currentWsId) {
-        newTasks = await fetchTasksByWorkspace(currentWsId, pageNum, 50, true);
-        if (newTasks.length < 50) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
+        newTasks = await fetchTasksByWorkspace(currentWsId, 1, 10000, true);
       } else {
-        if (isLoadMore) {
-          setLoading(false);
-          return;
-        }
         newTasks = await fetchAllTasks();
-        setHasMore(false);
       }
 
-      setTasks(prev => isLoadMore ? [...prev, ...newTasks] : newTasks);
+      setTasks(newTasks);
     } catch (e) {
       console.error(e);
     } finally {
@@ -497,14 +484,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   };
 
   const refresh = async () => {
-    setPage(1);
-    await fetchTasksData(1, false);
-  };
-
-  const loadMore = async () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    await fetchTasksData(nextPage, true);
+    await fetchTasksData();
   };
 
   const handleDeleteTask = async (e: React.MouseEvent, taskId: string) => {
@@ -728,7 +708,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       setSelectedWorkspaceId(wsId || null);
     }
     
-    fetchTasksData(1, false, wsId);
+    fetchTasksData(wsId);
   }, []);
 
   const getExportCellValue = (col: any, t: any) => {
@@ -866,7 +846,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               Workspace Tasks
             </h1>
             <p className="text-[13px] font-medium text-muted flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 bg-surface/50 dark:bg-surface/10 px-2 py-0.5 rounded-md border border-border/50 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 theme-card-structural /50 dark:/10 px-2 py-0.5 rounded-md /50 shadow-sm">
                 <Layers className="h-3 w-3" />
                 {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected Workspace' : 'All Workspaces'}
               </span>
@@ -897,7 +877,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         </header>
 
         {/* Command Bar */}
-        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-2 bg-surface/80 border border-border/50 rounded-2xl shadow-sm mb-6">
+        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-2 theme-card-structural /80 /50 rounded-2xl shadow-sm mb-6">
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
             {/* View Toggles */}
             <div className="flex bg-elevated/50 p-1 rounded-xl border border-border/50">
@@ -954,7 +934,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             
             <Popover.Root>
               <Popover.Trigger asChild>
-                <AppButton variant="outline" className="h-10 px-4 rounded-xl border-border/50 bg-elevated/50 shadow-sm font-semibold hover:bg-surface relative">
+                <AppButton variant="outline" className="h-10 px-4 rounded-xl /50 bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural relative">
                   <Filter className="h-4 w-4 mr-2" />
                   Filters
                   {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo || selectedWorkspaceId) && (
@@ -965,10 +945,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl bg-surface/95 border border-border/50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
+                <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl theme-card-structural /95 /50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
-                    <AppButton onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); fetchTasksData(1, false, null); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
+                    <AppButton onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); fetchTasksData(null); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
                       <RotateCcw className="h-3 w-3" /> Reset
                     </AppButton>
                   </div>
@@ -976,7 +956,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   <div className="space-y-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Workspace</label>
-                      <select value={selectedWorkspaceId || ""} onChange={(e) => { const v = e.target.value || null; setSelectedWorkspaceId(v); fetchTasksData(1, false, v); }} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
+                      <select value={selectedWorkspaceId || ""} onChange={(e) => { const v = e.target.value || null; setSelectedWorkspaceId(v); fetchTasksData(v); }} className="w-full h-9 px-3 text-sm rounded-lg bg-elevated/50 border border-border/50 text-foreground outline-none focus:ring-2 focus:ring-primary/20">
                         <option value="">All Workspaces</option>
                         {allWorkspaces.map((ws: any) => <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>)}
                       </select>
@@ -1019,12 +999,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
             <Popover.Root>
               <Popover.Trigger asChild>
-                <AppButton variant="outline" className="h-10 px-3 rounded-xl border-border/50 bg-elevated/50 shadow-sm font-semibold hover:bg-surface">
+                <AppButton variant="outline" className="h-10 px-3 rounded-xl /50 bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural">
                   <span className="flex items-center gap-1"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Export</span></span>
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl bg-surface/95 border border-border/50 shadow-xl min-w-[140px]">
+                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl theme-card-structural /95 /50 shadow-xl min-w-[140px]">
                   <AppButton onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
                     <FileSpreadsheet className="h-4 w-4 text-success" /> Export to Excel
                   </AppButton>
@@ -1038,7 +1018,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             <AppButton 
               variant="outline"
               onClick={() => setIsConfigOpen(true)}
-              className="h-10 px-3 rounded-xl border-border/50 bg-elevated/50 shadow-sm font-semibold hover:bg-surface"
+              className="h-10 px-3 rounded-xl /50 bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural"
               title="Configure Columns"
             >
               <Settings2 className="h-4 w-4" />
@@ -1049,7 +1029,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         {/* Floating Bulk Action Bar */}
         {selectedTaskIds.size > 0 && (
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-300">
-            <div className="flex items-center gap-3 bg-foreground dark:bg-surface/95 dark:text-background dark:text-foreground px-5 py-3 rounded-full shadow-2xl border border-border/10 dark:border-border">
+            <div className="flex items-center gap-3 bg-foreground dark:theme-card-structural /95 dark:text-background dark:text-foreground px-5 py-3 rounded-full shadow-2xl /10 dark:">
               <span className="text-sm font-bold bg-background/20 dark:bg-white/10 px-2.5 py-0.5 rounded-full">
                 {selectedTaskIds.size} Selected
               </span>
@@ -1565,14 +1545,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="text-center py-10 text-muted">No tasks found for this filter.</div>
         )}
         
-        {hasMore && filtered.length > 0 && (
-          <div className="flex justify-center py-4 border-t border-border dark:border-border bg-surface dark:bg-[#0B0F19]">
-            <AppButton variant="outline" size="sm" onClick={loadMore} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Load More Tasks
-            </AppButton>
-          </div>
-        )}
 
       {/* Side Drawer Component */}
       {selectedTask && (
@@ -1596,19 +1568,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-border shadow-sm transition-colors">
+                <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
                   <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.priority?.name || 'N/A'}</div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-border shadow-sm transition-colors">
+                <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Department</span>
                   <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.department?.name || 'N/A'}</div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-border shadow-sm transition-colors">
+                <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
                   <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.status?.name || 'N/A'}</div>
                 </div>
-                <div className="flex flex-col p-3 rounded-lg bg-surface/50 dark:bg-surface/10 border border-border/60 dark:border-border shadow-sm transition-colors">
+                <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Due Date</span>
                   <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.end_date || 'N/A'}</div>
                 </div>
@@ -1940,7 +1912,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               setIsCreatingTask(false);
               await createTask({ ...data, workspace_id: creationSubWorkspaceId || creationWorkspaceId });
               // Force refresh of tasks after creating
-              fetchTasksData(1, false, selectedWorkspaceId);
+              fetchTasksData(selectedWorkspaceId);
             } catch (e: any) {
               console.error("[TaskListViewClient] Error creating task:", e);
               toast.error(e.message || "Failed to create task");

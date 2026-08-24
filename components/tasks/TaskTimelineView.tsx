@@ -67,7 +67,7 @@ export default function TaskTimelineView({ tasks, onTaskClick }: TaskTimelineVie
         <div style={{ width: `${250 + totalDays * dayWidth}px` }} className="min-h-full">
           {/* Header Row */}
           <div className="flex sticky top-0 z-20 bg-surface dark:theme-card-structural /[0.02] border-b">
-            <div className="w-[250px] shrink-0 sticky left-0 z-30 bg-surface dark:bg-[#0B0F19] border-r border-border p-3 font-bold text-xs uppercase text-muted">
+            <div className="w-[250px] shrink-0 sticky left-0 z-30 theme-card-structural dark:bg-[#0B0F19] border-r p-3 font-bold text-xs uppercase text-muted">
               Task Name
             </div>
             <div className="flex flex-1">

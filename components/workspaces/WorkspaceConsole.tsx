@@ -9,7 +9,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       {workspaces.map(ws => (
-        <div key={ws.id} className="bg-surface/50 border border-border rounded-2xl p-6 hover:shadow-xl transition-all group">
+        <div key={ws.id} className="theme-card-structural /50 rounded-2xl p-6 hover:shadow-xl transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="font-semibold text-lg text-theme-heading group-hover:text-theme-icon transition-colors">{ws.workspace_name}</h3>
@@ -48,7 +48,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
   // A heavy enterprise execution context dashboard
   return (
     <div className="flex flex-col h-full bg-background dark:bg-[#0a0a0b] text-muted">
-      <header className="p-6 border-b border-border flex justify-between items-center bg-surface/20">
+      <header className="p-6 border-b flex justify-between items-center theme-card-structural /20">
         <div>
           <h1 className="-theme-heading">{workspace.workspace_name}</h1>
           <p className="text-sm text-muted mt-1">Workspace operations and execution center</p>
@@ -66,7 +66,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
       <div className="flex-1 overflow-auto">
         {/* Placeholder for TaskBoard or TaskTimeline */}
         <div className="p-6">
-          <div className="bg-surface/40 border border-border rounded-2xl p-6 mb-6 flex justify-around">
+          <div className="theme-card-structural /40 rounded-2xl p-6 mb-6 flex justify-around">
             <div className="text-center">
               <p className="-theme-heading">{tasks.length}</p>
               <p className="text-xs text-muted uppercase tracking-widest mt-1">Total Tasks</p>

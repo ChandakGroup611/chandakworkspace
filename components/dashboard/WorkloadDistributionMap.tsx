@@ -89,7 +89,7 @@ export default function WorkloadDistributionMap({ activities = [] }: { activitie
               </div>
 
               {/* Advanced track layout */}
-              <div className="h-2 w-full bg-surface/40 rounded-full overflow-hidden border border-border p-[1px]">
+              <div className="h-2 w-full theme-card-structural /40 rounded-full overflow-hidden p-[1px]">
                 <div 
                   className={`h-full rounded-full bg-gradient-to-r ${dept.color} transition-all duration-500 shadow-sm`} 
                   style={{ width: `${dept.capacity}%` }} 

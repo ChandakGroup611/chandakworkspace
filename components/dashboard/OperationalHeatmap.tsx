@@ -136,7 +136,7 @@ export default function OperationalHeatmap({ activities = [] }: { activities?: a
         </div>
 
         {/* Dynamic Context Tooltip Frame */}
-        <div className="h-8 flex items-center justify-between px-3 rounded-lg bg-surface/20 border border-border text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
+        <div className="h-8 flex items-center justify-between px-3 rounded-lg theme-card-structural /20 text-[0.8rem] overflow-x-auto whitespace-nowrap hide-scrollbar">
           {hoveredCell ? (
             <div className="flex items-center gap-2.5 text-muted font-medium animate-in fade-in duration-150">
               <Activity className="h-3 w-3 text-theme-icon shrink-0" />

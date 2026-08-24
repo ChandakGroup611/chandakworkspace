@@ -86,9 +86,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
 
             <div className={`flex items-center justify-between pt-4 border-t border-border`}>
               <div className="flex items-center gap-2">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                  "bg-surface border border-border text-muted"
-                }`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${ "theme-card-structural text-muted" }`}>
                   {req.owner?.full_name?.charAt(0) || req.analyst?.full_name?.charAt(0) || '?'}
                 </div>
                 <span className={`text-[10px] font-medium text-muted`}>

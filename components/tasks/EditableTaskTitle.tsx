@@ -57,7 +57,7 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
             }
           }}
           disabled={isSaving}
-          className={`flex-1 bg-surface border border-border rounded px-3 py-1 ${asHeading ? 'text-2xl' : 'text-xl'} font-extrabold text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary w-full transition-all shadow-sm`}
+          className={`flex-1 theme-card-structural rounded px-3 py-1 ${asHeading ? 'text-2xl' : 'text-xl'} font-extrabold text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary w-full transition-all shadow-sm`}
         />
         <AppButton size="sm" variant="primary" onClick={handleSave} disabled={isSaving} className="h-8 w-8 p-0 shrink-0 shadow-sm">
           <Check className="h-4 w-4" />

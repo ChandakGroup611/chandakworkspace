@@ -26,22 +26,17 @@ export function TicketRightPanel({ ticketId, dbId }: { ticketId: string, dbId: s
   // Audit States
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loadingAudits, setLoadingAudits] = useState(false);
-  const [hasMoreAudits, setHasMoreAudits] = useState(true);
-  const [auditsOffset, setAuditsOffset] = useState(0);
 
   useEffect(() => {
-    loadAudits(0);
+    loadAudits();
   }, [dbId]);
 
-  const loadAudits = async (offset: number) => {
+  const loadAudits = async () => {
     if (!dbId) return;
     setLoadingAudits(true);
     try {
-      const data = await fetchTicketAuditLogs(dbId, 20, offset);
-      if (offset === 0) setAuditLogs(data);
-      else setAuditLogs(prev => [...prev, ...data]);
-      setHasMoreAudits(data.length === 20);
-      setAuditsOffset(offset + 20);
+      const data = await fetchTicketAuditLogs(dbId, 10000, 0);
+      setAuditLogs(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -103,13 +98,7 @@ export function TicketRightPanel({ ticketId, dbId }: { ticketId: string, dbId: s
                   </div>
                 );
               })}
-              {hasMoreAudits && (
-                <div className="flex justify-center pt-2">
-                  <AppButton variant="outline" size="sm" onClick={() => loadAudits(auditsOffset)} isLoading={loadingAudits}>
-                    Load More
-                  </AppButton>
-                </div>
-              )}
+
               {auditLogs.length === 0 && !loadingAudits && (
                 <div className="text-center text-xs text-muted-foreground py-10">No audit logs found.</div>
               )}

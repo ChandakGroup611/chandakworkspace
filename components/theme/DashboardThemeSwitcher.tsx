@@ -21,12 +21,12 @@ export function DashboardThemeSwitcher() {
 
   return (
     <div className="relative group">
-      <AppButton variant="ghost" className="flex items-center justify-center p-2 rounded-xl bg-surface/50 hover:bg-surface transition-colors border border-border text-muted">
+      <AppButton variant="ghost" className="flex items-center justify-center p-2 rounded-xl theme-card-structural /50 hover: transition-colors text-muted">
         <Palette className="w-5 h-5" />
       </AppButton>
 
       <div className="absolute right-0 mt-2 w-56 bg-[#0a0a0b] border border-border rounded-2xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform origin-top-right scale-95 group-hover:scale-100">
-        <div className="p-3 border-b border-border bg-surface/30">
+        <div className="p-3 border-b theme-card-structural /30">
           <h4 className="text-xs font-bold text-muted uppercase tracking-widest">Dashboard Theme</h4>
         </div>
         <div className="p-2 space-y-1">

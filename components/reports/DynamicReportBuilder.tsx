@@ -208,7 +208,7 @@ export default function DynamicReportBuilder({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-border flex items-center justify-between bg-surface dark:bg-slate-900 rounded-b-2xl shrink-0">
+        <div className="p-4 border-t border-slate-100 dark: flex items-center justify-between theme-card-structural dark:bg-slate-900 rounded-b-2xl shrink-0">
           <AppButton 
             variant="ghost" 
             className="text-danger hover:bg-rose-50 dark:hover:bg-danger/10 hover:text-danger"

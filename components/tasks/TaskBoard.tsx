@@ -54,7 +54,7 @@ function SortableTask({ task }: { task: Task }) {
 
 function Column({ id, title, tasks }: ColumnProps) {
   return (
-    <div className="flex-1 min-w-[280px] flex flex-col bg-surface/40 rounded-xl p-4 border border-border">
+    <div className="flex-1 min-w-[280px] flex flex-col theme-card-structural /40 rounded-xl p-4">
       <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-4 flex justify-between items-center">
         <span>{title}</span>
         <span className="bg-surface/10 px-2 py-0.5 rounded-full text-xs">{tasks.length}</span>

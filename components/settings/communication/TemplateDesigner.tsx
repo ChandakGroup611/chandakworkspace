@@ -243,7 +243,7 @@ export default function TemplateDesigner() {
               }
               setEditingTemplateId(null);
             }}
-            className="flex items-center gap-2 bg-surface hover:bg-surface/80 text-foreground px-4 py-2 rounded-lg text-sm font-bold border border-border shadow-sm transition-all"
+            className="flex items-center gap-2 theme-card-structural hover:/80 text-foreground px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all"
           >
             <ArrowLeft className="w-4 h-4" /> Back to List
           </AppButton>
@@ -262,7 +262,7 @@ export default function TemplateDesigner() {
         
         {/* LIST VIEW */}
         {!editingTemplateId && (
-          <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xl">
+          <div className="theme-card-structural rounded-xl overflow-hidden shadow-xl">
             {templates.length === 0 ? (
               <div className="text-center py-12">
                 <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
@@ -323,9 +323,9 @@ export default function TemplateDesigner() {
 
         {/* EDITOR VIEW */}
         {editingTemplateId && tpl && (
-          <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xl flex flex-col animate-in slide-in-from-right-4 duration-300">
+          <div className="theme-card-structural rounded-xl overflow-hidden shadow-xl flex flex-col animate-in slide-in-from-right-4 duration-300">
             {/* Header Configuration */}
-            <div className="p-6 border-b border-border grid grid-cols-1 md:grid-cols-3 gap-6 bg-surface">
+            <div className="p-6 border-b grid grid-cols-1 md:grid-cols-3 gap-6 theme-card-structural">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Template Name</label>
                 <input 
@@ -420,13 +420,13 @@ export default function TemplateDesigner() {
             <div className="flex border-b border-border bg-background">
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "code")}
-                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'code' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'code' ? 'border-theme-btn-primary text-theme-icon theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Code2 className="w-4 h-4" /> HTML Source
               </AppButton>
               <AppButton 
                 onClick={() => handleTabSwitch(tpl.id, "preview")}
-                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'preview' ? 'border-theme-btn-primary text-theme-icon bg-surface' : 'border-transparent text-muted hover:text-foreground'}`}
+                className={`theme-tab-standard border-b-2 ${activeTab[tpl.id] === 'preview' ? 'border-theme-btn-primary text-theme-icon theme-card-structural ' : 'border-transparent text-muted hover:text-foreground'}`}
               >
                 <Eye className="w-4 h-4" /> Live Preview (Dynamic)
               </AppButton>

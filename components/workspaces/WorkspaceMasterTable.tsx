@@ -182,7 +182,7 @@ export function WorkspaceMasterTable({
               const uInfo = usersMap.get(uid);
               const isOnline = onlineUsers.has(uid);
               return (
-                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-surface/5 dark:hover:bg-surface/40/5">
+                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-surface/40 backdrop-blur/5 dark:hover:bg-surface/40 backdrop-blur/40/5">
                   <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-success shadow-[0_0_4px_#22c55e]' : 'bg-danger shadow-[0_0_4px_#ef4444]'}`} />
                   <span className={`text-[11px] truncate ${isOnline ? ("text-foreground") : 'text-danger font-medium'}`}>{uInfo?.full_name || 'Unknown User'}</span>
                 </div>
@@ -245,9 +245,7 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
-        className={`theme-table-row grid items-center border-b transition-colors group min-h-[48px] cursor-pointer select-none relative hover:z-50 hover:bg-surface-hover ${
-        node.isMatched ? 'bg-theme-btn-primary/5 ring-1 ring-inset ring-theme-btn-primary/30' : ''
-      } border-border/40`} style={{ gridTemplateColumns: gridCols }}>
+        className={`theme-table-row grid items-center border-b transition-colors group min-h-[48px] cursor-pointer select-none relative hover:z-50 hover:theme-card-structural -hover ${ node.isMatched ? 'bg-theme-btn-primary/5 ring-1 ring-inset ring-theme-btn-primary/30' : '' } /40`} style={{ gridTemplateColumns: gridCols }}>
 
           {/* VS Code Style Guide Lines for Nested Items */}
           {depth > 0 && Array.from({ length: depth }).map((_, i) => {

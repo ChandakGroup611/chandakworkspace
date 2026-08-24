@@ -85,9 +85,7 @@ export function EnterpriseDrawerShell({
 
         {/* Footer */}
         {footer && (
-          <div className={`shrink-0 p-6 border-t flex items-center justify-end gap-3 ${
-            "border-border bg-surface"
-          }`}>
+          <div className={`shrink-0 p-6 border-t flex items-center justify-end gap-3 ${ " theme-card-structural " }`}>
             {footer}
           </div>
         )}

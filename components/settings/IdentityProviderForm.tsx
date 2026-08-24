@@ -101,7 +101,7 @@ export default function IdentityProviderForm() {
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Overview Card */}
-      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-xl p-6 shadow-2xl">
+      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
@@ -178,7 +178,7 @@ export default function IdentityProviderForm() {
       </div>
 
       {/* Auto Provisioning Settings */}
-      <div className="bg-surface dark:bg-[#0A0D14] border border-border dark:border-border rounded-xl p-6 shadow-2xl">
+      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 shadow-2xl">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
             <Users className="w-6 h-6 text-theme-icon" />

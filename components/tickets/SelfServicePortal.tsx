@@ -85,7 +85,7 @@ export function SelfServicePortal() {
               placeholder="Search your tickets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-surface dark:bg-surface/20 border border-border dark:border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary"
+              className="w-full pl-9 pr-4 py-2 theme-card-structural dark:/20 dark: rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary"
             />
           </div>
         </div>

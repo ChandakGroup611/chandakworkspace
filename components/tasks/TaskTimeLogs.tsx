@@ -85,7 +85,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
       </div>
 
       {/* Log Form */}
-      <form onSubmit={handleSubmit} className={`p-4 rounded-xl border bg-surface border-border`}>
+      <form onSubmit={handleSubmit} className={`p-4 rounded-xl theme-card-structural`}>
         <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
           <Clock className="h-4 w-4" /> Log New Time
         </h4>

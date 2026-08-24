@@ -34,7 +34,7 @@ export function TicketListSidebar({
     <div className={`flex flex-col h-full overflow-hidden border-r transition-colors duration-300 ${ "theme-card-structural " }`}>
       {/* Filters Area */}
       <div className={`p-4 space-y-4 border-b ${
-        "border-border bg-elevated/50/50/50/30"
+        "border-border bg-elevated/50/50/50/50/30"
       }`}>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
@@ -99,7 +99,7 @@ export function TicketListSidebar({
                 className={`w-full text-left p-4 rounded-2xl transition-all duration-200 group border cursor-pointer ${
                   isSelected 
                     ? ("bg-theme-btn-primary/10 border-theme-btn-primary/30 shadow-sm")
-                    : ("hover:bg-elevated/50/50/50 border-transparent")
+                    : ("hover:bg-elevated/50/50/50/50 border-transparent")
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -167,7 +167,7 @@ export function TicketListSidebar({
 
       {/* Stats Summary */}
       <div className={`p-4 border-t transition-colors duration-300 ${
-        "border-border bg-elevated/50/50/50/30"
+        "border-border bg-elevated/50/50/50/50/30"
       } flex items-center justify-between`}>
         <span className="text-xs text-muted font-medium">{tickets.length} Incidents Found</span>
         <div className="flex items-center gap-2">

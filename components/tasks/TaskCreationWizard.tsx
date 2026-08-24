@@ -256,7 +256,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detailed execution instructions, context, or constraints..."
-                className={`w-full min-h-[120px] p-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y theme-input-structural bg-surface text-foreground placeholder-muted`}
+                className={`w-full min-h-[120px] p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y theme-input-structural theme-card-structural text-foreground placeholder-muted`}
               />
             </div>
             </div>
@@ -514,7 +514,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="space-y-2">
                   {checklistItems.map((item, index) => (
-                    <div key={`${item}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md border border-border/40 bg-surface transition-all hover:border-theme-icon/30">
+                    <div key={`${item}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md /40 theme-card-structural transition-all hover:border-theme-icon/30">
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
                         <div className="shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-background" />
                         <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
@@ -557,9 +557,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     />
                     <label 
                       htmlFor="task-attachment"
-                      className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-md text-sm font-bold border border-dashed cursor-pointer transition-all ${
-                        "bg-surface/50 border-border text-muted hover:bg-surface hover:border-theme-btn-primary hover:text-theme-icon"
-                      }`}
+                      className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-md text-sm font-bold border-dashed cursor-pointer transition-all ${ "theme-card-structural /50 text-muted hover: hover:border-theme-btn-primary hover:text-theme-icon" }`}
                     >
                       <Paperclip className="h-3 w-3" />
                       <span>Attach Files</span>
@@ -571,7 +569,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
                 <div className="grid grid-cols-1 gap-3">
                   {attachments.map((item, index) => (
-                    <div key={`${item.file_url}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md border border-border/40 bg-surface transition-all hover:border-theme-icon/30">
+                    <div key={`${item.file_url}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md /40 theme-card-structural transition-all hover:border-theme-icon/30">
                       <div className="flex items-center gap-3 overflow-hidden flex-1">
                         <div className="shrink-0 h-8 w-8 rounded-md flex items-center justify-center text-[10px] font-bold bg-theme-icon/10 text-theme-icon">
                           {item.file_type.substring(0,3).toUpperCase()}
@@ -656,7 +654,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     <div className="w-full sm:flex-1 space-y-1.5">
                       <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Data Type</label>
                       <select 
-                        className="w-full h-9 px-3 rounded-md text-[12px] bg-surface border border-border/60 focus:border-theme-icon focus:outline-none transition-colors theme-input-structural text-foreground"
+                        className="w-full h-9 px-3 rounded-md text-[12px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors theme-input-structural text-foreground"
                         value={newFieldType}
                         onChange={e => setNewFieldType(e.target.value)}
                       >

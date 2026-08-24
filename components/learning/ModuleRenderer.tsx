@@ -154,7 +154,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
                 <span className="font-semibold mr-1">Outcome:</span>
                 {result.outcome}
               </p>
-              <div className={`p-3 rounded-xl border text-[11px] font-mono leading-relaxed mt-auto bg-surface text-muted border-border`}>
+              <div className={`p-3 rounded-xl text-[11px] font-mono leading-relaxed mt-auto theme-card-structural text-muted`}>
                 <span className="text-theme-icon mr-2">$</span>
                 {result.technicalDetail}
               </div>

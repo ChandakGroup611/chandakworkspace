@@ -112,7 +112,7 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
           <DialogTitle>Update Requirement</DialogTitle>
         </DialogHeader>
 
-        <div className="flex border-b border-border dark:border-white/10 overflow-x-auto bg-surface/30 px-6 pt-2">
+        <div className="flex border-b dark:border-white/10 overflow-x-auto theme-card-structural /30 px-6 pt-2">
           {['general', 'planning', 'details'].map(tab => {
             return (
               // eslint-disable-next-line no-restricted-syntax

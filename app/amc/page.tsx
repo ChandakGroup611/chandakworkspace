@@ -14,6 +14,7 @@ import { AMCHistoryModal } from "@/components/amc/AMCHistoryModal";
 import { AMCTransactionsTab } from "@/components/amc/AMCTransactionsTab";
 import { AMCRenewalsTab } from "@/components/amc/AMCRenewalsTab";
 import { AMCAllocationsTab } from "@/components/amc/AMCAllocationsTab";
+import { AMCAttachmentsTab } from "@/components/amc/AMCAttachmentsTab";
 import { AMCPaymentsTab } from "@/components/amc/AMCPaymentsTab";
 import { createClient } from "@/utils/supabase/client";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
@@ -124,6 +125,12 @@ export default function AMCPage() {
   const [formSlaTat, setFormSlaTat] = useState("");
   const [formCostCenterId, setFormCostCenterId] = useState("");
   const [formNotifyBeforeDays, setFormNotifyBeforeDays] = useState("30");
+
+  const [formDataClassification, setFormDataClassification] = useState("");
+  const [formComplianceStatus, setFormComplianceStatus] = useState<string[]>([]);
+  const [formInfosecApprovedDate, setFormInfosecApprovedDate] = useState("");
+  const [formDpaSigned, setFormDpaSigned] = useState(false);
+  const [formDpaSignedDate, setFormDpaSignedDate] = useState("");
 
   const [revealedLicenseKeys, setRevealedLicenseKeys] = useState<Record<string, boolean>>({});
   const [revealLicenseModal, setRevealLicenseModal] = useState<{ show: boolean, lineItemId: string, amcId: string } | null>(null);
@@ -406,6 +413,12 @@ export default function AMCPage() {
     setFormUsedLicenses("");
     setFormCostPerLicense("");
     setFormPaymentTerms("");
+
+    setFormDataClassification("");
+    setFormComplianceStatus([]);
+    setFormInfosecApprovedDate("");
+    setFormDpaSigned(false);
+    setFormDpaSignedDate("");
     setFormSupportTier("");
     setFormSlaUptime("");
     setFormSlaTat("");
@@ -505,6 +518,11 @@ export default function AMCPage() {
     setFormSlaTat(rec.sla_tat || "");
     setFormCostCenterId(rec.cost_center_id || "");
     setFormNotifyBeforeDays(rec.notify_before_days?.toString() || "30");
+    setFormDataClassification(rec.data_classification || "");
+    setFormComplianceStatus(rec.compliance_status || []);
+    setFormInfosecApprovedDate(rec.infosec_approved_date ? new Date(rec.infosec_approved_date).toISOString().split('T')[0] : "");
+    setFormDpaSigned(rec.dpa_signed || false);
+    setFormDpaSignedDate(rec.dpa_signed_date ? new Date(rec.dpa_signed_date).toISOString().split('T')[0] : "");
     setRevealedLicenseKeys({});
 
     setSolutionLineItems(rec.solution_line_items || []);
@@ -665,6 +683,11 @@ export default function AMCPage() {
       sla_tat: formSlaTat || null,
       cost_center_id: formCostCenterId || null,
       notify_before_days: formNotifyBeforeDays ? parseInt(formNotifyBeforeDays) : 30,
+      data_classification: formDataClassification || null,
+      compliance_status: formComplianceStatus,
+      infosec_approved_date: formInfosecApprovedDate || null,
+      dpa_signed: formDpaSigned,
+      dpa_signed_date: formDpaSignedDate || null,
       
       // JSON fields
       solution_line_items: finalLineItems,
@@ -974,7 +997,7 @@ export default function AMCPage() {
           {editRecordId && (
             <div className={`p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border`}>
               <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm">
-                {['Master', 'Payments', 'Transactions', 'Renewals', 'Allocations'].map(tab => (
+                {['Master', 'Transactions', 'Payments', 'Renewals', 'Allocations', 'Attachments'].map(tab => (
                   <AppButton 
                     key={tab}
                     type="button"
@@ -1208,6 +1231,60 @@ export default function AMCPage() {
                   <label className="theme-label">Resolution TAT (Turnaround Time)</label>
                   <AppInput value={formSlaTat} onChange={(e) => setFormSlaTat(e.target.value)} placeholder="e.g., 4 Hours for P1, 24 Hours for P2" className="h-11" />
                 </div>
+              </div>
+            </div>
+
+            {/* SECTION: GOVERNANCE & COMPLIANCE */}
+            <div className={`p-6 rounded-2xl border overflow-hidden bg-surface border-border shadow-[var(--shadow-ambient)]`}>
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
+                <div className={`p-2 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary`}>
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Governance & Compliance</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <label className="theme-label">Data Classification</label>
+                  <select value={formDataClassification} onChange={(e) => setFormDataClassification(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground`}>
+                    <option value="">-- Select --</option>
+                    <option value="Public">Public</option>
+                    <option value="Internal">Internal</option>
+                    <option value="Confidential">Confidential</option>
+                    <option value="Restricted/PII">Restricted / PII</option>
+                    <option value="Financial">Financial Data</option>
+                  </select>
+                </div>
+                <div className="space-y-2 lg:col-span-2">
+                  <label className="theme-label">Compliance Status</label>
+                  <FormMultiSelect 
+                    options={[
+                      {value: "GDPR Compliant", label: "GDPR Compliant"},
+                      {value: "SOC2 Type II", label: "SOC2 Type II"},
+                      {value: "ISO 27001", label: "ISO 27001"},
+                      {value: "HIPAA", label: "HIPAA"},
+                      {value: "PCI-DSS", label: "PCI-DSS"}
+                    ]}
+                    selectedValues={formComplianceStatus}
+                    onChange={setFormComplianceStatus}
+                    placeholder="Select compliance standards..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="theme-label">InfoSec Approved Date</label>
+                  <AppInput type="date" value={formInfosecApprovedDate} onChange={(e) => setFormInfosecApprovedDate(e.target.value)} className="h-11" />
+                </div>
+                <div className="space-y-2 lg:col-span-2 flex items-end">
+                  <div className="flex items-center gap-3 h-11">
+                    <input type="checkbox" id="dpa_signed" checked={formDpaSigned} onChange={(e) => setFormDpaSigned(e.target.checked)} className="w-5 h-5 rounded text-theme-btn-primary focus:ring-theme-btn-primary bg-elevated border-border" />
+                    <label htmlFor="dpa_signed" className="font-medium text-sm cursor-pointer">Data Processing Agreement (DPA) Signed</label>
+                  </div>
+                </div>
+                {formDpaSigned && (
+                  <div className="space-y-2">
+                    <label className="theme-label">DPA Signed Date</label>
+                    <AppInput type="date" value={formDpaSignedDate} onChange={(e) => setFormDpaSignedDate(e.target.value)} className="h-11" required />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1719,13 +1796,13 @@ export default function AMCPage() {
 
             {activeTab === 'Payments' && editRecordId && (
               <div className="p-6 md:p-8">
-                <AMCPaymentsTab amcId={editRecordId} isLightMode={isLightMode} />
+                <AMCPaymentsTab amcId={editRecordId} isLightMode={isLightMode} currency={formCurrency} />
               </div>
             )}
 
             {activeTab === 'Transactions' && editRecordId && (
               <div className="p-6 md:p-8">
-                <AMCTransactionsTab amcId={editRecordId} isLightMode={isLightMode} onUpdate={fetchRecords} />
+                <AMCTransactionsTab amcId={editRecordId} isLightMode={isLightMode} onUpdate={fetchRecords} currency={formCurrency} />
               </div>
             )}
 
@@ -1736,6 +1813,7 @@ export default function AMCPage() {
                   isLightMode={isLightMode} 
                   onUpdate={fetchRecords} 
                   currentExpiryDate={formExpiryDate}
+                  currency={formCurrency}
                 />
               </div>
             )}
@@ -1743,6 +1821,12 @@ export default function AMCPage() {
             {activeTab === 'Allocations' && editRecordId && (
               <div className="p-6 md:p-8">
                 <AMCAllocationsTab amcId={editRecordId} isLightMode={isLightMode} onUpdate={fetchRecords} />
+              </div>
+            )}
+
+            {activeTab === 'Attachments' && editRecordId && (
+              <div className="p-6 md:p-8">
+                <AMCAttachmentsTab amcId={editRecordId} isLightMode={isLightMode} />
               </div>
             )}
 

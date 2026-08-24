@@ -73,7 +73,7 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
               variant="ghost"
               className="p-0 h-auto w-full group relative text-left transition-all duration-300 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
             >
-              <AppCard className={`h-full w-full transition-all duration-300 overflow-hidden relative border ${isLightMode ? 'border-border/80 hover:border-theme-btn-primary/60' : 'border-border hover:border-theme-btn-primary/80'} shadow-sm hover:shadow-md ${style.border} bg-surface rounded-2xl`}>
+              <AppCard className={`h-full w-full transition-all duration-300 overflow-hidden relative ${isLightMode ? '/80 hover:border-theme-btn-primary/60' : ' hover:border-theme-btn-primary/80'} shadow-sm hover:shadow-md ${style.border} theme-card-structural rounded-2xl`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} transition-colors duration-500`} />
                 <AppCardContent className="p-6 relative z-10 flex flex-col h-full space-y-5">
                   <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${style.iconBg} ${style.hoverBg} transition-colors duration-300 shadow-sm border border-black/5 dark:border-border`}>

@@ -34,7 +34,7 @@ export function CommandPalette() {
       />
       
       {/* Palette Container */}
-      <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-xl theme-card-structural shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         
         {/* Search Input Area */}
         <div className="flex items-center border-b border-border px-4 py-3">

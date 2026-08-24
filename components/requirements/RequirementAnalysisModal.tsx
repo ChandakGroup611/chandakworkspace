@@ -172,9 +172,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/60 p-4 overflow-y-auto">
-      <AppCard className={`w-full max-w-5xl border shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col ${
-        "bg-surface border-border"
-      }`}>
+      <AppCard className={`w-full max-w-5xl shadow-2xl relative my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col ${ "theme-card-structural " }`}>
         <AppButton variant="secondary" 
           onClick={onClose}
           className={`absolute top-4 right-4 p-2 rounded-full transition-colors z-10 ${

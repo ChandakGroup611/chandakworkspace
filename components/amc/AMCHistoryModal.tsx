@@ -142,7 +142,7 @@ export function AMCHistoryModal({
                             if (typeof after === 'object') return null; // Simplify object diffs
 
                             return (
-                              <div key={key} className={`flex items-center gap-3 p-2.5 rounded-lg text-sm border bg-surface border-border`}>
+                              <div key={key} className={`flex items-center gap-3 p-2.5 rounded-lg text-sm theme-card-structural`}>
                                 <span className="font-mono text-xs w-1/3 truncate text-muted">{key}</span>
                                 <div className="flex-1 flex items-center gap-3 truncate">
                                   <span className="truncate text-danger/80 line-through opacity-80 max-w-[40%]">{String(before || 'null')}</span>

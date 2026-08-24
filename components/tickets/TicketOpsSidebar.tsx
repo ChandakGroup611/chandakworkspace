@@ -48,7 +48,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <AppBadge variant={isStable ? "success" : "warning"} className="text-[0.65rem] py-0">STABLE</AppBadge>
           </div>
           <div className={`p-5 border rounded-2xl space-y-4 ${
-            "bg-elevated/50/50/50 border-border"
+            "bg-elevated/50/50/50/50 border-border"
           }`}>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -60,7 +60,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <div className={`h-1.5 w-full rounded-full overflow-hidden bg-elevated`}>
+              <div className={`h-1.5 w-full rounded-full overflow-hidden bg-elevated/50`}>
                 <div 
                   className={`h-full transition-all duration-1000 ${isStable ? "bg-theme-btn-primary" : "bg-warning"}`}
                   style={{ width: `${slaPercentage}%` }}
@@ -88,7 +88,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             </AppButton>
             <AppButton 
               variant="secondary"
-              className={`w-full justify-start text-xs py-5 ${ "theme-card-structural text-muted hover:bg-elevated/50/50/50 shadow-sm" }`}
+              className={`w-full justify-start text-xs py-5 ${ "theme-card-structural text-muted hover:bg-elevated/50/50/50/50 shadow-sm" }`}
               onClick={() => onAction("RESOLVE")}
             >
               <CheckCircle2 className="h-4 w-4 mr-3 text-success" /> Mark as Resolved
@@ -96,14 +96,14 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
             <div className="grid grid-cols-2 gap-2">
               <AppButton 
                 variant="ghost" 
-                className={`text-xs h-10 border bg-elevated/50/50/50 border-border text-muted`}
+                className={`text-xs h-10 border bg-elevated/50/50/50/50 border-border text-muted`}
                 onClick={() => onAction("HOLD")}
               >
                 <Pause className="h-3 w-3 mr-2" /> Put on Hold
               </AppButton>
               <AppButton 
                 variant="ghost" 
-                className={`text-xs h-10 border bg-elevated/50/50/50 border-border text-muted`}
+                className={`text-xs h-10 border bg-elevated/50/50/50/50 border-border text-muted`}
                 onClick={() => onAction("ESCALATE")}
               >
                 <AlertTriangle className="h-3 w-3 mr-2" /> Escalate
@@ -140,7 +140,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
               </div>
             ))}
             <AppButton variant="secondary" className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${
-              "border-border bg-elevated/50/50/50 text-muted hover:bg-elevated/50/50/50"
+              "border-border bg-elevated/50/50/50/50 text-muted hover:bg-elevated/50/50/50/50"
             }`}>
               <UserPlus className="h-3 w-3" />
             </AppButton>
@@ -151,7 +151,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
         <section className="space-y-4">
           <h3 className="text-xs font-bold text-muted uppercase tracking-widest">Quick Attachments</h3>
           <div className={`p-4 border border-dashed rounded-2xl flex flex-col items-center justify-center text-center space-y-2 py-8 transition-colors cursor-pointer group ${
-            "border-border bg-elevated/50/50/50/50 hover:bg-elevated/50/50/50/50"
+            "border-border bg-elevated/50/50/50/50/50 hover:bg-elevated/50/50/50/50/50"
           }`}>
             <div className={`p-2 rounded-lg bg-surface group-hover:opacity-90/10`}>
               <Eye className={`h-4 w-4 text-muted group-hover:text-theme-icon`} />
@@ -163,9 +163,9 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
 
       {/* Sticky Bottom Actions */}
       <div className={`p-4 border-t flex items-center justify-between ${
-        "bg-elevated/50/50/50 border-border"
+        "bg-elevated/50/50/50/50 border-border"
       }`}>
-        <AppButton variant="secondary" className={`p-2 rounded-lg transition-colors hover:bg-elevated text-muted`}>
+        <AppButton variant="secondary" className={`p-2 rounded-lg transition-colors hover:bg-elevated/50 text-muted`}>
           <Workflow className="h-4 w-4" />
         </AppButton>
         <span className="text-xs font-bold text-muted uppercase tracking-widest">Governance ID: 9910-E</span>
