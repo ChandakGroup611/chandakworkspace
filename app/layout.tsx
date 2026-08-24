@@ -17,6 +17,9 @@ const roboto = Roboto({ subsets: ['latin'], weight: ['300', '400', '500', '700']
 export const metadata = {
   title: 'Chandak Workspace',
   description: 'Complete Enterprise Implementation Blueprint',
+  icons: {
+    icon: '/Chandak-Group-Final-Logo.svg',
+  },
 }
 
 export default function RootLayout({
