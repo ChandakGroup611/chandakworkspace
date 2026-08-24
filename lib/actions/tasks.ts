@@ -1095,21 +1095,26 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
 
   if (fetchError) return { error: "Failed to fetch task" };
 
-  // If changing status, must be assigned user
+  // If changing status, must be assigned user, superadmin, or executive
   if (newStatusId && newStatusId !== currentTask.status_id) {
     if (currentTask.assigned_to !== userId) {
-      const { data: participant } = await supabaseAdmin
-        .from('task_participants')
-        .select('id')
-        .eq('task_id', taskId)
-        .eq('user_id', userId)
-        .maybeSingle();
+      const { checkServerPermission } = await import("@/lib/permissions");
+      const isSuperAdmin = await checkServerPermission("SUPER_ADMIN") || await checkServerPermission("WORKSPACES_MANAGE");
 
-      if (!participant) {
-        await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
-          action_attempted: 'UPDATE_STATUS_INLINE'
-        }, userId);
-        return { error: "Only the assigned user or execution team can change the task status." };
+      if (!isSuperAdmin) {
+        const { data: participant } = await supabaseAdmin
+          .from('task_participants')
+          .select('id, participation_role')
+          .eq('task_id', taskId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!participant || participant.participation_role !== 'EXECUTOR') {
+          await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
+            action_attempted: 'UPDATE_STATUS_INLINE'
+          }, userId);
+          return { error: "Only the owner, superadmin, or an executive can change the status." };
+        }
       }
     }
 
@@ -1335,6 +1340,27 @@ export async function executeTaskBatchOperation(payload: {
 
   const { taskId, updates, statusChanges, departmentChange, checklistCreates, checklistUpdates, remarks, attachmentIds } = payload;
   
+  if (statusChanges || (departmentChange && departmentChange.new_id !== undefined)) {
+    const { data: currentTask } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
+    if (currentTask && currentTask.assigned_to !== userId) {
+      const { checkServerPermission } = await import("@/lib/permissions");
+      const isSuperAdmin = await checkServerPermission("SUPER_ADMIN") || await checkServerPermission("WORKSPACES_MANAGE");
+      
+      if (!isSuperAdmin) {
+        const { data: participant } = await supabaseAdmin
+          .from('task_participants')
+          .select('participation_role')
+          .eq('task_id', taskId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!participant || participant.participation_role !== 'EXECUTOR') {
+          return { error: "Only the owner, superadmin, or an executive can change the status or department." };
+        }
+      }
+    }
+  }
+
   const tCore0 = performance.now();
   // Update Task Core
   const updatePayload = { ...updates };

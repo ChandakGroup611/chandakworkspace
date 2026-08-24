@@ -692,6 +692,11 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     setDepartmentModalOpen(true);
   };
 
+  const isOwner = inlineTask?.assigned_to === currentUserId;
+  const isSuperAdmin = hasPermission("WORKSPACES_MANAGE");
+  const isExecutive = inlineTask?.participants?.some((p: any) => p.user_id === currentUserId && p.participation_role === 'EXECUTOR');
+  const canChangeFields = isOwner || isSuperAdmin || isExecutive;
+
   const handleStatusSave = async () => {
     if (!inlineTask) return;
     if (!inlineRemark || inlineRemark.trim().length === 0) {
@@ -1859,7 +1864,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
             
-            {true ? (
+            {canChangeFields ? (
               <div className="grid gap-2">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">New Status</label>
                 <select
@@ -1897,7 +1902,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               disabled={inlineLoading || !inlineRemark.trim()}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {(inlineTask?.assigned_to === currentUserId || hasPermission("WORKSPACES_MANAGE")) && inlineNewStatus !== inlineTask?.status_id ? "Change Status" : "Add Remark"}
+              {canChangeFields && inlineNewStatus !== inlineTask?.status_id ? "Change Status" : "Add Remark"}
             </AppButton>
           </DialogFooter>
         </DialogContent>
@@ -1912,7 +1917,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
             
-            {true ? (
+            {canChangeFields ? (
               <div className="grid gap-2">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">New Department</label>
                 <select
@@ -1950,7 +1955,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               disabled={inlineLoading || !inlineRemark.trim()}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {(inlineTask?.assigned_to === currentUserId || hasPermission("WORKSPACES_MANAGE")) && inlineNewDepartment !== inlineTask?.department_id ? "Change Department" : "Add Remark"}
+              {canChangeFields && inlineNewDepartment !== inlineTask?.department_id ? "Change Department" : "Add Remark"}
             </AppButton>
           </DialogFooter>
         </DialogContent>
