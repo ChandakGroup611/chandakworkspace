@@ -90,11 +90,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     }
 
     // 5. Hydrate Templates and Queue
-    let humanReadableStatus = payload.status;
-    if (humanReadableStatus && humanReadableStatus.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-       const { data: sm } = await supabaseAdmin.from('status_master').select('status_name').eq('id', humanReadableStatus).maybeSingle();
-       if (sm && sm.status_name) humanReadableStatus = sm.status_name;
-    }
+    let autoHydratedPayload = await autoHydratePayload(payload);
 
     const validEmails = users.filter(u => u.email).map(u => u.email);
     if (validEmails.length === 0) return;
@@ -102,8 +98,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
     const recipientEmails = validEmails.join(',');
 
     const hydratedPayload = { 
-      ...payload, 
-      status: humanReadableStatus,
+      ...autoHydratedPayload, 
       recipient_name: "Team", 
       creator_name: finalCreatorName
     };
@@ -148,6 +143,46 @@ function triggerBackgroundProcessor() {
 // ---------------------------------------------------------------------------
 // HYDRATION ENGINE
 // ---------------------------------------------------------------------------
+async function autoHydratePayload(payload: any) {
+  const hydrated = { ...payload };
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  const fieldMappings: Record<string, { table: string, column: string }> = {
+    'assigned_to': { table: 'user_master', column: 'full_name' },
+    'requester_id': { table: 'user_master', column: 'full_name' },
+    'created_by': { table: 'user_master', column: 'full_name' },
+    'triggering_user_id': { table: 'user_master', column: 'full_name' },
+    'priority': { table: 'priority_master', column: 'priority_name' },
+    'priority_id': { table: 'priority_master', column: 'priority_name' },
+    'department': { table: 'departments', column: 'name' },
+    'department_id': { table: 'departments', column: 'name' },
+    'category': { table: 'ticket_categories', column: 'name' },
+    'category_id': { table: 'ticket_categories', column: 'name' },
+    'subcategory': { table: 'ticket_subcategories', column: 'name' },
+    'subcategory_id': { table: 'ticket_subcategories', column: 'name' },
+    'workspace_id': { table: 'workspaces', column: 'name' },
+    'status': { table: 'status_master', column: 'status_name' },
+    'status_id': { table: 'status_master', column: 'status_name' }
+  };
+
+  for (const [key, value] of Object.entries(hydrated)) {
+    if (typeof value === 'string' && uuidRegex.test(value)) {
+       const mapping = fieldMappings[key];
+       if (mapping) {
+          try {
+             const { data } = await supabaseAdmin.from(mapping.table).select(mapping.column).eq('id', value).maybeSingle();
+             if (data && (data as any)[mapping.column]) {
+                hydrated[key] = (data as any)[mapping.column];
+             }
+          } catch (e) {
+             console.error(`[NotificationEngine] Failed to hydrate ${key}`, e);
+          }
+       }
+    }
+  }
+  return hydrated;
+}
+
 function hydrateTemplate(text: string, data: any): string {
   let hydrated = text;
   // Match {{key}} pattern
