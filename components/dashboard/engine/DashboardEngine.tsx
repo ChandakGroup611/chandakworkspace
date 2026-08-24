@@ -24,9 +24,71 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   // Active widgets ordered by user preference
   const activeWidgets = layout.filter(w => w.order !== -1).sort((a, b) => a.order - b.order);
 
+  // Group widgets into sections
+  const sections = [
+    {
+      title: "Executive Overview",
+      types: ["kpi"]
+    },
+    {
+      title: "Analytics & Insights",
+      types: ["risk_intelligence", "status_comparison", "resolution_velocity", "sla_governance", "workload_intelligence", "charts"]
+    },
+    {
+      title: "Active Work",
+      types: ["kanban", "recent_tickets"]
+    },
+    {
+      title: "Team Operations",
+      types: ["team_performance"]
+    },
+    {
+      title: "Timeline & Alerts",
+      types: ["activity_feed", "upcoming_deadlines"]
+    }
+  ];
+
+  const renderSection = (title: string, allowedTypes: string[]) => {
+    const sectionWidgets = activeWidgets.filter(w => allowedTypes.includes(w.type));
+    if (sectionWidgets.length === 0) return null;
+
+    return (
+      <div key={title} className="mb-10">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">{title}</h2>
+          <div className="h-px bg-border/50 flex-1"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {sectionWidgets.map(widgetConfig => {
+            const WidgetComponent = WidgetRegistry[widgetConfig.type];
+            if (!WidgetComponent) {
+              console.warn(`Widget type ${widgetConfig.type} not found in registry.`);
+              return null;
+            }
+
+            return (
+              <div 
+                key={widgetConfig.id} 
+                className={cn(
+                  widgetConfig.colSpan === 4 && "lg:col-span-4",
+                  widgetConfig.colSpan === 3 && "lg:col-span-3",
+                  widgetConfig.colSpan === 2 && "lg:col-span-2",
+                  widgetConfig.colSpan === 1 && "lg:col-span-1",
+                  "h-full"
+                )}
+              >
+                <WidgetComponent metrics={metrics} kpis={kpis} {...widgetConfig.props} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full relative animate-in fade-in duration-700">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground">Workspace / Enterprise Overview</h1>
           <div className="flex items-center gap-4 mt-2 text-xs font-medium text-muted-foreground">
@@ -40,40 +102,16 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
           size="sm" 
           leftIcon={<Settings2 className="h-4 w-4" />}
           onClick={() => setIsCustomizeOpen(true)}
-          className="theme-card-structural /50 /50 hover:"
+          className="theme-card-structural /50 hover:bg-background/80"
         >
           Customize
         </AppButton>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {activeWidgets.map(widgetConfig => {
-          const WidgetComponent = WidgetRegistry[widgetConfig.type];
-          if (!WidgetComponent) {
-            console.warn(`Widget type ${widgetConfig.type} not found in registry.`);
-            return null;
-          }
-
-          return (
-            <div 
-              key={widgetConfig.id} 
-              className={cn(
-                // Span classes
-                widgetConfig.colSpan === 4 && "lg:col-span-4",
-                widgetConfig.colSpan === 3 && "lg:col-span-3",
-                widgetConfig.colSpan === 2 && "lg:col-span-2",
-                widgetConfig.colSpan === 1 && "lg:col-span-1",
-                "h-full"
-              )}
-            >
-              <WidgetComponent metrics={metrics} kpis={kpis} {...widgetConfig.props} />
-            </div>
-          );
-        })}
-      </div>
+      {sections.map(section => renderSection(section.title, section.types))}
 
       {activeWidgets.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-dashed rounded-3xl theme-card-structural /30">
+        <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-dashed rounded-3xl theme-card-structural /30 border-border">
           <Settings2 className="w-12 h-12 mb-4 text-muted-foreground/30" />
           <h3 className="text-lg font-semibold text-foreground">Dashboard is Empty</h3>
           <p className="mt-2 text-sm text-muted-foreground max-w-md">

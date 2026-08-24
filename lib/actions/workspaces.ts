@@ -641,7 +641,7 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
       taskQuery = taskQuery.lte('created_at', filters.dateTo);
     }
 
-    const { data: fetchedTasks, error: taskErr } = await taskQuery.order('created_at', { ascending: false }).limit(200);
+    const { data: fetchedTasks, error: taskErr } = await taskQuery.order('created_at', { ascending: false });
     if (!taskErr && fetchedTasks) {
       tasks = fetchedTasks;
     }
@@ -1218,13 +1218,10 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
   }).filter(Boolean);
 }
 
-
-export async function fetchTasksByWorkspace(workspaceId: string, page: number = 1, limit: number = 50, includeDescendants: boolean = false) {
+export async function fetchTasksByWorkspace(workspaceId: string, includeDescendants: boolean = false) {
   const tId = Math.random().toString(36).substr(2, 5);
   console.time(`[PROFILER] fetchTasksByWorkspace_TOTAL_${tId}`);
   try {
-    if (!workspaceId) return [];
-  
     const cookieStore = await cookies();
     const supabaseClient = createClient(cookieStore);
     
@@ -1233,9 +1230,9 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
 
     const canManageAll = await hasPermission(userData.user.id, "WORKSPACES_MANAGE");
     const supabase = canManageAll ? supabaseAdmin : supabaseClient;
-  
+
+    // Get Hierarchy
     let targetWorkspaceIds = [workspaceId];
-  
     if (includeDescendants) {
       console.log(`[PROFILER] Hierarchy_CTE_Start_${tId}`);
       console.time(`[PROFILER] Hierarchy_CTE_Duration_${tId}`);
@@ -1244,9 +1241,6 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
       console.log(`[PROFILER] Hierarchy_CTE_End_${tId}`);
     }
   
-    const startIdx = (page - 1) * limit;
-    const endIdx = startIdx + limit - 1;
-
     let query = supabase
       .from("tasks")
       .select(`
@@ -1280,8 +1274,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, page: number = 
     }
 
     const { data: workspaceTasks, error: tasksError } = await query
-      .order("created_at", { ascending: false })
-      .range(startIdx, endIdx);
+      .order("created_at", { ascending: false });
 
     if (tasksError) {
       console.error("[Workspaces] Error fetching tasks by workspace:", tasksError);

@@ -541,7 +541,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     try {
       let newTasks: any[] = [];
       if (currentWsId) {
-        newTasks = await fetchTasksByWorkspace(currentWsId, 1, 10000, true);
+        newTasks = await fetchTasksByWorkspace(currentWsId, true);
       } else {
         newTasks = await fetchAllTasks();
       }

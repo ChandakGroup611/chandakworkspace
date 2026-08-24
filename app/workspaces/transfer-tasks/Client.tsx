@@ -82,7 +82,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
       try {
         const [stakeholders, tasks] = await Promise.all([
           m.fetchWorkspaceStakeholders(targetId),
-          m.fetchTasksByWorkspace(targetId, 1, 500, false)
+          m.fetchTasksByWorkspace(targetId, false)
         ]);
         if (isMounted) {
           setTargetStakeholders(stakeholders);

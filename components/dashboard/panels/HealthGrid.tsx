@@ -8,8 +8,27 @@ interface HealthGridProps {
 
 export default function HealthGrid({ metrics = [] }: HealthGridProps) {
   
-  const velocity = useMemo(() => {
-    return metrics.filter(m => String(m.status).toLowerCase().includes('resolv') || String(m.status).toLowerCase().includes('done')).length * 3 + 24; // dummy math for points
+  const { velocity, cycleTime } = useMemo(() => {
+    let resolvedCount = 0;
+    let totalCycleTimeDays = 0;
+    
+    metrics.forEach(m => {
+      const isResolved = String(m.status).toLowerCase().includes('resolv') || String(m.status).toLowerCase().includes('done');
+      if (isResolved) {
+        resolvedCount++;
+        if (m.createdAt && m.updatedAt) {
+          const diffMs = new Date(m.updatedAt).getTime() - new Date(m.createdAt).getTime();
+          const diffDays = diffMs / (1000 * 3600 * 24);
+          totalCycleTimeDays += Math.max(0, diffDays);
+        }
+      }
+    });
+    
+    const avgCycle = resolvedCount > 0 ? (totalCycleTimeDays / resolvedCount) : 0;
+    return {
+      velocity: resolvedCount,
+      cycleTime: avgCycle < 0.1 && resolvedCount > 0 ? "<0.1" : avgCycle.toFixed(1)
+    };
   }, [metrics]);
 
   const completion = useMemo(() => {
@@ -26,7 +45,7 @@ export default function HealthGrid({ metrics = [] }: HealthGridProps) {
         </div>
         <div>
           <div className="health-label">Resolution Rate</div>
-          <div className="health-value" style={{ color: 'var(--green)' }}>{velocity} pts</div>
+          <div className="health-value" style={{ color: 'var(--green)' }}>{velocity} items</div>
         </div>
       </div>
       
@@ -36,7 +55,7 @@ export default function HealthGrid({ metrics = [] }: HealthGridProps) {
         </div>
         <div>
           <div className="health-label">Avg. Cycle Time</div>
-          <div className="health-value" style={{ color: 'var(--accent)' }}>2.4 days</div>
+          <div className="health-value" style={{ color: 'var(--accent)' }}>{cycleTime} days</div>
         </div>
       </div>
       

@@ -30,7 +30,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     );
   }
 
-  const tasks = workspaceId ? await fetchTasksByWorkspace(workspaceId, 1, 50, true) : await fetchAllTasks();
+  const tasks = workspaceId ? await fetchTasksByWorkspace(workspaceId, true) : await fetchAllTasks();
   
   return (
     <div className="w-full h-full animate-in fade-in-50 duration-500">

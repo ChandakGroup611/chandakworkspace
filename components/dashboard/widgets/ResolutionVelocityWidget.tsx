@@ -32,14 +32,24 @@ export function ResolutionVelocityWidget({ metrics = [] }: ResolutionVelocityWid
     }
 
     metrics.forEach(m => {
+      // Bucket New (Created)
       if (m.createdAt) {
-        const d = new Date(m.createdAt);
-        const dayStr = d.toLocaleDateString(undefined, { weekday: 'short' });
-        if (dailyData[dayStr]) {
-          dailyData[dayStr].total++;
-          const sLower = String(m.status).toLowerCase();
-          if (sLower.includes('resolv') || sLower.includes('done')) {
-            dailyData[dayStr].resolved++;
+        const createD = new Date(m.createdAt);
+        const createDayStr = createD.toLocaleDateString(undefined, { weekday: 'short' });
+        if (dailyData[createDayStr]) {
+          dailyData[createDayStr].total++;
+        }
+      }
+      
+      // Bucket Resolved
+      const sLower = String(m.status).toLowerCase();
+      if (sLower.includes('resolv') || sLower.includes('done')) {
+        const resolveTime = m.updatedAt || m.createdAt;
+        if (resolveTime) {
+          const resolveD = new Date(resolveTime);
+          const resolveDayStr = resolveD.toLocaleDateString(undefined, { weekday: 'short' });
+          if (dailyData[resolveDayStr]) {
+            dailyData[resolveDayStr].resolved++;
           }
         }
       }

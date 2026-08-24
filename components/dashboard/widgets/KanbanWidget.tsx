@@ -37,15 +37,23 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
   const renderCard = (m: any, isProgress: boolean) => {
     const isBug = m.module === 'Tickets';
     const isTask = m.module === 'Tasks';
+    const isReq = m.module === 'Requirements';
+    
+    let href = '#';
+    if (isTask || m.module === 'Sub Tasks') href = `/tasks/${m.id}`;
+    if (isBug) href = `/tickets/${m.id}`;
+    if (isReq) href = `/requirements/${m.id}`;
     
     const tagBg = isBug ? 'bg-danger/10 text-danger border-red-500/20' : isTask ? 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20' : 'bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20';
     const shortId = m.id ? String(m.id).substring(0, 7).toUpperCase() : 'UNKNOWN';
     const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
     return (
-      <div 
+      <a 
         key={m.id} 
-        className={`p-3 rounded-xl border bg-background/50 hover:bg-background/80 transition-colors cursor-pointer shadow-sm ${isProgress ? 'border-primary/30 ring-1 ring-primary/10' : 'border-border/50 hover:border-border'}`}
+        href={href}
+        className={`block p-3 rounded-xl border bg-background/50 hover:bg-background/80 transition-colors cursor-pointer shadow-sm ${isProgress ? 'border-primary/30 ring-1 ring-primary/10' : 'border-border/50 hover:border-border'}`}
+        style={{ textDecoration: 'none' }}
       >
         <div className="text-sm font-semibold text-foreground line-clamp-2 leading-snug mb-2" title={m.title}>{m.title || `${m.module} Assignment`}</div>
         
@@ -70,7 +78,7 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
             </div>
           </div>
         )}
-      </div>
+      </a>
     );
   };
 

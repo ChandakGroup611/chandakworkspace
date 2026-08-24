@@ -18,7 +18,16 @@ export const metadata = {
   title: 'Chandak Workspace',
   description: 'Complete Enterprise Implementation Blueprint',
   icons: {
-    icon: '/Chandak-Group-Final-Logo.svg',
+    icon: [
+      { url: '/Chandak-Group-Final-Logo.svg', type: 'image/svg+xml' }
+    ],
+    apple: '/Chandak-Group-Final-Logo.svg',
+    shortcut: '/Chandak-Group-Final-Logo.svg',
+  },
+  openGraph: {
+    title: 'Chandak Workspace',
+    description: 'Complete Enterprise Implementation Blueprint',
+    images: [{ url: '/Chandak-Group-Final-Logo.svg' }],
   },
 }
 

@@ -248,11 +248,47 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
               placeholder="Users"
             />
 
-            <AppButton variant="outline" size="sm" leftIcon={<Download className="h-3.5 w-3.5" />}>
-              Export
+            <AppButton 
+              variant="outline" 
+              size="sm" 
+              leftIcon={<Download className="h-3.5 w-3.5" />}
+              onClick={() => {
+                if (!filteredMetrics || filteredMetrics.length === 0) return;
+                
+                const headers = ["Module", "ID", "Code", "Title", "Status", "User", "Role", "Priority", "Created At", "Updated At", "Due Date", "Overdue"];
+                const csvRows = [headers.join(",")];
+                
+                filteredMetrics.forEach(m => {
+                  const row = [
+                    `"${m.module || ''}"`,
+                    `"${m.id || ''}"`,
+                    `"${m.code || ''}"`,
+                    `"${(m.title || '').replace(/"/g, '""')}"`,
+                    `"${m.status || ''}"`,
+                    `"${m.user || ''}"`,
+                    `"${m.userRole || ''}"`,
+                    `"${m.priority || ''}"`,
+                    `"${m.createdAt || ''}"`,
+                    `"${m.updatedAt || ''}"`,
+                    `"${m.dueDate || ''}"`,
+                    `"${m.isOverdue ? 'Yes' : 'No'}"`
+                  ];
+                  csvRows.push(row.join(","));
+                });
+                
+                const blob = new Blob([csvRows.join("\n")], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `TaskForge_Metrics_Export_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+              }}
+            >
+              Export CSV
             </AppButton>
-            <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />}>
-              New Metric
+            <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => window.location.href = '/tasks'}>
+              New Task
             </AppButton>
             
             {refreshComponent && (

@@ -23,21 +23,39 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
         userMap[m.user] = {
           name: m.user,
           initials: m.user.substring(0,2).toUpperCase(),
+          role: m.userRole || "Team Member",
           closed: 0,
           pts: 0,
           active: 0,
+          totalResolutionDays: 0
         };
       }
       
-      if (String(m.status) === 'Resolved' || String(m.status) === 'Done') {
+      const isResolved = String(m.status) === 'Resolved' || String(m.status) === 'Done';
+      if (isResolved) {
         userMap[m.user].closed += 1;
-        userMap[m.user].pts += 3;
+        
+        // Dynamic Priority Points
+        const p = String(m.priority || '').toLowerCase();
+        if (p.includes('critical') || p.includes('high')) userMap[m.user].pts += 5;
+        else if (p.includes('medium') || p.includes('standard')) userMap[m.user].pts += 3;
+        else if (p.includes('low')) userMap[m.user].pts += 1;
+        else userMap[m.user].pts += 3; // Default
+
+        // Avg Days
+        if (m.createdAt && m.updatedAt) {
+          const diffMs = new Date(m.updatedAt).getTime() - new Date(m.createdAt).getTime();
+          const diffDays = diffMs / (1000 * 3600 * 24);
+          userMap[m.user].totalResolutionDays += Math.max(0, diffDays);
+        }
       } else {
         userMap[m.user].active += 1;
       }
     });
 
-    return Object.values(userMap).slice(0, 5);
+    return Object.values(userMap)
+      .sort((a, b) => b.pts - a.pts) // Sort by points
+      .slice(0, 5);
   }, [metrics]);
 
   const handleOpenUserSheet = (userName: string) => {
@@ -54,12 +72,12 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
     setIsSheetOpen(true);
   };
 
-  const getRole = (i: number) => {
-    return "Team Member";
-  };
+  const getRole = (u: any) => u.role;
 
-  const getAvgDays = (i: number) => {
-    return "-";
+  const getAvgDays = (u: any) => {
+    if (u.closed === 0) return "-";
+    const avg = u.totalResolutionDays / u.closed;
+    return avg < 0.1 ? "<0.1d" : `${avg.toFixed(1)}d`;
   };
 
   return (
@@ -112,7 +130,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                         </div>
                         <div>
                           <div className="text-xs font-bold text-foreground hover:text-primary transition-colors">{u.name}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono">{getRole(i)}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono">{getRole(u)}</div>
                         </div>
                       </div>
                     </AppTableCell>
@@ -131,7 +149,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                       </div>
                     </AppTableCell>
                     <AppTableCell className="text-right font-mono text-xs text-muted-foreground">
-                      {getAvgDays(i)}
+                      {getAvgDays(u)}
                     </AppTableCell>
                   </AppTableRow>
                 );

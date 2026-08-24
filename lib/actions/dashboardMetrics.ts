@@ -51,8 +51,8 @@ export async function fetchLiveDashboardMetrics() {
         .order("created_at", { ascending: false })
         .then(res => ({ data: res.data || [], error: res.error }));
     } else {
-      const createdPromise = supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('created_by', userId).eq("is_deleted", false);
-      const assignedPromise = supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('assigned_to', userId).eq("is_deleted", false);
+      const createdPromise = supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('created_by', userId).eq("is_deleted", false);
+      const assignedPromise = supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('assigned_to', userId).eq("is_deleted", false);
       
       let partTasksData: any[] = [];
       let partTasksError = null;
@@ -60,7 +60,7 @@ export async function fetchLiveDashboardMetrics() {
         const CHUNK_SIZE = 150;
         for (let i = 0; i < participantTaskIds.length; i += CHUNK_SIZE) {
           const chunk = participantTaskIds.slice(i, i + CHUNK_SIZE);
-          const { data, error } = await supabaseAdmin.from("tasks").select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).in('id', chunk).eq("is_deleted", false);
+          const { data, error } = await supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).in('id', chunk).eq("is_deleted", false);
           if (error) partTasksError = error;
           if (data) partTasksData.push(...data);
         }
@@ -81,13 +81,13 @@ export async function fetchLiveDashboardMetrics() {
     let subTasksPromise: any;
     if (isSuperAdmin) {
       subTasksPromise = supabaseAdmin.from("sub_tasks")
-        .select(`id, created_at, created_by, assigned_to, subject, status`)
+        .select(`id, created_at, updated_at, created_by, assigned_to, subject, status`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
         .then(res => ({ data: res.data || [], error: res.error }));
     } else {
-      const createdSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('created_by', userId).eq("is_deleted", false);
-      const assignedSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, created_by, assigned_to, subject, status`).eq('assigned_to', userId).eq("is_deleted", false);
+      const createdSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status`).eq('created_by', userId).eq("is_deleted", false);
+      const assignedSubPromise = supabaseAdmin.from("sub_tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status`).eq('assigned_to', userId).eq("is_deleted", false);
       
       subTasksPromise = Promise.all([createdSubPromise, assignedSubPromise]).then(([cRes, aRes]) => {
         if (cRes.error) return { data: null, error: cRes.error };
@@ -102,13 +102,13 @@ export async function fetchLiveDashboardMetrics() {
     let ticketsPromise: any;
     if (isSuperAdmin) {
       ticketsPromise = supabaseAdmin.from("tickets")
-        .select(`id, created_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`)
+        .select(`id, created_at, updated_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
         .then(res => ({ data: res.data || [], error: res.error }));
     } else {
-      const createdTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('creator_id', userId).eq("is_deleted", false);
-      const assignedTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('assignee_id', userId).eq("is_deleted", false);
+      const createdTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, updated_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('creator_id', userId).eq("is_deleted", false);
+      const assignedTkPromise = supabaseAdmin.from("tickets").select(`id, created_at, updated_at, creator_id, title, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), due_date, assignee_id`).eq('assignee_id', userId).eq("is_deleted", false);
       
       ticketsPromise = Promise.all([createdTkPromise, assignedTkPromise]).then(([cRes, aRes]) => {
         if (cRes.error) return { data: null, error: cRes.error };
@@ -123,13 +123,13 @@ export async function fetchLiveDashboardMetrics() {
     if (isSuperAdmin) {
       requirementsPromise = supabaseAdmin
         .from("requirements")
-        .select(`id, created_at, creator_id, title, status_id, status_master(status_name), due_date`)
+        .select(`id, created_at, updated_at, creator_id, title, status_id, status_master(status_name), due_date`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
     } else {
       requirementsPromise = supabaseAdmin
         .from("requirements")
-        .select(`id, created_at, creator_id, title, status_id, status_master(status_name), due_date`)
+        .select(`id, created_at, updated_at, creator_id, title, status_id, status_master(status_name), due_date`)
         .eq("is_deleted", false)
         .eq('creator_id', userId)
         .order("created_at", { ascending: false });
@@ -139,14 +139,14 @@ export async function fetchLiveDashboardMetrics() {
     if (isSuperAdmin) {
       workspacesPromise = supabaseAdmin
         .from("workspaces")
-        .select(`id, created_at, workspace_name, parent_workspace_id, status_id, status_master(status_name), end_date`)
+        .select(`id, created_at, updated_at, workspace_name, parent_workspace_id, status_id, status_master(status_name), end_date`)
         .eq('is_deleted', false)
         .order("created_at", { ascending: false });
     } else {
       const idsToFetch = [...workspaceIds];
       workspacesPromise = idsToFetch.length > 0 ? supabaseAdmin
         .from("workspaces")
-        .select(`id, created_at, workspace_name, parent_workspace_id, status_id, status_master(status_name), end_date`)
+        .select(`id, created_at, updated_at, workspace_name, parent_workspace_id, status_id, status_master(status_name), end_date`)
         .in('id', idsToFetch)
         .eq('is_deleted', false)
         .order("created_at", { ascending: false }) : Promise.resolve({ data: [], error: null });
@@ -183,9 +183,11 @@ export async function fetchLiveDashboardMetrics() {
         title: t.subject || "Untitled Sub Task",
         status: status,
         rawStatus: t.status || "Unknown",
-        user: userMap[t.assigned_to] || userMap[t.created_by] || "Unassigned",
+        user: userMap[t.assigned_to]?.name || userMap[t.created_by]?.name || "Unassigned",
+        userRole: userMap[t.assigned_to]?.role || userMap[t.created_by]?.role || "Team Member",
         priority: "N/A",
         createdAt: t.created_at,
+        updatedAt: t.updated_at || t.created_at,
         dueDate: null,
         isOverdue: false
       });
@@ -194,16 +196,19 @@ export async function fetchLiveDashboardMetrics() {
     ticketsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); if (t.assignee_id) userIdsToFetch.add(t.assignee_id); });
     requirementsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); });
 
-    let userMap: Record<string, string> = {};
+    let userMap: Record<string, any> = {};
     if (userIdsToFetch.size > 0) {
       const { data: usersData } = await supabaseAdmin
         .from('user_master')
-        .select('id, full_name')
+        .select('id, full_name, role_id, roles(name)')
         .in('id', Array.from(userIdsToFetch));
       
       if (usersData) {
         usersData.forEach((u: any) => {
-          userMap[u.id] = u.full_name;
+          userMap[u.id] = {
+            name: u.full_name,
+            role: u.roles?.name || "Team Member"
+          };
         });
       }
     }
@@ -246,9 +251,11 @@ export async function fetchLiveDashboardMetrics() {
         title: t.subject || "Untitled Task",
         status: status,
         rawStatus: (t.status_master as any)?.status_name || "Unknown",
-        user: userMap[t.assigned_to] || userMap[t.created_by] || "Unassigned",
+        user: userMap[t.assigned_to]?.name || userMap[t.created_by]?.name || "Unassigned",
+        userRole: userMap[t.assigned_to]?.role || userMap[t.created_by]?.role || "Team Member",
         priority: t.priority?.priority_name || "Standard",
         createdAt: t.created_at,
+        updatedAt: t.updated_at || t.created_at,
         dueDate: t.end_date,
         isOverdue: t.end_date && new Date(t.end_date).getTime() < now && status !== "Resolved"
       });
@@ -268,9 +275,11 @@ export async function fetchLiveDashboardMetrics() {
         title: t.title || "Untitled Ticket",
         status: status,
         rawStatus: (t.status_master as any)?.status_name || "Unknown",
-        user: userMap[t.assignee_id] || userMap[t.creator_id] || "Unassigned",
+        user: userMap[t.assignee_id]?.name || userMap[t.creator_id]?.name || "Unassigned",
+        userRole: userMap[t.assignee_id]?.role || userMap[t.creator_id]?.role || "Team Member",
         priority: t.priority?.priority_name || "Standard",
         createdAt: t.created_at,
+        updatedAt: t.updated_at || t.created_at,
         dueDate: t.due_date,
         isOverdue: t.due_date && new Date(t.due_date).getTime() < now && status !== "Resolved",
         slaBreached: false
@@ -292,9 +301,11 @@ export async function fetchLiveDashboardMetrics() {
         title: r.title || "Untitled Requirement",
         status: status,
         rawStatus: (r.status_master as any)?.status_name || "Unknown",
-        user: userMap[r.creator_id] || "Unassigned",
+        user: userMap[r.creator_id]?.name || "Unassigned",
+        userRole: userMap[r.creator_id]?.role || "Team Member",
         priority: "N/A", 
         createdAt: r.created_at,
+        updatedAt: r.updated_at || r.created_at,
         dueDate: r.due_date,
         isOverdue: r.due_date && new Date(r.due_date).getTime() < now && status !== "Resolved"
       });
