@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 
 export interface SavedFilter<T> {
@@ -15,6 +15,11 @@ export function useSavedFilters<T>(
   const [savedFilters, setSavedFilters] = useState<SavedFilter<T>[]>([]);
   const [activeSavedFilterId, setActiveSavedFilterId] = useState<string | null>(null);
 
+  const onAutoApplyRef = useRef(onAutoApply);
+  useEffect(() => {
+    onAutoApplyRef.current = onAutoApply;
+  }, [onAutoApply]);
+
   useEffect(() => {
     if (!currentUserId) return;
     try {
@@ -29,17 +34,17 @@ export function useSavedFilters<T>(
       
       if (storedActiveId && loadedFilters.length > 0) {
         setActiveSavedFilterId(storedActiveId);
-        if (onAutoApply) {
+        if (onAutoApplyRef.current) {
           const activeFilter = loadedFilters.find(f => f.id === storedActiveId);
           if (activeFilter) {
-            onAutoApply(activeFilter.payload);
+            onAutoApplyRef.current(activeFilter.payload);
           }
         }
       }
     } catch (e) {
       console.error("Failed to load saved filters:", e);
     }
-  }, [currentUserId, storageKeyPrefix, onAutoApply]);
+  }, [currentUserId, storageKeyPrefix]);
 
   const saveCurrentFilter = (payload: T, onSuccess?: (filter: SavedFilter<T>) => void) => {
     const name = window.prompt("Enter a name for this saved filter:");
