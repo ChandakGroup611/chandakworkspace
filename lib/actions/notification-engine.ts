@@ -91,26 +91,28 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
        if (sm && sm.name) humanReadableStatus = sm.name;
     }
 
-    const queueInserts = users.map(user => {
-      const hydratedPayload = { 
-        ...payload, 
-        status: humanReadableStatus,
-        recipient_name: user.full_name,
-        creator_name: payload.creator_name || creatorName
-      };
-      const subject = template.subject ? hydrateTemplate(template.subject, hydratedPayload) : "System Notification";
-      const htmlBody = template.html_body ? hydrateTemplate(template.html_body, hydratedPayload) : null;
-      const bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, hydratedPayload) : null;
+    const validEmails = users.filter(u => u.email).map(u => u.email);
+    if (validEmails.length === 0) return;
+    
+    const recipientEmails = validEmails.join(',');
 
-      // Use only legacy columns to ensure the insert succeeds even if the migration hasn't been applied yet.
-      // The DB will use its DEFAULT 'PENDING' for status if the new schema is present.
-      return {
-        recipient_email: user.email,
-        subject: subject,
-        body_template: htmlBody || bodyTemplate,
-        is_sent: false
-      };
-    });
+    const hydratedPayload = { 
+      ...payload, 
+      status: humanReadableStatus,
+      recipient_name: "Team", 
+      creator_name: payload.creator_name || creatorName
+    };
+    
+    const subject = template.subject ? hydrateTemplate(template.subject, hydratedPayload) : "System Notification";
+    const htmlBody = template.html_body ? hydrateTemplate(template.html_body, hydratedPayload) : null;
+    const bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, hydratedPayload) : null;
+
+    const queueInserts = [{
+      recipient_email: recipientEmails,
+      subject: subject,
+      body_template: htmlBody || bodyTemplate,
+      is_sent: false
+    }];
 
     // 6. Async Batch Insert into Queue
     const { error } = await supabaseAdmin.from("email_queue").insert(queueInserts);
