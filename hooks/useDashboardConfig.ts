@@ -32,7 +32,8 @@ export function useDashboardConfig(dashboardCode: string = 'DEFAULT_COMMAND_CENT
 
   const fetchLayout = useCallback(() => {
     setLoading(true);
-    const storageKey = `dashboard_layout_${dashboardCode}`;
+    // Bust cache to force the new layout updates for all users
+    const storageKey = `dashboard_layout_v2_${dashboardCode}`;
     const saved = localStorage.getItem(storageKey);
 
     if (saved) {
@@ -54,17 +55,17 @@ export function useDashboardConfig(dashboardCode: string = 'DEFAULT_COMMAND_CENT
     fetchLayout();
   }, [fetchLayout]);
 
-  const saveLayout = async (newLayout: DashboardWidgetConfig[]) => {
-    const storageKey = `dashboard_layout_${dashboardCode}`;
+  const saveLayout = useCallback((newLayout: DashboardWidgetConfig[]) => {
+    setLayout(newLayout);
+    const storageKey = `dashboard_layout_v2_${dashboardCode}`;
     localStorage.setItem(storageKey, JSON.stringify(newLayout));
-    setLayout(newLayout.sort((a, b) => a.order - b.order));
-  };
+  }, [dashboardCode]);
 
-  const resetToDefault = async () => {
-    const storageKey = `dashboard_layout_${dashboardCode}`;
-    localStorage.removeItem(storageKey);
+  const resetToDefault = useCallback(() => {
     setLayout(DEFAULT_DASHBOARD_LAYOUT);
-  };
+    const storageKey = `dashboard_layout_v2_${dashboardCode}`;
+    localStorage.removeItem(storageKey);
+  }, [dashboardCode]);
 
   return {
     layout,
