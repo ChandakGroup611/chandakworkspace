@@ -1311,20 +1311,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                     {departments.map(d => (
                                       <AppButton 
                                         key={d.id}
-                                        onClick={async () => {
+                                        onClick={(e) => {
+                                          e.stopPropagation();
                                           if (d.id === task.department_id) return;
-                                          try {
-                                            setInlineLoading(true);
-                                            const res = await executeTaskBatchOperation({
-                                              taskId: task.id,
-                                              departmentChange: { old_id: task.department_id, new_id: d.id, old_name: task.department?.name, new_name: d.name },
-                                              remarks: "Inline update"
-                                            });
-                                            if (res?.error) throw new Error(res.error);
-                                            setTasks(prev => prev.map(t => t.id === task.id ? { ...t, department_id: d.id, department: d } : t));
-                                            triggerToast("Department updated");
-                                          } catch (e: any) { toast.error("Failed: " + e.message); }
-                                          finally { setInlineLoading(false); }
+                                          setInlineTask(task);
+                                          setInlineNewDepartment(d.id);
+                                          setInlineRemark("");
+                                          setDepartmentModalOpen(true);
                                         }}
                                         className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
                                       >
@@ -1374,16 +1367,13 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                     {masterStatuses.map(s => (
                                       <AppButton 
                                         key={s.id}
-                                        onClick={async () => {
+                                        onClick={(e) => {
+                                          e.stopPropagation();
                                           if (s.id === task.status_id) return;
-                                          try {
-                                            setInlineLoading(true);
-                                            const { error } = await updateTaskStatusInline(task.id, s.id, "Inline update");
-                                            if (error) throw new Error(error);
-                                            setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status_id: s.id, status: { name: s.name, code: s.code, status_color: s.color } } : t));
-                                            triggerToast("Status updated");
-                                          } catch (e: any) { toast.error("Failed: " + e.message); }
-                                          finally { setInlineLoading(false); }
+                                          setInlineTask(task);
+                                          setInlineNewStatus(s.id);
+                                          setInlineRemark("");
+                                          setStatusModalOpen(true);
                                         }}
                                         className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${s.id === task.status_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
                                       >
@@ -1627,16 +1617,12 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         tasks={filtered} 
         statuses={masterStatuses} 
         onStatusChange={async (taskId, newStatusId) => {
-          setInlineTask({ id: taskId } as any);
+          const t = filtered.find(x => x.id === taskId) || tasks.find(x => x.id === taskId);
+          if (!t) return;
+          setInlineTask(t);
           setInlineNewStatus(newStatusId);
-          setInlineRemark("Moved via Kanban Board");
-          // Perform inline save
-          const stMaster = masterStatuses.find(s => s.id === newStatusId);
-          const mappedStatus = stMaster ? { name: stMaster.name, code: stMaster.code, status_color: stMaster.color } : undefined;
-          
-          await updateTaskStatusInline(taskId, newStatusId, "Moved via Kanban Board");
-          setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status_id: newStatusId, status: mappedStatus || t.status } : t));
-          triggerToast(`Status updated successfully.`);
+          setInlineRemark("");
+          setStatusModalOpen(true);
         }}
         onTaskClick={(task) => {
           setSelectedTask(task);
