@@ -27,6 +27,8 @@ import { HierarchyStateManager } from "@/lib/services/HierarchyStateManager";
 import { usePresence } from "@/hooks/use-presence";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
+import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
+import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
 import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { TaskDetailDrawer } from "@/components/tasks/TaskDetailDrawer";
@@ -138,6 +140,43 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       isCancelled = true;
     };
   }, [debouncedSearchQuery, filters]);
+
+  const {
+    savedFilters,
+    activeSavedFilterId,
+    saveCurrentFilter,
+    applySavedFilter,
+    deleteSavedFilter
+  } = useSavedFilters<{ searchQuery: string, filters: HierarchyFilterOptions }>("chandak_workspaces", currentUser?.id || null);
+
+  const handleSaveCurrentFilter = () => {
+    saveCurrentFilter({
+      searchQuery: debouncedSearchQuery,
+      filters
+    });
+  };
+
+  const applyFilter = (f: SavedFilter<{ searchQuery: string, filters: HierarchyFilterOptions }>) => {
+    applySavedFilter(
+      f,
+      (payload) => {
+        setSearchQuery(payload.searchQuery || "");
+        setFilters(payload.filters || {
+          entityType: 'ALL',
+          statusId: '',
+          priorityId: '',
+          assigneeId: '',
+          myTasksOnly: false
+        });
+        if (payload.searchQuery || Object.values(payload.filters || {}).some(v => v !== '' && v !== false && v !== 'ALL')) {
+           setShowFilters(true);
+        }
+      },
+      () => {
+        clearFilters();
+      }
+    );
+  };
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -789,6 +828,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             >
               New Workspace
             </AppButton>
+            
+            <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
+            
+            <SavedFiltersDropdown
+              savedFilters={savedFilters}
+              activeSavedFilterId={activeSavedFilterId}
+              onSaveCurrent={handleSaveCurrentFilter}
+              onApplyFilter={applyFilter}
+              onDeleteFilter={deleteSavedFilter}
+              align="end"
+            />
           </>
         }
       />

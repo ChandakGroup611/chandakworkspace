@@ -28,6 +28,8 @@ import { useLocalReportConfig, UIFieldDefinition } from "@/hooks/useLocalReportC
 import DynamicReportBuilder from "@/components/reports/DynamicReportBuilder";
 import { Settings2 } from "lucide-react";
 import { ReportKPIBar } from "@/components/ui/ReportKPIBar";
+import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
+import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
 
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -35,6 +37,15 @@ import { CSS } from '@dnd-kit/utilities';
 import { getAllReportCustomFields } from "@/lib/actions/workspace_reports";
 
 type Requirement = any;
+
+interface ReqFilterPayload {
+  scope: "ALL" | "REQUESTER" | "APPROVER";
+  query: string;
+  selectedStatus: string;
+  selectedPriority: string;
+  dateFrom: string;
+  dateTo: string;
+}
 
 function DraggableTableHead({ col, isFirst }: { col: any, isFirst?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
@@ -137,6 +148,42 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   
+  const {
+    savedFilters,
+    activeSavedFilterId,
+    saveCurrentFilter,
+    applySavedFilter,
+    deleteSavedFilter
+  } = useSavedFilters<ReqFilterPayload>("chandak_reqs", currentUserId);
+
+  const handleSaveCurrentFilter = () => {
+    saveCurrentFilter({
+      scope, query, selectedStatus, selectedPriority, dateFrom, dateTo
+    });
+  };
+
+  const applyFilter = (f: SavedFilter<ReqFilterPayload>) => {
+    applySavedFilter(
+      f,
+      (payload) => {
+        setScope(payload.scope);
+        setQuery(payload.query);
+        setSelectedStatus(payload.selectedStatus || "");
+        setSelectedPriority(payload.selectedPriority || "");
+        setDateFrom(payload.dateFrom || "");
+        setDateTo(payload.dateTo || "");
+      },
+      () => {
+        setScope("ALL");
+        setQuery("");
+        setSelectedStatus("");
+        setSelectedPriority("");
+        setDateFrom("");
+        setDateTo("");
+      }
+    );
+  };
+
   // currentUserId is defined above in useState
 
   useEffect(() => {
@@ -381,6 +428,16 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                   {sc === "ALL" ? "All Requirements" : sc === "REQUESTER" ? "My Requests" : "Pending My Approval"}
                 </AppButton>
               ))}
+              
+              <div className="h-6 w-px bg-border mx-2"></div>
+              
+              <SavedFiltersDropdown
+                savedFilters={savedFilters}
+                activeSavedFilterId={activeSavedFilterId}
+                onSaveCurrent={handleSaveCurrentFilter}
+                onApplyFilter={applyFilter}
+                onDeleteFilter={deleteSavedFilter}
+              />
             </div>
 
             <div className="flex items-center gap-4 pb-2">
