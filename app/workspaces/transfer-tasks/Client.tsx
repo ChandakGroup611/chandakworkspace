@@ -295,8 +295,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
       {/* Transfer Modal */}
       {isTransferModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/60 p-4">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-card w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-border flex-shrink-0">
               <h2 className="text-xl font-bold text-foreground">Transfer Tasks</h2>
               <p className="text-sm text-muted-foreground mt-1">Move {selectedTaskIds.size} selected tasks to a new workspace.</p>
@@ -304,7 +304,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
             
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Target Workspace (Root)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Target Workspace</label>
                 <select
                   className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                   value={targetWorkspaceId}
@@ -317,29 +317,30 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                   }}
                 >
                   <option value="">Select a workspace...</option>
-                  {workspaces.filter((w: any) => !w.parent_workspace_id).map((ws: any) => (
-                    <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
-                  ))}
-                </select>
-              </div>
+                  {(() => {
+                    const map = new Map<string, any[]>();
+                    workspaces.forEach((w: any) => {
+                      const parentId = w.parent_workspace_id || 'root';
+                      if (!map.has(parentId)) map.set(parentId, []);
+                      map.get(parentId)!.push(w);
+                    });
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Subworkspace (Optional)</label>
-                <select
-                  className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary disabled:opacity-50"
-                  value={targetSubworkspaceId}
-                  onChange={(e) => {
-                    setTargetSubworkspaceId(e.target.value);
-                    setNewOwnerId(''); 
-                    setNewExecutors([]); 
-                    setNewWatchers([]);
-                  }}
-                  disabled={!targetWorkspaceId}
-                >
-                  <option value="">-- Root Level (No Subworkspace) --</option>
-                  {workspaces.filter((w: any) => w.parent_workspace_id === targetWorkspaceId).map((ws: any) => (
-                    <option key={ws.id} value={ws.id}>{ws.workspace_name || ws.name}</option>
-                  ))}
+                    const options: any[] = [];
+                    const recurse = (parentId: string, depth: number) => {
+                      const children = map.get(parentId) || [];
+                      children.forEach(child => {
+                        const indent = depth > 0 ? "\u00A0\u00A0\u00A0\u00A0".repeat(depth) + "↳ " : "";
+                        options.push(
+                          <option key={child.id} value={child.id}>
+                            {indent}{child.workspace_name || child.name}
+                          </option>
+                        );
+                        recurse(child.id, depth + 1);
+                      });
+                    };
+                    recurse('root', 0);
+                    return options;
+                  })()}
                 </select>
               </div>
 
