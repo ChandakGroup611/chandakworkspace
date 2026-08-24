@@ -84,11 +84,16 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
        if (creator) creatorName = creator.full_name || "System";
     }
 
+    let finalCreatorName = creatorName;
+    if (payload.creator_name && payload.creator_name !== "System") {
+      finalCreatorName = payload.creator_name;
+    }
+
     // 5. Hydrate Templates and Queue
     let humanReadableStatus = payload.status;
     if (humanReadableStatus && humanReadableStatus.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-       const { data: sm } = await supabaseAdmin.from('status_master').select('name').eq('id', humanReadableStatus).maybeSingle();
-       if (sm && sm.name) humanReadableStatus = sm.name;
+       const { data: sm } = await supabaseAdmin.from('status_master').select('status_name').eq('id', humanReadableStatus).maybeSingle();
+       if (sm && sm.status_name) humanReadableStatus = sm.status_name;
     }
 
     const validEmails = users.filter(u => u.email).map(u => u.email);
@@ -100,7 +105,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       ...payload, 
       status: humanReadableStatus,
       recipient_name: "Team", 
-      creator_name: payload.creator_name || creatorName
+      creator_name: finalCreatorName
     };
     
     const subject = template.subject ? hydrateTemplate(template.subject, hydratedPayload) : "System Notification";
