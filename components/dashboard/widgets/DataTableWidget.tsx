@@ -71,10 +71,10 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
                 const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
                 const handleRowClick = () => {
-                  if (m.module === 'Tickets') router.push(`/tickets/${m.id}`);
-                  else if (m.module === 'Tasks' || m.module === 'Sub Tasks') router.push(`/tasks/${m.id}`);
-                  else if (m.module === 'Requirements') router.push(`/requirements/${m.id}`);
-                  else router.push(`/${m.module.toLowerCase()}`);
+                  if (m.module === 'Tickets') window.location.href = `/tickets/${m.id}`;
+                  else if (m.module === 'Tasks' || m.module === 'Sub Tasks') window.location.href = `/tasks/${m.id}`;
+                  else if (m.module === 'Requirements') window.location.href = `/requirements/${m.id}`;
+                  else window.location.href = `/${m.module.toLowerCase()}`;
                 };
 
                 return (

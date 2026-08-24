@@ -21,8 +21,8 @@ export const DEFAULT_DASHBOARD_LAYOUT: DashboardWidgetConfig[] = [
   { id: "charts_row", type: "charts", colSpan: 4, rowSpan: 2, order: 7 },
   { id: "kanban_board", type: "kanban", colSpan: 4, rowSpan: 2, order: 8 },
   { id: "recent_tickets", type: "recent_tickets", colSpan: 2, rowSpan: 2, order: 9 },
-  { id: "activity_feed", type: "activity_feed", colSpan: 1, rowSpan: 2, order: 10 },
-  { id: "upcoming_deadlines", type: "upcoming_deadlines", colSpan: 1, rowSpan: 2, order: 11 },
+  { id: "activity_feed", type: "activity_feed", colSpan: 2, rowSpan: 2, order: 10 },
+  { id: "upcoming_deadlines", type: "upcoming_deadlines", colSpan: 2, rowSpan: 2, order: 11 },
   { id: "team_performance", type: "team_performance", colSpan: 4, rowSpan: 2, order: 12 },
 ];
 

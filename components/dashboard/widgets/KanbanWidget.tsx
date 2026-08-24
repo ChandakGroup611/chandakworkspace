@@ -93,7 +93,7 @@ export function KanbanWidget({ metrics = [] }: KanbanWidgetProps) {
           <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
             {board.backlog.length + board.inProgress.length + board.inReview.length} active items
           </span>
-          <span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1">
+          <span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1" onClick={() => window.location.href = '/workspaces/tasks'}>
             Full Board <ArrowUpRight className="w-3 h-3" />
           </span>
         </div>

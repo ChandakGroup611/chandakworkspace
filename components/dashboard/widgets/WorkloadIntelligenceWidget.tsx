@@ -69,8 +69,11 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
           </div>
         </div>
       </div>
-      
-      <AppButton variant="primary" className="w-full mt-6 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors py-2.5 bg-primary/5 hover:bg-primary/10 rounded-xl">
+      <AppButton 
+        variant="primary" 
+        className="w-full mt-6 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors py-2.5 bg-primary/5 hover:bg-primary/10 rounded-xl"
+        onClick={() => window.location.href = '/workspaces/tasks'}
+      >
         View Assignment Queue <ArrowUpRight className="w-3 h-3" />
       </AppButton>
     </BaseWidget>

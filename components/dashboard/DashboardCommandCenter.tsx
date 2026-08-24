@@ -253,43 +253,74 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
               size="sm" 
               leftIcon={<Download className="h-3.5 w-3.5" />}
               onClick={() => {
-                if (!filteredMetrics || filteredMetrics.length === 0) return;
+                if (!filteredMetrics || filteredMetrics.length === 0) {
+                  alert("No data available to export with current filters.");
+                  return;
+                }
                 
-                const headers = ["Module", "ID", "Code", "Title", "Status", "User", "Role", "Priority", "Created At", "Updated At", "Due Date", "Overdue"];
-                const csvRows = [headers.join(",")];
-                
-                filteredMetrics.forEach(m => {
-                  const row = [
-                    `"${m.module || ''}"`,
-                    `"${m.id || ''}"`,
-                    `"${m.code || ''}"`,
-                    `"${(m.title || '').replace(/"/g, '""')}"`,
-                    `"${m.status || ''}"`,
-                    `"${m.user || ''}"`,
-                    `"${m.userRole || ''}"`,
-                    `"${m.priority || ''}"`,
-                    `"${m.createdAt || ''}"`,
-                    `"${m.updatedAt || ''}"`,
-                    `"${m.dueDate || ''}"`,
-                    `"${m.isOverdue ? 'Yes' : 'No'}"`
-                  ];
-                  csvRows.push(row.join(","));
-                });
-                
-                const blob = new Blob([csvRows.join("\n")], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `TaskForge_Metrics_Export_${new Date().toISOString().split('T')[0]}.csv`;
-                a.click();
-                window.URL.revokeObjectURL(url);
+                try {
+                  const headers = ["Module", "ID", "Code", "Title", "Status", "User", "Role", "Priority", "Created At", "Updated At", "Due Date", "Overdue"];
+                  const csvRows = [headers.join(",")];
+                  
+                  filteredMetrics.forEach(m => {
+                    const row = [
+                      `"${m.module || ''}"`,
+                      `"${m.id || ''}"`,
+                      `"${m.code || ''}"`,
+                      `"${(m.title || '').replace(/"/g, '""')}"`,
+                      `"${m.status || ''}"`,
+                      `"${m.user || ''}"`,
+                      `"${m.userRole || ''}"`,
+                      `"${m.priority || ''}"`,
+                      `"${m.createdAt || ''}"`,
+                      `"${m.updatedAt || ''}"`,
+                      `"${m.dueDate || ''}"`,
+                      `"${m.isOverdue ? 'Yes' : 'No'}"`
+                    ];
+                    csvRows.push(row.join(","));
+                  });
+                  
+                  const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.setAttribute('download', `TaskForge_Metrics_Export_${new Date().toISOString().split('T')[0]}.csv`);
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.error("Export failed:", err);
+                  alert("Failed to generate CSV export.");
+                }
               }}
             >
-              Export CSV
+              Export
             </AppButton>
-            <AppButton variant="primary" size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={() => window.location.href = '/tasks'}>
-              New Task
-            </AppButton>
+            
+            <div className="relative">
+              <AppButton 
+                variant="primary" 
+                size="sm" 
+                leftIcon={<Plus className="h-3.5 w-3.5" />} 
+                onClick={(e) => {
+                  const el = e.currentTarget.nextElementSibling;
+                  if (el) el.classList.toggle('hidden');
+                }}
+              >
+                New Metric
+              </AppButton>
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 hidden z-50">
+                <div className="py-1" role="menu" aria-orientation="vertical">
+                  <a href="/workspaces" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Workspace</a>
+                  <a href="/tasks" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Task</a>
+                  <a href="/tickets" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Ticket</a>
+                  <a href="/requirements" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Requirement</a>
+                  <div className="border-t border-border my-1"></div>
+                  <a href="/masters" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">Master Configuration</a>
+                </div>
+              </div>
+            </div>
             
             {refreshComponent && (
               <div className="ml-2 pl-2 border-l border-[var(--border)]">
