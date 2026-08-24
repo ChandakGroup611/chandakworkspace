@@ -7,7 +7,6 @@ import Navbar from "./Navbar";
 import { Suspense } from "react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { useEffect, useState } from "react";
-import { CommandPalette } from "@/components/ui/CommandPalette";
 
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
@@ -57,7 +56,6 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         </main>
       </div>
 
-      <CommandPalette />
     </div>
   );
 }
