@@ -74,6 +74,11 @@ export function UserPerformanceWorkingSheetModal({
         setData(res.data);
       }
     } catch (err: any) {
+      if (err?.message?.includes("was not found on the server")) {
+        // Self-heal: Force reload to fetch the new server action hashes
+        window.location.reload();
+        return;
+      }
       setError(err.message || "Failed to load performance data");
     } finally {
       setLoading(false);
