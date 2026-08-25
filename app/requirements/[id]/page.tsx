@@ -20,8 +20,89 @@ import SafeHtml from "@/components/ui/SafeHtml";
 import { sanitizeErrorMessage } from "@/lib/utils";
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
-import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
+
+const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }: { value: string, onChange: (val: string) => void, readOnly?: boolean, placeholder?: string }) => {
+  const [mounted, setMounted] = useState(false);
+  const [localValue, setLocalValue] = useState(value);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (value !== localValue) {
+      setLocalValue(value || "");
+    }
+  }, [value]);
+
+  const handleChange = (content: string) => {
+    setLocalValue(content);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onChange(content);
+    }, 500);
+  };
+
+  if (!mounted) {
+    return <div className="p-4 border rounded-xl animate-pulse bg-surface dark:bg-elevated/40 h-32 text-xs font-semibold text-muted flex items-center justify-center">Loading editor...</div>;
+  }
+
+  return (
+    <div className="quill-wrapper rounded-xl border border-border/60 bg-surface dark:bg-[#0B0F19] text-foreground overflow-hidden shadow-xs">
+      <style>{`
+        .quill-wrapper .ql-toolbar.ql-snow {
+          border: none;
+          border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+          background: rgba(243, 244, 246, 0.5);
+          border-top-left-radius: 0.75rem;
+          border-top-right-radius: 0.75rem;
+        }
+        .dark .quill-wrapper .ql-toolbar.ql-snow {
+          background: rgba(17, 24, 39, 0.8);
+        }
+        .dark .quill-wrapper .ql-stroke {
+          stroke: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-fill {
+          fill: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-picker {
+          color: #9CA3AF !important;
+        }
+        .dark .quill-wrapper .ql-picker-options {
+          background-color: #1F2937 !important;
+          border-color: #374151 !important;
+        }
+        .quill-wrapper .ql-container.ql-snow {
+          border: none;
+          min-height: 110px;
+          font-size: 0.875rem;
+        }
+        .quill-wrapper .ql-editor {
+          min-height: 110px;
+        }
+      `}</style>
+      <ReactQuill 
+        theme="snow" 
+        value={localValue} 
+        onChange={handleChange}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        modules={{
+          toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['clean']
+          ]
+        }}
+      />
+    </div>
+  );
+};
 
 const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: string }> }) => {
   const [reqId, setReqId] = useState<string>("");
