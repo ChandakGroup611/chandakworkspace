@@ -1,7 +1,7 @@
 "use client";
 import { toast } from 'react-toastify';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { AppCard, AppCardContent } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -83,6 +83,14 @@ interface RequirementItem {
 }
 
 export default function RequirementsPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" /></div>}>
+      <RequirementsPageContent />
+    </Suspense>
+  );
+}
+
+function RequirementsPageContent() {
   const router = useRouter();
   const supabase = createClient();
   const { hasPermission, loading: permsLoading } = usePermissions();

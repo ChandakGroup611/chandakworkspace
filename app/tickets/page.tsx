@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceConsole";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
@@ -16,6 +16,14 @@ import { AppTable, AppTableBody, AppTableCell, AppTableContainer, AppTableHead, 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export default function TicketsPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" /></div>}>
+      <TicketsPageContent />
+    </Suspense>
+  );
+}
+
+function TicketsPageContent() {
   const router = useRouter();
   const supabase = createClient();
   const { theme } = useTheme();

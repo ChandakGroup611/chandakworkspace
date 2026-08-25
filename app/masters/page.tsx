@@ -1,7 +1,7 @@
 "use client";
 import { toast } from 'react-toastify';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
 import { executeMasterMutation } from "@/lib/actions/masters";
@@ -103,6 +103,14 @@ function UsersIcon(props: any) {
 }
 
 export default function MastersPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" /></div>}>
+      <MastersPageContent />
+    </Suspense>
+  );
+}
+
+function MastersPageContent() {
   const supabase = createClient();
   const { hasPermission, loading: permsLoading } = usePermissions();
   let isLightMode = false;
