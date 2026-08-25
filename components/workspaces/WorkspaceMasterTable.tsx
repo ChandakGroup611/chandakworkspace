@@ -136,22 +136,17 @@ export function WorkspaceMasterTable({
     return user ? user.full_name : "System";
   };
 
-  const renderAssignees = (node: any) => {
-    // Workspaces have .members array, tasks might have .assignees or we fallback
-    let members = node.members || node.assignees || [];
-    if (members.length === 0) {
-      if (node.assignee && node.assignee.id) members = [{ user_id: node.assignee.id }];
-      else if (node.assigned_to) members = [{ user_id: node.assigned_to }];
-      else if (node.owner_id) members = [{ user_id: node.owner_id }];
-    }
-    
-    if (!members || members.length === 0) return <span className="text-muted text-[10px]">Unassigned</span>;
+  // Perfectly balanced layout matrix for segregated assignees:
+  const gridCols = 'minmax(280px, 6fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)';
+
+  const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
+    if (!members || members.length === 0) return <span className="text-muted text-[10px]">{fallbackText}</span>;
 
     const displayMembers = members.slice(0, 3);
     const extraCount = members.length - 3;
 
     return (
-      <div className="relative group/assignee inline-flex items-center cursor-pointer">
+      <div className="relative group/avatar inline-flex items-center cursor-pointer">
         <div className="flex -space-x-2">
           {displayMembers.map((m: any, idx: number) => {
             const uid = m.user_id || m.id;
@@ -174,8 +169,8 @@ export function WorkspaceMasterTable({
         </div>
 
         {/* Hover Tooltip */}
-        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/assignee:opacity-100 group-hover/assignee:visible transition-all z-[9999] theme-card-structural`}>
-          <div className="text-[10px] font-bold uppercase text-muted mb-2 px-1 border-b pb-1 border-border dark:border-border">Assigned Users ({members.length})</div>
+        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/avatar:opacity-100 group-hover/avatar:visible transition-all z-[9999] theme-card-structural`}>
+          <div className="text-[10px] font-bold uppercase text-muted mb-2 px-1 border-b pb-1 border-border dark:border-border">{title} ({members.length})</div>
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {
               const uid = m.user_id || m.id;
@@ -193,9 +188,6 @@ export function WorkspaceMasterTable({
       </div>
     );
   };
-
-  // Perfectly balanced layout matrix:
-  const gridCols = 'minmax(350px, 8fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(80px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr)';
 
   const renderHierarchyRow = (node: any, parentNode: any, depth: number, isExpanded: boolean) => {
     const hasChildren = node.children && node.children.length > 0;
@@ -395,14 +387,39 @@ export function WorkspaceMasterTable({
             {shortDate}
           </div>
 
-          {/* Created By */}
-          <div className="py-3 px-4 text-[13px] font-bold text-theme-icon whitespace-nowrap">
-            {creatorId ? getUserName(creatorId) : "System"}
+          {/* Creator */}
+          <div className="py-3 px-4 flex items-center justify-center">
+            {renderAvatarGroup(creatorId ? [{ id: creatorId }] : [], "Creator", "System")}
           </div>
 
-          {/* Assignees */}
-          <div className="py-3 px-4 flex items-center">
-            {renderAssignees(node)}
+          {/* Owner */}
+          <div className="py-3 px-4 flex items-center justify-center">
+            {renderAvatarGroup(
+              isWorkspaceType 
+                ? (node.owner_id ? [{ id: node.owner_id }] : (node.workspace_owner_id ? [{ id: node.workspace_owner_id }] : (node.members?.filter((m: any) => m.role === 'OWNER') || [])))
+                : (node.owner_id ? [{ id: node.owner_id }] : []),
+              "Owner", "None"
+            )}
+          </div>
+
+          {/* Executives */}
+          <div className="py-3 px-4 flex items-center justify-center">
+            {renderAvatarGroup(
+              isWorkspaceType 
+                ? (node.members?.filter((m: any) => m.role === 'EXECUTOR') || [])
+                : (node.assignees?.filter((m: any) => m.participation_role === 'EXECUTOR') || (node.assigned_to ? [{ id: node.assigned_to }] : [])),
+              "Executives", "None"
+            )}
+          </div>
+
+          {/* Watchers */}
+          <div className="py-3 px-4 flex items-center justify-center">
+            {renderAvatarGroup(
+              isWorkspaceType 
+                ? (node.members?.filter((m: any) => m.role === 'WATCHER') || [])
+                : (node.assignees?.filter((m: any) => m.participation_role === 'WATCHER') || []),
+              "Watchers", "None"
+            )}
           </div>
 
           {/* Create Sub-Items */}
@@ -550,8 +567,10 @@ export function WorkspaceMasterTable({
         }`} style={{ gridTemplateColumns: gridCols }}>
           <div className="py-3 px-4 pl-[64px]">Entity Name</div>
           <div className="py-3 px-4">Created Date</div>
-          <div className="py-3 px-4">Created By</div>
-          <div className="py-3 px-4 text-center">Assign</div>
+          <div className="py-3 px-4 text-center">Creator</div>
+          <div className="py-3 px-4 text-center">Owner</div>
+          <div className="py-3 px-4 text-center">Executives</div>
+          <div className="py-3 px-4 text-center">Watchers</div>
           <div className="py-3 px-4 text-center">Create</div>
           <div className="py-3 px-4 text-center">Actions</div>
         </div>
