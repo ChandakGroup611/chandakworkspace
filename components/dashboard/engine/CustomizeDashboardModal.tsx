@@ -13,8 +13,8 @@ interface CustomizeDashboardModalProps {
   isOpen: boolean;
   onClose: () => void;
   layout: DashboardWidgetConfig[];
-  onSave: (layout: DashboardWidgetConfig[]) => Promise<void>;
-  onReset: () => Promise<void>;
+  onSave: (layout: DashboardWidgetConfig[]) => void | Promise<void>;
+  onReset: () => void | Promise<void>;
 }
 
 export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onReset }: CustomizeDashboardModalProps) {

@@ -25,8 +25,8 @@ export async function middleware(request: NextRequest) {
 
   // If user is authenticated and trying to access login/register, redirect to home page
   if (user && isAuthRoute) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/";
+    const nextParam = request.nextUrl.searchParams.get("next") || "/";
+    const redirectUrl = new URL(nextParam, request.url);
     const response = NextResponse.redirect(redirectUrl);
     
     // Copy refreshed Supabase cookies to avoid session desynchronization
