@@ -1350,6 +1350,26 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               </div>
             </AppCard>
 
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                  <Paperclip className="w-4 h-4 text-accent" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Associated Files & Attachments</h3>
+                </div>
+              </div>
+              <div className="p-5">
+                <EnterpriseUploader 
+                  moduleType="requirement"
+                  recordId={reqId as string}
+                  onUploadComplete={() => {
+                    loadData();
+                    toast.success("Attachment uploaded successfully");
+                  }}
+                />
+              </div>
+            </AppCard>
+
             {requirement.status?.status_name === 'UAT' && (
               <section className="bg-amber-900/20 rounded-2xl p-6 border border-amber-500/20 shadow-md">
                 <h3 className="theme-label text-amber-500 mb-2 font-bold text-base flex items-center gap-2">
