@@ -164,6 +164,8 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
   const [submittingUat, setSubmittingUat] = useState(false);
   const [formData, setFormData] = useState({
     objective: "",
+    requirement_reason: "",
+    requirement_details: "",
     business_impact: "",
     business_value_id: "",
     business_criticality_id: "",
@@ -256,6 +258,8 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
       if (data) {
         setFormData({
           objective: data.objective || "",
+          requirement_reason: data.requirement_reason || data.custom_fields?.business_reason || data.custom_fields?.custom_fields?.business_reason || data.objective || "",
+          requirement_details: data.requirement_details || data.custom_fields?.requirement_details || data.custom_fields?.requirement_description || data.custom_fields?.custom_fields?.requirement_description || data.functional_scope || "",
           business_impact: data.business_impact || "",
           business_value_id: data.custom_fields?.business_value || "",
           business_criticality_id: data.business_criticality_id || "",
@@ -1030,6 +1034,40 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
         {/* TAB 1: Requirement Details */}
         {activeTab === 'details' && (
           <div className="flex flex-col space-y-6 pb-12 animate-in fade-in duration-300">
+            {/* DEDICATED CARD: Requirement Reason & Details */}
+            {(requirement.requirement_reason || requirement.requirement_details || requirement.objective || requirement.functional_scope || requirement.custom_fields?.business_reason || requirement.custom_fields?.requirement_details) && (
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
+                  <FileText className="w-4 h-4 text-accent" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Requirement Reason & Details</h3>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason
+                    </span>
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.custom_fields?.custom_fields?.business_reason || requirement.objective || '-'}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details
+                    </span>
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || requirement.custom_fields?.requirement_description || requirement.custom_fields?.custom_fields?.requirement_description || requirement.functional_scope || '-'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </AppCard>
+            )}
+
             {/* DEDICATED CARD: Business Classification */}
             {(requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || requirement.business_criticality?.name || requirement.priority?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || requirement.business_impact || requirement.custom_fields?.business_impact || requirement.dependency_notes || requirement.custom_fields?.dependency_notes || requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope) && (
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
@@ -1403,22 +1441,44 @@ function RequirementAnalyzePageContent({ params }: { params: Promise<{ id: strin
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason
-                    </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_reason || requirement.custom_fields?.business_reason || requirement.custom_fields?.custom_fields?.business_reason || requirement.objective || '-'}
-                    </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason</span>
+                    </label>
+                    {isEditable ? (
+                      <textarea
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.requirement_reason}
+                        onChange={(e) => handleUpdateField('requirement_reason', e.target.value)}
+                        placeholder="Enter requirement reason..."
+                      />
+                    ) : (
+                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50">
+                        <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                          {formData.requirement_reason || '-'}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details
-                    </span>
-                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
-                      {requirement.requirement_details || requirement.custom_fields?.requirement_details || requirement.custom_fields?.requirement_description || requirement.custom_fields?.custom_fields?.requirement_description || '-'}
-                    </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Requirement Details</span>
+                    </label>
+                    {isEditable ? (
+                      <textarea
+                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.requirement_details}
+                        onChange={(e) => handleUpdateField('requirement_details', e.target.value)}
+                        placeholder="Enter requirement details..."
+                      />
+                    ) : (
+                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50">
+                        <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                          {formData.requirement_details || '-'}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
