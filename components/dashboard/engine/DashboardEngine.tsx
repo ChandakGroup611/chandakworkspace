@@ -24,27 +24,19 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   // Active widgets ordered by user preference
   const activeWidgets = layout.filter(w => w.order !== -1).sort((a, b) => a.order - b.order);
 
-  // Group widgets into sections
+  // Group widgets into logical sections that reflect the new prioritized sequence
   const sections = [
     {
-      title: "Executive Overview",
-      types: ["kpi"]
+      title: "Action Center",
+      types: ["kpi", "upcoming_deadlines", "recent_tickets", "activity_feed"]
     },
     {
       title: "Analytics & Insights",
       types: ["risk_intelligence", "status_comparison", "resolution_velocity", "sla_governance", "workload_intelligence", "charts"]
     },
     {
-      title: "Active Work",
-      types: ["kanban", "recent_tickets"]
-    },
-    {
-      title: "Team Operations",
-      types: ["team_performance"]
-    },
-    {
-      title: "Timeline & Alerts",
-      types: ["activity_feed", "upcoming_deadlines"]
+      title: "Execution & Operations",
+      types: ["kanban", "team_performance"]
     }
   ];
 
