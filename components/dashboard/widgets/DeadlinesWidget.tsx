@@ -56,9 +56,10 @@ export function DeadlinesWidget({ metrics = [] }: DeadlinesWidgetProps) {
           const { icon, bg } = getIconData(diff);
           
           const handleItemClick = () => {
-            if (m.module === 'Tickets') router.push(`/tickets?ticket=${m.id}`);
-            else if (m.module === 'Tasks' || m.module === 'Sub Tasks') router.push(`/workspaces?task=${m.id}`);
-            else if (m.module === 'Sub Workspaces') router.push(`/workspaces?subWorkspace=${m.id}`);
+            if (m.module === 'Tickets') router.push(`/tickets/${m.id}`);
+            else if (m.module === 'Tasks' || m.module === 'Sub Tasks') router.push(`/tasks/${m.id}`);
+            else if (m.module === 'Sub Workspaces' || m.module === 'Workspaces') router.push(`/workspaces/tasks?workspaceId=${m.id}`);
+            else if (m.module === 'Requirements') router.push(`/requirements/${m.id}`);
             else router.push(`/${m.module.toLowerCase()}`);
           };
 
@@ -77,9 +78,21 @@ export function DeadlinesWidget({ metrics = [] }: DeadlinesWidgetProps) {
                 <div className={`p-2 rounded-lg border shadow-sm group-hover:scale-105 transition-transform ${bg}`}>
                   {icon}
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{m.module} Assignment ({m.priority})</div>
-                  <div className="text-[10px] font-mono text-muted-foreground mt-1">TF-{shortId} · {new Date(m.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1" title={m.title || `${m.module} Assignment`}>
+                    {m.title || `${m.module} Assignment`}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span className="font-mono text-primary/80">{m.code || `ID-${shortId}`}</span>
+                    <span>·</span>
+                    <span className="font-medium text-[9px] uppercase tracking-wider">{m.module}</span>
+                    {m.priority && m.priority !== "N/A" && (
+                      <>
+                        <span>·</span>
+                        <span className="font-medium">{m.priority}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex-shrink-0 ml-4">
