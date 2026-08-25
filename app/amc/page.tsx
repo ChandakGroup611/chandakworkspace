@@ -1034,15 +1034,17 @@ export default function AMCPage() {
                   <div key={s.step} className="flex flex-col items-center gap-2 bg-surface px-4 z-10">
                     <AppButton
                       type="button"
+                      variant="ghost"
                       disabled={!editRecordId && s.step > 1}
                       onClick={() => setCurrentStep(s.step)}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm
-                        ${currentStep === s.step ? 'bg-theme-btn-primary text-white scale-110 shadow-theme-btn-primary/30 ring-4 ring-theme-btn-primary/10' : 
-                          s.step < currentStep ? 'bg-theme-btn-primary text-white' : 
-                          'bg-elevated text-muted border border-border disabled:opacity-50 disabled:cursor-not-allowed'}
+                      className={`
+                        w-12 h-12 rounded-full p-0 flex items-center justify-center shrink-0 border-2 transition-all duration-300
+                        ${currentStep === s.step ? 'bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/30' : 
+                          s.step < currentStep ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/50' : 
+                          'bg-surface dark:bg-elevated/40 text-muted border-border/50 hover:border-theme-btn-primary/30'}
                       `}
                     >
-                      {s.step < currentStep ? <CheckCircle className="w-5 h-5" /> : s.step}
+                      {s.step < currentStep ? <CheckCircle2 className="w-5 h-5" /> : s.step}
                     </AppButton>
                     <span className={`text-[10px] font-bold uppercase tracking-wider
                       ${currentStep === s.step ? 'text-theme-btn-primary' : 'text-muted'}`}>{s.label}</span>

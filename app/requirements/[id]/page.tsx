@@ -11,6 +11,7 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+
 import { PageContainer } from "@/components/layout/PageContainer";
 import { usePermissions } from "@/hooks/usePermissions";
 import Link from "next/link";
@@ -18,91 +19,8 @@ import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import dynamic from "next/dynamic";
 import SafeHtml from "@/components/ui/SafeHtml";
 import { sanitizeErrorMessage } from "@/lib/utils";
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
-import 'react-quill-new/dist/quill.snow.css';
+import { LazyQuill } from "@/components/ui/LazyQuill";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
-
-const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }: { value: string, onChange: (val: string) => void, readOnly?: boolean, placeholder?: string }) => {
-  const [mounted, setMounted] = useState(false);
-  const [localValue, setLocalValue] = useState(value);
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (value !== localValue) {
-      setLocalValue(value || "");
-    }
-  }, [value]);
-
-  const handleChange = (content: string) => {
-    setLocalValue(content);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      onChange(content);
-    }, 500);
-  };
-
-  if (!mounted) {
-    return <div className="p-4 border rounded-xl animate-pulse bg-surface dark:bg-elevated/40 h-32 text-xs font-semibold text-muted flex items-center justify-center">Loading editor...</div>;
-  }
-
-  return (
-    <div className="quill-wrapper rounded-xl border border-border/60 bg-surface dark:bg-[#0B0F19] text-foreground overflow-hidden shadow-xs">
-      <style>{`
-        .quill-wrapper .ql-toolbar.ql-snow {
-          border: none;
-          border-bottom: 1px solid rgba(156, 163, 175, 0.2);
-          background: rgba(243, 244, 246, 0.5);
-          border-top-left-radius: 0.75rem;
-          border-top-right-radius: 0.75rem;
-        }
-        .dark .quill-wrapper .ql-toolbar.ql-snow {
-          background: rgba(17, 24, 39, 0.8);
-        }
-        .dark .quill-wrapper .ql-stroke {
-          stroke: #9CA3AF !important;
-        }
-        .dark .quill-wrapper .ql-fill {
-          fill: #9CA3AF !important;
-        }
-        .dark .quill-wrapper .ql-picker {
-          color: #9CA3AF !important;
-        }
-        .dark .quill-wrapper .ql-picker-options {
-          background-color: #1F2937 !important;
-          border-color: #374151 !important;
-        }
-        .quill-wrapper .ql-container.ql-snow {
-          border: none;
-          min-height: 110px;
-          font-size: 0.875rem;
-        }
-        .quill-wrapper .ql-editor {
-          min-height: 110px;
-        }
-      `}</style>
-      <ReactQuill 
-        theme="snow" 
-        value={localValue} 
-        onChange={handleChange}
-        readOnly={readOnly}
-        placeholder={placeholder}
-        modules={{
-          toolbar: [
-            [{ 'header': [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'color': [] }, { 'background': [] }],
-            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-            ['clean']
-          ]
-        }}
-      />
-    </div>
-  );
-};
 
 const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: string }> }) => {
   const [reqId, setReqId] = useState<string>("");
@@ -374,7 +292,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       setError(null);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to load requirement details.");
+      setError(sanitizeErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -411,7 +329,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       setShowPutToUseDialog(false);
       loadData();
     } catch (e: any) {
-      toast.error("Error: " + e.message);
+      toast.error(sanitizeErrorMessage(e));
     } finally {
       setSubmittingPutToUse(false);
     }
@@ -427,7 +345,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       setUatComment("");
       loadData();
     } catch (e: any) {
-      toast.error(e.message || "Failed to process UAT");
+      toast.error(sanitizeErrorMessage(e));
     } finally {
       setSubmittingUat(false);
     }
@@ -471,7 +389,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       setAmendmentFile(null);
       loadData();
     } catch (e: any) {
-      toast.error("Error: " + e.message);
+      toast.error(sanitizeErrorMessage(e));
     } finally {
       setSubmittingAmendment(false);
     }
@@ -556,7 +474,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         toast.warning(`Requirement ${action.toLowerCase()} successfully!`);
         await loadData();
       } catch (err: any) {
-        setError(err.message || "An error occurred");
+        setError(sanitizeErrorMessage(err));
       } finally {
         setSaving(false);
       }
@@ -581,7 +499,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to process approval.");
+      toast.error(sanitizeErrorMessage(err));
     } finally {
       setSavingApproval(false);
     }
@@ -638,7 +556,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       await loadData();
       router.push('/requirements/approvals');
     } catch (err: any) {
-      toast.error(err.message || "Failed to process approval action.");
+      toast.error(sanitizeErrorMessage(err));
     } finally {
       setSavingApproval(false);
     }
@@ -652,7 +570,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       await deleteRequirement(requirement.id, user!.id);
       router.push('/requirements');
     } catch (err: any) {
-      toast.error(err.message || "Failed to delete requirement.");
+      toast.error(sanitizeErrorMessage(err));
     }
   };
 
@@ -674,7 +592,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         window.open(targetUrl, '_blank', 'noopener,noreferrer');
       }
     } catch (e: any) {
-      toast.error(`Failed to ${action} attachment: ` + (e.message || "Unknown error"));
+      toast.error(`Failed to ${action} attachment: ` + sanitizeErrorMessage(e));
     }
   };
 
@@ -696,7 +614,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       setShowAddMasterModal(false);
       setNewMasterName("");
     } catch (e: any) {
-      toast.error("Failed to add master: " + e.message);
+      toast.error("Failed to add master: " + sanitizeErrorMessage(e));
     } finally {
       setIsAddingMaster(false);
     }
@@ -948,7 +866,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                await createTaskFromRequirement(reqId, selectedWorkspaceId, selectedSubWorkspaceId || null, data);
                loadData(); 
              } catch (err: any) {
-               toast.error(err.message || "Failed to create task");
+               toast.error(sanitizeErrorMessage(err));
              } finally {
                setSaving(false);
              }
@@ -967,7 +885,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </h3>
 
                 <div className="space-y-3">
-                  <RichTextEditor
+                  <LazyQuill
                     value={approvalRemarks}
                     onChange={setApprovalRemarks}
                     placeholder={requirement.approval_status === 'Pending SignOff' ? "Enter your mandatory sign-off remarks here..." : "Enter your mandatory approval or rejection remarks here..."}
@@ -1210,155 +1128,10 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </AppCard>
 
             <AppCard className="overflow-hidden border border-border/60 shadow-md p-5 mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-muted flex items-center gap-2">
-                  <Paperclip className="h-4 w-4 text-theme-icon" /> Associated Files & Attachments ({attachments.length})
-                </div>
+              <div className="text-xs font-extrabold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+                <Paperclip className="h-4 w-4 text-theme-icon" /> Associated Files & Attachments ({attachments.length})
               </div>
               <div className="mb-4">
-                <EnterpriseUploader 
-                  moduleType="requirement"
-                  recordId={reqId as string}
-                  onUploadComplete={() => {
-                    loadData();
-                    toast.success("Attachment uploaded successfully");
-                  }}
-                />
-              </div>
-              {attachments.length > 0 && (
-                <div className="flex gap-3 flex-wrap pt-2 border-t border-border/50">
-                  {attachments.map(att => (
-                    <div
-                      key={att.id}
-                      className="flex items-center gap-2 pl-3 pr-1 py-1.5 bg-surface dark:bg-elevated/40 border border-border/60 rounded-xl text-xs shadow-2xs hover:border-border transition-all"
-                    >
-                      <Paperclip className="h-4 w-4 text-theme-icon" />
-                      <span className="text-foreground font-semibold truncate max-w-[200px]" title={att.original_file_name || att.file_name}>{att.original_file_name || att.file_name}</span>
-                      <span className="text-[10px] text-muted mr-2">{(att.file_size / 1024).toFixed(1)} KB</span>
-                      <div className="flex items-center gap-1 border-l border-border/60 pl-2">
-                        <AppButton 
-                          variant="ghost" size="sm"
-                          onClick={() => handleAttachmentAction(att.id, 'view')}
-                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
-                          title="View Attachment"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </AppButton>
-                        <AppButton 
-                          variant="ghost" size="sm"
-                          onClick={() => handleAttachmentAction(att.id, 'download')}
-                          className="p-1.5 text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg transition-colors"
-                          title="Download Attachment"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </AppButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </AppCard>
-
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
-                  <Clock className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Timelines & Resources</h3>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-accent" /> Start Date
-                    </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.start_date ? new Date(requirement.start_date).toLocaleDateString() : (requirement.created_at ? new Date(requirement.created_at).toLocaleDateString() : 'Not Set')}
-                    </span>
-                  </div>
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-accent" /> Due Date
-                    </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.due_date || requirement.expected_completion_date ? new Date(requirement.due_date || requirement.expected_completion_date).toLocaleDateString() : 'Not Set'}
-                    </span>
-                  </div>
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Hourglass className="w-3.5 h-3.5 text-accent" /> Estimated Effort (Days)
-                    </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.estimated_effort || requirement.custom_fields?.estimated_effort || (requirement.start_date && requirement.due_date ? Math.max(1, Math.round((new Date(requirement.due_date).getTime() - new Date(requirement.start_date).getTime()) / (1000 * 60 * 60 * 24))) : '5 Days')}
-                    </span>
-                  </div>
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-accent" /> Estimated Cost
-                    </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.estimated_cost ? `₹${requirement.estimated_cost}` : (requirement.custom_fields?.estimated_cost ? `₹${requirement.custom_fields.estimated_cost}` : 'Standard Budget')}
-                    </span>
-                  </div>
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 justify-center min-h-[76px]">
-                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-accent" /> Estimated Resources
-                    </span>
-                    <span className="theme-data-value text-foreground truncate">
-                      {requirement.estimated_resources || requirement.custom_fields?.estimated_resources || '-'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </AppCard>
-
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
-                  <Briefcase className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Impacted Departments</h3>
-                </div>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
-                    <span className="theme-label mb-1.5 text-accent">Primary Impacted Department</span>
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-full theme-data-value bg-indigo-600 text-white shadow-xs">
-                        {requirement.department?.name || snap.department || '-'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/50 dark:bg-elevated/20 border border-border/60">
-                    <span className="theme-label mb-1.5 text-accent">Department Approvers & Stakeholders</span>
-                    <div className="flex flex-wrap gap-2">
-                      {approvalFlow && approvalFlow.length > 0 ? (
-                        approvalFlow.map((flow: any, idx: number) => (
-                          <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface dark:bg-elevated border border-border text-foreground">
-                            <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center">{idx + 1}</span>
-                            {flow.approver?.full_name || flow.user?.full_name || `Approver Level ${idx + 1}`} - {flow.department?.name || '-'} ({flow.approver?.designation?.name || '-'})
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs font-medium text-muted italic">No sequence configured</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </AppCard>
-
-            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
-                  <Paperclip className="w-4 h-4 text-accent" />
-                  <h3 className="font-bold text-sm tracking-wide text-foreground">Associated Files & Attachments</h3>
-                </div>
-              </div>
-              <div className="p-5">
                 <EnterpriseUploader 
                   moduleType="requirement"
                   recordId={reqId as string}
@@ -1373,9 +1146,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             {requirement.status?.status_name === 'UAT' && (
               <section className="bg-amber-900/20 rounded-2xl p-6 border border-amber-500/20 shadow-md">
                 <h3 className="theme-label text-amber-500 mb-2 font-bold text-base flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" /> User Acceptance Testing (UAT) Action Required
+                  <AlertTriangle className="w-5 h-5" />
+                  User Acceptance Testing (UAT)
                 </h3>
-                <p className="text-sm text-muted mb-4">Task implementation is complete. Please verify the requirement meets the business justification.</p>
                 <textarea 
                   className="w-full bg-surface/40 border border-white/10 rounded-xl p-3 text-sm text-white mb-4 focus:outline-none focus:border-amber-500 min-h-[100px]"
                   placeholder="Enter UAT feedback or rejection reasons (Required for Failure)..."
@@ -1596,7 +1369,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     <span className="flex items-center gap-1.5"><Server className="w-3.5 h-3.5 text-accent" /> Technical Scope / Architecture Details <span className="text-red-500">*</span></span>
                   </label>
                   {isEditable ? (
-                    <RichTextEditor
+                    <LazyQuill
                       value={formData.technical_scope}
                       onChange={(v) => handleUpdateField('technical_scope', v)}
                       placeholder="Enter architecture details..."
@@ -1984,7 +1757,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                   <label className="theme-data-value uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5 text-accent" /> Add New Analysis Remarks (Mandatory for Approvers) <span className="text-red-500">*</span>
                   </label>
-                  <RichTextEditor
+                  <LazyQuill
                     value={approvalRemarks}
                     onChange={setApprovalRemarks}
                     placeholder="Enter mandatory analysis remarks, technical recommendations, or approval feedback with rich text decorations..."
