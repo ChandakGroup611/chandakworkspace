@@ -1600,6 +1600,7 @@ export async function moveTasksInBulk(payload: {
   taskIds: string[];
   targetWorkspaceId: string;
   targetSubWorkspaceId?: string;
+  targetParentTaskId?: string | null;
   newOwnerId?: string;
   newParticipantIds?: { user_id: string; participation_role: string }[];
 }) {
@@ -1609,7 +1610,7 @@ export async function moveTasksInBulk(payload: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Unauthenticated" };
 
-    const { taskIds, targetWorkspaceId, targetSubWorkspaceId, newOwnerId, newParticipantIds } = payload;
+    const { taskIds, targetWorkspaceId, targetSubWorkspaceId, targetParentTaskId, newOwnerId, newParticipantIds } = payload;
     
     // Recursive fetch of all task IDs including children
     let allTaskIdsToMove = new Set<string>(taskIds);
@@ -1648,6 +1649,15 @@ export async function moveTasksInBulk(payload: {
       .in('id', finalTaskIds);
 
     if (updateError) throw updateError;
+
+    if (targetParentTaskId !== undefined) {
+      const { error: parentUpdateError } = await supabaseAdmin
+        .from('tasks')
+        .update({ parent_task_id: targetParentTaskId })
+        .in('id', taskIds);
+
+      if (parentUpdateError) throw parentUpdateError;
+    }
 
     // Handle participants if provided
     if (newParticipantIds && newParticipantIds.length > 0) {

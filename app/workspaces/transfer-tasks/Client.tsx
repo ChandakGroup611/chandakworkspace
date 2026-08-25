@@ -126,8 +126,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
   const handleTransfer = async () => {
     if (!targetWorkspaceId) return;
-
-    // Validate that we have a new owner if it's required
+    // Validate that we have a new owner if it's required
     if (!validity.isValid && !newOwnerId) {
       toast.warning("Please select a new owner for the tasks since current owners don't have access.");
       return;
@@ -139,11 +138,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
         taskIds: Array.from(selectedTaskIds),
         targetWorkspaceId,
         targetSubWorkspaceId: targetSubworkspaceId,
+        targetParentTaskId: targetParentTaskId || null,
       };
-
-      if (targetParentTaskId) {
-        payload.targetParentTaskId = targetParentTaskId;
-      }
 
       if (!validity.isValid && newOwnerId) {
         payload.newOwnerId = newOwnerId;
