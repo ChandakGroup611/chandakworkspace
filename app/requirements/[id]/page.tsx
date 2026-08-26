@@ -927,9 +927,9 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                     <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
                     {requirement.approval_status === 'Pending SignOff' ? (
-                      <AppButton variant="primary" onClick={() => submitApproval('SignOff' as any)} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Sign Off</AppButton>
+                      <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('SignOff' as any)} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Sign Off</AppButton>
                     ) : (
-                      <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                      <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
                     )}
                   </div>
                 </div>
@@ -2142,7 +2142,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </span>
                     <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                     <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                    <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                    <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
                   </>
                 ) : (
                   isEditable ? (
@@ -2202,7 +2202,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </span>
                 <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                 <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
-                <AppButton variant="primary" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
+                <AppButton className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => submitApproval('Approve')} isLoading={savingApproval} leftIcon={<CheckCircle className="h-4 w-4"/>}>Approve</AppButton>
               </>
             )}
           </div>

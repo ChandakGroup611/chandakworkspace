@@ -3,6 +3,7 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "react-toastify";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 export interface AppButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -24,10 +25,12 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       rightIcon,
       children,
       disabled,
+      onClick,
       ...props
     },
     ref
   ) => {
+    const [internalLoading, setInternalLoading] = React.useState(false);
 
     const baseStyles = 
       "inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
@@ -48,18 +51,53 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       "icon-sm": "h-6 w-6 px-0 gap-0 shrink-0",
     };
 
+    const showLoader = isLoading || internalLoading;
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (onClick) {
+        const result = onClick(e) as any;
+        if (result instanceof Promise) {
+          setInternalLoading(true);
+          result
+            .then(() => {
+              const text = (e.currentTarget.textContent || "").toLowerCase();
+              if (text.includes('delete') || text.includes('remove')) {
+                toast.success('Record Deleted Successfully');
+              } else if (text.includes('update') || text.includes('save') || text.includes('edit')) {
+                toast.success('Record Saved Successfully');
+              } else if (text.includes('create') || text.includes('add') || text.includes('new')) {
+                toast.success('Record Created Successfully');
+              } else if (text.includes('approve') || text.includes('accept')) {
+                toast.success('Approved Successfully');
+              } else if (text.includes('reject')) {
+                toast.success('Rejected Successfully');
+              } else if (text.includes('sign off')) {
+                toast.success('Signed Off Successfully');
+              }
+            })
+            .catch(() => {
+              // Errors are expected to be handled by the specific action or global fetch wrapper
+            })
+            .finally(() => {
+              setInternalLoading(false);
+            });
+        }
+      }
+    };
+
     return (
       <button
         type={props.type || "button"}
         ref={ref}
-        disabled={disabled || isLoading}
+        disabled={disabled || showLoader}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
+        onClick={handleClick}
         {...props}
       >
-        {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-current" />}
-        {!isLoading && leftIcon}
+        {showLoader && <Loader2 className="h-3.5 w-3.5 animate-spin text-current" />}
+        {!showLoader && leftIcon}
         {children}
-        {!isLoading && rightIcon}
+        {!showLoader && rightIcon}
       </button>
     );
   }
