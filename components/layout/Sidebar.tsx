@@ -56,7 +56,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Dashboard", href: "/", icon: LayoutDashboard },
       { label: "My Support Portal", href: "/support", icon: LifeBuoy, permission: "SUPPORT_PORTAL_VIEW" },
-      { label: "ITSM Tickets", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
+      { label: "Ticket Tracking", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
       { 
         label: "Requirements", 
         href: "/requirements", 

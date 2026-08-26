@@ -7,7 +7,7 @@ import { TicketScopeSelector } from "./TicketScopeSelector";
 import { TicketFormInfra } from "./TicketFormInfra";
 import { TicketFormERP } from "./TicketFormERP";
 import { TicketFormOthers } from "./TicketFormOthers";
-import { X, ChevronLeft } from "lucide-react";
+import { X, ChevronLeft, Loader2 } from "lucide-react";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "../theme/ThemeProvider";
@@ -21,6 +21,7 @@ interface TicketCreationWizardProps {
 export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizardProps) {
   const [step, setStep] = useState<"SCOPE" | "FORM">("SCOPE");
   const [scope, setScope] = useState<any | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
@@ -35,6 +36,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
   };
 
   const handleFormSubmit = async (data: any) => {
+    setIsSubmitting(true);
     try {
       const { createEnterpriseTicket } = await import("@/lib/actions/tickets");
       const { initializeAttachmentUpload } = await import("@/lib/actions/attachments");
@@ -181,6 +183,8 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
     } catch (err: any) {
       console.error("Critical submission error details:", err.message || err);
       toast.error(`Failed to initialize operational ticket: ${err.message || "Please verify connectivity"}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -219,13 +223,18 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
         {step === "SCOPE" ? (
           <TicketScopeSelector onSelect={handleScopeSelect} />
         ) : (
-          <>
+          <div className="relative">
+            {isSubmitting && (
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm rounded-xl">
+                <Loader2 className="h-8 w-8 animate-spin text-theme-icon mb-2" />
+                <p className="text-sm font-semibold text-foreground">Processing Request...</p>
+              </div>
+            )}
             {scope?.code === "INFRA" && <TicketFormInfra scope={scope} onCancel={handleBack} onSubmit={handleFormSubmit} />}
             {scope?.code === "ERP" && <TicketFormERP scope={scope} onCancel={handleBack} onSubmit={handleFormSubmit} />}
             {scope?.code === "OTHERS" && <TicketFormOthers scope={scope} onCancel={handleBack} onSubmit={handleFormSubmit} />}
-          </>
+          </div>
         )}
     </EnterpriseWizardShell>
   );
 }
-

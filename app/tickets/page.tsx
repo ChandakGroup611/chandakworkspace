@@ -420,8 +420,12 @@ function TicketsPageContent() {
           onClose={() => setShowWizard(false)}
           onSuccess={(id) => {
             setShowWizard(false);
-            fetchData();
-            setToastMessage(`Ticket ${id} initialized successfully.`);
+            if (id.includes("-REQ-")) {
+              router.push("/requirements");
+            } else {
+              fetchData();
+              setToastMessage(`Ticket ${id} initialized successfully.`);
+            }
           }}
         />
       )}
