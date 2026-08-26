@@ -11,7 +11,7 @@ import { createClient } from '@/utils/supabase/server';
 
 export async function transitionRequirementStatus(reqId: string, newStatusId: string, performedBy: string) {
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
-  if (!isAuthorized) throw new Error("Unauthorized to transition requirement.");
+  if (!isAuthorized) return { error: "Unauthorized to transition requirement." };
 
   const { data: req } = await supabaseAdmin
     .from('requirements')
@@ -19,7 +19,7 @@ export async function transitionRequirementStatus(reqId: string, newStatusId: st
     .eq('id', reqId)
     .single();
 
-  if (!req) throw new Error("Requirement not found");
+  if (!req) return { error: "Requirement not found" };
 
   const { data: transition } = await supabaseAdmin
     .from('workflow_transition_master')
@@ -29,7 +29,7 @@ export async function transitionRequirementStatus(reqId: string, newStatusId: st
     .eq('is_active', true)
     .maybeSingle();
 
-  if (!transition) throw new Error("Invalid workflow transition.");
+  if (!transition) return { error: "Invalid workflow transition." };
 
   // Check roles if required
   if (transition.allowed_role_id) {
@@ -39,7 +39,7 @@ export async function transitionRequirementStatus(reqId: string, newStatusId: st
       .eq('user_id', performedBy)
       .eq('role_id', transition.allowed_role_id)
       .single();
-    if (!roleCheck) throw new Error("Not authorized for this specific transition role.");
+    if (!roleCheck) return { error: "Not authorized for this specific transition role." };
   }
 
   await supabaseAdmin
@@ -53,7 +53,7 @@ export async function transitionRequirementStatus(reqId: string, newStatusId: st
 
 export async function generateRequirementTask(reqId: string, taskPayload: any, performedBy: string) {
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
-  if (!isAuthorized) throw new Error("Unauthorized to create tasks for this requirement.");
+  if (!isAuthorized) return { error: "Unauthorized to create tasks for this requirement." };
 
   // 1. Create the Task natively in the workspace
   const { createTask } = await import('@/lib/actions/tasks');
@@ -63,7 +63,7 @@ export async function generateRequirementTask(reqId: string, taskPayload: any, p
   });
 
   if (task && 'error' in task) {
-    throw new Error((task as any).error);
+    return { error: (task as any).error };
   }
 
   // 2. Link Task to Requirement
@@ -116,7 +116,7 @@ export async function recalculateRequirementCompletion(reqId: string) {
 
 export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL', comments: string, performedBy: string) {
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
-  if (!isAuthorized) throw new Error("Unauthorized to perform UAT.");
+  if (!isAuthorized) return { error: "Unauthorized to perform UAT." };
 
   if (result === 'PASS') {
     // Look up closed/completed state
@@ -206,7 +206,7 @@ export async function fetchRequirements(workspaceId?: string | null) {
     }
   }
 
-  return data || [];
+  return data ? JSON.parse(JSON.stringify(data)) : [];
 }
 
 export async function createRequirement(payload: {
@@ -232,10 +232,10 @@ export async function createRequirement(payload: {
 }) {
   const { hasPermission } = await import('@/lib/permissions');
   const isAuthorized = await hasPermission(payload.created_by, 'REQUIREMENTS_CREATE');
-  if (!isAuthorized) throw new Error("Unauthorized: Missing REQUIREMENTS_CREATE capability.");
+  if (!isAuthorized) return { error: "Unauthorized: Missing REQUIREMENTS_CREATE capability." };
 
-  if (!payload.title || !payload.title.trim()) throw new Error("Validation Error: Requirement title is required.");
-  if (!payload.objective || !payload.objective.trim()) throw new Error("Validation Error: Requirement objective is required.");
+  if (!payload.title || !payload.title.trim()) return { error: "Validation Error: Requirement title is required." };
+  if (!payload.objective || !payload.objective.trim()) return { error: "Validation Error: Requirement objective is required." };
 
   let statusId = payload.status_id;
   if (!statusId) {
@@ -342,7 +342,7 @@ export async function createRequirement(payload: {
   
   await logActivityEvent('REQUIREMENT', data.id, 'CREATED', null, { title: data.title }, payload.created_by);
   revalidatePath('/requirements');
-  return data;
+  return data ? JSON.parse(JSON.stringify(data)) : null;
 }
 
 export async function submitRequirementAnalysis(reqId: string, payload: any, performedBy: string, action?: 'ACCEPT' | 'HOLD' | 'CANCEL' | 'SAVE') {
@@ -350,7 +350,7 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
   const user = authUser?.user || { id: performedBy, email: 'system' };
   const { hasPermission } = await import('@/lib/permissions');
   const isSuperAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
-  if (!isSuperAdmin) throw new Error("Only SUPER_ADMIN can submit Requirement Analysis.");
+  if (!isSuperAdmin) return { error: "Only SUPER_ADMIN can submit Requirement Analysis." };
 
   if (action === 'CANCEL') {
      await supabaseAdmin.from('requirements').update({ approval_status: 'Cancelled' }).eq('id', reqId);
@@ -406,8 +406,12 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
   };
 
   if (action === 'SAVE') {
+    console.log("Saving Requirement:", reqId, "Payload:", JSON.stringify(updatePayload));
     const { error: saveErr } = await supabaseAdmin.from('requirements').update(updatePayload).eq('id', reqId);
-    if (saveErr) throw new Error("Failed to save requirement details: " + saveErr.message);
+    if (saveErr) {
+        console.error("Save Error:", saveErr);
+        return { error: "Failed to save requirement details: " + saveErr.message };
+    }
     await logActivityEvent('REQUIREMENT', reqId, 'ANALYSIS_SAVED', null, { message: 'Business Analysis drafted.', remarks: payload.analysis_remarks }, performedBy);
     revalidatePath(`/requirements/${reqId}`);
     return { success: true };
@@ -438,11 +442,11 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
       if (firstApprover) updatePayload.current_assignee_id = firstApprover.approver_id;
       
       const { error: reqErr } = await supabaseAdmin.from('requirements').update(updatePayload).eq('id', reqId);
-      if (reqErr) throw new Error("Failed to update requirement details: " + reqErr.message);
+      if (reqErr) return { error: "Failed to update requirement details: " + reqErr.message };
 
       await supabaseAdmin.from('requirement_approval_flow').delete().eq('requirement_id', reqId);
       const { error: flowErr } = await supabaseAdmin.from('requirement_approval_flow').insert(flowInserts);
-      if (flowErr) throw new Error("Failed to insert approval flow: " + flowErr.message);
+      if (flowErr) return { error: "Failed to insert approval flow: " + flowErr.message };
 
       const { dispatchNotification } = await import('@/lib/actions/notifications');
       const l1Approvers = flowInserts.filter((f: any) => f.level === 1);
@@ -460,7 +464,7 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
         }).catch(e => console.error("Requirement Approval Pending event failed", e));
       }
     } else {
-      throw new Error("Please select at least one approver for the impacted departments.");
+      return { error: "Please select at least one approver for the impacted departments." };
     }
   }
 
@@ -473,7 +477,7 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
 export async function fetchRequirementStatuses() {
   const { data, error } = await supabaseAdmin.from('status_master').select('*').eq('scope_type', 'REQUIREMENT').eq('is_deleted', false).order('status_order', { ascending: true });
   if (error) return [];
-  return data || [];
+  return data ? JSON.parse(JSON.stringify(data)) : [];
 }
 
 export async function generateApprovalFlow(reqId: string, performedBy: string) {
@@ -481,16 +485,16 @@ export async function generateApprovalFlow(reqId: string, performedBy: string) {
   const canManage = await hasPermission(performedBy, 'REQUIREMENTS_MANAGE');
   const isAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
   if (!canManage && !isAdmin) {
-      throw new Error("Unauthorized: You do not have permission to generate approval flows.");
+      return { error: "Unauthorized: You do not have permission to generate approval flows." };
   }
 
   const { data: req } = await supabaseAdmin.from('requirements').select('*').eq('id', reqId).single();
-  if (!req) throw new Error("Requirement not found");
+  if (!req) return { error: "Requirement not found" };
   if (['Approved', 'SignedOff', 'Closed', 'Cancelled', 'Rejected'].includes(req.approval_status)) {
-    throw new Error("Cannot alter approval flow on a closed or finalized requirement.");
+    return { error: "Cannot alter approval flow on a closed or finalized requirement." };
   }
   const { data: impacts } = await supabaseAdmin.from('requirement_impacted_departments').select('department_id').eq('requirement_id', reqId).order('selection_order');
-  if (!impacts || impacts.length === 0) throw new Error("No impacted departments defined");
+  if (!impacts || impacts.length === 0) return { error: "No impacted departments defined" };
   const deptIds = impacts.map(i => i.department_id);
   const { data: matrix } = await supabaseAdmin.from('requirement_approval_matrix').select('*').in('department_id', deptIds);
   let flowEntries = [];
@@ -518,7 +522,7 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
   const canDelete = await hasPermission(performedBy, 'REQUIREMENTS_DELETE');
   const isSuperAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
   
-  if (!isSuperAdmin && !canDelete) throw new Error('Only SUPER_ADMIN or users with REQUIREMENTS_DELETE permission can delete requirements.');
+  if (!isSuperAdmin && !canDelete) return { error: 'Only SUPER_ADMIN or users with REQUIREMENTS_DELETE permission can delete requirements.' };
 
   // Check cross-logic: Are there any active tasks raised against this requirement?
   // We check via the `requirement_tasks` pivot table and join with `tasks`
@@ -528,22 +532,22 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
     .eq('requirement_id', reqId)
     .eq('tasks.is_deleted', false);
     
-  if (taskError) throw new Error('Failed to verify cross-logic: ' + taskError.message);
+  if (taskError) return { error: 'Failed to verify cross-logic: ' + taskError.message };
   
   if (activeTasks && activeTasks.length > 0) {
-    throw new Error('Cannot delete this requirement because there are active tasks raised against it. Please delete those tasks first.');
+    return { error: 'Cannot delete this requirement because there are active tasks raised against it. Please delete those tasks first.' };
   }
 
   // Soft delete the requirement so it can be viewed in the Trash Data module
   const { error } = await supabaseAdmin.from('requirements').update({ is_deleted: true }).eq('id', reqId);
-  if (error) throw new Error('Failed to delete requirement: ' + error.message);
+  if (error) return { error: 'Failed to delete requirement: ' + error.message };
   revalidatePath('/requirements');
   return { success: true };
 }
 
 export async function updateRequirementIntake(reqId: string, payload: any, performedBy: string) {
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
-  if (!isAuthorized) throw new Error('Unauthorized to update this requirement.');
+  if (!isAuthorized) return { error: 'Unauthorized to update this requirement.' };
   const updatePayload: any = { 
     title: payload.title, 
     scope: payload.scope, 
@@ -565,7 +569,7 @@ export async function updateRequirementIntake(reqId: string, payload: any, perfo
     }
   });
   const { error } = await supabaseAdmin.from('requirements').update(updatePayload).eq('id', reqId);
-  if (error) throw new Error('Failed to update requirement: ' + error.message);
+  if (error) return { error: 'Failed to update requirement: ' + error.message };
   await logActivityEvent('REQUIREMENT', reqId, 'INTAKE_UPDATED', null, { message: 'Requirement intake details updated by Super Admin.' }, performedBy);
   revalidatePath('/requirements');
   revalidatePath(`/requirements/${reqId}`);
@@ -611,7 +615,9 @@ export async function fetchRequirementAnalyticsData() {
     requester:user_master!requirements_requester_id_fkey(full_name),
     assignee:user_master!requirements_current_assignee_id_fkey(full_name),
     requirement_approval_flow(approver_id)
-  `).order('created_at', { ascending: false });
+  `)
+  .eq('is_deleted', false)
+  .order('created_at', { ascending: false });
 
   if (error) {
     console.error("fetchRequirementAnalyticsData Error:", error);
@@ -705,7 +711,7 @@ export async function fetchRequirement(reqId: string) {
     const { data: creatorData } = await supabaseAdmin.from('user_master').select('full_name').eq('id', data.creator_id).single();
     if (creatorData) data.creator = creatorData;
   }
-  return data;
+  return data ? JSON.parse(JSON.stringify(data)) : null;
 }
 
 export async function processApprovalAction(reqId: string, action: string, remarks: string, performedBy: string) {
@@ -714,19 +720,19 @@ export async function processApprovalAction(reqId: string, action: string, remar
   let finalReqId = reqId;
   if (!reqId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
     const { data: idLookup } = await supabaseAdmin.from('requirements').select('id').eq('code', reqId).single();
-    if (!idLookup) throw new Error(`Requirement not found for code: '${reqId}'`);
+    if (!idLookup) return { error: `Requirement not found for code: '${reqId}'` };
     finalReqId = idLookup.id;
   }
 
   const { data: req, error: reqErr } = await supabaseAdmin.from('requirements').select('id, code, title, requester_id, current_assignee_id, approval_status').eq('id', finalReqId).single();
-  if (reqErr) throw new Error(`Requirement lookup failed for reqId '${finalReqId}': ${reqErr.message}`);
-  if (!req) throw new Error(`Requirement not found for reqId: '${finalReqId}'`);
+  if (reqErr) return { error: `Requirement lookup failed for reqId '${finalReqId}': ${reqErr.message}` };
+  if (!req) return { error: `Requirement not found for reqId: '${finalReqId}'` };
   const { hasPermission } = await import('@/lib/permissions');
   const isAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
 
   if (action === 'SignOff') {
-     if (!isAdmin) throw new Error("Only an administrator can Sign Off.");
-     if (req.approval_status !== 'Pending SignOff') throw new Error("Requirement is not in Pending SignOff status.");
+     if (!isAdmin) return { error: "Only an administrator can Sign Off." };
+     if (req.approval_status !== 'Pending SignOff') return { error: "Requirement is not in Pending SignOff status." };
      await supabaseAdmin.from('requirements').update({ approval_status: 'Approved', current_assignee_id: null }).eq('id', finalReqId);
      await logActivityEvent('REQUIREMENT', finalReqId, 'APPROVAL_SIGNOFF', null, { remarks, override: true }, performedBy);
      if (req.requester_id && req.requester_id !== performedBy) {
@@ -753,7 +759,7 @@ export async function processApprovalAction(reqId: string, action: string, remar
   }
 
   const { data: activeFlows } = await supabaseAdmin.from('requirement_approval_flow').select('*').eq('requirement_id', finalReqId).eq('status', 'Pending').order('level', { ascending: true });
-  if (!activeFlows || activeFlows.length === 0) throw new Error("No pending approvals found for this requirement.");
+  if (!activeFlows || activeFlows.length === 0) return { error: "No pending approvals found for this requirement." };
   const currentLevel = activeFlows[0].level;
   const levelFlows = activeFlows.filter(f => f.level === currentLevel);
   let targetFlow = levelFlows.find(f => f.approver_id === performedBy);
@@ -774,7 +780,7 @@ export async function processApprovalAction(reqId: string, action: string, remar
         }, 
         performedBy
       );
-      throw new Error("You are not authorized to approve at the current level.");
+      return { error: "You are not authorized to approve at the current level." };
     }
   }
   const mappedStatus = action === 'Approve' ? 'Approved' : action === 'Reject' ? 'Rejected' : action === 'Hold' ? 'Hold' : 'Clarification';
@@ -855,13 +861,13 @@ export async function fetchRequirementApprovalFlow(reqId: string, _timestamp?: n
     return [];
   }
   
-  return data || [];
+  return data ? JSON.parse(JSON.stringify(data)) : [];
 }
 
 export async function createTaskFromRequirement(reqId: string, workspaceId: string, subWorkspaceId: string | null, taskPayload: any) {
   const cookieStore = await cookies();
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
-  if (!user) throw new Error("Unauthenticated");
+  if (!user) return { error: "Unauthenticated" };
 
   // Import task creation logic dynamically to avoid circular dependencies if any
   const { createTask } = await import('@/lib/actions/tasks');
@@ -885,13 +891,13 @@ export async function createTaskFromRequirement(reqId: string, workspaceId: stri
        .maybeSingle();
        
      if (!existingMember) {
-        throw new Error("Unauthorized: Assignee is not a member of the target workspace.");
+        return { error: "Unauthorized: Assignee is not a member of the target workspace." };
      }
   }
 
   const taskResult = await createTask(payload);
   if (taskResult.error) {
-    throw new Error(`Failed to create task: ${taskResult.error}`);
+    return { error: `Failed to create task: ${taskResult.error}` };
   }
 
   const taskId = taskResult.id;
@@ -904,7 +910,7 @@ export async function createTaskFromRequirement(reqId: string, workspaceId: stri
   }]);
 
   if (linkErr) {
-    throw new Error(`Failed to link task to requirement: ${linkErr.message}`);
+    return { error: `Failed to link task to requirement: ${linkErr.message}` };
   }
 
   // Log activity event

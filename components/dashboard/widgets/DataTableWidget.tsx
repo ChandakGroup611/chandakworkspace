@@ -8,9 +8,10 @@ import { BaseWidget } from "./BaseWidget";
 
 interface DataTableWidgetProps {
   metrics?: any[];
+  onOpenList?: () => void;
 }
 
-export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
+export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetProps) {
   const router = useRouter();
   
   const recentItems = useMemo(() => {
@@ -46,7 +47,7 @@ export function DataTableWidget({ metrics = [] }: DataTableWidgetProps) {
       icon={<ListChecks className="w-5 h-5" />}
       className="h-[400px]"
       noPadding
-      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors" onClick={() => router.push('/tickets')}>View All</span>}
+      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors" onClick={onOpenList || (() => router.push('/tickets'))}>View All</span>}
     >
       <div className="w-full overflow-auto h-full custom-scrollbar">
         <AppTable className="border-b-0">

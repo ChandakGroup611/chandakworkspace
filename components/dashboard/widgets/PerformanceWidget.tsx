@@ -9,9 +9,10 @@ import { UserPerformanceWorkingSheetModal } from "../performance/UserPerformance
 
 interface PerformanceWidgetProps {
   metrics?: any[];
+  onOpenList?: () => void;
 }
 
-export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
+export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidgetProps) {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
   
@@ -75,10 +76,10 @@ export function PerformanceWidget({ metrics = [] }: PerformanceWidgetProps) {
         noPadding
         headerRight={
           <AppButton variant="ghost" 
-            onClick={handleOpenTopPerformer}
+            onClick={onOpenList}
             className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1 bg-transparent border-0 p-0"
           >
-            Full Working Sheet <ArrowUpRight className="w-3 h-3" />
+            View Details <ArrowUpRight className="w-3 h-3" />
           </AppButton>
         }
       >

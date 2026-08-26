@@ -44,7 +44,7 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive">
           {`
             try {
-              const theme = localStorage.getItem("app_theme") || "amazon-prime-upi";
+              const theme = localStorage.getItem("app_theme") || "light-neumorphic";
               const density = localStorage.getItem("app_density") || "comfortable";
               const baseSize = localStorage.getItem("app_base_font_size") || "16";
               const subtextSize = localStorage.getItem("app_subtext_font_size") || "14";

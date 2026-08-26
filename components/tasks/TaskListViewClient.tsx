@@ -1374,6 +1374,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                                   <div className="max-h-60 overflow-y-auto pr-1">
                                     {masterStatuses.map(s => (
                                       <AppButton 
+                                        variant="ghost"
                                         key={s.id}
                                         onClick={(e) => {
                                           e.stopPropagation();

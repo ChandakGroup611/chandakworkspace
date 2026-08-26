@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 
 interface DeadlinesWidgetProps {
   metrics?: any[];
+  onOpenList?: () => void;
 }
 
-export function DeadlinesWidget({ metrics = [] }: DeadlinesWidgetProps) {
+export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetProps) {
   const router = useRouter();
   
   const upcoming = useMemo(() => {
@@ -47,7 +48,7 @@ export function DeadlinesWidget({ metrics = [] }: DeadlinesWidgetProps) {
       title="Upcoming Deadlines"
       icon={<CalendarClock className="w-5 h-5" />}
       className="h-[400px]"
-      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1">Calendar <ArrowUpRight className="w-3 h-3" /></span>}
+      headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1">Calendar <ArrowUpRight className="w-3 h-3" /></span>}
     >
       <div className="space-y-3">
         {upcoming.map((m, i) => {

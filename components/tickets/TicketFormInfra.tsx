@@ -242,16 +242,7 @@ export function TicketFormInfra({ scope, onCancel, onSubmit }: TicketFormInfraPr
             />
           </div>
 
-          <div className="space-y-2 mt-4">
-            <label className={`text-sm font-bold uppercase tracking-wider text-muted flex items-center gap-2`}>
-              Attachment
-            </label>
-            <input 
-              type="file" 
-              className={`w-full p-3 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 theme-input-structural text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-btn-primary hover:file:bg-theme-btn-primary/20`}
-              onChange={(e) => setFormData(prev => ({ ...prev, attachment: e.target.files?.[0] || null }))}
-            />
-          </div>
+
 
           {isReqCategory && (
             <div className="grid grid-cols-1 gap-y-4 animate-in fade-in slide-in-from-top-2 p-4 bg-theme-btn-primary/5 border border-theme-btn-primary/20 rounded-2xl">

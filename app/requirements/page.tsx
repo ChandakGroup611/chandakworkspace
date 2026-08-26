@@ -217,7 +217,8 @@ function RequirementsPageContent() {
     try {
       const { deleteRequirement } = await import("@/lib/actions/requirements");
       const { data: { user } } = await supabase.auth.getUser();
-      await deleteRequirement(dbId, user!.id);
+      const res = await deleteRequirement(dbId, user!.id);
+      if (res?.error) throw new Error(res.error);
       await loadRequirements();
     } catch (err: any) {
       toast.error(err.message || "Failed to delete requirement.");

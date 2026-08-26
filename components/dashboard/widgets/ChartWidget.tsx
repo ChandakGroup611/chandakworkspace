@@ -19,9 +19,10 @@ import {
 
 interface ChartWidgetProps {
   metrics?: any[];
+  onOpenList?: () => void;
 }
 
-export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
+export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
   const burndownData = useMemo(() => {
     const days: Record<string, { tasksT: number; tasksR: number; wsT: number; wsR: number; ticT: number; ticR: number; reqT: number; reqR: number; }> = {};
     const now = new Date();
@@ -139,7 +140,7 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
         id="chart-trend"
         title="Active Items Trend"
         icon={<Activity className="w-5 h-5" />}
-        headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View Details</span>}
+        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View Details</span>}
         overflowHidden
       >
         <div className="flex-1 w-full h-full pt-4 min-h-[280px] pb-2">
@@ -162,7 +163,7 @@ export function ChartWidget({ metrics = [] }: ChartWidgetProps) {
         id="chart-distribution"
         title="Volume Distribution"
         icon={<LineChart className="w-5 h-5" />}
-        headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By Type</span>}
+        headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By Type</span>}
         overflowHidden
       >
         <div className="flex items-center flex-1 w-full h-full min-h-[280px] pt-2 pb-2">

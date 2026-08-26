@@ -18,6 +18,7 @@ export function sanitizeErrorMessage(error: any, fallback = "An unexpected error
     msg.includes("#423") ||
     msg.includes("#425")
   ) {
+    console.error("Masked React internal error:", error);
     return "A temporary server communication error occurred. Please refresh or try again.";
   }
   

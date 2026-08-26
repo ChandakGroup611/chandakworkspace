@@ -45,6 +45,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserDepartmentId, setCurrentUserDepartmentId] = useState<string | null>(null);
   const [isCurrentApprover, setIsCurrentApprover] = useState(false);
+  const [showManualOverride, setShowManualOverride] = useState(false);
+  const [isPendingForOther, setIsPendingForOther] = useState(false);
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const [savingApproval, setSavingApproval] = useState(false);
   const [showTaskWizard, setShowTaskWizard] = useState(false);
@@ -153,17 +155,23 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
        const isApproverInFlow = pendingFlows.some(f => f.approver_id === currentUserId);
        
        const isExplicitApprover = requirement.current_assignee_id === currentUserId || (currentUserDepartmentId && requirement.current_assignee_id === currentUserDepartmentId) || isApproverInFlow;
-       const isApproverCtx = isExplicitApprover || isAdmin || isSuperAdmin;
        
        if (approvalFlow.length === 0) {
          setIsCurrentApprover(false);
+         setIsPendingForOther(false);
        } else if (requirement.approval_status === 'Pending SignOff') {
-         setIsCurrentApprover(isAdmin || isSuperAdmin);
+         setIsCurrentApprover(isExplicitApprover);
+         setIsPendingForOther((isAdmin || isSuperAdmin) && !isExplicitApprover);
        } else {
-         setIsCurrentApprover(!!isApproverCtx && (requirement.approval_status === 'Pending' || requirement.approval_status === 'Pending Approval'));
+         const isPending = requirement.approval_status === 'Pending' || requirement.approval_status === 'Pending Approval';
+         setIsCurrentApprover(!!isExplicitApprover && isPending);
+         setIsPendingForOther(isSuperAdmin && !isExplicitApprover && isPending);
        }
     }
   }, [requirement, currentUserId, currentUserDepartmentId, isAdmin, isSuperAdmin, approvalFlow]);
+
+  const showApprovalControls = isCurrentApprover || (isPendingForOther && showManualOverride);
+
 
   const loadData = async () => {
     if (!reqId) return;
@@ -177,15 +185,15 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
           objective: data.objective || "",
           requirement_reason: data.requirement_reason || data.custom_fields?.business_reason || data.custom_fields?.custom_fields?.business_reason || data.objective || "",
           requirement_details: data.requirement_details || data.custom_fields?.requirement_details || data.custom_fields?.requirement_description || data.custom_fields?.custom_fields?.requirement_description || data.functional_scope || "",
-          business_impact: data.business_impact || "",
+          business_impact: data.business_impact || data.custom_fields?.business_impact || "",
           business_value_id: data.custom_fields?.business_value || "",
           business_criticality_id: data.business_criticality_id || "",
           functional_scope: data.functional_scope || "",
           technical_scope: data.technical_scope || "",
-          budget_impact: data.budget_impact || "",
+          budget_impact: data.budget_impact || data.custom_fields?.budget_impact || "",
           estimated_effort: data.estimated_effort || "",
           estimated_cost: data.custom_fields?.estimated_cost || "",
-          estimated_resources: data.estimated_resources || "",
+          estimated_resources: data.estimated_resources || data.custom_fields?.estimated_resources || "",
           dependency_notes: data.dependency_notes || "",
           start_date: data.start_date ? data.start_date.split('T')[0] : "",
           due_date: data.due_date ? data.due_date.split('T')[0] : "",
@@ -220,7 +228,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
           try {
             const { data: approvalFlow } = await supabase
             .from('requirement_approval_flow')
-            .select('*, approver:user_master!requirement_approval_flow_approver_id_fkey(id, full_name), department:departments!requirement_approval_flow_department_id_fkey(name)')
+            .select('*, approver:user_master!requirement_approval_flow_approver_id_fkey(id, full_name, profile_photo, designation:designations!fk_user_master_designation(name)), department:departments!requirement_approval_flow_department_id_fkey(name)')
             .eq('requirement_id', reqId)
             .order('level', { ascending: true });
 
@@ -438,17 +446,31 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       
       const payload = { ...formData, analysis_remarks: currentRemarks };
 
-      if (action === 'ACCEPT') {
-        if (!payload.impacted_departments.length || !payload.due_date || !payload.dependency_notes?.trim() || !payload.technical_scope?.trim() || !payload.estimated_effort?.trim()) {
-            toast.warning("Impacted Departments, Due Date, Dependency Notes, Technical Scope, and Estimated Effort are mandatory to Accept.");
+      if (action === 'ACCEPT' || action === 'SAVE') {
+        const missingFields = [];
+        if (!payload.requirement_type_id) missingFields.push("Business Classification");
+        if (!payload.business_criticality_id) missingFields.push("Business Criticality");
+        if (!payload.dependency_notes?.trim()) missingFields.push("Dependency Notes");
+        if (!payload.technical_scope?.trim()) missingFields.push("Technical Scope / Architecture");
+        if (!payload.start_date) missingFields.push("Start Date");
+        if (!payload.due_date) missingFields.push("Due Date");
+        if (!payload.estimated_effort?.trim()) missingFields.push("Estimated Effort");
+        if (!payload.impacted_departments || !payload.impacted_departments.length) missingFields.push("Impacted Departments");
+
+        if (missingFields.length > 0) {
+            toast.warning(`Please fill all mandatory fields: ${missingFields.join(", ")}`);
             return;
         }
+
         for (const deptId of payload.impacted_departments) {
             if (!payload.department_approvers[deptId] || payload.department_approvers[deptId].length === 0) {
                 toast.warning("Please select at least one approver for each Impacted Department.");
                 return;
             }
         }
+      }
+
+      if (action === 'ACCEPT') {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const start = new Date(formData.start_date);
@@ -472,6 +494,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         const { data: { user } } = await supabase.auth.getUser();
         await submitRequirementAnalysis(requirement.id, payload, user!.id, action);
         toast.warning(`Requirement ${action.toLowerCase()} successfully!`);
+        setApprovalRemarks("");
         await loadData();
       } catch (err: any) {
         setError(sanitizeErrorMessage(err));
@@ -638,7 +661,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   }
 
   const isViewMode = searchParams.get('mode') === 'view';
-  const isEditable = !isViewMode && (!requirement.approval_status || requirement.approval_status === 'Draft' || requirement.approval_status === 'Pending' || requirement.approval_status === 'On Hold' || requirement.approval_status === 'Clarification');
+  const isEditable = !isViewMode && 
+    (!requirement.approval_status || 
+     requirement.approval_status === 'Draft' || 
+     requirement.approval_status === 'On Hold' || 
+     requirement.approval_status === 'Clarification' || 
+     (requirement.approval_status === 'Pending' && showApprovalControls));
   const snap = requirement.intake_snapshot || {};
 
   return (
@@ -875,14 +903,19 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       )}
 
       <div className="flex flex-col flex-1 min-h-0 overflow-y-auto pb-12">
-        {isCurrentApprover && (
+        {showApprovalControls && (
           <div className="bg-surface dark:bg-elevated/40 border-l-4 border-accent p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex items-start gap-3">
               <ShieldAlert className="h-6 w-6 text-accent shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">
-                  {requirement.approval_status === 'Pending SignOff' ? 'Action Required: Sign Off is Pending' : 'Action Required: Your Approval is Pending'}
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                    {requirement.approval_status === 'Pending SignOff' ? 'Action Required: Sign Off is Pending' : isPendingForOther ? 'Action Required: Manual Override Approval' : 'Action Required: Your Approval is Pending'}
+                  </h3>
+                  {isPendingForOther && (
+                    <AppButton variant="ghost" size="sm" onClick={() => setShowManualOverride(false)}>Cancel Override</AppButton>
+                  )}
+                </div>
 
                 <div className="space-y-3">
                   <LazyQuill
@@ -903,6 +936,21 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           </div>
+        )}
+
+        {isPendingForOther && !showManualOverride && (
+           <div className="bg-surface dark:bg-elevated/40 border-l-4 border-amber-500 p-4 mb-6 rounded-r-md shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 flex items-center justify-between flex-wrap gap-4">
+             <div className="flex items-center gap-3">
+               <ShieldAlert className="h-6 w-6 text-amber-500 shrink-0" />
+               <div>
+                 <h3 className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                   Approval Queue Pending
+                 </h3>
+                 <p className="text-xs text-muted dark:text-muted mt-0.5">A user's approval is pending. As a Super Admin, you can manually override and approve this requirement.</p>
+               </div>
+             </div>
+             <AppButton variant="primary" onClick={() => setShowManualOverride(true)}>Manual Approve Override</AppButton>
+           </div>
         )}
 
         <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-surface/80 dark:bg-elevated/40 border border-border/80 mb-6 shadow-xs select-none">
@@ -953,7 +1001,16 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </div>
               </div>
               <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+                    <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-accent" /> Issue Description
+                    </span>
+                    <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                      {requirement.objective || requirement.custom_fields?.description || snap.description || '-'}
+                    </div>
+                  </div>
+
                   <div className="flex flex-col p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <span className="theme-label mb-1.5 text-muted flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason
@@ -1322,20 +1379,31 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                 </div>
               </div>
               <div className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  <div className="flex flex-col space-y-1.5">
+                    <label className="theme-label text-muted flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Issue Description</span>
+                    </label>
+                    <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 h-full">
+                      <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                        {requirement.objective || requirement.custom_fields?.description || snap.description || '-'}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col space-y-1.5">
                     <label className="theme-label text-muted flex items-center justify-between">
                       <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5 text-accent" /> Requirement Reason</span>
                     </label>
                     {isEditable ? (
                       <textarea
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[80px] h-full w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.requirement_reason}
                         onChange={(e) => handleUpdateField('requirement_reason', e.target.value)}
                         placeholder="Enter requirement reason..."
                       />
                     ) : (
-                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50">
+                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 h-full">
                         <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                           {formData.requirement_reason || '-'}
                         </div>
@@ -1349,13 +1417,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                     </label>
                     {isEditable ? (
                       <textarea
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex min-h-[80px] h-full w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         value={formData.requirement_details}
                         onChange={(e) => handleUpdateField('requirement_details', e.target.value)}
                         placeholder="Enter requirement details..."
                       />
                     ) : (
-                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50">
+                      <div className="p-3.5 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 h-full">
                         <div className="theme-data-value text-foreground whitespace-pre-wrap leading-relaxed break-words">
                           {formData.requirement_details || '-'}
                         </div>
@@ -2064,13 +2132,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       <div className="shrink-0 bg-background/95 dark:bg-background/90 border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-[100] empty:hidden px-6 md:px-8">
         {activeTab === 'analysis' && (
           <div className="p-4 flex items-center justify-end gap-3">
-            {((isSuperAdmin && !isViewMode) || isCurrentApprover) && (
+            {((isSuperAdmin && !isViewMode) || showApprovalControls) && (
               <>
-                {isCurrentApprover ? (
+                {showApprovalControls ? (
                   <>
                     <span className="text-sm font-semibold text-accent mr-auto flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4" />
-                      Pending Your Approval
+                      {isPendingForOther ? 'Manual Override Approval' : 'Pending Your Approval'}
                     </span>
                     <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                     <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>
@@ -2126,11 +2194,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         
         {activeTab === 'approval' && (
           <div className="p-4 flex items-center justify-end gap-3">
-            {isCurrentApprover && (
+            {showApprovalControls && (
               <>
                 <span className="text-sm font-semibold text-accent mr-auto flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
-                  Pending Your Approval
+                  {isPendingForOther ? 'Manual Override Approval' : 'Pending Your Approval'}
                 </span>
                 <AppButton variant="secondary" onClick={() => submitApproval('Hold')} isLoading={savingApproval} leftIcon={<PauseCircle className="h-4 w-4"/>}>Hold</AppButton>
                 <AppButton variant="destructive" onClick={() => submitApproval('Reject')} isLoading={savingApproval} leftIcon={<XCircle className="h-4 w-4"/>}>Reject</AppButton>

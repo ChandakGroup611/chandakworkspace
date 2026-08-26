@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useDashboardConfig } from "@/hooks/useDashboardConfig";
 import { WidgetRegistry } from "./WidgetRegistry";
 import { CustomizeDashboardModal } from "./CustomizeDashboardModal";
+import { MetricsListModal } from "../widgets/MetricsListModal";
 import { AppButton } from "@/components/ui/AppButton";
 import { Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ export interface DashboardEngineProps {
 export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   const { layout, loading, saveLayout, resetToDefault } = useDashboardConfig();
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const [isListModalOpen, setIsListModalOpen] = useState(false);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-sm text-muted-foreground animate-pulse">Loading Premium Layout...</div>;
@@ -69,7 +71,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                   "h-full"
                 )}
               >
-                <WidgetComponent metrics={metrics} kpis={kpis} {...widgetConfig.props} />
+                <WidgetComponent metrics={metrics} kpis={kpis} {...widgetConfig.props} onOpenList={() => setIsListModalOpen(true)} />
               </div>
             );
           })}
@@ -124,6 +126,12 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
           onReset={resetToDefault}
         />
       )}
+
+      <MetricsListModal 
+        isOpen={isListModalOpen} 
+        onClose={() => setIsListModalOpen(false)} 
+        metrics={metrics} 
+      />
     </div>
   );
 }
