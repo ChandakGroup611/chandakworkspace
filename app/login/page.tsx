@@ -249,9 +249,7 @@ export default function LoginPage() {
           <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-12 leading-tight drop-shadow-sm">
               Intelligent Governance <br />
-              <span className="text-transparent bg-clip-text bg-surface border border-border/50 text-foreground from-accent to-cyan-400">
-                & Enterprise Mastery
-              </span>
+              & Enterprise Mastery
             </h1>
             <p className="text-muted-foreground text-lg font-medium leading-relaxed max-w-md mx-auto drop-shadow-sm">
               Securely orchestrate enterprise operations, manage identities, and automate workflows in one unified platform.
