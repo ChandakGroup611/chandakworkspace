@@ -23,9 +23,9 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
   if (!searchTerm) return [];
 
   const [tickets, tasks, requirements] = await Promise.all([
-    getVisibleTickets(userId),
-    getVisibleTasks(userId),
-    getVisibleRequirements(userId)
+    getVisibleTickets(userId, 'id, title, code, description, status:status_master(status_name)'),
+    getVisibleTasks(userId, 'id, subject, task_code, description, status:status_master(status_name)'),
+    getVisibleRequirements(userId, 'id, title, code, description, status:status_master(status_name)')
   ]);
 
   const results: SearchResult[] = [];

@@ -81,8 +81,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   
   const searchParams = useSearchParams();
   useEffect(() => {
-    if (searchParams?.get("create") === "true") {
+    const createParam = searchParams?.get("create");
+    if (createParam === "true" || createParam === "workspace") {
       setWsModalMode("ROOT");
+    } else if (createParam === "task") {
+      setIsCreatingTask(true);
+      setCreatingTaskWorkspaceId(null); // Force user to select workspace if not context aware, or it will default to selected inside component
+      setCreatingTaskParentId(null);
     }
   }, [searchParams]);
 

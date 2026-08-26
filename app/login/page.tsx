@@ -53,6 +53,33 @@ export default function LoginPage() {
       }
 
       const finalError = urlErrorDesc || urlError || hashErrorDesc || hashError;
+      
+      if (accessToken && !finalError) {
+        setIsOAuthCallback(true);
+        
+        // Listen for the auth state change which sets the cookies in @supabase/ssr
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_IN" && session) {
+            const next = searchParams.get("next") || "/";
+            // Wait 500ms to ensure @supabase/ssr has completely finished writing cookies
+            setTimeout(() => {
+              window.location.href = next;
+            }, 500);
+          }
+        });
+        
+        // Fallback just in case the event already fired before we attached the listener
+        setTimeout(async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const next = searchParams.get("next") || "/";
+            window.location.href = next;
+          }
+        }, 1500);
+        
+        return; // Exit early, let the event listener or fallback handle the redirect
+      }
+
       if (finalError) {
         if (finalError === "not-registered") {
           setErrorMsg("Your account is not registered in our system. Please contact your administrator.");

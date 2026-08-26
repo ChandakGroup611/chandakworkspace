@@ -86,7 +86,7 @@ export default function RootLayout({
               <ClientSessionManager />
               <GlobalAutoRefresh />
               <WorkspaceShell>{children}</WorkspaceShell>
-              <ToastContainer position="bottom-right" theme="colored" />
+              <ToastContainer position="top-center" theme="colored" />
             </ThemeProvider>
           </PermissionsProvider>
         </QueryProvider>
