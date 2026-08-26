@@ -223,6 +223,7 @@ export default function Sidebar() {
               <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
                 Chandak Workspace
               </span>
+              <span className="text-xs text-red-500 font-mono">[{roleCode || 'NULL_ROLE'}]</span>
             </div>
           </Link>
         ) : (

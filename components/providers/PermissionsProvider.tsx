@@ -96,7 +96,7 @@ interface UnifiedAuthData {
       const [profileRes, secondaryRolesRes] = await Promise.all([
         supabase
           .from("user_master")
-          .select("id, full_name, email, profile_photo, is_deleted, created_at, role:roles(code, role_permissions(permissions(code)))")
+          .select("id, full_name, email, profile_photo, is_deleted, created_at, role_id, role:roles(code, role_permissions(permissions(code)))")
           .eq("id", user.id)
           .single(),
         supabase
@@ -106,6 +106,12 @@ interface UnifiedAuthData {
       ]);
 
       const profileData = profileRes.data;
+      if (profileRes.error) {
+        console.error("[PermissionsProvider] Failed to fetch user profile:", profileRes.error);
+      }
+      if (secondaryRolesRes.error) {
+        console.error("[PermissionsProvider] Failed to fetch secondary roles:", secondaryRolesRes.error);
+      }
       
       // Safety net: if they somehow bypassed the server layout and are deleted
       if (profileData?.is_deleted) {
@@ -114,7 +120,18 @@ interface UnifiedAuthData {
         return { profile: null, permissions: [], roleCode: null };
       }
 
-      const primaryRole = profileData?.role;
+      let primaryRole = profileData?.role;
+      
+      // Fallback if the join failed due to RLS or PostgREST issue
+      if (!primaryRole && profileData?.role_id) {
+        console.warn("[PermissionsProvider] Join failed, attempting manual role fetch");
+        const { data: fallbackRole } = await supabase
+          .from("roles")
+          .select("code, role_permissions(permissions(code))")
+          .eq("id", profileData.role_id)
+          .single();
+        if (fallbackRole) primaryRole = fallbackRole as any;
+      }
 
       let baseRoleCode = null;
       if (profileData) {

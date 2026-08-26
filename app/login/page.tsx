@@ -96,7 +96,7 @@ export default function LoginPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const next = searchParams.get("next") || "/";
-          router.push(next);
+          window.location.href = next;
         }
       }
     };
@@ -173,7 +173,7 @@ export default function LoginPage() {
       // Check if user is already authenticated before initiating SSO
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push(next);
+        window.location.href = next;
         return;
       }
 

@@ -47,6 +47,26 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
   
   const [degradationStage, setDegradationStage] = useState<DegradationStage>(DegradationStage.STAGE_0_NORMAL);
 
+  const [exportOpen, setExportOpen] = useState(false);
+  const [newMetricOpen, setNewMetricOpen] = useState(false);
+  const exportRef = React.useRef<HTMLDivElement>(null);
+  const newMetricRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
+        setExportOpen(false);
+      }
+      if (newMetricRef.current && !newMetricRef.current.contains(event.target as Node)) {
+        setNewMetricOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     setMounted(true);
     performanceGovernor.setRoute('Dashboard');
@@ -249,23 +269,21 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
               placeholder="Users"
             />
 
-            <div className="relative">
+            <div className="relative" ref={exportRef}>
               <AppButton 
                 variant="outline" 
                 size="sm" 
                 leftIcon={<Download className="h-3.5 w-3.5" />}
-                onClick={(e) => {
-                  const el = e.currentTarget.nextElementSibling;
-                  if (el) el.classList.toggle('hidden');
-                }}
+                onClick={() => setExportOpen(!exportOpen)}
               >
                 Export
               </AppButton>
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 hidden z-50">
-                <div className="py-1" role="menu" aria-orientation="vertical">
+              {exportOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="py-1" role="menu" aria-orientation="vertical">
                   <button 
-                    onClick={async (e) => {
-                      e.currentTarget.closest('.relative')?.querySelector('.hidden')?.classList.add('hidden');
+                    onClick={async () => {
+                      setExportOpen(false);
                       const exportArea = document.getElementById('dashboard-export-area');
                       if (!exportArea) {
                         alert("Dashboard export area not found.");
@@ -310,8 +328,8 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                     Export as PDF (Layout)
                   </button>
                   <button 
-                    onClick={(e) => {
-                      e.currentTarget.closest('.relative')?.querySelector('.hidden')?.classList.add('hidden');
+                    onClick={() => {
+                      setExportOpen(false);
                       if (!filteredMetrics || filteredMetrics.length === 0) {
                         alert("No data available to export with current filters.");
                         return;
@@ -358,32 +376,32 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                   >
                     Export as CSV (Data)
                   </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             
-            <div className="relative">
+            <div className="relative" ref={newMetricRef}>
               <AppButton 
                 variant="primary" 
                 size="sm" 
                 leftIcon={<Plus className="h-3.5 w-3.5" />} 
-                onClick={(e) => {
-                  const el = e.currentTarget.nextElementSibling;
-                  if (el) el.classList.toggle('hidden');
-                }}
+                onClick={() => setNewMetricOpen(!newMetricOpen)}
               >
                 New Metric
               </AppButton>
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 hidden z-50">
-                <div className="py-1" role="menu" aria-orientation="vertical">
+              {newMetricOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="py-1" role="menu" aria-orientation="vertical">
                   <a href="/workspaces?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Workspace</a>
                   <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Task</a>
                   <a href="/tickets?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Ticket</a>
                   <a href="/requirements?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Requirement</a>
                   <div className="border-t border-border my-1"></div>
                   <a href="/masters?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">Master Configuration</a>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             
             {refreshComponent && (
