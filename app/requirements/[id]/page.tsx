@@ -318,6 +318,31 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     loadData();
+
+    if (!reqId) return;
+    
+    // Real-time subscription to ensure the UI updates instantly when another user modifies the requirement or its approval flow
+    const channel = supabase
+      .channel(`requirement-updates-${reqId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'requirements', filter: `id=eq.${reqId}` },
+        () => {
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'requirement_approval_flow', filter: `requirement_id=eq.${reqId}` },
+        () => {
+          loadData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [reqId]);
 
   const isReadyToPutToUse = requirement?.approval_status === 'Ready to Put to Use' || 
