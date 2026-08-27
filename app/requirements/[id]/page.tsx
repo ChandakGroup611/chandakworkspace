@@ -36,6 +36,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   }, [params]);
   
   const [requirement, setRequirement] = useState<any>(null);
+  const [assetName, setAssetName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +182,15 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       const data = await fetchRequirement(reqId);
       setRequirement(data);
       if (data) {
+        if (data.scope === 'INFRA' && data.custom_fields?.intake_snapshot?.assetId) {
+          try {
+            const { data: assetData } = await supabase.from('assets').select('name').eq('id', data.custom_fields.intake_snapshot.assetId).single();
+            if (assetData) setAssetName(assetData.name);
+          } catch (e) {
+            console.error("Failed to fetch asset name", e);
+          }
+        }
+
         setFormData({
           objective: data.objective || "",
           requirement_reason: data.requirement_reason || data.custom_fields?.business_reason || data.custom_fields?.custom_fields?.business_reason || data.objective || "",
@@ -1035,6 +1045,48 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </AppCard>
             )}
 
+            {requirement.scope === 'INFRA' && snap.infraSpecifications && snap.infraSpecifications.length > 0 && (
+            <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4 animate-in fade-in duration-500">
+              <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-4 rounded-full bg-theme-btn-primary shadow-xs" />
+                  <Server className="w-4 h-4 text-theme-btn-primary" />
+                  <h3 className="font-bold text-sm tracking-wide text-foreground">Infrastructure Specifications</h3>
+                </div>
+              </div>
+              <div className="p-0">
+                <AppTable>
+                  <AppTableHeader>
+                    <AppTableRow>
+                      <AppTableHead className="w-[50%]">Item Description</AppTableHead>
+                      <AppTableHead className="text-right">Unit Cost</AppTableHead>
+                      <AppTableHead className="text-right">Quantity</AppTableHead>
+                      <AppTableHead className="text-right">Total</AppTableHead>
+                    </AppTableRow>
+                  </AppTableHeader>
+                  <AppTableBody>
+                    {snap.infraSpecifications.map((spec: any, idx: number) => (
+                      <AppTableRow key={idx}>
+                        <AppTableCell className="font-medium text-foreground">{spec.item}</AppTableCell>
+                        <AppTableCell className="text-right">${(spec.cost || 0).toLocaleString()}</AppTableCell>
+                        <AppTableCell className="text-right">{spec.qty || 1}</AppTableCell>
+                        <AppTableCell className="text-right font-semibold text-theme-btn-primary">
+                          ${((spec.cost || 0) * (spec.qty || 1)).toLocaleString()}
+                        </AppTableCell>
+                      </AppTableRow>
+                    ))}
+                    <AppTableRow className="bg-elevated/30 border-t-2 border-theme-btn-primary/20">
+                      <AppTableCell colSpan={3} className="text-right font-bold text-muted">Total Estimated Cost</AppTableCell>
+                      <AppTableCell className="text-right font-bold text-lg text-theme-btn-primary">
+                        ${snap.infraSpecifications.reduce((sum: number, spec: any) => sum + ((spec.cost || 0) * (spec.qty || 1)), 0).toLocaleString()}
+                      </AppTableCell>
+                    </AppTableRow>
+                  </AppTableBody>
+                </AppTable>
+              </div>
+            </AppCard>
+            )}
+
             {(requirement.business_classification?.name || snap.business_classification || requirement.requirement_type?.name || requirement.business_criticality?.name || requirement.priority?.name || requirement.business_value?.name || requirement.custom_fields?.business_value || requirement.business_impact || requirement.custom_fields?.business_impact || requirement.dependency_notes || requirement.custom_fields?.dependency_notes || requirement.technical_scope || requirement.custom_fields?.technical_scope || snap.technical_scope) && (
             <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
               <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
@@ -1145,9 +1197,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
-                    <Server className="w-3 h-3 text-purple-500" /> System
+                    <Server className="w-3 h-3 text-purple-500" /> {requirement.scope === 'INFRA' ? 'Affected Asset' : 'System'}
                   </span>
-                  <span className="theme-data-value text-foreground truncate" title={requirement.software_system?.name || snap.system || '-'}>{requirement.software_system?.name || snap.system || '-'}</span>
+                  <span className="theme-data-value text-foreground truncate" title={requirement.scope === 'INFRA' ? (assetName || snap.assetId || '-') : (requirement.software_system?.name || snap.system || '-')}>
+                    {requirement.scope === 'INFRA' ? (assetName || snap.assetId || '-') : (requirement.software_system?.name || snap.system || '-')}
+                  </span>
                 </div>
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">

@@ -46,10 +46,37 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
     opex_amount: "",
     budget_impact: "",
     attachment: null as File | null,
+    infraSpecifications: [] as Array<{ id: string, item: string, cost: number, qty: number }>
   });
 
   const [isReqCategory, setIsReqCategory] = useState(false);
   const [slaPreview, setSlaPreview] = useState<string | null>(null);
+
+  const handleAddSpec = () => {
+    setFormData(prev => ({
+      ...prev,
+      infraSpecifications: [
+        ...prev.infraSpecifications,
+        { id: Math.random().toString(36).substr(2, 9), item: "", cost: 0, qty: 1 }
+      ]
+    }));
+  };
+
+  const handleUpdateSpec = (id: string, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      infraSpecifications: prev.infraSpecifications.map(spec => 
+        spec.id === id ? { ...spec, [field]: value } : spec
+      )
+    }));
+  };
+
+  const handleRemoveSpec = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      infraSpecifications: prev.infraSpecifications.filter(spec => spec.id !== id)
+    }));
+  };
 
   // 1. Initial Load of Scoped Masters
   useEffect(() => {
@@ -159,7 +186,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
 
             {/* Category & Subcategory */}
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Asset Category</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Issue Category</label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.categoryId}
@@ -343,6 +370,58 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                 <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Budget Impact</label>
                 <input type="text" className={`w-full p-4 rounded-2xl text-sm theme-input-structural text-foreground`} value={formData.budget_impact} onChange={e => setFormData(p => ({...p, budget_impact: e.target.value}))} placeholder="e.g. Unbudgeted, Approved in Q3" />
               </div>
+              
+              {formData.requirement_domain === "Infrastructure & Hardware" && (
+                <div className="space-y-4 mt-6 p-4 rounded-xl border border-dashed border-theme-btn-primary/30 bg-elevated/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="font-bold text-accent">Infrastructure Specifications</h5>
+                      <p className="text-xs text-muted">Itemize the exact hardware/software licenses, qty, and unit cost required.</p>
+                    </div>
+                    <AppButton type="button" size="sm" variant="outline" onClick={handleAddSpec} className="gap-2 text-xs h-8">
+                      <span className="text-lg leading-none">+</span> Add Spec
+                    </AppButton>
+                  </div>
+                  
+                  {formData.infraSpecifications.length > 0 ? (
+                    <div className="space-y-3 mt-4">
+                      {formData.infraSpecifications.map((spec, index) => (
+                        <div key={spec.id} className="flex flex-col md:flex-row gap-3 items-end bg-elevated/50 p-3 rounded-xl border border-border">
+                          <div className="flex-1 space-y-1 w-full">
+                            <label className="text-xs font-semibold text-muted uppercase">Item Description</label>
+                            <input type="text" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.item} onChange={(e) => handleUpdateSpec(spec.id, 'item', e.target.value)} placeholder="e.g. Dell PowerEdge R740" />
+                          </div>
+                          <div className="w-full md:w-32 space-y-1">
+                            <label className="text-xs font-semibold text-muted uppercase">Unit Cost ($)</label>
+                            <input type="number" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.cost || ''} onChange={(e) => handleUpdateSpec(spec.id, 'cost', parseFloat(e.target.value) || 0)} placeholder="0.00" />
+                          </div>
+                          <div className="w-full md:w-24 space-y-1">
+                            <label className="text-xs font-semibold text-muted uppercase">Qty</label>
+                            <input type="number" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.qty || ''} onChange={(e) => handleUpdateSpec(spec.id, 'qty', parseInt(e.target.value) || 0)} placeholder="1" />
+                          </div>
+                          <div className="w-full md:w-auto pt-2 md:pt-0">
+                            <button type="button" onClick={() => handleRemoveSpec(spec.id)} className="w-full md:w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/20 text-danger transition-colors">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div className="flex justify-end pt-2 border-t border-border mt-2">
+                        <div className="text-sm font-semibold">
+                          Total Estimate: <span className="text-theme-btn-primary ml-2">
+                            ${formData.infraSpecifications.reduce((acc, curr) => acc + ((curr.cost || 0) * (curr.qty || 0)), 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-sm text-muted/70 italic border border-dashed border-border rounded-xl">
+                      No specifications added. Click 'Add Spec' to itemize requirement.
+                    </div>
+                  )}
+                </div>
+              )}
 
             </div>
           )}

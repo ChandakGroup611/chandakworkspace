@@ -85,7 +85,11 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
           subject: payload.title,
           description: payload.description,
           requirementDescription: data.requirement_description,
-          businessReason: data.business_reason
+          businessReason: data.business_reason,
+          assetId: data.assetId,
+          issueTypeId: data.issueTypeId,
+          issueSubtypeId: data.issueSubtypeId,
+          infraSpecifications: data.infraSpecifications
         };
 
         const reqPayload = {
