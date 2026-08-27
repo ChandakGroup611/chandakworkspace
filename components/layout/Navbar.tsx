@@ -311,7 +311,7 @@ export default function Navbar() {
 
           <div className="flex items-center mx-2 px-3 py-1 rounded-full bg-surface-hover/50 border border-border/40 shadow-sm">
             <span className="text-[13px] font-medium text-foreground tracking-tight">
-              Welcome - {userData?.full_name || 'System Operator'} <span className="text-accent font-bold">({roleCode || 'NULL_ROLE'})</span>
+              Welcome - {userData?.full_name || 'System Operator'} <span className="text-accent font-bold">({roleCode || 'USER'})</span>
             </span>
           </div>
 
