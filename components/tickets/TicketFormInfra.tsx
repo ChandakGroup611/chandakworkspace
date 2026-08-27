@@ -223,9 +223,8 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.assetId}
                 onChange={(e) => setFormData({ ...formData, assetId: e.target.value })}
-                required
               >
-                <option value="">Select Asset</option>
+                <option value="">Select Asset (Optional)</option>
                 {(masters.asset || []).map((a: any) => (
                   <option key={a.id} value={a.id}>{a.name} [{a.asset_tag}]</option>
                 ))}
