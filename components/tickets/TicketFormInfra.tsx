@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { Server, AlertCircle, Clock, Paperclip, Send, X, Loader2 } from "lucide-react";
+import { Paperclip, Send, X, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { fetchMastersByScope, fetchDependentMasters } from "@/lib/actions/masters";
 
@@ -16,8 +16,6 @@ interface TicketFormInfraProps {
 
 export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: TicketFormInfraProps) {
   const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
-  
   const [loading, setLoading] = useState(true);
   const [masters, setMasters] = useState<any>({});
   const [subTypes, setSubTypes] = useState<any[]>([]);
@@ -50,7 +48,6 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
   });
 
   const [isReqCategory, setIsReqCategory] = useState(false);
-  const [slaPreview, setSlaPreview] = useState<string | null>(null);
 
   const handleAddSpec = () => {
     setFormData(prev => ({
@@ -92,7 +89,6 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
         const defaultPrio = prios.find((p: any) => p.code === "PRIO_MED_P3") || prios[0];
         if (defaultPrio) {
           setFormData(prev => ({ ...prev, priorityId: defaultPrio.id }));
-          setSlaPreview(`${defaultPrio.sla_target_minutes || 240}m Standard`);
         }
       } catch (error) {
         console.error("Failed to load infra masters:", error);
@@ -126,12 +122,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
   }, [formData.categoryId, masters.ticket_category]);
 
   const handlePriorityChange = (id: string) => {
-    const prios = masters.master_priority || [];
-    const prio = prios.find((p: any) => p.id === id);
     setFormData(prev => ({ ...prev, priorityId: id }));
-    if (prio) {
-      setSlaPreview(`${prio.sla_target_minutes || 240}m Standard`);
-    }
   };
 
   if (loading) {
