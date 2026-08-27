@@ -137,7 +137,7 @@ export function WorkspaceMasterTable({
   };
 
   // Perfectly balanced layout matrix for segregated assignees:
-  const gridCols = 'minmax(280px, 6fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr)';
+  const gridCols = 'minmax(280px, 6fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(150px, 1fr) minmax(160px, 1fr)';
 
   const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
     if (!members || members.length === 0) return <span className="text-muted text-[10px]">{fallbackText}</span>;
@@ -453,7 +453,7 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Actions - Progressive Disclosure (Visible on Hover) */}
-          <div className="py-1 px-1 flex items-center justify-center gap-0.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <div className="py-1 px-1 flex items-center justify-center gap-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {isTask && onOpenTask && (
               <AppButton 
                 variant="ghost"
