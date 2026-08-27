@@ -104,6 +104,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
     requirement_type_id: "",
     impacted_departments: [] as string[],
     department_approvers: {} as Record<string, string[]>,
+    signoff_approver_id: "",
     analysis_remarks: ""
   });
 
@@ -211,6 +212,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
           requirement_type_id: data.requirement_type_id || "",
           impacted_departments: data.custom_fields?.impacted_departments || [],
           department_approvers: data.custom_fields?.department_approvers || {},
+          signoff_approver_id: data.custom_fields?.signoff_approver_id || "",
           analysis_remarks: ""
         });
 
@@ -496,6 +498,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         if (!payload.due_date) missingFields.push("Due Date");
         if (!payload.estimated_effort?.trim()) missingFields.push("Estimated Effort");
         if (!payload.impacted_departments || !payload.impacted_departments.length) missingFields.push("Impacted Departments");
+        if (!payload.signoff_approver_id) missingFields.push("Sign-Off Approver");
 
         if (missingFields.length > 0) {
             toast.warning(`Please fill all mandatory fields: ${missingFields.join(", ")}`);
@@ -1889,6 +1892,29 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       })}
                     </div>
                   )}
+
+                  {/* 3. Sign-Off Approver Selection */}
+                  <div className="mt-4 pt-4 border-t border-border/60">
+                    <label className="block theme-label text-muted mb-2">
+                      Designated Sign-Off Approver <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      className="flex h-10 w-full md:w-1/2 rounded-md border border-input bg-surface px-3 py-2 text-sm ring-offset-background placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
+                      value={formData.signoff_approver_id}
+                      onChange={(e) => setFormData({ ...formData, signoff_approver_id: e.target.value })}
+                    >
+                      <option value="" className="text-muted">-- Select Sign-Off Approver --</option>
+                      {(masters.users || []).map((u: any) => (
+                        <option key={u.id} value={u.id} className="text-foreground">
+                          {u.full_name || u.name || 'User'} {u.designation?.name ? `(${u.designation.name})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-muted font-medium mt-1.5">
+                      This user will be responsible for the final sign-off once all departmental approvals are complete.
+                    </p>
+                  </div>
+
                 </div>
                 )}
               </div>

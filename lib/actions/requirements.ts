@@ -400,7 +400,8 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
           opex_amount: payload.opex_amount || null,
           estimated_cost: payload.estimated_cost,
       impacted_departments: payload.impacted_departments,
-      department_approvers: payload.department_approvers
+      department_approvers: payload.department_approvers,
+      signoff_approver_id: payload.signoff_approver_id
     },
     updated_at: new Date().toISOString()
   };
@@ -731,7 +732,9 @@ export async function processApprovalAction(reqId: string, action: string, remar
   const isAdmin = await hasPermission(performedBy, 'SUPER_ADMIN');
 
   if (action === 'SignOff') {
-     if (!isAdmin) return { error: "Only an administrator can Sign Off." };
+     const { data: reqCustomFields } = await supabaseAdmin.from('requirements').select('custom_fields').eq('id', finalReqId).single();
+     const signoffApproverId = reqCustomFields?.custom_fields?.signoff_approver_id;
+     if (!isAdmin && signoffApproverId !== performedBy) return { error: "You are not authorized to Sign Off. Only the designated sign-off approver or an administrator can do this." };
      if (req.approval_status !== 'Pending SignOff') return { error: "Requirement is not in Pending SignOff status." };
      await supabaseAdmin.from('requirements').update({ approval_status: 'Approved', current_assignee_id: null }).eq('id', finalReqId);
      await logActivityEvent('REQUIREMENT', finalReqId, 'APPROVAL_SIGNOFF', null, { remarks, override: true }, performedBy);
@@ -819,8 +822,26 @@ export async function processApprovalAction(reqId: string, action: string, remar
         }).catch(e => console.error(e));
       }
     } else {
-      await supabaseAdmin.from('requirements').update({ approval_status: 'Pending SignOff', current_assignee_id: null }).eq('id', finalReqId);
+      const { data: reqCustomFields } = await supabaseAdmin.from('requirements').select('custom_fields').eq('id', finalReqId).single();
+      const signoffApproverId = reqCustomFields?.custom_fields?.signoff_approver_id || null;
+      
+      await supabaseAdmin.from('requirements').update({ approval_status: 'Pending SignOff', current_assignee_id: signoffApproverId }).eq('id', finalReqId);
       await logActivityEvent('REQUIREMENT', finalReqId, 'APPROVAL_COMPLETED', null, { message: 'All approval levels completed. Awaiting final SignOff.' }, performedBy);
+      
+      if (signoffApproverId) {
+        const { dispatchNotification } = await import('@/lib/actions/notifications');
+        await dispatchNotification(signoffApproverId, 'Requirement Sign-Off Pending', `Requirement ${req.code} ("${req.title}") has completed approvals and is awaiting your final Sign-Off.`, `/requirements/${finalReqId}?tab=approval`, 'REQUIREMENT', 'APPROVAL_PENDING', { _disableEmail: true }).catch((e: any) => console.error("Failed to notify sign-off approver in-app", e));
+        
+        queueBusinessEvent("Requirement", "Sign-Off Requested", {
+          entity_id: finalReqId,
+          triggering_user_id: user.id,
+          req_code: req.code,
+          req_title: req.title,
+          assigned_to: signoffApproverId,
+          creator_name: user.email,
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}?tab=approval`
+        }).catch(e => console.error(e));
+      }
     }
   }
   await logActivityEvent('REQUIREMENT', finalReqId, 'APPROVAL_ACTION', null, { action, level: currentLevel, remarks, override: isAdmin && targetFlow.approver_id !== performedBy }, performedBy);
