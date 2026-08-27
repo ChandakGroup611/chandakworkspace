@@ -1341,29 +1341,32 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                         </AppTableCell>
                       );
                       case "priority": return (
-                        <AppTableCell className="text-center">
-                          <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true}>
-                            {task.priority?.name || '—'}
-                          </AppBadge>
+                        <AppTableCell className="text-center px-1">
+                          <div className="w-full max-w-[110px] mx-auto overflow-hidden">
+                            <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true} className="max-w-full truncate block" title={task.priority?.name || ''}>
+                              {task.priority?.name || '—'}
+                            </AppBadge>
+                          </div>
                         </AppTableCell>
                       );
                       case "due_date": return (
                         <AppTableCell className="text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
                       );
                       case "status": return (
-                        <AppTableCell className="whitespace-nowrap text-center">
-                          <Popover.Root>
-                            <Popover.Trigger asChild>
-                              <AppButton variant="secondary" 
-                                onClick={(e) => { e.stopPropagation(); }}
-                                className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none`} 
-                                title={canUpdate ? "Update Status" : "Status"}
-                              >
-                                <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={canUpdate ? "border-dashed" : ""} isOutline={true}>
-                                  {task.status?.name || '—'}
-                                </AppBadge>
-                              </AppButton>
-                            </Popover.Trigger>
+                        <AppTableCell className="text-center px-1">
+                          <div className="w-full max-w-[120px] mx-auto">
+                            <Popover.Root>
+                              <Popover.Trigger asChild>
+                                <AppButton variant="secondary" 
+                                  onClick={(e) => { e.stopPropagation(); }}
+                                  className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full w-full px-2`} 
+                                  title={canUpdate ? "Update Status" : "Status"}
+                                >
+                                  <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdate ? "border-dashed" : "", "max-w-full truncate block w-full")} isOutline={true} title={task.status?.name || ''}>
+                                    {task.status?.name || '—'}
+                                  </AppBadge>
+                                </AppButton>
+                              </Popover.Trigger>
                             {canUpdate && (
                               <Popover.Portal>
                                 <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl shadow-xl flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
