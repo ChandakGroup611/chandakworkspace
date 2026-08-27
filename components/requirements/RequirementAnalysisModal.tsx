@@ -48,7 +48,8 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
     cc_users: [] as string[],
     start_date: "",
     due_date: "",
-    expected_completion_date: ""
+    expected_completion_date: "",
+    signoff_approver_id: ""
   });
 
   const [loading, setLoading] = useState(false);
@@ -439,6 +440,29 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                     })}
                   </div>
                 )}
+              </div>
+
+              {/* Sign-Off Approver */}
+              <div className="mt-4 pt-4 border-t border-border/60">
+                <label className={labelClass}>
+                  Designated Sign-Off Approver <span className="text-red-500">*</span>
+                </label>
+                <select 
+                  className={inputClass}
+                  value={formData.signoff_approver_id}
+                  onChange={(e) => setFormData({ ...formData, signoff_approver_id: e.target.value })}
+                  required
+                >
+                  <option value="" className="text-muted">-- Select Sign-Off Approver --</option>
+                  {(masters.users || []).map((u: any) => (
+                    <option key={u.id} value={u.id} className="text-foreground">
+                      {u.full_name || u.name || 'User'} {u.designation?.name ? `(${u.designation.name})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-muted mt-1.5">
+                  This user will be responsible for the final sign-off once all departmental approvals are complete.
+                </p>
               </div>
             </div>
 
