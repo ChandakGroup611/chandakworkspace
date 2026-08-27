@@ -1342,7 +1342,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       );
                       case "priority": return (
                         <AppTableCell className="text-center px-1">
-                          <div className="w-full max-w-[110px] mx-auto overflow-hidden">
+                          <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
                             <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true} className="max-w-full truncate block" title={task.priority?.name || ''}>
                               {task.priority?.name || '—'}
                             </AppBadge>
@@ -1354,15 +1354,15 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       );
                       case "status": return (
                         <AppTableCell className="text-center px-1">
-                          <div className="w-full max-w-[120px] mx-auto">
+                          <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
                             <Popover.Root>
                               <Popover.Trigger asChild>
                                 <AppButton variant="secondary" 
                                   onClick={(e) => { e.stopPropagation(); }}
-                                  className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full w-full px-2`} 
+                                  className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full truncate px-2`} 
                                   title={canUpdate ? "Update Status" : "Status"}
                                 >
-                                  <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdate ? "border-dashed" : "", "max-w-full truncate block w-full")} isOutline={true} title={task.status?.name || ''}>
+                                  <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdate ? "border-dashed" : "", "max-w-full truncate block")} isOutline={true} title={task.status?.name || ''}>
                                     {task.status?.name || '—'}
                                   </AppBadge>
                                 </AppButton>
