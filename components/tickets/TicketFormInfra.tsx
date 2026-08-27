@@ -312,7 +312,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
               </div>
 
               {formData.requirement_domain === "IT & Software System" && (
-                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary text-theme-btn-primary-text/5 p-4 rounded-xl border border-blue-500/20">
+                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary/5 p-4 rounded-xl border border-theme-btn-primary/20">
                   <h5 className="font-bold text-accent">IT & Software System Scope</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -342,7 +342,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
               )}
 
               {formData.requirement_domain === "Infrastructure & Hardware" && (
-                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary text-theme-btn-primary-text/5 p-4 rounded-xl border border-indigo-500/20">
+                <div className="space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary/5 p-4 rounded-xl border border-theme-btn-primary/20">
                   <h5 className="font-bold text-accent">Infrastructure Scope</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">

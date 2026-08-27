@@ -1904,7 +1904,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
                       Designated Sign-Off Approver <span className="text-red-500">*</span>
                     </label>
                     <select 
-                      className="flex h-10 w-full md:w-1/2 rounded-md border border-input bg-surface px-3 py-2 text-sm ring-offset-background placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
+                      className="flex h-10 w-full md:w-1/2 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                       value={formData.signoff_approver_id}
                       onChange={(e) => setFormData({ ...formData, signoff_approver_id: e.target.value })}
                     >
