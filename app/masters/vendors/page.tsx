@@ -726,11 +726,11 @@ export default function VendorMasterPage() {
               </form>
             </div>
 
-            <div className="p-6 border-t border-border shrink-0 flex items-center justify-end gap-3 bg-surface/50">
-              <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-11 px-6">
-                Cancel
-              </AppButton>
-              <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-bold shadow-lg shadow-theme-btn-primary/20">
+              <div className="p-6 border-t border-border shrink-0 flex items-center justify-end gap-4 bg-surface/80 rounded-b-3xl">
+                <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-11 px-8 text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+                  Discard
+                </AppButton>
+                <AppButton type="submit" form="vendorForm" disabled={saving} className="h-11 px-8 font-bold shadow-lg shadow-theme-btn-primary/20">
                 {saving ? "Saving..." : editId ? "Update Profile" : "Create Vendor"}
               </AppButton>
             </div>

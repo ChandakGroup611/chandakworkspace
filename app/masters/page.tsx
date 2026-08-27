@@ -1165,8 +1165,9 @@ function MastersPageContent() {
                   variant="outline" 
                   size="sm"
                   onClick={() => setShowModal(false)}
+                  className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger"
                 >
-                  Cancel
+                  Discard
                 </AppButton>
                 <AppButton 
                   type="submit" 

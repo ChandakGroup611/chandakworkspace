@@ -10,10 +10,11 @@ import { fetchMastersByScope, fetchDependentMasters } from "@/lib/actions/master
 interface TicketFormOthersProps {
   scope: any;
   onCancel: () => void;
+  onDiscard?: () => void;
   onSubmit: (data: any) => void;
 }
 
-export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthersProps) {
+export function TicketFormOthers({ scope, onCancel, onDiscard, onSubmit }: TicketFormOthersProps) {
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const [loading, setLoading] = useState(true);
@@ -360,12 +361,17 @@ export function TicketFormOthers({ scope, onCancel, onSubmit }: TicketFormOthers
             </div>
 
             <div className="flex items-center gap-3 shrink-0 pb-1">
+              {onDiscard && (
+                <AppButton variant="outline" type="button" onClick={onDiscard} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+                  Discard
+                </AppButton>
+              )}
               <AppButton variant="ghost" type="button" onClick={onCancel} className={"text-muted"}>
-                Cancel
+                Back
               </AppButton>
               <AppButton variant="primary" type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 <Send className="h-4 w-4 mr-2" />
-                Submit Request
+                Submit Ticket
               </AppButton>
             </div>
           </div>

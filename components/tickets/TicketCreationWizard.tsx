@@ -221,7 +221,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
     >
 
         {step === "SCOPE" ? (
-          <TicketScopeSelector onSelect={handleScopeSelect} />
+          <TicketScopeSelector onSelect={handleScopeSelect} onDiscard={onClose} />
         ) : (
           <div className="relative">
             {isSubmitting && (
@@ -230,9 +230,9 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
                 <p className="text-sm font-semibold text-foreground">Processing Request...</p>
               </div>
             )}
-            {scope?.code === "INFRA" && <TicketFormInfra scope={scope} onCancel={handleBack} onSubmit={handleFormSubmit} />}
-            {scope?.code === "ERP" && <TicketFormERP scope={scope} onCancel={handleBack} onSubmit={handleFormSubmit} />}
-            {scope?.code === "OTHERS" && <TicketFormOthers scope={scope} onCancel={handleBack} onSubmit={handleFormSubmit} />}
+            {scope?.code === "INFRA" && <TicketFormInfra scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
+            {scope?.code === "ERP" && <TicketFormERP scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
+            {scope?.code === "OTHERS" && <TicketFormOthers scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}
           </div>
         )}
     </EnterpriseWizardShell>

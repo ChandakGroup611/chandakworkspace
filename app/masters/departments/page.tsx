@@ -260,8 +260,8 @@ export default function DepartmentsMasterPage() {
             </div>
 
             <div className="p-5 border-t border-border shrink-0 flex items-center justify-end gap-3 bg-surface/50 rounded-b-2xl">
-              <AppButton type="button" variant="ghost" onClick={() => setShowModal(false)} className="h-10 px-6">
-                Cancel
+              <AppButton type="button" variant="outline" onClick={() => setShowModal(false)} className="h-10 px-6 text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+                Discard
               </AppButton>
               <AppButton type="submit" form="deptForm" disabled={saving} className="h-10 px-8">
                 {saving ? "Saving..." : "Save Department"}

@@ -115,7 +115,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-            <AppButton type="button" variant="outline" onClick={onClose} disabled={loading}>Cancel</AppButton>
+            <AppButton type="button" variant="outline" onClick={onClose} disabled={loading} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
             <AppButton type="submit" variant="primary" disabled={loading} leftIcon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}>
               Confirm Renewal
             </AppButton>

@@ -114,7 +114,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <AppButton type="button" variant="ghost" onClick={() => setIsCreating(false)}>Cancel</AppButton>
+                <AppButton type="button" variant="outline" onClick={() => setIsCreating(false)} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
                 <AppButton type="submit" variant="primary" disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save Template"}</AppButton>
               </div>
             </form>

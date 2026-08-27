@@ -25,24 +25,31 @@ export async function GET(request: Request) {
         .eq('id', sessionData.user.id)
         .maybeSingle();
 
+      const forwardedHost = request.headers.get('x-forwarded-host');
+      const isLocalEnv = process.env.NODE_ENV === 'development';
+      const redirectOrigin = (forwardedHost && !isLocalEnv) ? `https://${forwardedHost}` : origin;
+
       if (!userRecord) {
         // User not found in user_master
         await supabase.auth.signOut();
-        return NextResponse.redirect(`${origin}/login?error=not-registered`);
+        return NextResponse.redirect(`${redirectOrigin}/login?error=not-registered`);
       }
 
       if (userRecord.is_deleted || userRecord.is_active === false) {
         // User is deactivated or deleted
         await supabase.auth.signOut();
-        return NextResponse.redirect(`${origin}/login?error=account-disabled`);
+        return NextResponse.redirect(`${redirectOrigin}/login?error=account-disabled`);
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`${redirectOrigin}${next}`);
     } else {
       console.error("Auth Callback Error:", error?.message || "User data missing in session");
     }
   }
 
   // If there's an error or no code, redirect back to login
-  return NextResponse.redirect(`${origin}/login?error=auth-callback-failed`);
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const isLocalEnv = process.env.NODE_ENV === 'development';
+  const redirectOrigin = (forwardedHost && !isLocalEnv) ? `https://${forwardedHost}` : origin;
+  return NextResponse.redirect(`${redirectOrigin}/login?error=auth-callback-failed`);
 }

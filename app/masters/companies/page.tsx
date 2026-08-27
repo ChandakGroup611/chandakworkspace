@@ -355,7 +355,7 @@ export default function CompanyMasterPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-                <AppButton variant="ghost" type="button" onClick={() => setShowModal(false)}>Cancel</AppButton>
+                <AppButton variant="outline" type="button" onClick={() => setShowModal(false)} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
                 <AppButton variant="primary" type="submit">Save Company Record</AppButton>
               </div>
             </form>

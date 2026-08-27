@@ -6,11 +6,12 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  const isAuthRoute = pathname === "/login" || pathname === "/register" || pathname.startsWith("/auth");
+  const isAuthPage = pathname === "/login" || pathname === "/register";
   const isApiRoute = pathname.startsWith("/api");
+  const isAuthCallback = pathname.startsWith("/auth/callback");
 
   // If user is not authenticated and trying to access protected routes, redirect to /login
-  if (!user && !isAuthRoute && !isApiRoute) {
+  if (!user && !isAuthPage && !isApiRoute && !isAuthCallback) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname + request.nextUrl.search);
@@ -24,7 +25,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is authenticated and trying to access login/register, redirect to home page
-  if (user && isAuthRoute) {
+  if (user && isAuthPage) {
     const nextParam = request.nextUrl.searchParams.get("next") || "/";
     const redirectUrl = new URL(nextParam, request.url);
     const response = NextResponse.redirect(redirectUrl);
@@ -37,7 +38,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Prevent browser caching for protected routes to avoid "Back Button" ghost sessions
-  if (!isAuthRoute && !isApiRoute) {
+  if (!isAuthPage && !isApiRoute && !isAuthCallback) {
     supabaseResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     supabaseResponse.headers.set("Pragma", "no-cache");
     supabaseResponse.headers.set("Expires", "0");

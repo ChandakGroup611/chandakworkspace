@@ -464,9 +464,9 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
               </div>
             </div>
 
-            <div className={`flex justify-end gap-3 pt-6 border-t border-border`}>
-              <AppButton type="button" variant="ghost" onClick={onClose} disabled={loading} className={"text-muted"}>
-                Cancel
+            <div className="flex justify-end gap-3 pt-6 border-t border-border">
+              <AppButton variant="outline" type="button" onClick={onClose} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+                Discard
               </AppButton>
               <AppButton type="submit" variant="primary" disabled={loading} className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 {loading ? "Submitting..." : "Submit Analysis"}

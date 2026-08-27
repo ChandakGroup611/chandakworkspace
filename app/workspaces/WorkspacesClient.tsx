@@ -1334,8 +1334,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
           </div>
           
-          <div className="p-6 border-t border-border/40 bg-background flex justify-end gap-3 shrink-0">
-            <AppButton variant="ghost" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting}>Cancel</AppButton>
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border px-6 pb-6">
+            <AppButton variant="outline" onClick={() => { setWsModalMode(null); setEditWSId(null); }} disabled={isSubmitting} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
             <AppButton variant="primary" onClick={handleCreateWorkspace} disabled={isSubmitting}>
               {isSubmitting ? "Saving..." : (editWSId ? "Save Changes" : "Provision Workspace")}
             </AppButton>

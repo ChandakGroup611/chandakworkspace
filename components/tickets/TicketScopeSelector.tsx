@@ -9,9 +9,10 @@ import { fetchScopes } from "@/lib/actions/masters";
 
 interface TicketScopeSelectorProps {
   onSelect: (scope: any) => void;
+  onDiscard?: () => void;
 }
 
-export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
+export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelectorProps) {
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const [dbScopes, setDbScopes] = React.useState<any[]>([]);
@@ -101,6 +102,14 @@ export function TicketScopeSelector({ onSelect }: TicketScopeSelectorProps) {
           );
         })}
       </div>
+      
+      {onDiscard && (
+        <div className="mt-8 pt-6 border-t border-border w-full flex justify-center">
+          <AppButton variant="outline" type="button" onClick={onDiscard} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger px-8">
+            Discard Request
+          </AppButton>
+        </div>
+      )}
     </div>
   );
 }

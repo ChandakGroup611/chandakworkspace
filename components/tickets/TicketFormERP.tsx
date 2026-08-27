@@ -10,10 +10,11 @@ import { fetchMastersByScope, fetchDependentMasters } from "@/lib/actions/master
 interface TicketFormERPProps {
   scope: any;
   onCancel: () => void;
+  onDiscard?: () => void;
   onSubmit: (data: any) => void;
 }
 
-export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps) {
+export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFormERPProps) {
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   
@@ -386,8 +387,13 @@ export function TicketFormERP({ scope, onCancel, onSubmit }: TicketFormERPProps)
             </div>
 
             <div className="flex items-center gap-3 shrink-0 pb-1">
+              {onDiscard && (
+                <AppButton variant="outline" type="button" onClick={onDiscard} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+                  Discard
+                </AppButton>
+              )}
               <AppButton variant="ghost" type="button" onClick={onCancel} className={"text-muted"}>
-                Cancel
+                Back
               </AppButton>
               <AppButton variant="primary" type="submit" className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text min-w-[140px]">
                 <Send className="h-4 w-4 mr-2" />

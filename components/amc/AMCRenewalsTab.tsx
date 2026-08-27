@@ -172,8 +172,8 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
           </div>
           <div className="flex justify-end pt-2 gap-2">
             {editId && (
-              <AppButton type="button" variant="ghost" onClick={handleCancelEdit}>
-                Cancel
+              <AppButton type="button" variant="outline" onClick={handleCancelEdit} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+                Discard
               </AppButton>
             )}
             <AppButton type="submit" variant="primary" disabled={isSubmitting} leftIcon={isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}>

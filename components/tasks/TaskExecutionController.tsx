@@ -1415,8 +1415,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       placeholder="Why is this task being transferred?"
                     />
                   </div>
-                  <div className="flex gap-2 justify-end pt-2 border-t border-theme-btn-primary/30 dark:border-indigo-800/50 mt-4">
-                    <AppButton variant="ghost" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }}>Cancel</AppButton>
+                  <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
+                    <AppButton variant="outline" size="sm" onClick={() => { setIsTransferModalOpen(false); setSelectedTransferWorkspace(""); setSelectedTransferSubworkspace(""); }} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
                     <AppButton variant="primary" size="sm" className="bg-theme-btn-primary hover:opacity-90" onClick={submitTransfer} disabled={transferLoading || checkingScope}>
                       {transferLoading ? "Transferring..." : "Confirm Transfer"}
                     </AppButton>

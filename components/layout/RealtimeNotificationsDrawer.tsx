@@ -216,7 +216,7 @@ export default function RealtimeNotificationsDrawer() {
       >
         <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-warning animate-bounce" : ""}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full theme-card-structural /50 text-foreground from-amber-500 to-orange-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-[#0A0D14] animate-pulse font-mono">
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-500 px-1 text-[0.7rem] font-bold text-white shadow-md ring-2 ring-background animate-pulse font-mono">
             {unreadCount}
           </span>
         )}

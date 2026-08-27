@@ -25,7 +25,6 @@ export default function GlobalShortcuts() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
-  // We only want to handle shortcuts if the user is NOT typing in an input field
   const isTyping = () => {
     if (typeof document === "undefined") return false;
     const activeElement = document.activeElement;
@@ -108,23 +107,17 @@ export default function GlobalShortcuts() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in an input
       if (isTyping()) return;
 
-      // Check Shortcuts
-      
-      // Shift + ? for Help Modal
       if (e.shiftKey && e.key === "?") {
         e.preventDefault();
         setIsOpen(prev => !prev);
         return;
       }
 
-      // Alt Modifiers
       if (e.altKey) {
         const key = e.key.toLowerCase();
         
-        // Navigation (Alt + Key)
         if (!e.shiftKey) {
           if (key === "d") { e.preventDefault(); executeAction(shortcuts.navigation[0].action); }
           else if (key === "w") { e.preventDefault(); executeAction(shortcuts.navigation[1].action); }
@@ -132,7 +125,6 @@ export default function GlobalShortcuts() {
           else if (key === "r") { e.preventDefault(); executeAction(shortcuts.navigation[3].action); }
         }
         
-        // Creation (Alt + Shift + Key)
         if (e.shiftKey) {
           if (key === "t") { e.preventDefault(); executeAction(shortcuts.creation[0].action); }
           else if (key === "w") { e.preventDefault(); executeAction(shortcuts.creation[1].action); }
@@ -152,11 +144,11 @@ export default function GlobalShortcuts() {
     <div 
       key={item.description}
       onClick={() => executeAction(item.action)}
-      className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-hover cursor-pointer transition-colors group"
+      className="flex items-center justify-between p-3 rounded-lg hover:bg-surface cursor-pointer transition-colors group"
     >
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-md bg-background border border-border group-hover:border-theme-icon/50 group-hover:text-theme-icon transition-colors">
-          <item.icon className="h-4 w-4 text-muted group-hover:text-theme-icon" />
+        <div className="p-2 rounded-md bg-surface-hover border border-border/50 group-hover:border-theme-icon/30 group-hover:bg-theme-icon/10 transition-colors">
+          <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-theme-icon transition-colors" />
         </div>
         <span className="font-medium text-sm text-foreground">{item.description}</span>
       </div>
@@ -179,7 +171,6 @@ export default function GlobalShortcuts() {
         className="w-full max-w-2xl bg-surface rounded-2xl shadow-2xl border border-border/50 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border/50 bg-background/50">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
@@ -200,8 +191,7 @@ export default function GlobalShortcuts() {
           </AppButton>
         </div>
 
-        {/* Content */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 overflow-y-auto max-h-[60vh] bg-background/30">
           
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-muted uppercase tracking-wider pl-1 mb-2">Navigation</h3>
@@ -226,7 +216,6 @@ export default function GlobalShortcuts() {
 
         </div>
         
-        {/* Footer Hint */}
         <div className="bg-background/80 p-3 text-center border-t border-border/50">
           <p className="text-[11px] text-muted-foreground font-medium">
             Pro Tip: You can click on any shortcut above to execute it directly.
