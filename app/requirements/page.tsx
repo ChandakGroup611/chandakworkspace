@@ -121,6 +121,10 @@ function RequirementsPageContent() {
       const m = await import("@/lib/actions/requirements");
       const data = await m.fetchRequirements();
       
+      // Fetch assets for INFRA mapping
+      const { data: assets } = await supabase.from('assets').select('id, name').eq('is_deleted', false);
+      const assetMap = new Map(assets?.map((a: any) => [a.id, a.name]) || []);
+      
       const mapped = data.map((d: any) => {
         const createdDate = new Date(d.created_at);
         const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
@@ -143,7 +147,9 @@ function RequirementsPageContent() {
           dbId: d?.id,
           title: d?.title || 'Untitled',
           scope: d?.scope || '-',
-          softwareSystem: d?.software_system?.name || '-',
+          softwareSystem: d?.scope === 'INFRA' 
+            ? (d?.custom_fields?.intake_snapshot?.assetId ? assetMap.get(d?.custom_fields?.intake_snapshot?.assetId) || '-' : '-') 
+            : (d?.software_system?.name || '-'),
           module: d?.module?.name || '-',
           subModule: d?.sub_module?.name || '-',
           category: d?.category?.name || '-',
@@ -334,9 +340,9 @@ function RequirementsPageContent() {
             onChange={(e: any) => setFilter(f => ({ ...f, search: e.target.value }))}
           />
         </div>
-        <div>
-          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System</div>
-          <select 
+          <div>
+            <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System / Asset</div>
+            <select 
             className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
@@ -405,12 +411,12 @@ function RequirementsPageContent() {
         <AppTableContainer className="flex-1 overflow-y-auto">
           <AppTable>
             <AppTableHeader>
-              <AppTableRow>
-                <AppTableHead>Req #</AppTableHead>
-                <AppTableHead>Title</AppTableHead>
-                <AppTableHead>System</AppTableHead>
-                <AppTableHead>Module</AppTableHead>
-                <AppTableHead>Submodule</AppTableHead>
+                  <AppTableRow className="bg-surface/50 dark:bg-surface/10 hover:bg-transparent">
+                    <AppTableHead className="w-[150px]">REQ #</AppTableHead>
+                    <AppTableHead className="min-w-[200px]">Title</AppTableHead>
+                    <AppTableHead>System / Asset</AppTableHead>
+                    <AppTableHead>Module</AppTableHead>
+                    <AppTableHead>Submodule</AppTableHead>
                 <AppTableHead>Particulars</AppTableHead>
                 <AppTableHead>Priority</AppTableHead>
                 <AppTableHead>Est. Pts</AppTableHead>
