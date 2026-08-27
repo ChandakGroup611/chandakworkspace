@@ -1064,7 +1064,7 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
   const { data: { user } } = await createClient(cookieStore).auth.getUser();
   if (!user) return { error: 'Unauthenticated' };
   
-  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, code, created_by').eq('id', reqId).single();
+  const { data: req } = await supabaseAdmin.from('requirements').select('amendment_version, code, creator_id').eq('id', reqId).single();
   if (!req) return { error: 'Requirement not found' };
 
   const newVersion = (req.amendment_version || 0) + 1;
@@ -1098,7 +1098,7 @@ export async function amendRequirement(reqId: string, revisedDetails: string, ne
     triggering_user_id: user.id,
     amendment_version: newVersion,
     status: 'Amended',
-    requester_id: req.created_by // Assumes requirement has created_by
+    requester_id: req.creator_id // Assumes requirement has creator_id
   });
 
   revalidatePath(`/requirements/${reqId}`);
