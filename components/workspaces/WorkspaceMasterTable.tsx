@@ -298,7 +298,7 @@ export function WorkspaceMasterTable({
                     <TypeIcon className={`h-4 w-4 flex-shrink-0 ${
                       isWorkspaceType ? (depth === 0 ? 'text-theme-icon dark:text-theme-icon' : 'text-theme-icon/80') : 'text-success'
                     }`} />
-                    <div className="flex items-center gap-2 min-w-0 flex-1 py-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0 flex-1 py-1">
                       <span className={`flex-1 min-w-0 ${
                         isWorkspaceType ? 'truncate font-semibold tracking-tight text-sm' : 
                         isSubWorkspace ? 'truncate font-medium tracking-tight text-[13px]' : 
