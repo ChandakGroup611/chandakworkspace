@@ -399,9 +399,9 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                             <input type="number" className="w-full h-10 px-3 rounded-lg text-sm theme-input-structural text-foreground" value={spec.qty || ''} onChange={(e) => handleUpdateSpec(spec.id, 'qty', parseInt(e.target.value) || 0)} placeholder="1" />
                           </div>
                           <div className="w-full md:w-auto pt-2 md:pt-0">
-                            <button type="button" onClick={() => handleRemoveSpec(spec.id)} className="w-full md:w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/20 text-danger transition-colors">
+                            <AppButton variant="ghost" type="button" onClick={() => handleRemoveSpec(spec.id)} className="w-full md:w-10 h-10 flex items-center justify-center rounded-lg hover:bg-danger/20 text-danger transition-colors">
                               <X className="w-4 h-4" />
-                            </button>
+                            </AppButton>
                           </div>
                         </div>
                       ))}
