@@ -557,7 +557,14 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                               ) : col.field_key === "code" ? (
                                 <span className="font-mono font-bold text-amber-500">{r.code || r.id}</span>
                               ) : col.field_key === "title" ? (
-                                <div className="font-medium truncate" title={r.title}>{r.title}</div>
+                                <div className="font-medium truncate flex items-center gap-2" title={r.title}>
+                                  <span>{r.title}</span>
+                                  {r.amendmentVersion > 0 && (
+                                    <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold tracking-wider uppercase shrink-0">
+                                      v{r.amendmentVersion}
+                                    </span>
+                                  )}
+                                </div>
                               ) : col.field_key === "task_count" ? (
                                 <div className="font-bold text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
                               ) : col.field_key === "due_days" ? (

@@ -723,6 +723,11 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             <h1 className="text-[1.1rem] font-bold text-foreground dark:text-white truncate max-w-full leading-tight">
               <span className="text-muted mr-2 uppercase text-sm tracking-wider">{requirement.code || reqId}</span>
               {requirement.title || 'Untitled Subject'}
+              {requirement.amendment_version > 0 && (
+                <span className="ml-3 px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20 text-xs font-bold tracking-widest uppercase">
+                  v{requirement.amendment_version}
+                </span>
+              )}
             </h1>
           </div>
           <AppBadge variant="info" className="shrink-0">{requirement.approval_status || requirement.status?.name || "Draft"}</AppBadge>
