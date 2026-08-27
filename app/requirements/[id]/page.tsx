@@ -345,8 +345,13 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
     };
   }, [reqId]);
 
+  const allTasksResolvedOrClosed = linkedTasks && linkedTasks.length > 0 && linkedTasks.every(lt => {
+    const statusName = lt.task?.status?.name || lt.task?.status?.status_name;
+    return statusName === 'Resolved' || statusName === 'Closed';
+  });
+
   const isReadyToPutToUse = requirement?.approval_status === 'Ready to Put to Use' || 
-    (requirement?.custom_fields?.completion_percentage === 100 && linkedTasks?.length > 0 && requirement?.approval_status !== 'Closed');
+    (allTasksResolvedOrClosed && requirement?.approval_status !== 'Closed');
 
   useEffect(() => {
     if (isReadyToPutToUse) {
