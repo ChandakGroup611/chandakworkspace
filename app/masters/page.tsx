@@ -22,6 +22,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { createClient } from "@/utils/supabase/client";
+import { sanitizeErrorMessage } from "@/lib/utils";
 import { 
   Database, 
   Search, 
@@ -476,7 +477,7 @@ function MastersPageContent() {
       console.warn("Master Creation validation intercepted:", err);
       
       // ALERTS THE ACTUAL DATABASE ERROR SO THE USER SEES IT IMMEDIATELY
-      toast.error("Database Error: " + (err.message || err.details || JSON.stringify(err)));
+      toast.error(sanitizeErrorMessage(err));
 
       setShowModal(false);
       setFormCode("");
@@ -500,7 +501,7 @@ function MastersPageContent() {
       setSuccessAlert(`Record status successfully updated.`);
     } catch (err: any) {
       console.warn("Status toggle backend verification filtered:", err);
-      toast.error("Database Error on Toggle: " + (err.message || err.details || JSON.stringify(err)));
+      toast.error(sanitizeErrorMessage(err));
     }
   };
 
@@ -514,7 +515,7 @@ function MastersPageContent() {
       fetchRecords();
     } catch (err: any) {
       console.warn("Hard delete blocked:", err);
-      toast.error("Database Error on Deletion: " + (err.message || err.details || JSON.stringify(err)));
+      toast.error(sanitizeErrorMessage(err));
     }
   };
 
