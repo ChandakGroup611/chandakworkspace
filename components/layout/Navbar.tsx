@@ -31,7 +31,7 @@ import { globalSearch } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/repositories/search";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
-import { useProfile } from "@/hooks/usePermissions";
+import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { AppButton } from "@/components/ui/AppButton";
 
 export default function Navbar() {
@@ -39,6 +39,7 @@ export default function Navbar() {
   const supabase = createClient();
   const { theme, setTheme, density, tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize } = useTheme();
   const { data: profileData } = useProfile();
+  const { roleCode } = usePermissions();
   const userData = profileData || null;
 
   const [mounted, setMounted] = useState(false);
@@ -307,6 +308,12 @@ export default function Navbar() {
           </Link>
 
           <RealtimeNotificationsDrawer />
+
+          <div className="flex items-center mx-2 px-3 py-1 rounded-full bg-surface-hover/50 border border-border/40 shadow-sm">
+            <span className="text-[13px] font-medium text-foreground tracking-tight">
+              Welcome - {userData?.full_name || 'System Operator'} <span className="text-accent font-bold">({roleCode || 'NULL_ROLE'})</span>
+            </span>
+          </div>
 
           <div className="relative ml-2" ref={dropdownRef}>
             <div 

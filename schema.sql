@@ -3618,7 +3618,7 @@ ALTER TABLE ONLY "public"."activity_events"
 
 
 ALTER TABLE ONLY "public"."approval_types"
-    ADD CONSTRAINT "approval_types_code_key" UNIQUE ("code");
+    ADD CONSTRAINT "approval_types_code_scope_key" UNIQUE ("code", "scope_id");
 
 
 
@@ -4038,7 +4038,7 @@ ALTER TABLE ONLY "public"."task_templates"
 
 
 ALTER TABLE ONLY "public"."task_types"
-    ADD CONSTRAINT "task_types_code_key" UNIQUE ("code");
+    ADD CONSTRAINT "task_types_code_scope_key" UNIQUE ("code", "scope_id");
 
 
 
@@ -4278,7 +4278,7 @@ ALTER TABLE ONLY "public"."websocket_queue"
 
 
 ALTER TABLE ONLY "public"."workflow_states"
-    ADD CONSTRAINT "workflow_states_code_key" UNIQUE ("code");
+    ADD CONSTRAINT "status_master_code_scope_key" UNIQUE ("code", "scope_id");
 
 
 
@@ -7121,3 +7121,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 
 
 
+A L T E R   T A B L E   O N L Y   " p u b l i c " . " p r i o r i t y _ m a s t e r "   A D D   C O N S T R A I N T   " p r i o r i t y _ m a s t e r _ c o d e _ s c o p e _ k e y "   U N I Q U E   ( " p r i o r i t y _ c o d e " ,   " s c o p e _ i d " ) ;  
+ 
