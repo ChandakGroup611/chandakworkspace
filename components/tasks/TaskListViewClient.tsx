@@ -1261,10 +1261,10 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                       );
                       case "title_description": return (
                         <AppTableCell className="text-left">
-                          <div className="flex items-center gap-2">
-                            <div className="text-[13px] font-semibold text-foreground whitespace-normal break-words w-full">{task.title || '-'}</div>
+                          <div className="flex items-center gap-2 max-w-[250px] md:max-w-none">
+                            <div className="text-[13px] font-semibold text-foreground truncate min-w-0 flex-1" title={task.title || ''}>{task.title || '-'}</div>
                             {task.attachmentCount > 0 && (
-                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 text-theme-icon dark:text-theme-icon" title={`${task.attachmentCount} Attachment(s)`}>
+                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 text-theme-icon dark:text-theme-icon shrink-0" title={`${task.attachmentCount} Attachment(s)`}>
                                 <Paperclip className="h-3 w-3" />
                               </div>
                             )}

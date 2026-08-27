@@ -299,7 +299,7 @@ export function WorkspaceMasterTable({
                       isWorkspaceType ? (depth === 0 ? 'text-theme-icon dark:text-theme-icon' : 'text-theme-icon/80') : 'text-success'
                     }`} />
                     <div className="flex items-center gap-2 min-w-0 flex-1 py-1">
-                      <span className={`${
+                      <span className={`flex-1 min-w-0 ${
                         isWorkspaceType ? 'truncate font-semibold tracking-tight text-sm' : 
                         isSubWorkspace ? 'truncate font-medium tracking-tight text-[13px]' : 
                         'whitespace-normal break-words text-[13px] font-normal leading-snug'
@@ -313,9 +313,9 @@ export function WorkspaceMasterTable({
 
                       {/* Task Status & Priority Badges */}
                       {isTask && (
-                        <div className="inline-flex items-center gap-1.5 ml-1 shrink-0">
+                        <div className="inline-flex items-center gap-1.5 ml-1 shrink-0 flex-wrap max-w-full">
                           <span 
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-sm"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-sm max-w-full truncate"
                             style={{ 
                               borderColor: `${statusColor}40`, 
                               backgroundColor: `${statusColor}15`,

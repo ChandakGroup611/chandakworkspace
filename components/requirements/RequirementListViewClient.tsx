@@ -557,8 +557,8 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                               ) : col.field_key === "code" ? (
                                 <span className="font-mono font-bold text-amber-500">{r.code || r.id}</span>
                               ) : col.field_key === "title" ? (
-                                <div className="font-medium truncate flex items-center gap-2" title={r.title}>
-                                  <span>{r.title}</span>
+                                <div className="font-medium flex items-center gap-2 max-w-[250px] md:max-w-none" title={r.title}>
+                                  <span className="truncate flex-1 min-w-0">{r.title}</span>
                                   {r.amendmentVersion > 0 && (
                                     <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold tracking-wider uppercase shrink-0">
                                       v{r.amendmentVersion}
