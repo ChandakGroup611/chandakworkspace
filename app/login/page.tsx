@@ -391,12 +391,7 @@ export default function LoginPage() {
               </AppButton>
             </form>
 
-            {/* Navigate to Registration */}
-            <div className="mt-8 text-center">
-              <span className="text-sm font-medium text-muted-foreground">
-                Don't have an account? <Link href="/register" className="text-theme-icon font-semibold hover:underline transition-colors">Register now</Link>
-              </span>
-            </div>
+
 
             <div className="relative py-8">
               <div className="absolute inset-0 flex items-center">

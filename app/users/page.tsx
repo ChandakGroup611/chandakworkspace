@@ -20,7 +20,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresence } from "@/hooks/use-presence";
-import { saveUserAction, fetchUsersDashboardData, deleteUserAction } from "@/lib/actions/users";
+import { saveUserAction, fetchUsersDashboardData, deleteUserAction, inviteUserAction } from "@/lib/actions/users";
 import { 
   Users, 
   UserPlus, 
@@ -148,6 +148,31 @@ export default function UserMasterPage() {
   // Notifications
   const [successAlert, setSuccessAlert] = useState<string | null>(null);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
+
+  // Invite Modal States
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<string>("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  const handleSendInvite = async () => {
+    if (!inviteEmail) {
+      triggerToast("Email is required.", true);
+      return;
+    }
+    setInviteLoading(true);
+    const res = await inviteUserAction(inviteEmail, inviteRole || null);
+    if (res.success) {
+      triggerToast(res.message || "Invite sent.");
+      setInviteModalOpen(false);
+      setInviteEmail("");
+      setInviteRole("");
+    } else {
+      triggerToast(res.error || "Failed to send invite.", true);
+    }
+    setInviteLoading(false);
+  };
+
 
   // Automatic triggers to display temporary dismissable toast banners
   const triggerToast = (msg: string, isErr = false) => {
@@ -606,6 +631,15 @@ export default function UserMasterPage() {
             Refresh Directory
           </AppButton>
           <AppButton 
+            variant="outline" 
+            size="sm" 
+            leftIcon={<Mail className="h-3.5 w-3.5" />}
+            onClick={() => setInviteModalOpen(true)}
+            disabled={!(hasPermission("USERS_CREATE") || isSuperAdmin)}
+          >
+            Invite User
+          </AppButton>
+          <AppButton 
             variant="primary" 
             size="sm" 
             leftIcon={<UserPlus className="h-3.5 w-3.5" />}
@@ -616,6 +650,49 @@ export default function UserMasterPage() {
           </AppButton>
         </div>
       </div>
+
+      {/* Invite Modal */}
+      {inviteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-background border border-border w-full max-w-md rounded-xl shadow-2xl p-6">
+            <h3 className="text-lg font-bold mb-4">Invite New User</h3>
+            <p className="text-sm text-muted mb-4">Send an email invitation allowing a new user to securely join the application.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold mb-1 block">Email Address *</label>
+                <AppInput 
+                  type="email" 
+                  placeholder="user@example.com" 
+                  value={inviteEmail} 
+                  onChange={e => setInviteEmail(e.target.value)} 
+                />
+              </div>
+              
+              <div>
+                <label className="text-xs font-semibold mb-1 block">Initial Role (Optional)</label>
+                <select 
+                  className="w-full text-sm bg-surface border border-border rounded-md px-3 py-2 outline-none focus:border-theme-btn-primary"
+                  value={inviteRole}
+                  onChange={e => setInviteRole(e.target.value)}
+                >
+                  <option value="">-- No Role (Assign Later) --</option>
+                  {roles.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <AppButton variant="ghost" onClick={() => setInviteModalOpen(false)}>Cancel</AppButton>
+              <AppButton variant="primary" onClick={handleSendInvite} disabled={inviteLoading}>
+                {inviteLoading ? "Sending..." : "Send Invite"}
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dismissable Informational Alerts */}
       {successAlert && (

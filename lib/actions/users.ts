@@ -498,3 +498,70 @@ export async function deleteUserAction(userId: string) {
   revalidatePath("/users");
   return { success: true };
 }
+
+export async function inviteUserAction(email: string, roleId: string | null) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(cookieStore);
+
+  // 1. Authenticate the caller
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+  if (authError || !authUser) {
+    return { success: false, error: "Unauthenticated request. Please log in." };
+  }
+
+  // 2. Authorize the caller
+  const { hasPermission } = await import('@/lib/permissions');
+  let isCallerAdmin = await hasPermission(authUser.id, 'SUPER_ADMIN');
+
+  if (!isCallerAdmin) {
+    const { data: userPerms } = await supabase
+      .from("user_permissions_snapshot")
+      .select("permission_code")
+      .eq("user_id", authUser.id);
+      
+    const perms = userPerms ? userPerms.map((r: any) => r.permission_code) : [];
+    if (!perms.includes("USERS_CREATE") && !perms.includes("USERS_MANAGE")) {
+      return { success: false, error: "Unauthorized: You do not have permissions to invite users." };
+    }
+  }
+
+  const isServiceRoleAvailable = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!isServiceRoleAvailable) {
+    return { success: false, error: "Missing Service Role Key. Cannot send invites from this environment." };
+  }
+
+  const adminClient = getAdminClient();
+
+  // 3. Send the invite
+  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email);
+
+  if (inviteError) {
+    console.error("[Server Action] Invite error:", inviteError);
+    return { success: false, error: `Invite failed: ${inviteError.message}` };
+  }
+
+  const newUserId = inviteData.user.id;
+
+  // 4. Update the user_master with the requested role
+  // (The trigger handle_new_user should have already created the row when inviteUserByEmail executed)
+  const updatePayload: any = {
+    is_active: true
+  };
+  
+  if (roleId) {
+    updatePayload.role_id = roleId;
+    await adminClient.from("user_roles").insert({ user_id: newUserId, role_id: roleId }).select();
+  }
+
+  const { error: dbError } = await adminClient
+    .from("user_master")
+    .update(updatePayload)
+    .eq("id", newUserId);
+
+  if (dbError) {
+    console.error("[Server Action] DB role update error for invite:", dbError);
+  }
+
+  revalidatePath("/users");
+  return { success: true, message: `Invite sent successfully to ${email}` };
+}
