@@ -1401,6 +1401,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                               </Popover.Portal>
                             )}
                           </Popover.Root>
+                          </div>
                         </AppTableCell>
                       );
                       case "assignee": return (
