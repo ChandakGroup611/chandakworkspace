@@ -328,7 +328,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   };
 
   
-  // Modals
   const [wsModalMode, setWsModalMode] = useState<'ROOT' | 'SUB' | 'EDIT' | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [drawerTask, setDrawerTask] = useState<any>(null);
@@ -338,6 +337,27 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+  
+  // Dependency Checks
+  const [checkingDependencyId, setCheckingDependencyId] = useState<string | null>(null);
+  const [dependencyModal, setDependencyModal] = useState<{
+    userId: string;
+    userName: string;
+    result: import("@/lib/actions/dependencies").DependencyCheckResult;
+  } | null>(null);
+
+  // User Role Modal
+  const [userRoleModal, setUserRoleModal] = useState<{
+    userId: string;
+    userName: string;
+    step: 'choice' | 'tasks';
+  } | null>(null);
+  const [workspaceTasksForRole, setWorkspaceTasksForRole] = useState<any[]>([]);
+  const [fetchingTasksForRole, setFetchingTasksForRole] = useState(false);
+  const [stagedTaskRoles, setStagedTaskRoles] = useState<Record<string, 'primary' | 'executor'>>({});
+  
+  const [isAssigningTasks, setIsAssigningTasks] = useState(false);
+
 
   const [autoCollapse, setAutoCollapse] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -1293,15 +1313,43 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     <label key={u.id} className="flex items-center gap-3 text-sm p-1.5 rounded cursor-pointer hover:bg-surface-hover transition-colors">
                       <input 
                         type="checkbox" 
+                        disabled={checkingDependencyId === u.id}
                         checked={newWS.assigneeIds.includes(u.id)} 
-                        onChange={e => {
-                          if (e.target.checked) setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
-                          else setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
+                        onChange={async e => {
+                          if (e.target.checked) {
+                            if (editWSId) {
+                              setUserRoleModal({ userId: u.id, userName: u.full_name, step: 'choice' });
+                            } else {
+                              setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, u.id]});
+                            }
+                          } else {
+                            if (editWSId) {
+                              setCheckingDependencyId(u.id);
+                              try {
+                                const { checkWorkspaceUserDependencies } = await import("@/lib/actions/dependencies");
+                                const deps = await checkWorkspaceUserDependencies(editWSId, [u.id]);
+                                const result = deps[u.id];
+                                if (result && !result.isSafe) {
+                                  setDependencyModal({ userId: u.id, userName: u.full_name, result });
+                                  return; // Stop here, don't update state yet
+                                }
+                              } catch (err) {
+                                console.error("Dependency check failed:", err);
+                              } finally {
+                                setCheckingDependencyId(null);
+                              }
+                            }
+                            // Safe to remove
+                            setNewWS({...newWS, assigneeIds: newWS.assigneeIds.filter((id: string) => id !== u.id)});
+                          }
                         }} 
                         className="rounded border-border text-theme-icon focus:ring-theme-icon focus:ring-offset-background h-3.5 w-3.5" 
                       />
                       <div className="flex flex-col min-w-0">
-                        <span className="text-foreground text-[12px] font-medium truncate">{u.full_name}</span>
+                        <span className="text-foreground text-[12px] font-medium truncate flex items-center gap-2">
+                          {u.full_name}
+                          {checkingDependencyId === u.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
+                        </span>
                       </div>
                     </label>
                   ))}
@@ -1380,6 +1428,219 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           task={drawerTask} 
           onClose={() => setDrawerTask(null)} 
         />
+      )}
+
+      {/* Dependency Check Modal */}
+      {dependencyModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-danger/10 border-danger/20' : 'bg-warning/10 border-warning/20'}`}>
+              <div className="flex items-center gap-3">
+                {dependencyModal.result.type === 'executive' ? (
+                  <ShieldAlert className="w-5 h-5 text-danger" />
+                ) : (
+                  <ShieldCheck className="w-5 h-5 text-warning" />
+                )}
+                <h3 className="font-bold text-sm">Action Requires Attention</h3>
+              </div>
+            </div>
+            
+            <div className="p-5">
+              <p className="text-sm text-foreground leading-relaxed mb-4">
+                <strong>{dependencyModal.userName}</strong> has active dependencies in this workspace:
+              </p>
+              
+              <ul className="text-xs text-muted mb-5 space-y-1 bg-surface p-3 rounded-lg border border-border/50 max-h-40 overflow-y-auto">
+                {dependencyModal.result.blockingItems.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-theme-icon mt-0.5">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="p-3 bg-surface-hover rounded-lg border border-border/50 text-xs text-foreground font-medium">
+                {dependencyModal.result.message}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-border flex justify-end gap-3 bg-surface/30">
+              <AppButton 
+                variant="outline" 
+                onClick={() => setDependencyModal(null)}
+              >
+                {dependencyModal.result.type === 'executive' ? 'Close' : 'No, Go Back'}
+              </AppButton>
+              {dependencyModal.result.type === 'watcher' && (
+                <AppButton 
+                  variant="primary" 
+                  className="bg-danger hover:opacity-90 border-none"
+                  onClick={() => {
+                    // Safe to remove watcher
+                    setNewWS({
+                      ...newWS,
+                      assigneeIds: newWS.assigneeIds.filter(id => id !== dependencyModal.userId)
+                    });
+                    setDependencyModal(null);
+                  }}
+                >
+                  Yes, Remove User
+                </AppButton>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Role Assignment Modal */}
+      {userRoleModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-4 border-b bg-surface flex items-center justify-between shrink-0">
+              <h3 className="font-bold text-sm">Assign User Role: {userRoleModal.userName}</h3>
+              <button onClick={() => { setUserRoleModal(null); setStagedTaskRoles({}); }} className="text-muted hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto flex-1 min-h-0">
+              {userRoleModal.step === 'choice' ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-foreground leading-relaxed">
+                    Will this user be only a watcher in this workspace, or should they be assigned as an owner/executive to specific tasks?
+                  </p>
+                  
+                  <div className="flex flex-col gap-3 mt-4">
+                    <AppButton 
+                      variant="outline" 
+                      className="justify-start h-auto py-3 px-4 text-left border-border/50 hover:bg-surface"
+                      onClick={() => {
+                        setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, userRoleModal.userId]});
+                        setUserRoleModal(null);
+                      }}
+                    >
+                      <div>
+                        <div className="font-bold text-sm text-foreground">Only Watcher / Member</div>
+                        <div className="text-xs text-muted mt-1">Add them to the workspace without task assignments.</div>
+                      </div>
+                    </AppButton>
+                    
+                    <AppButton 
+                      variant="primary" 
+                      className="justify-start h-auto py-3 px-4 text-left bg-theme-btn-primary hover:opacity-90"
+                      onClick={async () => {
+                        setUserRoleModal({ ...userRoleModal, step: 'tasks' });
+                        setFetchingTasksForRole(true);
+                        try {
+                          const { fetchWorkspaceTasksList } = await import("@/lib/actions/tasks");
+                          const tasks = await fetchWorkspaceTasksList(editWSId!);
+                          setWorkspaceTasksForRole(tasks);
+                        } catch (err) {
+                          console.error(err);
+                        } finally {
+                          setFetchingTasksForRole(false);
+                        }
+                      }}
+                    >
+                      <div>
+                        <div className="font-bold text-sm">Assign to Tasks</div>
+                        <div className="text-xs opacity-90 mt-1">Select specific tasks to assign them as Primary or Executor.</div>
+                      </div>
+                    </AppButton>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-foreground leading-relaxed">
+                    Select tasks to assign <strong>{userRoleModal.userName}</strong> to:
+                  </p>
+                  
+                  {fetchingTasksForRole ? (
+                    <div className="flex items-center justify-center p-8 text-muted">
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      <span className="text-sm">Loading tasks...</span>
+                    </div>
+                  ) : workspaceTasksForRole.length === 0 ? (
+                    <div className="text-center p-8 bg-surface rounded-lg border border-border/50 text-sm text-muted">
+                      No active tasks found in this workspace.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {workspaceTasksForRole.map(task => (
+                        <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-surface">
+                          <div className="font-medium text-xs truncate max-w-[180px]">{task.title}</div>
+                          <div className="flex items-center gap-2">
+                            <select
+                              className="text-xs bg-background border border-border rounded px-2 py-1 outline-none text-muted focus:text-foreground"
+                              value={stagedTaskRoles[task.id] || ""}
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (!val) {
+                                  const newRoles = { ...stagedTaskRoles };
+                                  delete newRoles[task.id];
+                                  setStagedTaskRoles(newRoles);
+                                } else {
+                                  setStagedTaskRoles({ ...stagedTaskRoles, [task.id]: val as 'primary' | 'executor' });
+                                }
+                              }}
+                            >
+                              <option value="">None</option>
+                              <option value="executor">Executor</option>
+                              <option value="primary">Primary Owner</option>
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {userRoleModal.step === 'tasks' && (
+              <div className="p-4 border-t border-border flex justify-end gap-3 bg-surface/30 shrink-0">
+                <AppButton 
+                  variant="ghost" 
+                  onClick={() => setUserRoleModal({ ...userRoleModal, step: 'choice' })}
+                  disabled={isAssigningTasks}
+                >
+                  Back
+                </AppButton>
+                <AppButton 
+                  variant="primary" 
+                  className="bg-theme-btn-primary hover:opacity-90"
+                  disabled={isAssigningTasks || (workspaceTasksForRole.length > 0 && Object.keys(stagedTaskRoles).length === 0)}
+                  onClick={async () => {
+                    if (Object.keys(stagedTaskRoles).length > 0) {
+                      setIsAssigningTasks(true);
+                      try {
+                        const { assignUserToTasksBatch } = await import("@/lib/actions/tasks");
+                        const assignments = Object.entries(stagedTaskRoles).map(([taskId, role]) => ({ taskId, role }));
+                        const res = await assignUserToTasksBatch(userRoleModal.userId, assignments);
+                        if (res.error) {
+                          toast.error(res.error);
+                        } else {
+                          toast.success(`User assigned to ${assignments.length} task(s).`);
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        toast.error("Failed to assign user to tasks.");
+                      } finally {
+                        setIsAssigningTasks(false);
+                      }
+                    }
+                    
+                    setNewWS({...newWS, assigneeIds: [...newWS.assigneeIds, userRoleModal.userId]});
+                    setUserRoleModal(null);
+                    setStagedTaskRoles({});
+                  }}
+                >
+                  {isAssigningTasks ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Assignments'}
+                </AppButton>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
     </PageContainer>

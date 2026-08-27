@@ -1499,7 +1499,16 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     return { error: "You do not have permission to edit assignees. Only the Primary Assignee or a Super Admin can do this." };
   }
 
-  const finalPrimaryId = primaryAssigneeId || assignees[0] || task.assigned_to;
+  // Handle explicit removal of primary assignee (if passed as empty string)
+  let finalPrimaryId: string | null = task.assigned_to;
+  if (primaryAssigneeId !== undefined) {
+    finalPrimaryId = primaryAssigneeId === "" ? null : primaryAssigneeId;
+  }
+  // Fallback to first executor if primary is null but executors exist
+  if (!finalPrimaryId && assignees.length > 0) {
+    finalPrimaryId = assignees[0];
+  }
+
   if (!finalPrimaryId && assignees.length === 0) {
     return { error: "At least one assignee or primary assignee must be selected." };
   }
@@ -1523,7 +1532,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
     if (insertError) return { error: insertError.message };
   }
 
-  if (finalPrimaryId) {
+  if (finalPrimaryId !== undefined) {
     const { error: updateError } = await supabaseAdmin.from('tasks').update({ assigned_to: finalPrimaryId }).eq('id', taskId);
     if (updateError) return { error: updateError.message };
   }
@@ -1976,5 +1985,49 @@ export async function acknowledgeTaskAmendment(taskId: string) {
   } catch (err: any) {
     console.error("Error acknowledging task amendment:", err);
     return { error: err.message || "Failed to acknowledge amendment." };
+  }
+}
+
+export async function fetchWorkspaceTasksList(workspaceId: string) {
+  try {
+    const { data: tasks, error } = await supabaseAdmin
+      .from('tasks')
+      .select('id, title, assigned_to, parent_task_id')
+      .eq('workspace_id', workspaceId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    return tasks || [];
+  } catch (err) {
+    console.error("Error fetching workspace tasks:", err);
+    return [];
+  }
+}
+
+export async function assignUserToTasksBatch(userId: string, assignments: { taskId: string; role: 'primary' | 'executor' }[]) {
+  try {
+    for (const assignment of assignments) {
+      if (assignment.role === 'primary') {
+        const { error } = await supabaseAdmin
+          .from('tasks')
+          .update({ assigned_to: userId })
+          .eq('id', assignment.taskId);
+        if (error) console.error("Error assigning primary:", error);
+      } else if (assignment.role === 'executor') {
+        const { error } = await supabaseAdmin
+          .from('task_participants')
+          .upsert({ 
+            task_id: assignment.taskId, 
+            user_id: userId, 
+            participation_role: 'EXECUTOR' 
+          }, { onConflict: 'task_id, user_id' });
+        if (error) console.error("Error assigning executor:", error);
+      }
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in assignUserToTasksBatch:", err);
+    return { error: err.message || "Failed to batch assign user to tasks." };
   }
 }

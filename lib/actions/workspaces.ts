@@ -1090,11 +1090,14 @@ export async function updateWorkspace(id: string, formData: any) {
         assigneesArray.push(ownerId);
     }
 
-    // 3. Perform soft-deletes and upserts
-    const usersToSoftDelete = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id) && !m.is_deleted).map(m => m.id);
-    if (usersToSoftDelete.length > 0) {
-      await supabaseAdmin.from("workspace_members").update({ is_deleted: true }).in("id", usersToSoftDelete);
+    // 3. Perform deletes and upserts (Hard delete to fix zombie users in embedded queries)
+    const usersToDelete = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.id);
+    if (usersToDelete.length > 0) {
+      await supabaseAdmin.from("workspace_members").delete().in("id", usersToDelete);
     }
+    
+    // Also clean up any previously soft-deleted members for this workspace to fix the bug
+    await supabaseAdmin.from("workspace_members").delete().eq("workspace_id", id).eq("is_deleted", true);
 
     for (const uid of assigneesArray) {
       const existingRole = roleMap.get(uid);

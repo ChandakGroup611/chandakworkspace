@@ -11,7 +11,7 @@ import {
   CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2, 
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
   ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye, ActivitySquare, Link as LinkIcon, MessageCircle,
-  User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, Users, X, Search, Check, UserCheck
+  User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, ShieldAlert, Users, X, Search, Check, UserCheck
 } from "lucide-react";
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
@@ -176,6 +176,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [stakeholderSearch, setStakeholderSearch] = useState<string>("");
   const [isEditingAssignees, setIsEditingAssignees] = useState(false);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
+
+  // Dependency Checks
+  const [checkingDependencyId, setCheckingDependencyId] = useState<string | null>(null);
+  const [dependencyModal, setDependencyModal] = useState<{
+    userId: string;
+    userName: string;
+    result: import("@/lib/actions/dependencies").DependencyCheckResult;
+  } | null>(null);
   
   const handleAcknowledgeAmendment = async () => {
     if (!task?.id) return;
@@ -1931,8 +1939,31 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                         return (
                           <div
                             key={s.id}
-                            onClick={() => setSelectedPrimaryAssignee(s.id)}
-                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${ isSelected ? 'border-theme-btn-primary bg-theme-btn-primary/10 dark:bg-theme-btn-primary/15 shadow-xs' : '/60 hover:border-theme-btn-primary/40 hover:theme-card-structural /60 dark:hover:bg-elevated/60' }`}
+                            onClick={async () => {
+                              if (checkingDependencyId) return;
+                              if (isSelected) {
+                                if (task?.id) {
+                                  setCheckingDependencyId(s.id);
+                                  try {
+                                    const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
+                                    const deps = await checkTaskUserDependencies(task.id, [s.id]);
+                                    const result = deps[s.id];
+                                    if (result && !result.isSafe) {
+                                      setDependencyModal({ userId: s.id, userName: s.full_name, result });
+                                      return;
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                  } finally {
+                                    setCheckingDependencyId(null);
+                                  }
+                                }
+                                setSelectedPrimaryAssignee("");
+                              } else {
+                                setSelectedPrimaryAssignee(s.id);
+                              }
+                            }}
+                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${ isSelected ? 'border-theme-btn-primary bg-theme-btn-primary/10 dark:bg-theme-btn-primary/15 shadow-xs' : '/60 hover:border-theme-btn-primary/40 hover:theme-card-structural /60 dark:hover:bg-elevated/60' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               {s.profile_photo ? (
@@ -1945,6 +1976,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               <div className="min-w-0">
                                 <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
                                   <span>{s.full_name}</span>
+                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
                                   {isSelected && (
                                     <span className="text-[10px] bg-theme-btn-primary text-theme-btn-primary-text px-2 py-0.2 rounded-full font-semibold shrink-0">
                                       Primary
@@ -1996,14 +2028,31 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       return (
                         <div
                           key={s.id}
-                          onClick={() => {
+                          onClick={async () => {
+                            if (checkingDependencyId) return;
                             if (isSelected) {
+                              if (task?.id) {
+                                setCheckingDependencyId(s.id);
+                                try {
+                                  const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
+                                  const deps = await checkTaskUserDependencies(task.id, [s.id]);
+                                  const result = deps[s.id];
+                                  if (result && !result.isSafe) {
+                                    setDependencyModal({ userId: s.id, userName: s.full_name, result });
+                                    return;
+                                  }
+                                } catch (e) {
+                                  console.error(e);
+                                } finally {
+                                  setCheckingDependencyId(null);
+                                }
+                              }
                               setSelectedExecutors(selectedExecutors.filter(id => id !== s.id));
                             } else {
                               setSelectedExecutors([...selectedExecutors, s.id]);
                             }
                           }}
-                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${ isSelected ? 'border-emerald-500 bg-success/10 dark:bg-success/15 shadow-xs' : '/60 hover:border-emerald-400/40 hover:theme-card-structural /60 dark:hover:bg-elevated/60' }`}
+                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${ isSelected ? 'border-emerald-500 bg-success/10 dark:bg-success/15 shadow-xs' : '/60 hover:border-emerald-400/40 hover:theme-card-structural /60 dark:hover:bg-elevated/60' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             {s.profile_photo ? (
@@ -2016,6 +2065,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             <div className="min-w-0">
                               <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
                                 <span>{s.full_name}</span>
+                                {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
                                 {s.id === selectedPrimaryAssignee && (
                                   <span className="text-[10px] bg-theme-btn-primary/15 text-theme-icon border border-theme-btn-primary/30 px-1.5 py-0.2 rounded-full font-semibold shrink-0">
                                     Primary Owner
@@ -2064,6 +2114,69 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   Stage Assignment
                 </AppButton>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dependency Check Modal */}
+      {dependencyModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-danger/10 border-danger/20' : 'bg-warning/10 border-warning/20'}`}>
+              <div className="flex items-center gap-3">
+                {dependencyModal.result.type === 'executive' ? (
+                  <ShieldAlert className="w-5 h-5 text-danger" />
+                ) : (
+                  <ShieldCheck className="w-5 h-5 text-warning" />
+                )}
+                <h3 className="font-bold text-sm">Action Requires Attention</h3>
+              </div>
+            </div>
+            
+            <div className="p-5">
+              <p className="text-sm text-foreground leading-relaxed mb-4">
+                <strong>{dependencyModal.userName}</strong> has active dependencies in this task:
+              </p>
+              
+              <ul className="text-xs text-muted mb-5 space-y-1 bg-surface p-3 rounded-lg border border-border/50 max-h-40 overflow-y-auto">
+                {dependencyModal.result.blockingItems.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-theme-icon mt-0.5">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="p-3 bg-surface-hover rounded-lg border border-border/50 text-xs text-foreground font-medium">
+                {dependencyModal.result.message}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-border flex justify-end gap-3 bg-surface/30">
+              <AppButton 
+                variant="outline" 
+                onClick={() => setDependencyModal(null)}
+              >
+                {dependencyModal.result.type === 'executive' ? 'Close' : 'No, Go Back'}
+              </AppButton>
+              {dependencyModal.result.type === 'watcher' && (
+                <AppButton 
+                  variant="primary" 
+                  className="bg-danger hover:opacity-90 border-none"
+                  onClick={() => {
+                    // Safe to remove watcher
+                    if (assigneeModalTab === 'primary') {
+                      setSelectedPrimaryAssignee("");
+                    } else {
+                      setSelectedExecutors(selectedExecutors.filter(id => id !== dependencyModal.userId));
+                    }
+                    setDependencyModal(null);
+                  }}
+                >
+                  Yes, Remove User
+                </AppButton>
+              )}
             </div>
           </div>
         </div>
