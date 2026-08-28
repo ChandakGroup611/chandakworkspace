@@ -35,11 +35,11 @@
     background-attachment: fixed;
   }
 
-  /* Cards - Thick Frosted Dark Glass */
+  /* Cards - Solid Metallic (reduced mirroring) */
   [data-theme="industrial-control"] .theme-card-structural {
-    background: linear-gradient(135deg, rgba(30, 30, 30, 0.5), rgba(10, 10, 10, 0.3)) !important;
-    backdrop-filter: blur(32px) saturate(120%) !important;
-    -webkit-backdrop-filter: blur(32px) saturate(120%) !important;
+    background: linear-gradient(135deg, rgba(28, 30, 34, 0.98), rgba(18, 20, 24, 0.98)) !important;
+    backdrop-filter: blur(8px) saturate(100%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: 
       inset 1px 1px 0px rgba(255, 255, 255, 0.2),
