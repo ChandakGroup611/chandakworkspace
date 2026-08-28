@@ -21,8 +21,7 @@ export async function fetchLiveDashboardMetrics() {
     let workspaceIds: string[] = [];
     let subWorkspaceIds: string[] = [];
     let participantTaskIds: string[] = [];
-    
-    // 1. Get workspaces where user is enrolled
+    // 1. Get workspaces where user is enrolled or created
     const { data: wsMembers } = await supabase
       .from("workspace_members")
       .select("workspace_id, workspaces!inner(id)")
@@ -31,6 +30,18 @@ export async function fetchLiveDashboardMetrics() {
       .eq("workspaces.is_deleted", false);
     
     workspaceIds = wsMembers?.map(m => m.workspace_id) || [];
+
+    const { data: wsCreated } = await supabase
+      .from("workspaces")
+      .select("id")
+      .eq("created_by", userId)
+      .eq("is_deleted", false);
+      
+    if (wsCreated) {
+      wsCreated.forEach(w => {
+        if (!workspaceIds.includes(w.id)) workspaceIds.push(w.id);
+      });
+    }
 
     // Get tasks where user is a participant
     const { data: taskParticipants } = await supabase
@@ -172,26 +183,8 @@ export async function fetchLiveDashboardMetrics() {
     // Fetch user details manually to avoid foreign key ambiguity errors
     const userIdsToFetch = new Set<string>();
     tasksData?.forEach((t: any) => { if (t.assigned_to) userIdsToFetch.add(t.assigned_to); if (t.created_by) userIdsToFetch.add(t.created_by); });
+    // Prepare SubTasks userIdsToFetch but do not process allItems yet
     subTasksData?.forEach((t: any) => { if (t.assigned_to) userIdsToFetch.add(t.assigned_to); if (t.created_by) userIdsToFetch.add(t.created_by); });
-    
-    subTasksData?.forEach((t: any) => {
-      const status = mapStatus(t.status);
-      allItems.push({
-        module: "Sub Tasks",
-        id: t.id,
-        code: null,
-        title: t.subject || "Untitled Sub Task",
-        status: status,
-        rawStatus: t.status || "Unknown",
-        user: userMap[t.assigned_to]?.name || "Unassigned",
-        userRole: userMap[t.assigned_to]?.role || userMap[t.created_by]?.role || "Team Member",
-        priority: "N/A",
-        createdAt: t.created_at,
-        updatedAt: t.updated_at || t.created_at,
-        dueDate: null,
-        isOverdue: false
-      });
-    });
 
     ticketsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); if (t.assignee_id) userIdsToFetch.add(t.assignee_id); });
     requirementsData?.forEach((t: any) => { if (t.current_assignee_id) userIdsToFetch.add(t.current_assignee_id); if (t.creator_id) userIdsToFetch.add(t.creator_id); });
@@ -261,6 +254,25 @@ export async function fetchLiveDashboardMetrics() {
       });
     });
 
+    subTasksData?.forEach((t: any) => {
+      const status = mapStatus(t.status);
+      allItems.push({
+        module: "Sub Tasks",
+        id: t.id,
+        code: null,
+        title: t.subject || "Untitled Sub Task",
+        status: status,
+        rawStatus: t.status || "Unknown",
+        user: userMap[t.assigned_to]?.name || "Unassigned",
+        userRole: userMap[t.assigned_to]?.role || userMap[t.created_by]?.role || "Team Member",
+        priority: "N/A",
+        createdAt: t.created_at,
+        updatedAt: t.updated_at || t.created_at,
+        dueDate: null,
+        isOverdue: false
+      });
+    });
+
     ticketsData?.forEach((t: any) => {
       const status = mapStatus((t.status_master as any)?.status_name);
       if (status === "Escalated") escalatedCount++;
@@ -322,6 +334,8 @@ export async function fetchLiveDashboardMetrics() {
       allItems.push({
         module: w.parent_workspace_id ? "Sub Workspaces" : "Workspaces",
         id: w.id,
+        code: `WS-${w.id.substring(0, 6).toUpperCase()}`,
+        title: w.workspace_name || "Untitled Workspace",
         status: status,
         rawStatus: (w.status_master as any)?.status_name || "Unknown",
         user: "System",
