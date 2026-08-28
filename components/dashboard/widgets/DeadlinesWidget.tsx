@@ -13,18 +13,6 @@ interface DeadlinesWidgetProps {
 
 export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetProps) {
   const router = useRouter();
-  
-  const upcoming = useMemo(() => {
-    if (!Array.isArray(metrics)) return [];
-    return metrics
-      .filter(m => {
-        if (!m || !m.dueDate || String(m.status) === 'Resolved' || String(m.status) === 'Done') return false;
-        const diff = getDaysDiff(m.dueDate);
-        return diff <= 3; // Show only if due in 3 days or less (including overdue)
-      })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-      .slice(0, 8);
-  }, [metrics]);
 
   const getDaysDiff = (dateStr: string) => {
     if (!dateStr) return 0;
@@ -44,6 +32,18 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
     const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24));
     return diff > 0 ? diff : 0;
   };
+  
+  const upcoming = useMemo(() => {
+    if (!Array.isArray(metrics)) return [];
+    return metrics
+      .filter(m => {
+        if (!m || !m.dueDate || String(m.status) === 'Resolved' || String(m.status) === 'Done') return false;
+        const diff = getDaysDiff(m.dueDate);
+        return diff <= 3; // Show only if due in 3 days or less (including overdue)
+      })
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 8);
+  }, [metrics]);
 
   const renderDaysLeft = (diff: number) => {
     if (diff < 0) {
