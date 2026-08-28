@@ -341,55 +341,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                   >
                     Export as PDF (Layout)
                   </button>
-                  <button 
-                    onClick={() => {
-                      setExportOpen(false);
-                      if (!filteredMetrics || filteredMetrics.length === 0) {
-                        alert("No data available to export with current filters.");
-                        return;
-                      }
-                      
-                      try {
-                        const headers = ["Module", "ID", "Code", "Title", "Status", "User", "Role", "Priority", "Created At", "Updated At", "Due Date", "Overdue"];
-                        const csvRows = [headers.join(",")];
-                        
-                        filteredMetrics.forEach(m => {
-                          const row = [
-                            `"${m.module || ''}"`,
-                            `"${m.id || ''}"`,
-                            `"${m.code || ''}"`,
-                            `"${(m.title || '').replace(/"/g, '""')}"`,
-                            `"${m.status || ''}"`,
-                            `"${m.user || ''}"`,
-                            `"${m.userRole || ''}"`,
-                            `"${m.priority || ''}"`,
-                            `"${m.createdAt || ''}"`,
-                            `"${m.updatedAt || ''}"`,
-                            `"${m.dueDate || ''}"`,
-                            `"${m.isOverdue ? 'Yes' : 'No'}"`
-                          ];
-                          csvRows.push(row.join(","));
-                        });
-                        
-                        const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.setAttribute('download', `TaskForge_Metrics_Export_${new Date().toISOString().split('T')[0]}.csv`);
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        window.URL.revokeObjectURL(url);
-                      } catch (err) {
-                        console.error("CSV Export failed:", err);
-                        alert("Failed to generate CSV export.");
-                      }
-                    }}
-                    className="w-full text-left block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10"
-                    role="menuitem"
-                  >
-                    Export as CSV (Data)
-                  </button>
+
                   </div>
                 </div>
               )}
