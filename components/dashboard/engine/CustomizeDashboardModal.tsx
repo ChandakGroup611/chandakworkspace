@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, GripVertical, Check, RefreshCw } from "lucide-react";
+import { X, GripVertical, Check, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { DashboardWidgetConfig } from "@/hooks/useDashboardConfig";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -30,7 +30,7 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
   }, [isOpen, layout]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -56,6 +56,16 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
 
   const setSpan = (id: string, span: 1 | 2 | 3 | 4) => {
     setLocalLayout(items => items.map(i => i.id === id ? { ...i, colSpan: span } : i));
+  };
+
+  const moveItem = (id: string, direction: -1 | 1) => {
+    setLocalLayout((items) => {
+      const index = items.findIndex(i => i.id === id);
+      if (index < 0) return items;
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= items.length) return items;
+      return arrayMove(items, index, newIndex);
+    });
   };
 
   const handleSave = async () => {
@@ -104,6 +114,8 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
                     item={item} 
                     onToggle={() => toggleVisibility(item.id)}
                     onSpanChange={(s) => setSpan(item.id, s)}
+                    onMoveUp={() => moveItem(item.id, -1)}
+                    onMoveDown={() => moveItem(item.id, 1)}
                   />
                 ))}
               </div>
@@ -133,9 +145,11 @@ interface SortableWidgetItemProps {
   item: DashboardWidgetConfig;
   onToggle: () => void;
   onSpanChange: (span: 1 | 2 | 3 | 4) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }
 
-function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItemProps) {
+function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown }: SortableWidgetItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   
   const style = {
@@ -161,8 +175,16 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
         isDragging && "ring-2 ring-primary border-primary  opacity-100"
       )}
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1">
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 hidden sm:block">
         <GripVertical className="w-5 h-5" />
+      </div>
+      <div className="flex flex-col items-center justify-center gap-1 sm:hidden mr-2">
+        <button type="button" onClick={onMoveUp} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
+          <ChevronUp className="w-4 h-4" />
+        </button>
+        <button type="button" onClick={onMoveDown} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
+          <ChevronDown className="w-4 h-4" />
+        </button>
       </div>
       
       <div className="flex-1">
@@ -193,7 +215,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
         )}
 
         {/* Toggle */}
-        <AppButton variant="secondary"
+        <button type="button"
           onClick={onToggle}
           className={cn(
             "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
@@ -204,11 +226,11 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
           <span
             aria-hidden="true"
             className={cn(
-              "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out",
+              "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out",
               isActive ? "translate-x-4" : "translate-x-0"
             )}
           />
-        </AppButton>
+        </button>
       </div>
     </div>
   );
