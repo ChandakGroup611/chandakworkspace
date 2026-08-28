@@ -20,7 +20,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/workspaces" className="block group">
         <BaseWidget 
           id="kpi-workspaces" 
-          className="h-[120px] overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
           noPadding
           overflowHidden
         >
@@ -55,7 +55,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/workspaces" className="block group">
         <BaseWidget 
           id="kpi-sub-workspaces" 
-          className="h-[120px] overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
           noPadding
           overflowHidden
         >
@@ -90,7 +90,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/workspaces/tasks" className="block group">
         <BaseWidget 
           id="kpi-tasks" 
-          className="h-[120px] overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
           noPadding
           overflowHidden
         >
@@ -128,7 +128,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/workspaces/tasks" className="block group">
         <BaseWidget 
           id="kpi-sub-tasks" 
-          className="h-[120px] overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
           noPadding
           overflowHidden
         >
@@ -163,7 +163,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/requirements" className="block group">
         <BaseWidget 
           id="kpi-requirements" 
-          className="h-[120px] overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
           noPadding
           overflowHidden
         >
@@ -201,7 +201,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
       <Link href="/tickets" className="block group">
         <BaseWidget 
           id="kpi-tickets" 
-          className="h-[120px] overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
           noPadding
           overflowHidden
         >
