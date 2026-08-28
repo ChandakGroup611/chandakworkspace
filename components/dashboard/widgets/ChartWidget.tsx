@@ -72,7 +72,9 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
       return {
         day,
         Tasks: rTasksT - rTasksR,
+        Requirements: rReqT - rReqR,
         Tickets: rTicT - rTicR,
+        Workspaces: rWsT - rWsR,
       };
     });
   }, [metrics]);
@@ -152,6 +154,8 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--text-muted)', opacity: 0.2 }} />
               <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
               <Bar dataKey="Tasks" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="Requirements" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="Workspaces" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
               <Bar dataKey="Tickets" stackId="a" fill="#a855f7" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
