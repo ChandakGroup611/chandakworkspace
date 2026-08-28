@@ -104,7 +104,7 @@ export default function NotificationCenter() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className={`absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl shadow-2xl z-50 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200 ${ "theme-card-structural " }`}>
+          <div className={`absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl  z-50 overflow-hidden transform origin-top-right animate-in fade-in zoom-in-95 duration-200 ${ "theme-card-structural " }`}>
             <div className={`p-4 border-b flex items-center justify-between theme-card-structural /50`}>
               <div className="flex items-center gap-2">
                 <h3 className={`font-bold ${"text-foreground"}`}>Notifications</h3>

@@ -256,7 +256,7 @@ export default function ProviderDashboard() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : toastMsg.type === 'warning' ? 'bg-warning' : 'bg-theme-btn-primary'} text-theme-btn-primary-text`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : toastMsg.type === 'warning' ? 'bg-warning' : 'bg-theme-btn-primary'} text-theme-btn-primary-text`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

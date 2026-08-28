@@ -109,7 +109,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                     </div>
                     <div className="h-2 w-full bg-surface rounded-full overflow-hidden mb-6">
                       <div 
-                        className="h-full theme-card-structural /50 text-foreground from-indigo-600 to-indigo-400 transition-all duration-700" 
+                        className="h-full theme-card-structural text-foreground from-indigo-600 to-indigo-400 transition-all duration-700" 
                         style={{ width: `${requirement.completion_percentage}%` }}
                       />
                     </div>
@@ -163,8 +163,8 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               {activeTab === "collaboration" && (
                 <div className="animate-in fade-in zoom-in-95 duration-200">
                   {/* Realtime Chat Engine */}
-                  <section className="h-[500px] flex flex-col border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="theme-card-structural /80 p-4 border-b border-white/5">
+                  <section className="h-[500px] flex flex-col border border-white/10 rounded-2xl overflow-hidden ">
+                    <div className="theme-card-structural p-4 border-b border-white/5">
                       <h3 className="theme-label text-foreground">Execution Collaboration</h3>
                     </div>
                     <div className="flex-1 bg-surface/20">
@@ -178,7 +178,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
 
             {/* Sidebar Metadata */}
             <div className="col-span-1 space-y-3">
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="theme-label text-muted mb-1">Business Analyst</span>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold text-theme-icon border border-theme-btn-primary/50">
@@ -187,15 +187,15 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   <span className="theme-data-value font-semibold text-theme-heading truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
                 </div>
               </div>
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="theme-label text-muted mb-1">Department</span>
                 <span className="theme-data-value font-semibold text-theme-heading truncate">{requirement.department?.name || 'Enterprise Global'}</span>
               </div>
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="theme-label text-muted mb-1">Priority SLA</span>
                 <span className="theme-data-value font-semibold text-theme-heading truncate">{requirement.priority?.priority_name || 'Standard'}</span>
               </div>
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="theme-label text-muted mb-1">Estimations</span>
                 <div className="space-y-1 theme-data-value font-semibold text-theme-heading mt-1">
                   <div className="flex justify-between"><span>Hours:</span> <span>{requirement.estimated_hours || 0}</span></div>

@@ -372,7 +372,7 @@ export function TicketWorkspaceConsole({
                       
                       {/* Autocomplete Dropdown */}
                       {showSuggestions && searchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg shadow-xl z-50 max-h-[250px] overflow-y-auto">
+                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg  z-50 max-h-[250px] overflow-y-auto">
                           {searchResults.map((t) => (
                             <div 
                               key={t.id} 
@@ -402,7 +402,7 @@ export function TicketWorkspaceConsole({
                         </div>
                       )}
                       {showSuggestions && searchResults.length === 0 && newRelationCode.trim().length > 0 && !isSearching && (
-                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg shadow-xl z-50 p-3 text-center text-xs text-muted-foreground">
+                        <div className="absolute top-full left-0 right-0 mt-1 theme-card-structural rounded-lg  z-50 p-3 text-center text-xs text-muted-foreground">
                           No tickets found matching "{newRelationCode}"
                         </div>
                       )}

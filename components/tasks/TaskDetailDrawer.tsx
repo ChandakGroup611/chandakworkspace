@@ -76,7 +76,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <div className="animate-in fade-in zoom-in-95 duration-200">
                   {/* Realtime Chat Engine - Lazy Loaded when tab active */}
                   <section className="h-[500px] flex flex-col border border-border rounded-xl overflow-hidden">
-                    <div className="theme-card-structural /50 p-3 border-b">
+                    <div className="theme-card-structural p-3 border-b">
                       <h3 className="text-sm font-semibold text-foreground">Collaboration & Audit</h3>
                     </div>
                     <div className="flex-1 bg-surface/20">
@@ -90,18 +90,18 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
 
             {/* Sidebar Metadata */}
             <div className="col-span-1 space-y-3">
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: task.status?.status_color || 'gray' }}></div>
                   <span className="text-sm font-semibold text-theme-heading truncate">{task.status?.status_name || 'Unknown'}</span>
                 </div>
               </div>
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
                 <span className="text-sm font-semibold text-theme-heading truncate">{task.priority?.priority_name || 'None'}</span>
               </div>
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Task Owner</span>
                 {task.assignee ? (
                   <div className="flex items-center gap-2 text-sm font-semibold text-theme-heading">
@@ -112,7 +112,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                   </div>
                 ) : <span className="text-sm font-semibold text-muted italic">Unassigned</span>}
               </div>
-              <div className="flex flex-col p-3 rounded-lg theme-card-structural /50 dark:/10 /60 dark: shadow-sm transition-colors">
+              <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">SLA Target</span>
                 <span className="text-sm font-semibold text-theme-heading truncate">{task.priority?.max_sla_hours ? `${task.priority.max_sla_hours} Hours` : 'N/A'}</span>
               </div>

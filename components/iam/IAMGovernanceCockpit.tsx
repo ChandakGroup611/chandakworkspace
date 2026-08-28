@@ -424,7 +424,7 @@ export default function IAMGovernanceCockpit({
       <div className={cn("flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b pb-8", "border-border")}>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-accent shadow-xl shadow-indigo-500/20">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-accent  shadow-indigo-500/20">
               <ShieldCheck className="h-6 w-6 text-foreground" />
             </div>
             <div>
@@ -453,7 +453,7 @@ export default function IAMGovernanceCockpit({
               {isSaving ? "Syncing Logic Gates..." : "Snapshot Synced"}
             </span>
           </div>
-          <AppButton variant="ghost" className="theme-card-structural /50 text-foreground from-indigo-600 to-accent hover:from-indigo-500 hover:to-accent border-none shadow-lg shadow-indigo-500/10">
+          <AppButton variant="ghost" className="theme-card-structural text-foreground from-indigo-600 to-accent hover:from-indigo-500 hover:to-accent border-none shadow-lg shadow-indigo-500/10">
             Audit Export
           </AppButton>
         </div>

@@ -39,7 +39,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbEr
   const lastUpdated = mounted && dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : "";
 
   const refreshComponent = (
-    <div className="flex items-center gap-2 px-2 py-1 theme-card-structural /50 rounded-full /50">
+    <div className="flex items-center gap-2 px-2 py-1 theme-card-structural rounded-full /50">
       {isFetching ? (
         <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />
       ) : (

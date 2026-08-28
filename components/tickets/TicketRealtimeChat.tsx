@@ -512,7 +512,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         
         {/* Mentions Dropdown */}
         {showMentions && (
-          <div className={`absolute bottom-full mb-2 left-4 right-16 rounded-xl shadow-xl overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
+          <div className={`absolute bottom-full mb-2 left-4 right-16 rounded-xl  overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
             <div className="max-h-48 overflow-y-auto py-1">
               {/* @All Option */}
               {("all".includes(mentionFilter)) && (
@@ -572,7 +572,7 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
 
         {/* Macros Dropdown */}
         {showMacros && macros.length > 0 && (
-          <div className={`absolute bottom-full mb-2 left-16 w-64 rounded-xl shadow-xl overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
+          <div className={`absolute bottom-full mb-2 left-16 w-64 rounded-xl  overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
             <div className="theme-card-structural dark:/20 p-2 border-b dark: text-xs font-bold uppercase text-muted">
               Quick Responses (Macros)
             </div>

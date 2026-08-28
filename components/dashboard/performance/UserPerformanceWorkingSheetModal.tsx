@@ -195,10 +195,10 @@ export function UserPerformanceWorkingSheetModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
-      <div className="w-full max-w-6xl max-h-[92vh] theme-card-structural dark:bg-[#0B0F19] /80 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-6xl max-h-[92vh] theme-card-structural dark:bg-[#0B0F19] rounded-3xl  flex flex-col overflow-hidden">
         
         {/* MODAL HEADER */}
-        <div className="p-4 md:p-5 border-b /60 flex flex-wrap items-center justify-between gap-4 theme-card-structural /50 dark:bg-[#0E1320]/80">
+        <div className="p-4 md:p-5 border-b /60 flex flex-wrap items-center justify-between gap-4 theme-card-structural dark:bg-[#0E1320]/80">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-emerald-500/20 border border-primary/30 flex items-center justify-center text-primary font-black text-lg shadow-sm">
               {data?.user?.fullName ? data.user.fullName.substring(0, 2).toUpperCase() : (userNameOrId?.substring(0, 2).toUpperCase() || "UP")}
@@ -326,7 +326,7 @@ export function UserPerformanceWorkingSheetModal({
                   </div>
                   <div className="mt-2.5 w-full bg-surface dark:bg-surface/20 h-1.5 rounded-full overflow-hidden">
                     <div 
-                      className="h-full theme-card-structural /50 text-foreground from-primary to-emerald-500 rounded-full transition-all duration-1000"
+                      className="h-full theme-card-structural text-foreground from-primary to-emerald-500 rounded-full transition-all duration-1000"
                       style={{ width: `${data.ratios.overallPerformanceRatio}%` }}
                     />
                   </div>
@@ -422,7 +422,7 @@ export function UserPerformanceWorkingSheetModal({
               </div>
 
               {/* MODULE BREAKDOWN PILLS */}
-              <div className="flex flex-wrap items-center gap-2 p-3 theme-card-structural /50 dark:bg-[#0E1320] /60 rounded-2xl text-xs">
+              <div className="flex flex-wrap items-center gap-2 p-3 theme-card-structural dark:bg-[#0E1320] /60 rounded-2xl text-xs">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-2">Output Breakdown:</span>
                 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl theme-card-structural dark:bg-[#131927] font-medium">
@@ -558,7 +558,7 @@ export function UserPerformanceWorkingSheetModal({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                       {data.monthlyTrends.map((trend, idx) => (
-                        <div key={idx} className="p-4 rounded-xl theme-card-structural /50 dark:bg-[#0E1320] text-center space-y-2">
+                        <div key={idx} className="p-4 rounded-xl theme-card-structural dark:bg-[#0E1320] text-center space-y-2">
                           <span className="text-xs font-bold font-mono text-muted-foreground uppercase">{trend.month}</span>
                           <div className="text-2xl font-black text-foreground">{trend.total}</div>
                           <div className="text-[11px] text-muted-foreground">
@@ -712,7 +712,7 @@ export function UserPerformanceWorkingSheetModal({
                     </div>
 
                     {/* TABLE FOOTER SUMMARY */}
-                    <div className="p-3 theme-card-structural /50 dark:bg-[#0E1320] border-t /60 flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="p-3 theme-card-structural dark:bg-[#0E1320] border-t /60 flex items-center justify-between text-xs text-muted-foreground">
                       <span>Showing <strong>{filteredActivities.length}</strong> of <strong>{data.activities.length}</strong> recorded activities</span>
                       <span className="font-mono text-[11px]">User Performance Working Sheet</span>
                     </div>
@@ -726,7 +726,7 @@ export function UserPerformanceWorkingSheetModal({
         </div>
 
         {/* MODAL FOOTER */}
-        <div className="p-4 border-t /60 flex items-center justify-between theme-card-structural /50 dark:bg-[#0E1320]/80">
+        <div className="p-4 border-t /60 flex items-center justify-between theme-card-structural dark:bg-[#0E1320]/80">
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
             <span>TaskForge Intelligence Governance • Realtime Multi-Module Sync</span>

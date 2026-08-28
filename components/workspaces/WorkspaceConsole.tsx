@@ -9,7 +9,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       {workspaces.map(ws => (
-        <div key={ws.id} className="theme-card-structural /50 rounded-2xl p-6 hover:shadow-xl transition-all group">
+        <div key={ws.id} className="theme-card-structural rounded-2xl p-6 hover: transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="font-semibold text-lg text-theme-heading group-hover:text-theme-icon transition-colors">{ws.workspace_name}</h3>

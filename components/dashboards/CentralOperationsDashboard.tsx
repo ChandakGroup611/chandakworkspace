@@ -26,7 +26,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
         
         {/* Task KPI */}
         <Link href="/workspaces/tasks" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl theme-card-structural text-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-white to-accent/10 dark:from-white/5 dark:to-accent/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
@@ -60,7 +60,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
 
         {/* Workspace KPI */}
         <Link href="/workspaces/enrolled" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl theme-card-structural text-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-white to-emerald-500/10 dark:from-white/5 dark:to-emerald-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
@@ -93,7 +93,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
 
         {/* Requirement & Ticket KPI */}
         <Link href="/tickets" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl theme-card-structural text-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: theme-card-structural text-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-white to-purple-500/10 dark:from-white/5 dark:to-purple-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             
@@ -128,7 +128,7 @@ export function CentralOperationsDashboard({ analytics, preferences }: Dashboard
 
         {/* SLA KPI */}
         <Link href="/sla" className="block h-full">
-          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl border bg-card text-card-foreground shadow-sm">
+          <div className="h-full relative overflow-hidden rounded-2xl group transition-all duration-300 hover:-translate-y-1.5 hover: border bg-card text-card-foreground shadow-sm">
             {/* 3D Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-white to-rose-500/10 dark:from-white/5 dark:to-rose-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
             

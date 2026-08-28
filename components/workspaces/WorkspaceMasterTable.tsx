@@ -169,7 +169,7 @@ export function WorkspaceMasterTable({
         </div>
 
         {/* Hover Tooltip */}
-        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg shadow-xl opacity-0 invisible group-hover/avatar:opacity-100 group-hover/avatar:visible transition-all z-[9999] theme-card-structural`}>
+        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg  opacity-0 invisible group-hover/avatar:opacity-100 group-hover/avatar:visible transition-all z-[9999] theme-card-structural`}>
           <div className="text-[10px] font-bold uppercase text-muted mb-2 px-1 border-b pb-1 border-border dark:border-border">{title} ({members.length})</div>
           <div className="max-h-32 overflow-y-auto space-y-1">
             {members.map((m: any, idx: number) => {

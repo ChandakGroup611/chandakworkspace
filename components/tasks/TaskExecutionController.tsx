@@ -61,7 +61,7 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
   }, []);
 
   if (!mounted) {
-    return <div className="p-4 rounded-xl animate-pulse theme-card-structural /50 dark:bg-slate-900/50 h-36 text-xs font-semibold text-muted flex items-center justify-center">Loading editor...</div>;
+    return <div className="p-4 rounded-xl animate-pulse theme-card-structural dark:bg-slate-900/50 h-36 text-xs font-semibold text-muted flex items-center justify-center">Loading editor...</div>;
   }
 
   return (
@@ -904,8 +904,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
      
       {/* Extended Metadata Section - Dedicated Card with Background Header */}
       <div>
-        <AppCard className="overflow-hidden /50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 theme-card-structural /40 p-0 mb-4">
-          <div className="theme-card-structural dark:bg-elevated/50 px-5 py-3.5 border-b /80 flex items-center justify-between">
+        <AppCard className="overflow-hidden shadow-md hover: hover:-translate-y-1 transition-all duration-500 theme-card-structural /40 p-0 mb-4">
+          <div className="theme-card-structural dark:bg-elevated/50 px-5 py-3.5 border-b flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
               <Clock className="w-4 h-4 text-accent" />
@@ -923,7 +923,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
               
               {/* 1. Creator */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Creator</span>
                 </span>
@@ -933,7 +933,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 2. Created At */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Created At</span>
                 </span>
@@ -943,7 +943,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 3. Last Status */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Last Status</span>
                 </span>
@@ -953,7 +953,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 4. Last Updated */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-muted" /> <span className="text-muted font-bold">Last Updated</span>
                 </span>
@@ -963,7 +963,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 5. Priority */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Flag className="w-3.5 h-3.5 text-danger" /> <span className="text-danger font-bold">Priority</span>
                 </span>
@@ -976,7 +976,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 6. Duration */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> <span className="text-cyan-600 dark:text-cyan-400 font-bold">Duration</span>
                 </span>
@@ -1009,7 +1009,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 7. Start Date */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <CalendarDays className="w-3.5 h-3.5 text-success" /> <span className="text-success dark:text-success font-bold">Start Date</span> <span className="text-danger">*</span>
                 </span>
@@ -1034,7 +1034,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 8. Due Date */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                   <CalendarCheck className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Due Date</span> <span className="text-danger">*</span>
                 </span>
@@ -1059,7 +1059,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 9. Primary Assignee */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center-xs">
                 <div className="flex items-center justify-between">
                   <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary Assignee</span>
@@ -1109,7 +1109,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
 
               {/* 10. Executors */}
-              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural /80 dark:bg-elevated/40 /50 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center relative-xs">
+              <div className="flex flex-col space-y-1 p-3 rounded-xl theme-card-structural dark:bg-elevated/40 hover:/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300 min-h-[76px] justify-center relative-xs">
                 <div className="flex items-center justify-between">
                   <span className="theme-data-value uppercase tracking-wider text-muted0 flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5 text-success" /> <span className="text-success dark:text-success font-bold">Executors</span>
@@ -1161,8 +1161,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       
       {/* 4. Remarks and Updates Group - Dedicated Card with Background-Colored Header */}
       <div>
-        <AppCard className="overflow-hidden /50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 theme-card-structural /40 p-0 mb-4">
-          <div className="theme-card-structural dark:bg-elevated/50 px-5 py-3.5 border-b /80 flex items-center justify-between">
+        <AppCard className="overflow-hidden shadow-md hover: hover:-translate-y-1 transition-all duration-500 theme-card-structural /40 p-0 mb-4">
+          <div className="theme-card-structural dark:bg-elevated/50 px-5 py-3.5 border-b flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
               <MessageSquare className="w-4 h-4 text-accent" />
@@ -1375,7 +1375,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       </div>
                       
                       {isOwnerDropped && (
-                        <div className="theme-card-structural /50 dark:bg-surface/20 p-3 rounded border-amber-200 dark:border-amber-500/30">
+                        <div className="theme-card-structural dark:bg-surface/20 p-3 rounded border-amber-200 dark:border-amber-500/30">
                           <label className="theme-data-value text-amber-800 dark:text-amber-300 mb-1.5 block">Assign New Primary Owner <span className="text-danger">*</span></label>
                           <select
                             value={newAssigneeId}
@@ -1391,7 +1391,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       )}
                       
                       {true && (
-                        <div className="theme-card-structural /50 dark:bg-surface/20 p-3 rounded border-amber-200 dark:border-amber-500/30 mt-2">
+                        <div className="theme-card-structural dark:bg-surface/20 p-3 rounded border-amber-200 dark:border-amber-500/30 mt-2">
                           <label className="theme-data-value text-amber-800 dark:text-amber-300 mb-1.5 block">Assign Additional Executives (Optional)</label>
                           <div className="max-h-32 overflow-y-auto space-y-1 scrollbar-thin">
                             {targetStakeholders.map(s => (
@@ -1595,8 +1595,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
       {/* 5. Utilities & Communication Group - Dedicated Card with 7 Tabs */}
       <div>
-        <AppCard className="overflow-hidden /50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 theme-card-structural /40 p-0 mb-4">
-          <div className="theme-card-structural dark:bg-elevated/50 px-5 py-3.5 border-b /80 flex items-center justify-between">
+        <AppCard className="overflow-hidden shadow-md hover: hover:-translate-y-1 transition-all duration-500 theme-card-structural /40 p-0 mb-4">
+          <div className="theme-card-structural dark:bg-elevated/50 px-5 py-3.5 border-b flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
               <ActivitySquare className="w-4 h-4 text-accent" />
@@ -1606,7 +1606,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           
           <div className="p-5">
             {/* 7 Tab Navigation Buttons */}
-            <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl theme-card-structural /80 dark:bg-elevated/40 /80 mb-6 shadow-xs">
+            <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl theme-card-structural dark:bg-elevated/40 mb-6 shadow-xs">
               {[
                 { id: 'tags', label: 'Tags', icon: Pin },
                 { id: 'links', label: 'Link URL', icon: LinkIcon },
@@ -1713,7 +1713,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {task.checklists.map((item: any) => (
                         <div 
                           key={item.id} 
-                          className="flex items-center justify-between p-2 rounded-lg /30 hover:theme-card-structural /50 transition-colors"
+                          className="flex items-center justify-between p-2 rounded-lg /30 hover:theme-card-structural transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
                             <input
@@ -1834,7 +1834,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           onClick={() => setIsAssigneeModalOpen(false)}
         >
           <div 
-            className="theme-card-structural dark:bg-elevated shadow-2xl rounded-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[88vh] animate-in zoom-in-95 duration-200 text-foreground"
+            className="theme-card-structural dark:bg-elevated  rounded-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[88vh] animate-in zoom-in-95 duration-200 text-foreground"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1859,7 +1859,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex border-b theme-card-structural /50 dark:bg-elevated/50 px-6 pt-3 gap-2">
+            <div className="flex border-b theme-card-structural dark:bg-elevated/50 px-6 pt-3 gap-2">
               <AppButton
                 type="button"
                 onClick={() => setAssigneeModalTab('primary')}
@@ -2122,7 +2122,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
       {/* Dependency Check Modal */}
       {dependencyModal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+          <div className="bg-background border border-border rounded-xl  max-w-md w-full overflow-hidden">
             <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-danger/10 border-danger/20' : 'bg-warning/10 border-warning/20'}`}>
               <div className="flex items-center gap-3">
                 {dependencyModal.result.type === 'executive' ? (

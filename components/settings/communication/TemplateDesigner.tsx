@@ -262,7 +262,7 @@ export default function TemplateDesigner() {
         
         {/* LIST VIEW */}
         {!editingTemplateId && (
-          <div className="theme-card-structural rounded-xl overflow-hidden shadow-xl">
+          <div className="theme-card-structural rounded-xl overflow-hidden ">
             {templates.length === 0 ? (
               <div className="text-center py-12">
                 <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
@@ -323,7 +323,7 @@ export default function TemplateDesigner() {
 
         {/* EDITOR VIEW */}
         {editingTemplateId && tpl && (
-          <div className="theme-card-structural rounded-xl overflow-hidden shadow-xl flex flex-col animate-in slide-in-from-right-4 duration-300">
+          <div className="theme-card-structural rounded-xl overflow-hidden  flex flex-col animate-in slide-in-from-right-4 duration-300">
             {/* Header Configuration */}
             <div className="p-6 border-b grid grid-cols-1 md:grid-cols-3 gap-6 theme-card-structural">
               <div className="space-y-2">
@@ -492,7 +492,7 @@ export default function TemplateDesigner() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

@@ -59,7 +59,7 @@ export function EnterpriseDrawerShell({
 
       {/* Drawer Container */}
       <div 
-        className={`relative w-full ${SIZE_MAP[size]} h-full flex flex-col shadow-2xl border-l animate-in slide-in-from-right duration-300 ${ "theme-card-structural " } ${className}`}
+        className={`relative w-full ${SIZE_MAP[size]} h-full flex flex-col  border-l animate-in slide-in-from-right duration-300 ${ "theme-card-structural " } ${className}`}
       >
         {/* Header */}
         <div className={`shrink-0 p-6 border-b flex items-start justify-between gap-4 ${ " theme-card-structural " }`}>

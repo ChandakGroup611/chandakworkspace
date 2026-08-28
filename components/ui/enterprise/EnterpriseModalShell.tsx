@@ -55,7 +55,7 @@ export function EnterpriseModalShell({
 
       {/* Modal Container */}
       <div 
-        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl shadow-2xl overflow-hidden ${ "theme-card-structural shadow-xl" } ${className}`}
+        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl  overflow-hidden ${ "theme-card-structural " } ${className}`}
         style={{
           maxHeight: "calc(100vh - 48px)" // Safe spacing
         }}

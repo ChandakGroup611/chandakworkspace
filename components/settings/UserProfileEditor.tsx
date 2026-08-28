@@ -265,14 +265,14 @@ export default function UserProfileEditor() {
     <div className="w-full relative">
       {/* Toast notifications */}
       {successMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-success/90 text-white px-5 py-3.5 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-success/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
           <Check className="h-4 w-4" />
           <span className="text-sm font-semibold">{successMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-danger/90 text-white px-5 py-3.5 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[100] flex items-center gap-2 rounded-xl bg-danger/90 text-white px-5 py-3.5  animate-in slide-in-from-bottom-5 duration-300">
           <AlertCircle className="h-4 w-4" />
           <span className="text-sm font-semibold">{errorMsg}</span>
         </div>
@@ -292,7 +292,7 @@ export default function UserProfileEditor() {
         <div className="lg:col-span-4 space-y-6">
           <AppCard className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             {/* Abstract Background Banner */}
-            <div className="h-32 w-full theme-card-structural /50 text-foreground from-accent/20 via-accent/10 to-transparent relative overflow-hidden">
+            <div className="h-32 w-full theme-card-structural text-foreground from-accent/20 via-accent/10 to-transparent relative overflow-hidden">
               <div className="absolute inset-0 bg-grid-white/[0.02]" />
             </div>
             
@@ -303,7 +303,7 @@ export default function UserProfileEditor() {
                   className="relative group cursor-pointer"
                   onClick={() => !photoUploading && fileInputRef.current?.click()}
                 >
-                  <div className={`h-32 w-32 rounded-full p-1 bg-card shadow-xl transition-transform duration-300 ${!photoUploading ? 'group-hover:scale-105' : ''}`}>
+                  <div className={`h-32 w-32 rounded-full p-1 bg-card  transition-transform duration-300 ${!photoUploading ? 'group-hover:scale-105' : ''}`}>
                     <div className="h-full w-full rounded-full overflow-hidden relative bg-elevated">
                       <img 
                         src={getAvatarUrl(profile?.full_name || "User", formPhoto)}
@@ -532,7 +532,7 @@ export default function UserProfileEditor() {
                         </div>
 
                         {managerDropdownOpen && (
-                          <div className="absolute z-50 w-full mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-card shadow-xl shadow-black/20 animate-in fade-in zoom-in-95 duration-200">
+                          <div className="absolute z-50 w-full mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-card  shadow-black/20 animate-in fade-in zoom-in-95 duration-200">
                             <div className="p-1 space-y-0.5">
                               {managers.map((m) => (
                                 <div 

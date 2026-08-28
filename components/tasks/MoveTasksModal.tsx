@@ -118,7 +118,7 @@ export function MoveTasksModal({ open, onOpenChange, taskIds, tasks, onSuccess }
       onOpenChange(val);
       if (!val) { setStep(1); setTargetWorkspaceId(""); }
     }}>
-      <DialogContent className="sm:max-w-[500px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border shadow-xl">
+      <DialogContent className="sm:max-w-[500px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border ">
         <DialogHeader>
           <DialogTitle className="text-theme-heading">
             {step === 1 ? `Move ${taskIds.length} Task(s)` : "Map Assignees & Watchers"}

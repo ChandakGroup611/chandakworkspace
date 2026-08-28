@@ -80,7 +80,7 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl theme-card-structural shadow-2xl rounded-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-2xl theme-card-structural  rounded-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border bg-background/50">
@@ -158,7 +158,7 @@ function SortableWidgetItem({ item, onToggle, onSpanChange }: SortableWidgetItem
         isActive 
           ? "bg-surface border-border shadow-sm" 
           : "bg-surface/30 border-border/50 opacity-60",
-        isDragging && "ring-2 ring-primary border-primary shadow-xl opacity-100"
+        isDragging && "ring-2 ring-primary border-primary  opacity-100"
       )}
     >
       <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1">

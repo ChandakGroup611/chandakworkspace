@@ -96,7 +96,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
           size="sm" 
           leftIcon={<Settings2 className="h-4 w-4" />}
           onClick={() => setIsCustomizeOpen(true)}
-          className="theme-card-structural /50 hover:bg-background/80"
+          className="theme-card-structural hover:bg-background/80"
         >
           Customize
         </AppButton>

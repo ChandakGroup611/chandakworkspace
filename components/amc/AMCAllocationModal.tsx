@@ -130,7 +130,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-surface/60" onClick={onClose} />
-      <AppCard className={`relative w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
+      <AppCard className={`relative w-full max-w-4xl h-[80vh] flex flex-col  animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>

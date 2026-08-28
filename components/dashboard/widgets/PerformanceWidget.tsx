@@ -24,24 +24,56 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
         userMap[m.user] = {
           name: m.user,
           initials: m.user.substring(0,2).toUpperCase(),
+          role: m.userRole || "Team Member",
           closed: 0,
           pts: 0,
           active: 0,
+          totalResolutionDays: 0,
+          tasks: { assigned: 0, resolved: 0 },
+          tickets: { assigned: 0, resolved: 0 },
+          reqs: { assigned: 0, resolved: 0 },
         };
       }
       
       const statusStr = String(m.status).toLowerCase();
       if (statusStr.includes('resolv') || statusStr.includes('done')) {
         userMap[m.user].closed += 1;
-        userMap[m.user].pts += 3;
+        
+        // Dynamic Priority Points
+        const p = String(m.priority || '').toLowerCase();
+        if (p.includes('critical') || p.includes('high')) userMap[m.user].pts += 5;
+        else if (p.includes('medium') || p.includes('standard')) userMap[m.user].pts += 3;
+        else if (p.includes('low')) userMap[m.user].pts += 1;
+        else userMap[m.user].pts += 3; // Default
+
+        // Avg Days
+        if (m.createdAt && m.updatedAt) {
+          const diffMs = new Date(m.updatedAt).getTime() - new Date(m.createdAt).getTime();
+          const diffDays = diffMs / (1000 * 3600 * 24);
+          userMap[m.user].totalResolutionDays += Math.max(0, diffDays);
+        }
       } else {
         userMap[m.user].active += 1;
+      }
+
+      const isTask = m.module === 'Tasks' || m.module === 'Sub Tasks';
+      const isTicket = m.module === 'Tickets';
+      const isReq = m.module === 'Requirements';
+
+      if (isTask) {
+        if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].tasks.resolved++;
+        else userMap[m.user].tasks.assigned++;
+      } else if (isTicket) {
+        if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].tickets.resolved++;
+        else userMap[m.user].tickets.assigned++;
+      } else if (isReq) {
+        if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].reqs.resolved++;
+        else userMap[m.user].reqs.assigned++;
       }
     });
 
     return Object.values(userMap)
-      .sort((a, b) => b.closed - a.closed) // Sort by closed items
-      .slice(0, 5);
+      .sort((a, b) => b.closed - a.closed); // Sort by closed items, showing all users
   }, [metrics]);
 
   const handleOpenUserSheet = (userName: string) => {
@@ -58,12 +90,20 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
     setIsSheetOpen(true);
   };
 
-  const getRole = (i: number) => {
-    return "Team Member";
+  const getRole = (u: any) => {
+    return u.role;
   };
 
-  const getAvgDays = (i: number) => {
-    return "2.4d";
+  const getWorkloadStatus = (active: number) => {
+    if (active >= 5) return { label: "Loaded", color: "text-danger bg-danger/10 border-danger/20" };
+    if (active >= 2) return { label: "Min Loaded", color: "text-warning bg-warning/10 border-warning/20" };
+    return { label: "Available", color: "text-success bg-success/10 border-success/20" };
+  };
+
+  const getAvgDays = (u: any) => {
+    if (u.closed === 0) return "-";
+    const avg = u.totalResolutionDays / u.closed;
+    return avg < 0.1 ? "<0.1d" : `${avg.toFixed(1)}d`;
   };
 
   return (
@@ -88,10 +128,12 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
             <AppTableHeader className="sticky top-0 z-10 bg-surface/90 dark:bg-[#0B0F19]/90 shadow-sm">
               <AppTableRow className="border-b border-border/50">
                 <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent">Member</AppTableHead>
-                <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Closed</AppTableHead>
+                <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Workload</AppTableHead>
+                <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Tasks (A/R)</AppTableHead>
+                <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Tickets (A/R)</AppTableHead>
+                <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Reqs (A/R)</AppTableHead>
                 <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-center w-24">Story Pts</AppTableHead>
                 <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent w-48">Progress</AppTableHead>
-                <AppTableHead className="font-semibold text-xs tracking-wider uppercase text-muted-foreground bg-transparent text-right w-24">Avg Progress</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody>
@@ -120,12 +162,29 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
                             {u.name}
                             <FileSpreadsheet className="w-3 h-3 opacity-0 group-hover:opacity-80 text-primary transition-opacity" />
                           </div>
-                          <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">{getRole(i)}</div>
+                          <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">{getRole(u)}</div>
                         </div>
                       </div>
                     </AppTableCell>
-                    <AppTableCell className="text-center font-bold text-lg text-foreground/80 group-hover:text-foreground transition-colors">
-                      {u.closed}
+                    <AppTableCell className="text-center">
+                      <div className={`inline-flex items-center justify-center px-2 py-1 rounded text-[10px] font-bold border whitespace-nowrap ${getWorkloadStatus(u.active).color}`}>
+                        {getWorkloadStatus(u.active).label}
+                      </div>
+                    </AppTableCell>
+                    <AppTableCell className="text-center">
+                      <div className="text-xs font-mono">
+                        <span className="text-warning">{u.tasks.assigned}</span> / <span className="text-success">{u.tasks.resolved}</span>
+                      </div>
+                    </AppTableCell>
+                    <AppTableCell className="text-center">
+                      <div className="text-xs font-mono">
+                        <span className="text-warning">{u.tickets.assigned}</span> / <span className="text-success">{u.tickets.resolved}</span>
+                      </div>
+                    </AppTableCell>
+                    <AppTableCell className="text-center">
+                      <div className="text-xs font-mono">
+                        <span className="text-warning">{u.reqs.assigned}</span> / <span className="text-success">{u.reqs.resolved}</span>
+                      </div>
                     </AppTableCell>
                     <AppTableCell className="text-center font-bold text-lg text-primary/80 group-hover:text-primary transition-colors">
                       {u.pts}
@@ -138,15 +197,12 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
                         <div className={`h-full ${fillCls} transition-all duration-1000`} style={{ width: `${progress}%` }}></div>
                       </div>
                     </AppTableCell>
-                    <AppTableCell className="text-right font-mono text-xs text-muted-foreground font-semibold">
-                      {getAvgDays(i)}
-                    </AppTableCell>
                   </AppTableRow>
                 );
               })}
               {teamStats.length === 0 && (
                 <AppTableRow>
-                  <AppTableCell colSpan={5} className="text-center py-12 text-muted-foreground border-0">
+                  <AppTableCell colSpan={7} className="text-center py-12 text-muted-foreground border-0">
                     <div className="flex flex-col items-center justify-center">
                       <Users className="w-8 h-8 mb-2 opacity-20" />
                       <span className="text-sm">No team performance data</span>

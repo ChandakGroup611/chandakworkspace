@@ -501,7 +501,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         
         {/* Mentions Dropdown */}
         {showMentions && (
-          <div className={`absolute bottom-full mb-2 left-4 right-16 rounded-xl shadow-xl overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
+          <div className={`absolute bottom-full mb-2 left-4 right-16 rounded-xl  overflow-hidden flex flex-col z-50 animate-in slide-in-from-bottom-2 ${ "theme-card-structural " }`}>
             <div className="max-h-48 overflow-y-auto py-1">
               {/* @All Option */}
               {("all".includes(mentionFilter)) && (

@@ -69,7 +69,7 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
           align={iconOnly ? "end" : "start"}
           sideOffset={4}
           className={cn(
-            "z-[100] bg-surface border border-border rounded-md shadow-xl outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95",
+            "z-[100] bg-surface border border-border rounded-md  outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95",
             iconOnly ? "w-48" : "w-56"
           )}
           onInteractOutside={() => setIsOpen(false)}

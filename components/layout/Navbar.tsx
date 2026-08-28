@@ -222,7 +222,7 @@ export default function Navbar() {
               onFocus={() => setSearchOpen(true)}
               onKeyDown={handleSearchKeyDown}
               placeholder="Search or jump to..."
-              className={`flex items-center h-9 w-full rounded-full pl-9 pr-12 text-[13px] bg-transparent outline-none /30 theme-card-structural /50 hover: hover:border-theme-icon/50 focus:border-theme-icon transition-all duration-300 text-foreground placeholder-muted shadow-sm`}
+              className={`flex items-center h-9 w-full rounded-full pl-9 pr-12 text-[13px] bg-transparent outline-none /30 theme-card-structural hover: hover:border-theme-icon/50 focus:border-theme-icon transition-all duration-300 text-foreground placeholder-muted shadow-sm`}
             />
             <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] font-semibold pointer-events-none bg-background/50 border border-border/50 text-muted shadow-sm`}>
               <Command className="h-3 w-3" />
@@ -232,7 +232,7 @@ export default function Navbar() {
           
           {/* Dropdown Results */}
           {searchOpen && (
-            <div className="absolute top-[110%] left-0 w-[500px] max-w-[calc(100vw-48px)] rounded-xl theme-card-structural shadow-2xl border border-border/50 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute top-[110%] left-0 w-[500px] max-w-[calc(100vw-48px)] rounded-xl theme-card-structural  border border-border/50 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="max-h-[60vh] overflow-y-auto p-2">
                 {query === "" ? (
                   <>
@@ -318,7 +318,7 @@ export default function Navbar() {
           <div className="relative ml-2" ref={dropdownRef}>
             <div 
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex h-8 w-8 items-center justify-center rounded-full theme-card-structural -hover text-xs font-medium text-foreground cursor-pointer /50 hover: transition-all overflow-hidden shadow-sm"
+              className="flex h-8 w-8 items-center justify-center rounded-full theme-card-structural -hover text-xs font-medium text-foreground cursor-pointer hover: transition-all overflow-hidden shadow-sm"
             >
               {userData?.profile_photo ? (
                 <img src={userData.profile_photo} alt="Profile" className="h-full w-full object-cover" />

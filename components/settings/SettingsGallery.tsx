@@ -239,7 +239,7 @@ export default function SettingsGallery() {
     <div className="space-y-8 pb-12">
       {/* Toast feedback component */}
       {successToast && (
-        <div id="settings-toast-alert" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-success text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div id="settings-toast-alert" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-success text-white px-4 py-3  animate-in slide-in-from-bottom-5 duration-300">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
@@ -272,7 +272,7 @@ export default function SettingsGallery() {
                 }}
                 className={`group relative flex flex-col justify-between rounded-2xl p-5 cursor-pointer transition-all duration-300 tactile-lift ${
                   isSelected 
-                    ? `ring-2 ring-primary shadow-xl theme-card-structural border-primary` 
+                    ? `ring-2 ring-primary  theme-card-structural border-primary` 
                     : `theme-card-structural opacity-80 border-border hover:opacity-100 hover:-translate-y-1`
                 }`}
               >

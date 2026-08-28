@@ -87,7 +87,7 @@ export default function MetricsRow({ metrics = [] }: MetricsRowProps) {
         return (
           <AppCard 
             key={card.id}
-            className={`relative overflow-hidden group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${
+            className={`relative overflow-hidden group transition-all duration-300 hover:-translate-y-1.5 hover: ${
               "theme-card-structural"
             }`}
           >

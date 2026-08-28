@@ -74,7 +74,7 @@ export function GlobalCommandCenter() {
       <div className="absolute inset-0 z-0" onClick={() => setIsOpen(false)} />
 
       {/* Command Palette */}
-      <div className="relative z-10 w-full max-w-2xl bg-card border shadow-2xl rounded-2xl overflow-hidden flex flex-col animate-in slide-in-from-top-4 duration-300">
+      <div className="relative z-10 w-full max-w-2xl bg-card border  rounded-2xl overflow-hidden flex flex-col animate-in slide-in-from-top-4 duration-300">
         
         {/* Search Input */}
         <div className="flex items-center px-4 border-b">

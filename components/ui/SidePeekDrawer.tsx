@@ -63,7 +63,7 @@ export function SidePeekDrawer({
       {/* Drawer Panel */}
       <div 
         className={cn(
-          "relative flex flex-col bg-background border-l border-border shadow-2xl h-full transform transition-transform animate-in slide-in-from-right duration-300",
+          "relative flex flex-col bg-background border-l border-border  h-full transform transition-transform animate-in slide-in-from-right duration-300",
           widthMap[width],
           className
         )}

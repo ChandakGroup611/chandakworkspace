@@ -237,7 +237,7 @@ export default function Sidebar() {
           variant="ghost"
           size="icon-sm"
           onClick={() => setIsCompactState(!isCompactState)}
-          className="absolute -right-3 top-4 rounded-full shadow-md transition-all hover:scale-110 duration-200 z-50 theme-card-structural /50 text-muted hover:text-accent hover:border-accent/50"
+          className="absolute -right-3 top-4 rounded-full shadow-md transition-all hover:scale-110 duration-200 z-50 theme-card-structural text-muted hover:text-accent hover:border-accent/50"
           title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
         >
           {isCompactState ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}

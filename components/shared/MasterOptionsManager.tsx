@@ -38,7 +38,7 @@ export function MasterOptionsManager({ title, tableName, options, onClose, onUpd
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/40">
-      <div className="theme-card-structural shadow-2xl rounded-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
+      <div className="theme-card-structural  rounded-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
         <div className="flex items-center justify-between p-5 border-b shrink-0 theme-card-structural /50">
           <h2 className="text-base font-black text-foreground flex items-center gap-2">
             <Settings className="w-5 h-5 text-theme-icon" />

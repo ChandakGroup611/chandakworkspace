@@ -31,7 +31,7 @@ export function SavedFiltersDropdown<T>({
         </AppButton>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content align={align} sideOffset={8} className="z-50 w-64 p-2 rounded-2xl theme-card-structural /95 /50 shadow-2xl animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-2">
+        <Popover.Content align={align} sideOffset={8} className="z-50 w-64 p-2 rounded-2xl theme-card-structural  animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-2">
           <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/50 pb-2">
             <h4 className="text-xs font-bold text-foreground">My Saved Filters</h4>
             <AppButton variant="ghost" onClick={onSaveCurrent} className="h-6 px-2 text-[10px] bg-primary/10 text-primary hover:bg-primary/20 rounded-md">

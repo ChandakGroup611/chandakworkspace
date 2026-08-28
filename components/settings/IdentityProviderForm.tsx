@@ -101,7 +101,7 @@ export default function IdentityProviderForm() {
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Overview Card */}
-      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 shadow-2xl">
+      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 ">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
@@ -178,7 +178,7 @@ export default function IdentityProviderForm() {
       </div>
 
       {/* Auto Provisioning Settings */}
-      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 shadow-2xl">
+      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 ">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
             <Users className="w-6 h-6 text-theme-icon" />
@@ -240,7 +240,7 @@ export default function IdentityProviderForm() {
 
       {/* Local Toast Notification */}
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}`}>
           {toastMsg.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>

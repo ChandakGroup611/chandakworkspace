@@ -143,7 +143,7 @@ export default function DynamicReportBuilder({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
       <div className="absolute inset-0 bg-slate-900/60" onClick={onClose} />
-      <div className="relative theme-card-structural dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border-border dark:border-border animate-in fade-in zoom-in-95">
+      <div className="relative theme-card-structural dark:bg-slate-900 rounded-2xl  w-full max-w-4xl max-h-[90vh] flex flex-col border-border dark:border-border animate-in fade-in zoom-in-95">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-border shrink-0">

@@ -54,8 +54,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
     });
 
     return Object.values(userMap)
-      .sort((a, b) => b.pts - a.pts) // Sort by points
-      .slice(0, 5);
+      .sort((a, b) => b.pts - a.pts); // Sort by points
   }, [metrics]);
 
   const handleOpenUserSheet = (userName: string) => {

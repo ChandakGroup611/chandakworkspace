@@ -157,7 +157,7 @@ export default function NotificationRuleBuilder() {
           const config = MODULE_CONFIG[rule.module] || MODULE_CONFIG["Task"];
           
           return (
-            <div key={rule.id} className="bg-background dark:bg-[#121620] border border-border dark:border-border rounded-xl overflow-hidden shadow-xl">
+            <div key={rule.id} className="bg-background dark:bg-[#121620] border border-border dark:border-border rounded-xl overflow-hidden ">
               {/* Header IF block */}
               <div className="theme-card-structural /5 px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
                 <span className="font-mono text-success font-bold text-lg">IF</span>
@@ -294,7 +294,7 @@ export default function NotificationRuleBuilder() {
       </div>
 
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger' : 'bg-success'} text-white`}>
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>
       )}

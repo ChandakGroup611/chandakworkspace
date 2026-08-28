@@ -32,7 +32,7 @@ export function RiskIntelligenceWidget({ kpis }: RiskIntelligenceWidgetProps) {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-background/95 border border-border/50 p-3 rounded-lg shadow-xl z-50">
+        <div className="bg-background/95 border border-border/50 p-3 rounded-lg  z-50">
           <div className="flex items-center gap-2 text-xs">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
             <span className="text-muted-foreground">{data.name}:</span>
