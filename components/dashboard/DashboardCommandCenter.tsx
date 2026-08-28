@@ -305,16 +305,29 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                         alert("Generating PDF... this may take a few seconds.");
                         
                         const canvas = await html2canvas(exportArea, {
-                          scale: 2,
+                          scale: 1, // Lower scale to prevent memory/size limits on large dashboards
                           useCORS: true,
-                          logging: false
+                          allowTaint: false,
+                          logging: true,
+                          onclone: (document) => {
+                            // Ensure the cloned element is visible and formatted for export
+                            const el = document.getElementById("dashboard-export-area");
+                            if (el) {
+                              el.style.padding = "20px";
+                              el.style.backgroundColor = window.getComputedStyle(document.body).backgroundColor || "#ffffff";
+                            }
+                          }
                         });
                         
-                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        if (!canvas || canvas.width === 0 || canvas.height === 0) {
+                          throw new Error("Canvas generation failed or returned empty area.");
+                        }
+                        
+                        const imgData = canvas.toDataURL('image/jpeg', 0.90);
                         
                         // Calculate standard A4 dimensions (210x297mm)
                         const pdf = new jsPDF({
-                          orientation: 'portrait',
+                          orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
                           unit: 'mm',
                           format: 'a4'
                         });
@@ -322,11 +335,13 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                         const pdfWidth = pdf.internal.pageSize.getWidth();
                         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
                         
+                        // If height exceeds page, we might need multiple pages, but for now we just scale to fit or let it overflow (user wanted layout)
+                        // Actually, it's better to just add the image. jsPDF handles overflow by just clipping it.
                         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                         pdf.save(`Dashboard_Export_${new Date().toISOString().split('T')[0]}.pdf`);
-                      } catch (err) {
+                      } catch (err: any) {
                         console.error("PDF Export failed:", err);
-                        alert("Failed to generate PDF export.");
+                        alert(`Failed to generate PDF export. Error: ${err.message || "Unknown error"}`);
                       }
                     }}
                     className="w-full text-left block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10"
