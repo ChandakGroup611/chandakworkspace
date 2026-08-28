@@ -38,7 +38,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-auto flex flex-col">
-              <span className="text-2xl font-bold text-foreground leading-none">{kpis.workspaces?.total || 0}</span>
+              <span className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 leading-none drop-shadow-sm">{kpis.workspaces?.total || 0}</span>
 
             </div>
           </div>
@@ -67,7 +67,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-auto flex flex-col">
-              <span className="text-2xl font-bold text-foreground leading-none">{kpis.sub_workspaces?.total || 0}</span>
+              <span className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 leading-none drop-shadow-sm">{kpis.sub_workspaces?.total || 0}</span>
 
             </div>
           </div>
@@ -96,7 +96,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-auto flex flex-col">
-              <span className="text-2xl font-bold text-foreground leading-none">{kpis.tasks?.total || 0}</span>
+              <span className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 leading-none drop-shadow-sm">{kpis.tasks?.total || 0}</span>
               <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground mt-2">
                 <span className="text-blue-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tasks?.resolved || 0} Resolved</span>
                 <span className="text-muted-foreground/50">·</span>
@@ -129,7 +129,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-auto flex flex-col">
-              <span className="text-2xl font-bold text-foreground leading-none">{kpis.sub_tasks?.total || 0}</span>
+              <span className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 leading-none drop-shadow-sm">{kpis.sub_tasks?.total || 0}</span>
               <div className="flex flex-col gap-0.5 mt-2">
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                   <span className="text-cyan-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.sub_tasks?.resolved || 0} Resolved</span>
@@ -164,7 +164,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-auto flex flex-col">
-              <span className="text-2xl font-bold text-foreground leading-none">{kpis.requirements?.total || 0}</span>
+              <span className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 leading-none drop-shadow-sm">{kpis.requirements?.total || 0}</span>
               <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground mt-2">
                 <span className="text-indigo-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.requirements?.resolved || 0} Resolved</span>
                 <span className="text-muted-foreground/50">·</span>
@@ -197,7 +197,7 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-auto flex flex-col">
-              <span className="text-2xl font-bold text-foreground leading-none">{kpis.tickets?.total || 0}</span>
+              <span className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60 leading-none drop-shadow-sm">{kpis.tickets?.total || 0}</span>
               <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground mt-2">
                 <span className="text-purple-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tickets?.resolved || 0} Resolved</span>
                 <span className="text-muted-foreground/50">·</span>
