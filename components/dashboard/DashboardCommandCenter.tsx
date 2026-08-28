@@ -47,16 +47,11 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
   
   const [degradationStage, setDegradationStage] = useState<DegradationStage>(DegradationStage.STAGE_0_NORMAL);
 
-  const [exportOpen, setExportOpen] = useState(false);
   const [newMetricOpen, setNewMetricOpen] = useState(false);
-  const exportRef = React.useRef<HTMLDivElement>(null);
   const newMetricRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
-        setExportOpen(false);
-      }
       if (newMetricRef.current && !newMetricRef.current.contains(event.target as Node)) {
         setNewMetricOpen(false);
       }
@@ -276,76 +271,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
               placeholder="Users"
             />
 
-            <div className="relative" ref={exportRef}>
-              <AppButton 
-                variant="outline" 
-                size="sm" 
-                leftIcon={<Download className="h-3.5 w-3.5" />}
-                onClick={() => setExportOpen(!exportOpen)}
-              >
-                Export
-              </AppButton>
-              {exportOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 z-50">
-                  <div className="py-1" role="menu" aria-orientation="vertical">
-                  <button 
-                    onClick={async () => {
-                      setExportOpen(false);
-                      const exportArea = document.getElementById('dashboard-export-area');
-                      if (!exportArea) {
-                        alert("Dashboard export area not found.");
-                        return;
-                      }
-                      
-                      try {
-                        // Dynamically import to avoid SSR issues
-                        const htmlToImage = await import('html-to-image');
-                        const { jsPDF } = await import('jspdf');
-                        
-                        alert("Generating PDF... this may take a few seconds.");
-                        
-                        // html-to-image correctly handles modern CSS colors (like oklab) without crashing
-                        const imgData = await htmlToImage.toJpeg(exportArea, { 
-                          quality: 0.95,
-                          backgroundColor: window.getComputedStyle(document.body).backgroundColor || "#ffffff",
-                          style: { padding: '20px' }
-                        });
-                        
-                        if (!imgData) {
-                          throw new Error("Failed to generate image data from layout.");
-                        }
-                        
-                        const rect = exportArea.getBoundingClientRect();
-                        const canvasWidth = rect.width || 1200;
-                        const canvasHeight = rect.height || 800;
-                        
-                        // Calculate standard A4 dimensions (210x297mm)
-                        const pdf = new jsPDF({
-                          orientation: canvasWidth > canvasHeight ? 'landscape' : 'portrait',
-                          unit: 'mm',
-                          format: 'a4'
-                        });
-                        
-                        const pdfWidth = pdf.internal.pageSize.getWidth();
-                        const pdfHeight = (canvasHeight * pdfWidth) / canvasWidth;
-                        
-                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                        pdf.save(`Dashboard_Export_${new Date().toISOString().split('T')[0]}.pdf`);
-                      } catch (err: any) {
-                        console.error("PDF Export failed:", err);
-                        alert(`Failed to generate PDF export. Error: ${err.message || "Unknown error"}`);
-                      }
-                    }}
-                    className="w-full text-left block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10"
-                    role="menuitem"
-                  >
-                    Export as PDF (Layout)
-                  </button>
 
-                  </div>
-                </div>
-              )}
-            </div>
             
             <div className="relative" ref={newMetricRef}>
               <AppButton 
