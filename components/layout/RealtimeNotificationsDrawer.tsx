@@ -212,7 +212,7 @@ export default function RealtimeNotificationsDrawer() {
         variant="outline"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative !h-10 !w-10 rounded-xl theme-card-structural text-muted hover:bg-muted hover:text-foreground"
+        className="relative !h-10 !w-10 rounded-xl theme-card-structural !overflow-visible text-muted hover:bg-muted hover:text-foreground"
       >
         <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-warning animate-bounce" : ""}`} />
         {unreadCount > 0 && (
