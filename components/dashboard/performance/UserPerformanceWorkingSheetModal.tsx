@@ -195,7 +195,7 @@ export function UserPerformanceWorkingSheetModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 md:p-6 overflow-hidden animate-in fade-in duration-200">
-      <div className="w-full max-w-6xl max-h-[92vh] theme-card-structural dark:bg-[#0B0F19] rounded-3xl  flex flex-col overflow-hidden">
+      <div className="w-full max-w-6xl max-h-[92vh] bg-background border border-border shadow-2xl rounded-3xl flex flex-col overflow-hidden">
         
         {/* MODAL HEADER */}
         <div className="p-4 md:p-5 border-b /60 flex flex-wrap items-center justify-between gap-4 theme-card-structural dark:bg-[#0E1320]/80">

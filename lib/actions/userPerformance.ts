@@ -87,9 +87,9 @@ export async function fetchUserPerformanceWorkingSheet(
       .from("user_master")
       .select(`
         id, full_name, email, user_code, is_active,
-        department:departments(department_name),
-        designation:designations!fk_user_master_designation(designation_name),
-        role:roles(role_name, code)
+        department:departments(name),
+        designation:designations!fk_user_master_designation(name),
+        role:roles(name, code)
       `);
 
     // Test if userIdentifier is UUID or Full Name
@@ -108,9 +108,9 @@ export async function fetchUserPerformanceWorkingSheet(
         .from("user_master")
         .select(`
           id, full_name, email, user_code, is_active,
-          department:departments(department_name),
-          designation:designations!fk_user_master_designation(designation_name),
-          role:roles(role_name, code)
+          department:departments(name),
+          designation:designations!fk_user_master_designation(name),
+          role:roles(name, code)
         `)
         .ilike("full_name", `%${userIdentifier.trim()}%`)
         .eq("is_deleted", false)
@@ -517,9 +517,9 @@ export async function fetchUserPerformanceWorkingSheet(
         fullName: targetUser.full_name || "Unknown User",
         email: targetUser.email || "N/A",
         userCode: targetUser.user_code || `USR-${targetUser.id.substring(0, 5).toUpperCase()}`,
-        designation: (targetUser.designation as any)?.designation_name || "Team Member",
-        department: (targetUser.department as any)?.department_name || "General",
-        role: (targetUser.role as any)?.role_name || "Standard User",
+        designation: (targetUser.designation as any)?.name || "Team Member",
+        department: (targetUser.department as any)?.name || "General",
+        role: (targetUser.role as any)?.name || "Standard User",
         isActive: targetUser.is_active !== false,
       },
       metrics: {
