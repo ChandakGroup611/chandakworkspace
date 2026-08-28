@@ -82,24 +82,26 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
 
   return (
     <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-2 rounded-xl">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground">Workspace / Enterprise Overview</h1>
-          <div className="flex items-center gap-4 mt-2 text-xs font-medium text-muted-foreground">
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground mr-2 border-r border-border pr-5 hidden md:flex">
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success animate-pulse"></span> System Health: Excellent</span>
             <span>•</span>
             <span>{metrics.length} Active Items</span>
           </div>
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            leftIcon={<Settings2 className="h-4 w-4" />}
+            onClick={() => setIsCustomizeOpen(true)}
+            className="theme-card-structural hover:bg-background/80 whitespace-nowrap"
+          >
+            Customize
+          </AppButton>
         </div>
-        <AppButton 
-          variant="outline" 
-          size="sm" 
-          leftIcon={<Settings2 className="h-4 w-4" />}
-          onClick={() => setIsCustomizeOpen(true)}
-          className="theme-card-structural hover:bg-background/80"
-        >
-          Customize
-        </AppButton>
       </div>
 
       {sections.map(section => renderSection(section.title, section.types))}
