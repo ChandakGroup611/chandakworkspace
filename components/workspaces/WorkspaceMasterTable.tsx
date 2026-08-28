@@ -137,7 +137,7 @@ export function WorkspaceMasterTable({
   };
 
   // Perfectly balanced layout matrix for segregated assignees:
-  const gridCols = 'minmax(280px, 6fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(150px, 1fr) minmax(160px, 1fr)';
+  const gridCols = 'minmax(450px, 8fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(150px, 1fr) minmax(160px, 1fr)';
 
   const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
     if (!members || members.length === 0) return <span className="text-muted text-[10px]">{fallbackText}</span>;
