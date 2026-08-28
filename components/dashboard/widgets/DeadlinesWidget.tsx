@@ -15,9 +15,10 @@ export function DeadlinesWidget({ metrics = [], onOpenList }: DeadlinesWidgetPro
   const router = useRouter();
   
   const upcoming = useMemo(() => {
+    if (!Array.isArray(metrics)) return [];
     return metrics
       .filter(m => {
-        if (!m.dueDate || String(m.status) === 'Resolved' || String(m.status) === 'Done') return false;
+        if (!m || !m.dueDate || String(m.status) === 'Resolved' || String(m.status) === 'Done') return false;
         const diff = getDaysDiff(m.dueDate);
         return diff <= 3; // Show only if due in 3 days or less (including overdue)
       })

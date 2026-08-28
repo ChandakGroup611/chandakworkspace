@@ -17,9 +17,10 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
   
   const teamStats = useMemo(() => {
+    if (!Array.isArray(metrics)) return [];
     const userMap: Record<string, any> = {};
     metrics.forEach(m => {
-      if (!m.user || m.user === 'System') return;
+      if (!m || !m.user || m.user === 'System') return;
       if (!userMap[m.user]) {
         userMap[m.user] = {
           name: m.user,
