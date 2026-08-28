@@ -40,10 +40,10 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.workspaces?.total || 0}</span>
               <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground truncate">
-                  <span className="text-success flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.workspaces?.resolved || 0} Resolved</span>
-                  <span>·</span>
-                  <span>{(kpis.workspaces?.total || 0) - (kpis.workspaces?.resolved || 0)} Pending</span>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                  <span className="text-success flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.workspaces?.resolved || 0} Resolved</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="whitespace-nowrap">{(kpis.workspaces?.total || 0) - (kpis.workspaces?.resolved || 0)} Pending</span>
                 </div>
               </div>
             </div>
@@ -75,10 +75,10 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.sub_workspaces?.total || 0}</span>
               <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground truncate">
-                  <span className="text-teal-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.sub_workspaces?.resolved || 0} Resolved</span>
-                  <span>·</span>
-                  <span>{(kpis.sub_workspaces?.total || 0) - (kpis.sub_workspaces?.resolved || 0)} Pending</span>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                  <span className="text-teal-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.sub_workspaces?.resolved || 0} Resolved</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="whitespace-nowrap">{(kpis.sub_workspaces?.total || 0) - (kpis.sub_workspaces?.resolved || 0)} Pending</span>
                 </div>
               </div>
             </div>
@@ -110,13 +110,13 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.tasks?.total || 0}</span>
               <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground truncate">
-                  <span className="text-accent flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.tasks?.resolved || 0} Resolved</span>
-                  <span>·</span>
-                  <span>{(kpis.tasks?.total || 0) - (kpis.tasks?.resolved || 0)} Pending</span>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                  <span className="text-accent flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tasks?.resolved || 0} Resolved</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="whitespace-nowrap">{(kpis.tasks?.total || 0) - (kpis.tasks?.resolved || 0)} Pending</span>
                 </div>
-                <div className="text-[11px] font-medium text-warning flex items-center gap-1 truncate">
-                  <Clock className="h-3 w-3" /> {kpis.tasks?.upcoming_due || 0} Due Soon
+                <div className="text-[11px] font-medium text-warning flex items-center gap-1">
+                  <Clock className="h-3 w-3 shrink-0" /> {kpis.tasks?.upcoming_due || 0} Due Soon
                 </div>
               </div>
             </div>
@@ -148,10 +148,10 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.sub_tasks?.total || 0}</span>
               <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground truncate">
-                  <span className="text-cyan-500 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.sub_tasks?.resolved || 0} Resolved</span>
-                  <span>·</span>
-                  <span>{(kpis.sub_tasks?.total || 0) - (kpis.sub_tasks?.resolved || 0)} Pending</span>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                  <span className="text-cyan-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.sub_tasks?.resolved || 0} Resolved</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="whitespace-nowrap">{(kpis.sub_tasks?.total || 0) - (kpis.sub_tasks?.resolved || 0)} Pending</span>
                 </div>
               </div>
             </div>
@@ -183,13 +183,13 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.requirements?.total || 0}</span>
               <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground truncate">
-                  <span className="text-accent flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.requirements?.resolved || 0} Resolved</span>
-                  <span>·</span>
-                  <span>{(kpis.requirements?.total || 0) - (kpis.requirements?.resolved || 0)} Pending</span>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                  <span className="text-accent flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.requirements?.resolved || 0} Resolved</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="whitespace-nowrap">{(kpis.requirements?.total || 0) - (kpis.requirements?.resolved || 0)} Pending</span>
                 </div>
-                <div className="text-[11px] font-medium text-warning flex items-center gap-1 truncate">
-                  <Clock className="h-3 w-3" /> {kpis.requirements?.upcoming_due || 0} Due Soon
+                <div className="text-[11px] font-medium text-warning flex items-center gap-1">
+                  <Clock className="h-3 w-3 shrink-0" /> {kpis.requirements?.upcoming_due || 0} Due Soon
                 </div>
               </div>
             </div>
@@ -221,13 +221,13 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.tickets?.total || 0}</span>
               <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground truncate">
-                  <span className="text-accent flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {kpis.tickets?.resolved || 0} Resolved</span>
-                  <span>·</span>
-                  <span>{(kpis.tickets?.total || 0) - (kpis.tickets?.resolved || 0)} Pending</span>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                  <span className="text-accent flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tickets?.resolved || 0} Resolved</span>
+                  <span className="text-muted-foreground/50">·</span>
+                  <span className="whitespace-nowrap">{(kpis.tickets?.total || 0) - (kpis.tickets?.resolved || 0)} Pending</span>
                 </div>
-                <div className="text-[11px] font-medium text-warning flex items-center gap-1 truncate">
-                  <Clock className="h-3 w-3" /> {kpis.tickets?.upcoming_due || 0} Due Soon
+                <div className="text-[11px] font-medium text-warning flex items-center gap-1">
+                  <Clock className="h-3 w-3 shrink-0" /> {kpis.tickets?.upcoming_due || 0} Due Soon
                 </div>
               </div>
             </div>

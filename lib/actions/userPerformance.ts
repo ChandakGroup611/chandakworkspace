@@ -88,7 +88,7 @@ export async function fetchUserPerformanceWorkingSheet(
       .select(`
         id, full_name, email, user_code, is_active,
         department:departments(department_name),
-        designation:designations(designation_name),
+        designation:designations!fk_user_master_designation(designation_name),
         role:roles(role_name, code)
       `);
 
@@ -97,7 +97,7 @@ export async function fetchUserPerformanceWorkingSheet(
     if (isUUID) {
       targetUserQuery = targetUserQuery.eq("id", userIdentifier.trim());
     } else {
-      targetUserQuery = targetUserQuery.ilike("full_name", userIdentifier.trim());
+      targetUserQuery = targetUserQuery.ilike("full_name", userIdentifier.trim()).eq("is_deleted", false);
     }
 
     const { data: targetUserData, error: userError } = await targetUserQuery.maybeSingle();
@@ -109,10 +109,11 @@ export async function fetchUserPerformanceWorkingSheet(
         .select(`
           id, full_name, email, user_code, is_active,
           department:departments(department_name),
-          designation:designations(designation_name),
+          designation:designations!fk_user_master_designation(designation_name),
           role:roles(role_name, code)
         `)
         .ilike("full_name", `%${userIdentifier.trim()}%`)
+        .eq("is_deleted", false)
         .limit(1);
 
       if (!fallbackUsers || fallbackUsers.length === 0) {
