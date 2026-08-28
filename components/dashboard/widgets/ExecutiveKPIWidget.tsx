@@ -82,28 +82,25 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
           noPadding
           overflowHidden
         >
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-theme-btn-primary text-theme-btn-primary-text shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-          <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.05] dark:opacity-[0.08] group-hover:scale-125 transition-transform duration-500 text-accent">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+          <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.05] dark:opacity-[0.08] group-hover:scale-125 transition-transform duration-500 text-blue-500">
             <Target className="h-16 w-16" />
           </div>
 
           <div className="p-4 flex flex-col h-full relative z-10">
             <div className="flex justify-between items-center mb-1">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">Tasks</h3>
-              <div className="p-1 rounded-md bg-theme-btn-primary text-theme-btn-primary-text/10 text-accent">
+              <div className="p-1 rounded-md bg-blue-500/10 text-blue-500">
                 <Target className="h-4 w-4" />
               </div>
             </div>
             
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.tasks?.total || 0}</span>
-              <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                  <span className="text-accent flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tasks?.resolved || 0} Resolved</span>
-                  <span className="text-muted-foreground/50">·</span>
-                  <span className="whitespace-nowrap">{(kpis.tasks?.total || 0) - (kpis.tasks?.resolved || 0)} Pending</span>
-                </div>
-
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground mt-2">
+                <span className="text-blue-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tasks?.resolved || 0} Resolved</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="whitespace-nowrap">{(kpis.tasks?.total || 0) - (kpis.tasks?.resolved || 0)} Pending</span>
               </div>
             </div>
           </div>
@@ -153,28 +150,25 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
           noPadding
           overflowHidden
         >
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-theme-btn-primary text-theme-btn-primary-text shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-          <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.05] dark:opacity-[0.08] group-hover:scale-125 transition-transform duration-500 text-accent">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+          <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.05] dark:opacity-[0.08] group-hover:scale-125 transition-transform duration-500 text-indigo-500">
             <FileText className="h-16 w-16" />
           </div>
 
           <div className="p-4 flex flex-col h-full relative z-10">
             <div className="flex justify-between items-center mb-1">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">Requirements</h3>
-              <div className="p-1 rounded-md bg-theme-btn-primary text-theme-btn-primary-text/10 text-accent">
+              <div className="p-1 rounded-md bg-indigo-500/10 text-indigo-500">
                 <FileText className="h-4 w-4" />
               </div>
             </div>
             
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.requirements?.total || 0}</span>
-              <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                  <span className="text-accent flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.requirements?.resolved || 0} Resolved</span>
-                  <span className="text-muted-foreground/50">·</span>
-                  <span className="whitespace-nowrap">{(kpis.requirements?.total || 0) - (kpis.requirements?.resolved || 0)} Pending</span>
-                </div>
-
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground mt-2">
+                <span className="text-indigo-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.requirements?.resolved || 0} Resolved</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="whitespace-nowrap">{(kpis.requirements?.total || 0) - (kpis.requirements?.resolved || 0)} Pending</span>
               </div>
             </div>
           </div>
@@ -189,28 +183,25 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
           noPadding
           overflowHidden
         >
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-theme-btn-primary text-theme-btn-primary-text shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
-          <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.05] dark:opacity-[0.08] group-hover:scale-125 transition-transform duration-500 text-accent">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+          <div className="absolute -bottom-4 -right-4 p-3 opacity-[0.05] dark:opacity-[0.08] group-hover:scale-125 transition-transform duration-500 text-purple-500">
             <LayoutDashboard className="h-16 w-16" />
           </div>
 
           <div className="p-4 flex flex-col h-full relative z-10">
             <div className="flex justify-between items-center mb-1">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">Tickets</h3>
-              <div className="p-1 rounded-md bg-theme-btn-primary/10 text-accent">
+              <div className="p-1 rounded-md bg-purple-500/10 text-purple-500">
                 <LayoutDashboard className="h-4 w-4" />
               </div>
             </div>
             
             <div className="mt-auto flex flex-col">
               <span className="-theme-heading leading-none">{kpis.tickets?.total || 0}</span>
-              <div className="flex flex-col gap-0.5 mt-2">
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                  <span className="text-accent flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tickets?.resolved || 0} Resolved</span>
-                  <span className="text-muted-foreground/50">·</span>
-                  <span className="whitespace-nowrap">{(kpis.tickets?.total || 0) - (kpis.tickets?.resolved || 0)} Pending</span>
-                </div>
-
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground mt-2">
+                <span className="text-purple-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tickets?.resolved || 0} Resolved</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="whitespace-nowrap">{(kpis.tickets?.total || 0) - (kpis.tickets?.resolved || 0)} Pending</span>
               </div>
             </div>
           </div>
