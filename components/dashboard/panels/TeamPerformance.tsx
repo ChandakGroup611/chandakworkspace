@@ -18,7 +18,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
   const teamStats = useMemo(() => {
     const userMap: Record<string, any> = {};
     metrics.forEach(m => {
-      if (!m.user || m.user === 'System') return;
+      if (!m || !m.user || m.user === 'System' || m.user === 'Unassigned') return;
       if (!userMap[m.user]) {
         userMap[m.user] = {
           name: m.user,

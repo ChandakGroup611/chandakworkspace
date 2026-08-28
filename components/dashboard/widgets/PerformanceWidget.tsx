@@ -20,7 +20,7 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
     if (!Array.isArray(metrics)) return [];
     const userMap: Record<string, any> = {};
     metrics.forEach(m => {
-      if (!m || !m.user || m.user === 'System') return;
+      if (!m || !m.user || m.user === 'System' || m.user === 'Unassigned') return;
       if (!userMap[m.user]) {
         userMap[m.user] = {
           name: m.user,
