@@ -299,44 +299,36 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                       
                       try {
                         // Dynamically import to avoid SSR issues
-                        const html2canvas = (await import('html2canvas')).default;
+                        const htmlToImage = await import('html-to-image');
                         const { jsPDF } = await import('jspdf');
                         
                         alert("Generating PDF... this may take a few seconds.");
                         
-                        const canvas = await html2canvas(exportArea, {
-                          scale: 1, // Lower scale to prevent memory/size limits on large dashboards
-                          useCORS: true,
-                          allowTaint: false,
-                          logging: true,
-                          onclone: (document) => {
-                            // Ensure the cloned element is visible and formatted for export
-                            const el = document.getElementById("dashboard-export-area");
-                            if (el) {
-                              el.style.padding = "20px";
-                              el.style.backgroundColor = window.getComputedStyle(document.body).backgroundColor || "#ffffff";
-                            }
-                          }
+                        // html-to-image correctly handles modern CSS colors (like oklab) without crashing
+                        const imgData = await htmlToImage.toJpeg(exportArea, { 
+                          quality: 0.95,
+                          backgroundColor: window.getComputedStyle(document.body).backgroundColor || "#ffffff",
+                          style: { padding: '20px' }
                         });
                         
-                        if (!canvas || canvas.width === 0 || canvas.height === 0) {
-                          throw new Error("Canvas generation failed or returned empty area.");
+                        if (!imgData) {
+                          throw new Error("Failed to generate image data from layout.");
                         }
                         
-                        const imgData = canvas.toDataURL('image/jpeg', 0.90);
+                        const rect = exportArea.getBoundingClientRect();
+                        const canvasWidth = rect.width || 1200;
+                        const canvasHeight = rect.height || 800;
                         
                         // Calculate standard A4 dimensions (210x297mm)
                         const pdf = new jsPDF({
-                          orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                          orientation: canvasWidth > canvasHeight ? 'landscape' : 'portrait',
                           unit: 'mm',
                           format: 'a4'
                         });
                         
                         const pdfWidth = pdf.internal.pageSize.getWidth();
-                        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                        const pdfHeight = (canvasHeight * pdfWidth) / canvasWidth;
                         
-                        // If height exceeds page, we might need multiple pages, but for now we just scale to fit or let it overflow (user wanted layout)
-                        // Actually, it's better to just add the image. jsPDF handles overflow by just clipping it.
                         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                         pdf.save(`Dashboard_Export_${new Date().toISOString().split('T')[0]}.pdf`);
                       } catch (err: any) {
