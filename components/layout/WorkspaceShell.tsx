@@ -14,8 +14,9 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
   const pathname = usePathname();
   const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const isAuthRoute = pathname === "/login" || pathname === "/register";
+  const isDashboardRoute = pathname === "/";
   const isRequirementDetailsRoute = pathname.startsWith('/requirements/') && pathname.split('/').length === 3 && !['reports', 'approvals', 'grooming'].includes(pathname.split('/')[2]);
-  const isZeroPaddingRoute = isAuthRoute || isRequirementDetailsRoute;
+  const isZeroPaddingRoute = isAuthRoute || isRequirementDetailsRoute || isDashboardRoute;
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
 
   useEffect(() => {
