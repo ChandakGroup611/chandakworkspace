@@ -302,7 +302,7 @@ export function WorkspaceMasterTable({
                       <span className={`flex-1 min-w-0 ${
                         isWorkspaceType ? 'truncate font-semibold tracking-tight text-sm' : 
                         isSubWorkspace ? 'truncate font-medium tracking-tight text-[13px]' : 
-                        'truncate text-[13px] font-normal leading-snug'
+                        'whitespace-normal text-[13px] font-normal leading-snug'
                       } ${
                         (depth === 0 ? 'text-foreground group-hover:text-theme-icon transition-colors' : 'text-foreground/80 group-hover:text-foreground transition-colors')
                       }`} title={isSubWorkspace && parentNode && (parentNode.workspace_name || parentNode.name) && !(node.workspace_name || node.name || '').startsWith((parentNode.workspace_name || parentNode.name) + ' -')
@@ -562,7 +562,7 @@ export function WorkspaceMasterTable({
 
   return (
     <div className="w-full font-sans overflow-x-auto">
-      <div className="w-full flex flex-col min-w-[1100px] pb-10">
+      <div className="w-full flex flex-col min-w-[1300px] pb-10">
         {/* Header */}
         <div className={`sticky top-0 z-20 grid items-center text-[13px] tracking-wider font-bold uppercase text-muted border-b border-border/50 pb-2 mb-1 ${
           "bg-background/90 text-muted"
