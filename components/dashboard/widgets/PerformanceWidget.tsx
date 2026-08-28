@@ -62,14 +62,14 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
       const isReq = m.module === 'Requirements';
 
       if (isTask) {
+        userMap[m.user].tasks.assigned++;
         if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].tasks.resolved++;
-        else userMap[m.user].tasks.assigned++;
       } else if (isTicket) {
+        userMap[m.user].tickets.assigned++;
         if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].tickets.resolved++;
-        else userMap[m.user].tickets.assigned++;
       } else if (isReq) {
+        userMap[m.user].reqs.assigned++;
         if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].reqs.resolved++;
-        else userMap[m.user].reqs.assigned++;
       }
     });
 
