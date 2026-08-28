@@ -164,7 +164,7 @@ export async function fetchUserPerformanceWorkingSheet(
         id, code, subject, description, created_at, created_by, assigned_to,
         status_id, status_master(status_name),
         priority_id, priority:priority_master(priority_name),
-        start_date, end_date, is_deleted,
+        start_date, end_date, is_deleted, parent_task_id,
         workspaces:workspaces(workspace_name)
       `)
       .or(`assigned_to.eq.${targetUserId},created_by.eq.${targetUserId}`)
@@ -294,21 +294,27 @@ export async function fetchUserPerformanceWorkingSheet(
     let taskOverdue = 0;
 
     tasksData?.forEach((t: any) => {
+      const isSubTask = !!t.parent_task_id;
       const rawStatus = (t.status_master as any)?.status_name || "Active";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
       const isOverdue = !!t.end_date && new Date(t.end_date).getTime() < now && !isResolved;
       const isOnTime = isResolved; // If completed and was on/before due date (or resolved)
 
-      if (isResolved) taskCompleted++;
-      else taskActive++;
-      if (isOverdue) taskOverdue++;
+      if (isSubTask) {
+        if (isResolved) subTaskCompleted++;
+        else subTaskActive++;
+      } else {
+        if (isResolved) taskCompleted++;
+        else taskActive++;
+        if (isOverdue) taskOverdue++;
+      }
 
       registerMonthly(t.created_at, isResolved, status === "Escalated" || isOverdue);
 
       activities.push({
         id: t.id,
-        module: "Tasks",
+        module: isSubTask ? "Sub Tasks" : "Tasks",
         code: t.code || `TSK-${t.id.substring(0, 6)}`,
         title: t.subject || "Untitled Task",
         context: (t.workspaces as any)?.workspace_name || null,

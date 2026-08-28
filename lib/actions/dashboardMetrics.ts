@@ -57,13 +57,13 @@ export async function fetchLiveDashboardMetrics() {
     let tasksPromise: any;
     if (isSuperAdmin) {
       tasksPromise = supabaseAdmin.from("tasks")
-        .select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`)
+        .select(`id, created_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
         .then(res => ({ data: res.data || [], error: res.error }));
     } else {
-      const createdPromise = supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('created_by', userId).eq("is_deleted", false);
-      const assignedPromise = supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).eq('assigned_to', userId).eq("is_deleted", false);
+      const createdPromise = supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id`).eq('created_by', userId).eq("is_deleted", false);
+      const assignedPromise = supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id`).eq('assigned_to', userId).eq("is_deleted", false);
       
       let partTasksData: any[] = [];
       let partTasksError = null;
@@ -71,7 +71,7 @@ export async function fetchLiveDashboardMetrics() {
         const CHUNK_SIZE = 150;
         for (let i = 0; i < participantTaskIds.length; i += CHUNK_SIZE) {
           const chunk = participantTaskIds.slice(i, i + CHUNK_SIZE);
-          const { data, error } = await supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date`).in('id', chunk).eq("is_deleted", false);
+          const { data, error } = await supabaseAdmin.from("tasks").select(`id, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id`).in('id', chunk).eq("is_deleted", false);
           if (error) partTasksError = error;
           if (data) partTasksData.push(...data);
         }
@@ -226,22 +226,24 @@ export async function fetchLiveDashboardMetrics() {
     const allItems: any[] = [];
     
     tasksData?.forEach((t: any) => {
-      totalTasks++;
+      const isSubTask = !!t.parent_task_id;
+      if (!isSubTask) totalTasks++;
+      
       const status = mapStatus((t.status_master as any)?.status_name);
-      if (status === "Resolved") resolvedCount++;
+      if (status === "Resolved" && !isSubTask) resolvedCount++;
       if (status === "Escalated") escalatedCount++;
       
       if (t.end_date && status !== "Resolved") {
         const diffDays = (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24);
-        if (diffDays >= 0 && diffDays <= 7) upcomingTasks++;
+        if (diffDays >= 0 && diffDays <= 7 && !isSubTask) upcomingTasks++;
         if (diffDays < 0) escalatedCount++; // Overdue
       }
 
       allItems.push({
-        module: "Tasks",
+        module: isSubTask ? "Sub Tasks" : "Tasks",
         id: t.id,
         code: t.code,
-        title: t.subject || "Untitled Task",
+        title: t.subject || (isSubTask ? "Untitled Sub Task" : "Untitled Task"),
         status: status,
         rawStatus: (t.status_master as any)?.status_name || "Unknown",
         user: userMap[t.assigned_to]?.name || "Unassigned",
@@ -349,8 +351,11 @@ export async function fetchLiveDashboardMetrics() {
     const kpis = {
       workspaces: { total: workspacesData?.filter((w: any) => !w.parent_workspace_id).length || 0, resolved: workspacesData?.filter((w: any) => !w.parent_workspace_id && mapStatus((w.status_master as any)?.status_name) === 'Resolved').length || 0 },
       sub_workspaces: { total: workspacesData?.filter((w: any) => w.parent_workspace_id).length || 0, resolved: workspacesData?.filter((w: any) => w.parent_workspace_id && mapStatus((w.status_master as any)?.status_name) === 'Resolved').length || 0 },
-      tasks: { total: tasksData?.length || 0, resolved: tasksData?.filter((t: any) => mapStatus((t.status_master as any)?.status_name) === 'Resolved').length || 0, upcoming_due: tasksData?.filter((t: any) => t.end_date && mapStatus((t.status_master as any)?.status_name) !== 'Resolved' && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length || 0 },
-      sub_tasks: { total: subTasksData?.length || 0, resolved: subTasksData?.filter((t: any) => mapStatus(t.status) === 'Resolved').length || 0 },
+      tasks: { total: tasksData?.filter((t: any) => !t.parent_task_id).length || 0, resolved: tasksData?.filter((t: any) => !t.parent_task_id && mapStatus((t.status_master as any)?.status_name) === 'Resolved').length || 0, upcoming_due: tasksData?.filter((t: any) => !t.parent_task_id && t.end_date && mapStatus((t.status_master as any)?.status_name) !== 'Resolved' && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length || 0 },
+      sub_tasks: { 
+        total: (subTasksData?.length || 0) + (tasksData?.filter((t: any) => !!t.parent_task_id).length || 0), 
+        resolved: (subTasksData?.filter((t: any) => mapStatus(t.status) === 'Resolved').length || 0) + (tasksData?.filter((t: any) => !!t.parent_task_id && mapStatus((t.status_master as any)?.status_name) === 'Resolved').length || 0) 
+      },
       requirements: { total: requirementsData?.length || 0, resolved: requirementsData?.filter((r: any) => mapStatus((r.status_master as any)?.status_name) === 'Resolved').length || 0, upcoming_due: requirementsData?.filter((r: any) => r.due_date && mapStatus((r.status_master as any)?.status_name) !== 'Resolved' && (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length || 0 },
       tickets: { total: ticketsData?.length || 0, resolved: ticketsData?.filter((t: any) => mapStatus((t.status_master as any)?.status_name) === 'Resolved').length || 0, upcoming_due: ticketsData?.filter((t: any) => t.due_date && mapStatus((t.status_master as any)?.status_name) !== 'Resolved' && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length || 0 },
     };
