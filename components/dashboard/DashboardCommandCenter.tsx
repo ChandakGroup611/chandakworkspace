@@ -124,10 +124,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
   const dynamicKpis = useMemo(() => {
     let wsTotal = 0, wsResolved = 0;
     let subWsTotal = 0, subWsResolved = 0;
-    let tasksTotal = 0, tasksResolved = 0;
+    let tasksTotal = 0, tasksResolved = 0, tasksUpcoming = 0;
     let subTasksTotal = 0, subTasksResolved = 0;
-    let reqsTotal = 0, reqsResolved = 0;
-    let ticketsTotal = 0, ticketsResolved = 0;
+    let reqsTotal = 0, reqsResolved = 0, reqsUpcoming = 0;
+    let ticketsTotal = 0, ticketsResolved = 0, ticketsUpcoming = 0;
     
     let healthy = 0, warning = 0, breached = 0;
     let totalEscalated = 0, totalOverdue = 0, totalActive = 0, totalReview = 0;
@@ -167,6 +167,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
         }
       }
 
+      const isUpcoming = m.dueDate && !isResolved && 
+        (new Date(m.dueDate).getTime() - Date.now()) / (1000 * 3600 * 24) >= 0 && 
+        (new Date(m.dueDate).getTime() - Date.now()) / (1000 * 3600 * 24) <= 3;
+
       if (m.module === 'Workspaces') {
         wsTotal++;
         if (isResolved) wsResolved++;
@@ -176,6 +180,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
       } else if (m.module === 'Tasks') {
         tasksTotal++;
         if (isResolved) tasksResolved++;
+        if (isUpcoming) tasksUpcoming++;
         
         // SLA logic strictly for Tasks
         if (isResolved) {
@@ -183,7 +188,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
         } else {
           if (isEscalated || m.isOverdue) {
             breached++;
-          } else if (m.dueDate && new Date(m.dueDate).getTime() - Date.now() <= 7 * 24 * 3600 * 1000) {
+          } else if (m.dueDate && new Date(m.dueDate).getTime() - Date.now() <= 3 * 24 * 3600 * 1000) {
             warning++;
           } else {
             healthy++;
@@ -195,9 +200,11 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
       } else if (m.module === 'Requirements') {
         reqsTotal++;
         if (isResolved) reqsResolved++;
+        if (isUpcoming) reqsUpcoming++;
       } else if (m.module === 'Tickets') {
         ticketsTotal++;
         if (isResolved) ticketsResolved++;
+        if (isUpcoming) ticketsUpcoming++;
       }
     });
 
@@ -209,10 +216,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
     return {
       workspaces: { total: wsTotal, resolved: wsResolved },
       sub_workspaces: { total: subWsTotal, resolved: subWsResolved },
-      tasks: { total: tasksTotal, resolved: tasksResolved },
+      tasks: { total: tasksTotal, resolved: tasksResolved, upcoming_due: tasksUpcoming },
       sub_tasks: { total: subTasksTotal, resolved: subTasksResolved },
-      requirements: { total: reqsTotal, resolved: reqsResolved },
-      tickets: { total: ticketsTotal, resolved: ticketsResolved },
+      requirements: { total: reqsTotal, resolved: reqsResolved, upcoming_due: reqsUpcoming },
+      tickets: { total: ticketsTotal, resolved: ticketsResolved, upcoming_due: ticketsUpcoming },
       sla: { escalated_or_breached: breached, healthy, warning, breached },
       workload: {
         active_tasks: tasksTotal - tasksResolved,
