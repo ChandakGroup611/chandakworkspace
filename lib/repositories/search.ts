@@ -25,7 +25,7 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
   const [tickets, tasks, requirements] = await Promise.all([
     getVisibleTickets(userId, 'id, title, code, description, status:status_master(status_name)'),
     getVisibleTasks(userId, 'id, subject, task_code, description, status:status_master(status_name)'),
-    getVisibleRequirements(userId, 'id, title, code, description, status:status_master(status_name)')
+    getVisibleRequirements(userId, 'id, title, code, objective, requirement_details, status:status_master(status_name)')
   ]);
 
   const results: SearchResult[] = [];
@@ -79,7 +79,8 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
     if (
       code.toLowerCase().includes(searchTerm) || 
       title.toLowerCase().includes(searchTerm) || 
-      (r.description || '').toLowerCase().includes(searchTerm)
+      (r.objective || '').toLowerCase().includes(searchTerm) ||
+      (r.requirement_details || '').toLowerCase().includes(searchTerm)
     ) {
       results.push({
         id: r.id,
