@@ -94,17 +94,17 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: task.status?.status_color || 'gray' }}></div>
-                  <span className="text-sm font-semibold text-theme-heading truncate">{task.status?.status_name || 'Unknown'}</span>
+                  <span className="text-sm font-semibold texttext-2xl font-bold text-foreground truncate">{task.status?.status_name || 'Unknown'}</span>
                 </div>
               </div>
               <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
-                <span className="text-sm font-semibold text-theme-heading truncate">{task.priority?.priority_name || 'None'}</span>
+                <span className="text-sm font-semibold texttext-2xl font-bold text-foreground truncate">{task.priority?.priority_name || 'None'}</span>
               </div>
               <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Task Owner</span>
                 {task.assignee ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-theme-heading">
+                  <div className="flex items-center gap-2 text-sm font-semibold texttext-2xl font-bold text-foreground">
                     <div className="w-6 h-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold text-theme-icon border border-theme-btn-primary/50 shrink-0">
                       {task.assignee.full_name?.charAt(0)}
                     </div>
@@ -114,7 +114,7 @@ export function TaskDetailDrawer({ task, onClose }: { task: any, onClose: () => 
               </div>
               <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                 <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">SLA Target</span>
-                <span className="text-sm font-semibold text-theme-heading truncate">{task.priority?.max_sla_hours ? `${task.priority.max_sla_hours} Hours` : 'N/A'}</span>
+                <span className="text-sm font-semibold texttext-2xl font-bold text-foreground truncate">{task.priority?.max_sla_hours ? `${task.priority.max_sla_hours} Hours` : 'N/A'}</span>
               </div>
 
               {/* Custom Fields Placeholder */}

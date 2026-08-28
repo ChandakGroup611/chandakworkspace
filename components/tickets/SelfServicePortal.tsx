@@ -75,7 +75,7 @@ export function SelfServicePortal() {
         
         <div className="theme-card-structural dark:bg-[#1a1c23] p-6 rounded-2xl shadow-sm border-border dark:border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-            <h2 className="text-lg font-bold text-theme-heading">How can we help you today?</h2>
+            <h2 className="text-lg font-bold texttext-2xl font-bold text-foreground">How can we help you today?</h2>
             <p className="text-sm text-muted ">Track your existing requests or submit a new one.</p>
           </div>
           <div className="relative w-full sm:w-64">

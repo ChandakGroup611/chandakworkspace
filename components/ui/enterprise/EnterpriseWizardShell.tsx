@@ -78,7 +78,7 @@ export function EnterpriseWizardShell({
         {/* Header - Solid and Sharp */}
         <div className="shrink-0 px-6 py-5 flex items-start justify-between gap-4 border-b border-border bg-background">
           <div className="relative z-10 flex flex-col justify-center">
-            {title && <div className={`text-xl font-semibold tracking-tight ${"text-theme-heading"}`}>{title}</div>}
+            {title && <div className={`text-xl font-semibold tracking-tight ${"texttext-2xl font-bold text-foreground"}`}>{title}</div>}
             {subtitle && <div className={`mt-1 text-sm ${"text-muted"}`}>{subtitle}</div>}
           </div>
           <AppButton variant="ghost" 

@@ -41,7 +41,7 @@ export const AppCardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "font-semibold text-sm leading-none tracking-tight text-theme-heading",
+      "font-semibold text-sm leading-none tracking-tight texttext-2xl font-bold text-foreground",
       className
     )}
     {...props}

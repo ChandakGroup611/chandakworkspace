@@ -19,7 +19,7 @@ function SortableColumnItem({ item, onToggle }: { item: UserReportLayout, onTogg
         <GripVertical className="w-5 h-5" />
       </AppButton>
       <div className="flex-1 min-w-0">
-        <span className={`-theme-heading dark:text-slate-200' : 'text-muted dark:text-slate-400'}`}>
+        <span className={`text-2xl font-bold text-foreground dark:text-slate-200' : 'text-muted dark:text-slate-400'}`}>
           {item.display_name}
         </span>
         <span className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">{item.data_type}</span>
@@ -148,7 +148,7 @@ export default function DynamicReportBuilder({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-border shrink-0">
           <div>
-            <h2 className="-theme-heading dark:text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
               Configure Columns: {reportName}
             </h2>
             <p className="text-xs text-muted mt-1 font-medium">Add, remove, or drag columns to rearrange your personal view.</p>
@@ -164,7 +164,7 @@ export default function DynamicReportBuilder({
           {/* Left Panel: Selected/Active Columns */}
           <div className="flex-1 flex flex-col min-h-0 bg-surface/50 dark:bg-slate-950/30">
             <div className="p-4 border-b border-slate-100 dark:border-border shrink-0 theme-card-structural dark:bg-slate-900">
-              <h3 className="-theme-heading dark:text-slate-200 uppercase tracking-wider">Report Layout</h3>
+              <h3 className="text-2xl font-bold text-foreground dark:text-slate-200 uppercase tracking-wider">Report Layout</h3>
             </div>
             <div className="p-4 flex-1 overflow-y-auto space-y-2">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -183,7 +183,7 @@ export default function DynamicReportBuilder({
           {/* Right Panel: Available Fields */}
           <div className="w-full md:w-72 lg:w-80 flex flex-col min-h-0 bg-surface dark:bg-slate-900">
             <div className="p-4 border-b border-slate-100 dark:border-border shrink-0">
-              <h3 className="-theme-heading dark:text-slate-200 uppercase tracking-wider">Available Fields</h3>
+              <h3 className="text-2xl font-bold text-foreground dark:text-slate-200 uppercase tracking-wider">Available Fields</h3>
             </div>
             <div className="p-4 flex-1 overflow-y-auto space-y-2">
               {unselectedFields.map(field => (
@@ -193,7 +193,7 @@ export default function DynamicReportBuilder({
                   onClick={() => handleAddMissingField(field)}
                 >
                   <div className="min-w-0">
-                    <span className="-theme-heading dark:text-slate-300 block truncate">{field.display_name}</span>
+                    <span className="text-2xl font-bold text-foreground dark:text-slate-300 block truncate">{field.display_name}</span>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity dark:bg-theme-btn-primary/20 dark:text-theme-icon shrink-0">
                     Add +

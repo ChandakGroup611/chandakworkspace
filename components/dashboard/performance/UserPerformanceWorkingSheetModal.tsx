@@ -333,7 +333,7 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 {/* On-Time Delivery Rate */}
-                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">On-Time Delivery</span>
                     <CheckCircle2 className="w-4 h-4 text-success" />
@@ -355,7 +355,7 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 {/* SLA Compliance */}
-                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">SLA Compliance</span>
                     <ShieldCheck className="w-4 h-4 text-theme-icon" />
@@ -375,7 +375,7 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 {/* Completion Volume */}
-                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Resolved Volume</span>
                     <TrendingUp className="w-4 h-4 text-primary" />
@@ -397,7 +397,7 @@ export function UserPerformanceWorkingSheetModal({
                 </div>
 
                 {/* Active & Risk Load */}
-                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] /70 shadow-sm col-span-2 lg:col-span-1">
+                <div className="p-4 rounded-2xl theme-card-structural dark:bg-[#111625] shadow-sm col-span-2 lg:col-span-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Active & Overdue</span>
                     <AlertTriangle className={cn("w-4 h-4", data.metrics.totalOverdue > 0 ? "text-danger" : "text-warning")} />
@@ -480,6 +480,7 @@ export function UserPerformanceWorkingSheetModal({
                       const isActive = activeTab === tab.key;
                       return (
                         <AppButton
+                          variant="ghost"
                           key={tab.key}
                           onClick={() => setActiveTab(tab.key as TabType)}
                           className={cn(
@@ -550,7 +551,7 @@ export function UserPerformanceWorkingSheetModal({
                 {/* TAB CONTENT */}
                 {activeTab === "trends" ? (
                   /* MONTHLY TRENDS VIEW */
-                  <div className="p-5 theme-card-structural dark:bg-[#111625] /70 rounded-2xl space-y-6">
+                  <div className="p-5 theme-card-structural dark:bg-[#111625] rounded-2xl space-y-6">
                     <div>
                       <h4 className="text-sm font-bold text-foreground">Monthly Output & Resolution Velocity</h4>
                       <p className="text-xs text-muted-foreground mt-0.5">Historical activity volume and resolution performance over the last 6 months.</p>
@@ -575,7 +576,7 @@ export function UserPerformanceWorkingSheetModal({
                   </div>
                 ) : (
                   /* TABULAR WORKING SHEET */
-                  <div className="/70 rounded-2xl overflow-hidden theme-card-structural dark:bg-[#111625] shadow-sm">
+                  <div className="rounded-2xl overflow-hidden theme-card-structural dark:bg-[#111625] shadow-sm">
                     <div className="max-h-[380px] overflow-y-auto custom-scrollbar">
                       <AppTable>
                         <AppTableHeader className="sticky top-0 z-10 bg-surface/95 dark:bg-[#111625]/95">

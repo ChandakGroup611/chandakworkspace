@@ -184,20 +184,20 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
                   <div className="w-6 h-6 rounded-full bg-theme-btn-primary/20 flex items-center justify-center text-[10px] font-bold text-theme-icon border border-theme-btn-primary/50">
                     {requirement.analyst?.full_name?.charAt(0) || '?'}
                   </div>
-                  <span className="theme-data-value font-semibold text-theme-heading truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
+                  <span className="theme-data-value font-semibold texttext-2xl font-bold text-foreground truncate">{requirement.analyst?.full_name || 'Unassigned'}</span>
                 </div>
               </div>
               <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="theme-label text-muted mb-1">Department</span>
-                <span className="theme-data-value font-semibold text-theme-heading truncate">{requirement.department?.name || 'Enterprise Global'}</span>
+                <span className="theme-data-value font-semibold texttext-2xl font-bold text-foreground truncate">{requirement.department?.name || 'Enterprise Global'}</span>
               </div>
               <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="theme-label text-muted mb-1">Priority SLA</span>
-                <span className="theme-data-value font-semibold text-theme-heading truncate">{requirement.priority?.priority_name || 'Standard'}</span>
+                <span className="theme-data-value font-semibold texttext-2xl font-bold text-foreground truncate">{requirement.priority?.priority_name || 'Standard'}</span>
               </div>
               <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark:border-white/10 shadow-sm transition-colors">
                 <span className="theme-label text-muted mb-1">Estimations</span>
-                <div className="space-y-1 theme-data-value font-semibold text-theme-heading mt-1">
+                <div className="space-y-1 theme-data-value font-semibold texttext-2xl font-bold text-foreground mt-1">
                   <div className="flex justify-between"><span>Hours:</span> <span>{requirement.estimated_hours || 0}</span></div>
                   <div className="flex justify-between"><span>Cost:</span> <span>${requirement.estimated_cost?.toLocaleString() || 0}</span></div>
                 </div>

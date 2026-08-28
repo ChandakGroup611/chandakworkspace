@@ -67,7 +67,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
         <div className="flex justify-between items-end mb-2">
           <div className="space-y-1">
             <p className="text-xs font-bold text-muted uppercase tracking-wider">Total Logged</p>
-            <p className={`-theme-heading dark:text-slate-100`}>{totalLogged.toFixed(1)}h</p>
+            <p className={`text-2xl font-bold text-foreground dark:text-slate-100`}>{totalLogged.toFixed(1)}h</p>
           </div>
           <div className="space-y-1 text-right">
             <p className="text-xs font-bold text-muted uppercase tracking-wider">Estimated</p>

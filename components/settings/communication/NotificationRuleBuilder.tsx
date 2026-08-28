@@ -167,7 +167,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.module}
                     onChange={(e) => updateLocalRule(rule.id, "module", e.target.value)}
-                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold texttext-2xl font-bold text-foreground focus:outline-none"
                   >
                     {Object.keys(MODULE_CONFIG).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
@@ -180,7 +180,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.event}
                     onChange={(e) => updateLocalRule(rule.id, "event", e.target.value)}
-                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold texttext-2xl font-bold text-foreground focus:outline-none"
                   >
                     {config.events.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
@@ -193,7 +193,7 @@ export default function NotificationRuleBuilder() {
                   <select 
                     value={rule.status_trigger || "ANY"}
                     onChange={(e) => updateLocalRule(rule.id, "status_trigger", e.target.value)}
-                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-theme-heading focus:outline-none"
+                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold texttext-2xl font-bold text-foreground focus:outline-none"
                   >
                     {config.statuses.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>

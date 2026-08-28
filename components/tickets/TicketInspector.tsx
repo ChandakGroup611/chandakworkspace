@@ -40,7 +40,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
           <Activity className={`h-10 w-10 text-muted`} />
         </div>
         <div className="space-y-1">
-          <h3 className={`-theme-heading"}`}>Select a Ticket to Inspect</h3>
+          <h3 className={`text-2xl font-bold text-foreground"}`}>Select a Ticket to Inspect</h3>
           <p className="text-sm text-muted max-w-xs">Select an operational record from the sidebar to view full diagnostic data and collaboration history.</p>
         </div>
       </div>
@@ -70,7 +70,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                 {status?.name || "Active"}
               </AppBadge>
             </div>
-            <h2 className={`-theme-heading"}`}>{ticket.title}</h2>
+            <h2 className={`text-2xl font-bold text-foreground"}`}>{ticket.title}</h2>
           </div>
         </div>
 

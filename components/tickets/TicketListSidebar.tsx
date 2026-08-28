@@ -120,7 +120,7 @@ export function TicketListSidebar({
                 <h4 className={`text-sm font-semibold mb-2 line-clamp-1 transition-colors ${
                   isSelected 
                     ? ("text-theme-icon-secondary") 
-                    : ("text-theme-heading group-hover:text-theme-icon")
+                    : ("texttext-2xl font-bold text-foreground group-hover:text-theme-icon")
                 }`}>
                   {ticket.title}
                 </h4>

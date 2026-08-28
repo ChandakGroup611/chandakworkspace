@@ -52,7 +52,7 @@ export function TicketOpsSidebar({ ticket, onAction }: TicketOpsSidebarProps) {
           }`}>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <span className={`-theme-heading"}`}>{timeLeft}m</span>
+                <span className={`text-2xl font-bold text-foreground"}`}>{timeLeft}m</span>
                 <p className="text-xs text-muted font-medium">Until Resolution Breach</p>
               </div>
               <div className={`p-3 rounded-xl bg-theme-btn-primary/10`}>

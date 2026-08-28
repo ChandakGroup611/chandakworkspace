@@ -31,7 +31,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
             <module.icon className="h-8 w-8" />
           </div>
           <div>
-            <h1 className={`-theme-heading`}>
+            <h1 className={`text-2xl font-bold text-foreground`}>
               {module.title}
             </h1>
             <p className={"text-muted"}>{module.description}</p>
@@ -77,7 +77,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
           <Settings2 className={`h-5 w-5 text-muted`} />
-          <h2 className={`-theme-heading`}>Field to Field Information</h2>
+          <h2 className={`text-2xl font-bold text-foreground`}>Field to Field Information</h2>
         </div>
         <div className={`rounded-2xl overflow-hidden theme-card-structural`}>
           <AppTableContainer><AppTable className="w-full text-left text-base">
@@ -117,7 +117,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
           <BookOpen className={`h-5 w-5 text-muted`} />
-          <h2 className={`-theme-heading`}>Step-by-Step Navigation</h2>
+          <h2 className={`text-2xl font-bold text-foreground`}>Step-by-Step Navigation</h2>
         </div>
         <div className="space-y-3">
           {module.steps.map((step, idx) => (
@@ -141,7 +141,7 @@ export default function ModuleRenderer({ module }: { module: LearningModule }) {
       <section>
         <div className="flex items-center gap-2 mb-4 px-1">
           <Terminal className={`h-5 w-5 text-muted`} />
-          <h2 className={`-theme-heading`}>System Results & Technical Details</h2>
+          <h2 className={`text-2xl font-bold text-foreground`}>System Results & Technical Details</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {module.results.map((result, idx) => (

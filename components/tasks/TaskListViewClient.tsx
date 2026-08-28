@@ -1665,7 +1665,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
           <div className="fixed inset-y-0 right-0 z-50 w-full md:w-[450px] theme-card-structural dark:bg-[#0B0F19]  border-l border-border dark:border-border flex flex-col animate-in slide-in-from-right duration-200">
             <div className="p-4 border-b border-border dark:border-border flex items-center justify-between bg-surface dark:theme-card-structural /[0.02]">
               <div>
-                <h2 className="text-[14px] font-bold text-theme-heading truncate pr-4">{selectedTask.title}</h2>
+                <h2 className="text-[14px] font-bold texttext-2xl font-bold text-foreground truncate pr-4">{selectedTask.title}</h2>
                 <div className="text-[11px] font-mono text-muted mt-1">{selectedTask.code} • {selectedTask.workspace?.name}</div>
               </div>
               <AppButton variant="ghost" size="sm" onClick={() => setSelectedTask(null)} className="h-8 w-8 p-0 shrink-0">✕</AppButton>
@@ -1682,19 +1682,19 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Priority</span>
-                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.priority?.name || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold texttext-2xl font-bold text-foreground truncate">{selectedTask.priority?.name || 'N/A'}</div>
                 </div>
                 <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Department</span>
-                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.department?.name || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold texttext-2xl font-bold text-foreground truncate">{selectedTask.department?.name || 'N/A'}</div>
                 </div>
                 <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Status</span>
-                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.status?.name || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold texttext-2xl font-bold text-foreground truncate">{selectedTask.status?.name || 'N/A'}</div>
                 </div>
                 <div className="flex flex-col p-3 rounded-lg theme-card-structural dark:/10 /60 dark: shadow-sm transition-colors">
                   <span className="text-[10px] text-muted uppercase font-bold tracking-wider mb-1">Due Date</span>
-                  <div className="text-[13px] font-semibold text-theme-heading truncate">{selectedTask.end_date || 'N/A'}</div>
+                  <div className="text-[13px] font-semibold texttext-2xl font-bold text-foreground truncate">{selectedTask.end_date || 'N/A'}</div>
                 </div>
               </div>
               
@@ -1764,7 +1764,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <Dialog open={bulkStatusModalOpen} onOpenChange={setBulkStatusModalOpen}>
         <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border ">
           <DialogHeader>
-            <DialogTitle className="text-theme-heading">Bulk Update Tasks</DialogTitle>
+            <DialogTitle className="texttext-2xl font-bold text-foreground">Bulk Update Tasks</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Updating {selectedTaskIds.size} Tasks</div>
@@ -1858,7 +1858,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
         <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border ">
           <DialogHeader>
-            <DialogTitle className="text-theme-heading">Update Status</DialogTitle>
+            <DialogTitle className="texttext-2xl font-bold text-foreground">Update Status</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
@@ -1911,7 +1911,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
       <Dialog open={departmentModalOpen} onOpenChange={setDepartmentModalOpen}>
         <DialogContent className="sm:max-w-[425px] theme-card-structural dark:bg-[#0B0F19] border-border dark:border-border ">
           <DialogHeader>
-            <DialogTitle className="text-theme-heading">Update Department</DialogTitle>
+            <DialogTitle className="texttext-2xl font-bold text-foreground">Update Department</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="text-sm font-medium mb-1">Task: {inlineTask?.title || 'Unknown'}</div>
@@ -1974,7 +1974,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                   setCreationWorkspaceId(e.target.value);
                   setCreationSubWorkspaceId("");
                 }}
-                className="w-full text-sm p-2.5 border-border dark:border-border rounded-md theme-card-structural dark:bg-[#0a0d14] text-theme-heading focus:ring-theme-btn-primary focus:border-theme-btn-primary"
+                className="w-full text-sm p-2.5 border-border dark:border-border rounded-md theme-card-structural dark:bg-[#0a0d14] texttext-2xl font-bold text-foreground focus:ring-theme-btn-primary focus:border-theme-btn-primary"
               >
                 <option value="">-- Select Workspace --</option>
                 {allWorkspaces.filter(w => !w.parent_workspace_id).map(w => (
@@ -1989,7 +1989,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
                 <select
                   value={creationSubWorkspaceId}
                   onChange={(e) => setCreationSubWorkspaceId(e.target.value)}
-                  className="w-full text-sm p-2.5 border-border dark:border-border rounded-md theme-card-structural dark:bg-[#0a0d14] text-theme-heading focus:ring-theme-btn-primary focus:border-theme-btn-primary"
+                  className="w-full text-sm p-2.5 border-border dark:border-border rounded-md theme-card-structural dark:bg-[#0a0d14] texttext-2xl font-bold text-foreground focus:ring-theme-btn-primary focus:border-theme-btn-primary"
                 >
                   <option value="">-- None --</option>
                   {allWorkspaces.filter(sw => sw.parent_workspace_id === creationWorkspaceId).map(sw => (

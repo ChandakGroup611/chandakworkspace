@@ -71,8 +71,8 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
 
   const TitleWrapper = asHeading ? 'h1' : 'span';
   const titleClasses = asHeading 
-    ? "text-2xl font-bold text-theme-heading break-words whitespace-normal flex-1" 
-    : "truncate text-theme-heading flex-1";
+    ? "text-2xl font-bold texttext-2xl font-bold text-foreground break-words whitespace-normal flex-1" 
+    : "truncate texttext-2xl font-bold text-foreground flex-1";
 
   return (
     <div className="group flex items-start gap-2 relative w-full">
