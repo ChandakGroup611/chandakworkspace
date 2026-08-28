@@ -123,13 +123,13 @@ export async function fetchLiveDashboardMetrics() {
     if (isSuperAdmin) {
       requirementsPromise = supabaseAdmin
         .from("requirements")
-        .select(`id, created_at, updated_at, creator_id, title, status_id, status_master(status_name), due_date`)
+        .select(`id, created_at, updated_at, creator_id, current_assignee_id, title, status_id, status_master(status_name), due_date`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
     } else {
       requirementsPromise = supabaseAdmin
         .from("requirements")
-        .select(`id, created_at, updated_at, creator_id, title, status_id, status_master(status_name), due_date`)
+        .select(`id, created_at, updated_at, creator_id, current_assignee_id, title, status_id, status_master(status_name), due_date`)
         .eq("is_deleted", false)
         .eq('creator_id', userId)
         .order("created_at", { ascending: false });
@@ -194,7 +194,7 @@ export async function fetchLiveDashboardMetrics() {
     });
 
     ticketsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); if (t.assignee_id) userIdsToFetch.add(t.assignee_id); });
-    requirementsData?.forEach((t: any) => { if (t.creator_id) userIdsToFetch.add(t.creator_id); });
+    requirementsData?.forEach((t: any) => { if (t.current_assignee_id) userIdsToFetch.add(t.current_assignee_id); if (t.creator_id) userIdsToFetch.add(t.creator_id); });
 
     let userMap: Record<string, any> = {};
     if (userIdsToFetch.size > 0) {
@@ -301,8 +301,8 @@ export async function fetchLiveDashboardMetrics() {
         title: r.title || "Untitled Requirement",
         status: status,
         rawStatus: (r.status_master as any)?.status_name || "Unknown",
-        user: userMap[r.creator_id]?.name || "Unassigned",
-        userRole: userMap[r.creator_id]?.role || "Team Member",
+        user: userMap[r.current_assignee_id]?.name || "Unassigned",
+        userRole: userMap[r.current_assignee_id]?.role || "Team Member",
         priority: "N/A", 
         createdAt: r.created_at,
         updatedAt: r.updated_at || r.created_at,
