@@ -252,6 +252,22 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     setExpandedNodes({});
   };
 
+  const [autoCollapse, setAutoCollapse] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('workspace_auto_collapse');
+        if (saved !== null) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return true; // default
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('workspace_auto_collapse', JSON.stringify(autoCollapse));
+    } catch (e) {}
+  }, [autoCollapse]);
+
   useEffect(() => {
     setMounted(true);
     // Asynchronously mark task as read if opened via URL
@@ -295,9 +311,25 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         }
       }
       
-      // Expand all nodes in the path
+      // Expand all nodes in the path and collapse sibling hierarchies if autoCollapse is active
       setExpandedNodes(prev => {
         const next = { ...prev };
+        if (autoCollapse) {
+          path.forEach(nodeId => {
+            const current = workspaces.find(w => w.id === nodeId);
+            if (current) {
+              const parentId = current.parent_workspace_id;
+              // Collapse all sibling workspaces at the same level
+              const siblings = workspaces.filter(w => w.parent_workspace_id === parentId);
+              siblings.forEach(s => {
+                if (s.id !== nodeId) {
+                  next[s.id] = false;
+                }
+              });
+            }
+          });
+        }
+        // Ensure the expansion path itself is set to true
         path.forEach(id => {
           next[id] = true;
         });
@@ -338,7 +370,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       
       loadTreePath();
     }
-  }, [initialData?.prefetchWorkspaceId, workspaces]);
+  }, [initialData?.prefetchWorkspaceId, workspaces, autoCollapse]);
 
   // Real-time presence tracking via server-side heartbeat
   const allUserIds = useMemo(
@@ -425,21 +457,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [isAssigningTasks, setIsAssigningTasks] = useState(false);
 
 
-  const [autoCollapse, setAutoCollapse] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('workspace_auto_collapse');
-        if (saved !== null) return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return true; // default
-  });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('workspace_auto_collapse', JSON.stringify(autoCollapse));
-    } catch (e) {}
-  }, [autoCollapse]);
 
   const [newWS, setNewWS] = useState({ 
     name: "", 
