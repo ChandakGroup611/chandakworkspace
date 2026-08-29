@@ -225,7 +225,13 @@ export async function fetchLiveDashboardMetrics() {
 
     const allItems: any[] = [];
     
-    tasksData?.forEach((t: any) => {
+    const tasks = tasksData || [];
+    const subTasks = subTasksData || [];
+    const tickets = ticketsData || [];
+    const requirements = requirementsData || [];
+    const workspaces = workspacesData || [];
+
+    tasks.forEach((t: any) => {
       const isSubTask = !!t.parent_task_id;
       if (!isSubTask) totalTasks++;
       
@@ -256,7 +262,7 @@ export async function fetchLiveDashboardMetrics() {
       });
     });
 
-    subTasksData?.forEach((t: any) => {
+    subTasks.forEach((t: any) => {
       const status = mapStatus(t.status);
       allItems.push({
         module: "Sub Tasks",
@@ -275,7 +281,7 @@ export async function fetchLiveDashboardMetrics() {
       });
     });
 
-    ticketsData?.forEach((t: any) => {
+    tickets.forEach((t: any) => {
       const status = mapStatus((t.status_master as any)?.status_name);
       if (status === "Escalated") escalatedCount++;
       if (t.due_date && status !== "Resolved" && new Date(t.due_date).getTime() < now) {
@@ -300,7 +306,7 @@ export async function fetchLiveDashboardMetrics() {
       });
     });
 
-    requirementsData?.forEach((r: any) => {
+    requirements.forEach((r: any) => {
       const status = mapStatus((r.status_master as any)?.status_name);
       if (r.due_date && status !== "Resolved") {
         const diffDays = (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24);
@@ -325,7 +331,7 @@ export async function fetchLiveDashboardMetrics() {
       });
     });
 
-    workspacesData?.forEach((w: any) => {
+    workspaces.forEach((w: any) => {
       const status = mapStatus((w.status_master as any)?.status_name);
       if (w.end_date && status !== "Resolved") {
         const diffDays = (new Date(w.end_date).getTime() - now) / (1000 * 3600 * 24);
@@ -349,15 +355,33 @@ export async function fetchLiveDashboardMetrics() {
     });
 
     const kpis = {
-      workspaces: { total: workspacesData?.filter((w: any) => !w.parent_workspace_id).length || 0, resolved: workspacesData?.filter((w: any) => !w.parent_workspace_id && mapStatus((w.status_master as any)?.status_name) === 'Resolved').length || 0 },
-      sub_workspaces: { total: workspacesData?.filter((w: any) => w.parent_workspace_id).length || 0, resolved: workspacesData?.filter((w: any) => w.parent_workspace_id && mapStatus((w.status_master as any)?.status_name) === 'Resolved').length || 0 },
-      tasks: { total: tasksData?.filter((t: any) => !t.parent_task_id).length || 0, resolved: tasksData?.filter((t: any) => !t.parent_task_id && mapStatus((t.status_master as any)?.status_name) === 'Resolved').length || 0, upcoming_due: tasksData?.filter((t: any) => !t.parent_task_id && t.end_date && mapStatus((t.status_master as any)?.status_name) !== 'Resolved' && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length || 0 },
-      sub_tasks: { 
-        total: (subTasksData?.length || 0) + (tasksData?.filter((t: any) => !!t.parent_task_id).length || 0), 
-        resolved: (subTasksData?.filter((t: any) => mapStatus(t.status) === 'Resolved').length || 0) + (tasksData?.filter((t: any) => !!t.parent_task_id && mapStatus((t.status_master as any)?.status_name) === 'Resolved').length || 0) 
+      workspaces: { 
+        total: workspaces.filter((w: any) => !w.parent_workspace_id).length, 
+        resolved: workspaces.filter((w: any) => !w.parent_workspace_id && mapStatus((w.status_master as any)?.status_name) === 'Resolved').length 
       },
-      requirements: { total: requirementsData?.length || 0, resolved: requirementsData?.filter((r: any) => mapStatus((r.status_master as any)?.status_name) === 'Resolved').length || 0, upcoming_due: requirementsData?.filter((r: any) => r.due_date && mapStatus((r.status_master as any)?.status_name) !== 'Resolved' && (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length || 0 },
-      tickets: { total: ticketsData?.length || 0, resolved: ticketsData?.filter((t: any) => mapStatus((t.status_master as any)?.status_name) === 'Resolved').length || 0, upcoming_due: ticketsData?.filter((t: any) => t.due_date && mapStatus((t.status_master as any)?.status_name) !== 'Resolved' && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length || 0 },
+      sub_workspaces: { 
+        total: workspaces.filter((w: any) => w.parent_workspace_id).length, 
+        resolved: workspaces.filter((w: any) => w.parent_workspace_id && mapStatus((w.status_master as any)?.status_name) === 'Resolved').length 
+      },
+      tasks: { 
+        total: tasks.filter((t: any) => !t.parent_task_id).length, 
+        resolved: tasks.filter((t: any) => !t.parent_task_id && mapStatus((t.status_master as any)?.status_name) === 'Resolved').length, 
+        upcoming_due: tasks.filter((t: any) => !t.parent_task_id && t.end_date && mapStatus((t.status_master as any)?.status_name) !== 'Resolved' && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.end_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length 
+      },
+      sub_tasks: { 
+        total: subTasks.length + tasks.filter((t: any) => !!t.parent_task_id).length, 
+        resolved: subTasks.filter((t: any) => mapStatus(t.status) === 'Resolved').length + tasks.filter((t: any) => !!t.parent_task_id && mapStatus((t.status_master as any)?.status_name) === 'Resolved').length 
+      },
+      requirements: { 
+        total: requirements.length, 
+        resolved: requirements.filter((r: any) => mapStatus((r.status_master as any)?.status_name) === 'Resolved').length, 
+        upcoming_due: requirements.filter((r: any) => r.due_date && mapStatus((r.status_master as any)?.status_name) !== 'Resolved' && (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(r.due_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length 
+      },
+      tickets: { 
+        total: tickets.length, 
+        resolved: tickets.filter((t: any) => mapStatus((t.status_master as any)?.status_name) === 'Resolved').length, 
+        upcoming_due: tickets.filter((t: any) => t.due_date && mapStatus((t.status_master as any)?.status_name) !== 'Resolved' && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) >= 0 && (new Date(t.due_date).getTime() - now) / (1000 * 3600 * 24) <= 3).length 
+      },
     };
 
     return { data: allItems, kpis: kpis };
