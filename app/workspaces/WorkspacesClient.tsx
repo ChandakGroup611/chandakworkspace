@@ -277,17 +277,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   // Auto-expand hierarchy path to prefetched workspace
   const autoExpandedPathsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (initialData?.prefetchWorkspaceId) {
-      setDebugLog(prev => prev + `\nFound prefetch ID: ${initialData.prefetchWorkspaceId}`);
-      if (workspaces.length === 0) {
-        setDebugLog(prev => prev + `\nWorkspaces flat list is empty`);
-        return;
-      }
+    if (initialData?.prefetchWorkspaceId && workspaces.length > 0) {
       const targetId = initialData.prefetchWorkspaceId;
-      if (autoExpandedPathsRef.current.has(targetId)) {
-        setDebugLog(prev => prev + `\nAlready auto-expanded for ${targetId}`);
-        return;
-      }
+      if (autoExpandedPathsRef.current.has(targetId)) return;
       autoExpandedPathsRef.current.add(targetId);
 
       // Build parent path from target up to root
@@ -295,21 +287,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       let currentId = targetId;
       while (currentId) {
         const current = workspaces.find(w => w.id === currentId);
-        if (current) {
-          setDebugLog(prev => prev + `\nFound current node: ${current.name} (parent: ${current.parent_workspace_id})`);
-          if (current.parent_workspace_id) {
-            path.push(current.parent_workspace_id);
-            currentId = current.parent_workspace_id;
-          } else {
-            break;
-          }
+        if (current && current.parent_workspace_id) {
+          path.push(current.parent_workspace_id);
+          currentId = current.parent_workspace_id;
         } else {
-          setDebugLog(prev => prev + `\nCould not find node in flat list for ID: ${currentId}`);
           break;
         }
       }
-      
-      setDebugLog(prev => prev + `\nResolved expansion path: ${path.join(' -> ')}`);
       
       // Expand all nodes in the path
       setExpandedNodes(prev => {
@@ -323,13 +307,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       // Fetch children for all ancestors sequentially to construct the tree
       const loadTreePath = async () => {
         const orderedPath = [...path].reverse(); // from root to leaf
-        setDebugLog(prev => prev + `\nLoading children for: ${orderedPath.join(', ')}`);
         
         for (const nodeId of orderedPath) {
           try {
-            setDebugLog(prev => prev + `\nFetching children for node: ${nodeId}...`);
             const children = await fetchHierarchyChildren(nodeId, 'WORKSPACE');
-            setDebugLog(prev => prev + `\nFetched ${children?.length || 0} children for node: ${nodeId}`);
             
             setMasterHierarchy(prev => {
               const insertChildren = (tree: any[]): any[] => {
@@ -349,16 +330,13 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               };
               return insertChildren(prev);
             });
-          } catch (err: any) {
-            setDebugLog(prev => prev + `\nFailed to prefetch children for node ${nodeId}: ${err.message}`);
+          } catch (err) {
             console.error(`Failed to prefetch children for path node ${nodeId}:`, err);
           }
         }
       };
       
       loadTreePath();
-    } else {
-      setDebugLog(prev => prev + `\nNo prefetch ID found. (initialData.prefetchWorkspaceId is: ${initialData?.prefetchWorkspaceId})`);
     }
   }, [initialData?.prefetchWorkspaceId, workspaces]);
 
@@ -425,7 +403,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
-  const [debugLog, setDebugLog] = useState<string>("Initializing...");
   
   // Dependency Checks
   const [checkingDependencyId, setCheckingDependencyId] = useState<string | null>(null);
@@ -1729,12 +1706,6 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {debugLog && (
-        <div style={{ position: 'fixed', bottom: 10, right: 10, background: 'black', color: 'lime', padding: 10, zIndex: 99999, fontSize: '10px', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto', border: '1px solid lime', borderRadius: '4px', maxWidth: '400px' }}>
-          {debugLog}
         </div>
       )}
 
