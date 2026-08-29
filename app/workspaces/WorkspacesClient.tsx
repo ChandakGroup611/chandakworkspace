@@ -292,9 +292,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   // Auto-expand hierarchy path to prefetched workspace
   const autoExpandedPathsRef = useRef<Set<string>>(new Set());
+  const workspaceParam = searchParams?.get('workspace');
+
   useEffect(() => {
-    if (initialData?.prefetchWorkspaceId && workspaces.length > 0) {
-      const targetId = initialData.prefetchWorkspaceId;
+    if (workspaceParam && workspaces.length > 0) {
+      const targetId = workspaceParam;
       if (autoExpandedPathsRef.current.has(targetId)) return;
       autoExpandedPathsRef.current.add(targetId);
 
@@ -369,8 +371,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       };
       
       loadTreePath();
+    } else if (!workspaceParam && mounted) {
+      // Clear expansion state to match default collapsed view on client navigation
+      setExpandedNodes({});
+      autoExpandedPathsRef.current.clear();
     }
-  }, [initialData?.prefetchWorkspaceId, workspaces, autoCollapse]);
+  }, [workspaceParam, workspaces, autoCollapse, mounted]);
 
   // Real-time presence tracking via server-side heartbeat
   const allUserIds = useMemo(
