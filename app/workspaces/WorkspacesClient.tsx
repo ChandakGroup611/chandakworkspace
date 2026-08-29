@@ -274,6 +274,72 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
   }, [initialData?.prefetchWorkspaceId, initialData?.workspaces]);
 
+  // Auto-expand hierarchy path to prefetched workspace
+  const autoExpandedPathsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (initialData?.prefetchWorkspaceId && workspaces.length > 0) {
+      const targetId = initialData.prefetchWorkspaceId;
+      if (autoExpandedPathsRef.current.has(targetId)) return;
+      autoExpandedPathsRef.current.add(targetId);
+
+      // Build parent path from target up to root
+      const path: string[] = [targetId];
+      let currentId = targetId;
+      while (currentId) {
+        const current = workspaces.find(w => w.id === currentId);
+        if (current && current.parent_workspace_id) {
+          path.push(current.parent_workspace_id);
+          currentId = current.parent_workspace_id;
+        } else {
+          break;
+        }
+      }
+      
+      // Expand all nodes in the path
+      setExpandedNodes(prev => {
+        const next = { ...prev };
+        path.forEach(id => {
+          next[id] = true;
+        });
+        return next;
+      });
+
+      // Fetch children for all ancestors sequentially to construct the tree
+      const loadTreePath = async () => {
+        const orderedPath = [...path].reverse(); // from root to leaf
+        
+        for (const nodeId of orderedPath) {
+          try {
+            const children = await fetchHierarchyChildren(nodeId, 'WORKSPACE');
+            
+            setMasterHierarchy(prev => {
+              const insertChildren = (tree: any[]): any[] => {
+                return tree.map(item => {
+                  if (item.id === nodeId) {
+                    return { 
+                      ...item, 
+                      children: HierarchyStateManager.mergePrefetchedChildren(item.children, children), 
+                      childrenFetched: true 
+                    };
+                  }
+                  if (item.children && item.children.length > 0) {
+                    return { ...item, children: insertChildren(item.children) };
+                  }
+                  return item;
+                });
+              };
+              return insertChildren(prev);
+            });
+          } catch (err) {
+            console.error(`Failed to prefetch children for path node ${nodeId}:`, err);
+          }
+        }
+      };
+      
+      loadTreePath();
+    }
+  }, [initialData?.prefetchWorkspaceId, workspaces, initialData?.workspaces]);
+
   // Real-time presence tracking via server-side heartbeat
   const allUserIds = useMemo(
     () => allUsers.map((u: any) => u.id).filter(Boolean),

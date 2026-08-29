@@ -353,6 +353,10 @@ export default function Sidebar() {
                             isSubActive = true;
                           } else if (sub.href === '/requirements' && searchParams?.get('from') === 'approvals') {
                             isSubActive = false;
+                          } else if (sub.href === '/workspaces' && pathname === '/workspaces/tasks' && searchParams?.get('workspaceId')) {
+                            isSubActive = true;
+                          } else if (sub.href === '/workspaces/tasks' && pathname === '/workspaces/tasks' && searchParams?.get('workspaceId')) {
+                            isSubActive = false;
                           }
                           
                           return (
