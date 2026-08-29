@@ -39,7 +39,8 @@ export default async function Page() {
       // If missing and they aren't a SUPER_ADMIN (admins can sometimes skip), redirect
       if (isMissingOrgDetails) {
         // Double check they aren't SUPER_ADMIN before forcing redirect
-        const { data: role } = await supabase.from("roles").select("code").eq("id", profile.role_id).single();
+        const { supabaseAdmin } = await import("@/lib/supabase/service_role");
+        const { data: role } = await supabaseAdmin.from("roles").select("code").eq("id", profile.role_id).single();
         if (role?.code !== "SUPER_ADMIN") {
           redirect("/profile?setup=true");
         }

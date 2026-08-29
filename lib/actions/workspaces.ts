@@ -1110,12 +1110,11 @@ export async function updateWorkspace(id: string, formData: any) {
         await supabaseAdmin.from("workspace_members").insert({ workspace_id: id, user_id: uid, role, is_deleted: false });
       }
     }
-  }
 
-  // Dispatch Notifications for updates if new assignees were provided
-  if (formData.assigneeIds !== undefined) {
-    const assigneesArray = Array.from(new Set(formData.assigneeIds)).filter(Boolean) as string[];
-    for (const assigneeId of assigneesArray) {
+    // Dispatch Notifications for updates if new assignees were provided
+    const newAssignees = assigneesArray.filter(uid => !existingMembers?.some((m: any) => m.user_id === uid && !m.is_deleted));
+
+    for (const assigneeId of newAssignees) {
       if (assigneeId === userId) continue; // Skip the updater
 
       const isSub = !!formData.parent_workspace_id;

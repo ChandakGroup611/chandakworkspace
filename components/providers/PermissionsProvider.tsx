@@ -3,6 +3,7 @@
 import React, { createContext, useContext, ReactNode, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/utils/supabase/client";
+import { fetchServerPermissions } from "@/lib/actions/auth-permissions";
 
 const supabase = createClient();
 
@@ -59,7 +60,7 @@ interface UnifiedAuthData {
   useEffect(() => {
     // 1. Listen for Auth State Changes (Login, Logout, Token Refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "TOKEN_REFRESHED") {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
       }
     });
@@ -92,27 +93,9 @@ interface UnifiedAuthData {
       if (!user) return { profile: null, permissions: [], roleCode: null };
 
       // PHASE 5: REAL-TIME PERMISSIONS RESOLUTION
-      // We directly query the roles and role_permissions tables to avoid materialized view staleness.
-      const [profileRes, secondaryRolesRes] = await Promise.all([
-        supabase
-          .from("user_master")
-          .select("id, full_name, email, profile_photo, is_deleted, created_at, role_id, role:roles(code, role_permissions(permissions(code)))")
-          .eq("id", user.id)
-          .single(),
-        supabase
-          .from("user_roles")
-          .select("role:roles(code, role_permissions(permissions(code)))")
-          .eq("user_id", user.id)
-      ]);
+      // We directly query the roles and role_permissions tables via Server Action to bypass RLS staleness.
+      const { profileData, secondaryRoles } = await fetchServerPermissions();
 
-      const profileData = profileRes.data;
-      if (profileRes.error) {
-        console.error("[PermissionsProvider] Failed to fetch user profile:", profileRes.error);
-      }
-      if (secondaryRolesRes.error) {
-        console.error("[PermissionsProvider] Failed to fetch secondary roles:", secondaryRolesRes.error);
-      }
-      
       // Safety net: if they somehow bypassed the server layout and are deleted
       if (profileData?.is_deleted) {
         supabase.auth.signOut();
@@ -121,17 +104,6 @@ interface UnifiedAuthData {
       }
 
       let primaryRole = profileData?.role;
-      
-      // Fallback if the join failed due to RLS or PostgREST issue
-      if (!primaryRole && profileData?.role_id) {
-        console.warn("[PermissionsProvider] Join failed, attempting manual role fetch");
-        const { data: fallbackRole } = await supabase
-          .from("roles")
-          .select("code, role_permissions(permissions(code))")
-          .eq("id", profileData.role_id)
-          .single();
-        if (fallbackRole) primaryRole = fallbackRole as any;
-      }
 
       let baseRoleCode = null;
       if (profileData) {
@@ -162,8 +134,8 @@ interface UnifiedAuthData {
       }
 
       // Extract permissions from secondary roles
-      if (secondaryRolesRes.data) {
-        secondaryRolesRes.data.forEach((ur: any) => {
+      if (secondaryRoles) {
+        secondaryRoles.forEach((ur: any) => {
           const roleObj = Array.isArray(ur.role) ? ur.role[0] : ur.role;
           if (roleObj?.role_permissions) {
             roleObj.role_permissions.forEach((rp: any) => {

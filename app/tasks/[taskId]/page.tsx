@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, MessageCircle, ClipboardList, Type, AlignLeft } from "lucide-react";
+import { TaskBackButton } from "@/components/tasks/TaskBackButton";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { EditableTaskTitle } from "@/components/tasks/EditableTaskTitle";
 import { getTaskDetails, getTaskStatuses, getDepartments } from "@/lib/actions/tasks";
@@ -53,16 +54,13 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
       <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl transition-all duration-500 bg-surface/40 p-6 mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-5">
           <div className="flex flex-wrap items-center gap-4">
-            <Link
-              href={task.parent_task_id ? `/tasks/${task.parent_task_id}` : (task.workspace_id ? `/workspaces/tasks?workspaceId=${task.workspace_id}` : "/workspaces")}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-theme-icon hover:opacity-80 transition-opacity"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to {task.parent_task_id ? "Parent Task" : "Task List"}
-            </Link>
+            <TaskBackButton 
+              fallbackHref={task.parent_task_id ? `/tasks/${task.parent_task_id}` : (task.sub_workspace_id ? `/workspaces/tasks?workspaceId=${task.sub_workspace_id}` : (task.workspace_id ? `/workspaces/tasks?workspaceId=${task.workspace_id}` : "/workspaces"))}
+              label={`Back to ${task.parent_task_id ? "Parent Task" : "Task List"}`}
+            />
             <span className="hidden sm:inline text-muted/50 dark:text-subtle/50">|</span>
             <Link
-              href="/workspaces"
+              href={`/workspaces${(task.sub_workspace_id || task.workspace_id) ? `?workspace=${task.sub_workspace_id || task.workspace_id}` : ''}`}
               className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-foreground transition-colors"
             >
               Back to Workspace List

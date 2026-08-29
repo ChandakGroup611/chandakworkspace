@@ -6,8 +6,33 @@ import { WidgetRegistry } from "./WidgetRegistry";
 import { CustomizeDashboardModal } from "./CustomizeDashboardModal";
 import { MetricsListModal } from "../widgets/MetricsListModal";
 import { AppButton } from "@/components/ui/AppButton";
-import { Settings2 } from "lucide-react";
+import { Settings2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+class WidgetErrorBoundary extends React.Component<{ children: React.ReactNode, type: string }, { hasError: boolean, error: Error | null }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error(`[DashboardEngine] Widget "${this.props.type}" crashed:`, error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center p-6 border border-danger/20 bg-danger/5 rounded-2xl text-center">
+          <AlertTriangle className="w-8 h-8 text-danger/50 mb-3" />
+          <h3 className="text-sm font-semibold text-danger">Widget Unavailable</h3>
+          <p className="text-xs text-danger/70 mt-1 max-w-[200px] truncate">{this.state.error?.message || "An error occurred"}</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export interface DashboardEngineProps {
   metrics: any[];
@@ -71,7 +96,9 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                   "h-full"
                 )}
               >
-                <WidgetComponent metrics={metrics} kpis={kpis} {...widgetConfig.props} onOpenList={() => setIsListModalOpen(true)} />
+                <WidgetErrorBoundary type={widgetConfig.type}>
+                  <WidgetComponent metrics={metrics} kpis={kpis} {...widgetConfig.props} onOpenList={() => setIsListModalOpen(true)} />
+                </WidgetErrorBoundary>
               </div>
             );
           })}

@@ -117,17 +117,16 @@ export default function UserProfileEditor() {
       
       if (missingDetails) {
         // Fetch masters for onboarding setup
-        const [deptRes, desigRes, usersRes] = await Promise.all([
-          supabase.from("departments").select("id, name").eq("is_active", true).order("name"),
-          supabase.from("designations").select("id, name, department_id").eq("is_active", true).order("name"),
+        const { fetchOnboardingMasters } = await import("@/lib/actions/auth-permissions");
+        const [masters, usersRes] = await Promise.all([
+          fetchOnboardingMasters(),
           supabase.from("user_master").select("id, full_name, profile_photo, role_id").eq("is_active", true).neq("id", authUser.id)
         ]);
         
-        if (deptRes.data) setDepartments(deptRes.data);
-        if (desigRes.data) setDesignations(desigRes.data);
+        if (masters.departments) setDepartments(masters.departments);
+        if (masters.designations) setDesignations(masters.designations);
         if (usersRes.data) {
-           const { data: roles } = await supabase.from("roles").select("id, code");
-           const viewerRoleId = roles?.find(r => r.code === "VIEWER")?.id;
+           const viewerRoleId = masters.roles?.find(r => r.code === "VIEWER")?.id;
            setManagers(usersRes.data.filter(u => u.role_id !== viewerRoleId));
         }
       }
