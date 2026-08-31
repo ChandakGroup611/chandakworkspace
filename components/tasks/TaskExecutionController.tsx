@@ -852,6 +852,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isEffectivelyFrozen = pendingStatus ? (targetStatusObj?.is_closed ?? isFrozen) : isFrozen;
   const canBypassFreeze = task.currentUserIsSuperAdmin || hasPermission("WORKSPACES_MANAGE") || hasPermission("REQUIREMENTS_MANAGE");
   const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
+  const canEditDates = !readOnly && !effectivelyFrozenForUser && (task.currentUserIsSuperAdmin || task.assigned_to === task.currentUserId);
   
   // Roles
   const isOwner = task.currentUserCanAct || canBypassFreeze; // Owner/Assignee or SuperAdmin/Executive
@@ -981,21 +982,29 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> <span className="text-cyan-600 dark:text-cyan-400 font-bold">Duration</span>
                 </span>
                 <div className="theme-data-value text-foreground h-9 flex items-center">
-                  {task.currentUserIsSuperAdmin ? (
+                  {canEditDates ? (
                     <div className="flex items-center gap-1 text-xs">
                       <input
                         type="number"
                         className="w-16 px-2 py-0.5 rounded-md theme-card-structural focus:outline-none focus:ring-2 focus:ring-theme-btn-primary text-center font-bold text-foreground theme-input-structural text-foreground"
                         value={task.start_date && task.end_date ? Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0}
                         onChange={(e) => {
-                          if (!task.start_date) return;
                           const days = parseInt(e.target.value, 10);
                           if (!isNaN(days) && days > 0) {
-                            const startDate = new Date(task.start_date);
-                            startDate.setDate(startDate.getDate() + (days - 1));
+                            const currentStart = task.start_date ? task.start_date : new Date().toISOString().split('T')[0];
+                            const startDate = new Date(currentStart);
+                            startDate.setUTCDate(startDate.getUTCDate() + (days - 1));
                             const newEndDateStr = startDate.toISOString().split('T')[0];
-                            setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDateStr }));
-                            setTask((prev: any) => ({ ...prev, end_date: newEndDateStr }));
+                            setPendingTaskUpdates(prev => ({ 
+                              ...prev, 
+                              start_date: currentStart, 
+                              end_date: newEndDateStr 
+                            }));
+                            setTask((prev: any) => ({ 
+                              ...prev, 
+                              start_date: currentStart, 
+                              end_date: newEndDateStr 
+                            }));
                           }
                         }}
                       /> <span className="text-muted font-medium text-xs">Days</span>
@@ -1014,15 +1023,33 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <CalendarDays className="w-3.5 h-3.5 text-success" /> <span className="text-success dark:text-success font-bold">Start Date</span> <span className="text-danger">*</span>
                 </span>
                 <div className="h-9 flex items-center">
-                  {task.currentUserIsSuperAdmin ? (
+                  {canEditDates ? (
                     <input
                       type="date"
                       className="w-full h-9 px-2.5 rounded-lg theme-card-structural text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all theme-input-structural text-foreground"
                       value={task.start_date ? String(task.start_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newStartDate = e.target.value;
-                        setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
-                        setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
+                        if (newStartDate && task.start_date && task.end_date) {
+                          // Keep existing duration (in days) constant
+                          const days = Math.max(1, Math.round((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1);
+                          const sDate = new Date(newStartDate);
+                          sDate.setUTCDate(sDate.getUTCDate() + (days - 1));
+                          const newEndDateStr = sDate.toISOString().split('T')[0];
+                          setPendingTaskUpdates(prev => ({ 
+                            ...prev, 
+                            start_date: newStartDate, 
+                            end_date: newEndDateStr 
+                          }));
+                          setTask((prev: any) => ({ 
+                            ...prev, 
+                            start_date: newStartDate, 
+                            end_date: newEndDateStr 
+                          }));
+                        } else {
+                          setPendingTaskUpdates(prev => ({ ...prev, start_date: newStartDate }));
+                          setTask((prev: any) => ({ ...prev, start_date: newStartDate }));
+                        }
                       }}
                     />
                   ) : (
@@ -1039,13 +1066,17 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <CalendarCheck className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Due Date</span> <span className="text-danger">*</span>
                 </span>
                 <div className="h-9 flex items-center">
-                  {task.currentUserIsSuperAdmin ? (
+                  {canEditDates ? (
                     <input
                       type="date"
                       className="w-full h-9 px-2.5 rounded-lg theme-card-structural text-foreground text-xs sm:theme-data-value focus:outline-none focus:ring-2 focus:ring-theme-btn-primary dark:border-theme-btn-primary/40 dark:bg-theme-btn-primary/10 dark:shadow-[0_0_10px_rgba(99,102,241,0.15)] transition-all theme-input-structural text-foreground"
                       value={task.end_date ? String(task.end_date).substring(0, 10) : ""}
                       onChange={(e) => {
                         const newEndDate = e.target.value;
+                        if (newEndDate && task.start_date && newEndDate < task.start_date) {
+                          toast.error("Due date cannot be earlier than start date");
+                          return;
+                        }
                         setPendingTaskUpdates(prev => ({ ...prev, end_date: newEndDate }));
                         setTask((prev: any) => ({ ...prev, end_date: newEndDate }));
                       }}

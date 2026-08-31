@@ -102,6 +102,17 @@ export async function createTask(payload: {
       console.warn("[createTask] Prevented duplicate task creation");
       return { success: true, warning: "Task was already created recently. Duplicate prevented." };
     }
+    let startDate = (payload.start_date && payload.start_date.trim()) ? payload.start_date.trim() : null;
+    let endDate = (payload.end_date && payload.end_date.trim()) ? payload.end_date.trim() : null;
+
+    if (endDate && !startDate) {
+      startDate = new Date().toISOString().split('T')[0];
+    }
+
+    if (startDate && endDate && startDate > endDate) {
+      return { error: "Start date cannot be later than target due date" };
+    }
+
     const { data: task, error } = await supabaseAdmin
       .from('tasks')
       .insert([{
@@ -115,8 +126,8 @@ export async function createTask(payload: {
         priority_id: cleanUUID(payload.priority_id),
         department_id: cleanUUID(payload.department_id),
         status_id: finalStatusId,
-        start_date: (payload.start_date && payload.start_date.trim()) ? payload.start_date : null,
-        end_date: (payload.end_date && payload.end_date.trim()) ? payload.end_date : null,
+        start_date: startDate,
+        end_date: endDate,
         estimated_hours: payload.estimated_hours,
         custom_fields: payload.custom_fields,
         created_by: creatorId,
@@ -696,7 +707,7 @@ export async function updateTask(taskId: string, payload: any) {
   const userId = user?.id;
   if (!userId) return { error: "Unauthenticated" };
 
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by, start_date, end_date').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
   if (task.assigned_to !== userId && task.created_by !== userId) {
@@ -779,6 +790,12 @@ export async function updateTask(taskId: string, payload: any) {
   }
   if (updatePayload.parent_task_id !== undefined) {
     updatePayload.parent_task_id = cleanField(updatePayload.parent_task_id);
+  }
+
+  const finalStartDate = updatePayload.start_date !== undefined ? updatePayload.start_date : task.start_date;
+  const finalEndDate = updatePayload.end_date !== undefined ? updatePayload.end_date : task.end_date;
+  if (finalStartDate && finalEndDate && finalStartDate > finalEndDate) {
+    return { error: "Start date cannot be later than target due date" };
   }
 
   const { error } = await supabaseAdmin.from('tasks').update(updatePayload).eq('id', taskId);
@@ -1371,6 +1388,17 @@ export async function executeTaskBatchOperation(payload: {
      updatePayload.department_id = departmentChange.new_id;
   }
   
+  if (updatePayload.start_date !== undefined || updatePayload.end_date !== undefined) {
+    const { data: taskData } = await supabaseAdmin.from('tasks').select('start_date, end_date').eq('id', taskId).single();
+    if (taskData) {
+      const finalStartDate = updatePayload.start_date !== undefined ? (updatePayload.start_date && typeof updatePayload.start_date === 'string' ? updatePayload.start_date.trim() : null) : taskData.start_date;
+      const finalEndDate = updatePayload.end_date !== undefined ? (updatePayload.end_date && typeof updatePayload.end_date === 'string' ? updatePayload.end_date.trim() : null) : taskData.end_date;
+      if (finalStartDate && finalEndDate && finalStartDate > finalEndDate) {
+        return { error: "Start date cannot be later than target due date" };
+      }
+    }
+  }
+
   if (Object.keys(updatePayload).length > 0) {
     const { error: updateError } = await supabaseAdmin.from('tasks').update(updatePayload).eq('id', taskId);
     if (updateError) return { error: updateError.message };

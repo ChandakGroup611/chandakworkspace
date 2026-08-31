@@ -24,6 +24,60 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
   const [linkUrl, setLinkUrl] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [dueDays, setDueDays] = useState("");
+
+  const handleDueDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setDueDays(val);
+    const days = parseInt(val, 10);
+    if (!isNaN(days) && days > 0) {
+      let currentStart = startDate;
+      if (!currentStart) {
+        currentStart = localTodayString;
+        setStartDate(currentStart);
+      }
+      const sDate = new Date(currentStart);
+      sDate.setUTCDate(sDate.getUTCDate() + (days - 1));
+      setEndDate(sDate.toISOString().split('T')[0]);
+    }
+  };
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStart = e.target.value;
+    setStartDate(newStart);
+    if (newStart) {
+      const days = parseInt(dueDays, 10);
+      if (!isNaN(days) && days > 0) {
+        const sDate = new Date(newStart);
+        sDate.setUTCDate(sDate.getUTCDate() + (days - 1));
+        setEndDate(sDate.toISOString().split('T')[0]);
+      } else if (endDate) {
+        const sDate = new Date(newStart);
+        const eDate = new Date(endDate);
+        const diff = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (diff > 0) {
+          setDueDays(String(diff));
+        } else {
+          setDueDays("");
+        }
+      }
+    }
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEnd = e.target.value;
+    setEndDate(newEnd);
+    if (startDate && newEnd) {
+      const sDate = new Date(startDate);
+      const eDate = new Date(newEnd);
+      const diff = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      if (diff > 0) {
+        setDueDays(String(diff));
+      } else {
+        setDueDays("");
+      }
+    }
+  };
   
   const [customFields, setCustomFields] = useState<any[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -172,6 +226,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
         department_id: departmentId || null,
         start_date: startDate,
         end_date: endDate,
+        due_days: dueDays ? parseInt(dueDays, 10) : null,
         parent_task_id: parentTaskId || null,
         sprint_id: sprintId || null,
         assigned_to: assignees[0] || null,
@@ -271,14 +326,25 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <h3 className="text-sm font-semibold tracking-tight text-foreground">Timeline & Classification</h3>
             </div>
             
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="grid grid-cols-4 gap-2 mb-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">Duration (Days)</label>
+                <AppInput 
+                  type="number" 
+                  min="1"
+                  placeholder="e.g. 5"
+                  value={dueDays} 
+                  onChange={handleDueDaysChange} 
+                  className={"bg-surface"} 
+                />
+              </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date <span className="text-danger">*</span></label>
                 <AppInput 
                   type="date" 
                   min={localTodayString} 
                   value={startDate} 
-                  onChange={e => setStartDate(e.target.value)} 
+                  onChange={handleStartDateChange} 
                   className={"bg-surface"} 
                 />
               </div>
@@ -288,7 +354,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   type="date" 
                   min={startDate || localTodayString} 
                   value={endDate} 
-                  onChange={e => setEndDate(e.target.value)} 
+                  onChange={handleEndDateChange} 
                   className={"bg-surface"} 
                 />
               </div>
