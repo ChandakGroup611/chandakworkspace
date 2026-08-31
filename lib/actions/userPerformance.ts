@@ -292,6 +292,8 @@ export async function fetchUserPerformanceWorkingSheet(
     let taskCompleted = 0;
     let taskActive = 0;
     let taskOverdue = 0;
+    let subTaskCompleted = 0;
+    let subTaskActive = 0;
 
     tasksData?.forEach((t: any) => {
       const isSubTask = !!t.parent_task_id;
@@ -330,9 +332,6 @@ export async function fetchUserPerformanceWorkingSheet(
     });
 
     // B. Sub Tasks
-    let subTaskCompleted = 0;
-    let subTaskActive = 0;
-
     subTasksData?.forEach((st: any) => {
       const rawStatus = st.status || "Pending";
       const status = mapStatus(rawStatus);
