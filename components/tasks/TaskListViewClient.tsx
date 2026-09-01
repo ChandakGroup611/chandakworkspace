@@ -20,7 +20,7 @@ import {
 import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield } from "lucide-react";
 import Link from "next/link";
 import { deleteTask, getTaskStatuses, updateTaskStatusInline, getDepartments, executeTaskBatchOperation, createTask } from "@/lib/actions/tasks";
-import { fetchTasksByWorkspace, fetchAllTasks, fetchWorkspaces } from "@/lib/actions/workspaces";
+import { fetchTasksByWorkspace, fetchAllTasks, fetchWorkspaces, fetchPriorities } from "@/lib/actions/workspaces";
 import { createClient } from "@/utils/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -307,10 +307,25 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
     getTaskStatuses().then(setMasterStatuses).catch(console.error);
     getDepartments().then(setDepartments).catch(console.error);
     getAllReportCustomFields().then(setDynamicFields).catch(console.error);
+    fetchPriorities().then(setMasterPriorities).catch(console.error);
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.id) setCurrentUserId(data.user.id);
+    });
+    supabase.from('user_master').select('id, full_name, email, user_code').eq('is_active', true).eq('is_deleted', false).order('full_name').then(({ data }) => {
+      if (data) setMasterAssignees(data);
+    });
   }, []);
 
-  const uniqueStatuses = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[], [tasks]);
-  const uniquePriorities = useMemo(() => Array.from(new Set(tasks.map((t: any) => t.priority?.name).filter(Boolean))) as string[], [tasks]);
+  const uniqueStatuses = useMemo(() => {
+    if (masterStatuses.length > 0) return masterStatuses.map(s => s.name);
+    return Array.from(new Set(tasks.map((t: any) => t.status?.name).filter(Boolean))) as string[];
+  }, [tasks, masterStatuses]);
+
+  const uniquePriorities = useMemo(() => {
+    if (masterPriorities.length > 0) return masterPriorities.map(p => p.name || p.priority_name);
+    return Array.from(new Set(tasks.map((t: any) => t.priority?.name).filter(Boolean))) as string[];
+  }, [tasks, masterPriorities]);
   const router = useRouter();
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -418,6 +433,14 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
         const isExecutor = t.executors?.some((e: any) => e.id === currentUserId);
         const isReviewer = t.reviewers?.some((r: any) => r.id === currentUserId);
         if (!isExecutor && !isReviewer) return false;
+      }
+
+      if (selectedWorkspaceId) {
+        const matchesWs = t.workspace_id === selectedWorkspaceId || 
+                          t.workspace?.id === selectedWorkspaceId || 
+                          t.sub_workspace?.id === selectedWorkspaceId ||
+                          t.workspace?.parent_workspace_id === selectedWorkspaceId;
+        if (!matchesWs) return false;
       }
       
       if (selectedStatus && t.status?.name !== selectedStatus) return false;

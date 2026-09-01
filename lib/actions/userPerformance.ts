@@ -157,7 +157,7 @@ export async function fetchUserPerformanceWorkingSheet(
       return "Active";
     };
 
-    // 2. Fetch Tasks (Assigned or Created)
+    // 2. Fetch Tasks (Assigned to Target User)
     let tasksQuery = supabaseAdmin
       .from("tasks")
       .select(`
@@ -167,28 +167,28 @@ export async function fetchUserPerformanceWorkingSheet(
         start_date, end_date, is_deleted, parent_task_id,
         workspaces:workspaces(workspace_name)
       `)
-      .or(`assigned_to.eq.${targetUserId},created_by.eq.${targetUserId}`)
+      .eq("assigned_to", targetUserId)
       .eq("is_deleted", false);
 
     if (rangeCutoff) {
       tasksQuery = tasksQuery.gte("created_at", rangeCutoff.toISOString());
     }
 
-    // 3. Fetch Sub Tasks (Assigned or Created)
+    // 3. Fetch Sub Tasks (Assigned to Target User)
     let subTasksQuery = supabaseAdmin
       .from("sub_tasks")
       .select(`
         id, subject, status, created_at, updated_at, created_by, assigned_to, is_deleted,
         task_id, tasks:tasks(id, subject, task_code)
       `)
-      .or(`assigned_to.eq.${targetUserId},created_by.eq.${targetUserId}`)
+      .eq("assigned_to", targetUserId)
       .eq("is_deleted", false);
 
     if (rangeCutoff) {
       subTasksQuery = subTasksQuery.gte("created_at", rangeCutoff.toISOString());
     }
 
-    // 4. Fetch Tickets (Assignee or Creator)
+    // 4. Fetch Tickets (Assigned to Target User)
     let ticketsQuery = supabaseAdmin
       .from("tickets")
       .select(`
@@ -197,7 +197,7 @@ export async function fetchUserPerformanceWorkingSheet(
         priority_id, priority:priority_master(priority_name),
         due_date, is_deleted
       `)
-      .or(`assignee_id.eq.${targetUserId},creator_id.eq.${targetUserId}`)
+      .eq("assignee_id", targetUserId)
       .eq("is_deleted", false);
 
     if (rangeCutoff) {

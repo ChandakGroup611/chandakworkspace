@@ -257,7 +257,7 @@ export async function fetchLiveDashboardMetrics() {
         if (diffDays < 0) escalatedCount++; // Overdue
       }
 
-      const assignedUserId = t.assigned_to || t.created_by || null;
+      const assignedUserId = t.assigned_to || null;
       const assignedUser = assignedUserId ? userMap[assignedUserId] : null;
 
       allItems.push({
@@ -280,7 +280,7 @@ export async function fetchLiveDashboardMetrics() {
 
     subTasks.forEach((t: any) => {
       const status = mapStatus(t.status);
-      const assignedUserId = t.assigned_to || t.created_by || null;
+      const assignedUserId = t.assigned_to || null;
       const assignedUser = assignedUserId ? userMap[assignedUserId] : null;
 
       allItems.push({
@@ -308,7 +308,7 @@ export async function fetchLiveDashboardMetrics() {
         escalatedCount++;
       }
 
-      const assignedUserId = t.assignee_id || t.creator_id || null;
+      const assignedUserId = t.assignee_id || null;
       const assignedUser = assignedUserId ? userMap[assignedUserId] : null;
 
       allItems.push({

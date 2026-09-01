@@ -364,13 +364,14 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
 
 
     // 2. Fetch independent data concurrently to avoid waterfalls
-    const [profileRes, workspaces, managedDeptsRes, companies, priorities, taskStatuses] = await Promise.all([
+    const [profileRes, workspaces, managedDeptsRes, companies, priorities, taskStatuses, allUsersRes] = await Promise.all([
       supabase.from("user_master").select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at").eq("id", user.id).single(),
       getVisibleWorkspaces(user.id), // Independent, can run concurrently
       supabase.from("departments").select("id").eq("manager_id", user.id),
       fetchCompanies(),
       fetchPriorities(),
-      import('@/lib/actions/tasks').then(m => m.getTaskStatuses())
+      import('@/lib/actions/tasks').then(m => m.getTaskStatuses()),
+      supabaseAdmin.from("user_master").select("id, full_name, user_code, email").eq("is_active", true).eq("is_deleted", false).order("full_name", { ascending: true })
     ]);
 
     if (profileRes.error) {
@@ -399,7 +400,7 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       prefetchStakeholders: [], // DEFERRED TO LAZY LOAD
       masterHierarchy,
       taskStatuses,
-      allUsers: [] // Deferred to lazy load on client
+      allUsers: allUsersRes.data || []
     };
   } catch (err: any) {
     console.error("[fetchWorkspaceDashboardData] Error:", err?.message || String(err));
@@ -647,19 +648,16 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     }
   }
 
-  // Strictly enforce user assignment filtering
+  // Strictly enforce user assignment filtering (ONLY when explicitly filtered by user/assignee)
   tasks = tasks.filter((t: any) => {
     if (filters?.assigneeId) {
       const isAssigned = t.assigned_to === filters.assigneeId || 
-                         t.owner_id === filters.assigneeId || 
-                         t.created_by === filters.assigneeId || 
                          targetAssigneeTaskIds.has(t.id) ||
                          t.assignees?.some((a: any) => a.user_id === filters.assigneeId);
       if (!isAssigned) return false;
-    } else if (filters?.myTasksOnly || !canManageAll) {
+    }
+    if (filters?.myTasksOnly) {
       const isMyTask = t.assigned_to === user.id || 
-                       t.owner_id === user.id || 
-                       t.created_by === user.id || 
                        myParticipantTaskIds.has(t.id) ||
                        t.assignees?.some((a: any) => a.user_id === user.id);
       if (!isMyTask) return false;
@@ -710,6 +708,20 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     const { data: fetchedWs, error: wsErr } = await wsQuery.order('created_at', { ascending: false });
     if (!wsErr && fetchedWs) {
       workspaces = fetchedWs;
+    }
+
+    if (filters?.assigneeId) {
+      workspaces = workspaces.filter(w => 
+        w.owner_id === filters.assigneeId || 
+        w.created_by === filters.assigneeId || 
+        w.members?.some((m: any) => m.user_id === filters.assigneeId)
+      );
+    } else if (filters?.myTasksOnly) {
+      workspaces = workspaces.filter(w => 
+        w.owner_id === user.id || 
+        w.created_by === user.id || 
+        w.members?.some((m: any) => m.user_id === user.id)
+      );
     }
   }
 

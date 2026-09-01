@@ -1,29 +1,26 @@
 "use client";
 import { toast } from 'react-toastify';
 
-import React, { useState, useEffect } from "react";
-import { AppCard, AppCardHeader, AppCardTitle, AppCardContent } from "@/components/ui/AppCard";
+import React, { useState } from "react";
+import { AppCard, AppCardHeader } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppBadge } from "@/components/ui/AppBadge";
-import { FolderKanban, Search, Trash2, Edit2, Eye, Building2, CheckCircle2, ArrowLeft } from "lucide-react";
-import { useTheme } from "@/components/theme/ThemeProvider";
+import { FolderKanban, Search, Trash2, Edit2, Eye, ArrowLeft } from "lucide-react";
 import { AppTable, AppTableContainer, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { AppInput } from "@/components/ui/AppInput";
 import { useRouter } from "next/navigation";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspaces }: { initialWorkspaces: any[], initialSubWorkspaces: any[] }) {
-  const { theme } = useTheme();
   const router = useRouter();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const [searchQuery, setSearchQuery] = useState("");
   
   // Combine workspaces and sub-workspaces for the list
   const combinedItems = [
-    ...initialWorkspaces.map(w => ({ ...w, type: 'workspace' })),
-    ...initialSubWorkspaces.map(sw => ({ ...sw, type: 'sub_workspace' }))
+    ...(initialWorkspaces || []).map(w => ({ ...w, type: 'workspace' })),
+    ...(initialSubWorkspaces || []).map(sw => ({ ...sw, type: 'sub_workspace' }))
   ];
 
   const filteredItems = combinedItems.filter(item => 
@@ -32,19 +29,14 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   );
 
   const handleView = (item: any) => {
-    // If we want to open the workspace hub and focus on this workspace
-    router.push(`/workspaces?workspaceId=${item.id}`);
+    router.push(`/workspaces?workspace=${item.id}`);
   };
 
   const handleUpdate = (item: any) => {
-    // Update might open the master UI for workspaces or subworkspaces
-    // For now we'll route to the workspaces hub which has the update functionality
-    router.push(`/workspaces?workspaceId=${item.id}&action=edit`);
+    router.push(`/workspaces?workspace=${item.id}&action=edit`);
   };
 
   const handleDelete = (item: any) => {
-    // Deletion would require hitting the API
-    // We'll stub this out for now, to be implemented via an API route or server action
     toast.warning(`Delete action requested for ${item.type === 'workspace' ? item.workspace_name : item.name}`);
   };
 
@@ -67,7 +59,7 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   const canManage = hasPermission("ENROLLED_WORKSPACES_MANAGE");
 
   return (
-    <div className={`p-8 w-full max-w-7xl mx-auto space-y-6 ${"text-foreground"}`}>
+    <div className="p-8 w-full max-w-7xl mx-auto space-y-6 text-foreground">
       <div className="flex items-center justify-between border-b pb-4 border-border dark:border-border">
         <div className="flex items-center gap-3">
           <AppButton variant="outline" size="sm" onClick={() => router.push("/")} leftIcon={<ArrowLeft className="h-4 w-4" />}>
@@ -75,12 +67,12 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
           </AppButton>
           <div className="space-y-1">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FolderKanban className="h-6 w-6 text-success" />
-            Enrolled Workspaces
-          </h1>
-          <p className="text-sm text-muted">
-            A list of all explicit workspace and sub-workspace nodes you are a member of.
-          </p>
+              <FolderKanban className="h-6 w-6 text-success" />
+              Enrolled Workspaces
+            </h1>
+            <p className="text-sm text-muted">
+              A list of all explicit workspace and sub-workspace nodes you are a member of.
+            </p>
           </div>
         </div>
       </div>
@@ -171,4 +163,3 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
     </div>
   );
 }
-

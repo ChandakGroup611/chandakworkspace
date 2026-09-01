@@ -561,20 +561,21 @@ export function WorkspaceMasterTable({
     };
 
   return (
-    <div className="w-full font-sans overflow-x-auto">
+    <div className="w-full font-sans">
       <div className="w-full flex flex-col min-w-[1300px] pb-10">
-        {/* Header */}
-        <div className={`sticky top-0 z-20 grid items-center text-[13px] tracking-wider font-bold uppercase text-muted border-b border-border/50 pb-2 mb-1 ${
-          "bg-background/90 text-muted"
-        }`} style={{ gridTemplateColumns: gridCols }}>
-          <div className="py-3 px-4 pl-[64px]">Entity Name</div>
-          <div className="py-3 px-4">Created Date</div>
-          <div className="py-3 px-4 text-center">Creator</div>
-          <div className="py-3 px-4 text-center">Owner</div>
-          <div className="py-3 px-4 text-center">Executives</div>
-          <div className="py-3 px-4 text-center">Watchers</div>
-          <div className="py-3 px-4 text-center">Create</div>
-          <div className="py-3 px-4 text-center">Actions</div>
+        {/* Frozen Sticky Header */}
+        <div 
+          className="sticky top-0 z-30 grid items-center text-[12px] tracking-wider font-bold uppercase text-muted border-b border-border bg-surface/95 backdrop-blur-md pb-2.5 pt-2.5 mb-1 shadow-sm" 
+          style={{ gridTemplateColumns: gridCols }}
+        >
+          <div className="py-2 px-4 pl-[64px]">Entity Name</div>
+          <div className="py-2 px-4">Created Date</div>
+          <div className="py-2 px-4 text-center">Creator</div>
+          <div className="py-2 px-4 text-center">Owner</div>
+          <div className="py-2 px-4 text-center">Executives</div>
+          <div className="py-2 px-4 text-center">Watchers</div>
+          <div className="py-2 px-4 text-center">Create</div>
+          <div className="py-2 px-4 text-center">Actions</div>
         </div>
 
         {/* Body */}

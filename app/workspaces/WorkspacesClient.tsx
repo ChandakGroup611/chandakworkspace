@@ -49,7 +49,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);
   const [priorities, setPriorities] = useState<any[]>(initialData?.priorities || []);
   const [taskStatuses, setTaskStatuses] = useState<any[]>(initialData?.taskStatuses || []);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>(initialData?.allUsers || []);
   const [activeWorkspace, setActiveWorkspace] = useState<any>(initialData?.workspaces?.find((w: any) => w.id === initialData?.prefetchWorkspaceId) || null);
   const [tasks, setTasks] = useState<any[]>(initialData?.prefetchTasks || []);
   const [stakeholders, setStakeholders] = useState<any[]>(initialData?.prefetchStakeholders || []);
@@ -78,6 +78,21 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const filterPopoverRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterPopoverRef.current && !filterPopoverRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    };
+    if (showFilters) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFilters]);
   
   const searchParams = useSearchParams();
   useEffect(() => {
@@ -90,6 +105,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       setCreatingTaskParentId(null);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!initialData?.allUsers || initialData.allUsers.length === 0) {
+      const supabase = createClient();
+      supabase.from('user_master').select('id, full_name, user_code, email').eq('is_active', true).eq('is_deleted', false).order('full_name').then(({ data }) => {
+        if (data && data.length > 0) setAllUsers(data);
+      });
+    }
+  }, [initialData?.allUsers]);
 
   const [filters, setFilters] = useState<HierarchyFilterOptions>({
     entityType: 'ALL',
@@ -122,6 +146,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     if (!hasActiveFilters) {
       if (initialMasterHierarchy.length > 0) {
         setMasterHierarchy(initialMasterHierarchy);
+      } else {
+        searchHierarchyDeep("", { entityType: 'ALL' }).then(res => {
+          if (!isCancelled && res.hierarchy) setMasterHierarchy(res.hierarchy);
+        });
       }
       return;
     }
@@ -152,7 +180,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     return () => {
       isCancelled = true;
     };
-  }, [debouncedSearchQuery, filters]);
+  }, [debouncedSearchQuery, filters, initialMasterHierarchy]);
 
   const {
     savedFilters,
@@ -934,20 +962,147 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               )}
             </div>
 
-            <AppButton 
-              variant={showFilters || activeFilterCount > 0 ? "primary" : "outline"} 
-              size="sm" 
-              leftIcon={<Filter className="h-4 w-4" />}
-              onClick={() => setShowFilters(!showFilters)}
-              className="relative"
-            >
-              Filters
-              {activeFilterCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white text-theme-icon">
-                  {activeFilterCount}
-                </span>
+            <div className="relative" ref={filterPopoverRef}>
+              <AppButton 
+                variant={showFilters || activeFilterCount > 0 ? "primary" : "outline"} 
+                size="sm" 
+                leftIcon={<Filter className="h-4 w-4" />}
+                onClick={() => setShowFilters(!showFilters)}
+                className="relative"
+              >
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white text-theme-icon">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </AppButton>
+
+              {/* Floating Filter Popover (Does NOT take page height) */}
+              {showFilters && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-border bg-surface shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <Filter className="h-3.5 w-3.5 text-theme-icon" />
+                      Filter Engine
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {activeFilterCount > 0 && (
+                        <button 
+                          onClick={clearFilters}
+                          className="text-[11px] font-semibold text-muted hover:text-danger underline transition-colors"
+                        >
+                          Reset
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => setShowFilters(false)}
+                        className="text-muted hover:text-foreground p-0.5 rounded-md hover:bg-surface/60"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Scope Segmented Control */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Scope</label>
+                    <div className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-surface/60 border border-border/60">
+                      {[
+                        { id: 'ALL', label: 'All' },
+                        { id: 'WORKSPACES', label: 'Workspaces' },
+                        { id: 'SUB_WORKSPACES', label: 'Sub-WS' },
+                        { id: 'TASKS', label: 'Tasks' },
+                      ].map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setFilters(prev => ({ ...prev, entityType: tab.id as any }))}
+                          className={`py-1 text-xs font-semibold rounded-md transition-all ${
+                            filters.entityType === tab.id 
+                              ? 'bg-theme-btn-primary text-white shadow-sm' 
+                              : 'text-muted hover:text-foreground hover:bg-surface/50'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Toggle: My Assigned Tasks Only */}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
+                      filters.myTasksOnly 
+                        ? 'bg-success/15 text-success border-emerald-500/40 shadow-sm' 
+                        : 'border-border text-muted hover:text-foreground hover:bg-surface/50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4" />
+                      My Assigned Tasks Only
+                    </span>
+                    {filters.myTasksOnly && <Check className="h-3.5 w-3.5" />}
+                  </button>
+
+                  {/* Dropdown Filters */}
+                  <div className="space-y-2.5">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Status</label>
+                      <select
+                        value={filters.statusId || ""}
+                        onChange={(e) => setFilters(prev => ({ ...prev, statusId: e.target.value }))}
+                        className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
+                      >
+                        <option value="">All Statuses</option>
+                        {(taskStatuses || []).map((s: any) => (
+                          <option key={s.id} value={s.id}>{s.name || s.status_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Priority</label>
+                      <select
+                        value={filters.priorityId || ""}
+                        onChange={(e) => setFilters(prev => ({ ...prev, priorityId: e.target.value }))}
+                        className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
+                      >
+                        <option value="">All Priorities</option>
+                        {(priorities || []).map((p: any) => (
+                          <option key={p.id} value={p.id}>{p.name || p.priority_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Assignee</label>
+                      <select
+                        value={filters.assigneeId || ""}
+                        onChange={(e) => setFilters(prev => ({ ...prev, assigneeId: e.target.value }))}
+                        className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
+                      >
+                        <option value="">All Assignees</option>
+                        {allUsers.map((u: any) => (
+                          <option key={u.id} value={u.id}>{u.full_name} ({u.user_code || 'User'})</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-border flex items-center justify-end">
+                    <AppButton 
+                      variant="primary" 
+                      size="sm" 
+                      onClick={() => setShowFilters(false)}
+                      className="w-full text-xs font-semibold py-1.5"
+                    >
+                      Done
+                    </AppButton>
+                  </div>
+                </div>
               )}
-            </AppButton>
+            </div>
 
             <AppButton 
               variant="primary" 
@@ -999,104 +1154,43 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         }
       />
 
-      {/* Deep Search & Multi-Level Filtering Ribbon */}
-      {showFilters && (
-        <div className="mb-4 p-3 rounded-md /40 theme-card-structural space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted">Filter By Scope:</span>
-              <div className="flex items-center theme-card-structural /50 p-0.5 rounded-lg">
-                {[
-                  { id: 'ALL', label: 'All Items' },
-                  { id: 'WORKSPACES', label: 'Workspaces' },
-                  { id: 'SUB_WORKSPACES', label: 'Sub-Workspaces' },
-                  { id: 'TASKS', label: 'Tasks' },
-                ].map(tab => (
-                  <AppButton
-                    key={tab.id}
-                    onClick={() => setFilters(prev => ({ ...prev, entityType: tab.id as any }))}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                      filters.entityType === tab.id 
-                        ? 'bg-theme-btn-primary text-white shadow-sm font-semibold' 
-                        : 'text-muted hover:text-foreground'
-                    }`}
-                  >
-                    {tab.label}
-                  </AppButton>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Toggle: My Assigned Tasks Only */}
-            <div className="flex items-center gap-2">
-              <AppButton
-                onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg transition-all ${ filters.myTasksOnly ? 'bg-success/15 text-success border-emerald-500/40 shadow-sm' : 'theme-card-structural /50 text-muted hover:text-foreground' }`}
-              >
-                <UserCheck className="h-3.5 w-3.5" />
-                <span>My Assigned Tasks Only</span>
-                {filters.myTasksOnly && <Check className="h-3 w-3 ml-0.5" />}
-              </AppButton>
-
-              {activeFilterCount > 0 && (
-                <AppButton 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={clearFilters}
-                  className="h-7 text-xs text-muted hover:text-danger"
-                >
-                  Clear All
-                </AppButton>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            {/* Status Filter */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Status</label>
-              <select
-                value={filters.statusId || ""}
-                onChange={(e) => setFilters(prev => ({ ...prev, statusId: e.target.value }))}
-                className="w-full text-xs p-2 rounded-lg theme-card-structural text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
-              >
-                <option value="">All Statuses</option>
-                {(taskStatuses || []).map((s: any) => (
-                  <option key={s.id} value={s.id}>{s.name || s.status_name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Priority Filter */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Priority</label>
-              <select
-                value={filters.priorityId || ""}
-                onChange={(e) => setFilters(prev => ({ ...prev, priorityId: e.target.value }))}
-                className="w-full text-xs p-2 rounded-lg theme-card-structural text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
-              >
-                <option value="">All Priorities</option>
-                {(priorities || []).map((p: any) => (
-                  <option key={p.id} value={p.id}>{p.name || p.priority_name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Assignee Filter */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Assignee</label>
-              <select
-                value={filters.assigneeId || ""}
-                onChange={(e) => setFilters(prev => ({ ...prev, assigneeId: e.target.value }))}
-                className="w-full text-xs p-2 rounded-lg theme-card-structural text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
-              >
-                <option value="">All Assignees</option>
-                {allUsers.map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.full_name} ({u.user_code || 'User'})</option>
-                ))}
-              </select>
-            </div>
-          </div>
+      {/* Active Filter Chips Strip (Ultra-compact, takes minimal height ~28px) */}
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 mb-3 px-1 animate-in fade-in duration-150">
+          <span className="text-[10px] font-bold text-muted uppercase tracking-wider mr-1">Active:</span>
+          {filters.entityType && filters.entityType !== 'ALL' && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              Scope: {filters.entityType.replace('_', ' ')}
+              <button onClick={() => setFilters(p => ({ ...p, entityType: 'ALL' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
+            </span>
+          )}
+          {filters.myTasksOnly && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-success/15 text-success border border-success/30">
+              My Assigned Tasks Only
+              <button onClick={() => setFilters(p => ({ ...p, myTasksOnly: false }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
+            </span>
+          )}
+          {filters.statusId && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              Status: {taskStatuses.find(s => s.id === filters.statusId)?.name || 'Selected'}
+              <button onClick={() => setFilters(p => ({ ...p, statusId: '' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
+            </span>
+          )}
+          {filters.priorityId && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              Priority: {priorities.find(p => p.id === filters.priorityId)?.name || 'Selected'}
+              <button onClick={() => setFilters(p => ({ ...p, priorityId: '' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
+            </span>
+          )}
+          {filters.assigneeId && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+              Assignee: {allUsers.find(u => u.id === filters.assigneeId)?.full_name || 'Selected'}
+              <button onClick={() => setFilters(p => ({ ...p, assigneeId: '' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
+            </span>
+          )}
+          <button onClick={clearFilters} className="text-[11px] text-muted hover:text-danger underline ml-2 font-semibold">
+            Clear all
+          </button>
         </div>
       )}
 
