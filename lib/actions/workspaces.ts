@@ -572,11 +572,12 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
   const visibleWsIds = Array.from(visibleWsMap.keys());
   if (visibleWsIds.length === 0) return { hierarchy: [], matchedNodeIds: [], expandedNodeIds: [] };
 
-  // Fetch task IDs where current user is a participant
+  // Fetch task IDs where current user is an active executor/participant
   const { data: userPartData } = await supabaseAdmin
     .from("task_participants")
-    .select("task_id")
-    .eq("user_id", user.id);
+    .select("task_id, participation_role")
+    .eq("user_id", user.id)
+    .neq("participation_role", "WATCHER");
   const myParticipantTaskIds = new Set<string>((userPartData || []).map((p: any) => p.task_id));
 
   // If a specific assignee filter is passed, fetch task IDs for that assignee
@@ -584,8 +585,9 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
   if (filters?.assigneeId) {
     const { data: targetPartData } = await supabaseAdmin
       .from("task_participants")
-      .select("task_id")
-      .eq("user_id", filters.assigneeId);
+      .select("task_id, participation_role")
+      .eq("user_id", filters.assigneeId)
+      .neq("participation_role", "WATCHER");
     targetAssigneeTaskIds = new Set<string>((targetPartData || []).map((p: any) => p.task_id));
   }
 
@@ -656,14 +658,16 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
   tasks = tasks.filter((t: any) => {
     if (filters?.assigneeId) {
       const isAssigned = t.assigned_to === filters.assigneeId || 
+                         t.owner_id === filters.assigneeId ||
                          targetAssigneeTaskIds.has(t.id) ||
-                         t.assignees?.some((a: any) => a.user_id === filters.assigneeId);
+                         t.assignees?.some((a: any) => a.user_id === filters.assigneeId && a.participation_role !== 'WATCHER');
       if (!isAssigned) return false;
     }
     if (filters?.myTasksOnly) {
       const isMyTask = t.assigned_to === user.id || 
+                       t.owner_id === user.id ||
                        myParticipantTaskIds.has(t.id) ||
-                       t.assignees?.some((a: any) => a.user_id === user.id);
+                       t.assignees?.some((a: any) => a.user_id === user.id && a.participation_role !== 'WATCHER');
       if (!isMyTask) return false;
     }
     return true;
