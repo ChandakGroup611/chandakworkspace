@@ -54,7 +54,15 @@ const navGroups: NavGroup[] = [
   {
     label: "Core Operations",
     items: [
-      { label: "Dashboard", href: "/", icon: LayoutDashboard },
+      { 
+        label: "Dashboard", 
+        href: "/", 
+        icon: LayoutDashboard,
+        subItems: [
+          { label: "Overview", href: "/?view=overview" },
+          { label: "My Portfolio", href: "/?view=portfolio" }
+        ]
+      },
       { label: "My Support Portal", href: "/support", icon: LifeBuoy, permission: "SUPPORT_PORTAL_VIEW" },
       { label: "Ticket Tracking", href: "/tickets", icon: Ticket, permission: "TICKETS_VIEW" },
       { 

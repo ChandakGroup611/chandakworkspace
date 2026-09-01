@@ -99,7 +99,7 @@ export function MetricsListModal({ isOpen, onClose, metrics = [] }: MetricsListM
                     if (m.module === 'Tickets') window.location.href = `/tickets/${m.id}`;
                     else if (m.module === 'Tasks' || m.module === 'Sub Tasks') window.location.href = `/tasks/${m.id}`;
                     else if (m.module === 'Requirements') window.location.href = `/requirements/${m.id}`;
-                    else if (m.module === 'Workspaces' || m.module === 'Sub Workspaces') window.location.href = `/workspaces/tasks?workspaceId=${m.id}`;
+                    else if (m.module === 'Workspaces' || m.module === 'Sub Workspaces') window.location.href = `/workspaces?workspace=${m.id}`;
                     else window.location.href = `/${m.module.toLowerCase()}`;
                   };
 

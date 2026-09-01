@@ -6,13 +6,16 @@ import dynamic from 'next/dynamic';
 import './dashboard.css'; // The extracted and scoped CSS
 
 import { DashboardEngine } from "./engine/DashboardEngine";
+import { MyPortfolioSection } from "./portfolio/MyPortfolioSection";
 import { useRenderLog } from "@/hooks/use-render-log";
 import { onRenderCallback } from "@/utils/performance/profiler-utils";
 import { performanceGovernor, DegradationStage } from "@/utils/performance/PerformanceGovernanceEngine";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import { AppButton } from "@/components/ui/AppButton";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, LayoutDashboard, Briefcase, Sparkles } from "lucide-react";
 import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
+import { useSearchParams, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const SCOPE_OPTIONS = [
   { value: "Tickets", label: "Tickets" },
@@ -39,7 +42,13 @@ interface DashboardCommandCenterProps {
 
 export default function DashboardCommandCenter({ metrics = [], kpis, dbError, refreshComponent }: DashboardCommandCenterProps) {
   useRenderLog("DashboardCommandCenter", { metricsLength: metrics.length, dbError });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [mounted, setMounted] = useState(false);
+  const initialView = searchParams.get("view") === "portfolio" ? "portfolio" : "overview";
+  const [activeView, setActiveView] = useState<"overview" | "portfolio">(initialView);
+
   const [globalScopes, setGlobalScopes] = useState<string[]>(SCOPE_OPTIONS.map(o => o.value));
   const [globalStatuses, setGlobalStatuses] = useState<string[]>(STATUS_OPTIONS.map(o => o.value));
   const [globalUsers, setGlobalUsers] = useState<string[]>([]);
@@ -90,17 +99,27 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
 
   // Filter metrics based on global filters memoized
   const filteredMetrics = useMemo(() => {
-    if (!usersInitialized) return metrics; // Don't filter out everything before users are loaded
+    if (!usersInitialized) return metrics;
     
+    const isAllUsersSelected = globalUsers.length === 0 || globalUsers.length >= uniqueUsers.filter(u => u !== 'Unassigned').length;
+
     return metrics.filter(m => {
       const scopeMatch = globalScopes.includes(m.module);
-      const userMatch = globalUsers.includes(String(m.user)) || m.user === 'System';
+      
+      let userMatch = false;
+      if (m.user === 'System') {
+        userMatch = true;
+      } else if (m.user === 'Unassigned') {
+        userMatch = isAllUsersSelected || globalUsers.includes('Unassigned');
+      } else {
+        userMatch = globalUsers.includes(String(m.user));
+      }
       
       let statusMatch = false;
       const sLower = String(m.status).toLowerCase();
-      const isResolved = sLower.includes('resolv') || sLower.includes('done');
+      const isResolved = sLower.includes('resolv') || sLower.includes('done') || sLower.includes('clos');
       const isEscalated = sLower.includes('escalat') || sLower.includes('block');
-      const isReview = sLower.includes('review');
+      const isReview = sLower.includes('review') || sLower.includes('qa') || sLower.includes('approval');
       const isActive = !isResolved && !isEscalated && !isReview;
 
       if (globalStatuses.includes("Active") && isActive) statusMatch = true;
@@ -108,12 +127,11 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
       if (globalStatuses.includes("Escalated") && isEscalated) statusMatch = true;
       if (globalStatuses.includes("Review") && isReview) statusMatch = true;
 
-      // Special case: if raw text status matched none of the above cleanly, let's include it if Active is checked as fallback
       if (!statusMatch && globalStatuses.includes("Active") && !isResolved) statusMatch = true;
 
       return scopeMatch && userMatch && statusMatch;
     });
-  }, [metrics, globalScopes, globalUsers, globalStatuses, usersInitialized]);
+  }, [metrics, globalScopes, globalUsers, globalStatuses, usersInitialized, uniqueUsers]);
 
   // Dynamic KPIs calculated strictly from filteredMetrics for full segregation
   const dynamicKpis = useMemo(() => {
@@ -245,34 +263,86 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
         
         {/* TOPBAR */}
         <div className="topbar">
-          <div>
-            <div className="topbar-title">Overview Dashboard</div>
-            <div className="topbar-sub">Live System Metrics</div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div>
+              <div className="topbar-title">
+                {activeView === "portfolio" ? "My Portfolio & User Analytics" : "Overview Dashboard"}
+              </div>
+              <div className="topbar-sub">
+                {activeView === "portfolio" ? "User Comparison & Timeline Tracking" : "Live System Metrics"}
+              </div>
+            </div>
+
+            {/* MAIN DASHBOARD VIEW SWITCHER */}
+            <div className="flex items-center gap-1 p-1 bg-surface/80 rounded-xl border border-border/60 shadow-inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView("overview");
+                  router.replace("/?view=overview");
+                }}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  activeView === "overview"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                    : "text-muted hover:text-foreground hover:bg-surface"
+                )}
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                Enterprise Overview
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView("portfolio");
+                  router.replace("/?view=portfolio");
+                }}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  activeView === "portfolio"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                    : "text-muted hover:text-foreground hover:bg-surface"
+                )}
+              >
+                <Briefcase className="h-3.5 w-3.5" />
+                My Portfolio
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase",
+                  activeView === "portfolio" ? "bg-white/20 text-white" : "bg-theme-btn-primary/15 text-theme-icon"
+                )}>
+                  Live
+                </span>
+              </button>
+            </div>
           </div>
+
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <MultiSelectFilter
-              options={SCOPE_OPTIONS}
-              selectedValues={globalScopes}
-              onChange={setGlobalScopes}
-              placeholder="Scopes"
-            />
+            {activeView === "overview" && (
+              <>
+                <MultiSelectFilter
+                  options={SCOPE_OPTIONS}
+                  selectedValues={globalScopes}
+                  onChange={setGlobalScopes}
+                  placeholder="Scopes"
+                />
 
-            <MultiSelectFilter
-              options={STATUS_OPTIONS}
-              selectedValues={globalStatuses}
-              onChange={setGlobalStatuses}
-              placeholder="Statuses"
-            />
+                <MultiSelectFilter
+                  options={STATUS_OPTIONS}
+                  selectedValues={globalStatuses}
+                  onChange={setGlobalStatuses}
+                  placeholder="Statuses"
+                />
 
-            <MultiSelectFilter
-              options={userOptions}
-              selectedValues={globalUsers}
-              onChange={setGlobalUsers}
-              placeholder="Users"
-            />
+                <MultiSelectFilter
+                  options={userOptions}
+                  selectedValues={globalUsers}
+                  onChange={setGlobalUsers}
+                  placeholder="Users"
+                />
+              </>
+            )}
 
-
-            
             <div className="relative" ref={newMetricRef}>
               <AppButton 
                 variant="primary" 
@@ -280,7 +350,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                 leftIcon={<Plus className="h-3.5 w-3.5" />} 
                 onClick={() => setNewMetricOpen(!newMetricOpen)}
               >
-                New Metric
+                New Item
               </AppButton>
               {newMetricOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 z-50">
@@ -312,10 +382,16 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
             </div>
           )}
 
-          {dynamicKpis && (
-            <div className="mb-6">
-              <DashboardEngine metrics={filteredMetrics} kpis={dynamicKpis} />
+          {activeView === "portfolio" ? (
+            <div className="mb-8">
+              <MyPortfolioSection />
             </div>
+          ) : (
+            dynamicKpis && (
+              <div className="mb-6">
+                <DashboardEngine metrics={filteredMetrics} kpis={dynamicKpis} />
+              </div>
+            )
           )}
 
           {degradationStage >= DegradationStage.STAGE_3_SEVERE && (
@@ -329,7 +405,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
             <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>TaskForge Internal</div>
             <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Live Data Sync</div>
             <div style={{ flex: 1 }}></div>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Active Items: <span style={{ color: 'var(--amber)', fontWeight: 500 }}>{metrics.length}</span></div>
+            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
+              Active Items: <span style={{ color: 'var(--amber)', fontWeight: 500 }}>{metrics.length}</span>
+            </div>
           </div>
 
         </div>

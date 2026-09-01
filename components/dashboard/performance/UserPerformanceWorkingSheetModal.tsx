@@ -105,7 +105,15 @@ export function UserPerformanceWorkingSheetModal({
       if (statusFilter === "overdue" && !activity.isOverdue) return false;
 
       // Priority filter
-      if (priorityFilter !== "all" && activity.priority.toLowerCase() !== priorityFilter.toLowerCase()) return false;
+      if (priorityFilter !== "all") {
+        const pLower = (activity.priority || "").toLowerCase();
+        const filterLower = priorityFilter.toLowerCase();
+        if (filterLower === "critical" && !(pLower.includes("crit") || pLower.includes("urgent") || pLower.includes("highest") || pLower.includes("p1"))) return false;
+        else if (filterLower === "high" && !(pLower.includes("high") || pLower.includes("p2"))) return false;
+        else if (filterLower === "medium" && !(pLower.includes("med") || pLower.includes("moderate") || pLower.includes("p3"))) return false;
+        else if (filterLower === "low" && !(pLower.includes("low") || pLower.includes("minor") || pLower.includes("p4"))) return false;
+        else if (filterLower === "standard" && !(pLower.includes("stand") || pLower === "n/a")) return false;
+      }
 
       // Keyword search
       if (searchQuery.trim()) {
@@ -538,8 +546,9 @@ export function UserPerformanceWorkingSheetModal({
                         className="theme-card-structural dark:bg-[#111625] rounded-xl px-2.5 py-1.5 text-xs text-foreground font-medium outline-none cursor-pointer"
                       >
                         <option value="all">All Priorities</option>
-                        <option value="urgent">Urgent</option>
+                        <option value="critical">Critical / Urgent</option>
                         <option value="high">High</option>
+                        <option value="medium">Medium</option>
                         <option value="standard">Standard</option>
                         <option value="low">Low</option>
                       </select>
@@ -649,8 +658,9 @@ export function UserPerformanceWorkingSheetModal({
                                   <AppTableCell className="text-center">
                                     <span className={cn(
                                       "text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider font-mono",
-                                      act.priority.toLowerCase().includes("urgent") ? "bg-danger/10 text-danger border border-rose-500/20" :
+                                      act.priority.toLowerCase().includes("crit") || act.priority.toLowerCase().includes("urgent") ? "bg-danger/10 text-danger border border-rose-500/20" :
                                       act.priority.toLowerCase().includes("high") ? "bg-warning/10 text-warning border border-amber-500/20" :
+                                      act.priority.toLowerCase().includes("med") ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" :
                                       "bg-surface dark:bg-surface/20 text-muted-foreground"
                                     )}>
                                       {act.priority}

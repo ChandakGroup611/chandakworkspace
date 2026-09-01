@@ -19,8 +19,10 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
     const userMap: Record<string, any> = {};
     metrics.forEach(m => {
       if (!m || !m.user || m.user === 'System' || m.user === 'Unassigned') return;
-      if (!userMap[m.user]) {
-        userMap[m.user] = {
+      const key = m.userId || m.user;
+      if (!userMap[key]) {
+        userMap[key] = {
+          id: m.userId || null,
           name: m.user,
           initials: m.user.substring(0,2).toUpperCase(),
           role: m.userRole || "Team Member",
@@ -31,40 +33,46 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
         };
       }
       
-      const isResolved = String(m.status) === 'Resolved' || String(m.status) === 'Done';
+      const statusStr = String(m.status).toLowerCase();
+      const isResolved = statusStr.includes('resolv') || statusStr.includes('done') || statusStr.includes('clos');
+
       if (isResolved) {
-        userMap[m.user].closed += 1;
+        userMap[key].closed += 1;
         
         // Dynamic Priority Points
-        const p = String(m.priority || '').toLowerCase();
-        if (p.includes('critical') || p.includes('high')) userMap[m.user].pts += 5;
-        else if (p.includes('medium') || p.includes('standard')) userMap[m.user].pts += 3;
-        else if (p.includes('low')) userMap[m.user].pts += 1;
-        else userMap[m.user].pts += 3; // Default
+        if (m.module === 'Sub Tasks') {
+          userMap[key].pts += 1;
+        } else {
+          const p = String(m.priority || '').toLowerCase();
+          if (p.includes('critical') || p.includes('high') || p.includes('urgent')) userMap[key].pts += 5;
+          else if (p.includes('medium') || p.includes('standard')) userMap[key].pts += 3;
+          else if (p.includes('low') || p.includes('minor')) userMap[key].pts += 1;
+          else userMap[key].pts += 3; // Default
+        }
 
         // Avg Days
         if (m.createdAt && m.updatedAt) {
           const diffMs = new Date(m.updatedAt).getTime() - new Date(m.createdAt).getTime();
           const diffDays = diffMs / (1000 * 3600 * 24);
-          userMap[m.user].totalResolutionDays += Math.max(0, diffDays);
+          userMap[key].totalResolutionDays += Math.max(0, diffDays);
         }
       } else {
-        userMap[m.user].active += 1;
+        userMap[key].active += 1;
       }
     });
 
     return Object.values(userMap)
-      .sort((a, b) => b.pts - a.pts); // Sort by points
+      .sort((a, b) => b.closed - a.closed || b.pts - a.pts);
   }, [metrics]);
 
-  const handleOpenUserSheet = (userName: string) => {
-    setSelectedUser(userName);
+  const handleOpenUserSheet = (userObj: any) => {
+    setSelectedUser(userObj.id || userObj.name);
     setIsSheetOpen(true);
   };
 
   const handleOpenTopPerformer = () => {
     if (teamStats.length > 0) {
-      setSelectedUser(teamStats[0].name);
+      setSelectedUser(teamStats[0].id || teamStats[0].name);
     } else {
       setSelectedUser(null);
     }
@@ -118,7 +126,7 @@ export default function TeamPerformance({ metrics = [] }: TeamPerformanceProps) 
                 return (
                   <AppTableRow 
                     key={i}
-                    onClick={() => handleOpenUserSheet(u.name)}
+                    onClick={() => handleOpenUserSheet(u)}
                     className="cursor-pointer hover:bg-primary/5 transition-colors"
                     title={`Click to view ${u.name}'s Performance Working Sheet`}
                   >

@@ -21,8 +21,10 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
     const userMap: Record<string, any> = {};
     metrics.forEach(m => {
       if (!m || !m.user || m.user === 'System' || m.user === 'Unassigned') return;
-      if (!userMap[m.user]) {
-        userMap[m.user] = {
+      const key = m.userId || m.user;
+      if (!userMap[key]) {
+        userMap[key] = {
+          id: m.userId || null,
           name: m.user,
           initials: m.user.substring(0,2).toUpperCase(),
           role: m.userRole || "Team Member",
@@ -31,60 +33,66 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
           active: 0,
           totalResolutionDays: 0,
           tasks: { assigned: 0, resolved: 0 },
+          subtasks: { assigned: 0, resolved: 0 },
           tickets: { assigned: 0, resolved: 0 },
           reqs: { assigned: 0, resolved: 0 },
         };
       }
       
       const statusStr = String(m.status).toLowerCase();
-      if (statusStr.includes('resolv') || statusStr.includes('done')) {
-        userMap[m.user].closed += 1;
+      const isResolved = statusStr.includes('resolv') || statusStr.includes('done') || statusStr.includes('clos');
+
+      if (isResolved) {
+        userMap[key].closed += 1;
         
         // Dynamic Priority Points
-        const p = String(m.priority || '').toLowerCase();
-        if (p.includes('critical') || p.includes('high')) userMap[m.user].pts += 5;
-        else if (p.includes('medium') || p.includes('standard')) userMap[m.user].pts += 3;
-        else if (p.includes('low')) userMap[m.user].pts += 1;
-        else userMap[m.user].pts += 3; // Default
+        if (m.module === 'Sub Tasks') {
+          userMap[key].pts += 1;
+        } else {
+          const p = String(m.priority || '').toLowerCase();
+          if (p.includes('critical') || p.includes('high') || p.includes('urgent') || p.includes('p1') || p.includes('p2')) userMap[key].pts += 5;
+          else if (p.includes('medium') || p.includes('standard') || p.includes('p3')) userMap[key].pts += 3;
+          else if (p.includes('low') || p.includes('minor') || p.includes('p4')) userMap[key].pts += 1;
+          else userMap[key].pts += 3; // Default
+        }
 
         // Avg Days
         if (m.createdAt && m.updatedAt) {
           const diffMs = new Date(m.updatedAt).getTime() - new Date(m.createdAt).getTime();
           const diffDays = diffMs / (1000 * 3600 * 24);
-          userMap[m.user].totalResolutionDays += Math.max(0, diffDays);
+          userMap[key].totalResolutionDays += Math.max(0, diffDays);
         }
       } else {
-        userMap[m.user].active += 1;
+        userMap[key].active += 1;
       }
 
-      const isTask = m.module === 'Tasks' || m.module === 'Sub Tasks';
-      const isTicket = m.module === 'Tickets';
-      const isReq = m.module === 'Requirements';
-
-      if (isTask) {
-        userMap[m.user].tasks.assigned++;
-        if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].tasks.resolved++;
-      } else if (isTicket) {
-        userMap[m.user].tickets.assigned++;
-        if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].tickets.resolved++;
-      } else if (isReq) {
-        userMap[m.user].reqs.assigned++;
-        if (statusStr.includes('resolv') || statusStr.includes('done')) userMap[m.user].reqs.resolved++;
+      if (m.module === 'Tasks') {
+        userMap[key].tasks.assigned++;
+        if (isResolved) userMap[key].tasks.resolved++;
+      } else if (m.module === 'Sub Tasks') {
+        userMap[key].subtasks.assigned++;
+        if (isResolved) userMap[key].subtasks.resolved++;
+      } else if (m.module === 'Tickets') {
+        userMap[key].tickets.assigned++;
+        if (isResolved) userMap[key].tickets.resolved++;
+      } else if (m.module === 'Requirements') {
+        userMap[key].reqs.assigned++;
+        if (isResolved) userMap[key].reqs.resolved++;
       }
     });
 
     return Object.values(userMap)
-      .sort((a, b) => b.closed - a.closed); // Sort by closed items, showing all users
+      .sort((a, b) => b.closed - a.closed || b.pts - a.pts);
   }, [metrics]);
 
-  const handleOpenUserSheet = (userName: string) => {
-    setSelectedUser(userName);
+  const handleOpenUserSheet = (userObj: any) => {
+    setSelectedUser(userObj.id || userObj.name);
     setIsSheetOpen(true);
   };
 
   const handleOpenTopPerformer = () => {
     if (teamStats.length > 0) {
-      setSelectedUser(teamStats[0].name);
+      setSelectedUser(teamStats[0].id || teamStats[0].name);
     } else {
       setSelectedUser(null);
     }
@@ -96,8 +104,9 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
   };
 
   const getWorkloadStatus = (active: number) => {
-    if (active >= 5) return { label: "Loaded", color: "text-danger bg-danger/10 border-danger/20" };
-    if (active >= 2) return { label: "Min Loaded", color: "text-warning bg-warning/10 border-warning/20" };
+    if (active >= 8) return { label: "Heavily Loaded", color: "text-danger bg-danger/10 border-danger/20" };
+    if (active >= 4) return { label: "Loaded", color: "text-warning bg-warning/10 border-warning/20" };
+    if (active >= 1) return { label: "Active", color: "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/20" };
     return { label: "Available", color: "text-success bg-success/10 border-success/20" };
   };
 
@@ -149,7 +158,7 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
                 return (
                   <AppTableRow 
                     key={i} 
-                    onClick={() => handleOpenUserSheet(u.name)}
+                    onClick={() => handleOpenUserSheet(u)}
                     className="hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors border-b border-border/40 last:border-0 group cursor-pointer"
                     title={`Click to view ${u.name}'s Performance Working Sheet`}
                   >

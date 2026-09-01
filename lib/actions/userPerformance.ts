@@ -161,7 +161,7 @@ export async function fetchUserPerformanceWorkingSheet(
     let tasksQuery = supabaseAdmin
       .from("tasks")
       .select(`
-        id, code, subject, description, created_at, created_by, assigned_to,
+        id, task_code, subject, description, created_at, updated_at, created_by, assigned_to,
         status_id, status_master(status_name),
         priority_id, priority:priority_master(priority_name),
         start_date, end_date, is_deleted, parent_task_id,
@@ -178,8 +178,8 @@ export async function fetchUserPerformanceWorkingSheet(
     let subTasksQuery = supabaseAdmin
       .from("sub_tasks")
       .select(`
-        id, subject, status, created_at, created_by, assigned_to, is_deleted,
-        task_id, tasks:tasks(id, subject, code)
+        id, subject, status, created_at, updated_at, created_by, assigned_to, is_deleted,
+        task_id, tasks:tasks(id, subject, task_code)
       `)
       .or(`assigned_to.eq.${targetUserId},created_by.eq.${targetUserId}`)
       .eq("is_deleted", false);
@@ -192,7 +192,7 @@ export async function fetchUserPerformanceWorkingSheet(
     let ticketsQuery = supabaseAdmin
       .from("tickets")
       .select(`
-        id, code, title, created_at, creator_id, assignee_id,
+        id, code, title, created_at, updated_at, creator_id, assignee_id,
         status_id, status_master(status_name),
         priority_id, priority:priority_master(priority_name),
         due_date, is_deleted
@@ -204,11 +204,11 @@ export async function fetchUserPerformanceWorkingSheet(
       ticketsQuery = ticketsQuery.gte("created_at", rangeCutoff.toISOString());
     }
 
-    // 5. Fetch Requirements (Creator or Assigned)
+    // 5. Fetch Requirements (Creator)
     let requirementsQuery = supabaseAdmin
       .from("requirements")
       .select(`
-        id, code, title, created_at, creator_id,
+        id, code, title, created_at, updated_at, creator_id,
         status_id, status_master(status_name),
         due_date, is_deleted
       `)
@@ -225,9 +225,9 @@ export async function fetchUserPerformanceWorkingSheet(
       .select(`
         workspace_id, role,
         workspaces:workspaces(
-          id, code, workspace_name, parent_workspace_id,
+          id, workspace_code, workspace_name, parent_workspace_id,
           status_id, status_master(status_name),
-          start_date, end_date, created_at, is_deleted
+          start_date, end_date, created_at, updated_at, is_deleted
         )
       `)
       .eq("user_id", targetUserId)
@@ -236,9 +236,9 @@ export async function fetchUserPerformanceWorkingSheet(
     const wsCreatedQuery = supabaseAdmin
       .from("workspaces")
       .select(`
-        id, code, workspace_name, parent_workspace_id,
+        id, workspace_code, workspace_name, parent_workspace_id,
         status_id, status_master(status_name),
-        start_date, end_date, created_at, is_deleted
+        start_date, end_date, created_at, updated_at, is_deleted
       `)
       .eq("created_by", targetUserId)
       .eq("is_deleted", false);
@@ -292,8 +292,11 @@ export async function fetchUserPerformanceWorkingSheet(
     let taskCompleted = 0;
     let taskActive = 0;
     let taskOverdue = 0;
+    let taskTotalCount = 0;
+
     let subTaskCompleted = 0;
     let subTaskActive = 0;
+    let subTaskTotalCount = 0;
 
     tasksData?.forEach((t: any) => {
       const isSubTask = !!t.parent_task_id;
@@ -301,12 +304,17 @@ export async function fetchUserPerformanceWorkingSheet(
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
       const isOverdue = !!t.end_date && new Date(t.end_date).getTime() < now && !isResolved;
-      const isOnTime = isResolved; // If completed and was on/before due date (or resolved)
+      
+      const completedTime = t.updated_at ? new Date(t.updated_at).getTime() : new Date(t.created_at).getTime();
+      const dueTime = t.end_date ? new Date(t.end_date).getTime() : null;
+      const isOnTime = isResolved ? (!dueTime || completedTime <= dueTime + 86400000) : false;
 
       if (isSubTask) {
+        subTaskTotalCount++;
         if (isResolved) subTaskCompleted++;
         else subTaskActive++;
       } else {
+        taskTotalCount++;
         if (isResolved) taskCompleted++;
         else taskActive++;
         if (isOverdue) taskOverdue++;
@@ -317,26 +325,28 @@ export async function fetchUserPerformanceWorkingSheet(
       activities.push({
         id: t.id,
         module: isSubTask ? "Sub Tasks" : "Tasks",
-        code: t.code || `TSK-${t.id.substring(0, 6)}`,
-        title: t.subject || "Untitled Task",
+        code: t.task_code || (isSubTask ? `SUB-${t.id.substring(0, 6).toUpperCase()}` : `TSK-${t.id.substring(0, 6).toUpperCase()}`),
+        title: t.subject || (isSubTask ? "Untitled Sub Task" : "Untitled Task"),
         context: (t.workspaces as any)?.workspace_name || null,
         status,
         rawStatus,
         priority: (t.priority as any)?.priority_name || "Standard",
         createdAt: t.created_at,
         dueDate: t.end_date,
+        completedAt: isResolved ? (t.updated_at || t.created_at) : null,
         isOverdue,
         isOnTime,
         roleInActivity: t.assigned_to === targetUserId ? "Assignee" : "Creator"
       });
     });
 
-    // B. Sub Tasks
+    // B. Sub Tasks Table records
     subTasksData?.forEach((st: any) => {
       const rawStatus = st.status || "Pending";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
 
+      subTaskTotalCount++;
       if (isResolved) subTaskCompleted++;
       else subTaskActive++;
 
@@ -345,7 +355,7 @@ export async function fetchUserPerformanceWorkingSheet(
       activities.push({
         id: st.id,
         module: "Sub Tasks",
-        code: (st.tasks as any)?.code ? `${(st.tasks as any).code}-SUB` : `SUB-${st.id.substring(0, 6)}`,
+        code: (st.tasks as any)?.task_code ? `${(st.tasks as any).task_code}-SUB` : `SUB-${st.id.substring(0, 6).toUpperCase()}`,
         title: st.subject || "Untitled Sub Task",
         context: (st.tasks as any)?.subject || null,
         status,
@@ -353,6 +363,7 @@ export async function fetchUserPerformanceWorkingSheet(
         priority: "Standard",
         createdAt: st.created_at,
         dueDate: null,
+        completedAt: isResolved ? (st.updated_at || st.created_at) : null,
         isOverdue: false,
         isOnTime: isResolved,
         roleInActivity: st.assigned_to === targetUserId ? "Assignee" : "Creator"
@@ -363,12 +374,17 @@ export async function fetchUserPerformanceWorkingSheet(
     let ticketResolved = 0;
     let ticketActive = 0;
     let ticketSlaBreached = 0;
+    const ticketTotalCount = ticketsData?.length || 0;
 
     ticketsData?.forEach((tk: any) => {
       const rawStatus = (tk.status_master as any)?.status_name || "Open";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
       const isOverdue = !!tk.due_date && new Date(tk.due_date).getTime() < now && !isResolved;
+
+      const completedTime = tk.updated_at ? new Date(tk.updated_at).getTime() : new Date(tk.created_at).getTime();
+      const dueTime = tk.due_date ? new Date(tk.due_date).getTime() : null;
+      const isOnTime = isResolved ? (!dueTime || completedTime <= dueTime + 86400000) : false;
 
       if (isResolved) ticketResolved++;
       else ticketActive++;
@@ -379,16 +395,17 @@ export async function fetchUserPerformanceWorkingSheet(
       activities.push({
         id: tk.id,
         module: "Tickets",
-        code: tk.code || `TCK-${tk.id.substring(0, 6)}`,
+        code: tk.code || `TCK-${tk.id.substring(0, 6).toUpperCase()}`,
         title: tk.title || "Untitled Ticket",
         context: null,
         status,
         rawStatus,
-        priority: (tk.priority as any)?.priority_name || "Normal",
+        priority: (tk.priority as any)?.priority_name || "Standard",
         createdAt: tk.created_at,
         dueDate: tk.due_date,
+        completedAt: isResolved ? (tk.updated_at || tk.created_at) : null,
         isOverdue,
-        isOnTime: isResolved,
+        isOnTime,
         roleInActivity: tk.assignee_id === targetUserId ? "Assignee" : "Creator"
       });
     });
@@ -396,12 +413,17 @@ export async function fetchUserPerformanceWorkingSheet(
     // D. Requirements
     let reqCompleted = 0;
     let reqActive = 0;
+    const reqTotalCount = requirementsData?.length || 0;
 
     requirementsData?.forEach((rq: any) => {
       const rawStatus = (rq.status_master as any)?.status_name || "Submitted";
       const status = mapStatus(rawStatus);
       const isResolved = status === "Resolved";
       const isOverdue = !!rq.due_date && new Date(rq.due_date).getTime() < now && !isResolved;
+
+      const completedTime = rq.updated_at ? new Date(rq.updated_at).getTime() : new Date(rq.created_at).getTime();
+      const dueTime = rq.due_date ? new Date(rq.due_date).getTime() : null;
+      const isOnTime = isResolved ? (!dueTime || completedTime <= dueTime + 86400000) : false;
 
       if (isResolved) reqCompleted++;
       else reqActive++;
@@ -411,7 +433,7 @@ export async function fetchUserPerformanceWorkingSheet(
       activities.push({
         id: rq.id,
         module: "Requirements",
-        code: rq.code || `REQ-${rq.id.substring(0, 6)}`,
+        code: rq.code || `REQ-${rq.id.substring(0, 6).toUpperCase()}`,
         title: rq.title || "Untitled Requirement",
         context: null,
         status,
@@ -419,8 +441,9 @@ export async function fetchUserPerformanceWorkingSheet(
         priority: "Standard",
         createdAt: rq.created_at,
         dueDate: rq.due_date,
+        completedAt: isResolved ? (rq.updated_at || rq.created_at) : null,
         isOverdue,
-        isOnTime: isResolved,
+        isOnTime,
         roleInActivity: "Author"
       });
     });
@@ -448,6 +471,10 @@ export async function fetchUserPerformanceWorkingSheet(
       const isOverdue = !!w.end_date && new Date(w.end_date).getTime() < now && !isResolved;
       const isSub = !!w.parent_workspace_id;
 
+      const completedTime = w.updated_at ? new Date(w.updated_at).getTime() : new Date(w.created_at).getTime();
+      const dueTime = w.end_date ? new Date(w.end_date).getTime() : null;
+      const isOnTime = isResolved ? (!dueTime || completedTime <= dueTime + 86400000) : false;
+
       if (isResolved) wsCompleted++;
       else wsActive++;
 
@@ -456,7 +483,7 @@ export async function fetchUserPerformanceWorkingSheet(
       activities.push({
         id: w.id,
         module: isSub ? "Sub Workspaces" : "Workspaces",
-        code: w.code || `WS-${w.id.substring(0, 6)}`,
+        code: w.workspace_code || `WS-${w.id.substring(0, 6).toUpperCase()}`,
         title: w.workspace_name || "Untitled Workspace",
         context: isSub ? "Sub-Workspace" : "Primary Workspace",
         status,
@@ -464,8 +491,9 @@ export async function fetchUserPerformanceWorkingSheet(
         priority: "Standard",
         createdAt: w.created_at,
         dueDate: w.end_date,
+        completedAt: isResolved ? (w.updated_at || w.created_at) : null,
         isOverdue,
-        isOnTime: isResolved,
+        isOnTime,
         roleInActivity: w.memberRole || "Member"
       });
     });
@@ -481,25 +509,26 @@ export async function fetchUserPerformanceWorkingSheet(
     const totalEscalated = activities.filter(a => a.status === "Escalated").length;
     const totalOverdue = activities.filter(a => a.isOverdue).length;
     const onTimeCompleted = activities.filter(a => a.status === "Resolved" && a.isOnTime).length;
-    const lateCompleted = totalCompleted - onTimeCompleted;
+    const lateCompleted = Math.max(0, totalCompleted - onTimeCompleted);
 
     // Computed Ratios
     const completionRate = totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
-    const onTimeDeliveryRate = totalCompleted > 0 ? Math.round((onTimeCompleted / totalCompleted) * 100) : (totalAssigned > 0 ? 100 : 0);
+    const onTimeDeliveryRate = totalCompleted > 0 ? Math.round((onTimeCompleted / totalCompleted) * 100) : (totalAssigned > 0 && totalOverdue === 0 ? 100 : 0);
     const totalSlaEvaluated = ticketResolved + ticketActive + taskCompleted + taskActive;
     const slaBreachedCount = ticketSlaBreached + taskOverdue;
     const slaComplianceRate = totalSlaEvaluated > 0 ? Math.max(0, Math.round(((totalSlaEvaluated - slaBreachedCount) / totalSlaEvaluated) * 100)) : 100;
-    const overdueRatio = (totalActive + totalInReview + totalEscalated) > 0 ? Math.round((totalOverdue / (totalActive + totalInReview + totalEscalated)) * 100) : 0;
+    const activeRiskVolume = totalActive + totalInReview + totalEscalated;
+    const overdueRatio = activeRiskVolume > 0 ? Math.round((totalOverdue / activeRiskVolume) * 100) : 0;
 
     // Composite Performance Index Formula (0-100)
-    // 40% Completion Rate + 30% On-Time Delivery + 20% SLA Compliance + 10% Output Volume Bonus - Overdue Penalty
+    // 35% Completion Rate + 35% On-Time Delivery + 20% SLA Compliance + 10% Volume Bonus - Overdue Penalty
     const volumeFactor = Math.min(100, (totalCompleted / Math.max(1, totalAssigned)) * 100);
-    const rawScore = (0.40 * completionRate) + (0.30 * onTimeDeliveryRate) + (0.20 * slaComplianceRate) + (0.10 * volumeFactor) - (overdueRatio * 0.15);
+    const rawScore = (0.35 * completionRate) + (0.35 * onTimeDeliveryRate) + (0.20 * slaComplianceRate) + (0.10 * volumeFactor) - (overdueRatio * 0.15);
     const overallPerformanceRatio = Math.max(0, Math.min(100, Math.round(rawScore)));
 
     let performanceRating: "Exceptional" | "High Performer" | "Standard" | "Needs Attention" = "Standard";
-    if (overallPerformanceRatio >= 90) performanceRating = "Exceptional";
-    else if (overallPerformanceRatio >= 75) performanceRating = "High Performer";
+    if (overallPerformanceRatio >= 85) performanceRating = "Exceptional";
+    else if (overallPerformanceRatio >= 70) performanceRating = "High Performer";
     else if (overallPerformanceRatio >= 50) performanceRating = "Standard";
     else performanceRating = "Needs Attention";
 
@@ -547,30 +576,30 @@ export async function fetchUserPerformanceWorkingSheet(
       },
       moduleBreakdown: {
         tasks: {
-          total: (tasksData?.length || 0),
+          total: taskTotalCount,
           completed: taskCompleted,
           active: taskActive,
           overdue: taskOverdue,
-          rate: (tasksData?.length || 0) > 0 ? Math.round((taskCompleted / (tasksData?.length || 1)) * 100) : 0
+          rate: taskTotalCount > 0 ? Math.round((taskCompleted / taskTotalCount) * 100) : 0
         },
         subTasks: {
-          total: (subTasksData?.length || 0),
+          total: subTaskTotalCount,
           completed: subTaskCompleted,
           active: subTaskActive,
-          rate: (subTasksData?.length || 0) > 0 ? Math.round((subTaskCompleted / (subTasksData?.length || 1)) * 100) : 0
+          rate: subTaskTotalCount > 0 ? Math.round((subTaskCompleted / subTaskTotalCount) * 100) : 0
         },
         tickets: {
-          total: (ticketsData?.length || 0),
+          total: ticketTotalCount,
           resolved: ticketResolved,
           active: ticketActive,
           slaBreached: ticketSlaBreached,
-          rate: (ticketsData?.length || 0) > 0 ? Math.round((ticketResolved / (ticketsData?.length || 1)) * 100) : 0
+          rate: ticketTotalCount > 0 ? Math.round((ticketResolved / ticketTotalCount) * 100) : 0
         },
         requirements: {
-          total: (requirementsData?.length || 0),
+          total: reqTotalCount,
           completed: reqCompleted,
           active: reqActive,
-          rate: (requirementsData?.length || 0) > 0 ? Math.round((reqCompleted / (requirementsData?.length || 1)) * 100) : 0
+          rate: reqTotalCount > 0 ? Math.round((reqCompleted / reqTotalCount) * 100) : 0
         },
         workspaces: {
           total: wsMap.size,
@@ -583,7 +612,6 @@ export async function fetchUserPerformanceWorkingSheet(
     };
 
     return { data: summary, error: null };
-
   } catch (err: any) {
     console.error("[fetchUserPerformanceWorkingSheet] Exception:", err);
     return { data: null, error: err.message || "Failed to generate user performance working sheet" };
