@@ -10,10 +10,11 @@ import { AppButton } from "@/components/ui/AppButton";
 interface LiveDashboardWrapperProps {
   initialMetrics: any[];
   initialKpis?: any;
+  initialMeta?: any;
   dbError: string | null;
 }
 
-export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbError }: LiveDashboardWrapperProps) {
+export default function LiveDashboardWrapper({ initialMetrics, initialKpis, initialMeta, dbError }: LiveDashboardWrapperProps) {
   // Use React Query for enterprise-grade polling.
   const { data, isFetching, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["dashboard", "metrics"],
@@ -22,7 +23,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbEr
       if (result.error) throw new Error(result.error);
       return result;
     },
-    initialData: { data: initialMetrics, kpis: initialKpis },
+    initialData: { data: initialMetrics, kpis: initialKpis, meta: initialMeta },
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
     refetchIntervalInBackground: false,
@@ -31,6 +32,7 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbEr
 
   const metrics = data?.data || [];
   const kpis = data?.kpis || initialKpis;
+  const meta = data?.meta || initialMeta;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -54,7 +56,13 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, dbEr
   return (
     <div className="relative w-full">
       <div className={isFetching ? "opacity-90 transition-opacity" : "opacity-100 transition-opacity"}>
-        <DashboardCommandCenter metrics={metrics || []} kpis={kpis} dbError={dbError} refreshComponent={refreshComponent} />
+        <DashboardCommandCenter 
+          metrics={metrics || []} 
+          kpis={kpis} 
+          meta={meta}
+          dbError={dbError} 
+          refreshComponent={refreshComponent} 
+        />
       </div>
     </div>
   );

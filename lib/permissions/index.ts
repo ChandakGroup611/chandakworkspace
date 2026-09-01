@@ -98,6 +98,7 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
 export async function canAccessTicket(userId: string, ticketId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
 
   const { data } = await supabaseAdmin
     .from("tickets")
@@ -108,7 +109,16 @@ export async function canAccessTicket(userId: string, ticketId: string): Promise
   if (!data) return false;
   if (data.creator_id === userId || data.assignee_id === userId) return true;
 
-  // Manager or Department check could be added here
+  try {
+    const { getUserAccessScope } = await import('@/lib/auth/scope');
+    const scope = await getUserAccessScope(userId);
+    if (data.assignee_id && scope.subordinateUserIds.includes(data.assignee_id)) return true;
+    if (data.creator_id && scope.subordinateUserIds.includes(data.creator_id)) return true;
+    if (data.department_id && scope.managedDepartmentIds.includes(data.department_id)) return true;
+  } catch (e) {
+    console.warn("Error in canAccessTicket scope check:", e);
+  }
+
   return false;
 }
 
@@ -118,18 +128,29 @@ export async function canAccessTicket(userId: string, ticketId: string): Promise
 export async function canAccessTask(userId: string, taskId: string): Promise<boolean> {
   if (process.env.BREAK_GLASS_MODE === 'true') return true;
   const ctx = await getUserContext(userId);
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN") return true;
 
   const { data } = await supabaseAdmin
     .from("tasks")
-    .select("created_by, workspace_id, assignees:task_assignees(user_id)")
+    .select("created_by, assigned_to, department_id, workspace_id, assignees:task_assignees(user_id)")
     .eq("id", taskId)
     .single();
 
   if (!data) return false;
-  if (data.created_by === userId) return true;
+  if (data.created_by === userId || data.assigned_to === userId) return true;
   
   const assignees = data.assignees as any[];
   if (assignees?.some(a => a.user_id === userId)) return true;
+
+  try {
+    const { getUserAccessScope } = await import('@/lib/auth/scope');
+    const scope = await getUserAccessScope(userId);
+    if (data.assigned_to && scope.subordinateUserIds.includes(data.assigned_to)) return true;
+    if (data.created_by && scope.subordinateUserIds.includes(data.created_by)) return true;
+    if (data.department_id && scope.managedDepartmentIds.includes(data.department_id)) return true;
+  } catch (e) {
+    console.warn("Error in canAccessTask scope check:", e);
+  }
 
   return canAccessWorkspace(userId, data.workspace_id);
 }

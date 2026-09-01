@@ -54,6 +54,7 @@ export default async function Page() {
       <LiveDashboardWrapper 
         initialMetrics={metricsResult.data || []} 
         initialKpis={metricsResult.kpis || null}
+        initialMeta={metricsResult.meta || null}
         dbError={metricsResult.error || null} 
       />
     </div>

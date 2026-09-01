@@ -12,7 +12,7 @@ import { onRenderCallback } from "@/utils/performance/profiler-utils";
 import { performanceGovernor, DegradationStage } from "@/utils/performance/PerformanceGovernanceEngine";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
 import { AppButton } from "@/components/ui/AppButton";
-import { Download, Plus, LayoutDashboard, Briefcase, Sparkles } from "lucide-react";
+import { Download, Plus, LayoutDashboard, Briefcase, Sparkles, Building2, Users, UserCheck, Globe, Printer } from "lucide-react";
 import { MultiSelectFilter } from "@/components/ui/MultiSelectFilter";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -33,14 +33,33 @@ const STATUS_OPTIONS = [
   { value: "Resolved", label: "Resolved/Done" },
 ];
 
+type HierarchyScope = "all" | "my_dept" | "my_reports" | "assigned_me";
+
 interface DashboardCommandCenterProps {
   metrics?: any[];
   kpis?: any;
+  meta?: {
+    currentUser?: {
+      id: string;
+      name: string;
+      role: string;
+      departmentId: string | null;
+      departmentName: string;
+      isSuperAdmin?: boolean;
+      isManager?: boolean;
+      isDepartmentHead?: boolean;
+      directReportIds?: string[];
+      subordinateUserIds?: string[];
+      managedDepartmentIds?: string[];
+      managedDepartments?: Array<{ id: string; name: string; code?: string }>;
+    };
+    departments?: Array<{ id: string; name: string; code: string }>;
+  } | null;
   dbError?: string | null;
   refreshComponent?: React.ReactNode;
 }
 
-export default function DashboardCommandCenter({ metrics = [], kpis, dbError, refreshComponent }: DashboardCommandCenterProps) {
+export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbError, refreshComponent }: DashboardCommandCenterProps) {
   useRenderLog("DashboardCommandCenter", { metricsLength: metrics.length, dbError });
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -48,6 +67,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
   const [mounted, setMounted] = useState(false);
   const initialView = searchParams.get("view") === "portfolio" ? "portfolio" : "overview";
   const [activeView, setActiveView] = useState<"overview" | "portfolio">(initialView);
+
+  // Hierarchy & Department filter state
+  const [hierarchyScope, setHierarchyScope] = useState<HierarchyScope>("all");
+  const [selectedDepartmentName, setSelectedDepartmentName] = useState<string>("ALL");
 
   const [globalScopes, setGlobalScopes] = useState<string[]>(SCOPE_OPTIONS.map(o => o.value));
   const [globalStatuses, setGlobalStatuses] = useState<string[]>(STATUS_OPTIONS.map(o => o.value));
@@ -97,29 +120,63 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
     }
   }, [uniqueUsers, usersInitialized]);
 
-  // Filter metrics based on global filters memoized
+  const currentUser = meta?.currentUser;
+  const isSuperAdmin = currentUser?.isSuperAdmin;
+  const isManager = currentUser?.isManager || (currentUser?.subordinateUserIds && currentUser.subordinateUserIds.length > 1);
+  const managedDepts = currentUser?.managedDepartments || [];
+
+  // Filter metrics based on hierarchy & global filters memoized
   const filteredMetrics = useMemo(() => {
-    if (!usersInitialized) return metrics;
-    
-    const isAllUsersSelected = globalUsers.length === 0 || globalUsers.length >= uniqueUsers.filter(u => u !== 'Unassigned').length;
+    const isAllUsersSelected = !usersInitialized || globalUsers.length === 0 || globalUsers.length >= uniqueUsers.filter(u => u !== 'Unassigned').length;
 
     return metrics.filter(m => {
+      // 1. Hierarchy & Department Filtering
+      if (hierarchyScope === "my_dept") {
+        if (selectedDepartmentName !== "ALL") {
+          if (m.departmentName !== selectedDepartmentName) return false;
+        } else {
+          // If viewing all managed departments (e.g. CFO managing Finance + Accounts)
+          if (managedDepts.length > 0) {
+            const managedNames = managedDepts.map((d: any) => d.name);
+            if (!managedNames.includes(m.departmentName)) return false;
+          } else if (currentUser?.departmentName) {
+            if (m.departmentName !== currentUser.departmentName) return false;
+          }
+        }
+      } else if (hierarchyScope === "my_reports") {
+        // Reporting line (all subordinates in manager tree)
+        const subIds = currentUser?.subordinateUserIds || currentUser?.directReportIds || [];
+        if (!subIds.includes(m.userId)) return false;
+      } else if (hierarchyScope === "assigned_me" && currentUser?.id) {
+        if (m.userId !== currentUser.id) return false;
+      }
+
+      // 2. Specific Department Filter (when set under any scope)
+      if (selectedDepartmentName !== "ALL" && hierarchyScope !== "my_dept") {
+        if (m.departmentName !== selectedDepartmentName) return false;
+      }
+
+      // 3. Scope Matching
       const scopeMatch = globalScopes.includes(m.module);
+      if (!scopeMatch) return false;
       
+      // 4. User Matching
       let userMatch = false;
       if (m.user === 'System') {
         userMatch = true;
       } else if (m.user === 'Unassigned') {
         userMatch = isAllUsersSelected || globalUsers.includes('Unassigned');
       } else {
-        userMatch = globalUsers.includes(String(m.user));
+        userMatch = isAllUsersSelected || globalUsers.includes(String(m.user));
       }
+      if (!userMatch) return false;
       
+      // 5. Status Matching
       let statusMatch = false;
       const sLower = String(m.status).toLowerCase();
       const isResolved = sLower.includes('resolv') || sLower.includes('done') || sLower.includes('clos');
       const isEscalated = sLower.includes('escalat') || sLower.includes('block');
-      const isReview = sLower.includes('review') || sLower.includes('qa') || sLower.includes('approval');
+      const isReview = sLower.includes('review') || sLower.includes('qa') || sLower.includes('approval') || sLower.includes('pending');
       const isActive = !isResolved && !isEscalated && !isReview;
 
       if (globalStatuses.includes("Active") && isActive) statusMatch = true;
@@ -129,9 +186,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
 
       if (!statusMatch && globalStatuses.includes("Active") && !isResolved) statusMatch = true;
 
-      return scopeMatch && userMatch && statusMatch;
+      return statusMatch;
     });
-  }, [metrics, globalScopes, globalUsers, globalStatuses, usersInitialized, uniqueUsers]);
+  }, [metrics, hierarchyScope, selectedDepartmentName, currentUser, managedDepts, globalScopes, globalUsers, globalStatuses, usersInitialized, uniqueUsers]);
 
   // Dynamic KPIs calculated strictly from filteredMetrics for full segregation
   const dynamicKpis = useMemo(() => {
@@ -160,13 +217,13 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
       const sLower = String(m.status).toLowerCase();
       const isResolved = sLower.includes('resolv') || sLower.includes('done');
       const isEscalated = sLower.includes('escalat') || sLower.includes('block');
-      const isReview = sLower.includes('review');
+      const isReview = sLower.includes('review') || sLower.includes('pending') || sLower.includes('approval');
       const isActive = !isResolved && !isEscalated && !isReview;
 
       if (isActive) totalActive++;
       if (isEscalated) totalEscalated++;
       if (isReview) totalReview++;
-      if (m.isOverdue) totalOverdue++;
+      if (m.isOverdue || m.slaBreached) totalOverdue++;
       
       // Monthly Bucket
       if (m.createdAt) {
@@ -251,8 +308,12 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
     };
   }, [filteredMetrics]);
 
+  const handlePrintSnapshot = () => {
+    window.print();
+  };
+
   if (!mounted) {
-    return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading Exact Match Dashboard...</div>;
+    return <div style={{ padding: '2rem', color: '#8b91a8', fontFamily: 'monospace' }}>Loading Next-Gen Command Center...</div>;
   }
 
   return (
@@ -266,10 +327,10 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div>
               <div className="topbar-title">
-                {activeView === "portfolio" ? "My Portfolio & User Analytics" : "Overview Dashboard"}
+                {activeView === "portfolio" ? "My Portfolio & User Analytics" : "Enterprise Command Center"}
               </div>
               <div className="topbar-sub">
-                {activeView === "portfolio" ? "User Comparison & Timeline Tracking" : "Live System Metrics"}
+                {activeView === "portfolio" ? "User Comparison & Timeline Tracking" : "Live Operational Intelligence & SLA Governance"}
               </div>
             </div>
 
@@ -317,7 +378,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             {activeView === "overview" && (
               <>
                 <MultiSelectFilter
@@ -340,6 +401,17 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                   onChange={setGlobalUsers}
                   placeholder="Users"
                 />
+
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrintSnapshot}
+                  leftIcon={<Printer className="h-3.5 w-3.5" />}
+                  className="theme-card-structural hidden lg:inline-flex text-xs"
+                  title="Print Executive Snapshot"
+                >
+                  Snapshot
+                </AppButton>
               </>
             )}
 
@@ -349,6 +421,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
                 size="sm" 
                 leftIcon={<Plus className="h-3.5 w-3.5" />} 
                 onClick={() => setNewMetricOpen(!newMetricOpen)}
+                className="text-xs"
               >
                 New Item
               </AppButton>
@@ -373,6 +446,124 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
             )}
           </div>
         </div>
+
+        {/* HIERARCHY SCOPE BAR (Overview Mode) */}
+        {activeView === "overview" && (
+          <div className="px-6 py-2.5 bg-surface/40 border-b border-border/50 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-2 shrink-0">
+                Hierarchy Scope:
+              </span>
+
+              {/* Entire Organization (Super Admin / Global) */}
+              {(isSuperAdmin || !isManager) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHierarchyScope("all");
+                    setSelectedDepartmentName("ALL");
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                    hierarchyScope === "all" && selectedDepartmentName === "ALL"
+                      ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                      : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                  )}
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  Entire Organization
+                </button>
+              )}
+
+              {/* Reporting Line (for CFO / Managers / Team Leads) */}
+              {isManager && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHierarchyScope("my_reports");
+                    setSelectedDepartmentName("ALL");
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                    hierarchyScope === "my_reports"
+                      ? "bg-purple-600 text-white font-bold shadow-sm"
+                      : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                  )}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  My Reporting Tree ({currentUser?.subordinateUserIds?.length || 0} Members)
+                </button>
+              )}
+
+              {/* Department(s) Scope (Handles Single Dept or CFO Multi-Department) */}
+              {(managedDepts.length > 0 || currentUser?.departmentName) && (
+                <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHierarchyScope("my_dept");
+                      setSelectedDepartmentName("ALL");
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap",
+                      hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
+                        ? "bg-blue-600 text-white font-bold shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    {managedDepts.length > 1
+                      ? `All My Depts (${managedDepts.length})`
+                      : `My Dept (${currentUser?.departmentName || "General"})`}
+                  </button>
+
+                  {/* Multi-Department Dropdown (e.g. for CFO) */}
+                  {(managedDepts.length > 1 || isSuperAdmin) && (
+                    <select
+                      value={selectedDepartmentName}
+                      onChange={(e) => {
+                        setSelectedDepartmentName(e.target.value);
+                        setHierarchyScope("my_dept");
+                      }}
+                      className="text-xs bg-background/80 border border-border/60 rounded px-2 py-0.5 text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="ALL">
+                        {isSuperAdmin ? "Filter by Dept (All)" : `All Managed (${managedDepts.length})`}
+                      </option>
+                      {(isSuperAdmin ? (meta?.departments || []) : managedDepts).map((d: any) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+
+              {/* Personal Assigned Scope */}
+              <button
+                type="button"
+                onClick={() => {
+                  setHierarchyScope("assigned_me");
+                  setSelectedDepartmentName("ALL");
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                  hierarchyScope === "assigned_me"
+                    ? "bg-emerald-600 text-white font-bold shadow-sm"
+                    : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                )}
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                Assigned to Me
+              </button>
+            </div>
+
+            <div className="text-[11px] text-muted-foreground font-medium shrink-0">
+              Showing <strong className="text-foreground">{filteredMetrics.length}</strong> of {metrics.length} operational deliverables
+            </div>
+          </div>
+        )}
 
         <div className="content">
           
@@ -402,11 +593,11 @@ export default function DashboardCommandCenter({ metrics = [], kpis, dbError, re
 
           {/* FOOTER */}
           <div style={{ marginTop: '20px', padding: '14px 0', borderTop: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>TaskForge Internal</div>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Live Data Sync</div>
+            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>ADIOS OperationsOS</div>
+            <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>Live Data Sync (15s)</div>
             <div style={{ flex: 1 }}></div>
             <div style={{ fontSize: '10px', color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
-              Active Items: <span style={{ color: 'var(--amber)', fontWeight: 500 }}>{metrics.length}</span>
+              Active Items in Scope: <span style={{ color: 'var(--amber)', fontWeight: 600 }}>{filteredMetrics.length}</span>
             </div>
           </div>
 

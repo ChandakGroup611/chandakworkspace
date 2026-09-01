@@ -18,7 +18,17 @@ const StatusComparisonWidget = dynamic(() => import("../widgets/StatusComparison
 const RiskIntelligenceWidget = dynamic(() => import("../widgets/RiskIntelligenceWidget").then(m => m.RiskIntelligenceWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
 const ResolutionVelocityWidget = dynamic(() => import("../widgets/ResolutionVelocityWidget").then(m => m.ResolutionVelocityWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
 
+// Next-Gen Enterprise Additions
+const ExecutiveDigestWidget = dynamic(() => import("../widgets/ExecutiveDigestWidget").then(m => m.ExecutiveDigestWidget), { ssr: false, loading: () => <div className="h-48 bg-surface/50 rounded-2xl animate-pulse" /> });
+const SlaCountdownWidget = dynamic(() => import("../widgets/SlaCountdownWidget").then(m => m.SlaCountdownWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+const BottleneckRadarWidget = dynamic(() => import("../widgets/BottleneckRadarWidget").then(m => m.BottleneckRadarWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+const DepartmentalHealthWidget = dynamic(() => import("../widgets/DepartmentalHealthWidget").then(m => m.DepartmentalHealthWidget), { ssr: false, loading: () => <div className="h-64 bg-surface/50 rounded-2xl animate-pulse" /> });
+
 export const WidgetRegistry: Record<string, React.ComponentType<any>> = {
+  executive_digest: ExecutiveDigestWidget,
+  sla_countdown: SlaCountdownWidget,
+  bottleneck_radar: BottleneckRadarWidget,
+  departmental_health: DepartmentalHealthWidget,
   kpi: ExecutiveKPIWidget,
   charts: ChartWidget,
   kanban: KanbanWidget,

@@ -557,9 +557,27 @@ export async function getTaskDetails(taskId: string) {
       }
     }
 
+    let isReportingManagerOrDeptHead = false;
+    if (userId && !isSuperAdmin) {
+      try {
+        const { getUserAccessScope } = await import('@/lib/auth/scope');
+        const userScope = await getUserAccessScope(userId);
+        if (task.assigned_to && userScope.subordinateUserIds.includes(task.assigned_to)) {
+          isReportingManagerOrDeptHead = true;
+        } else if (task.created_by && userScope.subordinateUserIds.includes(task.created_by)) {
+          isReportingManagerOrDeptHead = true;
+        } else if (task.department_id && userScope.managedDepartmentIds.includes(task.department_id)) {
+          isReportingManagerOrDeptHead = true;
+        }
+      } catch (scopeErr) {
+        console.warn("[getTaskDetails] Error checking scope hierarchy:", scopeErr);
+      }
+    }
+
     const isAuthorized = 
       isSuperAdmin || 
       isWorkspaceMember || 
+      isReportingManagerOrDeptHead ||
       task.created_by === userId || 
       task.assigned_to === userId || 
       (participants && participants.some(p => p.user_id === userId));

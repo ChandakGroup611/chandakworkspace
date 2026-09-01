@@ -3,13 +3,15 @@
 import React from "react";
 import { ShieldAlert, AlertTriangle, ShieldCheck, Activity } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
+import { DrillDownFilter } from "./MetricsListModal";
 
 interface SlaGovernanceWidgetProps {
   analytics?: any;
   kpis?: any;
+  onDrillDown?: (filter: DrillDownFilter) => void;
 }
 
-export function SlaGovernanceWidget({ analytics, kpis: globalKpis }: SlaGovernanceWidgetProps) {
+export function SlaGovernanceWidget({ analytics, kpis: globalKpis, onDrillDown }: SlaGovernanceWidgetProps) {
   const kpis = globalKpis || analytics?.kpis || analytics || {};
   const slaStats = kpis.sla || { healthy: 0, warning: 0, breached: 0 };
   
@@ -34,17 +36,26 @@ export function SlaGovernanceWidget({ analytics, kpis: globalKpis }: SlaGovernan
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl border border-emerald-500/20 bg-success/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-success/10 cursor-default">
+          <div 
+            onClick={() => onDrillDown && onDrillDown({ title: "Healthy SLA Deliverables", description: "Deliverables progressing within target SLA windows." })}
+            className={`p-4 rounded-xl border border-emerald-500/20 bg-success/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-success/10 ${onDrillDown ? "cursor-pointer group" : ""}`}
+          >
             <ShieldCheck className="w-6 h-6 text-success mb-2" />
             <div className="text-3xl font-extrabold text-success dark:text-success drop-shadow-sm">{slaStats.healthy}</div>
             <div className="text-[10px] font-bold text-success/70 dark:text-success/70 uppercase tracking-widest mt-1">Healthy</div>
           </div>
-          <div className="p-4 rounded-xl border border-amber-500/20 bg-warning/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-warning/10 cursor-default">
+          <div 
+            onClick={() => onDrillDown && onDrillDown({ title: "Warning SLA Deliverables", description: "Deliverables nearing their deadline (<24 hours).", urgency: "warning" })}
+            className={`p-4 rounded-xl border border-amber-500/20 bg-warning/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-warning/10 ${onDrillDown ? "cursor-pointer group" : ""}`}
+          >
             <AlertTriangle className="w-6 h-6 text-warning mb-2" />
             <div className="text-3xl font-extrabold text-warning dark:text-warning drop-shadow-sm">{slaStats.warning}</div>
             <div className="text-[10px] font-bold text-warning/70 dark:text-warning/70 uppercase tracking-widest mt-1">Warning</div>
           </div>
-          <div className="p-4 rounded-xl border border-red-500/20 bg-danger/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-danger/10 cursor-default">
+          <div 
+            onClick={() => onDrillDown && onDrillDown({ title: "Breached SLA Deliverables", description: "All deliverables that exceeded resolution deadlines.", urgency: "breached" })}
+            className={`p-4 rounded-xl border border-red-500/20 bg-danger/5 text-center flex flex-col items-center justify-center transition-colors hover:bg-danger/10 ${onDrillDown ? "cursor-pointer group" : ""}`}
+          >
             <ShieldAlert className="w-6 h-6 text-danger mb-2" />
             <div className="text-3xl font-extrabold text-danger dark:text-danger drop-shadow-sm">{slaStats.breached}</div>
             <div className="text-[10px] font-bold text-danger/70 dark:text-danger/70 uppercase tracking-widest mt-1">Breached</div>

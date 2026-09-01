@@ -1,26 +1,41 @@
 "use client";
 
 import React from "react";
-import { Target, FolderOpen, LayoutDashboard, CheckCircle, Clock, FileText, Layers, GitMerge } from "lucide-react";
+import { Target, FolderOpen, LayoutDashboard, CheckCircle, Clock, FileText, Layers, GitMerge, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { BaseWidget } from "./BaseWidget";
+import { DrillDownFilter } from "./MetricsListModal";
 
 interface ExecutiveKPIWidgetProps {
   analytics?: any;
   kpis?: any;
+  onDrillDown?: (filter: DrillDownFilter) => void;
 }
 
-export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPIWidgetProps) {
+export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }: ExecutiveKPIWidgetProps) {
   // Try to find the kpis object, fallback to checking analytics.kpis
   const kpis = globalKpis || analytics?.kpis || analytics || {};
+
+  const handleCardClick = (moduleName: string, title: string) => {
+    if (onDrillDown) {
+      onDrillDown({
+        title: `${title} Deliverables`,
+        description: `All active and historical items under ${title}.`,
+        module: moduleName
+      });
+    }
+  };
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
       {/* Workspaces KPI */}
-      <Link href="/workspaces" className="block group">
+      <div 
+        onClick={() => handleCardClick("Workspaces", "Workspaces")}
+        className="block group cursor-pointer"
+      >
         <BaseWidget 
           id="kpi-workspaces" 
-          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural border border-border/70 hover:border-emerald-500/50 transition-all shadow-sm"
           noPadding
           overflowHidden
         >
@@ -38,17 +53,20 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-3">
-              <span className="text-3xl font-bold text-foreground drop-shadow-sm">{kpis.workspaces?.total || 0}</span>
+              <span className="text-3xl font-bold text-foreground drop-shadow-sm group-hover:text-emerald-500 transition-colors">{kpis.workspaces?.total || 0}</span>
             </div>
           </div>
         </BaseWidget>
-      </Link>
+      </div>
 
       {/* Sub Workspaces KPI */}
-      <Link href="/workspaces" className="block group">
+      <div 
+        onClick={() => handleCardClick("Sub Workspaces", "Sub Workspaces")}
+        className="block group cursor-pointer"
+      >
         <BaseWidget 
           id="kpi-sub-workspaces" 
-          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural border border-border/70 hover:border-teal-500/50 transition-all shadow-sm"
           noPadding
           overflowHidden
         >
@@ -66,17 +84,20 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-3">
-              <span className="text-3xl font-bold text-foreground drop-shadow-sm">{kpis.sub_workspaces?.total || 0}</span>
+              <span className="text-3xl font-bold text-foreground drop-shadow-sm group-hover:text-teal-500 transition-colors">{kpis.sub_workspaces?.total || 0}</span>
             </div>
           </div>
         </BaseWidget>
-      </Link>
+      </div>
 
       {/* Tasks KPI */}
-      <Link href="/workspaces/tasks" className="block group">
+      <div 
+        onClick={() => handleCardClick("Tasks", "Tasks")}
+        className="block group cursor-pointer"
+      >
         <BaseWidget 
           id="kpi-tasks" 
-          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural border border-border/70 hover:border-blue-500/50 transition-all shadow-sm"
           noPadding
           overflowHidden
         >
@@ -94,23 +115,26 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-3">
-              <span className="text-3xl font-bold text-foreground drop-shadow-sm">{kpis.tasks?.total || 0}</span>
+              <span className="text-3xl font-bold text-foreground drop-shadow-sm group-hover:text-blue-500 transition-colors">{kpis.tasks?.total || 0}</span>
             </div>
             
             <div className="mt-auto flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground pt-3">
-              <span className="text-blue-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tasks?.resolved || 0} Resolved</span>
+              <span className="text-blue-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tasks?.resolved || 0} Done</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="whitespace-nowrap">{(kpis.tasks?.total || 0) - (kpis.tasks?.resolved || 0)} Pending</span>
             </div>
           </div>
         </BaseWidget>
-      </Link>
+      </div>
 
       {/* Sub Tasks KPI */}
-      <Link href="/workspaces/tasks" className="block group">
+      <div 
+        onClick={() => handleCardClick("Sub Tasks", "Sub Tasks")}
+        className="block group cursor-pointer"
+      >
         <BaseWidget 
           id="kpi-sub-tasks" 
-          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural border border-border/70 hover:border-cyan-500/50 transition-all shadow-sm"
           noPadding
           overflowHidden
         >
@@ -128,23 +152,26 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-3">
-              <span className="text-3xl font-bold text-foreground drop-shadow-sm">{kpis.sub_tasks?.total || 0}</span>
+              <span className="text-3xl font-bold text-foreground drop-shadow-sm group-hover:text-cyan-500 transition-colors">{kpis.sub_tasks?.total || 0}</span>
             </div>
             
             <div className="mt-auto flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground pt-3">
-              <span className="text-cyan-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.sub_tasks?.resolved || 0} Resolved</span>
+              <span className="text-cyan-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.sub_tasks?.resolved || 0} Done</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="whitespace-nowrap">{(kpis.sub_tasks?.total || 0) - (kpis.sub_tasks?.resolved || 0)} Pending</span>
             </div>
           </div>
         </BaseWidget>
-      </Link>
+      </div>
 
       {/* Requirements KPI */}
-      <Link href="/requirements" className="block group">
+      <div 
+        onClick={() => handleCardClick("Requirements", "Requirements")}
+        className="block group cursor-pointer"
+      >
         <BaseWidget 
           id="kpi-requirements" 
-          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural border border-border/70 hover:border-indigo-500/50 transition-all shadow-sm"
           noPadding
           overflowHidden
         >
@@ -162,23 +189,26 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-3">
-              <span className="text-3xl font-bold text-foreground drop-shadow-sm">{kpis.requirements?.total || 0}</span>
+              <span className="text-3xl font-bold text-foreground drop-shadow-sm group-hover:text-indigo-500 transition-colors">{kpis.requirements?.total || 0}</span>
             </div>
             
             <div className="mt-auto flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground pt-3">
-              <span className="text-indigo-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.requirements?.resolved || 0} Resolved</span>
+              <span className="text-indigo-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.requirements?.resolved || 0} Done</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="whitespace-nowrap">{(kpis.requirements?.total || 0) - (kpis.requirements?.resolved || 0)} Pending</span>
             </div>
           </div>
         </BaseWidget>
-      </Link>
+      </div>
 
       {/* Tickets KPI */}
-      <Link href="/tickets" className="block group">
+      <div 
+        onClick={() => handleCardClick("Tickets", "Tickets")}
+        className="block group cursor-pointer"
+      >
         <BaseWidget 
           id="kpi-tickets" 
-          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural"
+          className="min-h-[130px] h-full overflow-hidden relative theme-card-structural border border-border/70 hover:border-purple-500/50 transition-all shadow-sm"
           noPadding
           overflowHidden
         >
@@ -196,17 +226,17 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis }: ExecutiveKPI
             </div>
             
             <div className="mt-3">
-              <span className="text-3xl font-bold text-foreground drop-shadow-sm">{kpis.tickets?.total || 0}</span>
+              <span className="text-3xl font-bold text-foreground drop-shadow-sm group-hover:text-purple-500 transition-colors">{kpis.tickets?.total || 0}</span>
             </div>
             
             <div className="mt-auto flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground pt-3">
-              <span className="text-purple-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tickets?.resolved || 0} Resolved</span>
+              <span className="text-purple-500 flex items-center gap-1 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> {kpis.tickets?.resolved || 0} Done</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="whitespace-nowrap">{(kpis.tickets?.total || 0) - (kpis.tickets?.resolved || 0)} Pending</span>
             </div>
           </div>
         </BaseWidget>
-      </Link>
+      </div>
     </div>
   );
 }
