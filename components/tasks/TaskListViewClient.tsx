@@ -17,7 +17,7 @@ import {
   AppTableHead,
   AppTableCell
 } from "@/components/ui/AppTable";
-import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield } from "lucide-react";
+import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield, Globe, Building2, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { deleteTask, getTaskStatuses, updateTaskStatusInline, getDepartments, executeTaskBatchOperation, createTask } from "@/lib/actions/tasks";
 import { fetchTasksByWorkspace, fetchAllTasks, fetchWorkspaces, fetchPriorities } from "@/lib/actions/workspaces";
@@ -180,15 +180,20 @@ const formatDate = (dateString: string | null | undefined): string => {
   }
 };
 
-export default function TaskListViewClient({ initialTasks }: { initialTasks: Task[] }) {
+export default function TaskListViewClient({ initialTasks, userScope }: { initialTasks: Task[]; userScope?: any }) {
   const [viewMode, setViewMode] = useState<"list" | "board" | "timeline">("list");
   const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
   const [scope, setScope] = useState<"ALL" | "ASSIGNEE" | "ENROLLED">("ALL");
+  const [hierarchyScope, setHierarchyScope] = useState<"all" | "my_dept" | "my_reports" | "assigned_me">("all");
+  const [selectedDepartmentName, setSelectedDepartmentName] = useState<string>("ALL");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
-  const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
-  const canUpdate = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_UPDATE");
+  const isSuperAdmin = roleCode === "SUPER_ADMIN" || userScope?.isSuperAdmin || hasPermission("WORKSPACES_MANAGE");
+  const isManager = userScope?.isManager || (userScope?.subordinateUserIds && userScope.subordinateUserIds.length > 1);
+  const managedDepts = userScope?.managedDepartments || [];
+  const canDelete = isSuperAdmin || hasPermission("TASKS_DELETE");
+  const canUpdate = isSuperAdmin || hasPermission("TASKS_UPDATE");
 
   const [dynamicFields, setDynamicFields] = useState<UIFieldDefinition[]>([]);
 
@@ -425,6 +430,30 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
   const baseFiltered = useMemo(() => {
     return tasks.filter(t => {
+      // 1. Hierarchy & Multi-Department Scope
+      if (hierarchyScope === "my_dept") {
+        if (selectedDepartmentName !== "ALL") {
+          if (t.department?.name !== selectedDepartmentName) return false;
+        } else if (managedDepts.length > 0) {
+          const deptNames = managedDepts.map((d: any) => d.name);
+          if (!deptNames.includes(t.department?.name)) return false;
+        } else if (userScope?.primaryDepartmentName) {
+          if (t.department?.name !== userScope.primaryDepartmentName) return false;
+        }
+      } else if (hierarchyScope === "my_reports") {
+        const subIds = userScope?.subordinateUserIds || [];
+        const assigneeId = (Array.isArray(t.assignee) ? t.assignee[0]?.id : t.assignee?.id) || t.assigned_to;
+        if (!subIds.includes(assigneeId) && !subIds.includes(t.created_by)) return false;
+      } else if (hierarchyScope === "assigned_me") {
+        const myId = userScope?.userId || currentUserId;
+        const assigneeId = (Array.isArray(t.assignee) ? t.assignee[0]?.id : t.assignee?.id) || t.assigned_to;
+        if (assigneeId !== myId && t.created_by !== myId) return false;
+      }
+
+      if (selectedDepartmentName !== "ALL" && hierarchyScope !== "my_dept") {
+        if (t.department?.name !== selectedDepartmentName) return false;
+      }
+
       if (scope === "ASSIGNEE") {
         const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
         if (a?.id !== currentUserId && t.assigned_to !== currentUserId) return false;
@@ -513,7 +542,7 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
 
       return true;
     });
-  }, [tasks, scope, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo, columnFilters, combinedFields]);
+  }, [tasks, scope, hierarchyScope, selectedDepartmentName, userScope, managedDepts, query, currentUserId, selectedWorkspaceId, selectedStatus, selectedPriority, showEscalatedOnly, dateFrom, dateTo, columnFilters, combinedFields]);
 
   const kpis = useMemo(() => {
     const total = baseFiltered.length;
@@ -724,7 +753,6 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
   };
 
   const isOwner = inlineTask?.assigned_to === currentUserId;
-  const isSuperAdmin = hasPermission("WORKSPACES_MANAGE");
   const isExecutive = inlineTask?.participants?.some((p: any) => p.user_id === currentUserId && p.participation_role === 'EXECUTOR');
   const canChangeFields = isOwner || isSuperAdmin || isExecutive;
 
@@ -994,6 +1022,120 @@ export default function TaskListViewClient({ initialTasks }: { initialTasks: Tas
             </AppButton>
           </div>
         </header>
+
+        {/* HIERARCHY SCOPE BAR */}
+        <div className="px-4 py-2 theme-card-structural rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs border border-border/50">
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar flex-wrap">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5 shrink-0">
+              Scope:
+            </span>
+
+            {/* Entire Organization (Super Admin / Global) */}
+            {(isSuperAdmin || !isManager) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setHierarchyScope("all");
+                  setSelectedDepartmentName("ALL");
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                  hierarchyScope === "all" && selectedDepartmentName === "ALL"
+                    ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                    : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                )}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                Entire Organization
+              </button>
+            )}
+
+            {/* Reporting Tree (for CFO / Managers / Team Leads) */}
+            {isManager && (
+              <button
+                type="button"
+                onClick={() => {
+                  setHierarchyScope("my_reports");
+                  setSelectedDepartmentName("ALL");
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                  hierarchyScope === "my_reports"
+                    ? "bg-purple-600 text-white font-bold shadow-sm"
+                    : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+                )}
+              >
+                <Users className="w-3.5 h-3.5" />
+                My Reporting Tree ({userScope?.subordinateUserIds?.length || 0} Members)
+              </button>
+            )}
+
+            {/* Managed Departments (for CFO / Multi-Department Heads) */}
+            {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
+              <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHierarchyScope("my_dept");
+                    setSelectedDepartmentName("ALL");
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap",
+                    hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
+                      ? "bg-blue-600 text-white font-bold shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  {managedDepts.length > 1
+                    ? `All My Depts (${managedDepts.length})`
+                    : `My Dept (${userScope?.primaryDepartmentName || "General"})`}
+                </button>
+
+                {/* Multi-Department Dropdown (e.g. for CFO) */}
+                {managedDepts.length > 1 && (
+                  <select
+                    value={selectedDepartmentName}
+                    onChange={(e) => {
+                      setSelectedDepartmentName(e.target.value);
+                      setHierarchyScope("my_dept");
+                    }}
+                    className="text-xs bg-background/80 border border-border/60 rounded px-2 py-0.5 text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="ALL">All Managed ({managedDepts.length})</option>
+                    {managedDepts.map((d: any) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
+            {/* Personal Assigned Scope */}
+            <button
+              type="button"
+              onClick={() => {
+                setHierarchyScope("assigned_me");
+                setSelectedDepartmentName("ALL");
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                hierarchyScope === "assigned_me"
+                  ? "bg-emerald-600 text-white font-bold shadow-sm"
+                  : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
+              )}
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              Assigned to Me
+            </button>
+          </div>
+
+          <div className="text-[11px] text-muted font-medium shrink-0">
+            Showing <strong className="text-foreground">{filtered.length}</strong> tasks
+          </div>
+        </div>
 
         {/* Command Bar */}
         <div className="sticky top-0 z-30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-2 theme-card-structural rounded-2xl shadow-sm mb-6">

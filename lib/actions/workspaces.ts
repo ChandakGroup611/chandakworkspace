@@ -390,8 +390,12 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
     // 3. Hierarchy Roots Only (Level 1)
     const masterHierarchy = await fetchHierarchyRoots(user.id, workspaces);
 
+    const { getUserAccessScope } = await import("@/lib/auth/scope");
+    const userScope = await getUserAccessScope(user.id);
+
     return {
       userProfile,
+      userScope,
       workspaces,
       companies,
       priorities,

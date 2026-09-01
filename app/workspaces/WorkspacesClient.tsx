@@ -12,7 +12,7 @@ import {
   FolderKanban, Users, Activity, Plus, Send, 
   Layers, GitMerge, ChevronDown, Building2, Calendar, Target,
   Loader2, ShieldAlert, Sparkles, ShieldCheck, Search, Filter,
-  X, Check, ChevronsDownUp, ChevronsUpDown, UserCheck, RefreshCw
+  X, Check, ChevronsDownUp, ChevronsUpDown, UserCheck, RefreshCw, Globe
 } from "lucide-react";
 import { 
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
@@ -114,6 +114,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       });
     }
   }, [initialData?.allUsers]);
+
+  const userScope = initialData?.userScope;
+  const isSuperAdmin = roleCode === "SUPER_ADMIN" || userScope?.isSuperAdmin || hasPermission("WORKSPACES_MANAGE");
+  const isManager = userScope?.isManager || (userScope?.subordinateUserIds && userScope.subordinateUserIds.length > 1);
+  const managedDepts = userScope?.managedDepartments || [];
+
+  const [hierarchyScope, setHierarchyScope] = useState<"all" | "my_dept" | "my_reports" | "assigned_me">("all");
+  const [selectedDepartmentName, setSelectedDepartmentName] = useState<string>("ALL");
 
   const [filters, setFilters] = useState<HierarchyFilterOptions>({
     entityType: 'ALL',
@@ -1153,6 +1161,116 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           </>
         }
       />
+
+      {/* HIERARCHY SCOPE BAR */}
+      <div className="px-4 py-2 mb-4 theme-card-structural rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs border border-border/50">
+        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar flex-wrap">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted mr-1.5 shrink-0">
+            Hierarchy Scope:
+          </span>
+
+          {/* Entire Organization (Super Admin / Global) */}
+          {(isSuperAdmin || !isManager) && (
+            <button
+              type="button"
+              onClick={() => {
+                setHierarchyScope("all");
+                setSelectedDepartmentName("ALL");
+                setFilters(prev => ({ ...prev, myTasksOnly: false, assigneeId: '' }));
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                hierarchyScope === "all" && selectedDepartmentName === "ALL" && !filters.myTasksOnly
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                  : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              Entire Organization
+            </button>
+          )}
+
+          {/* Reporting Tree (for CFO / Managers / Team Leads) */}
+          {isManager && (
+            <button
+              type="button"
+              onClick={() => {
+                setHierarchyScope("my_reports");
+                setSelectedDepartmentName("ALL");
+                setFilters(prev => ({ ...prev, myTasksOnly: false }));
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+                hierarchyScope === "my_reports"
+                  ? "bg-purple-600 text-white font-bold shadow-sm"
+                  : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              My Reporting Tree ({userScope?.subordinateUserIds?.length || 0} Members)
+            </button>
+          )}
+
+          {/* Managed Departments (for CFO / Multi-Department Heads) */}
+          {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
+            <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40">
+              <button
+                type="button"
+                onClick={() => {
+                  setHierarchyScope("my_dept");
+                  setSelectedDepartmentName("ALL");
+                  setFilters(prev => ({ ...prev, myTasksOnly: false }));
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                  hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
+                    ? "bg-blue-600 text-white font-bold shadow-sm"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                {managedDepts.length > 1
+                  ? `All My Depts (${managedDepts.length})`
+                  : `My Dept (${userScope?.primaryDepartmentName || "General"})`}
+              </button>
+
+              {/* Multi-Department Dropdown (e.g. for CFO) */}
+              {managedDepts.length > 1 && (
+                <select
+                  value={selectedDepartmentName}
+                  onChange={(e) => {
+                    setSelectedDepartmentName(e.target.value);
+                    setHierarchyScope("my_dept");
+                  }}
+                  className="text-xs bg-background/80 border border-border/60 rounded px-2 py-0.5 text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="ALL">All Managed ({managedDepts.length})</option>
+                  {managedDepts.map((d: any) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+
+          {/* Personal Assigned Scope */}
+          <button
+            type="button"
+            onClick={() => {
+              setHierarchyScope("assigned_me");
+              setSelectedDepartmentName("ALL");
+              setFilters(prev => ({ ...prev, myTasksOnly: true }));
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+              hierarchyScope === "assigned_me" || filters.myTasksOnly
+                ? "bg-emerald-600 text-white font-bold shadow-sm"
+                : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5" />
+            My Assigned Items
+          </button>
+        </div>
+      </div>
 
       {/* Active Filter Chips Strip (Ultra-compact, takes minimal height ~28px) */}
       {activeFilterCount > 0 && (

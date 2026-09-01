@@ -2,13 +2,14 @@ import { checkServerPermission } from "@/lib/permissions";
 import React from "react";
 import { Metadata } from "next";
 import TaskListViewClient from "@/components/tasks/TaskListViewClient";
+import { fetchAllTasks, fetchTasksByWorkspace } from "@/lib/actions/workspaces";
+import { getUserAccessScope } from "@/lib/auth/scope";
+import { getCachedUser } from "@/lib/auth/cached-user";
 
 export const metadata: Metadata = {
   title: "All Workspace Tasks | Chandak Workspace",
   description: "Detailed and filterable list of all workspace tasks.",
 };
-
-import { fetchAllTasks, fetchTasksByWorkspace } from "@/lib/actions/workspaces";
 
 interface TasksPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -30,12 +31,14 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     );
   }
 
+  const { user } = await getCachedUser();
+  const userScope = user ? await getUserAccessScope(user.id) : null;
   const tasks = workspaceId ? await fetchTasksByWorkspace(workspaceId, true) : await fetchAllTasks();
   
   return (
     <div className="w-full h-full animate-in fade-in-50 duration-500">
       <main>
-        <TaskListViewClient initialTasks={tasks} />
+        <TaskListViewClient initialTasks={tasks} userScope={userScope} />
       </main>
     </div>
   );
