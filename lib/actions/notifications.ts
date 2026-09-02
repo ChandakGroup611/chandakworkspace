@@ -194,12 +194,13 @@ export async function dispatchNotification(
     }
     baseUrl = baseUrl || "https://chandakgroup.tech";
     
-    const absoluteLink = link ? (link.startsWith('http') ? link : `${baseUrl}${link}`) : '';
+    const { createDirectActivityUrl, transformEmailContentLinks } = await import('@/lib/auth/direct-access');
+    const directLink = link ? createDirectActivityUrl(userId, user.email, link, baseUrl) : '';
 
     // Insert into corporate email_queue table
     try {
       let finalSubject = title;
-      let finalBody = `${message}\n\nLink: ${absoluteLink || 'N/A'}`;
+      let finalBody = `${message}\n\nLink: ${directLink || 'N/A'}`;
 
       if (moduleCode && eventCode) {
         const { data: template } = await supabaseAdmin
@@ -211,7 +212,7 @@ export async function dispatchNotification(
           .single();
 
         if (template) {
-          const payload = { title, message, link: absoluteLink, recipient_name: user.full_name || user.email, ...(customPayload || {}) };
+          const payload = { title, message, link: directLink, recipient_name: user.full_name || user.email, ...(customPayload || {}) };
           const hydrate = (text: string) => {
             if (!text) return text;
             let hydrated = text;
@@ -230,6 +231,9 @@ export async function dispatchNotification(
           if (template.html_body) finalBody = hydrate(template.html_body);
         }
       }
+
+      // Transform any remaining site links to direct access links for this recipient
+      finalBody = transformEmailContentLinks(finalBody, userId, user.email, baseUrl);
 
       await supabaseAdmin.from('email_queue').insert([{
         recipient_email: user.email,

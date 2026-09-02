@@ -269,12 +269,13 @@ export async function registerUserSession(sessionToken: string, userAgent?: stri
         last_active_at: now
       }, { onConflict: "user_id" });
       
-    // 2. Mark previous different session tokens for this user as inactive in auth_session_logs
+    // 2. Mark truly stale sessions (inactive for > 24 hours) as inactive in auth_session_logs
+    const staleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     await supabaseAdmin
       .from("auth_session_logs")
       .update({ is_active: false })
       .eq("user_id", user.id)
-      .neq("session_token", sessionToken);
+      .lt("last_activity", staleThreshold);
 
     // 3. Upsert / insert active session log
     const { data: existingLog } = await supabaseAdmin

@@ -242,7 +242,7 @@ export default function ClientSessionManager() {
             // Register current session with user_master, active_sessions, and auth_session_logs
             await registerUserSession(sessionToken, navigator.userAgent);
 
-            // Subscribe to concurrent login changes
+            // Subscribe to IAM session kill events
             const channelName = `active_sessions_${user.id}_${Math.random().toString(36).substring(7)}`;
             const channel = supabase
               .channel(channelName)
@@ -255,15 +255,6 @@ export default function ClientSessionManager() {
                     supabase.auth.signOut().catch(() => {}).finally(() => {
                       window.location.href = "/login?reason=terminated";
                     });
-                  } else if (payload.eventType === "UPDATE") {
-                    const newSessionToken = payload.new?.session_token;
-                    if (newSessionToken && newSessionToken !== sessionToken) {
-                      // Another device logged in and took over the session
-                      toast.warning("You have been logged out because your account was logged in on another device.");
-                      supabase.auth.signOut().catch(() => {}).finally(() => {
-                        window.location.href = "/login?reason=concurrent_login";
-                      });
-                    }
                   }
                 }
               )

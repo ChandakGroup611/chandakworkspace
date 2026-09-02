@@ -70,13 +70,17 @@ export async function addTicketRemark(ticketId: string, content: string) {
       // Push to Realtime Notification Queue
       await supabaseAdmin.from('notification_queue').insert(notifications);
       
-      // Also queue emails
-      const emails = users.map(u => ({
-        recipient_email: u.email,
-        subject: `Mentioned in Ticket ${ticketId}`,
-        body_template: `You were mentioned in a ticket remark: "${content}"`,
-        status: 'pending'
-      }));
+      // Also queue emails with personalized direct activity links
+      const { createDirectActivityUrl } = await import('@/lib/auth/direct-access');
+      const emails = users.map(u => {
+        const directLink = createDirectActivityUrl(u.id, u.email, `/tickets/${ticketId}`);
+        return {
+          recipient_email: u.email,
+          subject: `Mentioned in Ticket`,
+          body_template: `You were mentioned in a ticket remark:\n\n"${content}"\n\nLink: ${directLink}`,
+          is_sent: false
+        };
+      });
       await supabaseAdmin.from('email_queue').insert(emails);
     }
   }

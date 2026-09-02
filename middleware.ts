@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isApiRoute = pathname.startsWith("/api");
-  const isAuthCallback = pathname.startsWith("/auth/callback");
+  const isAuthCallback = pathname.startsWith("/auth/");
 
   // If user is not authenticated and trying to access protected routes, redirect to /login
   if (!user && !isAuthPage && !isApiRoute && !isAuthCallback) {

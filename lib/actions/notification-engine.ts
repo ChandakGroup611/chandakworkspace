@@ -89,30 +89,44 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       finalCreatorName = payload.creator_name;
     }
 
-    // 5. Hydrate Templates and Queue
+    // 5. Hydrate Templates and Queue per Recipient with Secure Direct Activity Links
+    const { createDirectActivityUrl, transformEmailContentLinks } = await import('@/lib/auth/direct-access');
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
+
     let autoHydratedPayload = await autoHydratePayload(payload);
 
-    const validEmails = users.filter(u => u.email).map(u => u.email);
-    if (validEmails.length === 0) return;
-    
-    const recipientEmails = validEmails.join(',');
+    const validUsers = users.filter(u => u.email && u.email.trim());
+    if (validUsers.length === 0) return;
 
-    const hydratedPayload = { 
-      ...autoHydratedPayload, 
-      recipient_name: "Team", 
-      creator_name: finalCreatorName
-    };
-    
-    const subject = template.subject ? hydrateTemplate(template.subject, hydratedPayload) : "System Notification";
-    const htmlBody = template.html_body ? hydrateTemplate(template.html_body, hydratedPayload) : null;
-    const bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, hydratedPayload) : null;
+    const queueInserts = validUsers.map(user => {
+      const userDirectLink = createDirectActivityUrl(
+        user.id,
+        user.email,
+        payload.link || `/${moduleName.toLowerCase()}s`,
+        baseUrl
+      );
 
-    const queueInserts = [{
-      recipient_email: recipientEmails,
-      subject: subject,
-      body_template: htmlBody || bodyTemplate,
-      is_sent: false
-    }];
+      const userHydratedPayload = {
+        ...autoHydratedPayload,
+        link: userDirectLink,
+        recipient_name: user.full_name || "Team",
+        creator_name: finalCreatorName
+      };
+
+      const subject = template.subject ? hydrateTemplate(template.subject, userHydratedPayload) : "System Notification";
+      let htmlBody = template.html_body ? hydrateTemplate(template.html_body, userHydratedPayload) : null;
+      let bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, userHydratedPayload) : null;
+
+      let finalBody = htmlBody || bodyTemplate || `Notification: ${moduleName} - ${eventName}\n\nLink: ${userDirectLink}`;
+      finalBody = transformEmailContentLinks(finalBody, user.id, user.email, baseUrl);
+
+      return {
+        recipient_email: user.email,
+        subject: subject,
+        body_template: finalBody,
+        is_sent: false
+      };
+    });
 
     // 6. Async Batch Insert into Queue
     const { error } = await supabaseAdmin.from("email_queue").insert(queueInserts);
