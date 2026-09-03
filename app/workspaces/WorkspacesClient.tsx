@@ -485,6 +485,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     userName: string;
     result: import("@/lib/actions/dependencies").DependencyCheckResult;
   } | null>(null);
+  const [reassignTargetUserId, setReassignTargetUserId] = useState<string>("");
+  const [isReassigning, setIsReassigning] = useState<boolean>(false);
 
   // User Role Modal
   const [userRoleModal, setUserRoleModal] = useState<{
@@ -1736,27 +1738,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       {dependencyModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-danger/10 border-danger/20' : 'bg-warning/10 border-warning/20'}`}>
+            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-warning/10 border-warning/20'}`}>
               <div className="flex items-center gap-3">
                 {dependencyModal.result.type === 'executive' ? (
-                  <ShieldAlert className="w-5 h-5 text-danger" />
+                  <ShieldAlert className="w-5 h-5 text-amber-500" />
                 ) : (
                   <ShieldCheck className="w-5 h-5 text-warning" />
                 )}
-                <h3 className="font-bold text-sm">Action Requires Attention</h3>
+                <h3 className="font-bold text-sm">
+                  {dependencyModal.result.type === 'executive' ? 'Task Reassignment Required' : 'Action Requires Attention'}
+                </h3>
               </div>
             </div>
             
-            <div className="p-5">
-              <p className="text-sm text-foreground leading-relaxed mb-4">
-                <strong>{dependencyModal.userName}</strong> has active dependencies in this workspace:
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-foreground leading-relaxed">
+                <strong>{dependencyModal.userName}</strong> has active assignments under this workspace:
               </p>
               
-              <ul className="text-xs text-muted mb-5 space-y-1 bg-surface p-3 rounded-lg border border-border/50 max-h-40 overflow-y-auto">
+              <ul className="text-xs text-muted space-y-1 bg-surface p-3 rounded-lg border border-border/50 max-h-36 overflow-y-auto">
                 {dependencyModal.result.blockingItems.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2">
                     <span className="text-theme-icon mt-0.5">•</span>
-                    <span>{item}</span>
+                    <span className="font-medium text-foreground/90">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -1764,16 +1768,76 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               <div className="p-3 bg-surface-hover rounded-lg border border-border/50 text-xs text-foreground font-medium">
                 {dependencyModal.result.message}
               </div>
+
+              {dependencyModal.result.type === 'executive' && (
+                <div className="space-y-1.5 pt-2">
+                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                    Select Replacement Assignee: *
+                  </label>
+                  <select
+                    value={reassignTargetUserId}
+                    onChange={e => setReassignTargetUserId(e.target.value)}
+                    className="w-full p-2.5 rounded-lg border border-border bg-surface text-sm text-foreground focus:outline-none focus:border-theme-icon transition-colors"
+                  >
+                    <option value="">-- Select Member to Take Over Tasks --</option>
+                    {availableUsers
+                      .filter(u => u.id !== dependencyModal.userId && !u.is_deleted)
+                      .map(u => (
+                        <option key={u.id} value={u.id}>
+                          {u.full_name} ({u.user_code || u.email || 'Member'})
+                        </option>
+                      ))}
+                  </select>
+                  <p className="text-[11px] text-muted">
+                    All tasks, subtasks, checklists, and tickets will be transferred to this user.
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="p-4 border-t border-border flex justify-end gap-3 bg-surface/30">
               <AppButton 
                 variant="outline" 
-                onClick={() => setDependencyModal(null)}
+                onClick={() => {
+                  setDependencyModal(null);
+                  setReassignTargetUserId("");
+                }}
               >
-                {dependencyModal.result.type === 'executive' ? 'Close' : 'No, Go Back'}
+                Cancel
               </AppButton>
-              {dependencyModal.result.type === 'watcher' && (
+
+              {dependencyModal.result.type === 'executive' ? (
+                <AppButton 
+                  variant="primary" 
+                  disabled={!reassignTargetUserId || isReassigning}
+                  onClick={async () => {
+                    if (!reassignTargetUserId || !editWSId) return;
+                    try {
+                      setIsReassigning(true);
+                      const { reassignAndRemoveWorkspaceUser } = await import("@/lib/actions/dependencies");
+                      const res = await reassignAndRemoveWorkspaceUser(editWSId, dependencyModal.userId, reassignTargetUserId);
+                      if (res.error) throw new Error(res.error);
+                      
+                      // Update workspace assignees state: remove old user, add new user if not present
+                      setNewWS(prev => ({
+                        ...prev,
+                        assigneeIds: Array.from(new Set([...prev.assigneeIds.filter(id => id !== dependencyModal.userId), reassignTargetUserId]))
+                      }));
+                      
+                      const targetUser = availableUsers.find(u => u.id === reassignTargetUserId);
+                      triggerToast(`Tasks successfully reassigned to ${targetUser?.full_name || 'new user'} and ${dependencyModal.userName} removed.`);
+                      setDependencyModal(null);
+                      setReassignTargetUserId("");
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to reassign tasks");
+                    } finally {
+                      setIsReassigning(false);
+                    }
+                  }}
+                >
+                  {isReassigning ? "Reassigning..." : "Reassign & Remove User"}
+                </AppButton>
+              ) : (
                 <AppButton 
                   variant="primary" 
                   className="bg-danger hover:opacity-90 border-none"
