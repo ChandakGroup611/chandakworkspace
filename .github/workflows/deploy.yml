@@ -49,8 +49,6 @@ jobs:
           cd .next/standalone
           zip -r ../../deploy.zip .
           cd ../..
-          mkdir upload-payload
-          mv deploy.zip upload-payload/
 
       # Upload the compiled standalone zip file to Hostinger via SCP (More stable than FTP)
       - name: Sync files via SCP
@@ -60,9 +58,8 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
-          source: "./upload-payload/deploy.zip"
+          source: "deploy.zip"
           target: "domains/chandakgroup.tech/public_html/"
-          strip_components: 1 # Removes the ./upload-payload/ folder structure during upload
 
       # Automatically extract the zip and restart the Node.js server via SSH
       - name: Extract and Restart Server via SSH
