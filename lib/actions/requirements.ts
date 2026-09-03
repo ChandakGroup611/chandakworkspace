@@ -120,7 +120,12 @@ export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL
 
   if (result === 'PASS') {
     // Look up closed/completed state
-    const { data: closedState } = await supabaseAdmin.from('status_master').select('id').eq('status_code', 'CLOSED').eq('scope_type', 'REQUIREMENT').maybeSingle();
+    const { data: closedState } = await supabaseAdmin
+      .from('status_master')
+      .select('id')
+      .or('status_code.eq.REQ_CLOSED,status_code.eq.CLOSED,status_code.eq.REQ_DEPLOYED')
+      .eq('scope_type', 'REQUIREMENT')
+      .maybeSingle();
     
     const updateData: any = { approval_status: 'Ready to Put to Use' };
     if (closedState) {
@@ -132,18 +137,58 @@ export async function handleRequirementUAT(reqId: string, result: 'PASS' | 'FAIL
     await logActivityEvent('REQUIREMENT', reqId, 'UAT_PASS', null, { comments }, performedBy);
   } else {
     // FAIL -> Reopen cascade
-    const { data: reopenState } = await supabaseAdmin.from('status_master').select('id').eq('is_reopen', true).eq('scope_type', 'REQUIREMENT').maybeSingle();
+    let reopenStateId: string | null = null;
+    const { data: reopenState } = await supabaseAdmin
+      .from('status_master')
+      .select('id')
+      .eq('is_reopen', true)
+      .eq('scope_type', 'REQUIREMENT')
+      .maybeSingle();
+      
     if (reopenState) {
-      await supabaseAdmin.from('requirements').update({ status_id: reopenState.id }).eq('id', reqId);
+      reopenStateId = reopenState.id;
+    } else {
+      const { data: fallbackReqReopen } = await supabaseAdmin
+        .from('status_master')
+        .select('id')
+        .in('status_code', ['REQ_DEVELOPMENT', 'REQ_PLANNING', 'REQ_PENDING'])
+        .eq('scope_type', 'REQUIREMENT')
+        .limit(1)
+        .maybeSingle();
+      if (fallbackReqReopen) reopenStateId = fallbackReqReopen.id;
+    }
+
+    if (reopenStateId) {
+      await supabaseAdmin.from('requirements').update({ status_id: reopenStateId }).eq('id', reqId);
     }
 
     // Cascade reopen to all linked tasks
     const { data: links } = await supabaseAdmin.from('requirement_tasks').select('task_id').eq('requirement_id', reqId);
     if (links && links.length > 0) {
       const taskIds = links.map(l => l.task_id);
-      const { data: taskReopenState } = await supabaseAdmin.from('status_master').select('id').eq('is_reopen', true).eq('scope_type', 'TASK').maybeSingle();
+      let taskReopenStateId: string | null = null;
+      const { data: taskReopenState } = await supabaseAdmin
+        .from('status_master')
+        .select('id')
+        .eq('is_reopen', true)
+        .eq('scope_type', 'TASK')
+        .maybeSingle();
+
       if (taskReopenState) {
-        await supabaseAdmin.from('tasks').update({ status_id: taskReopenState.id }).in('id', taskIds);
+        taskReopenStateId = taskReopenState.id;
+      } else {
+        const { data: fallbackTaskReopen } = await supabaseAdmin
+          .from('status_master')
+          .select('id')
+          .in('status_code', ['WORK INPROGRESS', 'TO DO', 'NEW'])
+          .eq('scope_type', 'TASK')
+          .limit(1)
+          .maybeSingle();
+        if (fallbackTaskReopen) taskReopenStateId = fallbackTaskReopen.id;
+      }
+
+      if (taskReopenStateId) {
+        await supabaseAdmin.from('tasks').update({ status_id: taskReopenStateId }).in('id', taskIds);
       }
     }
 

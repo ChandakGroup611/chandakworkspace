@@ -51,7 +51,7 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
   // 3. Check Tickets
   const { data: tickets } = await supabaseAdmin
     .from("tickets")
-    .select("id, ticket_number, assignee_id, custom_fields")
+    .select("id, code, title, assignee_id, custom_fields")
     .eq("is_deleted", false);
     
   const workspaceTickets = (tickets || []).filter(t => wsIdList.includes(t.custom_fields?.workspace_id));
@@ -87,7 +87,7 @@ export async function checkWorkspaceUserDependencies(workspaceId: string, userId
     // Evaluate Tickets
     workspaceTickets.forEach(ticket => {
       if (ticket.assignee_id === userId) {
-        blockingItems.push(`Ticket: #${ticket.ticket_number}`);
+        blockingItems.push(`Ticket: ${ticket.code || ticket.title || ticket.id}`);
       }
     });
 
