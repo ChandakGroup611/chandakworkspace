@@ -1111,6 +1111,7 @@ export async function updateWorkspace(id: string, formData: any) {
     }
 
     // 3. Perform deletes and upserts (Hard delete to fix zombie users in embedded queries)
+    const removedUserIds = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.user_id);
     const usersToDelete = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.id);
     if (usersToDelete.length > 0) {
       await supabaseAdmin.from("workspace_members").delete().in("id", usersToDelete);
@@ -1118,6 +1119,35 @@ export async function updateWorkspace(id: string, formData: any) {
     
     // Also clean up any previously soft-deleted members for this workspace to fix the bug
     await supabaseAdmin.from("workspace_members").delete().eq("workspace_id", id).eq("is_deleted", true);
+
+    // CASCADE REMOVAL: Automatically remove removed workspace members from all tasks/subtasks in this workspace
+    if (removedUserIds.length > 0) {
+      try {
+        const { data: wsTasks } = await supabaseAdmin
+          .from("tasks")
+          .select("id")
+          .eq("workspace_id", id);
+        
+        const wsTaskIds = wsTasks?.map(t => t.id) || [];
+        if (wsTaskIds.length > 0) {
+          await Promise.all([
+            supabaseAdmin
+              .from("task_participants")
+              .delete()
+              .in("task_id", wsTaskIds)
+              .in("user_id", removedUserIds)
+              .eq("participation_role", "WATCHER"),
+            supabaseAdmin
+              .from("task_watchers")
+              .delete()
+              .in("task_id", wsTaskIds)
+              .in("user_id", removedUserIds)
+          ]);
+        }
+      } catch (cascadeErr) {
+        console.warn("[updateWorkspace] Cascade task participant cleanup warning:", cascadeErr);
+      }
+    }
 
     for (const uid of assigneesArray) {
       const existingRole = roleMap.get(uid);

@@ -596,12 +596,25 @@ export async function getTaskDetails(taskId: string) {
     let usersMap = new Map<string, any>();
     if (uniqueUserIds.size > 0) {
       try {
-        const { data: allUsers } = await supabaseAdmin.from('user_master').select('id, full_name, profile_photo, user_code').in('id', Array.from(uniqueUserIds));
-        if (allUsers) allUsers.forEach(u => usersMap.set(u.id, u));
+        const { data: allUsers } = await supabaseAdmin
+          .from('user_master')
+          .select('id, full_name, profile_photo, user_code, is_deleted, is_active')
+          .in('id', Array.from(uniqueUserIds))
+          .eq('is_deleted', false);
+          
+        if (allUsers) {
+          allUsers.forEach(u => {
+            if (u.full_name !== 'Deleted User') {
+              usersMap.set(u.id, u);
+            }
+          });
+        }
       } catch (uErr) {
         console.warn("[getTaskDetails] Error fetching user_master records:", uErr);
       }
     }
+
+    const validWsMemberUserIds = new Set(wsMembers.map(m => m.user_id));
 
     task.creator = task.created_by ? usersMap.get(task.created_by) || null : null;
     task.assignee = task.assigned_to ? usersMap.get(task.assigned_to) || null : null;
@@ -614,9 +627,16 @@ export async function getTaskDetails(taskId: string) {
       participants.forEach(p => {
         const u = usersMap.get(p.user_id);
         if (!u) return;
-        if (p.participation_role === 'EXECUTOR') task.task_assignees.push(u);
-        else if (p.participation_role === 'REVIEWER') task.task_reviewers.push(u);
-        else if (p.participation_role === 'WATCHER') task.task_watchers.push(u);
+        if (p.participation_role === 'EXECUTOR') {
+          task.task_assignees.push(u);
+        } else if (p.participation_role === 'REVIEWER') {
+          task.task_reviewers.push(u);
+        } else if (p.participation_role === 'WATCHER') {
+          // Watchers must still be active members of the workspace or super admin
+          if (validWsMemberUserIds.has(p.user_id) || isSuperAdmin) {
+            task.task_watchers.push(u);
+          }
+        }
       });
     }
 
