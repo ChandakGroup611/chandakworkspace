@@ -263,11 +263,11 @@ export default function LoginPage() {
           
           {/* Logo - Pushed to Absolute Top */}
           <div className="absolute top-8 lg:top-12 left-0 right-0 flex flex-col items-center px-6 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
-            <div className="relative w-full max-w-[500px] py-5 px-7 rounded-2xl bg-surface/90 dark:bg-surface/50 backdrop-blur-md shadow-xl border border-border/70 flex items-center justify-center transition-all hover:shadow-2xl">
+            <div className="relative w-fit inline-flex py-3.5 px-6 rounded-2xl bg-surface/90 dark:bg-surface/50 backdrop-blur-md shadow-xl border border-border/70 items-center justify-center transition-all hover:shadow-2xl">
               <img 
                 src="/Chandak-Group-Final-Logo.svg" 
                 alt="Chandak Logo" 
-                className="h-20 lg:h-24 w-auto max-w-full object-contain dark:brightness-0 dark:invert"
+                className="h-16 lg:h-20 w-auto object-contain dark:brightness-0 dark:invert"
                 style={{ imageRendering: '-webkit-optimize-contrast' }}
               />
             </div>
@@ -296,11 +296,11 @@ export default function LoginPage() {
           <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
             
             <div className="lg:hidden flex flex-col items-center justify-center mb-8">
-              <div className="relative w-full max-w-[360px] py-4 px-6 flex items-center justify-center bg-surface/90 rounded-2xl shadow-lg border border-border/60">
+              <div className="relative w-fit inline-flex py-2.5 px-5 items-center justify-center bg-surface/90 rounded-2xl shadow-lg border border-border/60">
                 <img 
                   src="/Chandak-Group-Final-Logo.svg" 
                   alt="Chandak Logo" 
-                  className="h-14 w-auto max-w-full object-contain dark:brightness-0 dark:invert"
+                  className="h-11 w-auto object-contain dark:brightness-0 dark:invert"
                   style={{ imageRendering: '-webkit-optimize-contrast' }}
                 />
               </div>
