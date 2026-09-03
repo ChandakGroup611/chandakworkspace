@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
-
+import { usePermissions } from "@/hooks/usePermissions";
+import { Lock } from "lucide-react";
 
 export default function AMCReportsPage() {
   let isLightMode = false;
@@ -29,6 +30,7 @@ export default function AMCReportsPage() {
     isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   } catch (e) {}
   const supabase = createClient();
+  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
   const [loading, setLoading] = useState(true);
 
   // Level 1: Global Summary
@@ -48,6 +50,21 @@ export default function AMCReportsPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const isSuperAdmin = roleCode === "SUPER_ADMIN";
+
+  if (!permsLoading && !isSuperAdmin && !hasPermission("AMC_VIEW")) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center text-muted">
+        <Lock className="h-12 w-12 mb-4 opacity-50" />
+        <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>
+        <p className="text-sm mt-2 text-muted">You do not have permission to view AMC Reports.</p>
+        <Link href="/" className="mt-4">
+          <AppButton variant="primary" size="sm">Return to Dashboard</AppButton>
+        </Link>
+      </div>
+    );
+  }
 
   const fetchData = async () => {
     try {

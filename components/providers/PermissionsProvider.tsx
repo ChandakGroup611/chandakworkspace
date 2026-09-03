@@ -18,8 +18,9 @@ function expandPermissions(perms: string[]): string[] {
       expanded.add(`${base}_VIEW`);
       expanded.add(`${base}_CREATE`);
       expanded.add(`${base}_UPDATE`);
+      expanded.add(`${base}_EDIT`);
       expanded.add(`${base}_DELETE`);
-    } else if (p.endsWith("_CREATE") || p.endsWith("_UPDATE") || p.endsWith("_DELETE")) {
+    } else if (p.endsWith("_CREATE") || p.endsWith("_UPDATE") || p.endsWith("_EDIT") || p.endsWith("_DELETE")) {
       const base = p.slice(0, p.lastIndexOf("_"));
       expanded.add(`${base}_VIEW`);
     }
@@ -66,7 +67,7 @@ interface UnifiedAuthData {
     });
 
     // 2. Real-Time IAM Network Invalidation
-    // Listen for any capability modifications in IAM Governance Cockpit and instantly update all connected sessions globally
+    // Listen for any capability or role modifications and instantly update all connected sessions globally
     const channel = supabase.channel('iam_global_permissions_sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'role_permissions' }, () => {
         console.log("[IAM] Role permissions modified globally. Instantly invalidating cache.");
@@ -74,6 +75,14 @@ interface UnifiedAuthData {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'roles' }, () => {
         console.log("[IAM] Role metadata modified globally. Instantly invalidating cache.");
+        queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_master' }, () => {
+        console.log("[IAM] User profile/role modified globally. Instantly invalidating cache.");
+        queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => {
+        console.log("[IAM] User secondary roles modified globally. Instantly invalidating cache.");
         queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
       })
       .subscribe();
@@ -155,8 +164,8 @@ interface UnifiedAuthData {
 
       return { profile, permissions: perms, roleCode: finalRoleCode };
     },
-    staleTime: 300000,
-    gcTime: 1800000,
+    staleTime: 10000,
+    gcTime: 300000,
   });
 
   const loading = isLoading;

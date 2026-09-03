@@ -78,7 +78,7 @@ interface SolutionLineItem {
 
 export default function AMCPage() {
   const supabase = createClient();
-  const { hasPermission, loading: permsLoading } = usePermissions();
+  const { hasPermission, loading: permsLoading, roleCode } = usePermissions();
   let isLightMode = false;
   try {
     const { theme } = useTheme();
@@ -807,12 +807,17 @@ export default function AMCPage() {
     );
   }
 
-  if (!hasPermission("AMC_VIEW")) {
+  const isSuperAdmin = roleCode === "SUPER_ADMIN";
+
+  if (!isSuperAdmin && !hasPermission("AMC_VIEW")) {
     return (
       <div className="h-screen flex flex-col items-center justify-center text-muted">
         <Lock className="h-12 w-12 mb-4 opacity-50" />
-        <h2 className="text-xl font-semibold text-muted">Access Denied</h2>
-        <p className="text-sm mt-2">You do not have permission to view the AMC module.</p>
+        <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>
+        <p className="text-sm mt-2 text-muted">You do not have permission to view the AMC module.</p>
+        <Link href="/" className="mt-4">
+          <AppButton variant="primary" size="sm">Return to Dashboard</AppButton>
+        </Link>
       </div>
     );
   }

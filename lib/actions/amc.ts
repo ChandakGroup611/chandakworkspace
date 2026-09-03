@@ -11,8 +11,14 @@ import { supabaseAdmin } from "@/lib/supabase/service_role";
  */
 
 export async function saveAMCEntity(tableName: string, payload: any, editId?: string) {
-  const isAuthorized = await checkServerPermission("SUPER_ADMIN");
-  if (!isAuthorized) return { success: false, error: "Unauthorized." };
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  const hasSpecificPerm = editId
+    ? (await checkServerPermission("AMC_EDIT") || await checkServerPermission("AMC_UPDATE"))
+    : await checkServerPermission("AMC_CREATE");
+
+  if (!isSuperAdmin && !hasSpecificPerm) {
+    return { success: false, error: "Unauthorized: Missing AMC mutation capability." };
+  }
 
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
@@ -51,8 +57,11 @@ export async function saveAMCEntity(tableName: string, payload: any, editId?: st
 }
 
 export async function deleteAMCEntity(tableName: string, id: string, hardDelete = false) {
-  const isAuthorized = await checkServerPermission("SUPER_ADMIN");
-  if (!isAuthorized) return { success: false, error: "Unauthorized." };
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+  const hasDeletePerm = await checkServerPermission("AMC_DELETE");
+  if (!isSuperAdmin && !hasDeletePerm) {
+    return { success: false, error: "Unauthorized: Missing AMC delete capability." };
+  }
 
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);

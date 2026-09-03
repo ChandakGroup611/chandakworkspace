@@ -162,28 +162,34 @@ export default function Sidebar() {
   }, []);
 
   const { theme } = useTheme();
-  const { hasPermission, roleCode } = usePermissions();
+  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
   const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
 
   const visibleNavTree = React.useMemo(() => {
     return navGroups.map(group => {
       const visibleItems = group.items.map(item => {
+        const isSuperAdmin = roleCode === "SUPER_ADMIN";
+
         if (!item.subItems) {
-          if (roleCode === "SUPER_ADMIN" || !item.permission || hasPermission(item.permission)) {
-            return item;
-          }
-          return null;
+          if (isSuperAdmin) return item;
+          if (!item.permission) return item;
+          if (permsLoading) return null;
+          return hasPermission(item.permission) ? item : null;
         }
 
-        const visibleSubItems = roleCode === "SUPER_ADMIN" 
-          ? item.subItems 
-          : item.subItems.filter(sub => !sub.permission || hasPermission(sub.permission));
+        const visibleSubItems = isSuperAdmin
+          ? item.subItems
+          : item.subItems.filter(sub => {
+              if (!sub.permission) return true;
+              if (permsLoading) return false;
+              return hasPermission(sub.permission);
+            });
           
         if (visibleSubItems.length > 0) {
           return { ...item, subItems: visibleSubItems };
         }
         
-        if (roleCode === "SUPER_ADMIN" || (!item.permission || hasPermission(item.permission))) {
+        if (isSuperAdmin || (!item.permission && !permsLoading) || (item.permission && !permsLoading && hasPermission(item.permission))) {
            return { ...item, subItems: undefined };
         }
         
@@ -193,7 +199,7 @@ export default function Sidebar() {
       if (visibleItems.length === 0) return null;
       return { ...group, items: visibleItems };
     }).filter(Boolean) as NavGroup[];
-  }, [roleCode, hasPermission]);
+  }, [roleCode, hasPermission, permsLoading]);
 
   // When minimized, simply gliding mouse over sidebar gracefully expands it to reveal full module names and links temporarily
   const isCompact = isCompactState && !isHovered;
