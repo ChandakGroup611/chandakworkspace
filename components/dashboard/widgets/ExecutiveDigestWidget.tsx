@@ -127,7 +127,7 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
     return {
       healthScore,
       healthLabel,
-      bullets: bullets.slice(0, 4)
+      bullets: bullets.slice(0, 3)
     };
   }, [metrics]);
 
@@ -165,8 +165,8 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
         </div>
       </div>
 
-      {/* Bullets Grid */}
-      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3 bg-surface/10">
+      {/* Bullets Grid (3x1 layout) */}
+      <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-3 bg-surface/10">
         {digest.bullets.map((b) => {
           const Icon = b.icon;
           const isClickable = !!b.filter && !!onDrillDown;
