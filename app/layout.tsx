@@ -19,10 +19,11 @@ export const metadata = {
   description: 'Complete Enterprise Implementation Blueprint',
   icons: {
     icon: [
-      { url: '/Chandak-Group-Final-Logo.svg', type: 'image/svg+xml' }
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', type: 'image/svg+xml' }
     ],
-    apple: '/Chandak-Group-Final-Logo.svg',
-    shortcut: '/Chandak-Group-Final-Logo.svg',
+    apple: '/icon.svg',
+    shortcut: '/icon.svg',
   },
   openGraph: {
     title: 'Chandak Workspace',
