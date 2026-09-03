@@ -174,7 +174,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
       // 5. Status Matching
       let statusMatch = false;
       const sLower = String(m.status).toLowerCase();
-      const isResolved = sLower.includes('resolv') || sLower.includes('done') || sLower.includes('clos');
+      const isResolved = sLower.includes('resolv') || sLower.includes('done') || sLower.includes('clos') || sLower.includes('complete');
       const isEscalated = sLower.includes('escalat') || sLower.includes('block');
       const isReview = sLower.includes('review') || sLower.includes('qa') || sLower.includes('approval') || sLower.includes('pending');
       const isActive = !isResolved && !isEscalated && !isReview;
@@ -215,7 +215,7 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
 
     filteredMetrics.forEach(m => {
       const sLower = String(m.status).toLowerCase();
-      const isResolved = sLower.includes('resolv') || sLower.includes('done');
+      const isResolved = sLower.includes('resolv') || sLower.includes('done') || sLower.includes('clos') || sLower.includes('complete');
       const isEscalated = sLower.includes('escalat') || sLower.includes('block');
       const isReview = sLower.includes('review') || sLower.includes('pending') || sLower.includes('approval');
       const isActive = !isResolved && !isEscalated && !isReview;

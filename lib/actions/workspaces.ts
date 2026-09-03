@@ -1298,7 +1298,7 @@ export async function fetchTasksByWorkspace(workspaceId: string, includeDescenda
       .select(`
         id, subject, task_code, created_at, updated_at, start_date, end_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted, custom_fields,
         title:subject,
-        status:status_master(name:status_name, code:status_code, status_color),
+        status:status_master(name:status_name, code:status_code, status_color, is_closed, is_terminal),
         priority:priority_master(name:priority_name, code:priority_code, priority_color),
         department:departments(id, name),
         participants:task_participants(user_id, participation_role),
@@ -1466,7 +1466,7 @@ export async function fetchAllTasks() {
     .select(`
       id, subject, task_code, created_at, updated_at, start_date, end_date, status_id, priority_id, workspace_id, created_by, assigned_to, parent_task_id, is_deleted, custom_fields,
       title:subject,
-      status:status_master(name:status_name, code:status_code, status_color),
+      status:status_master(name:status_name, code:status_code, status_color, is_closed, is_terminal),
       priority:priority_master(name:priority_name, code:priority_code, priority_color),
       department:departments(id, name),
       participants:task_participants(user_id, participation_role),

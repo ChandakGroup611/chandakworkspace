@@ -86,6 +86,48 @@ const getSubWorkspaceName = (t: Task) => {
   return subName;
 };
 
+export const isTaskCompleted = (t: any): boolean => {
+  if (!t || !t.status) return false;
+  if (t.status.is_closed || t.status.is_terminal) return true;
+  const code = (t.status.code || t.status.status_code || "").toUpperCase().replace(/[\s_-]+/g, "");
+  const name = (t.status.name || t.status.status_name || "").toLowerCase();
+  return (
+    code === "COMPLETED" ||
+    code === "TASKCOMPLETED" ||
+    code === "CLOSED" ||
+    code === "RESOLVED" ||
+    code === "DONE" ||
+    name.includes("complete") ||
+    name.includes("closed") ||
+    name.includes("resolved") ||
+    name.includes("done")
+  );
+};
+
+export const isTaskInProgress = (t: any): boolean => {
+  if (!t || !t.status) return false;
+  if (isTaskCompleted(t)) return false;
+  const code = (t.status.code || t.status.status_code || "").toUpperCase().replace(/[\s_-]+/g, "");
+  const name = (t.status.name || t.status.status_name || "").toLowerCase();
+  return (
+    code === "INPROGRESS" ||
+    code === "WORKINPROGRESS" ||
+    code === "WIP" ||
+    code === "PROGRESS" ||
+    code === "UNDERREVIEW" ||
+    code === "INREVIEW" ||
+    name.includes("progress") ||
+    name.includes("wip") ||
+    name.includes("review") ||
+    name.includes("working")
+  );
+};
+
+export const isTaskOpen = (t: any): boolean => {
+  if (!t || !t.status) return false;
+  return !isTaskCompleted(t) && !isTaskInProgress(t);
+};
+
 function DraggableTableHead({ 
   col, 
   isFirst, 
@@ -546,9 +588,9 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
 
   const kpis = useMemo(() => {
     const total = baseFiltered.length;
-    const open = baseFiltered.filter(t => !t.status?.is_closed && !t.status?.name?.toLowerCase().includes('progress') && !t.status?.name?.toLowerCase().includes('done')).length;
-    const inProgress = baseFiltered.filter(t => t.status?.name?.toLowerCase().includes('progress')).length;
-    const completed = baseFiltered.filter(t => t.status?.is_closed || t.status?.name?.toLowerCase().includes('done')).length;
+    const open = baseFiltered.filter(t => isTaskOpen(t)).length;
+    const inProgress = baseFiltered.filter(t => isTaskInProgress(t)).length;
+    const completed = baseFiltered.filter(t => isTaskCompleted(t)).length;
     
     return [
       { label: "Total", value: total, icon: <LayoutList className="h-5 w-5" />, iconBgClass: "bg-sky-500/10", iconColorClass: "text-sky-600 dark:text-sky-400", onClick: () => setKpiFilter(null), isActive: kpiFilter === null },
@@ -561,9 +603,9 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
   const filtered = useMemo(() => {
     if (!kpiFilter) return baseFiltered;
     return baseFiltered.filter(t => {
-      if (kpiFilter === 'Open') return !t.status?.is_closed && !t.status?.name?.toLowerCase().includes('progress') && !t.status?.name?.toLowerCase().includes('done');
-      if (kpiFilter === 'In Progress') return t.status?.name?.toLowerCase().includes('progress');
-      if (kpiFilter === 'Completed') return t.status?.is_closed || t.status?.name?.toLowerCase().includes('done');
+      if (kpiFilter === 'Open') return isTaskOpen(t);
+      if (kpiFilter === 'In Progress') return isTaskInProgress(t);
+      if (kpiFilter === 'Completed') return isTaskCompleted(t);
       return true;
     });
   }, [baseFiltered, kpiFilter]);
