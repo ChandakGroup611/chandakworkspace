@@ -179,20 +179,8 @@ export async function dispatchNotification(
     const { data: user } = await supabaseAdmin.from("user_master").select("email, full_name").eq("id", userId).single();
     if (!user?.email) return;
 
-    // Build absolute URL for emails
-    let baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    if (!baseUrl) {
-      try {
-        const { headers } = await import('next/headers');
-        const headersList = await headers();
-        const host = headersList.get('host');
-        const protocol = headersList.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
-        if (host) baseUrl = `${protocol}://${host}`;
-      } catch (e) {
-        // Fallback for background contexts
-      }
-    }
-    baseUrl = baseUrl || "https://chandakgroup.tech";
+    // Build absolute URL for emails (always use production site URL for email links)
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
     
     const { createDirectActivityUrl, transformEmailContentLinks } = await import('@/lib/auth/direct-access');
     const directLink = link ? createDirectActivityUrl(userId, user.email, link, baseUrl) : '';
@@ -220,7 +208,7 @@ export async function dispatchNotification(
             if (matches) {
               matches.forEach(match => {
                 const key = match.replace(/[{}]/g, "").trim();
-                const value = payload[key as keyof typeof payload] !== undefined && payload[key as keyof typeof payload] !== null ? payload[key as keyof typeof payload] : match;
+                const value = payload[key as keyof typeof payload] !== undefined && payload[key as keyof typeof payload] !== null ? payload[key as keyof typeof payload] : "";
                 hydrated = hydrated.replace(match, String(value));
               });
             }

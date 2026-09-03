@@ -273,7 +273,7 @@ export async function createTask(payload: {
       assigned_to: task.assigned_to,
       priority: task.priority_id,
       due_date: task.end_date,
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${task.id}`
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${task.id}`
     }).catch(e => console.error("[NotificationEngine] Background push failed", e));
 
     return task;
@@ -383,7 +383,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
     triggering_user_id: userId,
     status: targetStatusId, // Note: This is an ID, but for email mapping we might want the code. Assuming code for simplicity.
     assigned_to: task.assigned_to,
-    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
+    link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
   }).catch(e => console.error("[NotificationEngine] Status change queue push failed", e));
 
   // Trigger requirement and parent progress evaluation
@@ -1510,7 +1510,7 @@ export async function executeTaskBatchOperation(payload: {
           status: statusChanges || taskData?.status_id || "UPDATED",
           task_name: taskData?.subject || "Task Updated",
           creator_name: user?.user_metadata?.full_name || "System",
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
       }).catch(e => console.error("[NotificationEngine] Background push failed", e));
   }).then(undefined, () => {});
 
@@ -1595,7 +1595,7 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
           status: taskData?.status_id || "UPDATED",
           task_name: taskData?.subject || "Task Assignment Changed",
           creator_name: "System", // Or fetch current user
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tasks/${taskId}`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
       }).catch(e => console.error("[NotificationEngine] Background push failed", e));
   }).then(undefined, () => {});
 

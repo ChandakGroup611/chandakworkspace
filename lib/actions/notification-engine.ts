@@ -161,6 +161,49 @@ async function autoHydratePayload(payload: any) {
   const hydrated = { ...payload };
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+  // Task-specific auto-enrichment
+  if (payload.entity_id && (!hydrated.task_name || !hydrated.ticket_no)) {
+    try {
+      const { data: task } = await supabaseAdmin
+        .from('tasks')
+        .select('subject, priority_id, status_id, end_date, assigned_to, creator_id, workspace_id')
+        .eq('id', payload.entity_id)
+        .maybeSingle();
+
+      if (task) {
+        if (!hydrated.task_name) hydrated.task_name = task.subject;
+        if (!hydrated.priority && task.priority_id) hydrated.priority = task.priority_id;
+        if (!hydrated.status && task.status_id) hydrated.status = task.status_id;
+        if (!hydrated.due_date && task.end_date) hydrated.due_date = task.end_date;
+        if (!hydrated.assigned_to && task.assigned_to) hydrated.assigned_to = task.assigned_to;
+        if (!hydrated.workspace_id && task.workspace_id) hydrated.workspace_id = task.workspace_id;
+
+        // Try to find if this task is linked to a requirement or ticket
+        const { data: reqTask } = await supabaseAdmin
+          .from('requirement_tasks')
+          .select('requirement_id, requirements(id, code, title, ticket_id)')
+          .eq('task_id', payload.entity_id)
+          .maybeSingle();
+
+        if (reqTask?.requirements) {
+          const req = reqTask.requirements as any;
+          if (req.ticket_id) {
+            const { data: ticket } = await supabaseAdmin
+              .from('tickets')
+              .select('code')
+              .eq('id', req.ticket_id)
+              .maybeSingle();
+            if (ticket?.code) hydrated.ticket_no = ticket.code;
+          } else if (req.code) {
+            hydrated.ticket_no = req.code;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[NotificationEngine] Task auto-enrichment failed', e);
+    }
+  }
+
   const fieldMappings: Record<string, { table: string, column: string }> = {
     'assigned_to': { table: 'user_master', column: 'full_name' },
     'requester_id': { table: 'user_master', column: 'full_name' },
@@ -194,17 +237,27 @@ async function autoHydratePayload(payload: any) {
        }
     }
   }
+
+  // Set aliases for common merge tags
+  if (hydrated.assigned_to && !hydrated.assigned_user) {
+    hydrated.assigned_user = hydrated.assigned_to;
+  }
+  if (hydrated.workspace_id && !hydrated.workspace_name) {
+    hydrated.workspace_name = hydrated.workspace_id;
+  }
+
   return hydrated;
 }
 
 function hydrateTemplate(text: string, data: any): string {
+  if (!text) return "";
   let hydrated = text;
   // Match {{key}} pattern
   const matches = hydrated.match(/{{(.*?)}}/g);
   if (matches) {
     matches.forEach(match => {
       const key = match.replace(/[{}]/g, "").trim();
-      const value = data[key] !== undefined && data[key] !== null ? data[key] : match;
+      const value = data[key] !== undefined && data[key] !== null ? data[key] : "";
       hydrated = hydrated.replace(match, String(value));
     });
   }

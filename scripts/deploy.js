@@ -16,6 +16,12 @@ rl.question('📝 Enter your commit message (leave blank for auto-generated): ',
   }
 
   try {
+    console.log('\n🔒 Running security vulnerability audit (npm audit)...');
+    execSync('npm audit', { stdio: 'inherit' });
+
+    console.log('\n🛡️ Running TypeScript verification (npx tsc --noEmit)...');
+    execSync('npx tsc --noEmit', { stdio: 'inherit' });
+
     console.log('\n🔍 Staging all changes...');
     execSync('git add .', { stdio: 'inherit' });
 

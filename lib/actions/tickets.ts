@@ -683,7 +683,7 @@ export async function createEnterpriseTicket(payload: any) {
         triggering_user_id: user.id,
         ticket_code: ticket.code,
         ticket_title: ticket.title || ticket.subject || 'Untitled',
-        link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tickets/${ticket.id}`
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${ticket.id}`
       });
 
       // If there's an assignee, notify them
@@ -703,7 +703,7 @@ export async function createEnterpriseTicket(payload: any) {
           assigned_to: finalAssigneeId,
           ticket_code: ticket.code,
           ticket_title: ticket.title || ticket.subject || 'Untitled',
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tickets/${ticket.id}`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${ticket.id}`
         });
       }
       // Or if it went to manager queue
@@ -723,7 +723,7 @@ export async function createEnterpriseTicket(payload: any) {
           assigned_to: creatorInfo.manager_id,
           ticket_code: ticket.code,
           ticket_title: ticket.title || ticket.subject || 'Untitled',
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tickets/${ticket.id}`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tickets/${ticket.id}`
         });
       }
     } catch (e) {

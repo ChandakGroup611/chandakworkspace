@@ -461,7 +461,7 @@ export async function submitRequirementAnalysis(reqId: string, payload: any, per
           req_title: currentReq?.title || 'Untitled',
           assigned_to: approver.approver_id,
           creator_name: user.email,
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${reqId}?tab=approval`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/requirements/${reqId}?tab=approval`
         }).catch(e => console.error("Requirement Approval Pending event failed", e));
       }
     } else {
@@ -748,7 +748,7 @@ export async function processApprovalAction(reqId: string, action: string, remar
          req_title: req.title,
          assigned_to: req.requester_id,
          creator_name: user.email,
-         link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}`
+         link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/requirements/${finalReqId}`
        }).catch(e => console.error(e));
      }
 
@@ -818,7 +818,7 @@ export async function processApprovalAction(reqId: string, action: string, remar
           req_title: req.title,
           assigned_to: flow.approver_id,
           creator_name: user.email,
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}?tab=approval`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/requirements/${finalReqId}?tab=approval`
         }).catch(e => console.error(e));
       }
     } else {
@@ -839,7 +839,7 @@ export async function processApprovalAction(reqId: string, action: string, remar
           req_title: req.title,
           assigned_to: signoffApproverId,
           creator_name: user.email,
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}?tab=approval`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/requirements/${finalReqId}?tab=approval`
         }).catch(e => console.error(e));
       }
     }
@@ -857,7 +857,7 @@ export async function processApprovalAction(reqId: string, action: string, remar
       req_title: req.title,
       assigned_to: req.requester_id,
       creator_name: user.email,
-      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/requirements/${finalReqId}`
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/requirements/${finalReqId}`
     }).catch(e => console.error(e));
   }
   revalidatePath(`/requirements/${finalReqId}`);

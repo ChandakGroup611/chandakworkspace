@@ -294,7 +294,7 @@ export async function createWorkspace(formData: any) {
           assigned_to: assigneeId,
           workspace_name: data.workspace_name,
           workspace_code: data.workspace_code,
-          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/workspaces`
+          link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
         });
       } catch (e) {
         console.error("Failed to dispatch notification to", assigneeId, e);

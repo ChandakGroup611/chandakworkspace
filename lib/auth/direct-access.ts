@@ -152,16 +152,38 @@ export function transformEmailContentLinks(
   let siteUrl = baseUrl || process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
   if (siteUrl.endsWith("/")) siteUrl = siteUrl.slice(0, -1);
 
-  // Match URLs starting with siteUrl or relative paths like /workspaces, /tasks/..., /tickets/...
-  // 1. Match full site URLs e.g. https://chandakgroup.tech/workspaces...
-  const escapedSiteUrl = siteUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const fullUrlRegex = new RegExp(`(${escapedSiteUrl})(/[^\\s"'<>]*)`, "g");
+  // 1. Transform full site URLs (including chandakgroup.tech and any localhost:XXXX)
+  const urlPatterns = [
+    /https?:\/\/localhost(?::\d+)?(\/[^\s"'<>]*)/gi,
+    /https?:\/\/127\.0\.0\.1(?::\d+)?(\/[^\s"'<>]*)/gi,
+    /https?:\/\/(?:www\.)?chandakgroup\.tech(\/[^\s"'<>]*)/gi
+  ];
 
-  let transformed = content.replace(fullUrlRegex, (_match, _origin, path) => {
-    // If it's already an auth/direct link, leave it
+  if (siteUrl && !siteUrl.includes("localhost") && !siteUrl.includes("chandakgroup.tech")) {
+    const escaped = siteUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    urlPatterns.push(new RegExp(`${escaped}(\\/[^\\s"'<>]*)`, "gi"));
+  }
+
+  let transformed = content;
+  for (const pattern of urlPatterns) {
+    transformed = transformed.replace(pattern, (_match, path) => {
+      if (path.startsWith("/auth/direct")) return _match;
+      return createDirectActivityUrl(userId, email, path, siteUrl);
+    });
+  }
+
+  // 2. Transform relative internal links in href attributes (e.g. href="/tasks/...")
+  transformed = transformed.replace(/href=["'](\/(?:tasks|tickets|workspaces|requirements|amc|sla|users|masters)[^"']*)["']/gi, (_match, path) => {
     if (path.startsWith("/auth/direct")) return _match;
-    return createDirectActivityUrl(userId, email, path, siteUrl);
+    return `href="${createDirectActivityUrl(userId, email, path, siteUrl)}"`;
+  });
+
+  // 3. Transform plain text Link: /path
+  transformed = transformed.replace(/Link:\s*(\/(?:tasks|tickets|workspaces|requirements|amc|sla|users|masters)[^\s"'<>]*)/gi, (_match, path) => {
+    if (path.startsWith("/auth/direct")) return _match;
+    return `Link: ${createDirectActivityUrl(userId, email, path, siteUrl)}`;
   });
 
   return transformed;
 }
+

@@ -1,0 +1,25 @@
+name: Periodic Security Audit & Dependency Check
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Run Dependency Audit
+        run: |
+          npm ci --ignore-scripts || npm install
+          npm audit --audit-level=high

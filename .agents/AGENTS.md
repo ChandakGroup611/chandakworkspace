@@ -19,3 +19,19 @@ NEVER deploy a change without first checking its global impact.
 - If you modify a shared component, global CSS, or utility (e.g., removing a class like `backdrop-blur` or modifying `globals.css`), you MUST search the codebase to understand what other modules use it.
 - If you modify a specific workflow (e.g., Requirement Creation), you MUST trace the entire lifecycle of the data (e.g., from Ticket -> Requirement) to ensure dependent entities like attachments, approval flows, or statuses aren't orphaned or broken.
 - Assume every localized change has a global ripple effect. Systematically verify that "because of or in between these changes, something else didn't accidentally break."
+
+## Strict Dependency & Package Governance (Zero Unauthorized Installs)
+
+- **NEVER install, add, or upgrade any npm package or external dependency without explicit permission from the user.**
+- If a security vulnerability arises or an upstream package launches an updated version, you MUST NOT install it silently. Instead, proactively inform the user with:
+  1. The exact package name and its parent dependency tree.
+  2. The current version vs. the newly released/patched version.
+  3. The CVE / vulnerability details (if applicable) and risk impact.
+  4. Explicitly ask the user for confirmation before executing `npm install` or changing dependencies in `package.json`.
+
+## Automated Vulnerability & Security Verification
+
+- As part of mandatory self-verification, always verify dependency security health by running `npm audit`.
+- Keep automated security mechanisms active (Dependabot daily monitoring, daily scheduled CI security scans, and pre-deployment safety gates in `scripts/deploy.js`).
+- Never allow high or critical vulnerabilities into production code.
+
