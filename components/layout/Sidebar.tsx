@@ -227,11 +227,11 @@ export default function Sidebar() {
       className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none theme-card-structural /40 border-r /30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${ isCompact ? "w-16" : "w-[240px]" }`}
     >
       {/* Sidebar Top Master Header */}
-      <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-0 px-4 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
+      <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-0 px-3 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
         {!isCompact ? (
           <Link href="/" className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
-            <div className={`flex items-center justify-center transition-all duration-300 h-[64px] w-[180px] mx-auto shrink-0 px-2`}>
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" />
+            <div className={`flex items-center justify-center transition-all duration-300 h-[64px] w-[210px] mx-auto shrink-0 px-1`}>
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </div>
             <div className="flex flex-col min-w-0 justify-center items-center px-1">
               <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
@@ -242,7 +242,7 @@ export default function Sidebar() {
         ) : (
           <Link href="/" className="flex h-14 w-14 mx-auto shrink-0 items-center justify-center mt-1">
             <div className="h-12 w-12 mx-auto flex items-center justify-center rounded-lg mb-2 overflow-hidden px-1">
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" />
+              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
             </div>
           </Link>
         )}

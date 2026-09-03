@@ -262,18 +262,19 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col items-center justify-center h-full p-12 lg:p-16 text-center">
           
           {/* Logo - Pushed to Absolute Top */}
-          <div className="absolute top-12 lg:top-16 left-0 right-0 flex flex-col items-center gap-5 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
-            <div className="relative h-24 w-64 lg:h-32 lg:w-80 bg-background rounded-2xl p-4 shadow-xl border border-border flex items-center justify-center">
+          <div className="absolute top-10 lg:top-14 left-0 right-0 flex flex-col items-center px-8 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
+            <div className="relative w-full max-w-[460px] py-4 px-6 rounded-2xl bg-surface/80 dark:bg-surface/40 backdrop-blur-md shadow-lg border border-border/60 flex items-center justify-center transition-all hover:shadow-xl">
               <img 
                 src="/Chandak-Group-Final-Logo.svg" 
                 alt="Chandak Logo" 
-                className="h-full w-auto max-w-full object-contain p-2 dark:brightness-0 dark:invert"
+                className="h-16 lg:h-20 w-auto max-w-full object-contain dark:brightness-0 dark:invert"
+                style={{ imageRendering: '-webkit-optimize-contrast' }}
               />
             </div>
           </div>
 
           {/* Main Text - Perfectly Centered */}
-          <div className="max-w-xl mt-24 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+          <div className="max-w-xl mt-28 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
             <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-12 leading-tight drop-shadow-sm">
               Intelligent Governance <br />
               & Enterprise Mastery
@@ -294,12 +295,13 @@ export default function LoginPage() {
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 xl:p-24 relative z-10 min-h-full">
           <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-700 fill-mode-both">
             
-            <div className="lg:hidden flex flex-col items-center justify-center mb-10">
-              <div className="relative h-20 w-56 flex items-center justify-center bg-white rounded-xl p-3 shadow-lg border border-white/20">
+            <div className="lg:hidden flex flex-col items-center justify-center mb-8">
+              <div className="relative w-full max-w-[340px] py-3.5 px-5 flex items-center justify-center bg-surface/80 rounded-2xl shadow-md border border-border/50">
                 <img 
                   src="/Chandak-Group-Final-Logo.svg" 
                   alt="Chandak Logo" 
-                  className="h-full w-auto max-w-full object-contain dark:brightness-0 dark:invert"
+                  className="h-12 w-auto max-w-full object-contain dark:brightness-0 dark:invert"
+                  style={{ imageRendering: '-webkit-optimize-contrast' }}
                 />
               </div>
             </div>
