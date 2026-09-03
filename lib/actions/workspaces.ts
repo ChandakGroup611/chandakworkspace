@@ -318,11 +318,8 @@ export async function createWorkspace(formData: any) {
 }
 
 export async function fetchWorkspaces() {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
+  const { user } = await getCachedUser();
+  const userId = user?.id;
   if (!userId) return [];
 
   // Fetch workspaces using the explicit repository layer

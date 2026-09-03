@@ -38,14 +38,10 @@ export async function getVisibleWorkspaces(userId: string, isSuperAdmin?: boolea
     return visibleWorkspaces || [];
   }
 
-  // 2. Optimized single query for standard users using PostgREST OR syntax
-  // We fetch workspaces where the user is EITHER the owner OR a member
-  // Note: PostgREST embedded filters handle this efficiently when properly structured,
-  // but to guarantee performance across complex ORs on relations, we use a subquery/RPC or two parallel light queries.
-  // We'll use two parallel light queries to get IDs, then one fetch. It's faster than 3 sequential.
+  // 2. Strict membership check for standard users
   const [memberRes, ownerRes] = await Promise.all([
     supabaseAdmin.from('workspace_members').select('workspace_id').eq('user_id', userId).eq('is_deleted', false),
-    supabaseAdmin.from('workspaces').select('id').eq('workspace_owner_id', userId).eq('is_deleted', false)
+    supabaseAdmin.from('workspaces').select('id, parent_workspace_id').eq('workspace_owner_id', userId).eq('is_deleted', false)
   ]);
     
   const workspaceIds = new Set<string>();
@@ -56,7 +52,19 @@ export async function getVisibleWorkspaces(userId: string, isSuperAdmin?: boolea
     return [];
   }
 
-  const authorizedWorkspaceIds = Array.from(workspaceIds);
+  // Include parents of enrolled sub-workspaces so top-level containers can be navigated
+  const { data: enrolledWs } = await supabaseAdmin
+    .from('workspaces')
+    .select('id, parent_workspace_id')
+    .in('id', Array.from(workspaceIds))
+    .eq('is_deleted', false);
+
+  const allRelevantIds = new Set<string>(workspaceIds);
+  enrolledWs?.forEach((w: any) => {
+    if (w.parent_workspace_id) {
+      allRelevantIds.add(w.parent_workspace_id);
+    }
+  });
 
   let { data: visibleWorkspaces, error } = await supabaseAdmin
     .from('workspaces')
@@ -80,13 +88,20 @@ export async function getVisibleWorkspaces(userId: string, isSuperAdmin?: boolea
       members:workspace_members(user_id, role),
       stats:workspace_statistics(task_count, subtask_count)
     `)
-    .in('id', authorizedWorkspaceIds)
+    .in('id', Array.from(allRelevantIds))
     .eq('is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
   
-  return visibleWorkspaces || [];
+  // Gating rule: Sub-workspaces MUST be explicitly enrolled/owned by the user.
+  // Root workspaces are visible if user is a direct member/owner OR has an enrolled sub-workspace.
+  return (visibleWorkspaces || []).filter((w: any) => {
+    if (w.parent_workspace_id) {
+      return workspaceIds.has(w.id);
+    }
+    return true;
+  });
   } finally {
     console.timeEnd(`[PROFILER] getVisibleWorkspaces_TOTAL_${tId}`);
   }

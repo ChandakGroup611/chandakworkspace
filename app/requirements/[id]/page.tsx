@@ -266,8 +266,8 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         const lTasks = await fetchLinkedTasks(reqId);
         setLinkedTasks(lTasks || []);
         
-        const wsRes = await supabase.from('workspaces').select('id, workspace_name, parent_workspace_id').eq('is_deleted', false);
-        const allWs = wsRes.data || [];
+        const { fetchWorkspaces } = await import("@/lib/actions/workspaces");
+        const allWs = await fetchWorkspaces();
         setWorkspaces(allWs.filter((w: any) => !w.parent_workspace_id));
         setSubWorkspaces(allWs.filter((w: any) => w.parent_workspace_id));
       } catch(e) {

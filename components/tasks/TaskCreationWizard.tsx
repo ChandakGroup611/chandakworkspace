@@ -97,6 +97,36 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
   const [statuses, setStatuses] = useState<any[]>([]);
     const [parentTaskId, setParentTaskId] = useState(initialParentTaskId || "");
   const [workspaceTasks, setWorkspaceTasks] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [canManageAll, setCanManageAll] = useState(false);
+
+  useEffect(() => {
+    import("@/utils/supabase/client").then(({ createClient }) => {
+      const supabase = createClient();
+      supabase.auth.getUser().then(async ({ data }) => {
+        if (data?.user?.id) {
+          setCurrentUserId(data.user.id);
+          const { hasPermission } = await import("@/lib/permissions");
+          const isSuper = await hasPermission(data.user.id, "WORKSPACES_MANAGE");
+          setCanManageAll(isSuper);
+        }
+      });
+    });
+  }, []);
+
+  const availableParentTasks = React.useMemo(() => {
+    if (canManageAll) return workspaceTasks;
+    if (!currentUserId) return [];
+    
+    return workspaceTasks.filter(t => {
+      const isAssignee = t.assigned_to === currentUserId || (Array.isArray(t.assignee) ? t.assignee.some((a: any) => a.id === currentUserId) : t.assignee?.id === currentUserId);
+      const isCreator = t.created_by === currentUserId || t.owner_id === currentUserId;
+      const isParticipant = t.participants?.some((p: any) => p.user_id === currentUserId) || 
+                            t.executors?.some((e: any) => e.id === currentUserId) ||
+                            t.reviewers?.some((r: any) => r.id === currentUserId);
+      return isAssignee || isCreator || isParticipant;
+    });
+  }, [workspaceTasks, currentUserId, canManageAll]);
   const [assignees, setAssignees] = useState<string[]>([]);
   const [assigneeSearchTerm, setAssigneeSearchTerm] = useState("");
   const [watchers, setWatchers] = useState<string[]>([]);
@@ -283,7 +313,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   disabled={!!initialParentTaskId}
                 >
                   <option value="">-- No Parent (Independent) --</option>
-                  {workspaceTasks.map(t => (
+                  {availableParentTasks.map(t => (
                     <option key={t.id} value={t.id}>{t.title || t.subject}</option>
                   ))}
                 </select>

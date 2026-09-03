@@ -85,6 +85,51 @@ export async function createTask(payload: {
     // Create Task
     const cleanUUID = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
     const finalWorkspaceId = cleanUUID(payload.sub_workspace_id) || cleanUUID(payload.workspace_id);
+
+    // Strict Access Validation:
+    // 1. Workspace membership check
+    const { hasPermission } = await import('@/lib/permissions');
+    const isSuperAdmin = await hasPermission(creatorId, 'WORKSPACES_MANAGE') || await hasPermission(creatorId, 'SUPER_ADMIN');
+    
+    if (!isSuperAdmin && finalWorkspaceId) {
+      const [memberCheck, ownerCheck] = await Promise.all([
+        supabaseAdmin.from('workspace_members').select('id').eq('workspace_id', finalWorkspaceId).eq('user_id', creatorId).eq('is_deleted', false).maybeSingle(),
+        supabaseAdmin.from('workspaces').select('id').eq('id', finalWorkspaceId).eq('workspace_owner_id', creatorId).eq('is_deleted', false).maybeSingle()
+      ]);
+      
+      if (!memberCheck.data && !ownerCheck.data) {
+        return { error: "Access Denied: You do not have permission to create tasks in this workspace or sub-workspace." };
+      }
+    }
+
+    // 2. Parent task participant check (for sub-tasks)
+    const parentTaskId = cleanUUID(payload.parent_task_id);
+    if (!isSuperAdmin && parentTaskId) {
+      const { data: parentTask } = await supabaseAdmin
+        .from('tasks')
+        .select('id, assigned_to, created_by, owner_id')
+        .eq('id', parentTaskId)
+        .eq('is_deleted', false)
+        .single();
+        
+      if (!parentTask) {
+        return { error: "Parent task not found or has been removed." };
+      }
+
+      const isParentOwner = parentTask.assigned_to === creatorId || parentTask.created_by === creatorId || parentTask.owner_id === creatorId;
+      if (!isParentOwner) {
+        const { data: isPart } = await supabaseAdmin
+          .from('task_participants')
+          .select('id')
+          .eq('task_id', parentTaskId)
+          .eq('user_id', creatorId)
+          .maybeSingle();
+
+        if (!isPart) {
+          return { error: "Access Denied: You must be a participant or assignee on the parent task to create sub-tasks under it." };
+        }
+      }
+    }
     
     // Prevent duplicate task creation (Idempotency / Retry Protection)
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
