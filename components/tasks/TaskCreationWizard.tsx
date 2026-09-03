@@ -106,8 +106,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       supabase.auth.getUser().then(async ({ data }) => {
         if (data?.user?.id) {
           setCurrentUserId(data.user.id);
-          const { hasPermission } = await import("@/lib/permissions");
-          const isSuper = await hasPermission(data.user.id, "WORKSPACES_MANAGE");
+          const { data: snap } = await supabase
+            .from("user_permissions_snapshot")
+            .select("permission_code")
+            .eq("user_id", data.user.id);
+          const perms = snap?.map((s: any) => s.permission_code) || [];
+          const isSuper = perms.includes("WORKSPACES_MANAGE") || perms.includes("SUPER_ADMIN");
           setCanManageAll(isSuper);
         }
       });
