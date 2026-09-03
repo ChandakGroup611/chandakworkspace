@@ -272,28 +272,51 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
 
   switch (type) {
     case "Creator":
-      if (payload.created_by) ids.push(payload.created_by);
+      if (payload.created_by) {
+        ids.push(payload.created_by);
+      } else if (payload.creator_id) {
+        ids.push(payload.creator_id);
+      } else if (payload.entity_id) {
+        if (moduleName === "Task") {
+          const { data } = await supabaseAdmin.from("tasks").select("created_by, creator_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.created_by) ids.push(data.created_by);
+          else if (data?.creator_id) ids.push(data.creator_id);
+        } else if (moduleName === "Ticket") {
+          const { data } = await supabaseAdmin.from("tickets").select("created_by, creator_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.created_by) ids.push(data.created_by);
+          else if (data?.creator_id) ids.push(data.creator_id);
+        } else if (moduleName === "Requirement") {
+          const { data } = await supabaseAdmin.from("requirements").select("created_by, creator_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.created_by) ids.push(data.created_by);
+          else if (data?.creator_id) ids.push(data.creator_id);
+        } else if (moduleName === "Workspace") {
+          const { data } = await supabaseAdmin.from("workspaces").select("created_by, owner_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.created_by) ids.push(data.created_by);
+        }
+      }
       break;
       
     case "Assigned User":
       if (payload.assigned_to) {
         ids.push(payload.assigned_to);
-      } else if (moduleName === "Requirement" && payload.entity_id) {
-        const { data: tasks } = await supabaseAdmin.from("requirement_tasks").select("task_id").eq("requirement_id", payload.entity_id);
-        if (tasks && tasks.length > 0) {
-           const { data: assigned } = await supabaseAdmin.from("tasks").select("assigned_to").in("id", tasks.map(t => t.task_id));
-           if (assigned) assigned.forEach(a => { if(a.assigned_to) ids.push(a.assigned_to); });
+      } else if (payload.entity_id) {
+        if (moduleName === "Task") {
+          const { data } = await supabaseAdmin.from("tasks").select("assigned_to").eq("id", payload.entity_id).maybeSingle();
+          if (data?.assigned_to) ids.push(data.assigned_to);
+        } else if (moduleName === "Ticket") {
+          const { data } = await supabaseAdmin.from("tickets").select("assigned_to").eq("id", payload.entity_id).maybeSingle();
+          if (data?.assigned_to) ids.push(data.assigned_to);
+        } else if (moduleName === "Requirement") {
+          const { data: tasks } = await supabaseAdmin.from("requirement_tasks").select("task_id").eq("requirement_id", payload.entity_id);
+          if (tasks && tasks.length > 0) {
+             const { data: assigned } = await supabaseAdmin.from("tasks").select("assigned_to").in("id", tasks.map(t => t.task_id));
+             if (assigned) assigned.forEach(a => { if(a.assigned_to) ids.push(a.assigned_to); });
+          }
+        } else if (moduleName === "Workspace") {
+          const { data } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.owner_id) ids.push(data.owner_id);
         }
       }
-      break;
-
-    case "Specific Approver":
-      if (payload.assigned_to) ids.push(payload.assigned_to);
-      break;
-
-    case "Requester":
-      if (payload.requester_id) ids.push(payload.requester_id);
-      else if (payload.assigned_to) ids.push(payload.assigned_to); // Fallback for backwards compatibility
       break;
 
     case "Executors":
@@ -313,30 +336,97 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
       }
       break;
 
+    case "Watchers":
+      if (moduleName === "Task" && payload.entity_id) {
+        // Fetch explicit watchers from task_participants
+        const { data: explicitWatchers } = await supabaseAdmin
+          .from("task_participants")
+          .select("user_id")
+          .eq("task_id", payload.entity_id)
+          .eq("participation_role", "WATCHER");
+        if (explicitWatchers) explicitWatchers.forEach(d => ids.push(d.user_id));
+
+        // Also check task_watchers table
+        const { data: tw } = await supabaseAdmin
+          .from("task_watchers")
+          .select("user_id")
+          .eq("task_id", payload.entity_id)
+          .eq("is_deleted", false);
+        if (tw) tw.forEach(d => ids.push(d.user_id));
+      } else if (moduleName === "Ticket" && payload.entity_id) {
+        const { data: tw } = await supabaseAdmin
+          .from("ticket_watchers")
+          .select("user_id")
+          .eq("ticket_id", payload.entity_id);
+        if (tw) tw.forEach(d => ids.push(d.user_id));
+      } else if (moduleName === "Requirement" && payload.entity_id) {
+        const { data: rw } = await supabaseAdmin
+          .from("requirement_watchers")
+          .select("user_id")
+          .eq("requirement_id", payload.entity_id)
+          .eq("is_deleted", false);
+        if (rw) rw.forEach(d => ids.push(d.user_id));
+      }
+      break;
+
     case "Workspace Owner":
-      if (moduleName === "Workspace" && payload.entity_id) {
-        const { data } = await supabaseAdmin
-          .from("workspaces")
-          .select("owner_id")
-          .eq("id", payload.entity_id)
-          .maybeSingle();
-        if (data && data.owner_id) ids.push(data.owner_id);
+      if (payload.workspace_id) {
+        const { data } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", payload.workspace_id).maybeSingle();
+        if (data?.owner_id) ids.push(data.owner_id);
+      } else if (payload.entity_id) {
+        if (moduleName === "Workspace") {
+          const { data } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.owner_id) ids.push(data.owner_id);
+        } else if (moduleName === "Task") {
+          const { data: task } = await supabaseAdmin.from("tasks").select("workspace_id").eq("id", payload.entity_id).maybeSingle();
+          if (task?.workspace_id) {
+            const { data: ws } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", task.workspace_id).maybeSingle();
+            if (ws?.owner_id) ids.push(ws.owner_id);
+          }
+        }
       }
       break;
 
     case "Department Admin":
-      // Look up the user's department, then find users with role 'DEPT_ADMIN' in that department
       if (payload.department_id) {
-        const { data: admins } = await supabaseAdmin
+        const { data: deptUsers } = await supabaseAdmin
           .from("user_master")
-          .select("id")
+          .select("id, role:roles(code)")
           .eq("department_id", payload.department_id)
-          .eq("role_id", "dept_admin_role_id_here"); // In reality, we'd join on roles table
-        if (admins) admins.forEach(a => ids.push(a.id));
+          .eq("is_active", true);
+        if (deptUsers) {
+          deptUsers.forEach((u: any) => {
+            const roleCode = Array.isArray(u.role) ? u.role[0]?.code : u.role?.code;
+            if (roleCode && ["ROLE_MANAGER", "ROLE_ADMIN", "SUPER_ADMIN", "DEPT_ADMIN"].includes(roleCode.toUpperCase())) {
+              ids.push(u.id);
+            }
+          });
+        }
       }
       break;
 
-    // Future implementations for other dynamic types...
+    case "Specific Approver":
+    case "Approver":
+      if (payload.assigned_to) {
+        ids.push(payload.assigned_to);
+      } else if (payload.approver_id) {
+        ids.push(payload.approver_id);
+      } else if (payload.entity_id && moduleName === "Requirement") {
+        const { data: req } = await supabaseAdmin.from("requirements").select("assigned_to, owner_id").eq("id", payload.entity_id).maybeSingle();
+        if (req?.assigned_to) ids.push(req.assigned_to);
+        else if (req?.owner_id) ids.push(req.owner_id);
+      }
+      break;
+
+    case "Requester":
+      if (payload.requester_id) ids.push(payload.requester_id);
+      else if (payload.created_by) ids.push(payload.created_by);
+      else if (payload.entity_id && moduleName === "Ticket") {
+        const { data: t } = await supabaseAdmin.from("tickets").select("requester_id, created_by").eq("id", payload.entity_id).maybeSingle();
+        if (t?.requester_id) ids.push(t.requester_id);
+        else if (t?.created_by) ids.push(t.created_by);
+      }
+      break;
   }
 
   return ids;

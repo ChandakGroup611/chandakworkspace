@@ -1502,13 +1502,16 @@ export async function executeTaskBatchOperation(payload: {
   revalidatePath(`/workspaces/tasks`);
   
   // Fire-and-forget: Push to async background queue
-  // Attempt to fetch task name for notification
-  supabaseAdmin.from('tasks').select('subject, status_id').eq('id', taskId).single().then(({ data: taskData }) => {
+  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, creator_id, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
       queueBusinessEvent("Task", "Updated", {
           entity_id: taskId,
           triggering_user_id: userId,
           status: statusChanges || taskData?.status_id || "UPDATED",
           task_name: taskData?.subject || "Task Updated",
+          assigned_to: taskData?.assigned_to,
+          created_by: taskData?.created_by || taskData?.creator_id,
+          workspace_id: taskData?.workspace_id,
+          department_id: taskData?.department_id,
           creator_name: user?.user_metadata?.full_name || "System",
           link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
       }).catch(e => console.error("[NotificationEngine] Background push failed", e));
@@ -1588,13 +1591,17 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   revalidatePath(`/workspaces/tasks`);
 
   // Fire-and-forget: Push to async background queue
-  supabaseAdmin.from('tasks').select('subject, status_id').eq('id', taskId).single().then(({ data: taskData }) => {
+  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, creator_id, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
       queueBusinessEvent("Task", "Executors Changed", {
           entity_id: taskId,
           triggering_user_id: userId || "",
           status: taskData?.status_id || "UPDATED",
           task_name: taskData?.subject || "Task Assignment Changed",
-          creator_name: "System", // Or fetch current user
+          assigned_to: finalPrimaryId || taskData?.assigned_to,
+          created_by: taskData?.created_by || taskData?.creator_id,
+          workspace_id: taskData?.workspace_id,
+          department_id: taskData?.department_id,
+          creator_name: user?.user_metadata?.full_name || "System",
           link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${taskId}`
       }).catch(e => console.error("[NotificationEngine] Background push failed", e));
   }).then(undefined, () => {});
