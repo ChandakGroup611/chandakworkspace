@@ -36,8 +36,8 @@
   /* Apply global font normalizations */
   body {
     font-family: var(--font-primary);
-    -webkit-font-smoothing: auto;
-    -moz-osx-font-smoothing: auto;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
     text-rendering: optimizeLegibility;
   }
 

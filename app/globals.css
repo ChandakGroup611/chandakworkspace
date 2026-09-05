@@ -292,7 +292,21 @@
     scrollbar-width: none;
 }
 
-/* Premium Card Hover Effects */
-.hover\:shadow-lg:hover .theme-data-value { text-shadow: 0 0 10px rgba(var(--foreground), 0.1); }
-.hover\:shadow-lg:hover .theme-label svg { transform: scale(1.15) rotate(4deg); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); filter: drop-shadow(0 0 4px currentColor); }
-.theme-label svg { transition: all 0.3s ease; }
+/* Universal Crisp Text & High-Contrast Rendering */
+.theme-data-value,
+input,
+select,
+textarea,
+label {
+  text-shadow: none !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+.hover\:shadow-lg:hover .theme-label svg { 
+  transform: scale(1.1); 
+  transition: all 0.2s ease-in-out; 
+}
+.theme-label svg { 
+  transition: all 0.2s ease; 
+}
