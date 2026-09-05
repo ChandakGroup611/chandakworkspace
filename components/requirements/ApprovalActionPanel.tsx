@@ -5,6 +5,7 @@ import { AppCard, AppCardContent } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { CheckCircle, XCircle, PauseCircle, MessageSquareWarning, ArrowRight } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { sanitizeErrorMessage } from "@/lib/utils";
 
 interface ApprovalActionPanelProps {
   flowId: string;
@@ -78,8 +79,8 @@ export default function ApprovalActionPanel({
 
         <AppCardContent className="p-4 space-y-4">
           {error && (
-            <div className="p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs font-medium">
-              {error}
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-950 dark:text-rose-100 text-xs font-semibold">
+              {sanitizeErrorMessage(error)}
             </div>
           )}
 

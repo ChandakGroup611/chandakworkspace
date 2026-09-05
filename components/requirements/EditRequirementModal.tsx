@@ -5,6 +5,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { X, Save } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { sanitizeErrorMessage } from "@/lib/utils";
 
 interface EditRequirementModalProps {
   reqId: string;
@@ -133,8 +134,8 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
 
         <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-[60vh]">
           {error && (
-            <div className="p-3 rounded-lg bg-rose-50 text-rose-600 text-sm border border-rose-100 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400">
-              {error}
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-950 dark:text-rose-100 text-sm font-semibold">
+              {sanitizeErrorMessage(error)}
             </div>
           )}
 

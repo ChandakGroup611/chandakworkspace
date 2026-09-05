@@ -11,7 +11,8 @@ import {
   CheckSquare, Paperclip, Users2, Activity, Play, CheckCircle2, 
   XCircle, RotateCcw, Plus, Download, Loader2, Trash2, FolderPlus, Pin,
   ChevronDown, ChevronUp, MessageSquare, Clock, ExternalLink, Eye, ActivitySquare, Link as LinkIcon, MessageCircle,
-  User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, ShieldAlert, Users, X, Search, Check, UserCheck
+  User, Calendar, Tag, Flag, Hourglass, CalendarDays, CalendarCheck, ShieldCheck, ShieldAlert, Users, X, Search, Check, UserCheck,
+  AlertTriangle, RefreshCw
 } from "lucide-react";
 import { 
   getTaskDetails, updateTask, deleteTask, transitionTaskStatus, resolveTask, 
@@ -27,7 +28,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 import dynamic from 'next/dynamic';
 import SafeHtml from "@/components/ui/SafeHtml";
-import { sanitizeErrorMessage } from "@/lib/utils";
+import { sanitizeErrorMessage, isReloadRequiredError } from "@/lib/utils";
 
 const getSafeExternalUrl = (url: string | undefined | null) => {
   if (!url) return '#';
@@ -892,11 +893,51 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     <ExperienceProvider mode="operational">
     <div className="space-y-6">
       
-      {/* Sleek Error Notification Banner */}
+      {/* High-Contrast Clear Warning / Notice Banner */}
       {error && (
-        <div className="p-3 bg-danger/10 border border-rose-500/20 text-danger text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
-          <span>{sanitizeErrorMessage(error)}</span>
-          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-danger/60 hover:text-danger font-bold px-2">Dismiss</AppButton>
+        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm animate-in slide-in-from-top-1 ${
+          isReloadRequiredError(error)
+            ? 'bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-100'
+            : 'bg-rose-500/10 border-rose-500/30 text-rose-950 dark:text-rose-100'
+        }`}>
+          <div className="flex items-start sm:items-center gap-3">
+            <div className={`p-2 rounded-lg shrink-0 ${
+              isReloadRequiredError(error)
+                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                : 'bg-rose-500/20 text-rose-600 dark:text-rose-400'
+            }`}>
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider opacity-80">
+                {isReloadRequiredError(error) ? 'Application Update Detected' : 'Notice / Error'}
+              </p>
+              <p className="text-sm font-semibold mt-0.5 leading-snug">
+                {sanitizeErrorMessage(error)}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+            {isReloadRequiredError(error) && (
+              <AppButton 
+                variant="primary" 
+                size="sm"
+                onClick={() => window.location.reload()} 
+                className="text-xs font-bold px-3 py-1.5 shadow-xs bg-amber-600 hover:bg-amber-700 text-white border-0"
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                Reload Page
+              </AppButton>
+            )}
+            <AppButton 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setError(null)} 
+              className="text-xs font-bold px-3 py-1.5"
+            >
+              Dismiss
+            </AppButton>
+          </div>
         </div>
       )}
 

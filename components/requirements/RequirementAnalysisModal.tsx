@@ -6,6 +6,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { X, LayoutDashboard, Target, Briefcase, Server, Shield, FileCheck2, Calendar, AlertTriangle, Users } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { sanitizeErrorMessage } from "@/lib/utils";
 
 interface RequirementAnalysisModalProps {
   requirement: any;
@@ -198,9 +199,9 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
         <AppCardContent className="pt-6 overflow-y-auto custom-scrollbar flex-1">
           <form onSubmit={handleSubmit} className="space-y-8">
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>{error}</span>
+              <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-950 dark:text-rose-100 text-sm font-semibold flex items-start gap-2.5">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" />
+                <span>{sanitizeErrorMessage(error)}</span>
               </div>
             )}
 

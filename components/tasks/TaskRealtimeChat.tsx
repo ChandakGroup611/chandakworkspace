@@ -363,9 +363,9 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3 bg-warning/10 border-b border-amber-500/20 text-warning text-[0.8rem] shrink-0 font-medium flex items-center justify-between animate-in slide-in-from-top-1">
+        <div className="p-3 bg-rose-500/10 border-b border-rose-500/30 text-rose-950 dark:text-rose-100 text-xs shrink-0 font-semibold flex items-center justify-between animate-in slide-in-from-top-1">
           <span>{sanitizeErrorMessage(error)}</span>
-          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-warning/60 hover:text-warning font-bold px-1">
+          <AppButton variant="secondary" onClick={() => setError(null)} className="text-xs text-rose-700 hover:text-rose-900 dark:text-rose-300 font-bold px-1.5">
             Dismiss
           </AppButton>
         </div>
