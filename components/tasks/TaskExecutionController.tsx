@@ -846,10 +846,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   const isFrozen = task.status?.is_closed;
   
-  // Allow unfreezing if the user is staging a status change to an open status
+  // Allow unfreezing if the task is frozen and the user is staging a status change to an open status
   const targetStatusId = pendingStatus || currentStatusCode;
-  const targetStatusObj = statuses.find(s => s.code === targetStatusId || s.status_code === targetStatusId);
-  const isEffectivelyFrozen = pendingStatus ? (targetStatusObj?.is_closed ?? isFrozen) : isFrozen;
+  const targetStatusObj = statuses.find(s => (s.code || s.status_code || s.id) === targetStatusId);
+  const isEffectivelyFrozen = isFrozen ? (pendingStatus ? !!targetStatusObj?.is_closed : true) : false;
   const canBypassFreeze = task.currentUserIsSuperAdmin || hasPermission("WORKSPACES_MANAGE") || hasPermission("REQUIREMENTS_MANAGE");
   const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
   const canEditDates = !readOnly && !effectivelyFrozenForUser && (task.currentUserIsSuperAdmin || task.assigned_to === task.currentUserId);
@@ -860,12 +860,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   
   // Owners and Executors can edit core properties, provided they have TASKS_UPDATE permission
-  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && hasPermission("TASKS_UPDATE");
+  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin);
   const canEditAux = canEditCore;
   const canDeleteTask = !readOnly && isOwner && canDelete;
   
   // Reviewers & Watchers
-  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer) && !effectivelyFrozenForUser);
+  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer || isOwner || isExecutor) && !effectivelyFrozenForUser);
   // Filter inherited workspace members to remove anyone explicitly assigned
   const explicitExecutors = [...(task.task_assignees || [])];
   
@@ -1468,7 +1468,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
         {pendingStatus && (
           <div className="p-3 bg-warning/10 border border-amber-500/20 text-warning text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
-            <span>Status change to <strong>{statuses.find(s => s.status_code === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
+            <span>Status change to <strong>{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
             <AppButton variant="secondary" onClick={() => setPendingStatus(null)} className="text-xs text-warning/60 hover:text-warning font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
@@ -1484,6 +1484,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <div className="p-3 bg-success/10 border border-emerald-500/20 text-theme-icon text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
             <span>Executors change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
             <AppButton variant="secondary" onClick={() => setPendingAssignees(null)} className="text-xs text-theme-icon/60 hover:text-theme-icon font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+          </div>
+        )}
+
+        {pendingPrimaryAssignee && (
+          <div className="p-3 bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-theme-icon text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
+            <span>Primary Assignee change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
+            <AppButton variant="secondary" onClick={() => setPendingPrimaryAssignee(null)} className="text-xs text-theme-icon/60 hover:text-theme-icon font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
           </div>
         )}
  
@@ -1506,7 +1513,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <span className="text-xs text-muted">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
             {canAddRemark && (
               <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
-                {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingDepartment || pendingAssignees) ? "Commit Updates & Save Remark" : "Save Remarks"}
+                {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "Commit Updates & Save Remark" : "Save Remarks"}
               </AppButton>
             )}
           </div>
