@@ -216,7 +216,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     setStakeholderSearch("");
     setIsAssigneeModalOpen(true);
     
-    if (stakeholders.length === 0 && task?.workspace_id) {
+    if (task?.workspace_id) {
       try {
         const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
         const res = await fetchWorkspaceStakeholders(task.workspace_id);

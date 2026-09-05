@@ -558,7 +558,7 @@ export async function getTaskDetails(taskId: string) {
         status:status_master(id, name:status_name, code:status_code, is_closed),
         priority:priority_master(id, name:priority_name, color:priority_color),
         department:departments(id, name),
-        workspace:workspaces(id, name:workspace_name, members:workspace_members(user_id, role))
+        workspace:workspaces(id, name:workspace_name, members:workspace_members(user_id, role, is_deleted))
       `).eq('id', taskId).single(),
       supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
       supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
@@ -582,7 +582,7 @@ export async function getTaskDetails(taskId: string) {
     let isWorkspaceMember = isSuperAdmin;
     
     if (task.workspace_id) {
-      wsMembers = task.workspace?.members || [];
+      wsMembers = (task.workspace?.members || []).filter((m: any) => !m.is_deleted);
       
       if (userId && !isSuperAdmin) {
         if (wsMembers.some(m => m.user_id === userId)) {
@@ -677,8 +677,8 @@ export async function getTaskDetails(taskId: string) {
         } else if (p.participation_role === 'REVIEWER') {
           task.task_reviewers.push(u);
         } else if (p.participation_role === 'WATCHER') {
-          // Watchers must still be active members of the workspace or super admin
-          if (validWsMemberUserIds.has(p.user_id) || isSuperAdmin) {
+          // Watchers must strictly be active members of the workspace
+          if (validWsMemberUserIds.has(p.user_id)) {
             task.task_watchers.push(u);
           }
         }

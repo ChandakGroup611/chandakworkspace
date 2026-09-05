@@ -192,7 +192,8 @@ export async function fetchWorkspaceStakeholders(workspaceId: string) {
   const { data, error } = await supabaseAdmin
     .from('workspace_members')
     .select('user_id, role, user:user_master(id, full_name, user_code, email)')
-    .eq('workspace_id', workspaceId);
+    .eq('workspace_id', workspaceId)
+    .eq('is_deleted', false);
   
   if (error) {
     console.error("Error fetching workspace stakeholders:", error);

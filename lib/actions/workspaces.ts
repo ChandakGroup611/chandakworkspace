@@ -1109,6 +1109,21 @@ export async function updateWorkspace(id: string, formData: any) {
 
     // 3. Perform deletes and upserts (Hard delete to fix zombie users in embedded queries)
     const removedUserIds = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.user_id);
+    
+    // BACKEND GUARD: Prevent removal of active Executives/Assignees without prior reassignment
+    if (removedUserIds.length > 0) {
+      const { checkWorkspaceUserDependencies } = await import("@/lib/actions/dependencies");
+      const depResults = await checkWorkspaceUserDependencies(id, removedUserIds);
+      for (const rUid of removedUserIds) {
+        const res = depResults[rUid];
+        if (res && res.type === 'executive') {
+          return { 
+            error: `Cannot remove member: User is an active Primary Assignee or Executor on ${res.blockingItems.length} task(s). Please reassign their tasks first.` 
+          };
+        }
+      }
+    }
+
     const usersToDelete = (existingMembers || []).filter(m => !assigneesArray.includes(m.user_id)).map(m => m.id);
     if (usersToDelete.length > 0) {
       await supabaseAdmin.from("workspace_members").delete().in("id", usersToDelete);
@@ -1117,13 +1132,23 @@ export async function updateWorkspace(id: string, formData: any) {
     // Also clean up any previously soft-deleted members for this workspace to fix the bug
     await supabaseAdmin.from("workspace_members").delete().eq("workspace_id", id).eq("is_deleted", true);
 
-    // CASCADE REMOVAL: Automatically remove removed workspace members from all tasks/subtasks in this workspace
+    // CASCADE REMOVAL: Automatically remove removed workspace members from all tasks/subtasks across workspace and descendants
     if (removedUserIds.length > 0) {
       try {
+        let targetWorkspaceIds = [id];
+        try {
+          const descendants = await HierarchyManager.getDescendants('WORKSPACE', id);
+          if (descendants && descendants.length > 0) {
+            targetWorkspaceIds = Array.from(new Set([id, ...descendants]));
+          }
+        } catch (hErr) {
+          console.warn("[updateWorkspace] Hierarchy resolution fallback:", hErr);
+        }
+
         const { data: wsTasks } = await supabaseAdmin
           .from("tasks")
           .select("id")
-          .eq("workspace_id", id);
+          .in("workspace_id", targetWorkspaceIds);
         
         const wsTaskIds = wsTasks?.map(t => t.id) || [];
         if (wsTaskIds.length > 0) {
