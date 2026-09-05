@@ -1723,6 +1723,70 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   return { success: true };
 }
 
+export async function updateTaskWatchers(taskId: string, workspaceId: string, watchers: string[]) {
+  const cookieStore = await cookies();
+  const { data: { user } } = await createClient(cookieStore).auth.getUser();
+  const userId = user?.id;
+  if (!userId) return { error: "Unauthenticated" };
+
+  // Fetch the task
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, created_by, subject').eq('id', taskId).single();
+  if (!task) return { error: "Task not found" };
+
+  // Check permissions: Super Admin, Primary Assignee, or Creator
+  const { checkServerPermission } = await import("@/lib/permissions");
+  const isSuperAdmin = await checkServerPermission("SUPER_ADMIN");
+
+  if (!isSuperAdmin && task.assigned_to !== userId && task.created_by !== userId) {
+    return { error: "You do not have permission to edit watchers. Only the Primary Assignee, Creator, or a Super Admin can do this." };
+  }
+
+  // Fetch all workspace members for validation & audit names
+  const { fetchWorkspaceStakeholders } = await import("@/lib/actions/workspaces");
+  const stakeholders = await fetchWorkspaceStakeholders(workspaceId);
+
+  // Prepare participants array for watchers
+  const uniqueWatcherIds = Array.from(new Set(watchers));
+  const participants: any[] = [];
+  uniqueWatcherIds.forEach(id => participants.push({ task_id: taskId, user_id: id, participation_role: 'WATCHER' }));
+
+  // Delete existing watchers for this task
+  const { error: deleteError } = await supabaseAdmin
+    .from('task_participants')
+    .delete()
+    .eq('task_id', taskId)
+    .eq('participation_role', 'WATCHER');
+  if (deleteError) return { error: deleteError.message };
+
+  if (participants.length > 0) {
+    const { error: insertError } = await supabaseAdmin
+      .from('task_participants')
+      .upsert(participants, { onConflict: 'task_id, user_id' });
+    if (insertError) return { error: insertError.message };
+  }
+
+  // Purge the cache for this task to ensure Next.js auto-refresh works on production
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath(`/workspaces/tasks`);
+
+  // Log in activity trail
+  const newWatcherNames = uniqueWatcherIds
+    .map(id => stakeholders.find((s: any) => s.id === id)?.full_name)
+    .filter(Boolean)
+    .join(', ');
+
+  await supabaseAdmin.from('task_activity_logs').insert([{
+    task_id: taskId,
+    actor_id: userId,
+    action: 'WATCHERS_CHANGE',
+    new_state: { 
+      watchers_text: newWatcherNames || 'None' 
+    }
+  }]);
+
+  return { success: true };
+}
+
 export async function moveTasksInBulk(payload: {
   taskIds: string[];
   targetWorkspaceId: string;

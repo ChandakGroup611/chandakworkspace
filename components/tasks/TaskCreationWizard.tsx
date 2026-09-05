@@ -6,7 +6,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { Plus, X, Activity, Paperclip, LayoutTemplate, CalendarDays, Users, LayoutList, AlignLeft, Search, Eye, Download } from "lucide-react";
+import { Plus, X, Activity, Paperclip, LayoutTemplate, CalendarDays, Users, LayoutList, AlignLeft, Search, Eye, Download, ShieldCheck } from "lucide-react";
 import { fetchCustomFields, createCustomField, getDepartments } from "@/lib/actions/tasks";
 import { fetchPriorities, fetchTasksByWorkspace, fetchStatusesByScope } from "@/lib/actions/workspaces";
 import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
@@ -131,8 +131,9 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       return isAssignee || isCreator || isParticipant;
     });
   }, [workspaceTasks, currentUserId, canManageAll]);
-  const [assignees, setAssignees] = useState<string[]>([]);
-  const [assigneeSearchTerm, setAssigneeSearchTerm] = useState("");
+  const [primaryAssignee, setPrimaryAssignee] = useState<string>("");
+  const [executors, setExecutors] = useState<string[]>([]);
+  const [executorSearchTerm, setExecutorSearchTerm] = useState("");
   const [watchers, setWatchers] = useState<string[]>([]);
   const [watcherSearchTerm, setWatcherSearchTerm] = useState("");
   const [stakeholders, setStakeholders] = useState<any[]>([]);
@@ -173,24 +174,12 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       setWorkspaceTasks(existingTasks);
       setStatuses(statusList);
       setDepartments(deptList || []);
-      setStakeholders(workspaceStakeholders);
+      setStakeholders(workspaceStakeholders || []);
       setSprints(sprintList.filter((s: any) => s.status !== 'CLOSED'));
       setDepartments(deptList || []);
     }
     initData();
   }, [workspaceId]);
-
-  useEffect(() => {
-    if (assignees.length > 0) {
-      // Auto-select all non-assignees as watchers whenever assignees change
-      const remainingIds = stakeholders.map(s => s.id).filter(id => !assignees.includes(id));
-      setWatchers(remainingIds);
-    } else {
-      setWatchers([]);
-    }
-  }, [assignees, stakeholders]);
-
-  // Auto-assignment of Watchers logic is handled at submission time.
 
   const handleAddField = async () => {
     if (!newFieldName) return;
@@ -229,8 +218,8 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       return;
     }
 
-    if (assignees.length === 0) {
-      toast.warning("You must explicitly select at least one Assignee for this task.");
+    if (!primaryAssignee && executors.length === 0) {
+      toast.warning("You must explicitly select at least a Primary Assignee or an Executor for this task.");
       return;
     }
 
@@ -238,14 +227,20 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       toast.warning("You must select a Priority for this task.");
       return;
     }
+
+    const finalPrimary = primaryAssignee || executors[0] || null;
+    const finalExecutors = Array.from(new Set([
+      ...(finalPrimary ? [finalPrimary] : []),
+      ...executors
+    ]));
     
     // Prepare multi-assignee execution team
     const participants: any[] = [];
-    assignees.forEach(id => participants.push({ user_id: id, participation_role: 'EXECUTOR' }));
+    finalExecutors.forEach(id => participants.push({ user_id: id, participation_role: 'EXECUTOR' }));
     
-    // Add explicitly selected watchers
+    // Add explicitly selected watchers (prevent duplicates if selected in executors)
     watchers.forEach(id => {
-      if (!assignees.includes(id)) { // Prevent duplicates if selected in both
+      if (!finalExecutors.includes(id)) {
         participants.push({ user_id: id, participation_role: 'WATCHER' });
       }
     });
@@ -263,7 +258,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
         due_days: dueDays ? parseInt(dueDays, 10) : null,
         parent_task_id: parentTaskId || null,
         sprint_id: sprintId || null,
-        assigned_to: assignees[0] || null,
+        assigned_to: finalPrimary,
         participants,
         custom_fields: { ...fieldValues, tags, link_url: linkUrl || null },
         checklist_items: checklistItems,
@@ -448,38 +443,95 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <Users className="h-4 w-4 text-theme-icon" />
               <h3 className="text-sm font-semibold tracking-tight text-foreground">Assignment & Execution</h3>
             </div>
+
+            {/* Category 1: Primary Assignee */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
+                  Primary Assignee (Task Owner) *
+                </label>
+              </div>
+              <select
+                className="w-full h-10 px-3 text-sm rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                value={primaryAssignee}
+                onChange={e => {
+                  const val = e.target.value;
+                  setPrimaryAssignee(val);
+                  if (val && !executors.includes(val)) {
+                    setExecutors(prev => [...prev, val]);
+                  }
+                  if (val && watchers.includes(val)) {
+                    setWatchers(prev => prev.filter(id => id !== val));
+                  }
+                }}
+              >
+                <option value="">-- Select Primary Assignee --</option>
+                {stakeholders.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name} ({s.role || 'Member'})
+                  </option>
+                ))}
+              </select>
+            </div>
             
+            {/* Category 2: Executors (Execution Team) */}
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <label className="text-sm font-bold text-muted uppercase tracking-wider">Assignees (Task Owners) *</label>
+                  <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-blue-500" />
+                    Executors (Execution Team)
+                  </label>
                   <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural focus-within:border-emerald-500`}>
                     <Search className="h-3 w-3 text-muted" />
                     <input 
                       type="text" 
                       placeholder="Search users..." 
                       className={`bg-transparent text-[11px] focus:outline-none w-32 text-foreground placeholder:text-muted`}
-                      value={assigneeSearchTerm}
-                      onChange={e => setAssigneeSearchTerm(e.target.value)}
+                      value={executorSearchTerm}
+                      onChange={e => setExecutorSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
                 <AppButton variant="secondary" type="button" onClick={() => {
-                  if (assignees.length === stakeholders.length && stakeholders.length > 0) setAssignees([]);
-                  else setAssignees(stakeholders.map(s => s.id));
+                  if (executors.length === stakeholders.length && stakeholders.length > 0) {
+                    setExecutors(primaryAssignee ? [primaryAssignee] : []);
+                  } else {
+                    const allIds = stakeholders.map(s => s.id);
+                    setExecutors(allIds);
+                    // Remove from watchers if all selected as executors
+                    setWatchers(prev => prev.filter(id => !allIds.includes(id)));
+                  }
                 }} className="text-[10px] font-bold text-success hover:text-emerald-700 uppercase tracking-wider">
-                  {assignees.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
+                  {executors.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
-              <div className={`p-2 rounded-xl max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
+              <div className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
-                  {stakeholders.filter(s => s.full_name?.toLowerCase().includes(assigneeSearchTerm.toLowerCase())).map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle  cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
-                      <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={assignees.includes(s.id)} onChange={e => {
-                        if (e.target.checked) setAssignees([...assignees, s.id]);
-                        else setAssignees(assignees.filter(id => id !== s.id));
-                      }} />
+                  {stakeholders.filter(s => s.full_name?.toLowerCase().includes(executorSearchTerm.toLowerCase())).map(s => (
+                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
+                      <input 
+                        type="checkbox" 
+                        className="accent-emerald-500 h-4 w-4" 
+                        checked={executors.includes(s.id)} 
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setExecutors([...executors, s.id]);
+                            setWatchers(watchers.filter(id => id !== s.id));
+                          } else {
+                            if (s.id === primaryAssignee) {
+                              // If primary assignee is unselected from executors, clear primary assignee
+                              setPrimaryAssignee("");
+                            }
+                            setExecutors(executors.filter(id => id !== s.id));
+                          }
+                        }} 
+                      />
                       <span className="truncate font-medium">{s.full_name}</span>
+                      {s.id === primaryAssignee && (
+                        <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1 py-0.5 rounded font-bold">Owner</span>
+                      )}
                     </label>
                   ))}
                   {stakeholders.length === 0 && <span className="text-xs text-muted p-2">No users available in this workspace.</span>}
@@ -487,10 +539,14 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               </div>
             </div>
             
+            {/* Category 3: Watchers (Team / Observers) */}
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <label className="text-sm font-bold text-muted uppercase tracking-wider">Watchers (Observers)</label>
+                  <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-purple-500" />
+                    Watchers (Team)
+                  </label>
                   <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural focus-within:border-emerald-500`}>
                     <Search className="h-3 w-3 text-muted" />
                     <input 
@@ -503,32 +559,43 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                   </div>
                 </div>
                 <AppButton variant="secondary" type="button" onClick={() => {
-                  if (watchers.length === stakeholders.length && stakeholders.length > 0) setWatchers([]);
-                  else setWatchers(stakeholders.map(s => s.id));
+                  const eligibleStakeholders = stakeholders.filter(s => !executors.includes(s.id));
+                  if (watchers.length === eligibleStakeholders.length && eligibleStakeholders.length > 0) {
+                    setWatchers([]);
+                  } else {
+                    setWatchers(eligibleStakeholders.map(s => s.id));
+                  }
                 }} className="text-[10px] font-bold text-success hover:text-emerald-700 uppercase tracking-wider">
-                  {watchers.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
+                  {watchers.length > 0 && watchers.length === stakeholders.filter(s => !executors.includes(s.id)).length ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
-              <div className={`p-2 rounded-xl max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
+              <div className={`p-2 rounded-xl max-h-36 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders
-                    .filter(s => !assignees.includes(s.id))
+                    .filter(s => !executors.includes(s.id))
                     .filter(s => s.full_name?.toLowerCase().includes(watcherSearchTerm.toLowerCase()))
                     .map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle  cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
-                      <input type="checkbox" className="accent-emerald-500 h-4 w-4" checked={watchers.includes(s.id)} onChange={e => {
-                        if (e.target.checked) setWatchers([...watchers, s.id]);
-                        else setWatchers(watchers.filter(id => id !== s.id));
-                      }} />
+                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
+                      <input 
+                        type="checkbox" 
+                        className="accent-emerald-500 h-4 w-4" 
+                        checked={watchers.includes(s.id)} 
+                        onChange={e => {
+                          if (e.target.checked) setWatchers([...watchers, s.id]);
+                          else setWatchers(watchers.filter(id => id !== s.id));
+                        }} 
+                      />
                       <span className="truncate font-medium">{s.full_name}</span>
                     </label>
                   ))}
-                  {stakeholders.length === 0 && <span className="text-xs text-muted p-2">No users available in this workspace.</span>}
+                  {stakeholders.filter(s => !executors.includes(s.id)).length === 0 && (
+                    <span className="text-xs text-muted p-2">
+                      {stakeholders.length === 0 ? "No users available in this workspace." : "All workspace members are already assigned as executors."}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-
-
             
             {/* Tags & Labels moved to 2x2 grid */}
           </div>

@@ -168,12 +168,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [pendingTaskUpdates, setPendingTaskUpdates] = useState<Record<string, any>>({});
   const [pendingAssignees, setPendingAssignees] = useState<string[] | null>(null);
   const [pendingPrimaryAssignee, setPendingPrimaryAssignee] = useState<string | null>(null);
+  const [pendingWatchers, setPendingWatchers] = useState<string[] | null>(null);
   
-  // Assignee & Executor Modal State
+  // Assignee, Executor & Watcher Modal State
   const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
-  const [assigneeModalTab, setAssigneeModalTab] = useState<'primary' | 'executors'>('primary');
+  const [assigneeModalTab, setAssigneeModalTab] = useState<'primary' | 'executors' | 'watchers'>('primary');
   const [selectedPrimaryAssignee, setSelectedPrimaryAssignee] = useState<string>("");
   const [selectedExecutors, setSelectedExecutors] = useState<string[]>([]);
+  const [selectedWatchers, setSelectedWatchers] = useState<string[]>([]);
   const [stakeholderSearch, setStakeholderSearch] = useState<string>("");
   const [isEditingAssignees, setIsEditingAssignees] = useState(false);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
@@ -209,11 +211,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const [editingAssigneesList, setEditingAssigneesList] = useState<string[]>([]);
   const [isSavingAssignees, setIsSavingAssignees] = useState(false);
   
-  const openAssigneeModal = async (tab: 'primary' | 'executors' = 'primary') => {
+  const openAssigneeModal = async (tab: 'primary' | 'executors' | 'watchers' = 'primary') => {
     setAssigneeModalTab(tab);
     setSelectedPrimaryAssignee(pendingPrimaryAssignee || task?.assigned_to || "");
     const currentExecutorIds = pendingAssignees || (task?.task_assignees || []).map((e: any) => e.id);
     setSelectedExecutors(currentExecutorIds);
+    const currentWatcherIds = pendingWatchers || (task?.task_watchers || []).map((w: any) => w.id);
+    setSelectedWatchers(currentWatcherIds);
     setStakeholderSearch("");
     setIsAssigneeModalOpen(true);
     
@@ -235,8 +239,9 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
     }
     setPendingPrimaryAssignee(selectedPrimaryAssignee);
     setPendingAssignees(selectedExecutors);
+    setPendingWatchers(selectedWatchers);
     setIsAssigneeModalOpen(false);
-    triggerToast("Assignee changes staged! Provide remarks and save updates.");
+    triggerToast("Participant changes staged! Provide remarks and save updates.");
   };
   
   // Click-outside reference for Executors Edit Panel
@@ -737,6 +742,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         await loadTaskDetails(true);
       }
 
+      if (pendingWatchers !== null) {
+        const { updateTaskWatchers } = await import("@/lib/actions/tasks");
+        const watchersRes = await updateTaskWatchers(taskId, task.workspace_id, pendingWatchers);
+        if (watchersRes?.error) throw new Error(watchersRes.error);
+        setPendingWatchers(null);
+        // Force hydration since watchers changed
+        await loadTaskDetails(true);
+      }
+
       // Step 3: Direct Hydration (Phase T5)
       if (res?.data) {
         setTask((prev: any) => {
@@ -878,16 +892,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const explicitReviewers = task.task_reviewers || [];
   const explicitWatchers = [...(task.task_watchers || [])];
 
-  if (task.inherited_users && task.inherited_users.length > 0) {
-    task.inherited_users.forEach((u: any) => {
-      if (task.assignee?.id === u.id) return;
-      if (explicitExecutors.some((e: any) => e.id === u.id)) return;
-      if (explicitWatchers.some((e: any) => e.id === u.id)) return;
-      
-      // All inherited workspace access defaults to being a Watcher
-      explicitWatchers.push(u);
-    });
-  }
+
 
   return (
     <ExperienceProvider mode="operational">
@@ -1216,13 +1221,34 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               
               {/* 11. Watchers (Team) */}
               <div className="flex flex-col space-y-1 p-3 rounded-xl bg-warning/5 dark:bg-warning/10 border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-400/80 transition-all duration-200 min-h-[76px] justify-center sm:col-span-2 lg:col-span-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Watchers (Team)</span>
-                </span>
-                <div className="text-xs text-foreground h-9 flex items-center overflow-hidden">
-                  <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
-                     {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-warning" /> <span className="text-warning dark:text-warning font-bold">Watchers (Team)</span>
+                    <span className="text-[10px] px-1.5 py-0 bg-warning/10 text-warning dark:text-warning rounded-full font-bold">
+                      {pendingWatchers ? pendingWatchers.length : explicitWatchers.length}
+                    </span>
                   </span>
+                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner || isExecutor) && !effectivelyFrozenForUser && (
+                    <AppButton 
+                      variant="secondary" 
+                      onClick={() => openAssigneeModal('watchers')}
+                      className="text-[10px] font-bold text-warning dark:text-warning hover:opacity-80 underline px-1 py-0 h-auto min-h-0"
+                    >
+                      Edit
+                    </AppButton>
+                  )}
+                </div>
+                <div className="text-xs text-foreground h-9 flex items-center overflow-hidden">
+                  {pendingWatchers ? (
+                    <div className="flex items-center gap-1.5 text-xs text-warning dark:text-warning font-bold">
+                      <span className="inline-block w-2 h-2 rounded-full bg-warning animate-pulse" />
+                      <span className="truncate">{pendingWatchers.length} watcher(s) (Pending save)</span>
+                    </div>
+                  ) : (
+                    <span className="truncate block w-full text-ellipsis whitespace-nowrap overflow-hidden font-semibold">
+                      {explicitWatchers.length > 0 ? explicitWatchers.map((p: any) => p.full_name).join(', ') : <span className="text-muted italic text-xs">None</span>}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -1965,6 +1991,18 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   {selectedExecutors.length}
                 </span>
               </AppButton>
+              <AppButton
+                type="button"
+                variant="ghost"
+                onClick={() => setAssigneeModalTab('watchers')}
+                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'watchers' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10' : 'border-transparent text-muted hover:text-foreground' }`}
+              >
+                <Eye className="w-4 h-4" />
+                <span>Watchers (Team)</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full font-bold">
+                  {selectedWatchers.length}
+                </span>
+              </AppButton>
             </div>
 
             {/* Search Input */}
@@ -2046,6 +2084,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 setSelectedPrimaryAssignee("");
                               } else {
                                 setSelectedPrimaryAssignee(s.id);
+                                if (!selectedExecutors.includes(s.id)) {
+                                  setSelectedExecutors(prev => [...prev, s.id]);
+                                }
+                                if (selectedWatchers.includes(s.id)) {
+                                  setSelectedWatchers(prev => prev.filter(id => id !== s.id));
+                                }
                               }
                             }}
                             className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-theme-btn-primary bg-theme-btn-primary/10 dark:bg-theme-btn-primary/15' : 'border-border/60 hover:border-theme-btn-primary/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
@@ -2083,20 +2127,125 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   );
                 }
 
-                // Executors Multi-Select Tab
+                if (assigneeModalTab === 'executors') {
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between px-1 pb-1">
+                        <span className="text-[11px] font-semibold text-muted">
+                          Select all collaborators who will execute this directive:
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const allIds = stakeholders.map(s => s.id);
+                              setSelectedExecutors(allIds);
+                              setSelectedWatchers(prev => prev.filter(id => !allIds.includes(id)));
+                            }}
+                            className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                          >
+                            Select All
+                          </AppButton>
+                          <span className="text-muted text-xs">•</span>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedExecutors(selectedPrimaryAssignee ? [selectedPrimaryAssignee] : [])}
+                            className="text-[10px] text-muted hover:text-foreground font-bold hover:underline"
+                          >
+                            Clear All
+                          </AppButton>
+                        </div>
+                      </div>
+                      {filteredStakeholders.map(s => {
+                        const isSelected = selectedExecutors.includes(s.id);
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={async () => {
+                              if (checkingDependencyId) return;
+                              if (isSelected) {
+                                if (task?.id) {
+                                  setCheckingDependencyId(s.id);
+                                  try {
+                                    const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
+                                    const deps = await checkTaskUserDependencies(task.id, [s.id]);
+                                    const result = deps[s.id];
+                                    if (result && !result.isSafe) {
+                                      setDependencyModal({ userId: s.id, userName: s.full_name, result });
+                                      return;
+                                    }
+                                  } catch (e) {
+                                    console.error(e);
+                                  } finally {
+                                    setCheckingDependencyId(null);
+                                  }
+                                }
+                                if (s.id === selectedPrimaryAssignee) {
+                                  setSelectedPrimaryAssignee("");
+                                }
+                                setSelectedExecutors(selectedExecutors.filter(id => id !== s.id));
+                              } else {
+                                setSelectedExecutors([...selectedExecutors, s.id]);
+                                setSelectedWatchers(selectedWatchers.filter(id => id !== s.id));
+                              }
+                            }}
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15' : 'border-border/60 hover:border-emerald-400/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {s.profile_photo ? (
+                                <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                  {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
+                                  <span>{s.full_name}</span>
+                                  {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
+                                  {s.id === selectedPrimaryAssignee && (
+                                    <span className="text-[10px] bg-theme-btn-primary/15 text-theme-icon border border-theme-btn-primary/30 px-1.5 py-0.2 rounded-full font-semibold shrink-0">
+                                      Primary Owner
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
+                              </div>
+                            </div>
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                              isSelected ? 'border-emerald-500 bg-emerald-600 text-white' : 'border-border'
+                            }`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                // Watchers Multi-Select Tab
+                const eligibleWatchers = filteredStakeholders.filter(s => !selectedExecutors.includes(s.id));
                 return (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between px-1 pb-1">
                       <span className="text-[11px] font-semibold text-muted">
-                        Select all collaborators who will execute this directive:
+                        Select workspace members to watch and observe task updates:
                       </span>
                       <div className="flex items-center gap-2">
                         <AppButton
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedExecutors(stakeholders.map(s => s.id))}
-                          className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                          onClick={() => {
+                            const allEligibleIds = stakeholders.filter(s => !selectedExecutors.includes(s.id)).map(s => s.id);
+                            setSelectedWatchers(allEligibleIds);
+                          }}
+                          className="text-[10px] text-amber-600 dark:text-amber-400 font-bold hover:underline"
                         >
                           Select All
                         </AppButton>
@@ -2105,73 +2254,56 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedExecutors([])}
+                          onClick={() => setSelectedWatchers([])}
                           className="text-[10px] text-muted hover:text-foreground font-bold hover:underline"
                         >
                           Clear All
                         </AppButton>
                       </div>
                     </div>
-                    {filteredStakeholders.map(s => {
-                      const isSelected = selectedExecutors.includes(s.id);
-                      return (
-                        <div
-                          key={s.id}
-                          onClick={async () => {
-                            if (checkingDependencyId) return;
-                            if (isSelected) {
-                              if (task?.id) {
-                                setCheckingDependencyId(s.id);
-                                try {
-                                  const { checkTaskUserDependencies } = await import("@/lib/actions/dependencies");
-                                  const deps = await checkTaskUserDependencies(task.id, [s.id]);
-                                  const result = deps[s.id];
-                                  if (result && !result.isSafe) {
-                                    setDependencyModal({ userId: s.id, userName: s.full_name, result });
-                                    return;
-                                  }
-                                } catch (e) {
-                                  console.error(e);
-                                } finally {
-                                  setCheckingDependencyId(null);
-                                }
+                    {eligibleWatchers.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-muted">
+                        All workspace members are already selected as Executors.
+                      </div>
+                    ) : (
+                      eligibleWatchers.map(s => {
+                        const isSelected = selectedWatchers.includes(s.id);
+                        return (
+                          <div
+                            key={s.id}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedWatchers(selectedWatchers.filter(id => id !== s.id));
+                              } else {
+                                setSelectedWatchers([...selectedWatchers, s.id]);
                               }
-                              setSelectedExecutors(selectedExecutors.filter(id => id !== s.id));
-                            } else {
-                              setSelectedExecutors([...selectedExecutors, s.id]);
-                            }
-                          }}
-                          className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15' : 'border-border/60 hover:border-emerald-400/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            {s.profile_photo ? (
-                              <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold shrink-0">
-                                {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                            }}
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/15' : 'border-border/60 hover:border-amber-400/40 hover:bg-surface-hover' }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {s.profile_photo ? (
+                                <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                  {s.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
+                                  <span>{s.full_name}</span>
+                                </div>
+                                <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
                               </div>
-                            )}
-                            <div className="min-w-0">
-                              <div className="text-xs font-bold text-foreground flex items-center gap-2 truncate">
-                                <span>{s.full_name}</span>
-                                {checkingDependencyId === s.id && <Loader2 className="w-3 h-3 animate-spin text-theme-icon" />}
-                                {s.id === selectedPrimaryAssignee && (
-                                  <span className="text-[10px] bg-theme-btn-primary/15 text-theme-icon border border-theme-btn-primary/30 px-1.5 py-0.2 rounded-full font-semibold shrink-0">
-                                    Primary Owner
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[11px] text-muted truncate">{s.email || "Workspace Member"}</div>
+                            </div>
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                              isSelected ? 'border-amber-500 bg-amber-600 text-white' : 'border-border'
+                            }`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </div>
                           </div>
-                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
-                            isSelected ? 'border-emerald-500 bg-emerald-600 text-white' : 'border-border'
-                          }`}>
-                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
                 );
               })()}
@@ -2179,12 +2311,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
             {/* Modal Footer */}
             <div className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between">
-              <div className="text-xs text-muted">
+              <div className="text-xs text-muted truncate max-w-[50%]">
                 <span className="font-semibold text-foreground">
                   {selectedPrimaryAssignee ? (stakeholders.find(s => s.id === selectedPrimaryAssignee)?.full_name || "Primary Selected") : "No Primary"}
                 </span>
                 {" • "}
                 <span>{selectedExecutors.length} executor(s)</span>
+                {" • "}
+                <span>{selectedWatchers.length} watcher(s)</span>
               </div>
               <div className="flex items-center gap-2">
                 <AppButton 
