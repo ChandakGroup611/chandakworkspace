@@ -1872,11 +1872,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           onClick={() => setIsAssigneeModalOpen(false)}
         >
           <div 
-            className="theme-card-structural dark:bg-elevated  rounded-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[88vh] animate-in zoom-in-95 duration-200 text-foreground"
+            className="bg-surface border border-border rounded-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[88vh] shadow-2xl animate-in zoom-in-95 duration-200 text-foreground"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-6 py-4 theme-card-structural /90 dark:bg-elevated/90 border-b flex items-center justify-between">
+            <div className="px-6 py-4 bg-surface border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-theme-btn-primary/15 flex items-center justify-center text-theme-icon">
                   <Users className="w-5 h-5" />
@@ -1888,8 +1888,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </div>
               <AppButton 
                 type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setIsAssigneeModalOpen(false)} 
-                className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface/80 transition-colors"
+                className="rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -1897,11 +1899,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex border-b theme-card-structural dark:bg-elevated/50 px-6 pt-3 gap-2">
+            <div className="flex border-b border-border bg-surface px-6 pt-3 gap-2">
               <AppButton
                 type="button"
+                variant="ghost"
                 onClick={() => setAssigneeModalTab('primary')}
-                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'primary' ? 'border-theme-btn-primary text-theme-icon theme-card-structural dark:bg-elevated shadow-xs' : 'border-transparent text-muted hover:text-foreground' }`}
+                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'primary' ? 'border-theme-btn-primary text-theme-btn-primary font-bold bg-theme-btn-primary/10' : 'border-transparent text-muted hover:text-foreground' }`}
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Primary Assignee</span>
@@ -1911,19 +1914,20 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               </AppButton>
               <AppButton
                 type="button"
+                variant="ghost"
                 onClick={() => setAssigneeModalTab('executors')}
-                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'executors' ? 'border-emerald-500 text-success dark:text-success theme-card-structural dark:bg-elevated shadow-xs' : 'border-transparent text-muted hover:text-foreground' }`}
+                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'executors' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'border-transparent text-muted hover:text-foreground' }`}
               >
                 <Users className="w-4 h-4" />
                 <span>Executors</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-success/10 text-success dark:text-success rounded-full font-bold">
+                <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full font-bold">
                   {selectedExecutors.length}
                 </span>
               </AppButton>
             </div>
 
             {/* Search Input */}
-            <div className="p-4 border-b theme-card-structural /30 dark:bg-elevated/30">
+            <div className="p-4 border-b border-border bg-surface">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-muted pointer-events-none" />
                 <input
@@ -1931,13 +1935,15 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   placeholder="Search workspace members by name or email..."
                   value={stakeholderSearch}
                   onChange={(e) => setStakeholderSearch(e.target.value)}
-                  className="w-full h-10 pl-9 pr-9 rounded-xl theme-card-structural dark:bg-elevated text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-all placeholder:text-muted"
+                  className="w-full h-10 pl-9 pr-9 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-all placeholder:text-muted"
                 />
                 {stakeholderSearch && (
                   <AppButton 
                     type="button"
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => setStakeholderSearch("")}
-                    className="absolute right-3 top-3 text-muted hover:text-foreground"
+                    className="absolute right-2.5 top-2.5 text-muted hover:text-foreground"
                   >
                     <X className="w-4 h-4" />
                   </AppButton>
@@ -2001,7 +2007,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 setSelectedPrimaryAssignee(s.id);
                               }
                             }}
-                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${ isSelected ? 'border-theme-btn-primary bg-theme-btn-primary/10 dark:bg-theme-btn-primary/15 shadow-xs' : '/60 hover:border-theme-btn-primary/40 hover:theme-card-structural /60 dark:hover:bg-elevated/60' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
+                            className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-theme-btn-primary bg-theme-btn-primary/10 dark:bg-theme-btn-primary/15' : 'border-border/60 hover:border-theme-btn-primary/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               {s.profile_photo ? (
@@ -2046,14 +2052,18 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       <div className="flex items-center gap-2">
                         <AppButton
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setSelectedExecutors(stakeholders.map(s => s.id))}
-                          className="text-[10px] text-success dark:text-success font-bold hover:underline"
+                          className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                         >
                           Select All
                         </AppButton>
                         <span className="text-muted text-xs">•</span>
                         <AppButton
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setSelectedExecutors([])}
                           className="text-[10px] text-muted hover:text-foreground font-bold hover:underline"
                         >
@@ -2090,13 +2100,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                               setSelectedExecutors([...selectedExecutors, s.id]);
                             }
                           }}
-                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${ isSelected ? 'border-emerald-500 bg-success/10 dark:bg-success/15 shadow-xs' : '/60 hover:border-emerald-400/40 hover:theme-card-structural /60 dark:hover:bg-elevated/60' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
+                          className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15' : 'border-border/60 hover:border-emerald-400/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             {s.profile_photo ? (
                               <img src={s.profile_photo} alt="" className="w-8 h-8 rounded-full object-cover bg-elevated shadow-xs shrink-0" />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-success/20 text-success dark:text-success flex items-center justify-center text-xs font-bold shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold shrink-0">
                                 {s.full_name?.substring(0, 2).toUpperCase() || "U"}
                               </div>
                             )}
@@ -2114,7 +2124,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             </div>
                           </div>
                           <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
-                            isSelected ? 'border-emerald-500 bg-success text-white' : 'border-border'
+                            isSelected ? 'border-emerald-500 bg-emerald-600 text-white' : 'border-border'
                           }`}>
                             {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                           </div>
@@ -2127,7 +2137,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 theme-card-structural /90 dark:bg-elevated/90 border-t flex items-center justify-between">
+            <div className="px-6 py-4 bg-surface border-t border-border flex items-center justify-between">
               <div className="text-xs text-muted">
                 <span className="font-semibold text-foreground">
                   {selectedPrimaryAssignee ? (stakeholders.find(s => s.id === selectedPrimaryAssignee)?.full_name || "Primary Selected") : "No Primary"}

@@ -68,28 +68,24 @@
     box-shadow: none !important;
   }
 
-  /* Primary Buttons - Complete 360-Degree Border Pill */
+  /* Primary Buttons */
   [data-theme="light-neumorphic"] .theme-button-structural {
     background: var(--btn-primary-bg) !important;
     border: 1px solid transparent !important;
     color: var(--btn-primary-text) !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     font-weight: 600;
-    box-shadow: 
-      5px 5px 10px rgba(112, 41, 99, 0.15),
-      -5px -5px 10px rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.2s ease;
   }
   [data-theme="light-neumorphic"] .theme-button-structural:hover:not(:disabled) {
     background: #4D1A44 !important;
-    box-shadow: 
-      3px 3px 6px rgba(112, 41, 99, 0.2),
-      -3px -3px 6px rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     transform: translateY(1px);
   }
   [data-theme="light-neumorphic"] .theme-button-structural:focus-visible {
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(112, 41, 99, 0.3) !important;
+    box-shadow: 0 0 0 2px rgba(112, 41, 99, 0.3) !important;
   }
   [data-theme="light-neumorphic"] .theme-button-structural:disabled {
     opacity: 0.5;

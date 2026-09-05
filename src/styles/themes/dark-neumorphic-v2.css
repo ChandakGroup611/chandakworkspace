@@ -67,33 +67,29 @@
     background: #1e212b !important;
   }
 
-  /* Buttons - Tactile Dark Buttons */
+  /* Buttons */
   [data-theme="dark-neumorphic"] .theme-button-structural {
-    background: #12141a !important;
-    border: none !important;
+    background: #181b24 !important;
+    border: 1px solid #2a3040 !important;
     color: var(--text-primary) !important;
-    border-radius: 12px !important;
-    padding: 10px 20px;
-    font-weight: 700;
-    box-shadow: 
-      6px 6px 10px #08090c,
-      -6px -6px 10px #1c1f28 !important;
+    border-radius: 8px !important;
+    padding: 8px 16px;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
     transition: all 0.2s ease;
   }
   [data-theme="dark-neumorphic"] .theme-button-structural:hover:not(:disabled) {
-    box-shadow: 
-      4px 4px 6px #08090c,
-      -4px -4px 6px #1c1f28 !important;
-    transform: translateY(2px);
+    background: #202430 !important;
+    border-color: #3b4356 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
   }
   [data-theme="dark-neumorphic"] .theme-button-structural:active:not(:disabled) {
-    box-shadow: 
-      inset 4px 4px 6px #08090c,
-      inset -4px -4px 6px #1c1f28 !important;
+    background: #141720 !important;
+    box-shadow: none !important;
   }
   [data-theme="dark-neumorphic"] .theme-button-structural:focus-visible {
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
   }
   [data-theme="dark-neumorphic"] .theme-button-structural:disabled {
     opacity: 0.5;
@@ -102,64 +98,53 @@
     transform: none !important;
   }
   
+  /* Primary Button */
   [data-theme="dark-neumorphic"] .theme-button-structural.theme-btn-primary {
     background: var(--btn-primary-bg) !important;
     color: var(--btn-primary-text) !important;
-    box-shadow: 
-      6px 6px 10px rgba(16, 185, 129, 0.15),
-      -6px -6px 10px #1c1f28 !important;
+    border: 1px solid transparent !important;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3) !important;
+  }
+  [data-theme="dark-neumorphic"] .theme-button-structural.theme-btn-primary:hover:not(:disabled) {
+    background: #059669 !important;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4) !important;
   }
   [data-theme="dark-neumorphic"] .theme-button-structural.theme-btn-primary:active:not(:disabled) {
-    box-shadow: 
-      inset 4px 4px 6px rgba(0,0,0,0.4),
-      inset -4px -4px 6px rgba(255,255,255,0.05) !important;
+    box-shadow: none !important;
   }
 
   /* Tables */
   [data-theme="dark-neumorphic"] .theme-table-structural {
-    background: #12141a !important;
-    border: none !important;
-    border-radius: 20px !important;
+    background: #141720 !important;
+    border: 1px solid #1e222d !important;
+    border-radius: 12px !important;
     overflow: hidden;
-    box-shadow: 
-      9px 9px 16px #08090c, 
-      -9px -9px 16px #1c1f28 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
   }
   [data-theme="dark-neumorphic"] .theme-table-header {
-    background: #12141a !important;
+    background: #181c26 !important;
     color: var(--text-secondary) !important;
     font-weight: 700;
-    box-shadow: 0 4px 6px -1px #08090c !important;
-    z-index: 5;
-    position: relative;
+    border-bottom: 1px solid #2a3040 !important;
   }
   [data-theme="dark-neumorphic"] .theme-table-row {
-    border-bottom: 1px solid rgba(255,255,255,0.02);
+    border-bottom: 1px solid #1a1e28;
     transition: all 0.2s;
   }
   [data-theme="dark-neumorphic"] .theme-table-row:hover {
-    background: #14161d !important;
-    transform: scale(1.01);
-    box-shadow: 
-      4px 4px 10px #08090c, 
-      -4px -4px 10px #1c1f28 !important;
-    z-index: 10;
-    position: relative;
-    border-radius: 8px !important;
-    border-bottom: none;
+    background: #1c212d !important;
+    box-shadow: none !important;
   }
 
   /* Badges */
   [data-theme="dark-neumorphic"] .theme-badge-structural {
-    background: #12141a !important;
-    border: none !important;
+    background: #1a1e28 !important;
+    border: 1px solid #2a3040 !important;
     color: var(--text-secondary) !important;
-    border-radius: 8px !important;
-    padding: 6px 12px;
+    border-radius: 6px !important;
+    padding: 4px 8px;
     font-size: 12px;
-    font-weight: 700;
-    box-shadow: 
-      inset 3px 3px 6px #08090c,
-      inset -3px -3px 6px #1c1f28 !important;
+    font-weight: 600;
+    box-shadow: none !important;
   }
 }
