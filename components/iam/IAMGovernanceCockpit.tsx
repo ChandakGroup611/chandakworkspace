@@ -586,10 +586,6 @@ export default function IAMGovernanceCockpit({
                         {activeRole.is_system && (
                           <AppBadge className="bg-warning/10 text-warning border-amber-500/20 py-0.5 px-1.5 text-[0.65rem] font-mono uppercase">System</AppBadge>
                         )}
-                        {/* DEBUG INJECT */}
-                        <div className="text-[10px] text-danger max-w-[300px] truncate">
-                          Perms ({activeRolePerms.length}): {JSON.stringify(activeRolePerms)}
-                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-muted flex items-center gap-1.5 font-mono text-xs">
