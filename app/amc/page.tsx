@@ -1319,7 +1319,7 @@ export default function AMCPage() {
               <div class="field"><div class="field-label">Vendor / Provider</div><div class="field-value">${vendor?.name || 'N/A'}</div></div>
               <div class="field"><div class="field-label">Contact Person</div><div class="field-value">${vendorContactName || 'N/A'} (${vendorContactPhone || 'N/A'})</div></div>
               <div class="field"><div class="field-label">Contact Email</div><div class="field-value">${vendorContactEmail || 'N/A'}</div></div>
-              <div class="field"><div class="field-label">PO Number / Date</div><div class="field-value">${formPoNumber || 'N/A'} ${formPoDate ? `(${formPoDate})` : ''}</div></div>
+              <div class="field"><div class="field-label">PO Number / Received Date</div><div class="field-value">${formPoNumber || 'N/A'} ${formPoDate ? `(${formPoDate})` : ''}</div></div>
               <div class="field"><div class="field-label">Purchase Date</div><div class="field-value">${formPurchaseDate || 'N/A'}</div></div>
               <div class="field"><div class="field-label">Expiry Date</div><div class="field-value">${formExpiryDate || 'N/A'}</div></div>
               <div class="field"><div class="field-label">Put to Use Date</div><div class="field-value">${formPutToUseDate || 'N/A'}</div></div>
@@ -2180,7 +2180,7 @@ export default function AMCPage() {
                       <AppInput value={formPoNumber} onChange={(e) => setFormPoNumber(e.target.value)} placeholder="e.g., PO-2026-0091" className="h-11" />
                     </div>
                     <div className="space-y-2">
-                      <label className="theme-label">PO Date</label>
+                      <label className="theme-label">PO Received Date</label>
                       <AppInput type="date" value={formPoDate} onChange={(e) => setFormPoDate(e.target.value)} className="h-11" />
                     </div>
                     <div className="space-y-2">
