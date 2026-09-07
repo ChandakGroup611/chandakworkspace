@@ -7,7 +7,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { createClient } from "@/utils/supabase/client";
-import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { 
   CheckCircle2, 
   Clock, 

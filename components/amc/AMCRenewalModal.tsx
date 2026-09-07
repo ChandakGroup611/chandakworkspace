@@ -6,7 +6,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { X, Calendar, DollarSign, FileText, Loader2 } from "lucide-react";
-import { saveAMCEntity } from "@/lib/actions/amc";
+import { saveAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "@/components/theme/ThemeProvider";
 

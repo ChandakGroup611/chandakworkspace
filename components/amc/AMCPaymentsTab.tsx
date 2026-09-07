@@ -6,7 +6,7 @@ import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { FileText, Plus, Search, Calendar, DollarSign, CheckCircle2, Clock, Check, Trash2, Loader2, IndianRupee, CheckCircle, AlertCircle } from "lucide-react";
-import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
 
 interface AMCPaymentsTabProps {

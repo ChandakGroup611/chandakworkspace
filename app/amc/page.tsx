@@ -22,7 +22,7 @@ import { AMCTCOSpendHistoryTab } from "@/components/amc/AMCTCOSpendHistoryTab";
 import { AMCExecutiveDashboard } from "@/components/amc/AMCExecutiveDashboard";
 import { CustomPaymentMilestoneManager, PaymentMilestone } from "@/components/amc/CustomPaymentMilestoneManager";
 import { createClient } from "@/utils/supabase/client";
-import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { saveMasterEntity } from "@/lib/actions/masters";
 import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
 import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { UserCheck, Search, Filter, Shield, Clock, ArrowRight, UserX, UserMinus, Loader2 } from "lucide-react";
-import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
+import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
 
 interface AMCAllocationsTabProps {
