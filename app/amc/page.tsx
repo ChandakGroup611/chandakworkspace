@@ -1080,8 +1080,20 @@ export default function AMCPage() {
         customRenewalDate: formExpiryDate || "",
         isLineItemWise: isLineItemWise,
         additionalApi: formAdditionalApi || "",
-        additionalApiAmount: formAdditionalApiAmount ? (parseFloat(formAdditionalApiAmount) || 0) : 0
+        additionalApiAmount: formAdditionalApiAmount ? (parseFloat(formAdditionalApiAmount) || 0) : 0,
+        paymentTerms: formPaymentTerms || "",
+        paymentTermsCustomType: formPaymentTermsCustomType,
+        paymentMilestones: formPaymentMilestones
       }];
+    } else if (finalLineItems[0]) {
+      finalLineItems[0] = {
+        ...finalLineItems[0],
+        additionalApi: finalLineItems[0].additionalApi || formAdditionalApi || "",
+        additionalApiAmount: finalLineItems[0].additionalApiAmount || (formAdditionalApiAmount ? parseFloat(formAdditionalApiAmount) : 0),
+        paymentTerms: finalLineItems[0].paymentTerms || formPaymentTerms || "",
+        paymentTermsCustomType: finalLineItems[0].paymentTermsCustomType || formPaymentTermsCustomType,
+        paymentMilestones: (finalLineItems[0].paymentMilestones && finalLineItems[0].paymentMilestones.length > 0) ? finalLineItems[0].paymentMilestones : formPaymentMilestones
+      };
     }
 
     const finalCostValue = isLineItemWise
@@ -1116,10 +1128,6 @@ export default function AMCPage() {
       used_licenses: formUsedLicenses ? parseInt(formUsedLicenses) : null,
       cost_per_license: computedCostPerLicense ? parseFloat(computedCostPerLicense) : null,
       payment_terms: formPaymentTerms || null,
-      payment_terms_json: formPaymentTerms === 'Custom' ? {
-        customType: formPaymentTermsCustomType,
-        milestones: formPaymentMilestones
-      } : {},
       support_tier: formSupportTier || null,
       sla_uptime: formSlaUptime ? parseFloat(formSlaUptime) : null,
       sla_tat: formSlaTat || null,
@@ -1130,8 +1138,6 @@ export default function AMCPage() {
       infosec_approved_date: formInfosecApprovedDate || null,
       dpa_signed: formDpaSigned,
       dpa_signed_date: formDpaSignedDate || null,
-      additional_api: formAdditionalApi || null,
-      additional_api_amount: formAdditionalApiAmount ? parseFloat(formAdditionalApiAmount) : null,
       
       // JSON fields
       solution_line_items: finalLineItems,
