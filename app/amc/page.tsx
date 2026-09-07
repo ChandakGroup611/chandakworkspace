@@ -1746,21 +1746,24 @@ export default function AMCPage() {
                       badgeText = "TCO";
                     }
 
+                    const isActive = activeTab === tab;
+
                     return (
                       <AppButton 
                         key={tab}
                         type="button"
+                        variant={isActive ? "secondary" : "ghost"}
                         onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center gap-2 min-w-[120px] ${
-                          activeTab === tab 
-                            ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
-                            : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
+                          isActive 
+                            ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border' 
+                            : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-foreground hover:bg-elevated/70 dark:hover:bg-surface/10 border border-transparent'
                         }`}
                       >
                         <span>{tab}</span>
                         {badgeText && (
-                          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                            activeTab === tab 
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                            isActive 
                               ? 'bg-theme-btn-primary/15 text-theme-icon border border-theme-btn-primary/20' 
                               : 'bg-elevated text-muted border border-border/60'
                           }`}>

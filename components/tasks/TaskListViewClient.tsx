@@ -1074,14 +1074,15 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
 
             {/* Entire Organization (Super Admin / Global) */}
             {(isSuperAdmin || !isManager) && (
-              <button
+              <AppButton
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   setHierarchyScope("all");
                   setSelectedDepartmentName("ALL");
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto",
                   hierarchyScope === "all" && selectedDepartmentName === "ALL"
                     ? "bg-primary text-primary-foreground font-bold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
@@ -1089,19 +1090,20 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
               >
                 <Globe className="w-3.5 h-3.5" />
                 Entire Organization
-              </button>
+              </AppButton>
             )}
 
             {/* Reporting Tree (for CFO / Managers / Team Leads) */}
             {isManager && (
-              <button
+              <AppButton
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   setHierarchyScope("my_reports");
                   setSelectedDepartmentName("ALL");
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto",
                   hierarchyScope === "my_reports"
                     ? "bg-purple-600 text-white font-bold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
@@ -1109,20 +1111,21 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
               >
                 <Users className="w-3.5 h-3.5" />
                 My Reporting Tree ({userScope?.subordinateUserIds?.length || 0} Members)
-              </button>
+              </AppButton>
             )}
 
             {/* Managed Departments (for CFO / Multi-Department Heads) */}
             {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
               <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40">
-                <button
+                <AppButton
                   type="button"
+                  variant="ghost"
                   onClick={() => {
                     setHierarchyScope("my_dept");
                     setSelectedDepartmentName("ALL");
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap",
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap h-auto",
                     hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
                       ? "bg-blue-600 text-white font-bold shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -1132,7 +1135,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                   {managedDepts.length > 1
                     ? `All My Depts (${managedDepts.length})`
                     : `My Dept (${userScope?.primaryDepartmentName || "General"})`}
-                </button>
+                </AppButton>
 
                 {/* Multi-Department Dropdown (e.g. for CFO) */}
                 {managedDepts.length > 1 && (
@@ -1156,14 +1159,15 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
             )}
 
             {/* Personal Assigned Scope */}
-            <button
+            <AppButton
               type="button"
+              variant="ghost"
               onClick={() => {
                 setHierarchyScope("assigned_me");
                 setSelectedDepartmentName("ALL");
               }}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto",
                 hierarchyScope === "assigned_me"
                   ? "bg-emerald-600 text-white font-bold shadow-sm"
                   : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
@@ -1171,7 +1175,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
             >
               <UserCheck className="w-3.5 h-3.5" />
               Assigned to Me
-            </button>
+            </AppButton>
           </div>
 
           <div className="text-[11px] text-muted font-medium shrink-0">
@@ -1276,7 +1280,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                 <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl theme-card-structural  animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
-                    <AppButton onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); fetchTasksData(null); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
+                    <AppButton variant="ghost" size="sm" onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); fetchTasksData(null); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
                       <RotateCcw className="h-3 w-3" /> Reset
                     </AppButton>
                   </div>
@@ -1332,11 +1336,11 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                 </AppButton>
               </Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl theme-card-structural  min-w-[140px]">
-                  <AppButton onClick={exportToExcel} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
+                <Popover.Content align="end" sideOffset={8} className="z-50 p-1 rounded-xl theme-card-structural border border-border min-w-[140px] shadow-lg">
+                  <AppButton variant="ghost" onClick={exportToExcel} className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated rounded-lg transition-colors">
                     <FileSpreadsheet className="h-4 w-4 text-success" /> Export to Excel
                   </AppButton>
-                  <AppButton onClick={exportToPDF} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated/80 rounded-lg transition-colors">
+                  <AppButton variant="ghost" onClick={exportToPDF} className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated rounded-lg transition-colors">
                     <FileText className="h-4 w-4 text-danger" /> Export to PDF
                   </AppButton>
                 </Popover.Content>
@@ -1364,22 +1368,25 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
               <div className="h-5 w-[1px] bg-background/20 dark:bg-border mx-1"></div>
               
               <AppButton 
+                variant="ghost"
                 onClick={() => setBulkStatusModalOpen(true)}
-                className="text-sm font-semibold hover:opacity-80 transition-opacity flex items-center gap-1.5 px-2"
+                className="text-sm font-semibold hover:bg-white/10 dark:hover:bg-white/10 text-white flex items-center gap-1.5 px-2"
               >
                 <Edit2 className="h-4 w-4" /> Update
               </AppButton>
               
               <AppButton 
+                variant="ghost"
                 onClick={handleBulkDelete}
-                className="text-sm font-semibold text-danger hover:text-rose-300 transition-opacity flex items-center gap-1.5 px-2"
+                className="text-sm font-semibold text-danger hover:bg-danger/10 hover:text-rose-300 flex items-center gap-1.5 px-2"
               >
                 <Trash2 className="h-4 w-4" /> Delete
               </AppButton>
               
               <AppButton 
+                variant="ghost"
                 onClick={() => setSelectedTaskIds(new Set())}
-                className="text-background/50 hover:text-background dark:text-muted dark:hover:text-foreground p-1 ml-2 transition-colors"
+                className="text-white/60 hover:text-white p-1 ml-2 transition-colors"
                 title="Clear Selection"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -1526,6 +1533,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                                     {departments.map(d => (
                                       <AppButton 
                                         key={d.id}
+                                        variant="ghost"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           if (d.id === task.department_id) return;
@@ -1534,7 +1542,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                                           setInlineRemark("");
                                           setDepartmentModalOpen(true);
                                         }}
-                                        className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
+                                        className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-elevated font-medium'}`}
                                       >
                                         <span className="truncate">{d.name}</span>
                                         {d.id === task.department_id && <CheckCircle2 className="h-3 w-3" />}
