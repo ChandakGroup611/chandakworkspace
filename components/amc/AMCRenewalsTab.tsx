@@ -1,11 +1,25 @@
 "use client";
 import { toast } from 'react-toastify';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { CalendarClock, Plus, Search, Trash2, Calendar, FileText, ArrowRight, Loader2, IndianRupee } from "lucide-react";
+import { 
+  CalendarClock, 
+  Plus, 
+  Search, 
+  Trash2, 
+  Calendar, 
+  FileText, 
+  ArrowRight, 
+  Loader2, 
+  IndianRupee,
+  TrendingUp,
+  TrendingDown,
+  Sparkles,
+  ShieldCheck
+} from "lucide-react";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc";
 import { createClient } from "@/utils/supabase/client";
 
@@ -15,9 +29,17 @@ interface AMCRenewalsTabProps {
   onUpdate: () => void;
   currentExpiryDate?: string;
   currency?: string;
+  baseContractCost?: number | string;
 }
 
-export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate, currency = 'INR' }: AMCRenewalsTabProps) {
+export function AMCRenewalsTab({ 
+  amcId, 
+  isLightMode, 
+  onUpdate, 
+  currentExpiryDate, 
+  currency = 'INR',
+  baseContractCost = 0
+}: AMCRenewalsTabProps) {
   const supabase = createClient();
   const [renewals, setRenewals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,8 +152,82 @@ export function AMCRenewalsTab({ amcId, isLightMode, onUpdate, currentExpiryDate
     }
   };
 
+  const numericBaseCost = typeof baseContractCost === 'string' ? parseFloat(baseContractCost) || 0 : baseContractCost || 0;
+
+  const renewalAnalytics = useMemo(() => {
+    if (renewals.length === 0) {
+      return {
+        hasHistory: false,
+        latestRenewalCost: 0,
+        diffFromBase: 0,
+        percentChange: 0,
+        isIncrease: false,
+        totalRenewalsCount: 0
+      };
+    }
+
+    const latest = renewals[0];
+    const latestCost = parseFloat(latest.renewal_cost) || 0;
+    const diff = numericBaseCost > 0 ? latestCost - numericBaseCost : 0;
+    const pct = numericBaseCost > 0 ? (diff / numericBaseCost) * 100 : 0;
+
+    return {
+      hasHistory: true,
+      latestRenewalCost: latestCost,
+      diffFromBase: diff,
+      percentChange: Math.abs(pct).toFixed(1),
+      isIncrease: diff > 0,
+      totalRenewalsCount: renewals.length
+    };
+  }, [renewals, numericBaseCost]);
+
   return (
     <div className="space-y-8">
+      {/* YoY Cost Comparison Banner */}
+      {renewalAnalytics.hasHistory && (
+        <div className="p-5 rounded-2xl border bg-surface border-border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-theme-icon" />
+              <span className="text-xs font-bold text-muted uppercase tracking-wider">Year-over-Year (YoY) Renewal Comparison</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div>
+                <span className="text-xs text-muted">Original Base Cost: </span>
+                <strong className="font-mono text-foreground">{currency} {numericBaseCost.toFixed(2)}</strong>
+              </div>
+              <span>→</span>
+              <div>
+                <span className="text-xs text-muted">Latest Renewed: </span>
+                <strong className="font-mono text-foreground">{currency} {renewalAnalytics.latestRenewalCost.toFixed(2)}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 text-xs font-bold ${
+              renewalAnalytics.diffFromBase === 0 
+                ? 'bg-muted/10 text-muted border-border'
+                : renewalAnalytics.isIncrease 
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            }`}>
+              {renewalAnalytics.isIncrease ? (
+                <TrendingUp className="h-4 w-4 text-amber-400" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-emerald-400" />
+              )}
+              <span>
+                {renewalAnalytics.diffFromBase > 0 ? `+${renewalAnalytics.percentChange}% Hike` : renewalAnalytics.diffFromBase < 0 ? `-${renewalAnalytics.percentChange}% Savings` : '0% Price Change'}
+              </span>
+            </div>
+            <div className="text-[11px] text-muted font-medium bg-elevated px-3 py-1.5 rounded-xl border border-border">
+              {renewalAnalytics.totalRenewalsCount} Renewal Cycle{renewalAnalytics.totalRenewalsCount === 1 ? '' : 's'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Renewal */}
       <AppCard className={`p-6 theme-card-structural`}>
         <h3 className="text-lg font-bold text-success mb-4 flex items-center gap-2">
