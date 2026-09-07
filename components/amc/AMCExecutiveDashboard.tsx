@@ -45,7 +45,7 @@ interface AMCExecutiveDashboardProps {
   departments: any[];
   vendors: any[];
   isLightMode: boolean;
-  onSelectRecord: (record: any) => void;
+  onSelectRecord: (record: any, tab?: string) => void;
   onRefresh: () => void;
 }
 
@@ -263,16 +263,21 @@ export function AMCExecutiveDashboard({
 
     records.forEach((rec) => {
       const lineItems = Array.isArray(rec.solution_line_items) ? rec.solution_line_items : [];
-      const currentCost = parseFloat(rec.cost) || 0;
+      let currentCost = parseFloat(rec.cost) || 0;
+      if (lineItems.length > 0) {
+        const sum = lineItems.reduce((s: number, i: any) => s + (parseFloat(i.netAmount) || 0), 0);
+        if (sum > 0) currentCost = sum;
+      }
       
-      // Look for previous renewal entries or previous expiry signals
-      if (rec.status === 'Renewed' || rec.renewal_period_type || lineItems.some((i: any) => i.renewalPeriodType)) {
+      // Look for renewal cadence or recurring AMC/Subscription contracts
+      if (rec.status === 'Renewed' || rec.renewal_period_type || rec.contract_type === 'AMC' || rec.contract_type === 'Subscription' || lineItems.some((i: any) => i.renewalPeriodType)) {
         renewedRecords.push({
           id: rec.id,
           rawRecord: rec,
           softwareName: rec.software_name,
           vendorName: rec.vendor_master?.name || "Direct Vendor",
           contractType: rec.contract_type || "AMC",
+          purchaseDate: rec.purchase_date ? new Date(rec.purchase_date).toLocaleDateString() : "N/A",
           renewalPeriod: rec.renewal_period_type || "Yearly",
           currentCost: currentCost,
           currency: rec.currency || "INR",
@@ -685,17 +690,18 @@ export function AMCExecutiveDashboard({
                 <AppTableHead className="pb-3 pr-4">Software Name</AppTableHead>
                 <AppTableHead className="pb-3 px-4">Vendor</AppTableHead>
                 <AppTableHead className="pb-3 px-4">Contract Type</AppTableHead>
+                <AppTableHead className="pb-3 px-4">Acquired Date</AppTableHead>
                 <AppTableHead className="pb-3 px-4">Renewal Cadence</AppTableHead>
                 <AppTableHead className="pb-3 px-4">Expiry Date</AppTableHead>
                 <AppTableHead className="pb-3 px-4">Contract Cost</AppTableHead>
                 <AppTableHead className="pb-3 px-4">Owner</AppTableHead>
-                <AppTableHead className="pb-3 pl-4 text-right">Action</AppTableHead>
+                <AppTableHead className="pb-3 pl-4 text-right">Spend History</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
             <AppTableBody className="divide-y divide-border/60">
               {renewalComparisonData.length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={8} className="py-8 text-center text-muted">
+                  <AppTableCell colSpan={9} className="py-8 text-center text-muted">
                     No renewal or recurring contracts logged yet.
                   </AppTableCell>
                 </AppTableRow>
@@ -709,6 +715,7 @@ export function AMCExecutiveDashboard({
                         {row.contractType}
                       </AppBadge>
                     </AppTableCell>
+                    <AppTableCell className="py-3.5 px-4 text-muted font-mono">{row.purchaseDate}</AppTableCell>
                     <AppTableCell className="py-3.5 px-4 font-medium text-foreground">{row.renewalPeriod}</AppTableCell>
                     <AppTableCell className="py-3.5 px-4 text-muted">{row.expiryDate}</AppTableCell>
                     <AppTableCell className="py-3.5 px-4 font-bold font-mono text-foreground">₹ {formatAmount(row.currentCost)}</AppTableCell>
@@ -718,10 +725,11 @@ export function AMCExecutiveDashboard({
                         type="button" 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => onSelectRecord(row.rawRecord)}
-                        className="text-theme-icon hover:underline text-xs"
+                        onClick={() => onSelectRecord(row.rawRecord, 'Spend History (TCO)')}
+                        className="text-theme-icon hover:underline text-xs font-semibold"
+                        rightIcon={<ArrowRight className="h-3 w-3" />}
                       >
-                        View History →
+                        TCO Timeline
                       </AppButton>
                     </AppTableCell>
                   </AppTableRow>

@@ -18,6 +18,7 @@ import { AMCAllocationsTab } from "@/components/amc/AMCAllocationsTab";
 import { AMCAttachmentsTab } from "@/components/amc/AMCAttachmentsTab";
 import { AMCPaymentsTab } from "@/components/amc/AMCPaymentsTab";
 import { AMCImplementationTab } from "@/components/amc/AMCImplementationTab";
+import { AMCTCOSpendHistoryTab } from "@/components/amc/AMCTCOSpendHistoryTab";
 import { AMCExecutiveDashboard } from "@/components/amc/AMCExecutiveDashboard";
 import { CustomPaymentMilestoneManager, PaymentMilestone } from "@/components/amc/CustomPaymentMilestoneManager";
 import { createClient } from "@/utils/supabase/client";
@@ -59,7 +60,8 @@ import {
   Boxes,
   ClipboardCheck,
   FileCheck,
-  Sparkles
+  Sparkles,
+  TrendingUp
 } from "lucide-react";
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 
@@ -763,9 +765,10 @@ export default function AMCPage() {
     setShowModal(true);
   };
 
-  const openEditModal = (rec: any) => {
+  const openEditModal = (rec: any, initialTab: string = "Master") => {
     resetForm();
     setEditRecordId(rec.id);
+    setActiveTab(initialTab);
     setFormSoftwareName(rec.software_name || "");
     setFormVendorId(rec.vendor_id || "");
     setFormContractType(rec.contract_type || "AMC");
@@ -1512,6 +1515,7 @@ export default function AMCPage() {
                   <AppTableHead className="p-3 font-medium text-muted border-b border-border">Solution Name</AppTableHead>
                   <AppTableHead className="p-3 font-medium text-muted border-b border-border">Vendor</AppTableHead>
                   <AppTableHead className="p-3 font-medium text-muted border-b border-border">Type</AppTableHead>
+                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Cost / Spend</AppTableHead>
                   <AppTableHead className="p-3 font-medium text-muted border-b border-border">Owner</AppTableHead>
                   <AppTableHead className="p-3 font-medium text-muted border-b border-border">Expiry Date</AppTableHead>
                   <AppTableHead className="p-3 font-medium text-muted border-b border-border">Approval</AppTableHead>
@@ -1546,6 +1550,11 @@ export default function AMCPage() {
                         <AppBadge variant={rec.contract_type === 'AMC' ? 'accent' : rec.contract_type === 'Subscription' ? 'warning' : 'neutral'}>
                           {rec.contract_type}
                         </AppBadge>
+                      </AppTableCell>
+                      <AppTableCell className="p-3">
+                        <div className="font-mono font-bold text-foreground">
+                          ₹ {rec.cost ? Number(rec.cost).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00'}
+                        </div>
                       </AppTableCell>
                       <AppTableCell className="p-3">
                         <div className="flex items-center gap-2">
@@ -1687,44 +1696,83 @@ export default function AMCPage() {
           </div>
 
           {editRecordId && (
-            <div className={`p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border`}>
-              <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm">
-                {['Master', 'Implementation', 'Transactions', 'Payments', 'Renewals', 'Allocations', 'Attachments'].map(tab => {
-                  let badgeText = null;
-                  if (tab === 'Attachments' && existingAttachments.length > 0) {
-                    badgeText = `${existingAttachments.length}`;
-                  } else if (tab === 'Allocations' && formTotalLicenses) {
-                    badgeText = `${formUsedLicenses || 0}/${formTotalLicenses}`;
-                  } else if (tab === 'Implementation') {
-                    badgeText = "Live";
-                  }
-
-                  return (
-                    <AppButton 
-                      key={tab}
-                      type="button"
-                      onClick={() => setActiveTab(tab)}
-                      className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center gap-2 min-w-[120px] ${
-                        activeTab === tab 
-                          ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
-                          : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
-                      }`}
-                    >
-                      <span>{tab}</span>
-                      {badgeText && (
-                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                          activeTab === tab 
-                            ? 'bg-theme-btn-primary/15 text-theme-icon border border-theme-btn-primary/20' 
-                            : 'bg-elevated text-muted border border-border/60'
-                        }`}>
-                          {badgeText}
-                        </span>
-                      )}
-                    </AppButton>
-                  );
-                })}
+            <>
+              {/* One-Line TCO Summary Strip */}
+              <div className="px-6 py-2.5 bg-elevated/80 border-b border-border flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-1.5 text-muted">
+                    <span>Initial Acquisition:</span>
+                    <span className="font-bold text-foreground font-mono">
+                      {formCurrency} {formPurchaseDate ? `(${formPurchaseDate})` : ''} {computedTotalCost || formCost || '0.00'}
+                    </span>
+                  </div>
+                  <div className="h-3 w-[1px] bg-border hidden sm:block"></div>
+                  <div className="flex items-center gap-1.5 text-muted">
+                    <span>PO Number:</span>
+                    <span className="font-semibold text-foreground font-mono">{formPoNumber || 'N/A'}</span>
+                  </div>
+                  <div className="h-3 w-[1px] bg-border hidden sm:block"></div>
+                  <div className="flex items-center gap-1.5 text-muted">
+                    <span>Contract Type:</span>
+                    <span className="font-semibold text-theme-icon">{formContractType}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AppButton 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setActiveTab('Spend History (TCO)')}
+                    className="h-7 text-xs font-bold text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 px-2.5 rounded-lg border border-emerald-500/20"
+                    leftIcon={<TrendingUp className="h-3.5 w-3.5" />}
+                  >
+                    View Full Spend Timeline (TCO) →
+                  </AppButton>
+                </div>
               </div>
-            </div>
+
+              {/* Tab Navigation Strip */}
+              <div className={`p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border`}>
+                <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm">
+                  {['Master', 'Implementation', 'Spend History (TCO)', 'Transactions', 'Payments', 'Renewals', 'Allocations', 'Attachments'].map(tab => {
+                    let badgeText = null;
+                    if (tab === 'Attachments' && existingAttachments.length > 0) {
+                      badgeText = `${existingAttachments.length}`;
+                    } else if (tab === 'Allocations' && formTotalLicenses) {
+                      badgeText = `${formUsedLicenses || 0}/${formTotalLicenses}`;
+                    } else if (tab === 'Implementation') {
+                      badgeText = "Live";
+                    } else if (tab === 'Spend History (TCO)') {
+                      badgeText = "TCO";
+                    }
+
+                    return (
+                      <AppButton 
+                        key={tab}
+                        type="button"
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center gap-2 min-w-[120px] ${
+                          activeTab === tab 
+                            ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
+                            : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
+                        }`}
+                      >
+                        <span>{tab}</span>
+                        {badgeText && (
+                          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                            activeTab === tab 
+                              ? 'bg-theme-btn-primary/15 text-theme-icon border border-theme-btn-primary/20' 
+                              : 'bg-elevated text-muted border border-border/60'
+                          }`}>
+                            {badgeText}
+                          </span>
+                        )}
+                      </AppButton>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           )}
           
           <div className="flex-1 overflow-y-auto w-full max-w-[98%] mx-auto pb-32">
@@ -2934,6 +2982,18 @@ export default function AMCPage() {
                   onUpdate={fetchRecords} 
                   softwareName={formSoftwareName}
                   contractPutToUseDate={formPutToUseDate}
+                />
+              </div>
+            )}
+
+            {activeTab === 'Spend History (TCO)' && editRecordId && (
+              <div className="p-6 md:p-8">
+                <AMCTCOSpendHistoryTab 
+                  amcId={editRecordId} 
+                  isLightMode={isLightMode} 
+                  currency={formCurrency}
+                  record={records.find(r => r.id === editRecordId)}
+                  onRefresh={fetchRecords}
                 />
               </div>
             )}
