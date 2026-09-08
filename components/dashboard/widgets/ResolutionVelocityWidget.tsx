@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { TrendingUp } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
 import {
   AreaChart,
@@ -81,7 +82,14 @@ export function ResolutionVelocityWidget({ metrics = [] }: ResolutionVelocityWid
   };
 
   return (
-    <BaseWidget id="resolution-velocity" title="Resolution Progress" subtitle="7-Day Activity" overflowHidden>
+    <BaseWidget 
+      id="resolution-velocity" 
+      title="Resolution Velocity Progress" 
+      subtitle="7-Day Creation vs Resolution Throughput" 
+      icon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
+      collapsible={true}
+      overflowHidden
+    >
       <div className="flex-1 w-full h-full pt-4 min-h-[250px] pb-2">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

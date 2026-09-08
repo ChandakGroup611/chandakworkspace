@@ -24,7 +24,14 @@ export function SlaGovernanceWidget({ analytics, kpis: globalKpis, onDrillDown }
     <BaseWidget
       id="sla-governance"
       title="SLA Governance Heatmap"
-      icon={<Activity className="w-5 h-5" />}
+      subtitle="Health distribution across target SLAs"
+      icon={<Activity className="w-5 h-5 text-emerald-500" />}
+      badge={
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+          {total} Evaluated
+        </span>
+      }
+      collapsible={true}
       headerRight={<span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Distribution</span>}
     >
       <div className="flex flex-col h-full justify-center">

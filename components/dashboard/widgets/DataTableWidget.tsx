@@ -44,8 +44,15 @@ export function DataTableWidget({ metrics = [], onOpenList }: DataTableWidgetPro
     <BaseWidget
       id="recent-items"
       title="Recent Assignments"
-      icon={<ListChecks className="w-5 h-5" />}
+      subtitle="Latest active and in-flight operational deliverables"
+      icon={<ListChecks className="w-5 h-5 text-theme-icon" />}
+      badge={
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 shrink-0">
+          {recentItems.length} Items
+        </span>
+      }
       className="h-[400px]"
+      collapsible={true}
       noPadding
       headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors" onClick={onOpenList || (() => router.push('/tickets'))}>View All</span>}
     >

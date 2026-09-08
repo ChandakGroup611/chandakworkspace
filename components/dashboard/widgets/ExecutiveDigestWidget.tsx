@@ -132,30 +132,24 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
   }, [metrics]);
 
   return (
-    <BaseWidget id="executive-digest" className="w-full theme-card-structural border border-border/80 rounded-2xl overflow-hidden p-0 relative shadow-sm">
-      <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 bg-surface/40">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
-            <Sparkles className="w-5 h-5 animate-pulse" />
+    <BaseWidget 
+      id="executive-digest" 
+      title="Executive Smart Digest"
+      subtitle="Automated cross-functional briefing from live system activity"
+      icon={<Sparkles className="w-5 h-5 animate-pulse text-primary" />}
+      badge={
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-primary/15 text-primary border border-primary/20 shrink-0">
+          AI Live Briefing
+        </span>
+      }
+      collapsible={true}
+      headerRight={
+        <div className="flex items-center gap-2.5 bg-surface/80 px-3 py-1 rounded-xl border border-border/60 shrink-0">
+          <div className="text-right hidden sm:block">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Health Score</div>
+            <div className="text-[11px] font-semibold text-foreground truncate max-w-[140px]">{digest.healthLabel}</div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-foreground tracking-tight">Executive Smart Digest</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-primary/15 text-primary">
-                AI Live Briefing
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Automated cross-functional briefing generated from live system activity</p>
-          </div>
-        </div>
-
-        {/* Health Score Badge */}
-        <div className="flex items-center gap-3 bg-background/80 px-4 py-2 rounded-xl border border-border/60 shrink-0">
-          <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">System Health Score</div>
-            <div className="text-xs font-semibold text-foreground">{digest.healthLabel}</div>
-          </div>
-          <div className={`flex items-center justify-center w-12 h-12 rounded-xl border font-black text-lg ${
+          <div className={`flex items-center justify-center w-8 h-8 rounded-lg border font-black text-xs ${
             digest.healthScore >= 85 ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' :
             digest.healthScore >= 60 ? 'text-amber-500 border-amber-500/30 bg-amber-500/10' :
             'text-danger border-red-500/30 bg-danger/10'
@@ -163,10 +157,11 @@ export function ExecutiveDigestWidget({ metrics = [], kpis, onDrillDown }: Execu
             {digest.healthScore}%
           </div>
         </div>
-      </div>
-
+      }
+      noPadding
+    >
       {/* Bullets Grid (3x1 layout) */}
-      <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-3 bg-surface/10">
+      <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-3 bg-surface/5">
         {digest.bullets.map((b) => {
           const Icon = b.icon;
           const isClickable = !!b.filter && !!onDrillDown;

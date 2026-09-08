@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { ShieldAlert } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
 import {
   PieChart,
@@ -48,8 +49,11 @@ export function RiskIntelligenceWidget({ kpis }: RiskIntelligenceWidgetProps) {
 
   return (
     <BaseWidget 
+      id="risk-intel"
       title="Risk Intelligence Radar" 
-      subtitle="System health and exposure analysis"
+      subtitle="System health & exposure analysis"
+      icon={<ShieldAlert className="w-5 h-5 text-amber-500" />}
+      collapsible={true}
       overflowHidden
     >
       <div className="flex flex-col h-full w-full pt-4">

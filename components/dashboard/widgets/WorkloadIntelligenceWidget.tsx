@@ -15,11 +15,20 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
   const kpis = globalKpis || analytics?.kpis || analytics || {};
   const workload = kpis.workload || { active_tickets: 0, active_tasks: 0, active_requirements: 0 };
 
+  const totalWorkload = workload.active_tickets + workload.active_tasks + workload.active_requirements;
+
   return (
     <BaseWidget
       id="workload"
       title="Tactical Workload"
-      icon={<Briefcase className="w-5 h-5" />}
+      subtitle="Active assignments across tickets, tasks & reqs"
+      icon={<Briefcase className="w-5 h-5 text-theme-icon" />}
+      badge={
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 shrink-0">
+          {totalWorkload} In Progress
+        </span>
+      }
+      collapsible={true}
       headerRight={<span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Active Assignments</span>}
     >
       <div className="space-y-5 mt-2">

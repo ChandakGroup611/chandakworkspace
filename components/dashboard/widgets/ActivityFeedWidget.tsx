@@ -70,9 +70,16 @@ export function ActivityFeedWidget({ metrics = [] }: ActivityFeedWidgetProps) {
     <BaseWidget
       id="activity-feed"
       title="Recent Activity"
-      icon={<Activity className="w-5 h-5" />}
+      subtitle="Real-time operational events & state transitions"
+      icon={<Activity className="w-5 h-5 text-emerald-500" />}
+      badge={
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+          Live Stream
+        </span>
+      }
       className="h-[400px]"
-      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1">All <ArrowUpRight className="w-3 h-3" /></span>}
+      collapsible={true}
+      headerRight={<span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1">All <ArrowUpRight className="w-3.5 h-3.5" /></span>}
     >
       <div className="space-y-4 pr-1">
         {activities.map((act, i) => {

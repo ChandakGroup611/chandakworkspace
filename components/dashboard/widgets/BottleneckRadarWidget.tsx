@@ -68,36 +68,35 @@ export function BottleneckRadarWidget({ metrics = [], onDrillDown }: BottleneckR
   const severePct = Math.round((agingAnalysis.severeCount / total) * 100);
 
   return (
-    <BaseWidget id="bottleneck-radar" className="w-full theme-card-structural border border-border/80 rounded-2xl overflow-hidden p-0 relative shadow-sm">
-      {/* Header */}
-      <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 bg-surface/40">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
-            <Hourglass className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-foreground tracking-tight">Bottleneck & Aging Analysis</h2>
-              {agingAnalysis.severeCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-danger/15 text-danger border border-red-500/30">
-                  {agingAnalysis.severeCount} Stalled &gt;10d
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Stage duration tracking and review/approval aging radar</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 bg-background/80 px-3.5 py-1.5 rounded-xl border border-border/60 shrink-0">
-          <Clock className="w-4 h-4 text-muted-foreground" />
+    <BaseWidget 
+      id="bottleneck-radar" 
+      title="Bottleneck & Aging Analysis"
+      subtitle="Stage duration tracking and review/approval aging radar"
+      icon={<Hourglass className="w-5 h-5 text-amber-500" />}
+      badge={
+        agingAnalysis.severeCount > 0 ? (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-danger/15 text-danger border border-red-500/30 shrink-0">
+            {agingAnalysis.severeCount} Stalled &gt;10d
+          </span>
+        ) : (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+            {agingAnalysis.activeItemCount} Active
+          </span>
+        )
+      }
+      collapsible={true}
+      headerRight={
+        <div className="flex items-center gap-2 bg-surface/80 px-3 py-1 rounded-xl border border-border/60 shrink-0">
+          <Clock className="w-3.5 h-3.5 text-muted-foreground" />
           <div className="text-xs">
-            <span className="text-muted-foreground">Avg Time in Status: </span>
-            <strong className="text-foreground font-bold">{agingAnalysis.avgDaysInStatus} Days</strong>
+            <span className="text-muted-foreground hidden sm:inline">Avg in Status: </span>
+            <strong className="text-foreground font-bold">{agingAnalysis.avgDaysInStatus}d</strong>
           </div>
         </div>
-      </div>
-
-      <div className="p-5 space-y-5 bg-surface/5">
+      }
+      noPadding
+    >
+      <div className="p-4 sm:p-5 space-y-5 bg-surface/5">
         
         {/* Visual Progress Bar Breakdown */}
         <div>

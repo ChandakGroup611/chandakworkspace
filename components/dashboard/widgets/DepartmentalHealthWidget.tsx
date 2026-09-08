@@ -74,27 +74,21 @@ export function DepartmentalHealthWidget({ metrics = [], onDrillDown }: Departme
   }, [metrics]);
 
   return (
-    <BaseWidget id="departmental-health" className="w-full theme-card-structural border border-border/80 rounded-2xl overflow-hidden p-0 relative shadow-sm">
-      {/* Header */}
-      <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 bg-surface/40">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 shrink-0">
-            <Building2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-foreground tracking-tight">Departmental & Cross-Functional Health</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-500/15 text-blue-500">
-                Org Matrix
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Comparative throughput, workload distribution, and SLA adherence by department</p>
-          </div>
-        </div>
-      </div>
-
+    <BaseWidget 
+      id="departmental-health" 
+      title="Departmental & Cross-Functional Health"
+      subtitle="Comparative throughput, workload distribution, and SLA adherence by department"
+      icon={<Building2 className="w-5 h-5 text-blue-500" />}
+      badge={
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-500/15 text-blue-500 border border-blue-500/20 shrink-0">
+          {departmentStats.length} Departments
+        </span>
+      }
+      collapsible={true}
+      noPadding
+    >
       {/* Grid of Department Cards */}
-      <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-surface/5">
+      <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-surface/5">
         {departmentStats.length > 0 ? (
           departmentStats.map((dept) => {
             const isClickable = !!onDrillDown;

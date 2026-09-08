@@ -141,7 +141,9 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
       <BaseWidget
         id="chart-trend"
         title="Active Items Trend"
-        icon={<Activity className="w-5 h-5" />}
+        subtitle="14-day cumulative workload"
+        icon={<Activity className="w-5 h-5 text-blue-500" />}
+        collapsible={true}
         headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">View Details</span>}
         overflowHidden
       >
@@ -166,7 +168,9 @@ export function ChartWidget({ metrics = [], onOpenList }: ChartWidgetProps) {
       <BaseWidget
         id="chart-distribution"
         title="Volume Distribution"
-        icon={<LineChart className="w-5 h-5" />}
+        subtitle="Deliverables segmented by module"
+        icon={<LineChart className="w-5 h-5 text-emerald-500" />}
+        collapsible={true}
         headerRight={<span onClick={onOpenList} className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors">By Type</span>}
         overflowHidden
       >

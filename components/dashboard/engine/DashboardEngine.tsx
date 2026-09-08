@@ -189,10 +189,10 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
                 <div 
                   key={widgetConfig.id} 
                   className={cn(
-                    widgetConfig.colSpan === 4 && "lg:col-span-4",
-                    widgetConfig.colSpan === 3 && "lg:col-span-3",
-                    widgetConfig.colSpan === 2 && "lg:col-span-2",
-                    widgetConfig.colSpan === 1 && "lg:col-span-1",
+                    widgetConfig.colSpan === 4 && "col-span-1 md:col-span-2 lg:col-span-4",
+                    widgetConfig.colSpan === 3 && "col-span-1 md:col-span-2 lg:col-span-3",
+                    widgetConfig.colSpan === 2 && "col-span-1 md:col-span-2 lg:col-span-2",
+                    widgetConfig.colSpan === 1 && "col-span-1",
                     "h-full min-w-0"
                   )}
                 >

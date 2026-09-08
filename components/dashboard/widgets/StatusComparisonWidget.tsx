@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { BarChart3 } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
 import {
   BarChart,
@@ -55,7 +56,14 @@ export function StatusComparisonWidget({ kpis }: StatusComparisonWidgetProps) {
   if (!kpis?.monthlyTrends) return <div className="h-full w-full bg-surface/50 rounded-2xl animate-pulse" />;
 
   return (
-    <BaseWidget title="Status Trends" subtitle="Monthly Status-wise comparison" overflowHidden>
+    <BaseWidget 
+      id="status-comp"
+      title="Status Trends" 
+      subtitle="Monthly status-wise breakdown" 
+      icon={<BarChart3 className="w-5 h-5 text-purple-500" />}
+      collapsible={true}
+      overflowHidden
+    >
       <div className="flex-1 w-full h-full pt-4 min-h-[250px] pb-2">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
