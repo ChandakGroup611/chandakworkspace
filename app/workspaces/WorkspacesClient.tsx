@@ -952,15 +952,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         title="Workspace & Task Engine"
         icon={<FolderKanban className="h-6 w-6" />}
         actions={
-          <>
-            <div className="relative flex items-center">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-end">
+            <div className="relative flex items-center flex-1 sm:flex-none min-w-[130px] sm:w-64 md:w-72">
               <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${isSearching ? 'text-theme-icon animate-spin' : 'text-muted'}`} />
               <input 
                 type="text" 
-                placeholder="Deep search tasks & workspaces..." 
+                placeholder="Search..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`pl-9 pr-8 h-8 text-[13px] rounded-md /50 theme-card-structural focus:-hover outline-none focus: transition-all w-56 sm:w-72 text-foreground`}
+                className={`w-full pl-9 pr-8 h-8 text-[13px] rounded-lg theme-card-structural focus:outline-none focus:ring-1 focus:ring-theme-icon transition-all text-foreground`}
               />
               {searchQuery && (
                 <AppButton 
@@ -972,7 +972,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               )}
             </div>
 
-            <div className="relative" ref={filterPopoverRef}>
+            <div className="relative shrink-0" ref={filterPopoverRef}>
               <AppButton 
                 variant={showFilters || activeFilterCount > 0 ? "primary" : "outline"} 
                 size="sm" 
@@ -1133,8 +1133,10 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 setWsModalMode('ROOT');
               }}
               disabled={!hasPermission("WORKSPACES_CREATE")}
+              className="shrink-0 whitespace-nowrap"
             >
-              New Workspace
+              <span className="hidden sm:inline">New Workspace</span>
+              <span className="sm:hidden">Workspace</span>
             </AppButton>
             
             {savedFilters.length > 0 && <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>}
@@ -1144,7 +1146,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 key={f.id}
                 variant="ghost"
                 onClick={() => applyFilter(f)}
-                className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                className={`hidden md:inline-flex px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
               >
                 {f.name}
               </AppButton>
@@ -1160,14 +1162,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               onDeleteFilter={deleteSavedFilter}
               align="end"
             />
-          </>
+          </div>
         }
       />
 
       {/* HIERARCHY SCOPE BAR */}
-      <div className="px-4 py-2 mb-4 theme-card-structural rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs border border-border/50">
-        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar flex-wrap">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted mr-1.5 shrink-0">
+      <div className="px-3 sm:px-4 py-2 mb-4 theme-card-structural rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs border border-border/50">
+        <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
+          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted mr-1.5 shrink-0">
             Hierarchy Scope:
           </span>
 
@@ -1180,7 +1182,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 setSelectedDepartmentName("ALL");
                 setFilters(prev => ({ ...prev, myTasksOnly: false, assigneeId: '' }));
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
                 hierarchyScope === "all" && selectedDepartmentName === "ALL" && !filters.myTasksOnly
                   ? "bg-primary text-primary-foreground font-bold shadow-sm"
                   : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
@@ -1200,7 +1202,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 setSelectedDepartmentName("ALL");
                 setFilters(prev => ({ ...prev, myTasksOnly: false }));
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
                 hierarchyScope === "my_reports"
                   ? "bg-purple-600 text-white font-bold shadow-sm"
                   : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
@@ -1213,7 +1215,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
           {/* Managed Departments (for CFO / Multi-Department Heads) */}
           {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
-            <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40">
+            <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40 shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -1262,7 +1264,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               setSelectedDepartmentName("ALL");
               setFilters(prev => ({ ...prev, myTasksOnly: true }));
             }}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
               hierarchyScope === "assigned_me" || filters.myTasksOnly
                 ? "bg-emerald-600 text-white font-bold shadow-sm"
                 : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
@@ -1320,8 +1322,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             
             {/* Hierarchical Task Matrix */}
             <AppCard className="flex-1 p-2 flex flex-col min-h-0 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
-                <div className="flex items-center gap-1 theme-card-structural p-1 rounded-lg /40">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border/40 pb-3 mb-4">
+                <div className="flex items-center gap-1 theme-card-structural p-1 rounded-lg">
                   <AppButton 
                     variant="ghost" 
                     onClick={() => setActiveView('HIERARCHY')}
@@ -1341,41 +1343,43 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 </div>
 
                 {activeView === 'HIERARCHY' && (
-                  <div className="flex items-center gap-1.5">
-                    <label className={`flex items-center gap-2 cursor-pointer text-muted mr-3`}>
+                  <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                    <label className={`flex items-center gap-2 cursor-pointer text-muted`}>
                       <input 
                         type="checkbox" 
                         checked={autoCollapse} 
                         onChange={e => setAutoCollapse(e.target.checked)} 
                         className={`rounded border-border text-theme-icon focus:ring-theme-icon`}
                       />
-                      <span className="text-[11px] uppercase tracking-wider font-bold">Auto-Minimize Others</span>
+                      <span className="text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">Auto-Minimize Others</span>
                     </label>
-                    <div className="w-px h-4 bg-border/50 mx-1"></div>
-                    <AppButton
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={handleExpandAllBranches}
-                      disabled={isExpandingAll}
-                      className="text-muted hover:text-foreground hover:theme-card-structural -hover rounded-md /40"
-                      title="Fetch and expand all workspace and task branches"
-                    >
-                      {isExpandingAll ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
-                      ) : (
-                        <ChevronsUpDown className="h-4 w-4" />
-                      )}
-                    </AppButton>
+                    <div className="flex items-center gap-1">
+                      <div className="w-px h-4 bg-border/50 mx-1"></div>
+                      <AppButton
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={handleExpandAllBranches}
+                        disabled={isExpandingAll}
+                        className="text-muted hover:text-foreground rounded-md"
+                        title="Fetch and expand all workspace and task branches"
+                      >
+                        {isExpandingAll ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
+                        ) : (
+                          <ChevronsUpDown className="h-4 w-4" />
+                        )}
+                      </AppButton>
 
-                    <AppButton
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={handleCollapseAllBranches}
-                      className="text-muted hover:text-foreground hover:theme-card-structural -hover rounded-md /40"
-                      title="Collapse all branches"
-                    >
-                      <ChevronsDownUp className="h-4 w-4" />
-                    </AppButton>
+                      <AppButton
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={handleCollapseAllBranches}
+                        className="text-muted hover:text-foreground rounded-md"
+                        title="Collapse all branches"
+                      >
+                        <ChevronsDownUp className="h-4 w-4" />
+                      </AppButton>
+                    </div>
                   </div>
                 )}
               </div>

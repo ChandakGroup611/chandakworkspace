@@ -42,7 +42,7 @@ export function PageHeader({ title, description, icon, badge, actions, children 
       </div>
 
       {actions && (
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto sm:shrink-0">
           {actions}
         </div>
       )}
