@@ -18,6 +18,8 @@ export interface EmailCardOptions {
   actionUrl?: string;
   actionText?: string;
   footerText?: string;
+  showLogo?: boolean;
+  logoUrl?: string;
   badge?: {
     text: string;
     variant?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
@@ -191,8 +193,22 @@ export function buildEmailCardHtml(options: EmailCardOptions): string {
     actionUrl,
     actionText,
     footerText,
-    badge
+    badge,
+    showLogo = true,
+    logoUrl
   } = options;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech';
+  const finalLogoUrl = logoUrl || `${siteUrl}/Chandak_Group_Official_Logo.png`;
+
+  let logoHeaderHtml = '';
+  if (showLogo !== false && finalLogoUrl) {
+    logoHeaderHtml = `
+      <div style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+        <img src="${escapeHtml(finalLogoUrl)}" alt="Chandak Group" style="height: 38px; max-width: 180px; object-fit: contain; display: block; border: 0;" />
+      </div>
+    `;
+  }
 
   const normalizedFields = normalizeDetailFields(details);
   const finalActionText = actionText || inferActionText(title, actionUrl);
@@ -267,6 +283,7 @@ export function buildEmailCardHtml(options: EmailCardOptions): string {
 
   return `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; box-sizing: border-box;">
+  ${logoHeaderHtml}
   ${badgeHtml}
   <h2 style="color: #1e293b; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 700; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
     ${escapeHtml(title)}
