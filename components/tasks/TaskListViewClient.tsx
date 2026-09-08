@@ -1039,10 +1039,10 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
       <div className="space-y-6">
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-2">
           <div className="flex flex-col gap-1.5 shrink-0">
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground bg-clip-text">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground bg-clip-text">
               Workspace Tasks
             </h1>
-            <p className="text-[13px] font-medium text-muted flex items-center gap-2">
+            <p className="text-xs sm:text-[13px] font-medium text-muted flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 theme-card-structural dark:/10 px-2 py-0.5 rounded-md shadow-sm">
                 <Layers className="h-3 w-3" />
                 {selectedWorkspaceId ? allWorkspaces.find(w => w.id === selectedWorkspaceId)?.workspace_name || allWorkspaces.find(w => w.id === selectedWorkspaceId)?.name || 'Selected Workspace' : 'All Workspaces'}
@@ -1052,9 +1052,9 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
             </p>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
-            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0 shadow-sm border border-border/50 rounded-xl" />
-            <div className="hidden sm:block h-8 w-[1px] bg-border mx-2"></div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />
+            <div className="hidden sm:block h-8 w-[1px] bg-border mx-1 shrink-0"></div>
             
             <AppButton size="sm" onClick={() => {
               let initialWs = selectedWorkspaceId || "";
@@ -1067,16 +1067,16 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
               setCreationWorkspaceId(initialWs);
               setCreationSubWorkspaceId(initialSubWs);
               setShowWorkspaceSelector(true);
-            }} leftIcon={<Plus className="h-4 w-4" />} className="h-10 px-5 rounded-xl font-bold bg-foreground text-background hover:bg-foreground/90 dark:bg-primary dark:text-primary-foreground shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_14px_0_rgba(0,182,212,0.3)] transition-all active:scale-[0.98]">
+            }} leftIcon={<Plus className="h-4 w-4" />} className="h-10 px-5 rounded-xl font-bold bg-foreground text-background hover:bg-foreground/90 dark:bg-primary dark:text-primary-foreground shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_14px_0_rgba(0,182,212,0.3)] transition-all active:scale-[0.98] shrink-0 w-full sm:w-auto justify-center">
               New Task
             </AppButton>
           </div>
         </header>
 
         {/* HIERARCHY SCOPE BAR */}
-        <div className="px-4 py-2 theme-card-structural rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs border border-border/50">
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar flex-wrap">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5 shrink-0">
+        <div className="px-3 sm:px-4 py-2.5 theme-card-structural rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs border border-border/50">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto pb-1 sm:pb-0">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
               Scope:
             </span>
 
@@ -1090,7 +1090,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                   setSelectedDepartmentName("ALL");
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto",
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                   hierarchyScope === "all" && selectedDepartmentName === "ALL"
                     ? "bg-primary text-primary-foreground font-bold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
@@ -1111,7 +1111,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                   setSelectedDepartmentName("ALL");
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto",
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                   hierarchyScope === "my_reports"
                     ? "bg-purple-600 text-white font-bold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
@@ -1124,7 +1124,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
 
             {/* Managed Departments (for CFO / Multi-Department Heads) */}
             {(managedDepts.length > 0 || userScope?.primaryDepartmentName) && (
-              <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40">
+              <div className="flex items-center gap-1 bg-surface/60 rounded-lg p-0.5 border border-border/40 shrink-0">
                 <AppButton
                   type="button"
                   variant="ghost"
@@ -1133,7 +1133,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                     setSelectedDepartmentName("ALL");
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap h-auto",
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                     hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
                       ? "bg-blue-600 text-white font-bold shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -1175,7 +1175,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                 setSelectedDepartmentName("ALL");
               }}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto",
+                "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                 hierarchyScope === "assigned_me"
                   ? "bg-emerald-600 text-white font-bold shadow-sm"
                   : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
@@ -1192,10 +1192,10 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
         </div>
 
         {/* Command Bar */}
-        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-2 theme-card-structural rounded-2xl shadow-sm mb-6">
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
+        <div className="sticky top-0 z-30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2.5 sm:p-2 theme-card-structural rounded-2xl shadow-sm mb-6">
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1.5 md:pb-0 no-scrollbar">
             {/* View Toggles */}
-            <div className="flex bg-elevated/50 p-1 rounded-xl border border-border/50">
+            <div className="flex bg-elevated/50 p-1 rounded-xl border border-border/50 shrink-0">
               <AppButton variant="ghost" 
                 onClick={() => setViewMode("list")} 
                 className={`p-2 rounded-lg transition-all ${viewMode === "list" ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
@@ -1219,16 +1219,16 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
               </AppButton>
             </div>
 
-            <div className="h-6 w-[1px] bg-border mx-1"></div>
+            <div className="h-6 w-[1px] bg-border mx-0.5 shrink-0"></div>
 
             {/* Scope Toggles & Saved Filter Tabs */}
-            <div className="flex items-center gap-1 bg-elevated/50 p-1 rounded-xl border border-border/50 overflow-x-auto custom-scrollbar">
+            <div className="flex items-center gap-1 bg-elevated/50 p-1 rounded-xl border border-border/50 overflow-x-auto no-scrollbar shrink-0">
               {(["ALL","ASSIGNEE","ENROLLED"] as const).map(sc => (
                 <AppButton
                   key={sc}
                   variant="ghost"
                   onClick={() => setScope(sc)}
-                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap ${!activeSavedFilterId && scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                  className={`px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-[12px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 ${!activeSavedFilterId && scope === sc ? "bg-surface shadow-sm text-foreground" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
                 >
                   {sc === "ALL" ? "All" : sc === "ASSIGNEE" ? "Assigned to Me" : "Enrolled"}
                 </AppButton>
@@ -1241,14 +1241,14 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                   key={f.id}
                   variant="ghost"
                   onClick={() => applyFilter(f)}
-                  className={`px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
+                  className={`px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-[12px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 ${activeSavedFilterId === f.id ? "bg-primary/10 text-primary shadow-sm" : "text-muted hover:text-foreground hover:bg-surface/50"}`}
                 >
                   {f.name}
                 </AppButton>
               ))}
             </div>
 
-            <div className="h-6 w-[1px] bg-border mx-1"></div>
+            <div className="h-6 w-[1px] bg-border mx-0.5 shrink-0"></div>
 
             {/* Saved Filters */}
             <SavedFiltersDropdown
@@ -1262,20 +1262,20 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
+            <div className="relative flex-1 md:w-64 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
                 placeholder="Search tasks..." 
                 value={query} 
                 onChange={(e:any) => setQuery(e.target.value)} 
-                className="w-full text-sm font-medium h-10 pl-9 pr-3 rounded-xl bg-elevated/50 border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted" 
+                className="w-full text-xs sm:text-sm font-medium h-9 sm:h-10 pl-9 pr-3 rounded-xl bg-elevated/50 border border-border/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted" 
               />
             </div>
             
             <Popover.Root>
               <Popover.Trigger asChild>
-                <AppButton variant="outline" className="h-10 px-4 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural relative">
-                  <Filter className="h-4 w-4 mr-2" />
+                <AppButton variant="outline" className="h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural relative shrink-0 text-xs sm:text-sm">
+                  <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                   Filters
                   {(selectedStatus || selectedPriority || showEscalatedOnly || dateFrom || dateTo || selectedWorkspaceId) && (
                     <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center border-2 border-surface">
@@ -1339,7 +1339,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
 
             <Popover.Root>
               <Popover.Trigger asChild>
-                <AppButton variant="outline" className="h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural">
+                <AppButton variant="outline" className="h-9 sm:h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural shrink-0">
                   <span className="flex items-center gap-1"><Upload className="h-4 w-4" /><span className="hidden sm:inline">Export</span></span>
                 </AppButton>
               </Popover.Trigger>
@@ -1349,16 +1349,16 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                     <FileSpreadsheet className="h-4 w-4 text-success" /> Export to Excel
                   </AppButton>
                   <AppButton variant="ghost" onClick={exportToPDF} className="w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-elevated rounded-lg transition-colors">
-                    <FileText className="h-4 w-4 text-danger" /> Export to PDF
+                    <FileSpreadsheet className="h-4 w-4 text-danger" /> Export to PDF
                   </AppButton>
                 </Popover.Content>
               </Popover.Portal>
             </Popover.Root>
 
-            <AppButton 
+            <AppButton
               variant="outline"
               onClick={() => setIsConfigOpen(true)}
-              className="h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural"
+              className="h-9 sm:h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural shrink-0"
               title="Configure Columns"
             >
               <Settings2 className="h-4 w-4" />

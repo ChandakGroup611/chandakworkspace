@@ -229,12 +229,12 @@ function TicketsPageContent() {
         }
       />
 
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-6 p-6">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-4 sm:gap-6 p-3 sm:p-6">
         {/* Filters Top Bar */}
-        <div className={`p-4 space-y-4 rounded-xl ${
+        <div className={`p-3 sm:p-4 space-y-3 sm:space-y-4 rounded-xl ${
           "theme-card-structural"
         }`}>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
             <div className="relative w-full sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
               <input 
@@ -248,15 +248,13 @@ function TicketsPageContent() {
               />
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted" />
-                <span className="text-xs font-bold uppercase tracking-wider text-muted hidden md:inline">Status:</span>
-              </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Filter className="h-4 w-4 text-muted shrink-0" />
+              <span className="text-xs font-bold uppercase tracking-wider text-muted hidden md:inline shrink-0">Status:</span>
               <select 
                 value={selectedStatus}
                 onChange={e => setSelectedStatus(e.target.value)}
-                className={`h-9 pl-3 pr-8 rounded-lg text-sm border outline-none cursor-pointer ${
+                className={`flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate ${
                   "bg-surface border-border"
                 }`}
               >
@@ -269,7 +267,7 @@ function TicketsPageContent() {
               <select 
                 value={selectedPriority}
                 onChange={e => setSelectedPriority(e.target.value)}
-                className={`h-9 pl-3 pr-8 rounded-lg text-sm border outline-none cursor-pointer ${
+                className={`flex-1 sm:flex-initial min-w-0 h-9 pl-2.5 pr-6 sm:pr-8 rounded-lg text-xs sm:text-sm border outline-none cursor-pointer truncate ${
                   "bg-surface border-border"
                 }`}
               >
@@ -281,12 +279,12 @@ function TicketsPageContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-border no-scrollbar w-full">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pt-2 pb-1 border-t border-border no-scrollbar w-full">
             <AppButton 
               onClick={() => setSelectedScope("ALL")}
               variant={selectedScope === "ALL" ? "primary" : "ghost"}
               size="sm"
-              className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
+              className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 ${
                 selectedScope === "ALL" 
                   ? "bg-theme-btn-primary text-white hover:bg-theme-btn-primary-secondary" 
                   : ""
@@ -300,7 +298,7 @@ function TicketsPageContent() {
                 onClick={() => setSelectedScope(scope.id)}
                 variant={selectedScope === scope.id ? "primary" : "ghost"}
                 size="sm"
-                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap shrink-0 ${
                   selectedScope === scope.id 
                     ? "bg-theme-btn-primary text-white hover:bg-theme-btn-primary-secondary" 
                     : ""

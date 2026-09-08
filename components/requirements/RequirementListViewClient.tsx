@@ -408,41 +408,43 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
               Deep dive analytics and reporting for all requirements
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0 shrink-0" />
-            <div className="hidden sm:block h-6 w-px bg-border mx-1"></div>
-            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-4 font-semibold border-border shadow-sm">
-              Export Excel
-            </AppButton>
-            <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<Download className="h-4 w-4" />} className="h-9 px-4 font-semibold border-border shadow-sm">
-              Export PDF
-            </AppButton>
-            <AppButton variant="outline" size="sm" onClick={() => setIsConfigOpen(true)} leftIcon={<Settings2 className="h-4 w-4" />} className="h-9 px-4 font-semibold border-border shadow-sm">
-              Columns
-            </AppButton>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
+            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />
+            <div className="hidden sm:block h-6 w-px bg-border mx-1 shrink-0"></div>
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
+                Export Excel
+              </AppButton>
+              <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<Download className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
+                Export PDF
+              </AppButton>
+              <AppButton variant="outline" size="sm" onClick={() => setIsConfigOpen(true)} leftIcon={<Settings2 className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm shrink-0">
+                Columns
+              </AppButton>
+            </div>
           </div>
         </header>
 
         <div className="theme-card-structural rounded-2xl shadow-sm flex flex-col">
-          <div className="flex items-center justify-between border-b border-border px-4 pt-2">
-            <div className="flex items-center gap-6 self-end">
+          <div className="flex items-center justify-between border-b border-border px-4 pt-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-4 sm:gap-6 self-end overflow-x-auto no-scrollbar pb-1 sm:pb-0 shrink-0">
               {(["ALL","REQUESTER","APPROVER"] as const).map(sc => (
                 <AppButton variant="secondary"
                   key={sc}
                   onClick={() => setScope(sc)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${!activeSavedFilterId && scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`pb-3 text-xs sm:text-[13px] font-bold transition-all border-b-2 relative top-[1px] whitespace-nowrap shrink-0 ${!activeSavedFilterId && scope === sc ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {sc === "ALL" ? "All Requirements" : sc === "REQUESTER" ? "My Requests" : "Pending My Approval"}
                 </AppButton>
               ))}
 
-              {savedFilters.length > 0 && <div className="h-4 w-px bg-border mx-2"></div>}
+              {savedFilters.length > 0 && <div className="h-4 w-px bg-border mx-1 sm:mx-2 shrink-0"></div>}
               
               {savedFilters.map(f => (
                 <AppButton variant="secondary"
                   key={f.id}
                   onClick={() => applyFilter(f)}
-                  className={`pb-3 text-[13px] font-bold transition-all border-b-2 relative top-[1px] ${activeSavedFilterId === f.id ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
+                  className={`pb-3 text-xs sm:text-[13px] font-bold transition-all border-b-2 relative top-[1px] whitespace-nowrap shrink-0 ${activeSavedFilterId === f.id ? "border-theme-btn-primary text-theme-icon" : "border-transparent text-muted hover:text-foreground"}`}
                 >
                   {f.name}
                 </AppButton>
