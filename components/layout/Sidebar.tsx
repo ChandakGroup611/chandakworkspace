@@ -134,7 +134,7 @@ const navGroups: NavGroup[] = [
   }
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?: boolean; onCloseMobile?: () => void }) {
   useRenderLog("Sidebar", {});
   const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
@@ -152,6 +152,10 @@ export default function Sidebar() {
       setExpandedTrees({ [activeItem.href]: true });
     } else {
       setExpandedTrees({});
+    }
+    // Auto-close mobile drawer on route change
+    if (onCloseMobile) {
+      onCloseMobile();
     }
   }, [pathname]);
   const [clientQuery, setClientQuery] = useState("");
@@ -219,47 +223,10 @@ export default function Sidebar() {
     }
   }, [isCompactState, isHovered]);
 
-  return (
-    <Profiler id="Sidebar" onRender={onRenderCallback}>
-      <aside
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`relative z-40 flex flex-col h-full shrink-0 font-sans transition-all duration-300 select-none theme-card-structural /40 border-r /30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${ isCompact ? "w-16" : "w-[240px]" }`}
-    >
-      {/* Sidebar Top Master Header */}
-      <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-0 px-3 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
-        {!isCompact ? (
-          <Link href="/" className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
-            <div className={`flex items-center justify-center transition-all duration-300 h-[64px] w-[210px] mx-auto shrink-0 px-1`}>
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            </div>
-            <div className="flex flex-col min-w-0 justify-center items-center px-1">
-              <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
-                Chandak Workspace
-              </span>
-            </div>
-          </Link>
-        ) : (
-          <Link href="/" className="flex h-14 w-14 mx-auto shrink-0 items-center justify-center mt-1">
-            <div className="h-12 w-12 mx-auto flex items-center justify-center rounded-lg mb-2 overflow-hidden px-1">
-              <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
-            </div>
-          </Link>
-        )}
-
-        <AppButton
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setIsCompactState(!isCompactState)}
-          className="absolute -right-3 top-4 rounded-full shadow-md transition-all hover:scale-110 duration-200 z-50 theme-card-structural text-muted hover:text-accent hover:border-accent/50"
-          title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
-        >
-          {isCompactState ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-        </AppButton>
-      </div>
-
+  const navContent = (
+    <>
       {/* Navigation Group Links */}
-      <div className="flex-1 px-3 pt-2 pb-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <div className="flex-1 px-3 pt-2 pb-24 md:pb-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {visibleNavTree.map((group, groupIdx) => {
           const groupColorClass = groupIdx === 0 
             ? "text-accent dark:text-accent" 
@@ -269,7 +236,7 @@ export default function Sidebar() {
 
           return (
             <div key={groupIdx} className="flex flex-col mb-2">
-              {!isCompact && (
+              {(!isCompact || isOpenMobile) && (
                 <div className={`px-3 mb-2 ${groupIdx === 0 ? "mt-1" : "mt-5"} flex items-center gap-1.5`}>
                   <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted/70">
                     {group.label}
@@ -307,23 +274,24 @@ export default function Sidebar() {
                     <div className="relative flex items-center">
                       <Link
                         href={item.href}
+                        onClick={() => onCloseMobile?.()}
                         className={`group relative flex items-center transition-all duration-200 select-none cursor-pointer ${
-                          isCompact 
+                          isCompact && !isOpenMobile
                             ? "w-10 h-10 mx-auto justify-center rounded-xl" 
                             : "flex-1 gap-3 rounded-r-xl py-2 px-3 text-sm overflow-hidden whitespace-nowrap"
                         } ${modTheme.activeBg} ${modTheme.text}`}
                       >
                         {/* Content Wrapper */}
-                        <div className={`flex items-center ${isCompact ? "justify-center w-full h-full" : "gap-3 w-full overflow-hidden"}`}>
+                        <div className={`flex items-center ${isCompact && !isOpenMobile ? "justify-center w-full h-full" : "gap-3 w-full overflow-hidden"}`}>
                           <IconComponent className={`shrink-0 transition-transform duration-200 ${
-                            isCompact ? "h-5 w-5" : "h-4 w-4"
+                            isCompact && !isOpenMobile ? "h-5 w-5" : "h-4 w-4"
                           } ${modTheme.iconColor}`} />
                           
-                          {!isCompact && (
+                          {(!isCompact || isOpenMobile) && (
                             <span className="flex-1 truncate transition-colors duration-150 text-inherit group-hover:font-bold">{item.label}</span>
                           )}
                           
-                          {!isCompact && item.badge && (
+                          {(!isCompact || isOpenMobile) && item.badge && (
                             <span className={`ml-auto text-[0.625rem] font-medium px-2 py-0.5 rounded-full ${item.badgeColor || 'bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]'}`}>
                               {item.badge}
                             </span>
@@ -332,7 +300,7 @@ export default function Sidebar() {
                       </Link>
 
                       {/* Expand Tree Toggle chevron button right side */}
-                      {!isCompact && item.subItems && (
+                      {(!isCompact || isOpenMobile) && item.subItems && (
                         <AppButton
                           variant="ghost"
                           size="icon-sm"
@@ -347,21 +315,20 @@ export default function Sidebar() {
                         </AppButton>
                       )}
 
-                      {/* Premium Interactive Module Popover Tooltip with Open Action Indicator button when minimized */}
-                      {isCompact && (
+                      {/* Premium Interactive Module Popover Tooltip when minimized */}
+                      {isCompact && !isOpenMobile && (
                         <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-md shrink-0 ${ "theme-card-structural text-foreground" }`}>
                           <span className="font-medium whitespace-nowrap text-xs">{item.label}</span>
                         </div>
                       )}
                     </div>
 
-                    {!isCompact && item.subItems && isTreeExpanded && (
+                    {(!isCompact || isOpenMobile) && item.subItems && isTreeExpanded && (
                       <div className={`pl-9 pr-1 py-1 space-y-1 relative animate-in slide-in-from-top-2 fade-in duration-200`}>
                         {/* The vertical chain line */}
                         <div className="absolute left-[1.125rem] top-0 bottom-3 w-[1px] bg-gradient-to-b from-border/80 via-border/40 to-transparent" />
                         
                         {item.subItems.map((sub) => {
-                          
                           let isSubActive = pathname === sub.href;
                           if (sub.href === '/requirements/approvals' && searchParams?.get('from') === 'approvals') {
                             isSubActive = true;
@@ -377,14 +344,16 @@ export default function Sidebar() {
                             <Link
                               key={sub.href}
                               href={sub.href}
-                              onClick={() => setClientQuery(`?scope=${sub.scopeParam}`)}
+                              onClick={() => {
+                                setClientQuery(`?scope=${sub.scopeParam}`);
+                                onCloseMobile?.();
+                              }}
                               className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-r-lg text-xs transition-all duration-300 select-none cursor-pointer overflow-hidden ${
                                 isSubActive 
                                   ? `font-bold text-accent bg-accent/5 border-l-[3px] border-accent` 
                                   : `text-muted hover:bg-surface/50 hover:text-foreground border-l-[3px] border-transparent`
                               }`}
                             >
-                              {/* The horizontal branch line */}
                               <div className={`absolute -left-[14px] top-1/2 w-3 h-[1px] transition-colors duration-300 ${isSubActive ? 'bg-accent' : 'bg-border/60 group-hover:bg-border'}`} />
                               <span className="truncate flex-1 text-inherit transform group-hover:translate-x-1 transition-transform duration-200">{sub.label}</span>
                             </Link>
@@ -400,8 +369,79 @@ export default function Sidebar() {
         );
       })}
       </div>
+    </>
+  );
 
-    </aside>
+  return (
+    <Profiler id="Sidebar" onRender={onRenderCallback}>
+      {/* Mobile Off-Canvas Drawer Backdrop & Container */}
+      {isOpenMobile && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => onCloseMobile?.()}
+          />
+          {/* Drawer Menu */}
+          <div className="relative z-50 w-[280px] max-w-[85vw] bg-surface dark:bg-[#0B0F19] h-full flex flex-col shadow-2xl border-r border-border animate-in slide-in-from-left duration-300">
+            <div className="flex items-center justify-between p-4 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-8 w-auto dark:brightness-0 dark:invert" />
+                <span className="text-sm font-bold text-foreground">Chandak Workspace</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onCloseMobile?.()}
+                className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            </div>
+            {navContent}
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Persistent Aside Navigation */}
+      <aside
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`hidden md:flex relative z-40 flex-col h-full shrink-0 font-sans transition-all duration-300 select-none theme-card-structural border-r border-border/30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${ isCompact ? "w-16" : "w-[240px]" }`}
+      >
+        {/* Sidebar Top Master Header */}
+        <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-0 px-3 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
+          {!isCompact ? (
+            <Link href="/" className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
+              <div className={`flex items-center justify-center transition-all duration-300 h-[64px] w-[210px] mx-auto shrink-0 px-1`}>
+                <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              </div>
+              <div className="flex flex-col min-w-0 justify-center items-center px-1">
+                <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
+                  Chandak Workspace
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/" className="flex h-14 w-14 mx-auto shrink-0 items-center justify-center mt-1">
+              <div className="h-12 w-12 mx-auto flex items-center justify-center rounded-lg mb-2 overflow-hidden px-1">
+                <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              </div>
+            </Link>
+          )}
+
+          <AppButton
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setIsCompactState(!isCompactState)}
+            className="absolute -right-3 top-4 rounded-full shadow-md transition-all hover:scale-110 duration-200 z-50 theme-card-structural text-muted hover:text-accent hover:border-accent/50"
+            title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
+          >
+            {isCompactState ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+          </AppButton>
+        </div>
+
+        {navContent}
+      </aside>
     </Profiler>
   );
 }

@@ -17,7 +17,7 @@ import {
   AppTableHead,
   AppTableCell
 } from "@/components/ui/AppTable";
-import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield, Globe, Building2, UserCheck } from "lucide-react";
+import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield, Globe, Building2, UserCheck, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { deleteTask, getTaskStatuses, updateTaskStatusInline, getDepartments, executeTaskBatchOperation, createTask } from "@/lib/actions/tasks";
 import { fetchTasksByWorkspace, fetchAllTasks, fetchWorkspaces, fetchPriorities } from "@/lib/actions/workspaces";
@@ -154,7 +154,8 @@ function DraggableTableHead({
     position: 'sticky' as any,
     top: 0,
     left: isFirst ? '40px' : undefined,
-    zIndex: isDragging ? 50 : (isFirst ? 30 : 25),
+    right: isActions ? '0px' : undefined,
+    zIndex: isDragging ? 50 : (isActions ? 40 : (isFirst ? 30 : 25)),
   };
   return (
     <AppTableHead 
@@ -163,6 +164,7 @@ function DraggableTableHead({
       className={cn(
         "select-none bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-3 py-2 cursor-grab active:cursor-grabbing hover:opacity-90/10 transition-colors align-middle group/header relative", 
         !isTitle ? "text-center" : "text-left",
+        isActions ? "shadow-[-4px_0_8px_rgba(0,0,0,0.06)]" : "",
         ["code", "due_date", "created_at", "updated_at", "status", "priority", "department"].includes(col.field_key) ? "whitespace-nowrap" : ""
       )}
       {...attributes} 
@@ -282,6 +284,12 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
   const [viewState, setViewState] = useState<any>(null);
   
   const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const closeMenu = () => setOpenMenuTaskId(null);
+    document.addEventListener("click", closeMenu);
+    return () => document.removeEventListener("click", closeMenu);
+  }, []);
 
   const {
     savedFilters,
@@ -1412,433 +1420,612 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
         )}
 
       {viewMode === "list" ? (
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-border dark:border-border bg-elevated shadow-sm relative">
-          <AppTable className="w-full min-w-max border-separate border-spacing-0 table-fixed">
-            <AppTableHeader className="sticky top-0 z-40 bg-elevated">
-              <AppTableRow>
-                <AppTableHead className="text-center p-0 w-[40px] min-w-[40px] max-w-[40px] sticky left-0 top-0 z-50 bg-elevated">
-                  <input 
-                    type="checkbox" 
-                    checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
-                    ref={input => {
-                      if (input) {
-                        input.indeterminate = selectedTaskIds.size > 0 && selectedTaskIds.size < filtered.length;
-                      }
-                    }}
-                    onChange={handleSelectAll}
-                    className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
-                  />
-                </AppTableHead>
-                <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
-                  {visibleColumns.map((col, index) => (
-                    <DraggableTableHead 
-                      key={col.field_id} 
-                      col={col} 
-                      isFirst={index === 0} 
-                      filterValues={columnFilters[col.field_id || col.field_key] || []}
-                      onFilterChange={(vals) => handleColumnFilterChange(col.field_id || col.field_key, vals)}
-                      options={columnOptions[col.field_id || col.field_key]}
-                    />
-                  ))}
-                </SortableContext>
-              </AppTableRow>
-            </AppTableHeader>
-            <AppTableBody>
-            {virtualizer.getVirtualItems().length > 0 && virtualizer.getVirtualItems()[0].start > 0 && (
-              <tr>
-                <td colSpan={visibleColumns.length + 1} style={{ height: `${virtualizer.getVirtualItems()[0].start}px` }} />
-              </tr>
-            )}
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const task = filtered[virtualRow.index];
-              return (
-                <AppTableRow 
-                  key={task.id} 
-                  data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}
-                  onClick={() => router.push(`/tasks/${task.id}`)}
-                  className="cursor-pointer hover:bg-surface dark:hover:bg-surface/50"
-                >
-                  <AppTableCell className="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-surface group-hover:bg-surface transition-colors" onClick={(e) => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedTaskIds.has(task.id)}
-                      onChange={(e) => handleSelectTask(task.id, e.target.checked)}
-                      className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
-                    />
-                  </AppTableCell>
-                  {visibleColumns.map((col, index) => {
-                    const renderCell = () => {
-                      switch(col.field_key) {
-                      case "code": return (
-                        <AppTableCell className="font-mono font-bold text-theme-icon whitespace-nowrap text-center">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
-                      );
-                      case "title_description": return (
-                        <AppTableCell className="text-left">
-                          <div className="flex items-center gap-2 max-w-[250px] md:max-w-none">
-                            <div className="text-[13px] font-semibold text-foreground truncate min-w-0 flex-1" title={task.title || ''}>{task.title || '-'}</div>
-                            {task.attachmentCount > 0 && (
-                              <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 text-theme-icon dark:text-theme-icon shrink-0" title={`${task.attachmentCount} Attachment(s)`}>
-                                <Paperclip className="h-3 w-3" />
-                              </div>
-                            )}
-                          </div>
-                          {task.custom_fields?.progress_percentage !== undefined && (
-                            <div className="mt-1.5 flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
-                                <div className="h-full bg-success rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
-                              </div>
-                              <span className="text-[10px] font-bold text-muted">{task.custom_fields.progress_percentage}%</span>
-                            </div>
-                          )}
-                        </AppTableCell>
-                      );
-                      case "workspace": {
-                        const wsName = task.workspace?.name || task.workspace?.code || '—';
-                        const parts = wsName.split(' - ');
-                        const mainWorkspace = parts[0];
-                        return (
-                          <AppTableCell className="text-subtle text-center px-2" title={mainWorkspace}>
-                            <div className="max-w-[120px] truncate mx-auto">{mainWorkspace}</div>
-                          </AppTableCell>
-                        );
-                      }
-                      case "sub_workspace": {
-                        const finalSubName = getSubWorkspaceName(task);
-                        return (
-                          <AppTableCell className="text-subtle text-center px-2" title={finalSubName}>
-                            <div className="max-w-[120px] truncate mx-auto">{finalSubName}</div>
-                          </AppTableCell>
-                        );
-                      }
-                      case "department": return (
-                        <AppTableCell className="text-subtle whitespace-nowrap text-center px-2">
-                          <Popover.Root>
-                            <Popover.Trigger asChild>
-                              <AppButton variant="secondary" 
-                                onClick={(e) => { e.stopPropagation(); }}
-                                className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
-                                title={canUpdate ? "Update Department" : "Department"}
+        <>
+          {/* Mobile / Tablet Card View (<1024px) */}
+          <div className="block lg:hidden space-y-3">
+            {filtered.length === 0 ? (
+              <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+                No tasks match your filters.
+              </div>
+            ) : (
+              filtered.map((task) => {
+                const isSelected = selectedTaskIds.has(task.id);
+                const subName = getSubWorkspaceName(task);
+                const wsName = (task.workspace?.name || task.workspace?.code || '—').split(' - ')[0];
+                const isMenuOpen = openMenuTaskId === task.id;
+
+                return (
+                  <div 
+                    key={task.id}
+                    data-state={isSelected ? "selected" : undefined}
+                    className={cn(
+                      "rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all select-none space-y-3 relative",
+                      isSelected && "ring-2 ring-theme-btn-primary bg-theme-btn-primary/5"
+                    )}
+                    onClick={() => router.push(`/tasks/${task.id}`)}
+                  >
+                    {/* Top Row: Checkbox, Code, Status & Priority Badges, 3-Dots Menu */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected}
+                            onChange={(e) => handleSelectTask(task.id, e.target.checked)}
+                            className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-4 h-4 block"
+                          />
+                        </div>
+                        <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                          {task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}
+                        </span>
+                        {task.priority?.name && (
+                          <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true} className="text-[10px] py-0 px-1.5 truncate">
+                            {task.priority.name}
+                          </AppBadge>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} isOutline={true} className="text-[10px] py-0.5 px-2">
+                          {task.status?.name || 'Open'}
+                        </AppBadge>
+
+                        {/* 3-Dots Action Popover */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setOpenMenuTaskId(isMenuOpen ? null : task.id)}
+                            className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-elevated transition-colors"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                          {isMenuOpen && (
+                            <div className="absolute right-0 top-8 z-50 w-36 p-1 rounded-xl theme-card-structural border border-border shadow-xl space-y-0.5 animate-in zoom-in-95">
+                              <Link
+                                href={`/tasks/${task.id}?mode=view`}
+                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-foreground hover:bg-elevated transition-colors w-full"
+                                onClick={() => setOpenMenuTaskId(null)}
                               >
-                                <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdate ? "border-dashed" : ""}`}>
-                                  {task.department?.name || '—'}
-                                </AppBadge>
-                              </AppButton>
-                            </Popover.Trigger>
-                            {canUpdate && (
-                              <Popover.Portal>
-                                <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
-                                  <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-2 py-1 mb-1 border-b border-border/50">Update Department</div>
-                                  <div className="max-h-60 overflow-y-auto pr-1">
-                                    {departments.map(d => (
-                                      <AppButton 
-                                        key={d.id}
-                                        variant="ghost"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (d.id === task.department_id) return;
-                                          setInlineTask(task);
-                                          setInlineNewDepartment(d.id);
-                                          setInlineRemark("");
-                                          setDepartmentModalOpen(true);
-                                        }}
-                                        className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-elevated font-medium'}`}
-                                      >
-                                        <span className="truncate">{d.name}</span>
-                                        {d.id === task.department_id && <CheckCircle2 className="h-3 w-3" />}
-                                      </AppButton>
-                                    ))}
-                                  </div>
-                                </Popover.Content>
-                              </Popover.Portal>
-                            )}
-                          </Popover.Root>
-                        </AppTableCell>
-                      );
-                      case "priority": return (
-                        <AppTableCell className="text-center px-1">
-                          <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
-                            <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true} className="max-w-full truncate block" title={task.priority?.name || ''}>
-                              {task.priority?.name || '—'}
-                            </AppBadge>
-                          </div>
-                        </AppTableCell>
-                      );
-                      case "due_date": return (
-                        <AppTableCell className="text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
-                      );
-                      case "status": return (
-                        <AppTableCell className="text-center px-1">
-                          <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
-                            <Popover.Root>
-                              <Popover.Trigger asChild>
-                                <AppButton variant="secondary" 
-                                  onClick={(e) => { e.stopPropagation(); }}
-                                  className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full truncate px-2`} 
-                                  title={canUpdate ? "Update Status" : "Status"}
-                                >
-                                  <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdate ? "border-dashed" : "", "max-w-full truncate block")} isOutline={true} title={task.status?.name || ''}>
-                                    {task.status?.name || '—'}
-                                  </AppBadge>
-                                </AppButton>
-                              </Popover.Trigger>
-                            {canUpdate && (
-                              <Popover.Portal>
-                                <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/50">
-                                    <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Update Status</span>
-                                    <Link href={`/tasks/${task.id}`} className="text-[10px] font-bold text-primary hover:underline">View</Link>
-                                  </div>
-                                  <div className="max-h-60 overflow-y-auto pr-1">
-                                    {masterStatuses.map(s => (
-                                      <AppButton 
-                                        variant="ghost"
-                                        key={s.id}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (s.id === task.status_id) return;
-                                          setInlineTask(task);
-                                          setInlineNewStatus(s.id);
-                                          setInlineRemark("");
-                                          setStatusModalOpen(true);
-                                        }}
-                                        className={`w-full text-left px-2 py-1.5 text-xs rounded-lg transition-colors flex items-center justify-between ${s.id === task.status_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-surface/50 font-medium'}`}
-                                      >
-                                        <div className="flex items-center gap-2 truncate">
-                                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color || '#ccc' }} />
-                                          <span className="truncate">{s.name}</span>
-                                        </div>
-                                        {s.id === task.status_id && <CheckCircle2 className="h-3 w-3" />}
-                                      </AppButton>
-                                    ))}
-                                  </div>
-                                </Popover.Content>
-                              </Popover.Portal>
-                            )}
-                          </Popover.Root>
-                          </div>
-                        </AppTableCell>
-                      );
-                      case "assignee": return (
-                        <AppTableCell className="text-center">
-                          {task.assignee ? (
-                            <div className="flex items-center justify-center gap-2">
-                              {(() => {
-                                 const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
-                                 if (!a) return null;
-                                 return (
-                                   <>
-                                     {a.profile_photo ? (
-                                       <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover bg-elevated" />
-                                     ) : (
-                                       <div className="w-5 h-5 rounded-full bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center text-[10px] font-bold shrink-0">
-                                         {a.full_name?.substring(0, 2).toUpperCase() || "U"}
-                                       </div>
-                                     )}
-                                     <span className="text-[13px] font-medium text-foreground whitespace-nowrap">{a.full_name}</span>
-                                   </>
-                                 );
-                              })()}
-                            </div>
-                          ) : (
-                            <span className="text-[13px] text-subtle italic">Unassigned</span>
-                          )}
-                        </AppTableCell>
-                      );
-                      case "creator_name": return (
-                        <AppTableCell className="text-subtle text-center">{task.creator?.full_name || '—'}</AppTableCell>
-                      );
-                      case "start_date": return (
-                        <AppTableCell className="text-subtle whitespace-nowrap text-center">{formatDate(task.start_date)}</AppTableCell>
-                      );
-                      case "duration": {
-                        let text = "—";
-                        if (task.start_date && task.end_date) {
-                          const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
-                          text = `${diff} day(s)`;
-                        }
-                        return <AppTableCell className="text-subtle ">{text}</AppTableCell>;
-                      }
-                      case "progress": return (
-                        <AppTableCell className="w-[120px]">
-                          {task.progress_percentage !== undefined ? (
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
-                                <div className="h-full bg-success rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
-                              </div>
-                              <span className="text-[10px] font-bold text-muted w-6 text-right">{task.progress_percentage}%</span>
-                            </div>
-                          ) : "—"}
-                        </AppTableCell>
-                      );
-                      case "executors": return (
-                        <AppTableCell>
-                          {task.executors && task.executors.length > 0 ? (
-                            <div className="flex -space-x-1.5 overflow-hidden">
-                              {task.executors.slice(0, 3).map((u: any) => (
-                                u.profile_photo ? (
-                                  <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
-                                ) : (
-                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-emerald-100 text-emerald-700 text-[8px] font-bold" title={u.full_name}>
-                                    {u.full_name?.substring(0, 2).toUpperCase() || "E"}
-                                  </div>
-                                )
-                              ))}
-                              {task.executors.length > 3 && (
-                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
-                                  +{task.executors.length - 3}
-                                </div>
-                              )}
-                            </div>
-                          ) : <span className="text-muted text-xs">—</span>}
-                        </AppTableCell>
-                      );
-                      case "reviewers": return (
-                        <AppTableCell>
-                          {task.reviewers && task.reviewers.length > 0 ? (
-                            <div className="flex -space-x-1.5 overflow-hidden">
-                              {task.reviewers.slice(0, 3).map((u: any) => (
-                                u.profile_photo ? (
-                                  <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
-                                ) : (
-                                  <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-theme-btn-primary/10 text-theme-icon text-[8px] font-bold" title={u.full_name}>
-                                    {u.full_name?.substring(0, 2).toUpperCase() || "W"}
-                                  </div>
-                                )
-                              ))}
-                              {task.reviewers.length > 3 && (
-                                <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
-                                  +{task.reviewers.length - 3}
-                                </div>
-                              )}
-                            </div>
-                          ) : <span className="text-muted text-xs">—</span>}
-                        </AppTableCell>
-                      );
-                      case "attachments": return (
-                        <AppTableCell className="text-center">
-                          {task.attachmentCount > 0 ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
-                              <Paperclip className="h-3 w-3" />
-                              {task.attachmentCount}
-                            </div>
-                          ) : <span className="text-muted text-xs">—</span>}
-                        </AppTableCell>
-                      );
-                      case "comments": return (
-                        <AppTableCell className="text-center">
-                          {task.commentCount > 0 ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
-                              <MessageSquare className="h-3 w-3" />
-                              {task.commentCount}
-                            </div>
-                          ) : <span className="text-muted text-xs">—</span>}
-                        </AppTableCell>
-                      );
-                      case "external_link": return (
-                        <AppTableCell >
-                          {task.custom_fields?.link_url ? (
-                            <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="text-theme-icon hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
-                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                              <span className="truncate">{task.custom_fields.link_url}</span>
-                            </a>
-                          ) : <span className="text-muted">—</span>}
-                        </AppTableCell>
-                      );
-                      case "created_at": return (
-                        <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
-                      );
-                      case "updated_at": return (
-                        <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
-                      );
-                      case "actions": return (
-                        <AppTableCell className="text-right">
-                          <div className="flex items-center justify-end gap-3">
-                            <Link 
-                              href={`/tasks/${task.id}?mode=view`}
-                              className="text-theme-icon hover:text-theme-icon transition-colors active:scale-95"
-                              title="View Task"
-                            >
-                              <Eye className="h-[15px] w-[15px]" />
-                            </Link>
-                            {canUpdate && (
-                              <Link 
-                                href={`/tasks/${task.id}`}
-                                className="text-warning hover:text-warning transition-colors active:scale-95"
-                                title="Edit Task"
-                              >
-                                <Edit2 className="h-[15px] w-[15px]" />
+                                <Eye className="h-3.5 w-3.5 text-theme-icon" />
+                                <span>View</span>
                               </Link>
-                            )}
-                            {canDelete && (
-                              <AppButton variant="secondary" 
-                                onClick={(e) => handleDeleteTask(e, task.id)}
-                                disabled={deleteLoadingId === task.id}
-                                className="text-danger hover:text-danger transition-colors active:scale-95 disabled:opacity-50"
-                                title="Delete Task"
-                              >
-                                {deleteLoadingId === task.id ? (
-                                  <Loader2 className="h-[15px] w-[15px] animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-[15px] w-[15px]" />
-                                )}
-                              </AppButton>
-                            )}
-                          </div>
-                        </AppTableCell>
-                      );
-                      default: {
-                        let val = undefined;
-                        if (task.custom_fields && task.custom_fields[col.field_key] !== undefined) {
-                          val = task.custom_fields[col.field_key];
-                        } else if (task[col.field_key] !== undefined) {
-                          val = task[col.field_key];
-                        }
-                        
-                        if (val === undefined || val === null || val === "") val = "—";
-                        else if (col.data_type === "boolean") val = val ? "Yes" : "No";
-                        else if (col.data_type === "date") val = formatDate(val);
-                        
-                        return (
-                          <AppTableCell className="text-subtle ">
-                            <div className="truncate max-w-[200px]" title={String(val)}>
-                              {col.data_type === "link" && val !== "—" ? (
-                                <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
-                              ) : col.data_type === "badge" && val !== "—" ? (
-                                <AppBadge variant="neutral">{val}</AppBadge>
-                              ) : (
-                                val
+                              {canUpdate && (
+                                <Link
+                                  href={`/tasks/${task.id}`}
+                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-warning hover:bg-elevated transition-colors w-full"
+                                  onClick={() => setOpenMenuTaskId(null)}
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                  <span>Edit</span>
+                                </Link>
+                              )}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    setOpenMenuTaskId(null);
+                                    handleDeleteTask(e, task.id);
+                                  }}
+                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-danger hover:bg-danger/10 transition-colors w-full text-left"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <span>Delete</span>
+                                </button>
                               )}
                             </div>
-                          </AppTableCell>
-                        );
-                      }
-                    }
-                    };
-                    const cellNode = renderCell() as React.ReactElement<any>;
-                    const isFirst = index === 0;
-                    return React.cloneElement(cellNode, {
-                      key: col.field_id,
-                      className: cn(cellNode.props.className, isFirst ? "sticky left-[40px] z-20 bg-surface transition-colors" : ""),
-                    });
-                  })}
-                </AppTableRow>
-              );
-            })}
-            {virtualizer.getVirtualItems().length > 0 && (
-              <tr>
-                <td 
-                  colSpan={visibleColumns.length + 1} 
-                  style={{ 
-                    height: `${virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end}px` 
-                  }} 
-                />
-              </tr>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Title & Attachment */}
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground hover:text-theme-icon transition-colors line-clamp-2">
+                        {task.title || 'Untitled Task'}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted font-medium flex-wrap">
+                        <span className="truncate max-w-[140px] text-foreground/80 font-semibold">{wsName}</span>
+                        {subName !== '—' && (
+                          <>
+                            <span>›</span>
+                            <span className="truncate max-w-[120px]">{subName}</span>
+                          </>
+                        )}
+                        {task.attachmentCount > 0 && (
+                          <span className="inline-flex items-center gap-1 text-theme-icon bg-theme-btn-primary/10 px-1.5 py-0.2 rounded font-bold">
+                            <Paperclip className="h-3 w-3" /> {task.attachmentCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Progress Bar (if exists) */}
+                    {task.custom_fields?.progress_percentage !== undefined && (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-muted">
+                          <span>Progress</span>
+                          <span>{task.custom_fields.progress_percentage}%</span>
+                        </div>
+                        <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
+                          <div className="h-full bg-success rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }} />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bottom Row: Assignee, Department, Due Date */}
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {task.assignee ? (
+                          (() => {
+                            const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                            if (!a) return <span className="text-muted text-[11px] italic">Unassigned</span>;
+                            return (
+                              <div className="flex items-center gap-1.5 min-w-0" title={a.full_name}>
+                                {a.profile_photo ? (
+                                  <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-theme-btn-primary/20 text-theme-icon flex items-center justify-center text-[9px] font-bold shrink-0">
+                                    {a.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                  </div>
+                                )}
+                                <span className="text-xs font-semibold text-foreground truncate max-w-[100px]">{a.full_name}</span>
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-muted text-[11px] italic">Unassigned</span>
+                        )}
+                        {task.department?.name && (
+                          <span className="text-[10px] font-bold text-muted bg-elevated px-2 py-0.5 rounded-md truncate max-w-[100px]">
+                            {task.department.name}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-[11px] font-semibold text-muted shrink-0 flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{task.end_date || '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
             )}
-          </AppTableBody>
-        </AppTable>
+          </div>
+
+          {/* Desktop Table View (>=1024px) */}
+          <div className="hidden lg:block">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <div ref={parentRef} className="h-[calc(100vh-160px)] overflow-auto rounded-xl border border-border dark:border-border bg-elevated shadow-sm relative">
+                <AppTable className="w-full min-w-max border-separate border-spacing-0 table-fixed">
+                  <AppTableHeader className="sticky top-0 z-40 bg-elevated">
+                    <AppTableRow>
+                      <AppTableHead className="text-center p-0 w-[40px] min-w-[40px] max-w-[40px] sticky left-0 top-0 z-50 bg-elevated">
+                        <input 
+                          type="checkbox" 
+                          checked={filtered.length > 0 && selectedTaskIds.size === filtered.length}
+                          ref={input => {
+                            if (input) {
+                              input.indeterminate = selectedTaskIds.size > 0 && selectedTaskIds.size < filtered.length;
+                            }
+                          }}
+                          onChange={handleSelectAll}
+                          className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
+                        />
+                      </AppTableHead>
+                      <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
+                        {visibleColumns.map((col, index) => (
+                          <DraggableTableHead 
+                            key={col.field_id} 
+                            col={col} 
+                            isFirst={index === 0} 
+                            filterValues={columnFilters[col.field_id || col.field_key] || []}
+                            onFilterChange={(vals) => handleColumnFilterChange(col.field_id || col.field_key, vals)}
+                            options={columnOptions[col.field_id || col.field_key]}
+                          />
+                        ))}
+                      </SortableContext>
+                    </AppTableRow>
+                  </AppTableHeader>
+                  <AppTableBody>
+                  {virtualizer.getVirtualItems().length > 0 && virtualizer.getVirtualItems()[0].start > 0 && (
+                    <tr>
+                      <td colSpan={visibleColumns.length + 1} style={{ height: `${virtualizer.getVirtualItems()[0].start}px` }} />
+                    </tr>
+                  )}
+                  {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const task = filtered[virtualRow.index];
+                    return (
+                      <AppTableRow 
+                        key={task.id} 
+                        data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}
+                        onClick={() => router.push(`/tasks/${task.id}`)}
+                        className="cursor-pointer hover:bg-surface dark:hover:bg-surface/50"
+                      >
+                        <AppTableCell className="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-surface group-hover:bg-surface transition-colors" onClick={(e) => e.stopPropagation()}>
+                          <input 
+                            type="checkbox" 
+                            checked={selectedTaskIds.has(task.id)}
+                            onChange={(e) => handleSelectTask(task.id, e.target.checked)}
+                            className="rounded border-border text-theme-icon focus:ring-theme-btn-primary w-3.5 h-3.5 mx-auto block"
+                          />
+                        </AppTableCell>
+                        {visibleColumns.map((col, index) => {
+                          const renderCell = () => {
+                            switch(col.field_key) {
+                            case "code": return (
+                              <AppTableCell className="font-mono font-bold text-theme-icon whitespace-nowrap text-center">{task.code || `TSK-${task.id.substring(0,4).toUpperCase()}`}</AppTableCell>
+                            );
+                            case "title_description": return (
+                              <AppTableCell className="text-left">
+                                <div className="flex items-center gap-2 max-w-[250px] md:max-w-none">
+                                  <div className="text-[13px] font-semibold text-foreground truncate min-w-0 flex-1" title={task.title || ''}>{task.title || '-'}</div>
+                                  {task.attachmentCount > 0 && (
+                                    <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 dark:bg-theme-btn-primary/20 text-theme-icon dark:text-theme-icon shrink-0" title={`${task.attachmentCount} Attachment(s)`}>
+                                      <Paperclip className="h-3 w-3" />
+                                    </div>
+                                  )}
+                                </div>
+                                {task.custom_fields?.progress_percentage !== undefined && (
+                                  <div className="mt-1.5 flex items-center gap-2">
+                                    <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
+                                      <div className="h-full bg-success rounded-full" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-muted">{task.custom_fields.progress_percentage}%</span>
+                                  </div>
+                                )}
+                              </AppTableCell>
+                            );
+                            case "workspace": {
+                              const wsName = task.workspace?.name || task.workspace?.code || '—';
+                              const parts = wsName.split(' - ');
+                              const mainWorkspace = parts[0];
+                              return (
+                                <AppTableCell className="text-subtle text-center px-2" title={mainWorkspace}>
+                                  <div className="max-w-[120px] truncate mx-auto">{mainWorkspace}</div>
+                                </AppTableCell>
+                              );
+                            }
+                            case "sub_workspace": {
+                              const finalSubName = getSubWorkspaceName(task);
+                              return (
+                                <AppTableCell className="text-subtle text-center px-2" title={finalSubName}>
+                                  <div className="max-w-[120px] truncate mx-auto">{finalSubName}</div>
+                                </AppTableCell>
+                              );
+                            }
+                            case "department": return (
+                              <AppTableCell className="text-subtle whitespace-nowrap text-center px-2">
+                                <Popover.Root>
+                                  <Popover.Trigger asChild>
+                                    <AppButton variant="secondary" 
+                                      onClick={(e) => { e.stopPropagation(); }}
+                                      className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
+                                      title={canUpdate ? "Update Department" : "Department"}
+                                    >
+                                      <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdate ? "border-dashed" : ""}`}>
+                                        {task.department?.name || '—'}
+                                      </AppBadge>
+                                    </AppButton>
+                                  </Popover.Trigger>
+                                  {canUpdate && (
+                                    <Popover.Portal>
+                                      <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                                        <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-2 py-1 mb-1 border-b border-border/50">Update Department</div>
+                                        <div className="max-h-60 overflow-y-auto pr-1">
+                                          {departments.map(d => (
+                                            <AppButton 
+                                              key={d.id}
+                                              variant="ghost"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (d.id === task.department_id) return;
+                                                setInlineTask(task);
+                                                setInlineNewDepartment(d.id);
+                                                setInlineRemark("");
+                                                setDepartmentModalOpen(true);
+                                              }}
+                                              className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${d.id === task.department_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-elevated font-medium'}`}
+                                            >
+                                              <span className="truncate">{d.name}</span>
+                                              {d.id === task.department_id && <CheckCircle2 className="h-3 w-3" />}
+                                            </AppButton>
+                                          ))}
+                                        </div>
+                                      </Popover.Content>
+                                    </Popover.Portal>
+                                  )}
+                                </Popover.Root>
+                              </AppTableCell>
+                            );
+                            case "priority": return (
+                              <AppTableCell className="text-center px-1">
+                                <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
+                                  <AppBadge variant={task.priority?.priority_color ? "custom" : "info"} customColor={task.priority?.priority_color || null} isOutline={true} className="max-w-full truncate block" title={task.priority?.name || ''}>
+                                    {task.priority?.name || '—'}
+                                  </AppBadge>
+                                </div>
+                              </AppTableCell>
+                            );
+                            case "due_date": return (
+                              <AppTableCell className="text-subtle whitespace-nowrap text-center">{task.end_date || '—'}</AppTableCell>
+                            );
+                            case "status": return (
+                              <AppTableCell className="text-center px-1">
+                                <div className="w-full flex items-center justify-center min-w-0 overflow-hidden">
+                                  <Popover.Root>
+                                    <Popover.Trigger asChild>
+                                      <AppButton variant="secondary" 
+                                        onClick={(e) => { e.stopPropagation(); }}
+                                        className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full truncate px-2`} 
+                                        title={canUpdate ? "Update Status" : "Status"}
+                                      >
+                                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdate ? "border-dashed" : "", "max-w-full truncate block")} isOutline={true} title={task.status?.name || ''}>
+                                          {task.status?.name || '—'}
+                                        </AppBadge>
+                                      </AppButton>
+                                    </Popover.Trigger>
+                                  {canUpdate && (
+                                    <Popover.Portal>
+                                      <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/50">
+                                          <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Update Status</span>
+                                          <Link href={`/tasks/${task.id}`} className="text-[10px] font-bold text-primary hover:underline">View</Link>
+                                        </div>
+                                        <div className="max-h-60 overflow-y-auto pr-1">
+                                          {masterStatuses.map(s => (
+                                            <AppButton 
+                                              variant="ghost" 
+                                              key={s.id}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (s.id === task.status_id) return;
+                                                setInlineTask(task);
+                                                setInlineNewStatus(s.id);
+                                                setInlineRemark("");
+                                                setStatusModalOpen(true);
+                                              }}
+                                              className={`w-full text-left px-2.5 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${s.id === task.status_id ? 'bg-primary/10 text-primary font-bold' : 'text-foreground hover:bg-elevated font-medium'}`}
+                                            >
+                                              <span className="truncate">{s.name}</span>
+                                              {s.id === task.status_id && <CheckCircle2 className="h-3 w-3" />}
+                                            </AppButton>
+                                          ))}
+                                        </div>
+                                      </Popover.Content>
+                                    </Popover.Portal>
+                                  )}
+                                </Popover.Root>
+                              </div>
+                            </AppTableCell>
+                          );
+                          case "assignee": return (
+                            <AppTableCell className="text-center px-1">
+                              {task.assignee ? (
+                                <div className="flex items-center justify-center gap-1.5">
+                                  {(() => {
+                                     const a = Array.isArray(task.assignee) ? task.assignee[0] : task.assignee;
+                                     if (!a) return <span className="text-[13px] text-subtle italic">Unassigned</span>;
+                                     return (
+                                       <>
+                                         {a.profile_photo ? (
+                                           <img src={a.profile_photo} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                                         ) : (
+                                           <div className="w-5 h-5 rounded-full bg-theme-btn-primary/20 text-theme-icon flex items-center justify-center text-[9px] font-bold shrink-0">
+                                             {a.full_name?.substring(0, 2).toUpperCase() || "U"}
+                                           </div>
+                                         )}
+                                         <span className="text-xs font-semibold text-foreground truncate max-w-[90px]" title={a.full_name}>{a.full_name}</span>
+                                       </>
+                                     );
+                                  })()}
+                                </div>
+                              ) : (
+                                <span className="text-[13px] text-subtle italic">Unassigned</span>
+                              )}
+                            </AppTableCell>
+                          );
+                          case "creator_name": return (
+                            <AppTableCell className="text-subtle text-center">{task.creator?.full_name || '—'}</AppTableCell>
+                          );
+                          case "start_date": return (
+                            <AppTableCell className="text-subtle whitespace-nowrap text-center">{formatDate(task.start_date)}</AppTableCell>
+                          );
+                          case "duration": {
+                            let text = "—";
+                            if (task.start_date && task.end_date) {
+                              const diff = Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24));
+                              text = `${diff} day(s)`;
+                            }
+                            return <AppTableCell className="text-subtle ">{text}</AppTableCell>;
+                          }
+                          case "progress": return (
+                            <AppTableCell className="w-[120px]">
+                              {task.progress_percentage !== undefined ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
+                                    <div className="h-full bg-success rounded-full" style={{ width: `${task.progress_percentage}%` }}></div>
+                                  </div>
+                                  <span className="text-[10px] font-bold text-muted w-6 text-right">{task.progress_percentage}%</span>
+                                </div>
+                              ) : "—"}
+                            </AppTableCell>
+                          );
+                          case "executors": return (
+                            <AppTableCell>
+                              {task.executors && task.executors.length > 0 ? (
+                                <div className="flex -space-x-1.5 overflow-hidden">
+                                  {task.executors.slice(0, 3).map((u: any) => (
+                                    u.profile_photo ? (
+                                      <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
+                                    ) : (
+                                      <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-emerald-100 text-emerald-700 text-[8px] font-bold" title={u.full_name}>
+                                        {u.full_name?.substring(0, 2).toUpperCase() || "E"}
+                                      </div>
+                                    )
+                                  ))}
+                                  {task.executors.length > 3 && (
+                                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
+                                      +{task.executors.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : <span className="text-muted text-xs">—</span>}
+                            </AppTableCell>
+                          );
+                          case "reviewers": return (
+                            <AppTableCell>
+                              {task.reviewers && task.reviewers.length > 0 ? (
+                                <div className="flex -space-x-1.5 overflow-hidden">
+                                  {task.reviewers.slice(0, 3).map((u: any) => (
+                                    u.profile_photo ? (
+                                      <img key={u.id} src={u.profile_photo} alt="" className="inline-block h-5 w-5 rounded-full ring-1 ring-white dark:ring-[#0f111a]" title={u.full_name} />
+                                    ) : (
+                                      <div key={u.id} className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-theme-btn-primary/10 text-theme-icon text-[8px] font-bold" title={u.full_name}>
+                                        {u.full_name?.substring(0, 2).toUpperCase() || "W"}
+                                      </div>
+                                    )
+                                  ))}
+                                  {task.reviewers.length > 3 && (
+                                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-white dark:ring-[#0f111a] bg-surface text-muted text-[8px] font-bold z-10">
+                                      +{task.reviewers.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : <span className="text-muted text-xs">—</span>}
+                            </AppTableCell>
+                          );
+                          case "attachments": return (
+                            <AppTableCell className="text-center">
+                              {task.attachmentCount > 0 ? (
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
+                                  <Paperclip className="h-3 w-3" />
+                                  {task.attachmentCount}
+                                </div>
+                              ) : <span className="text-muted text-xs">—</span>}
+                            </AppTableCell>
+                          );
+                          case "comments": return (
+                            <AppTableCell className="text-center">
+                              {task.commentCount > 0 ? (
+                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon dark:bg-theme-btn-primary/10 dark:text-theme-icon font-medium text-[11px]">
+                                  <MessageSquare className="h-3 w-3" />
+                                  {task.commentCount}
+                                </div>
+                              ) : <span className="text-muted text-xs">—</span>}
+                            </AppTableCell>
+                          );
+                          case "external_link": return (
+                            <AppTableCell >
+                              {task.custom_fields?.link_url ? (
+                                <a href={getSafeExternalUrl(task.custom_fields.link_url)} target="_blank" rel="noopener noreferrer" className="text-theme-icon hover:underline inline-flex items-center gap-1 max-w-[180px] truncate" onClick={(e) => e.stopPropagation()}>
+                                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">{task.custom_fields.link_url}</span>
+                                </a>
+                              ) : <span className="text-muted">—</span>}
+                            </AppTableCell>
+                          );
+                          case "created_at": return (
+                            <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.created_at)}</AppTableCell>
+                          );
+                          case "updated_at": return (
+                            <AppTableCell className="text-right text-muted whitespace-nowrap">{formatDate(task.updated_at)}</AppTableCell>
+                          );
+                          case "actions": return (
+                            <AppTableCell className="text-right">
+                              <div className="flex items-center justify-end gap-3">
+                                <Link 
+                                  href={`/tasks/${task.id}?mode=view`}
+                                  className="text-theme-icon hover:text-theme-icon transition-colors active:scale-95"
+                                  title="View Task"
+                                >
+                                  <Eye className="h-[15px] w-[15px]" />
+                                </Link>
+                                {canUpdate && (
+                                  <Link 
+                                    href={`/tasks/${task.id}`}
+                                    className="text-warning hover:text-warning transition-colors active:scale-95"
+                                    title="Edit Task"
+                                  >
+                                    <Edit2 className="h-[15px] w-[15px]" />
+                                  </Link>
+                                )}
+                                {canDelete && (
+                                  <AppButton variant="secondary" 
+                                    onClick={(e) => handleDeleteTask(e, task.id)}
+                                    disabled={deleteLoadingId === task.id}
+                                    className="text-danger hover:text-danger transition-colors active:scale-95 disabled:opacity-50"
+                                    title="Delete Task"
+                                  >
+                                    {deleteLoadingId === task.id ? (
+                                      <Loader2 className="h-[15px] w-[15px] animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-[15px] w-[15px]" />
+                                    )}
+                                  </AppButton>
+                                )}
+                              </div>
+                            </AppTableCell>
+                          );
+                          default: {
+                            let val = undefined;
+                            if (task.custom_fields && task.custom_fields[col.field_key] !== undefined) {
+                              val = task.custom_fields[col.field_key];
+                            } else if (task[col.field_key] !== undefined) {
+                              val = task[col.field_key];
+                            }
+                            
+                            if (val === undefined || val === null || val === "") val = "—";
+                            else if (col.data_type === "boolean") val = val ? "Yes" : "No";
+                            else if (col.data_type === "date") val = formatDate(val);
+                            
+                            return (
+                              <AppTableCell className="text-subtle ">
+                                <div className="truncate max-w-[200px]" title={String(val)}>
+                                  {col.data_type === "link" && val !== "—" ? (
+                                    <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
+                                  ) : col.data_type === "badge" && val !== "—" ? (
+                                    <AppBadge variant="neutral">{val}</AppBadge>
+                                  ) : (
+                                    val
+                                  )}
+                                </div>
+                              </AppTableCell>
+                            );
+                          }
+                        }
+                        };
+                        const cellNode = renderCell() as React.ReactElement<any>;
+                        const isFirst = index === 0;
+                        const isActions = col.field_key === "actions";
+                        return React.cloneElement(cellNode, {
+                          key: col.field_id,
+                          className: cn(
+                            cellNode.props.className, 
+                            isFirst ? "sticky left-[40px] z-20 bg-surface transition-colors" : "",
+                            isActions ? "sticky right-0 z-20 bg-surface transition-colors shadow-[-4px_0_8px_rgba(0,0,0,0.06)]" : ""
+                          ),
+                        });
+                      })}
+                    </AppTableRow>
+                  );
+                })}
+                {virtualizer.getVirtualItems().length > 0 && (
+                  <tr>
+                    <td 
+                      colSpan={visibleColumns.length + 1} 
+                      style={{ 
+                        height: `${virtualizer.getTotalSize() - virtualizer.getVirtualItems()[virtualizer.getVirtualItems().length - 1].end}px` 
+                      }} 
+                    />
+                  </tr>
+                )}
+              </AppTableBody>
+            </AppTable>
+          </div>
+        </DndContext>
       </div>
-    </DndContext>
+    </>
   ) : viewMode === "board" ? (
     <div className="h-[calc(100vh-200px)]">
       <TaskBoardView 

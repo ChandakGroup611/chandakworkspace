@@ -1,6 +1,5 @@
 "use client";
 import { toast } from 'react-toastify';
-
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -37,22 +36,24 @@ const getSafeExternalUrl = (url: string | undefined | null) => {
   return `https://${str}`;
 };
 
-function DraggableTableHead({ col, filterValue, onFilterChange }: { col: any; filterValue?: string; onFilterChange?: (v: string) => void }) {
+function DraggableTableHead({ col, isFirst, filterValue, onFilterChange }: { col: any; isFirst?: boolean; filterValue?: string; onFilterChange?: (v: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.field_id });
+  const isCode = col.field_key === "code" || isFirst;
   const style = { 
     transform: CSS.Translate.toString(transform), 
     transition, 
     minWidth: col.column_width ? `${col.column_width}px` : undefined,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 25,
+    zIndex: isDragging ? 50 : (isCode ? 35 : 25),
     position: 'sticky' as any,
     top: 0,
+    left: isCode ? 0 : undefined,
   };
   return (
     <AppTableHead 
       ref={setNodeRef} 
       style={style}
-      className={`bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:opacity-90/10 transition-colors ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
+      className={`bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:opacity-90/10 transition-colors ${isCode ? "shadow-[4px_0_8px_rgba(0,0,0,0.06)]" : ""} ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
     >
       <div className="flex flex-col gap-2">
         <div className="cursor-grab active:cursor-grabbing select-none" {...attributes} {...listeners}>
@@ -335,7 +336,7 @@ export default function ReportsClient() {
       {/* Top Row: Entity Selection & Scope Toggle */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-border pb-3">
         {/* Entity Selection Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar flex-nowrap sm:flex-wrap">
           <AppButton variant="secondary" onClick={() => setEntityType("WORKSPACE")} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${entityType === "WORKSPACE" ? "bg-theme-btn-primary/20 text-theme-icon" : "text-muted hover:bg-elevated"}`}>
             <Briefcase className="h-3.5 w-3.5" /> Workspaces
           </AppButton>
@@ -444,148 +445,214 @@ export default function ReportsClient() {
         { label: "Entity Type", value: getEntityDisplayName() },
       ]} className="mb-2" />
 
-      {/* Data Table */}
-      <AppTableContainer>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <div className="max-h-[600px] overflow-auto relative">
-            <AppTable className="w-full border-separate border-spacing-0">
-              <AppTableHeader className="sticky top-0 z-40 bg-elevated">
-                <AppTableRow>
-                  <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
-                    {visibleColumns.map(col => (
-                      <DraggableTableHead 
-                        key={col.field_id} 
-                        col={col} 
-                        filterValue={columnFilters[col.field_key]}
-                        onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, [col.field_key]: v }))}
-                      />
-                    ))}
-                  </SortableContext>
-                </AppTableRow>
-              </AppTableHeader>
-              <AppTableBody>
-              {filtered.length === 0 ? (
-                <AppTableRow>
-                  <AppTableCell colSpan={visibleColumns.length} className="h-32 text-center text-muted">
-                    {loading ? "Loading report data..." : "No records found matching the current filters."}
-                  </AppTableCell>
-                </AppTableRow>
-              ) : (
-                filtered.map((item) => (
-                  <AppTableRow key={item.id}>
-                    {visibleColumns.map(col => {
-                      switch(col.field_key) {
-                        case "code": return (
-                          <AppTableCell key={col.field_id} className="font-mono  font-bold text-theme-icon whitespace-nowrap">
-                            {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
-                          </AppTableCell>
-                        );
-                        case "title": return (
-                          <AppTableCell key={col.field_id}>
-                            <div className="text-[13px] font-semibold text-foreground whitespace-normal break-words w-full">{item.title}</div>
-                          </AppTableCell>
-                        );
-                        case "description": return (
-                          <AppTableCell key={col.field_id} className="text-subtle">
-                            <div className="truncate max-w-[300px]" title={item.description ? item.description.replace(/<[^>]*>?/gm, '') : ''}>
-                              {item.description ? item.description.replace(/<[^>]*>?/gm, '') : '—'}
-                            </div>
-                          </AppTableCell>
-                        );
-                        case "workspace": return (
-                          <AppTableCell key={col.field_id} className="text-subtle" title={item.workspace}>
-                            <div className="truncate max-w-[150px]">{item.workspace}</div>
-                          </AppTableCell>
-                        );
-                        case "department": return (
-                          <AppTableCell key={col.field_id} className="text-subtle">
-                            <div className="truncate max-w-[150px]" title={item.department}>{item.department}</div>
-                          </AppTableCell>
-                        );
-                        case "priority": return (
-                          <AppTableCell key={col.field_id} className="whitespace-nowrap">
-                            {item.priority !== "—" ? <AppBadge variant={item.priority_color ? "custom" : "info"} customColor={item.priority_color}>{item.priority}</AppBadge> : "—"}
-                          </AppTableCell>
-                        );
-                        case "due_date": return (
-                          <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap">
-                            {formatDate(item.end_date)}
-                          </AppTableCell>
-                        );
-                        case "start_date": return (
-                          <AppTableCell key={col.field_id} className="text-right  text-subtle whitespace-nowrap">
-                            {formatDate(item.start_date)}
-                          </AppTableCell>
-                        );
-                        case "status": return (
-                          <AppTableCell key={col.field_id} className="whitespace-nowrap">
-                            {item.status !== "—" ? (
-                              <AppBadge 
-                                variant={item.status_color ? "custom" : (item.status === "Closed" || item.status === "Completed" ? "success" : "neutral")}
-                                customColor={item.status_color}
-                              >
-                                {item.status}
-                              </AppBadge>
-                            ) : "—"}
-                          </AppTableCell>
-                        );
-                        case "creator_name": return (
-                          <AppTableCell key={col.field_id} className="font-medium text-foreground whitespace-nowrap">
-                            {item.creator_name}
-                          </AppTableCell>
-                        );
-                        case "assigned_to": return (
-                          <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap" title={item.assigned_to}>
-                            {item.assigned_to}
-                          </AppTableCell>
-                        );
-                        case "created_at": return (
-                          <AppTableCell key={col.field_id} className="text-right  text-muted whitespace-nowrap">
-                            {formatDate(item.created_at)}
-                          </AppTableCell>
-                        );
-                        case "updated_at": return (
-                          <AppTableCell key={col.field_id} className="text-right  text-muted whitespace-nowrap">
-                            {formatDate(item.updated_at)}
-                          </AppTableCell>
-                        );
-                        default: {
-                          let val = item[col.field_key];
-                          if (val === undefined && item.custom_fields) {
-                            val = item.custom_fields[col.field_key];
-                          }
-                          
-                          if (val === undefined || val === null || val === "") val = "—";
-                          else if (col.data_type === "boolean") val = val ? "Yes" : "No";
-                          else if (col.data_type === "date") val = formatDate(val);
-                          else if (typeof val === "object") val = JSON.stringify(val);
-                          
-                          return (
+      {/* Mobile / Tablet Report Cards (<1024px) */}
+      <div className="block lg:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+            {loading ? "Loading report data..." : "No records found matching the current filters."}
+          </div>
+        ) : (
+          filtered.map((item) => (
+            <div 
+              key={item.id} 
+              className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all select-none space-y-2.5"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                  {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
+                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {item.priority && item.priority !== "—" && (
+                    <AppBadge variant={item.priority_color ? "custom" : "info"} customColor={item.priority_color} isOutline={true} className="text-[10px] py-0 px-1.5">
+                      {item.priority}
+                    </AppBadge>
+                  )}
+                  {item.status && item.status !== "—" && (
+                    <AppBadge 
+                      variant={item.status_color ? "custom" : (item.status === "Closed" || item.status === "Completed" ? "success" : "neutral")}
+                      customColor={item.status_color}
+                      isOutline={true}
+                      className="text-[10px] py-0.5 px-2"
+                    >
+                      {item.status}
+                    </AppBadge>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-foreground line-clamp-2">
+                  {item.title || item.name || 'Untitled Record'}
+                </h4>
+                {item.description && (
+                  <p className="text-xs text-muted mt-1 line-clamp-2">
+                    {item.description.replace(/<[^>]*>?/gm, '')}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs text-muted flex-wrap">
+                <div className="flex items-center gap-2 truncate">
+                  {item.workspace && (
+                    <span className="font-semibold text-foreground/80 truncate max-w-[120px]">{item.workspace}</span>
+                  )}
+                  {item.department && (
+                    <span className="bg-elevated px-1.5 py-0.5 rounded text-[10px] font-bold">{item.department}</span>
+                  )}
+                </div>
+                <div className="text-[11px] font-medium shrink-0">
+                  {item.end_date ? `Due: ${formatDate(item.end_date)}` : (item.created_at ? formatDate(item.created_at) : '')}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Data Table (>=1024px) */}
+      <div className="hidden lg:block">
+        <AppTableContainer>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <div className="max-h-[600px] overflow-auto relative">
+              <AppTable className="w-full border-separate border-spacing-0">
+                <AppTableHeader className="sticky top-0 z-40 bg-elevated">
+                  <AppTableRow>
+                    <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
+                      {visibleColumns.map((col, index) => (
+                        <DraggableTableHead 
+                          key={col.field_id} 
+                          col={col} 
+                          isFirst={index === 0}
+                          filterValue={columnFilters[col.field_key]}
+                          onFilterChange={(v) => setColumnFilters(prev => ({ ...prev, [col.field_key]: v }))}
+                        />
+                      ))}
+                    </SortableContext>
+                  </AppTableRow>
+                </AppTableHeader>
+                <AppTableBody>
+                {filtered.length === 0 ? (
+                  <AppTableRow>
+                    <AppTableCell colSpan={visibleColumns.length} className="h-32 text-center text-muted">
+                      {loading ? "Loading report data..." : "No records found matching the current filters."}
+                    </AppTableCell>
+                  </AppTableRow>
+                ) : (
+                  filtered.map((item) => (
+                    <AppTableRow key={item.id}>
+                      {visibleColumns.map((col, index) => {
+                        const isCode = col.field_key === "code" || index === 0;
+                        switch(col.field_key) {
+                          case "code": return (
+                            <AppTableCell key={col.field_id} className="font-mono font-bold text-theme-icon whitespace-nowrap sticky left-0 bg-surface z-20 shadow-[4px_0_8px_rgba(0,0,0,0.06)]">
+                              {item.code || `ID-${item.id.substring(0,4).toUpperCase()}`}
+                            </AppTableCell>
+                          );
+                          case "title": return (
+                            <AppTableCell key={col.field_id}>
+                              <div className="text-[13px] font-semibold text-foreground whitespace-normal break-words w-full">{item.title}</div>
+                            </AppTableCell>
+                          );
+                          case "description": return (
                             <AppTableCell key={col.field_id} className="text-subtle">
-                              <div className="truncate max-w-[200px]" title={String(val)}>
-                                {col.data_type === "link" && val !== "—" ? (
-                                  <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
-                                ) : col.data_type === "badge" && val !== "—" ? (
-                                  <AppBadge variant="neutral">{val}</AppBadge>
-                                ) : (
-                                  val
-                                )}
+                              <div className="truncate max-w-[300px]" title={item.description ? item.description.replace(/<[^>]*>?/gm, '') : ''}>
+                                {item.description ? item.description.replace(/<[^>]*>?/gm, '') : '—'}
                               </div>
                             </AppTableCell>
                           );
+                          case "workspace": return (
+                            <AppTableCell key={col.field_id} className="text-subtle" title={item.workspace}>
+                              <div className="truncate max-w-[150px]">{item.workspace}</div>
+                            </AppTableCell>
+                          );
+                          case "department": return (
+                            <AppTableCell key={col.field_id} className="text-subtle">
+                              <div className="truncate max-w-[150px]" title={item.department}>{item.department}</div>
+                            </AppTableCell>
+                          );
+                          case "priority": return (
+                            <AppTableCell key={col.field_id} className="whitespace-nowrap">
+                              {item.priority !== "—" ? <AppBadge variant={item.priority_color ? "custom" : "info"} customColor={item.priority_color}>{item.priority}</AppBadge> : "—"}
+                            </AppTableCell>
+                          );
+                          case "due_date": return (
+                            <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap">
+                              {formatDate(item.end_date)}
+                            </AppTableCell>
+                          );
+                          case "start_date": return (
+                            <AppTableCell key={col.field_id} className="text-right  text-subtle whitespace-nowrap">
+                              {formatDate(item.start_date)}
+                            </AppTableCell>
+                          );
+                          case "status": return (
+                            <AppTableCell key={col.field_id} className="whitespace-nowrap">
+                              {item.status !== "—" ? (
+                                <AppBadge 
+                                  variant={item.status_color ? "custom" : (item.status === "Closed" || item.status === "Completed" ? "success" : "neutral")}
+                                  customColor={item.status_color}
+                                >
+                                  {item.status}
+                                </AppBadge>
+                              ) : "—"}
+                            </AppTableCell>
+                          );
+                          case "creator_name": return (
+                            <AppTableCell key={col.field_id} className="font-medium text-foreground whitespace-nowrap">
+                              {item.creator_name}
+                            </AppTableCell>
+                          );
+                          case "assigned_to": return (
+                            <AppTableCell key={col.field_id} className="text-subtle whitespace-nowrap" title={item.assigned_to}>
+                              {item.assigned_to}
+                            </AppTableCell>
+                          );
+                          case "created_at": return (
+                            <AppTableCell key={col.field_id} className="text-right  text-muted whitespace-nowrap">
+                              {formatDate(item.created_at)}
+                            </AppTableCell>
+                          );
+                          case "updated_at": return (
+                            <AppTableCell key={col.field_id} className="text-right  text-muted whitespace-nowrap">
+                              {formatDate(item.updated_at)}
+                            </AppTableCell>
+                          );
+                          default: {
+                            let val = item[col.field_key];
+                            if (val === undefined && item.custom_fields) {
+                              val = item.custom_fields[col.field_key];
+                            }
+                            
+                            if (val === undefined || val === null || val === "") val = "—";
+                            else if (col.data_type === "boolean") val = val ? "Yes" : "No";
+                            else if (col.data_type === "date") val = formatDate(val);
+                            else if (typeof val === "object") val = JSON.stringify(val);
+                            
+                            return (
+                              <AppTableCell key={col.field_id} className="text-subtle">
+                                <div className="truncate max-w-[200px]" title={String(val)}>
+                                  {col.data_type === "link" && val !== "—" ? (
+                                    <a href={getSafeExternalUrl(val)} target="_blank" rel="noreferrer" className="text-theme-icon hover:underline">{val}</a>
+                                  ) : col.data_type === "badge" && val !== "—" ? (
+                                    <AppBadge variant="neutral">{val}</AppBadge>
+                                  ) : (
+                                    val
+                                  )}
+                                </div>
+                              </AppTableCell>
+                            );
+                          }
                         }
-                      }
-                    })}
-                  </AppTableRow>
-                ))
-              )}
-            </AppTableBody>
-          </AppTable>
-        </div>
+                      })}
+                    </AppTableRow>
+                  ))
+                )}
+              </AppTableBody>
+            </AppTable>
+          </div>
         </DndContext>
       </AppTableContainer>
     </div>
-  );
+  </div>
+);
 }
-
-

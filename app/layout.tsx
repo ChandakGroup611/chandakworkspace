@@ -14,6 +14,14 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
 const roboto = Roboto({ subsets: ['latin'], weight: ['300', '400', '500', '700'], variable: '--font-roboto' })
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover' as const,
+  themeColor: '#090D16'
+};
+
 export const metadata = {
   title: 'Chandak Workspace',
   description: 'Complete Enterprise Implementation Blueprint',

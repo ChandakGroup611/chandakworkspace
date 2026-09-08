@@ -29,12 +29,12 @@ import {
 } from "lucide-react";
 import { globalSearch } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/repositories/search";
-import { useTheme } from "@/components/theme/ThemeProvider";
+import { useTheme, ThemeType } from "@/components/theme/ThemeProvider";
 import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { AppButton } from "@/components/ui/AppButton";
 
-export default function Navbar() {
+export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) {
   const router = useRouter();
   const supabase = createClient();
   const { theme, setTheme, density, tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize } = useTheme();
@@ -117,43 +117,23 @@ export default function Navbar() {
     }
 
     const itemsCount = query === "" ? 2 : results.length;
+    if (itemsCount === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex(prev => (prev < itemsCount - 1 ? prev + 1 : prev));
+      setActiveIndex(prev => (prev < itemsCount - 1 ? prev + 1 : 0));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex(prev => (prev > 0 ? prev - 1 : -1));
-    } else if (e.key === "Enter") {
+      setActiveIndex(prev => (prev > 0 ? prev - 1 : itemsCount - 1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
       e.preventDefault();
-      if (activeIndex >= 0) {
-        if (query === "") {
-          if (activeIndex === 0) {
-            setSearchOpen(false);
-            router.push('/workspaces');
-          } else if (activeIndex === 1) {
-            setSearchOpen(false);
-            router.push('/workspaces');
-          }
-        } else {
-          const selected = results[activeIndex];
-          if (selected) {
-            setSearchOpen(false);
-            router.push(selected.url);
-          }
-        }
+      if (query === "") {
+        if (activeIndex === 0) router.push('/workspaces');
+        if (activeIndex === 1) router.push('/workspaces');
+      } else if (results[activeIndex]) {
+        router.push(results[activeIndex].url);
       }
-    } else if (query === "" && !e.metaKey && !e.ctrlKey) {
-      // Quick Actions Keyboard Shortcuts when search is empty
-      if (e.key.toLowerCase() === "w") {
-        e.preventDefault();
-        setSearchOpen(false);
-        router.push('/workspaces');
-      } else if (e.key.toLowerCase() === "t") {
-        e.preventDefault();
-        setSearchOpen(false);
-        router.push('/workspaces');
-      }
+      setSearchOpen(false);
     }
   };
 
@@ -173,28 +153,28 @@ export default function Navbar() {
 
   const handleExecuteSignOut = async () => {
     setLoggingOut(true);
-    setProfileOpen(false);
     try {
-      if (userData?.id) {
-        // Fire and forget delete so we don't block, but catch any errors
-        supabase.from("active_sessions").delete().eq("user_id", userData.id).then(undefined, () => {});
-      }
-      // Await signout fully to ensure local storage and cookies are cleared
       await supabase.auth.signOut();
-    } catch (_) {}
-    window.location.href = "/login?action=logout";
+      window.location.href = "/login";
+    } catch (e) {
+      console.error(e);
+      window.location.href = "/login";
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const toggleQuickTheme = async () => {
-    const newTheme = isLight ? "amazon" : "amazon-prime-upi";
-    setTheme(newTheme);
-
+    const nextTheme: ThemeType = isLight ? "dark-neumorphic" : "light-neumorphic";
+    setTheme(nextTheme);
+    
+    // Auto-persist quick theme toggle to DB
     try {
       const { saveDesignPreferences } = await import("@/lib/actions/preferences");
       await saveDesignPreferences({
-        theme: newTheme,
+        theme: nextTheme,
         density,
-        tactile: tactileFeedback,
+        tactileFeedback,
         fontFamily,
         fontWeightProfile,
         accentColor,
@@ -209,9 +189,19 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`bg-background/80 border-b border-border/20 sticky top-0 z-40 flex h-14 w-full shrink-0 font-sans items-center justify-between transition-all duration-300 px-6`}
+        className={`bg-background/80 border-b border-border/20 sticky top-0 z-40 flex h-14 w-full shrink-0 font-sans items-center justify-between transition-all duration-300 px-3 sm:px-4 md:px-6`}
       >
-        <div className="flex items-center gap-4 flex-1 max-w-lg relative" ref={searchContainerRef}>
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 max-w-lg relative" ref={searchContainerRef}>
+          {/* Mobile Menu Hamburger Trigger */}
+          <button
+            type="button"
+            onClick={() => onOpenMobileMenu?.()}
+            className="md:hidden flex items-center justify-center h-9 w-9 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover active:scale-95 transition-all shrink-0"
+            title="Open navigation menu"
+          >
+            <Layers className="h-5 w-5" />
+          </button>
+
           <div className="relative flex items-center w-full group cursor-text">
             <Search className="absolute left-3 h-4 w-4 text-muted group-hover:text-theme-icon transition-colors" />
             <input
@@ -222,9 +212,9 @@ export default function Navbar() {
               onFocus={() => setSearchOpen(true)}
               onKeyDown={handleSearchKeyDown}
               placeholder="Search or jump to..."
-              className={`flex items-center h-9 w-full rounded-full pl-9 pr-12 text-[13px] bg-transparent outline-none /30 theme-card-structural hover: hover:border-theme-icon/50 focus:border-theme-icon transition-all duration-300 text-foreground placeholder-muted shadow-sm`}
+              className={`flex items-center h-9 w-full rounded-full pl-9 pr-10 sm:pr-12 text-xs sm:text-[13px] bg-transparent outline-none theme-card-structural hover:border-theme-icon/50 focus:border-theme-icon transition-all duration-300 text-foreground placeholder-muted shadow-sm`}
             />
-            <div className={`absolute right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] font-semibold pointer-events-none bg-background/50 border border-border/50 text-muted shadow-sm`}>
+            <div className={`hidden sm:flex absolute right-2 items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] font-semibold pointer-events-none bg-background/50 border border-border/50 text-muted shadow-sm`}>
               <Command className="h-3 w-3" />
               <span>K</span>
             </div>
@@ -309,7 +299,7 @@ export default function Navbar() {
 
           <RealtimeNotificationsDrawer />
 
-          <div className="flex items-center mx-2 px-3 py-1 rounded-full bg-surface-hover/50 border border-border/40 shadow-sm">
+          <div className="hidden lg:flex items-center mx-2 px-3 py-1 rounded-full bg-surface-hover/50 border border-border/40 shadow-sm">
             <span className="text-[13px] font-medium text-foreground tracking-tight">
               Welcome - {userData?.full_name || 'System Operator'} <span className="text-accent font-bold">({roleCode || 'USER'})</span>
             </span>

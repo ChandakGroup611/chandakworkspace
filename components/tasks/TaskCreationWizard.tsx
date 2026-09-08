@@ -302,7 +302,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={"bg-elevated"} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Parent Task Link</label>
                 <select
@@ -355,7 +355,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <h3 className="text-sm font-semibold tracking-tight text-foreground">Timeline & Classification</h3>
             </div>
             
-            <div className="grid grid-cols-4 gap-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Duration (Days)</label>
                 <AppInput 
@@ -393,7 +393,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Priority</label>
                 <select

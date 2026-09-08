@@ -1319,10 +1319,10 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           </div>
           
           <div className="space-y-1.5 w-full">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted block text-right w-full">
+            <label className="text-xs font-bold uppercase tracking-wider text-muted block text-left sm:text-right w-full">
               Quick Action Operations
             </label>
-            <div className="flex flex-wrap justify-end gap-2 pt-0.5 w-full">
+            <div className="flex flex-wrap justify-start sm:justify-end gap-2 pt-0.5 w-full">
               {currentStatusCode === "ST_OPEN" && canEditCore && (
                 <AppButton 
                   size="sm" 
@@ -1711,7 +1711,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           
           <div className="p-5">
             {/* 7 Tab Navigation Buttons */}
-            <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl theme-card-structural dark:bg-elevated/40 mb-6 shadow-xs">
+            <div className="flex items-center gap-2 p-2 rounded-2xl theme-card-structural dark:bg-elevated/40 mb-6 shadow-xs overflow-x-auto hide-scrollbar flex-nowrap sm:flex-wrap">
               {[
                 { id: 'tags', label: 'Tags', icon: Pin },
                 { id: 'links', label: 'Link URL', icon: LinkIcon },
@@ -1728,7 +1728,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                     type="button"
                     variant={isActive ? "primary" : "ghost"}
                     onClick={() => setActiveTab(t.id as any)}
-                    className={`theme-tab-standard rounded-xl ${
+                    className={`theme-tab-standard rounded-xl shrink-0 ${
                       isActive ? "shadow-md scale-[1.02] border-transparent" : "border border-transparent hover:border-border/60"
                     }`}
                   >
@@ -2402,6 +2402,30 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Mobile Floating Action Bar for Pending Changes */}
+      {(pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee || (remarksDraft && remarksDraft.trim().length > 0)) && canAddRemark && (
+        <div className="fixed bottom-20 left-4 right-4 z-40 sm:hidden flex items-center justify-between gap-3 p-3.5 bg-foreground text-background dark:bg-surface dark:text-foreground rounded-2xl shadow-2xl border border-border/80 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-theme-btn-primary truncate">
+              Pending Changes
+            </span>
+            <span className="text-xs font-semibold opacity-90 truncate">
+              {pendingStatus ? `Status: ${statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || pendingStatus}` : (pendingDepartment ? 'Department Change' : (pendingAssignees ? 'Executors Change' : 'Unsaved Remark'))}
+            </span>
+          </div>
+          <AppButton
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={handleBatchSave}
+            disabled={saveRemarksLoading}
+            className="shrink-0 bg-theme-btn-primary hover:opacity-90 font-bold text-xs px-4 py-2 rounded-xl shadow-md"
+          >
+            {saveRemarksLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Commit"}
+          </AppButton>
         </div>
       )}
     </div>
