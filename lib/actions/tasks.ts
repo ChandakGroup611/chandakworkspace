@@ -345,34 +345,34 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
 
   const { hasPermission } = await import('@/lib/permissions');
   const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
-  const isTaskOwner = task.created_by === userId || task.owner_id === userId;
-  const isTaskAssignee = task.assigned_to === userId;
-  const canReopenOrManageClosed = isSuperAdmin || isTaskOwner || isTaskAssignee;
+  const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId;
+  const canReopenClosed = isSuperAdmin || isTaskAssignee;
 
-  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins, the Task Owner, and the Task Assignee can transition/reopen it.
+  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins and the Task Assignee (Task Owner) can transition/reopen it.
   if (task.status_id) {
     const { data: currentStatus } = await supabaseAdmin.from('status_master').select('is_closed, is_terminal').eq('id', task.status_id).single();
     if (currentStatus && (currentStatus.is_closed || currentStatus.is_terminal)) {
-      if (!canReopenOrManageClosed) {
-        return { error: "This task is strictly frozen because it is Closed. Only Super Admins, the Task Owner, and the Task Assignee can reopen it." };
+      if (!canReopenClosed) {
+        return { error: "This task is strictly frozen because it is Closed. Only Super Admins and the Task Assignee (Task Owner) can reopen it." };
       }
     }
   }
 
-  if (!isTaskAssignee && !isTaskOwner && !isSuperAdmin) {
+  // Active status transition: Primary Assignee, Super Admin, or Assigned Executives (participants)
+  if (!isTaskAssignee && !isSuperAdmin) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
-      .select('id')
+      .select('id, participation_role')
       .eq('task_id', taskId)
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (!participant) {
+    if (!participant || (participant.participation_role !== 'EXECUTOR' && participant.participation_role !== 'PRIMARY')) {
        await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
          action_attempted: 'UPDATE_STATUS', 
          target_status: newStatusIdOrCode 
        }, userId);
-       return { error: "You do not have permission to transition this task status. Only the Task Assignee, Task Owner, or Super Admins can edit the status." };
+       return { error: "You do not have permission to transition this task status. Only the Task Assignee (Task Owner), Assigned Executives, or Super Admins can edit the status." };
     }
   }
 
@@ -699,15 +699,16 @@ export async function getTaskDetails(taskId: string) {
       attachmentCount: attachmentCount || 0
     };
     
-    const isTaskOwner = task.created_by === userId || task.owner_id === userId;
-    const isTaskAssignee = task.assigned_to === userId;
-    const canManageClosedTask = isSuperAdmin || isTaskOwner || isTaskAssignee;
+    const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId;
+    const isTaskCreator = task.created_by === userId;
+    const canManageClosedTask = isSuperAdmin || isTaskAssignee;
 
-    task.isTaskOwner = isTaskOwner;
+    task.isTaskOwner = isTaskAssignee;
     task.isTaskAssignee = isTaskAssignee;
+    task.isTaskCreator = isTaskCreator;
     task.canManageClosedTask = canManageClosedTask;
     task.currentUserIsSuperAdmin = isSuperAdmin;
-    task.currentUserCanAct = isTaskAssignee || (participants && participants.some(p => p.user_id === userId)) || isTaskOwner || isSuperAdmin;
+    task.currentUserCanAct = isTaskAssignee || (participants && participants.some(p => p.user_id === userId && p.participation_role === 'EXECUTOR')) || isSuperAdmin;
     task.currentUserId = userId || null;
     task.title = task.subject;
     task.checklists = [];
@@ -804,18 +805,19 @@ export async function updateTask(taskId: string, payload: any) {
   const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by, owner_id, workspace_id, start_date, end_date, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  const isTaskOwner = task.created_by === userId || task.owner_id === userId;
-  const isTaskAssignee = task.assigned_to === userId;
+  const isTaskAssignee = task.assigned_to === userId || task.owner_id === userId;
 
-  if (!isTaskAssignee && !isTaskOwner) {
+  if (!isTaskAssignee) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
-      .select('id')
+      .select('id, participation_role')
       .eq('task_id', taskId)
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (!participant) {
+    const isExecutor = participant && (participant.participation_role === 'EXECUTOR' || participant.participation_role === 'PRIMARY');
+
+    if (!isExecutor) {
       // Check if user is a super admin
       let isAuthorizedAdmin = false;
       try {
@@ -830,7 +832,7 @@ export async function updateTask(taskId: string, payload: any) {
         await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
           action_attempted: 'UPDATE_TASK'
         }, userId);
-        return { error: "You do not have permission to edit this task. Only the Task Owner, Assignee, or Super Admins can edit." };
+        return { error: "You do not have permission to edit this task. Only the Task Assignee (Task Owner), Assigned Executives, or Super Admins can edit." };
       }
     }
   }

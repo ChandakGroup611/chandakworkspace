@@ -867,24 +867,26 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isEffectivelyFrozen = isFrozen ? (pendingStatus ? !targetStatusObj?.is_closed : true) : false;
   
   const isSuperAdmin = task.currentUserIsSuperAdmin || hasPermission("SUPER_ADMIN");
-  const isTaskOwner = task.created_by === task.currentUserId || task.owner_id === task.currentUserId || task.isTaskOwner;
-  const isTaskAssignee = task.assigned_to === task.currentUserId || task.isTaskAssignee;
-  const canBypassFreeze = isSuperAdmin || isTaskOwner || isTaskAssignee;
-  const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
-  const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskOwner || isTaskAssignee);
-  
-  // Roles
-  const isOwner = task.currentUserCanAct || canBypassFreeze || isTaskOwner; // Super Admin / Task Owner / Assignee
+  const isTaskAssignee = task.assigned_to === task.currentUserId || task.owner_id === task.currentUserId || task.isTaskAssignee;
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
+  const isCreatorOnly = task.created_by === task.currentUserId && !isTaskAssignee && !isExecutor && !isSuperAdmin;
+
+  // Reopen/Bypass freeze is strictly for Super Admin and the Task Assignee (Task Owner)
+  const canBypassFreeze = isSuperAdmin || isTaskAssignee;
+  const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
+  const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
   
-  // Owners and Executors can edit core properties, provided they have TASKS_UPDATE permission
-  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || isTaskAssignee || isSuperAdmin || isTaskOwner);
+  // Roles: Owner is Assignee / SuperAdmin
+  const isOwner = task.currentUserCanAct || canBypassFreeze || isTaskAssignee;
+  
+  // Owners and Assigned Executives (Executors) can edit core properties, provided they have TASKS_UPDATE permission
+  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || isTaskAssignee || isSuperAdmin || isExecutor);
   const canEditAux = canEditCore;
-  const canDeleteTask = !readOnly && isOwner && canDelete;
+  const canDeleteTask = !readOnly && (isSuperAdmin || isTaskAssignee) && canDelete;
   
-  // Reviewers & Watchers
-  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer || isOwner || isExecutor) && !effectivelyFrozenForUser);
+  // Reviewers, Watchers, Executives, Assignee, and Creator (tracking progress) can add remarks
+  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer || isOwner || isExecutor || isCreatorOnly) && !effectivelyFrozenForUser);
   // Filter inherited workspace members to remove anyone explicitly assigned
   const explicitExecutors = [...(task.task_assignees || [])];
   
