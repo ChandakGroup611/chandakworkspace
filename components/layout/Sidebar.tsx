@@ -386,7 +386,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           <div className="relative z-50 w-[280px] max-w-[85vw] bg-surface dark:bg-[#0B0F19] h-full flex flex-col shadow-2xl border-r border-border animate-in slide-in-from-left duration-300">
             <div className="flex items-center justify-between p-4 border-b border-border/50">
               <div className="flex items-center gap-2">
-                <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="h-8 w-auto dark:brightness-0 dark:invert" />
+                <img src="/Chandak_Group_Official_Logo.png" alt="Chandak Logo" className="h-8 w-auto dark:brightness-0 dark:invert" />
                 <span className="text-sm font-bold text-foreground">Chandak Workspace</span>
               </div>
               <button
@@ -413,7 +413,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           {!isCompact ? (
             <Link href="/" className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
               <div className={`flex items-center justify-center transition-all duration-300 h-[64px] w-[210px] mx-auto shrink-0 px-1`}>
-                <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                <img src="/Chandak_Group_Official_Logo.png" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               </div>
               <div className="flex flex-col min-w-0 justify-center items-center px-1">
                 <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>

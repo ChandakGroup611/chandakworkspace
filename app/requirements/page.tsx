@@ -16,6 +16,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard";
 import { EditRequirementModal } from "@/components/requirements/EditRequirementModal";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface RequirementItem {
   id: string;
@@ -84,7 +85,7 @@ interface RequirementItem {
 
 export default function RequirementsPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading Requirements..." /></div>}>
       <RequirementsPageContent />
     </Suspense>
   );

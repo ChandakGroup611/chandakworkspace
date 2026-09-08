@@ -17,6 +17,7 @@ import {
   User,
   Zap
 } from "lucide-react";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -225,10 +226,11 @@ export default function LoginPage() {
   if (isOAuthCallback) {
     return (
       <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <span className="h-10 w-10 rounded-full border-4 border-current border-t-transparent animate-spin text-theme-icon" />
-          <p className="text-lg font-semibold tracking-wide text-muted-foreground">Completing sign in...</p>
-        </div>
+        <ChandakLoader
+          size="lg"
+          title="Completing sign in..."
+          subtitle="Synchronizing enterprise session..."
+        />
       </div>
     );
   }
@@ -265,8 +267,8 @@ export default function LoginPage() {
           <div className="absolute top-8 lg:top-12 left-0 right-0 flex flex-col items-center px-6 animate-in fade-in slide-in-from-top-8 duration-1000 delay-300">
             <div className="relative w-fit inline-flex py-3.5 px-6 rounded-2xl bg-surface/90 dark:bg-surface/50 backdrop-blur-md shadow-xl border border-border/70 items-center justify-center transition-all hover:shadow-2xl">
               <img 
-                src="/Chandak-Group-Final-Logo.svg" 
-                alt="Chandak Logo" 
+                src="/Chandak_Group_Official_Logo.png" 
+                alt="Chandak Group Official Logo" 
                 className="h-16 lg:h-20 w-auto object-contain dark:brightness-0 dark:invert"
                 style={{ imageRendering: '-webkit-optimize-contrast' }}
               />
@@ -298,8 +300,8 @@ export default function LoginPage() {
             <div className="lg:hidden flex flex-col items-center justify-center mb-8">
               <div className="relative w-fit inline-flex py-2.5 px-5 items-center justify-center bg-surface/90 rounded-2xl shadow-lg border border-border/60">
                 <img 
-                  src="/Chandak-Group-Final-Logo.svg" 
-                  alt="Chandak Logo" 
+                  src="/Chandak_Group_Official_Logo.png" 
+                  alt="Chandak Group Official Logo" 
                   className="h-11 w-auto object-contain dark:brightness-0 dark:invert"
                   style={{ imageRendering: '-webkit-optimize-contrast' }}
                 />

@@ -14,10 +14,11 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppTable, AppTableBody, AppTableCell, AppTableContainer, AppTableHead, AppTableHeader, AppTableRow } from "@/components/ui/AppTable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function TicketsPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading Tickets..." /></div>}>
       <TicketsPageContent />
     </Suspense>
   );

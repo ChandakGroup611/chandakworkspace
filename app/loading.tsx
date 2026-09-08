@@ -1,13 +1,13 @@
 import React from "react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 
-export default function WorkspacesLoading() {
+export default function RootLoading() {
   return (
     <div className="flex h-[80vh] w-full items-center justify-center">
       <ChandakLoader
-        size="md"
-        title="Connecting to Gateway..."
-        subtitle="Synchronizing workspace matrix"
+        size="lg"
+        title="Chandak Workspace"
+        subtitle="Initializing enterprise matrix..."
       />
     </div>
   );

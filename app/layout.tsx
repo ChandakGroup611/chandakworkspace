@@ -38,7 +38,7 @@ export const metadata = {
   openGraph: {
     title: 'Chandak Workspace',
     description: 'Complete Enterprise Implementation Blueprint',
-    images: [{ url: '/Chandak-Group-Final-Logo.svg' }],
+    images: [{ url: '/Chandak_Group_Official_Logo.png' }],
   },
 }
 
