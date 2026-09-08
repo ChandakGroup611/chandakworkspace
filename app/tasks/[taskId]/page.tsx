@@ -43,10 +43,10 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
   const supabase = createClient(cookieStore);
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isSuperAdmin = user ? (await hasPermission(user.id, "SUPER_ADMIN") || await hasPermission(user.id, "WORKSPACES_MANAGE") || await hasPermission(user.id, "REQUIREMENTS_MANAGE")) : false;
-  const isWorkspaceOwner = user ? (task.workspace?.workspace_owner_id === user.id) : false;
+  const isSuperAdmin = user ? await hasPermission(user.id, "SUPER_ADMIN") : false;
   const isTaskOwner = user ? (task.created_by === user.id || task.owner_id === user.id) : false;
-  const canManageClosedTask = isSuperAdmin || isWorkspaceOwner || isTaskOwner;
+  const isTaskAssignee = user ? (task.assigned_to === user.id) : false;
+  const canManageClosedTask = isSuperAdmin || isTaskOwner || isTaskAssignee;
 
   const isClosed = task.status?.is_closed === true;
   const isFrozen = isClosed && !canManageClosedTask;
@@ -137,7 +137,7 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
               <div>
                 <h4 className="text-sm font-bold text-amber-800 dark:text-warning">Task is Frozen</h4>
                 <p className="text-xs text-amber-700 dark:text-warning mt-1">
-                  This task is strictly frozen because its status is Closed. Only Super Admins, Workspace Owners, and Task Creators can edit or reopen it.
+                  This task is strictly frozen because its status is Closed. Only Super Admins, the Task Owner, and the Task Assignee can edit or reopen it.
                 </p>
               </div>
             </div>

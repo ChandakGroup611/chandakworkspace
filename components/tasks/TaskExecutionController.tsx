@@ -866,19 +866,20 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const targetStatusObj = statuses.find(s => (s.code || s.status_code || s.id) === targetStatusId);
   const isEffectivelyFrozen = isFrozen ? (pendingStatus ? !targetStatusObj?.is_closed : true) : false;
   
-  const isWorkspaceOwner = task.workspace?.workspace_owner_id === task.currentUserId || task.isWorkspaceOwner;
-  const isTaskCreatorOrOwner = task.created_by === task.currentUserId || task.owner_id === task.currentUserId || task.isTaskOwner;
-  const canBypassFreeze = task.currentUserIsSuperAdmin || isWorkspaceOwner || isTaskCreatorOrOwner || hasPermission("WORKSPACES_MANAGE") || hasPermission("REQUIREMENTS_MANAGE") || hasPermission("SUPER_ADMIN");
+  const isSuperAdmin = task.currentUserIsSuperAdmin || hasPermission("SUPER_ADMIN");
+  const isTaskOwner = task.created_by === task.currentUserId || task.owner_id === task.currentUserId || task.isTaskOwner;
+  const isTaskAssignee = task.assigned_to === task.currentUserId || task.isTaskAssignee;
+  const canBypassFreeze = isSuperAdmin || isTaskOwner || isTaskAssignee;
   const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
-  const canEditDates = !readOnly && !effectivelyFrozenForUser && (task.currentUserIsSuperAdmin || isWorkspaceOwner || isTaskCreatorOrOwner || task.assigned_to === task.currentUserId);
+  const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskOwner || isTaskAssignee);
   
   // Roles
-  const isOwner = task.currentUserCanAct || canBypassFreeze || isWorkspaceOwner || isTaskCreatorOrOwner; // Owner/Assignee or SuperAdmin/Workspace Owner/Task Creator
+  const isOwner = task.currentUserCanAct || canBypassFreeze || isTaskOwner; // Super Admin / Task Owner / Assignee
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   
   // Owners and Executors can edit core properties, provided they have TASKS_UPDATE permission
-  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isWorkspaceOwner || isTaskCreatorOrOwner);
+  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || isTaskAssignee || isSuperAdmin || isTaskOwner);
   const canEditAux = canEditCore;
   const canDeleteTask = !readOnly && isOwner && canDelete;
   

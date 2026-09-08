@@ -344,22 +344,22 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   if (!task) return { error: "Task not found" };
 
   const { hasPermission } = await import('@/lib/permissions');
-  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "WORKSPACES_MANAGE") || await hasPermission(userId, "REQUIREMENTS_MANAGE");
-  const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
+  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN");
   const isTaskOwner = task.created_by === userId || task.owner_id === userId;
-  const canManageTask = isSuperAdmin || isWorkspaceOwner || isTaskOwner;
+  const isTaskAssignee = task.assigned_to === userId;
+  const canReopenOrManageClosed = isSuperAdmin || isTaskOwner || isTaskAssignee;
 
-  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins, Workspace Owners, and Task Creators can transition/reopen it.
+  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins, the Task Owner, and the Task Assignee can transition/reopen it.
   if (task.status_id) {
     const { data: currentStatus } = await supabaseAdmin.from('status_master').select('is_closed, is_terminal').eq('id', task.status_id).single();
     if (currentStatus && (currentStatus.is_closed || currentStatus.is_terminal)) {
-      if (!canManageTask) {
-        return { error: "This task is strictly frozen because it is Closed. Only Super Admins, Workspace Owners, and Task Creators can reopen it." };
+      if (!canReopenOrManageClosed) {
+        return { error: "This task is strictly frozen because it is Closed. Only Super Admins, the Task Owner, and the Task Assignee can reopen it." };
       }
     }
   }
 
-  if (task.assigned_to !== userId && !canManageTask) {
+  if (!isTaskAssignee && !isTaskOwner && !isSuperAdmin) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
       .select('id')
@@ -372,7 +372,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
          action_attempted: 'UPDATE_STATUS', 
          target_status: newStatusIdOrCode 
        }, userId);
-       return { error: "You do not have permission to transition this task status. Only the Task Assignee, Participants, Task Creator, or Workspace Owner can edit the status." };
+       return { error: "You do not have permission to transition this task status. Only the Task Assignee, Task Owner, or Super Admins can edit the status." };
     }
   }
 
@@ -576,7 +576,7 @@ export async function getTaskDetails(taskId: string) {
     let isSuperAdmin = false;
     if (userId && permissionsModule) {
       try {
-        isSuperAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") || await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE");
+        isSuperAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN");
       } catch (permErr) {
         console.warn("[getTaskDetails] Error checking permissions:", permErr);
       }
@@ -699,15 +699,15 @@ export async function getTaskDetails(taskId: string) {
       attachmentCount: attachmentCount || 0
     };
     
-    const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
     const isTaskOwner = task.created_by === userId || task.owner_id === userId;
-    const canManageClosedTask = isSuperAdmin || isWorkspaceOwner || isTaskOwner;
+    const isTaskAssignee = task.assigned_to === userId;
+    const canManageClosedTask = isSuperAdmin || isTaskOwner || isTaskAssignee;
 
-    task.isWorkspaceOwner = isWorkspaceOwner;
     task.isTaskOwner = isTaskOwner;
+    task.isTaskAssignee = isTaskAssignee;
     task.canManageClosedTask = canManageClosedTask;
     task.currentUserIsSuperAdmin = isSuperAdmin;
-    task.currentUserCanAct = task.assigned_to === userId || (participants && participants.some(p => p.user_id === userId)) || canManageClosedTask;
+    task.currentUserCanAct = isTaskAssignee || (participants && participants.some(p => p.user_id === userId)) || isTaskOwner || isSuperAdmin;
     task.currentUserId = userId || null;
     task.title = task.subject;
     task.checklists = [];
@@ -804,10 +804,10 @@ export async function updateTask(taskId: string, payload: any) {
   const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by, owner_id, workspace_id, start_date, end_date, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
-  const isTaskCreatorOrOwner = task.created_by === userId || task.owner_id === userId;
+  const isTaskOwner = task.created_by === userId || task.owner_id === userId;
+  const isTaskAssignee = task.assigned_to === userId;
 
-  if (task.assigned_to !== userId && !isTaskCreatorOrOwner && !isWorkspaceOwner) {
+  if (!isTaskAssignee && !isTaskOwner) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
       .select('id')
@@ -816,12 +816,11 @@ export async function updateTask(taskId: string, payload: any) {
       .maybeSingle();
 
     if (!participant) {
-      // Check if user is a super admin or workspace manager
+      // Check if user is a super admin
       let isAuthorizedAdmin = false;
       try {
         const permissionsModule = await import('@/lib/permissions');
-        isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") ||
-                            await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE") || 
+        isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") || 
                             await permissionsModule.hasPermission(userId, "TASKS_UPDATE");
       } catch (e) {
         console.warn("[updateTask] Permission check failed", e);
@@ -831,7 +830,7 @@ export async function updateTask(taskId: string, payload: any) {
         await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
           action_attempted: 'UPDATE_TASK'
         }, userId);
-        return { error: "You do not have permission to edit this task. Only the Task Owner, Creator, Assignee, Workspace Owner, or Authorized Admins can edit." };
+        return { error: "You do not have permission to edit this task. Only the Task Owner, Assignee, or Super Admins can edit." };
       }
     }
   }
