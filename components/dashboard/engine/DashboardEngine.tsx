@@ -215,26 +215,26 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
   };
 
   return (
-    <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-2 rounded-xl">
+    <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-1 sm:p-2 rounded-xl">
       {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground">Workspace / Enterprise Overview</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Live operational command center with department hierarchy & SLA governance</p>
+          <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">Workspace Overview</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Live operational command center with department hierarchy & SLA governance</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
           {/* Preset Selector Dropdown */}
-          <div className="relative" ref={presetRef}>
+          <div className="relative flex-1 sm:flex-initial" ref={presetRef}>
             <AppButton
               variant="outline"
               size="sm"
               leftIcon={<Layers className="h-3.5 w-3.5" />}
               rightIcon={<ChevronDown className="h-3 w-3 opacity-60" />}
               onClick={() => setPresetDropdownOpen(!presetDropdownOpen)}
-              className="text-xs theme-card-structural"
+              className="text-xs theme-card-structural w-full sm:w-auto justify-between"
             >
-              Preset: <strong className="ml-1 text-foreground">{DASHBOARD_PRESETS[activePreset]?.name || "Custom"}</strong>
+              Preset: <strong className="ml-1 text-foreground truncate">{DASHBOARD_PRESETS[activePreset]?.name || "Custom"}</strong>
             </AppButton>
 
             {presetDropdownOpen && (
@@ -271,7 +271,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
             size="sm" 
             leftIcon={<Settings2 className="h-4 w-4" />}
             onClick={() => setIsCustomizeOpen(true)}
-            className="theme-card-structural hover:bg-background/80 whitespace-nowrap text-xs"
+            className="theme-card-structural hover:bg-background/80 whitespace-nowrap text-xs shrink-0"
           >
             Customize
           </AppButton>
@@ -279,7 +279,7 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
       </div>
 
       {/* Top Section KPI Quick Navigation & Accordion Pill Strip */}
-      <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-3 mb-6 flex-nowrap sm:flex-wrap">
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-2 mb-4 flex-nowrap">
         <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
           KPI Sections:
         </span>

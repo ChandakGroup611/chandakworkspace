@@ -324,18 +324,18 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
         
         {/* TOPBAR */}
         <div className="topbar">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full lg:w-auto">
             <div>
-              <div className="topbar-title">
+              <div className="topbar-title text-base sm:text-lg">
                 {activeView === "portfolio" ? "My Portfolio & User Analytics" : "Enterprise Command Center"}
               </div>
-              <div className="topbar-sub">
+              <div className="topbar-sub text-[11px] sm:text-xs">
                 {activeView === "portfolio" ? "User Comparison & Timeline Tracking" : "Live Operational Intelligence & SLA Governance"}
               </div>
             </div>
 
             {/* MAIN DASHBOARD VIEW SWITCHER */}
-            <div className="flex items-center gap-1 p-1 bg-surface/80 rounded-xl border border-border/60 shadow-inner">
+            <div className="flex items-center gap-1 p-1 bg-surface/80 rounded-xl border border-border/60 shadow-xs w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => {
@@ -343,9 +343,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   router.replace("/?view=overview");
                 }}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
                   activeView === "overview"
-                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
@@ -360,9 +360,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   router.replace("/?view=portfolio");
                 }}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
                   activeView === "portfolio"
-                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
@@ -378,9 +378,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="flex items-center justify-between sm:justify-start lg:justify-end gap-2 w-full lg:w-auto flex-wrap">
             {activeView === "overview" && (
-              <>
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none max-w-full pb-0.5">
                 <MultiSelectFilter
                   options={SCOPE_OPTIONS}
                   selectedValues={globalScopes}
@@ -412,47 +412,49 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                 >
                   Snapshot
                 </AppButton>
-              </>
+              </div>
             )}
 
-            <div className="relative" ref={newMetricRef}>
-              <AppButton 
-                variant="primary" 
-                size="sm" 
-                leftIcon={<Plus className="h-3.5 w-3.5" />} 
-                onClick={() => setNewMetricOpen(!newMetricOpen)}
-                className="text-xs"
-              >
-                New Item
-              </AppButton>
-              {newMetricOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 z-50">
-                  <div className="py-1" role="menu" aria-orientation="vertical">
-                  <a href="/workspaces?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Workspace</a>
-                  <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Task</a>
-                  <a href="/tickets?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Ticket</a>
-                  <a href="/requirements?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Requirement</a>
-                  <div className="border-t border-border my-1"></div>
-                  <a href="/masters?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">Master Configuration</a>
+            <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+              <div className="relative" ref={newMetricRef}>
+                <AppButton 
+                  variant="primary" 
+                  size="sm" 
+                  leftIcon={<Plus className="h-3.5 w-3.5" />} 
+                  onClick={() => setNewMetricOpen(!newMetricOpen)}
+                  className="text-xs font-bold shadow-xs whitespace-nowrap"
+                >
+                  New Item
+                </AppButton>
+                {newMetricOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 z-50">
+                    <div className="py-1" role="menu" aria-orientation="vertical">
+                      <a href="/workspaces?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Workspace</a>
+                      <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Task</a>
+                      <a href="/tickets?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Ticket</a>
+                      <a href="/requirements?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Requirement</a>
+                      <div className="border-t border-border my-1"></div>
+                      <a href="/masters?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">Master Configuration</a>
+                    </div>
                   </div>
+                )}
+              </div>
+              
+              {refreshComponent && (
+                <div className="pl-1.5 border-l border-[var(--border)] shrink-0">
+                  {refreshComponent}
                 </div>
               )}
             </div>
-            
-            {refreshComponent && (
-              <div className="ml-2 pl-2 border-l border-[var(--border)]">
-                {refreshComponent}
-              </div>
-            )}
           </div>
         </div>
 
         {/* HIERARCHY SCOPE BAR (Overview Mode) */}
         {activeView === "overview" && (
-          <div className="px-6 py-2.5 bg-surface/40 border-b border-border/50 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar flex-wrap">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-2 shrink-0">
-                Hierarchy Scope:
+          <div className="px-3 sm:px-6 py-2 bg-surface/40 border-b border-border/50 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none text-xs">
+            <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
+                Scope:
               </span>
 
               {/* Entire Organization (Super Admin / Global) */}
@@ -464,9 +466,9 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                     setSelectedDepartmentName("ALL");
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap",
+                    "flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
                     hierarchyScope === "all" && selectedDepartmentName === "ALL"
-                      ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
                       : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                   )}
                 >

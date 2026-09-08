@@ -88,18 +88,29 @@
   .main { background: var(--bg); display: flex; flex-direction: column; }
 
   .topbar {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 14px;
     border-bottom: 0.5px solid var(--border);
     background: var(--bg2);
-    position: sticky; top: -24px; z-index: 30;
+    position: sticky; top: 0; z-index: 30;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     .topbar {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 24px;
       top: -32px;
     }
   }
-  .topbar-title { font-family: var(--syne); font-size: 17px; font-weight: 600; flex: 1; }
+  .topbar-title { font-family: var(--syne); font-size: 16px; font-weight: 700; }
+  @media (min-width: 640px) {
+    .topbar-title { font-size: 18px; }
+  }
   .topbar-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); }
   .tb-btn {
     display: flex; align-items: center; gap: 6px;
@@ -116,25 +127,39 @@
   .tb-btn.primary:hover { background: var(--accent2); }
   .tb-btn i { font-size: 14px; }
 
-  .content { padding: 20px 24px; flex: 1; }
+  .content { padding: 12px 10px; flex: 1; }
+  @media (min-width: 640px) {
+    .content { padding: 16px 18px; }
+  }
+  @media (min-width: 1024px) {
+    .content { padding: 20px 24px; }
+  }
 
   /* METRIC CARDS */
   .metrics-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px; margin-bottom: 20px;
+    grid-template-columns: 1fr;
+    gap: 10px; margin-bottom: 16px;
+  }
+  @media (min-width: 480px) {
+    .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  }
+  @media (min-width: 1024px) {
+    .metrics-row { grid-template-columns: repeat(4, 1fr); margin-bottom: 20px; }
   }
   .metric-card {
-    padding: 16px;
+    padding: 14px;
     position: relative;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* theme-card-structural will provide bg, border, shadow */
-}
-.metric-card:hover {
-    transform: translateY(-3px) scale(1.02);
-    /* box-shadow provided by theme */
-}
+    border-radius: var(--r12);
+  }
+  @media (min-width: 640px) {
+    .metric-card { padding: 16px; }
+  }
+  .metric-card:hover {
+    transform: translateY(-3px) scale(1.01);
+  }
   .metric-card::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -144,8 +169,11 @@
   .metric-card.amber::before { background: var(--amber); }
   .metric-card.red::before { background: var(--red); }
 
-  .metric-label { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
-  .metric-value { font-family: var(--syne); font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  .metric-label { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .metric-value { font-family: var(--syne); font-size: 24px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  @media (min-width: 640px) {
+    .metric-value { font-size: 28px; }
+  }
   .metric-card.blue .metric-value { color: var(--accent); }
   .metric-card.green .metric-value { color: var(--green); }
   .metric-card.amber .metric-value { color: var(--amber); }
@@ -157,22 +185,29 @@
   .delta-up { color: var(--green); }
   .delta-down { color: var(--red); }
   .metric-icon {
-    position: absolute; right: 14px; top: 16px;
-    font-size: 28px; opacity: 0.08;
+    position: absolute; right: 12px; top: 14px;
+    font-size: 24px; opacity: 0.08;
   }
 
-  /* GRID 2COL */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+  /* GRID 2COL & 3COL */
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 16px; }
+  @media (min-width: 1024px) {
+    .grid-2 { grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  }
+  .grid-3 { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 16px; }
+  @media (min-width: 1024px) {
+    .grid-3 { grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+  }
 
   /* PANELS */
   .panel {
     overflow: hidden;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* theme-card-structural will provide bg, border, shadow */
-}
-.panel:hover {
+    border-radius: var(--r12);
+  }
+  .panel:hover {
     transform: translateY(-2px);
+  }
     /* box-shadow provided by theme */
 }
   .panel-header {

@@ -51,15 +51,15 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
           className={cn(
             iconOnly 
               ? "flex items-center justify-center p-1 rounded-sm hover:opacity-90/10 text-muted hover:text-theme-icon data-[active=true]:text-theme-icon data-[active=true]:bg-theme-btn-primary/10 transition-colors" 
-              : "tb-btn flex items-center justify-between gap-2 px-3 py-1.5 min-w-[140px] text-sm bg-surface hover:bg-elevated border border-border rounded-md transition-colors"
+              : "tb-btn flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-w-[95px] sm:min-w-[130px] text-xs sm:text-sm bg-surface hover:bg-elevated border border-border rounded-lg transition-colors shrink-0"
           )}
           data-active={selectedValues.length > 0}
         >
-          {!iconOnly && <span className="truncate max-w-[120px]">{displayValue}</span>}
+          {!iconOnly && <span className="truncate max-w-[85px] sm:max-w-[120px] font-semibold">{displayValue}</span>}
           {iconOnly ? (
             <Filter className={cn("w-3.5 h-3.5", selectedValues.length > 0 ? "fill-current" : "")} />
           ) : (
-            <ChevronDown className="w-4 h-4 opacity-50" />
+            <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0" />
           )}
         </button>
       </Popover.Trigger>
