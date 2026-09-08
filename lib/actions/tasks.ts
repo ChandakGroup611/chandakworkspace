@@ -334,28 +334,32 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   const userId = user?.id || performedBy;
   if (!userId) return { error: "Unauthenticated" };
 
-  // Get current status and owner
+  // Get current status, workspace, and owner
   const { data: task } = await supabaseAdmin
     .from('tasks')
-    .select('status_id, assigned_to')
+    .select('status_id, assigned_to, created_by, owner_id, workspace_id, workspace:workspaces(workspace_owner_id)')
     .eq('id', taskId)
     .single();
 
   if (!task) return { error: "Task not found" };
 
-  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins and Executives can transition it.
+  const { hasPermission } = await import('@/lib/permissions');
+  const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "WORKSPACES_MANAGE") || await hasPermission(userId, "REQUIREMENTS_MANAGE");
+  const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
+  const isTaskOwner = task.created_by === userId || task.owner_id === userId;
+  const canManageTask = isSuperAdmin || isWorkspaceOwner || isTaskOwner;
+
+  // Strict Freeze Logic: If task is currently CLOSED, only Super Admins, Workspace Owners, and Task Creators can transition/reopen it.
   if (task.status_id) {
     const { data: currentStatus } = await supabaseAdmin.from('status_master').select('is_closed, is_terminal').eq('id', task.status_id).single();
     if (currentStatus && (currentStatus.is_closed || currentStatus.is_terminal)) {
-      const { hasPermission } = await import('@/lib/permissions');
-      const isExecutive = await hasPermission(userId, "WORKSPACES_MANAGE") || await hasPermission(userId, "REQUIREMENTS_MANAGE");
-      if (!isExecutive) {
-        return { error: "This task is strictly frozen because it is Closed. Only Super Admins and Executives can reopen it." };
+      if (!canManageTask) {
+        return { error: "This task is strictly frozen because it is Closed. Only Super Admins, Workspace Owners, and Task Creators can reopen it." };
       }
     }
   }
 
-  if (task.assigned_to !== userId) {
+  if (task.assigned_to !== userId && !canManageTask) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
       .select('id')
@@ -368,7 +372,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
          action_attempted: 'UPDATE_STATUS', 
          target_status: newStatusIdOrCode 
        }, userId);
-       return { error: "You do not have permission to transition this task status. Only the Task Assignee or Participants can edit the status." };
+       return { error: "You do not have permission to transition this task status. Only the Task Assignee, Participants, Task Creator, or Workspace Owner can edit the status." };
     }
   }
 
@@ -558,7 +562,7 @@ export async function getTaskDetails(taskId: string) {
         status:status_master(id, name:status_name, code:status_code, is_closed),
         priority:priority_master(id, name:priority_name, color:priority_color),
         department:departments(id, name),
-        workspace:workspaces(id, name:workspace_name, members:workspace_members(user_id, role, is_deleted))
+        workspace:workspaces(id, name:workspace_name, workspace_owner_id, members:workspace_members(user_id, role, is_deleted))
       `).eq('id', taskId).single(),
       supabaseAdmin.from('task_checklists').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
       supabaseAdmin.from('task_attachments').select('*', { count: 'exact', head: true }).eq('task_id', taskId),
@@ -572,7 +576,7 @@ export async function getTaskDetails(taskId: string) {
     let isSuperAdmin = false;
     if (userId && permissionsModule) {
       try {
-        isSuperAdmin = await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE");
+        isSuperAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") || await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE");
       } catch (permErr) {
         console.warn("[getTaskDetails] Error checking permissions:", permErr);
       }
@@ -695,8 +699,15 @@ export async function getTaskDetails(taskId: string) {
       attachmentCount: attachmentCount || 0
     };
     
+    const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
+    const isTaskOwner = task.created_by === userId || task.owner_id === userId;
+    const canManageClosedTask = isSuperAdmin || isWorkspaceOwner || isTaskOwner;
+
+    task.isWorkspaceOwner = isWorkspaceOwner;
+    task.isTaskOwner = isTaskOwner;
+    task.canManageClosedTask = canManageClosedTask;
     task.currentUserIsSuperAdmin = isSuperAdmin;
-    task.currentUserCanAct = task.assigned_to === userId || (participants && participants.some(p => p.user_id === userId));
+    task.currentUserCanAct = task.assigned_to === userId || (participants && participants.some(p => p.user_id === userId)) || canManageClosedTask;
     task.currentUserId = userId || null;
     task.title = task.subject;
     task.checklists = [];
@@ -790,10 +801,13 @@ export async function updateTask(taskId: string, payload: any) {
   const userId = user?.id;
   if (!userId) return { error: "Unauthenticated" };
 
-  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by, start_date, end_date').eq('id', taskId).single();
+  const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, subject, created_by, owner_id, workspace_id, start_date, end_date, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();
   if (!task) return { error: "Task not found" };
 
-  if (task.assigned_to !== userId && task.created_by !== userId) {
+  const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
+  const isTaskCreatorOrOwner = task.created_by === userId || task.owner_id === userId;
+
+  if (task.assigned_to !== userId && !isTaskCreatorOrOwner && !isWorkspaceOwner) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
       .select('id')
@@ -806,7 +820,8 @@ export async function updateTask(taskId: string, payload: any) {
       let isAuthorizedAdmin = false;
       try {
         const permissionsModule = await import('@/lib/permissions');
-        isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE") || 
+        isAuthorizedAdmin = await permissionsModule.hasPermission(userId, "SUPER_ADMIN") ||
+                            await permissionsModule.hasPermission(userId, "WORKSPACES_MANAGE") || 
                             await permissionsModule.hasPermission(userId, "TASKS_UPDATE");
       } catch (e) {
         console.warn("[updateTask] Permission check failed", e);
@@ -816,7 +831,7 @@ export async function updateTask(taskId: string, payload: any) {
         await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
           action_attempted: 'UPDATE_TASK'
         }, userId);
-        return { error: "You do not have permission to edit this task. Only the Task Owner or Participants can edit." };
+        return { error: "You do not have permission to edit this task. Only the Task Owner, Creator, Assignee, Workspace Owner, or Authorized Admins can edit." };
       }
     }
   }
@@ -914,7 +929,7 @@ export async function updateTask(taskId: string, payload: any) {
 
 export async function deleteTask(taskId: string) {
   try {
-    const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to').eq('id', taskId).single();
+    const { data: task } = await supabaseAdmin.from('tasks').select('assigned_to, created_by, owner_id, workspace_id, workspace:workspaces(workspace_owner_id)').eq('id', taskId).single();
     if (!task) return { error: "Task not found" };
 
     const cookieStore = await cookies();
@@ -924,13 +939,17 @@ export async function deleteTask(taskId: string) {
     if (!userId) return { error: "Unauthenticated" };
 
     const { hasPermission } = await import('@/lib/permissions');
-    const canDelete = await hasPermission(userId, "TASKS_DELETE");
+    const isSuperAdmin = await hasPermission(userId, "SUPER_ADMIN") || await hasPermission(userId, "WORKSPACES_MANAGE");
+    const isWorkspaceOwner = (task.workspace as any)?.workspace_owner_id === userId;
+    const canDeletePerm = await hasPermission(userId, "TASKS_DELETE");
+
+    const canDelete = isSuperAdmin || isWorkspaceOwner || canDeletePerm;
 
     if (!canDelete) {
       await logActivityEvent('TASK', taskId, 'UNAUTHORIZED_TASK_ACTION', null, { 
         action_attempted: 'DELETE_TASK'
       }, userId);
-      return { error: "You do not have permission to delete this task. Only users with specific IAM permissions can delete." };
+      return { error: "You do not have permission to delete this task. Only Workspace Owners and Authorized Admins can delete." };
     }
 
     // Check for dependencies before deleting

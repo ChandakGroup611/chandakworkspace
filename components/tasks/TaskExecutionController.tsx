@@ -864,18 +864,21 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   // Allow unfreezing if the task is frozen and the user is staging a status change to an open status
   const targetStatusId = pendingStatus || currentStatusCode;
   const targetStatusObj = statuses.find(s => (s.code || s.status_code || s.id) === targetStatusId);
-  const isEffectivelyFrozen = isFrozen ? (pendingStatus ? !!targetStatusObj?.is_closed : true) : false;
-  const canBypassFreeze = task.currentUserIsSuperAdmin || hasPermission("WORKSPACES_MANAGE") || hasPermission("REQUIREMENTS_MANAGE");
+  const isEffectivelyFrozen = isFrozen ? (pendingStatus ? !targetStatusObj?.is_closed : true) : false;
+  
+  const isWorkspaceOwner = task.workspace?.workspace_owner_id === task.currentUserId || task.isWorkspaceOwner;
+  const isTaskCreatorOrOwner = task.created_by === task.currentUserId || task.owner_id === task.currentUserId || task.isTaskOwner;
+  const canBypassFreeze = task.currentUserIsSuperAdmin || isWorkspaceOwner || isTaskCreatorOrOwner || hasPermission("WORKSPACES_MANAGE") || hasPermission("REQUIREMENTS_MANAGE") || hasPermission("SUPER_ADMIN");
   const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
-  const canEditDates = !readOnly && !effectivelyFrozenForUser && (task.currentUserIsSuperAdmin || task.assigned_to === task.currentUserId);
+  const canEditDates = !readOnly && !effectivelyFrozenForUser && (task.currentUserIsSuperAdmin || isWorkspaceOwner || isTaskCreatorOrOwner || task.assigned_to === task.currentUserId);
   
   // Roles
-  const isOwner = task.currentUserCanAct || canBypassFreeze; // Owner/Assignee or SuperAdmin/Executive
+  const isOwner = task.currentUserCanAct || canBypassFreeze || isWorkspaceOwner || isTaskCreatorOrOwner; // Owner/Assignee or SuperAdmin/Workspace Owner/Task Creator
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   
   // Owners and Executors can edit core properties, provided they have TASKS_UPDATE permission
-  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin);
+  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isWorkspaceOwner || isTaskCreatorOrOwner);
   const canEditAux = canEditCore;
   const canDeleteTask = !readOnly && isOwner && canDelete;
   
@@ -1141,7 +1144,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary Assignee</span>
                   </span>
-                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
+                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner) && !effectivelyFrozenForUser && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('primary')}
@@ -1194,7 +1197,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {pendingAssignees ? pendingAssignees.length : explicitExecutors.length}
                     </span>
                   </span>
-                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin) && !effectivelyFrozenForUser && (
+                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner) && !effectivelyFrozenForUser && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('executors')}
