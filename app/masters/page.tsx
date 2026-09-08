@@ -607,8 +607,60 @@ function MastersPageContent() {
 
       {/* Central Columns Workspace Framework */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
-        {/* Left Column Span 4: Navigational Tab Controller */}
-        <div className="lg:col-span-4 space-y-4 flex flex-col min-h-0">
+        {/* Mobile Navigation Controller (<1024px) */}
+        <div className="block lg:hidden space-y-3">
+          <div className="p-1 rounded-xl grid grid-cols-3 sm:grid-cols-5 gap-1 text-xs font-bold tracking-tight bg-elevated/80 text-muted">
+            {[
+              { id: "ALL", label: "All" },
+              { id: "IT INFRA", label: "IT Infra" },
+              { id: "ERP", label: "Software" },
+              { id: "USERS", label: "Users" },
+              { id: "OTHERS", label: "Other" }
+            ].map(tier => {
+              const isSelected = activeCategoryFilter === tier.id;
+              return (
+                <AppButton variant="secondary"
+                  key={tier.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveCategoryFilter(tier.id);
+                    if (tier.id !== "ALL") {
+                      const firstItem = MASTER_TABLES.find(t => t.category === tier.id);
+                      if (firstItem) setActiveTab(firstItem.id);
+                    }
+                  }}
+                  className={`py-1.5 px-2 rounded-lg text-center transition-all truncate text-xs ${
+                    isSelected
+                      ? "bg-surface text-theme-icon shadow-sm ring-1 ring-border/50 font-bold"
+                      : "hover:text-foreground hover:bg-surface/50"
+                  }`}
+                >
+                  {tier.label}
+                </AppButton>
+              );
+            })}
+          </div>
+
+          <div className="relative">
+            <select
+              value={activeTab}
+              onChange={(e) => {
+                setActiveTab(e.target.value);
+                setSearchQuery("");
+              }}
+              className="w-full text-xs font-bold p-2.5 rounded-xl border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+            >
+              {MASTER_TABLES.filter(t => activeCategoryFilter === "ALL" || t.category === activeCategoryFilter).map(tab => (
+                <option key={tab.id} value={tab.id}>
+                  [{tab.category}] {tab.label} — {tab.desc}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Desktop Left Column Span 4: Navigational Tab Controller (>=1024px) */}
+        <div className="hidden lg:flex lg:col-span-4 space-y-4 flex-col min-h-0">
           <AppCard className="flex-1 p-4 space-y-4 flex flex-col min-h-0 overflow-hidden border-none shadow-none bg-surface/50">
             
             {/* Category Tier Selector Tabs */}
@@ -730,7 +782,7 @@ function MastersPageContent() {
           }`}>
             {/* Unified Filter Box Header */}
             <div className="bg-surface dark:bg-surface/5 p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-bold text-foreground tracking-tight">
                     {currentConfig.label}
@@ -741,7 +793,7 @@ function MastersPageContent() {
                 </div>
                 
                 {/* Dynamic Quick Text Search bar */}
-                <div className="w-64">
+                <div className="w-full sm:w-64">
                   <AppInput 
                     placeholder="Search records..." 
                     value={searchQuery}
@@ -753,7 +805,7 @@ function MastersPageContent() {
               </div>
             </div>
 
-            {/* Table Output Array Container */}
+            {/* Table / Mobile Cards Output Array Container */}
             <div className="p-4 flex-1 overflow-y-auto">
               {loading ? (
                 <div className="py-16 flex flex-col items-center justify-center space-y-3">
@@ -787,156 +839,241 @@ function MastersPageContent() {
                       </div>
                     </div>
                   ) : (
-                    <AppTableContainer>
-                      <AppTable>
-                        <AppTableHeader>
-                          <tr>
-                            <AppTableHead>Short Code</AppTableHead>
-                            <AppTableHead>Display Name</AppTableHead>
-                            {currentConfig.parentTable && (
-                              <AppTableHead>Parent Link</AppTableHead>
-                            )}
-                            {activeTab === "master_priorities" && (
-                              <AppTableHead>SLA Target</AppTableHead>
-                            )}
-                            {activeTab === "assets" && (
-                              <AppTableHead>Asset Tag</AppTableHead>
-                            )}
-                            {activeTab === "workflow_states" && (
-                              <AppTableHead>Module Scope</AppTableHead>
-                            )}
-                            <AppTableHead className="text-center">Status</AppTableHead>
-                            <AppTableHead className="text-right">Actions</AppTableHead>
-                          </tr>
-                        </AppTableHeader>
-                        <AppTableBody>
-                          {filteredDataset.map((rec) => (
-                            <AppTableRow key={rec.id}>
-                              <AppTableCell>
-                                <div className="space-y-0.5">
-                                  <span className={`font-mono text-xs font-bold block text-theme-icon`}>{rec.code}</span>
-                                </div>
-                              </AppTableCell>
-                              <AppTableCell>
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`font-bold text-xs block ${"text-foreground"}`}>{rec.name}</span>
-                                    <span className={`text-[0.65rem] font-bold px-1 rounded border tracking-tighter ${
-                                      rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
-                                        ? "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
-                                        : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
-                                        ? "text-warning border-amber-500/30 bg-warning/5"
-                                        : "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
-                                    }`}>
-                                      {rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
-                                        ? "FLAG 2 (ERP)"
-                                        : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
-                                        ? "FLAG 3 (OTHERS)"
-                                        : "FLAG 1 (INFRA)"}
-                                    </span>
-                                  </div>
-                                  {rec.description && (
-                                    <span className={`text-xs block whitespace-normal break-words text-muted`}>{rec.description}</span>
-                                  )}
-                                </div>
-                              </AppTableCell>
-
-                              {/* Dynamic Render based on specific column mappings */}
-                              {currentConfig.parentTable && (
-                                <AppTableCell>
-                                  <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block whitespace-normal break-words ${
-                                    "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
-                                  }`} title={rec[currentConfig.parentKey!]}>
-                                    {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || 
-                                     parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || 
-                                     rec[currentConfig.parentKey!] || "Unmapped"}
-                                  </span>
-                                </AppTableCell>
-                              )}
-
-                              {activeTab === "master_priorities" && (
-                                <AppTableCell>
-                                  {rec.max_sla_hours !== undefined ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className={`p-1 rounded-md bg-amber-100`}>
-                                        <Clock className="h-3 w-3 text-warning" />
-                                      </div>
-                                      <span className="font-semibold">{rec.max_sla_hours * 60}m Target</span>
-                                      <div className="flex gap-2 text-[0.65rem] opacity-60 uppercase font-bold tracking-tighter">
-                                        <span>Min: {rec.min_sla_hours || 0}h</span>
-                                        <span>Max: {rec.max_sla_hours || 0}h</span>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted">-</span>
-                                  )}
-                                </AppTableCell>
-                              )}
-
-                              {activeTab === "assets" && (
-                                <AppTableCell>
-                                  <span className={`text-xs font-mono font-bold text-emerald-700`}>
-                                    {rec.asset_tag}
-                                  </span>
-                                </AppTableCell>
-                              )}
-
-                              {activeTab === "workflow_states" && (
-                                <AppTableCell>
-                                  <span className={`text-xs font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                                    "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
-                                  }`}>
-                                    {(rec.module || "Universal").replace(/_/g, ' ')}
-                                  </span>
-                                </AppTableCell>
-                              )}
-
-                              <AppTableCell className="text-center">
+                    <>
+                      {/* Mobile Card List (<1024px) */}
+                      <div className="block lg:hidden space-y-3">
+                        {filteredDataset.map((rec) => (
+                          <div 
+                            key={rec.id}
+                            className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all space-y-3 relative"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                                {rec.code}
+                              </span>
+                              <div className="flex items-center gap-1.5 shrink-0">
                                 <AppButton variant="secondary"
                                   type="button"
                                   onClick={() => toggleActive(rec)}
                                   disabled={!hasPermission("MASTERS_UPDATE")}
-                                  className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  className={`px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     rec.is_active 
-                                      ? ("bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100")
-                                      : ("bg-elevated border-border text-muted line-through hover:bg-elevated")
+                                      ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                                      : "bg-elevated border-border text-muted line-through hover:bg-elevated"
                                   }`}
                                 >
                                   {rec.is_active ? "Active" : "Disabled"}
                                 </AppButton>
-                              </AppTableCell>
+                              </div>
+                            </div>
 
-                              <AppTableCell className="text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  <AppButton variant="secondary"
-                                    type="button"
-                                    onClick={() => openEditModal(rec)}
-                                    disabled={!hasPermission("MASTERS_UPDATE")}
-                                    className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      "bg-surface border-border text-muted hover:text-theme-icon hover:border-theme-btn-primary/30"
-                                    }`}
-                                    title="Edit Record Details"
-                                  >
-                                    <Edit className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                  <AppButton variant="secondary"
-                                    type="button"
-                                    onClick={() => handleDelete(rec)}
-                                    disabled={!hasPermission("MASTERS_DELETE")}
-                                    className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                                      "bg-surface border-border text-muted hover:text-danger hover:border-rose-300"
-                                    }`}
-                                    title="Delete Record"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                </div>
-                              </AppTableCell>
-                            </AppTableRow>
-                          ))}
-                        </AppTableBody>
-                      </AppTable>
-                    </AppTableContainer>
+                            <div>
+                              <h4 className="text-sm font-bold text-foreground">
+                                {rec.name}
+                              </h4>
+                              {rec.description && (
+                                <p className="text-xs text-muted mt-0.5 line-clamp-2">
+                                  {rec.description}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Additional metadata tags if available */}
+                            <div className="flex items-center gap-2 text-xs text-muted flex-wrap">
+                              {currentConfig.parentTable && (
+                                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded border text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30">
+                                  Parent: {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || "Unmapped"}
+                                </span>
+                              )}
+                              {activeTab === "master_priorities" && rec.max_sla_hours !== undefined && (
+                                <span className="text-[10px] font-semibold text-warning bg-amber-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                                  <Clock className="h-3 w-3" /> {rec.max_sla_hours * 60}m SLA
+                                </span>
+                              )}
+                              {activeTab === "assets" && rec.asset_tag && (
+                                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                  Tag: {rec.asset_tag}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Bottom Row: Actions */}
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/40 text-xs">
+                              <AppButton variant="secondary"
+                                type="button"
+                                onClick={() => openEditModal(rec)}
+                                disabled={!hasPermission("MASTERS_UPDATE")}
+                                className="px-2.5 py-1 rounded-lg border text-xs text-theme-icon bg-surface hover:bg-elevated border-border"
+                              >
+                                <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+                              </AppButton>
+                              <AppButton variant="secondary"
+                                type="button"
+                                onClick={() => handleDelete(rec)}
+                                disabled={!hasPermission("MASTERS_DELETE")}
+                                className="px-2.5 py-1 rounded-lg border text-xs text-danger bg-surface hover:bg-danger/10 border-border"
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                              </AppButton>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Desktop Table View (>=1024px) */}
+                      <div className="hidden lg:block">
+                        <AppTableContainer>
+                          <AppTable>
+                            <AppTableHeader>
+                              <tr>
+                                <AppTableHead>Short Code</AppTableHead>
+                                <AppTableHead>Display Name</AppTableHead>
+                                {currentConfig.parentTable && (
+                                  <AppTableHead>Parent Link</AppTableHead>
+                                )}
+                                {activeTab === "master_priorities" && (
+                                  <AppTableHead>SLA Target</AppTableHead>
+                                )}
+                                {activeTab === "assets" && (
+                                  <AppTableHead>Asset Tag</AppTableHead>
+                                )}
+                                {activeTab === "workflow_states" && (
+                                  <AppTableHead>Module Scope</AppTableHead>
+                                )}
+                                <AppTableHead className="text-center">Status</AppTableHead>
+                                <AppTableHead className="text-right">Actions</AppTableHead>
+                              </tr>
+                            </AppTableHeader>
+                            <AppTableBody>
+                              {filteredDataset.map((rec) => (
+                                <AppTableRow key={rec.id}>
+                                  <AppTableCell>
+                                    <div className="space-y-0.5">
+                                      <span className={`font-mono text-xs font-bold block text-theme-icon`}>{rec.code}</span>
+                                    </div>
+                                  </AppTableCell>
+                                  <AppTableCell>
+                                    <div className="space-y-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className={`font-bold text-xs block ${"text-foreground"}`}>{rec.name}</span>
+                                        <span className={`text-[0.65rem] font-bold px-1 rounded border tracking-tighter ${
+                                          rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
+                                            ? "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
+                                            : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
+                                            ? "text-warning border-amber-500/30 bg-warning/5"
+                                            : "text-theme-icon border-theme-btn-primary/30 bg-theme-btn-primary/5"
+                                        }`}>
+                                          {rec.scope_id === 'e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2'
+                                            ? "FLAG 2 (ERP)"
+                                            : rec.scope_id === 'e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3'
+                                            ? "FLAG 3 (OTHERS)"
+                                            : "FLAG 1 (INFRA)"}
+                                        </span>
+                                      </div>
+                                      {rec.description && (
+                                        <span className={`text-xs block whitespace-normal break-words text-muted`}>{rec.description}</span>
+                                      )}
+                                    </div>
+                                  </AppTableCell>
+
+                                  {/* Dynamic Render based on specific column mappings */}
+                                  {currentConfig.parentTable && (
+                                    <AppTableCell>
+                                      <span className={`text-xs font-mono font-medium px-2 py-0.5 rounded border inline-block whitespace-normal break-words ${
+                                        "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
+                                      }`} title={rec[currentConfig.parentKey!]}>
+                                        {parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.name || 
+                                         parentOptions.find((p: any) => p.id === rec[currentConfig.parentKey!])?.code || 
+                                         rec[currentConfig.parentKey!] || "Unmapped"}
+                                      </span>
+                                    </AppTableCell>
+                                  )}
+
+                                  {activeTab === "master_priorities" && (
+                                    <AppTableCell>
+                                      {rec.max_sla_hours !== undefined ? (
+                                        <div className="flex items-center gap-2">
+                                          <div className={`p-1 rounded-md bg-amber-100`}>
+                                            <Clock className="h-3 w-3 text-warning" />
+                                          </div>
+                                          <span className="font-semibold">{rec.max_sla_hours * 60}m Target</span>
+                                          <div className="flex gap-2 text-[0.65rem] opacity-60 uppercase font-bold tracking-tighter">
+                                            <span>Min: {rec.min_sla_hours || 0}h</span>
+                                            <span>Max: {rec.max_sla_hours || 0}h</span>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <span className="text-muted">-</span>
+                                      )}
+                                    </AppTableCell>
+                                  )}
+
+                                  {activeTab === "assets" && (
+                                    <AppTableCell>
+                                      <span className={`text-xs font-mono font-bold text-emerald-700`}>
+                                        {rec.asset_tag}
+                                      </span>
+                                    </AppTableCell>
+                                  )}
+
+                                  {activeTab === "workflow_states" && (
+                                    <AppTableCell>
+                                      <span className={`text-xs font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                                        "text-theme-icon bg-theme-btn-primary/10 border-theme-btn-primary/30"
+                                      }`}>
+                                        {(rec.module || "Universal").replace(/_/g, ' ')}
+                                      </span>
+                                    </AppTableCell>
+                                  )}
+
+                                  <AppTableCell className="text-center">
+                                    <AppButton variant="secondary"
+                                      type="button"
+                                      onClick={() => toggleActive(rec)}
+                                      disabled={!hasPermission("MASTERS_UPDATE")}
+                                      className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        rec.is_active 
+                                          ? ("bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100")
+                                          : ("bg-elevated border-border text-muted line-through hover:bg-elevated")
+                                      }`}
+                                    >
+                                      {rec.is_active ? "Active" : "Disabled"}
+                                    </AppButton>
+                                  </AppTableCell>
+
+                                  <AppTableCell className="text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      <AppButton variant="secondary"
+                                        type="button"
+                                        onClick={() => openEditModal(rec)}
+                                        disabled={!hasPermission("MASTERS_UPDATE")}
+                                        className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                          "bg-surface border-border text-muted hover:text-theme-icon hover:border-theme-btn-primary/30"
+                                        }`}
+                                        title="Edit Record Details"
+                                      >
+                                        <Edit className="h-3.5 w-3.5" />
+                                      </AppButton>
+                                      <AppButton variant="secondary"
+                                        type="button"
+                                        onClick={() => handleDelete(rec)}
+                                        disabled={!hasPermission("MASTERS_DELETE")}
+                                        className={`p-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                          "bg-surface border-border text-muted hover:text-danger hover:border-rose-300"
+                                        }`}
+                                        title="Delete Record"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </AppButton>
+                                    </div>
+                                  </AppTableCell>
+                                </AppTableRow>
+                              ))}
+                            </AppTableBody>
+                          </AppTable>
+                        </AppTableContainer>
+                      </div>
+                    </>
                   )}
                 </>
               )}

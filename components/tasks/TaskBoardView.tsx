@@ -140,7 +140,7 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
   });
 
   return (
-    <div className="flex flex-col w-[320px] min-w-[320px] bg-surface dark:theme-card-structural /[0.02] rounded-xl border-border dark:border-border h-full max-h-full">
+    <div className="flex flex-col w-[260px] sm:w-[300px] min-w-[260px] sm:min-w-[300px] shrink-0 bg-surface dark:theme-card-structural /[0.02] rounded-xl border border-border h-full max-h-full">
       <div className="p-3 border-b border-border dark:border-border flex items-center justify-between theme-card-structural dark:bg-[#0B0F19] rounded-t-xl shrink-0">
         <div className="flex items-center gap-2">
           {column.color && (

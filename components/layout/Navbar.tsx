@@ -222,8 +222,8 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
           
           {/* Dropdown Results */}
           {searchOpen && (
-            <div className="absolute top-[110%] left-0 w-[500px] max-w-[calc(100vw-48px)] rounded-xl theme-card-structural  border border-border/50 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="max-h-[60vh] overflow-y-auto p-2">
+            <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-[110%] sm:left-0 sm:w-[500px] max-w-[calc(100vw-24px)] rounded-xl theme-card-structural border border-border/80 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 shadow-2xl">
+              <div className="max-h-[60vh] overflow-y-auto p-2 custom-scrollbar">
                 {query === "" ? (
                   <>
                     <div className="mb-2 px-2 text-xs font-semibold text-muted uppercase tracking-wider">Quick Actions</div>

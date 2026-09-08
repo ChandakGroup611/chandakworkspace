@@ -500,92 +500,190 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
             reportName="Requirement Analysis"
           />
 
-          <AppTableContainer ref={parentRef} className="h-[600px] rounded-b-2xl">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <AppTable style={{ minWidth: visibleColumns.reduce((acc, col) => acc + (col.column_width || (col as any).default_width || 150), 0) + 100 }}>
-                <AppTableHeader>
-                  <AppTableRow>
-                    <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
-                      {visibleColumns.map((col, i) => (
-                        <DraggableTableHead key={col.field_id} col={col} isFirst={i === 0} />
-                      ))}
-                    </SortableContext>
-                  </AppTableRow>
-                </AppTableHeader>
-                <AppTableBody>
-                  {virtualizer.getVirtualItems().map((virtualRow) => {
-                    const r = filtered[virtualRow.index];
-                    return (
-                      <AppTableRow 
-                        key={r.id} 
-                        style={{ height: `${virtualRow.size}px` }} 
-                        className="hover:opacity-90/10/50 dark:hover:bg-surface/[0.02] cursor-pointer"
+          {/* Mobile Card List (<1024px) */}
+          <div className="block lg:hidden p-4 space-y-3">
+            {filtered.length === 0 ? (
+              <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+                No requirements match your current filters.
+              </div>
+            ) : (
+              filtered.map((r) => (
+                <div 
+                  key={r.id}
+                  onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
+                  className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all cursor-pointer space-y-3 relative active:scale-[0.99]"
+                >
+                  {/* Top Row: Code, Version, Status, Priority */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-mono text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md shrink-0">
+                        {r.code || r.id}
+                      </span>
+                      {r.amendmentVersion > 0 && (
+                        <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold uppercase shrink-0">
+                          v{r.amendmentVersion}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {r.priority_name && r.priority_name !== "—" && (
+                        <span 
+                          className="px-2 py-0.5 rounded text-[10px] font-bold text-foreground shadow-sm"
+                          style={{ backgroundColor: r.priority?.priority_color || '#6B7280' }}
+                        >
+                          {r.priority_name}
+                        </span>
+                      )}
+                      <AppBadge variant={r.status_name === 'Approved' ? 'success' : r.status_name === 'Rejected' ? 'danger' : r.status_name === 'Closed' ? 'success' : r.status_name?.includes('Pending') ? 'warning' : 'neutral'} className="text-[10px] py-0.5 px-2">
+                        {r.status_name || 'Draft'}
+                      </AppBadge>
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground line-clamp-2">
+                      {r.title || 'Untitled Requirement'}
+                    </h3>
+                  </div>
+
+                  {/* Department, System, Task Count */}
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted flex-wrap">
+                    <div className="flex items-center gap-2 truncate">
+                      {r.department_name && (
+                        <span className="bg-elevated px-2 py-0.5 rounded text-[10px] font-bold text-foreground/80">
+                          {r.department_name}
+                        </span>
+                      )}
+                      {r.system_name && (
+                        <span className="text-muted text-[11px] truncate max-w-[120px]">
+                          {r.system_name}
+                        </span>
+                      )}
+                    </div>
+                    {r.task_count !== undefined && (
+                      <span className="font-bold text-[10px] text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-full">
+                        {r.task_count} Tasks
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Bottom Row: Due Info & Quick View Button */}
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
+                    <div className="text-[11px] font-semibold text-muted flex items-center gap-2">
+                      {r.due_days && (
+                        <span className={r.due_days.includes("Overdue") ? "text-rose-500 font-bold" : "text-emerald-500 font-bold"}>
+                          {r.due_days}
+                        </span>
+                      )}
+                      {r.due_date && <span>• Due: {formatDate(r.due_date)}</span>}
+                    </div>
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <AppButton 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 px-2.5 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center gap-1"
                         onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
                       >
-                        {visibleColumns.map((col, i) => {
-                          const w = col.column_width || (col as any).default_width || 150;
-                          return (
-                            <AppTableCell 
-                              key={col.field_id} 
-                              style={{ width: `${w}px`, minWidth: `${w}px` }}
-                              className={cn(
-                                !["title", "task_summary"].includes(col.field_key) && "text-center",
-                                "text-[13px]",
-                                i === 0 && "sticky left-0 bg-elevated z-20"
-                              )}
-                            >
-                              {col.field_key === "actions" ? (
-                                <AppButton 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-7 w-7 p-0" 
-                                  onClick={(e) => { e.stopPropagation(); router.push(`/requirements/${r.id}?tab=analysis`); }}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </AppButton>
-                              ) : col.field_key === "status_name" ? (
-                                <AppBadge variant={r.status_name === 'Approved' ? 'success' : r.status_name === 'Rejected' ? 'danger' : r.status_name === 'Closed' ? 'success' : r.status_name?.includes('Pending') ? 'warning' : 'neutral'}>
-                                  {r.status_name}
-                                </AppBadge>
-                              ) : col.field_key === "priority_name" ? (
-                                <span 
-                                  className="px-2 py-1 rounded text-[10px] font-bold text-foreground shadow-sm"
-                                  style={{ backgroundColor: r.priority?.priority_color || '#6B7280' }}
-                                >
-                                  {r.priority_name !== "—" ? r.priority_name : "-"}
-                                </span>
-                              ) : col.field_key === "code" ? (
-                                <span className="font-mono font-bold text-amber-500">{r.code || r.id}</span>
-                              ) : col.field_key === "title" ? (
-                                <div className="font-medium flex items-center gap-2 max-w-[250px] md:max-w-none" title={r.title}>
-                                  <span className="truncate flex-1 min-w-0">{r.title}</span>
-                                  {r.amendmentVersion > 0 && (
-                                    <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold tracking-wider uppercase shrink-0">
-                                      v{r.amendmentVersion}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : col.field_key === "task_count" ? (
-                                <div className="font-bold text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
-                              ) : col.field_key === "due_days" ? (
-                                <div className={cn("font-semibold", r.due_days?.includes("Overdue") ? "text-rose-500" : "text-emerald-500")}>
-                                  {r.due_days}
-                                </div>
-                              ) : (
-                                <div className="truncate text-muted-foreground" title={String(getExportCellValue(col, r))}>
-                                  {getExportCellValue(col, r)}
-                                </div>
-                              )}
-                            </AppTableCell>
-                          );
-                        })}
-                      </AppTableRow>
-                    );
-                  })}
-                </AppTableBody>
-              </AppTable>
-            </DndContext>
-          </AppTableContainer>
+                        <Eye className="h-3.5 w-3.5" /> View Analysis
+                      </AppButton>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table Container (>=1024px) */}
+          <div className="hidden lg:block">
+            <AppTableContainer ref={parentRef} className="h-[600px] rounded-b-2xl">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <AppTable style={{ minWidth: visibleColumns.reduce((acc, col) => acc + (col.column_width || (col as any).default_width || 150), 0) + 100 }}>
+                  <AppTableHeader>
+                    <AppTableRow>
+                      <SortableContext items={visibleColumns.map(c => c.field_id)} strategy={horizontalListSortingStrategy}>
+                        {visibleColumns.map((col, i) => (
+                          <DraggableTableHead key={col.field_id} col={col} isFirst={i === 0} />
+                        ))}
+                      </SortableContext>
+                    </AppTableRow>
+                  </AppTableHeader>
+                  <AppTableBody>
+                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                      const r = filtered[virtualRow.index];
+                      return (
+                        <AppTableRow 
+                          key={r.id} 
+                          style={{ height: `${virtualRow.size}px` }} 
+                          className="hover:opacity-90/10/50 dark:hover:bg-surface/[0.02] cursor-pointer"
+                          onClick={() => router.push(`/requirements/${r.id}?tab=analysis`)}
+                        >
+                          {visibleColumns.map((col, i) => {
+                            const w = col.column_width || (col as any).default_width || 150;
+                            return (
+                              <AppTableCell 
+                                key={col.field_id} 
+                                style={{ width: `${w}px`, minWidth: `${w}px` }}
+                                className={cn(
+                                  !["title", "task_summary"].includes(col.field_key) && "text-center",
+                                  "text-[13px]",
+                                  i === 0 && "sticky left-0 bg-elevated z-20"
+                                )}
+                              >
+                                {col.field_key === "actions" ? (
+                                  <AppButton 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 w-7 p-0" 
+                                    onClick={(e) => { e.stopPropagation(); router.push(`/requirements/${r.id}?tab=analysis`); }}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </AppButton>
+                                ) : col.field_key === "status_name" ? (
+                                  <AppBadge variant={r.status_name === 'Approved' ? 'success' : r.status_name === 'Rejected' ? 'danger' : r.status_name === 'Closed' ? 'success' : r.status_name?.includes('Pending') ? 'warning' : 'neutral'}>
+                                    {r.status_name}
+                                  </AppBadge>
+                                ) : col.field_key === "priority_name" ? (
+                                  <span 
+                                    className="px-2 py-1 rounded text-[10px] font-bold text-foreground shadow-sm"
+                                    style={{ backgroundColor: r.priority?.priority_color || '#6B7280' }}
+                                  >
+                                    {r.priority_name !== "—" ? r.priority_name : "-"}
+                                  </span>
+                                ) : col.field_key === "code" ? (
+                                  <span className="font-mono font-bold text-amber-500">{r.code || r.id}</span>
+                                ) : col.field_key === "title" ? (
+                                  <div className="font-medium flex items-center gap-2 max-w-[250px] md:max-w-none" title={r.title}>
+                                    <span className="truncate flex-1 min-w-0">{r.title}</span>
+                                    {r.amendmentVersion > 0 && (
+                                      <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold tracking-wider uppercase shrink-0">
+                                        v{r.amendmentVersion}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : col.field_key === "task_count" ? (
+                                  <div className="font-bold text-theme-icon bg-theme-btn-primary/10 dark:bg-theme-btn-primary/10 px-2 py-1 rounded w-fit mx-auto">{r.task_count}</div>
+                                ) : col.field_key === "due_days" ? (
+                                  <div className={cn("font-semibold", r.due_days?.includes("Overdue") ? "text-rose-500" : "text-emerald-500")}>
+                                    {r.due_days}
+                                  </div>
+                                ) : (
+                                  <div className="truncate text-muted-foreground" title={String(getExportCellValue(col, r))}>
+                                    {getExportCellValue(col, r)}
+                                  </div>
+                                )}
+                              </AppTableCell>
+                            );
+                          })}
+                        </AppTableRow>
+                      );
+                    })}
+                  </AppTableBody>
+                </AppTable>
+              </DndContext>
+            </AppTableContainer>
+          </div>
         </div>
       </div>
     </ExperienceProvider>

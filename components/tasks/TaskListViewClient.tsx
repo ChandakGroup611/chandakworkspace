@@ -1471,10 +1471,13 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                         </AppBadge>
 
                         {/* 3-Dots Action Popover */}
-                        <div className="relative">
+                        <div className="relative" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={() => setOpenMenuTaskId(isMenuOpen ? null : task.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuTaskId(isMenuOpen ? null : task.id);
+                            }}
                             className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-elevated transition-colors"
                           >
                             <MoreVertical className="h-4 w-4" />

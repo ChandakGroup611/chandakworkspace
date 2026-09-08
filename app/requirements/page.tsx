@@ -331,19 +331,20 @@ function RequirementsPageContent() {
         />
       )}
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-6 gap-3 px-1">
-        <div>
+      {/* Filters Grid */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-1">
+        <div className="col-span-2 sm:col-span-1">
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Search</div>
           <AppInput 
-            placeholder="Search by Title or Req #..." 
+            placeholder="Search Title or Req #..." 
             value={filter.search}
             onChange={(e: any) => setFilter(f => ({ ...f, search: e.target.value }))}
           />
         </div>
-          <div>
-            <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System / Asset</div>
-            <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+        <div>
+          <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">System / Asset</div>
+          <select 
+            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
             value={filter.system}
             onChange={(e: any) => setFilter(f => ({ ...f, system: e.target.value }))}
           >
@@ -356,7 +357,7 @@ function RequirementsPageContent() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Status</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
             value={filter.status}
             onChange={(e: any) => setFilter(f => ({ ...f, status: e.target.value }))}
           >
@@ -369,7 +370,7 @@ function RequirementsPageContent() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Priority</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
             value={filter.priority}
             onChange={(e: any) => setFilter(f => ({ ...f, priority: e.target.value }))}
           >
@@ -382,7 +383,7 @@ function RequirementsPageContent() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Department</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
             value={filter.department}
             onChange={(e: any) => setFilter(f => ({ ...f, department: e.target.value }))}
           >
@@ -395,7 +396,7 @@ function RequirementsPageContent() {
         <div>
           <div className="text-[10px] text-muted uppercase font-bold mb-1 ml-1 tracking-wider">Flow/Stage</div>
           <select 
-            className="w-full text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary"
+            className="w-full text-xs sm:text-sm p-2 border border-border dark:border-white/10 rounded-md bg-surface dark:bg-[#0a0d14] text-foreground dark:text-gray-100 focus:ring-theme-btn-primary h-9"
             value={filter.stage}
             onChange={(e: any) => setFilter(f => ({ ...f, stage: e.target.value }))}
           >
@@ -408,43 +409,151 @@ function RequirementsPageContent() {
       </div>
 
       <div className="mt-4 flex-1 overflow-hidden flex flex-col min-h-0">
-        <AppTableContainer className="flex-1 overflow-y-auto">
-          <AppTable>
-            <AppTableHeader>
-                  <AppTableRow className="bg-surface/50 dark:bg-surface/10 hover:bg-transparent">
-                    <AppTableHead className="w-[150px]">REQ #</AppTableHead>
-                    <AppTableHead className="min-w-[200px]">Title</AppTableHead>
-                    <AppTableHead>System / Asset</AppTableHead>
-                    <AppTableHead>Module</AppTableHead>
-                    <AppTableHead>Submodule</AppTableHead>
-                <AppTableHead>Particulars</AppTableHead>
-                <AppTableHead>Priority</AppTableHead>
-                <AppTableHead>Est. Pts</AppTableHead>
-                <AppTableHead>Release</AppTableHead>
-                <AppTableHead>Department</AppTableHead>
-                <AppTableHead>Created By</AppTableHead>
-                <AppTableHead>Created Date</AppTableHead>
-                <AppTableHead>Approval</AppTableHead>
-                <AppTableHead className="w-24 text-center">Action</AppTableHead>
-              </AppTableRow>
-            </AppTableHeader>
-            <AppTableBody>
-              {reqs.filter(r => {
-                if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
-                if (filter.system && r.softwareSystem !== filter.system) return false;
-                if (filter.status && r.approvalStatus !== filter.status) return false;
-                if (filter.priority && r.priority !== filter.priority) return false;
-                if (filter.department && r.department !== filter.department) return false;
-                if (filter.stage && r.stage !== filter.stage) return false;
-                return true;
-              }).length === 0 ? (
-                <AppTableRow>
-                  <AppTableCell colSpan={14} className="text-center py-8 text-muted">
-                    {loadingReqs ? "Loading requirements..." : "No requirements found."}
-                  </AppTableCell>
+        {/* Mobile / Tablet Requirements Cards (<1024px) */}
+        <div className="block lg:hidden flex-1 overflow-y-auto space-y-3">
+          {reqs.filter(r => {
+            if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
+            if (filter.system && r.softwareSystem !== filter.system) return false;
+            if (filter.status && r.approvalStatus !== filter.status) return false;
+            if (filter.priority && r.priority !== filter.priority) return false;
+            if (filter.department && r.department !== filter.department) return false;
+            if (filter.stage && r.stage !== filter.stage) return false;
+            return true;
+          }).length === 0 ? (
+            <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+              {loadingReqs ? "Loading requirements..." : "No requirements found."}
+            </div>
+          ) : (
+            reqs.filter(r => {
+              if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
+              if (filter.system && r.softwareSystem !== filter.system) return false;
+              if (filter.status && r.approvalStatus !== filter.status) return false;
+              if (filter.priority && r.priority !== filter.priority) return false;
+              if (filter.department && r.department !== filter.department) return false;
+              if (filter.stage && r.stage !== filter.stage) return false;
+              return true;
+            }).map((r) => (
+              <div 
+                key={r.id}
+                onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
+                className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all cursor-pointer space-y-3 relative active:scale-[0.99]"
+              >
+                {/* Top Row: Code, Priority, Approval Status */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md shrink-0">
+                      {r.id}
+                    </span>
+                    {Boolean(r.amendmentVersion && r.amendmentVersion > 0) && (
+                      <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 text-[9px] font-bold uppercase shrink-0">
+                        v{r.amendmentVersion}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {r.priority !== '-' && (
+                      <span 
+                        className="px-2 py-0.5 rounded text-[10px] font-bold text-foreground shadow-sm"
+                        style={{ backgroundColor: r.priorityColor || '#6B7280' }}
+                      >
+                        {r.priority}
+                      </span>
+                    )}
+                    <AppBadge variant={r.approvalStatus === 'Approved' ? 'success' : r.approvalStatus === 'Rejected' ? 'danger' : r.approvalStatus?.includes('Pending') ? 'warning' : 'neutral'} className="text-[10px] py-0.5 px-2">
+                      {r.approvalStatus}
+                    </AppBadge>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <h3 className="text-sm font-bold text-foreground line-clamp-2">
+                    {r.title}
+                  </h3>
+                </div>
+
+                {/* System, Module, Department */}
+                <div className="flex items-center gap-2 text-xs text-muted flex-wrap">
+                  {r.softwareSystem && r.softwareSystem !== '-' && (
+                    <span className="bg-elevated px-2 py-0.5 rounded text-[10px] font-bold text-foreground/80">
+                      {r.softwareSystem}
+                    </span>
+                  )}
+                  {r.module && r.module !== '-' && (
+                    <span className="text-muted text-[11px]">› {r.module}</span>
+                  )}
+                  {r.department && r.department !== '-' && (
+                    <span className="bg-elevated px-2 py-0.5 rounded text-[10px] font-semibold text-muted ml-auto">
+                      {r.department}
+                    </span>
+                  )}
+                </div>
+
+                {/* Bottom Row: Created By, Date & Action Buttons */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
+                  <div className="text-[11px] text-muted truncate max-w-[150px]">
+                    <span>{r.createdBy || 'Unknown'}</span> • <span>{r.createdAt}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <AppButton 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 px-2 text-xs text-accent hover:bg-accent/10 rounded-lg flex items-center gap-1"
+                      onClick={() => router.push(`/requirements/${r.dbId}?mode=view`)}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> View
+                    </AppButton>
+                    {(isSuperAdmin || hasPermission('REQUIREMENTS_UPDATE')) && (
+                      <AppButton 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 px-2 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center gap-1"
+                        onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
+                      >
+                        <Edit2 className="h-3.5 w-3.5" /> Analysis
+                      </AppButton>
+                    )}
+                    {(isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
+                      <AppButton 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 w-7 p-0 text-muted hover:text-danger rounded-lg flex items-center justify-center"
+                        onClick={(e) => handleDelete(e, r.dbId)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </AppButton>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Virtualized Table (>=1024px) */}
+        <div className="hidden lg:block flex-1 overflow-hidden">
+          <AppTableContainer className="h-full overflow-y-auto">
+            <AppTable>
+              <AppTableHeader>
+                <AppTableRow className="bg-surface/50 dark:bg-surface/10 hover:bg-transparent">
+                  <AppTableHead className="w-[150px]">REQ #</AppTableHead>
+                  <AppTableHead className="min-w-[200px]">Title</AppTableHead>
+                  <AppTableHead>System / Asset</AppTableHead>
+                  <AppTableHead>Module</AppTableHead>
+                  <AppTableHead>Submodule</AppTableHead>
+                  <AppTableHead>Particulars</AppTableHead>
+                  <AppTableHead>Priority</AppTableHead>
+                  <AppTableHead>Est. Pts</AppTableHead>
+                  <AppTableHead>Release</AppTableHead>
+                  <AppTableHead>Department</AppTableHead>
+                  <AppTableHead>Created By</AppTableHead>
+                  <AppTableHead>Created Date</AppTableHead>
+                  <AppTableHead>Approval</AppTableHead>
+                  <AppTableHead className="w-24 text-center">Action</AppTableHead>
                 </AppTableRow>
-              ) : (
-                reqs.filter(r => {
+              </AppTableHeader>
+              <AppTableBody>
+                {reqs.filter(r => {
                   if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
                   if (filter.system && r.softwareSystem !== filter.system) return false;
                   if (filter.status && r.approvalStatus !== filter.status) return false;
@@ -452,93 +561,109 @@ function RequirementsPageContent() {
                   if (filter.department && r.department !== filter.department) return false;
                   if (filter.stage && r.stage !== filter.stage) return false;
                   return true;
-                }).map((r) => (
-                  <AppTableRow 
-                    key={r.id} 
-                    className="cursor-pointer hover:bg-theme-btn-primary/10/50 dark:hover:bg-surface/[0.02] transition-colors"
-                    onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
-                  >
-                    <AppTableCell className="font-mono text-xs font-bold text-amber-400">{r.id}</AppTableCell>
-                    <AppTableCell className="font-medium text-sm max-w-[200px] truncate" title={r.title}>{r.title}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.softwareSystem}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.module}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.subModule}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.subCategory}</AppTableCell>
-                    <AppTableCell>
-                      {r.priority !== '-' ? (
-                        <span 
-                          className="px-2 py-1 rounded text-[10px] font-bold text-foreground shadow-sm"
-                          style={{ backgroundColor: r.priorityColor || '#6B7280' }}
-                        >
-                          {r.priority}
-                        </span>
-                      ) : (
-                        <span className="text-muted">-</span>
-                      )}
-                    </AppTableCell>
-                    <AppTableCell>
-                      {r.storyPoints > 0 ? (
-                        <AppBadge variant="info">{r.storyPoints} pts</AppBadge>
-                      ) : (
-                        <span className="text-muted text-xs">-</span>
-                      )}
-                    </AppTableCell>
-                    <AppTableCell className="text-xs">{r.targetRelease}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.department}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.createdBy}</AppTableCell>
-                    <AppTableCell className="text-xs">{r.createdAt}</AppTableCell>
-                    <AppTableCell>
-                       <AppBadge variant={r.approvalStatus === 'Approved' ? 'success' : r.approvalStatus === 'Rejected' ? 'danger' : r.approvalStatus === 'Pending Approval' ? 'warning' : 'neutral'}>
-                         {r.approvalStatus}
-                       </AppBadge>
-                    </AppTableCell>
-                    <AppTableCell>
-                      <div className="flex items-center justify-center gap-0">
-                        <AppButton 
-                          variant="ghost" 
-                          size="sm" 
-                          title="View"
-                          className="h-7 w-7 p-0 text-accent hover:text-accent/80 hover:bg-accent/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/requirements/${r.dbId}?mode=view`);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </AppButton>
-                        {(isSuperAdmin || hasPermission('REQUIREMENTS_UPDATE')) && (
-                          <AppButton 
-                            variant="ghost" 
-                            size="sm" 
-                            title="Edit Business Analysis"
-                            className="h-7 w-7 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/requirements/${r.dbId}?tab=analysis`);
-                            }}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </AppButton>
-                        )}
-                        {(isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
-                          <AppButton 
-                            variant="ghost" 
-                            size="sm" 
-                            title="Delete"
-                            className="h-7 w-7 p-0 text-muted hover:text-rose-500 hover:bg-accent/10"
-                            onClick={(e) => handleDelete(e, r.dbId)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </AppButton>
-                        )}
-                      </div>
+                }).length === 0 ? (
+                  <AppTableRow>
+                    <AppTableCell colSpan={14} className="text-center py-8 text-muted">
+                      {loadingReqs ? "Loading requirements..." : "No requirements found."}
                     </AppTableCell>
                   </AppTableRow>
-                ))
-              )}
-            </AppTableBody>
-          </AppTable>
-        </AppTableContainer>
+                ) : (
+                  reqs.filter(r => {
+                    if (filter.search && !r.title.toLowerCase().includes(filter.search.toLowerCase()) && !r.id.toLowerCase().includes(filter.search.toLowerCase())) return false;
+                    if (filter.system && r.softwareSystem !== filter.system) return false;
+                    if (filter.status && r.approvalStatus !== filter.status) return false;
+                    if (filter.priority && r.priority !== filter.priority) return false;
+                    if (filter.department && r.department !== filter.department) return false;
+                    if (filter.stage && r.stage !== filter.stage) return false;
+                    return true;
+                  }).map((r) => (
+                    <AppTableRow 
+                      key={r.id} 
+                      className="cursor-pointer hover:bg-theme-btn-primary/10/50 dark:hover:bg-surface/[0.02] transition-colors"
+                      onClick={() => router.push(`/requirements/${r.dbId}?tab=analysis`)}
+                    >
+                      <AppTableCell className="font-mono text-xs font-bold text-amber-400">{r.id}</AppTableCell>
+                      <AppTableCell className="font-medium text-sm max-w-[200px] truncate" title={r.title}>{r.title}</AppTableCell>
+                      <AppTableCell className="text-xs">{r.softwareSystem}</AppTableCell>
+                      <AppTableCell className="text-xs">{r.module}</AppTableCell>
+                      <AppTableCell className="text-xs">{r.subModule}</AppTableCell>
+                      <AppTableCell className="text-xs">{r.subCategory}</AppTableCell>
+                      <AppTableCell>
+                        {r.priority !== '-' ? (
+                          <span 
+                            className="px-2 py-1 rounded text-[10px] font-bold text-foreground shadow-sm"
+                            style={{ backgroundColor: r.priorityColor || '#6B7280' }}
+                          >
+                            {r.priority}
+                          </span>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </AppTableCell>
+                      <AppTableCell>
+                        {r.storyPoints > 0 ? (
+                          <AppBadge variant="info">{r.storyPoints} pts</AppBadge>
+                        ) : (
+                          <span className="text-muted text-xs">-</span>
+                        )}
+                      </AppTableCell>
+                      <AppTableCell className="text-xs">{r.targetRelease}</AppTableCell>
+                      <AppTableCell className="text-xs">{r.department}</AppTableCell>
+                      <AppTableCell className="text-xs">{r.createdBy}</AppTableCell>
+                      <AppTableCell className="text-xs">{r.createdAt}</AppTableCell>
+                      <AppTableCell>
+                         <AppBadge variant={r.approvalStatus === 'Approved' ? 'success' : r.approvalStatus === 'Rejected' ? 'danger' : r.approvalStatus === 'Pending Approval' ? 'warning' : 'neutral'}>
+                           {r.approvalStatus}
+                         </AppBadge>
+                      </AppTableCell>
+                      <AppTableCell>
+                        <div className="flex items-center justify-center gap-0">
+                          <AppButton 
+                            variant="ghost" 
+                            size="sm" 
+                            title="View"
+                            className="h-7 w-7 p-0 text-accent hover:text-accent/80 hover:bg-accent/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/requirements/${r.dbId}?mode=view`);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </AppButton>
+                          {(isSuperAdmin || hasPermission('REQUIREMENTS_UPDATE')) && (
+                            <AppButton 
+                              variant="ghost" 
+                              size="sm" 
+                              title="Edit Business Analysis"
+                              className="h-7 w-7 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/requirements/${r.dbId}?tab=analysis`);
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </AppButton>
+                          )}
+                          {(isSuperAdmin || hasPermission('REQUIREMENTS_DELETE')) && (
+                            <AppButton 
+                              variant="ghost" 
+                              size="sm" 
+                              title="Delete"
+                              className="h-7 w-7 p-0 text-muted hover:text-rose-500 hover:bg-accent/10"
+                              onClick={(e) => handleDelete(e, r.dbId)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </AppButton>
+                          )}
+                        </div>
+                      </AppTableCell>
+                    </AppTableRow>
+                  ))
+                )}
+              </AppTableBody>
+            </AppTable>
+          </AppTableContainer>
+        </div>
       </div>
     </PageContainer>
   );
