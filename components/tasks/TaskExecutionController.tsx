@@ -1234,7 +1234,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {pendingWatchers ? pendingWatchers.length : explicitWatchers.length}
                     </span>
                   </span>
-                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner || isExecutor) && !effectivelyFrozenForUser && (
+                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner) && !effectivelyFrozenForUser && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('watchers')}
