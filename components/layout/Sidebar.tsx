@@ -423,8 +423,8 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
             </Link>
           ) : (
             <Link href="/" className="flex h-14 w-14 mx-auto shrink-0 items-center justify-center mt-1">
-              <div className="h-12 w-12 mx-auto flex items-center justify-center rounded-lg mb-2 overflow-hidden px-1">
-                <img src="/Chandak-Group-Final-Logo.svg" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+              <div className="h-10 w-10 mx-auto flex items-center justify-center rounded-lg mb-2 overflow-hidden px-1">
+                <img src="/chandak-40-icon.png" alt="Chandak 40 Years Logo" className="max-h-full max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               </div>
             </Link>
           )}
